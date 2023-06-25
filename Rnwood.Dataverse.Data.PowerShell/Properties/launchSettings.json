@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "Powershell Core": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "commandLineArgs": "-noexit -command \"import-module -verbose ./Rnwood.Dataverse.Data.PowerShell.psd1; . ./test.ps1\""
+    },
+    "Powershell Desktop": {
+      "commandName": "Executable",
+      "executablePath": "c:\\windows\\system32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "commandLineArgs": "-noexit -command \"import-module -verbose ./Rnwood.Dataverse.Data.PowerShell.psd1; & ./test.ps1\""
+    }
+  }
+}
