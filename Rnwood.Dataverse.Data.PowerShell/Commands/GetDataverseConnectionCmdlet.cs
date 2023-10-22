@@ -44,7 +44,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private const string PARAMSET_USERNAMEPASSWORD = "Authenticate with username and password";
 
 
-		[Parameter]
+		public const string CLIENTID_HELP = "Client ID to use for authentication. By default the MS provided ID for PAC CLI (`9cee029c-6210-4654-90bb-17e6e9d36617`) is used to make it easy to get started.";
+
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client ID to use for authentication.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = CLIENTID_HELP)]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = CLIENTID_HELP)]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = CLIENTID_HELP)]
 		public Guid ClientId { get; set; } = new Guid("9cee029c-6210-4654-90bb-17e6e9d36617");
 
 		[Parameter(Mandatory = true)]

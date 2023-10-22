@@ -6,11 +6,11 @@
       <command:verb>Get</command:verb>
       <command:noun>DataverseConnection</command:noun>
       <maml:description>
-        <maml:para>{{ Fill in the Synopsis }}</maml:para>
+        <maml:para>Gets a connection to a Dataverse environment either interactively or silently.</maml:para>
       </maml:description>
     </command:details>
     <maml:description>
-      <maml:para>{{ Fill in the Description }}</maml:para>
+      <maml:para></maml:para>
     </maml:description>
     <command:syntax>
       <command:syntaxItem>
@@ -178,7 +178,7 @@
           </dev:type>
           <dev:defaultValue>None</dev:defaultValue>
         </command:parameter>
-        <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
+        <command:parameter required="true" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
           <maml:name>ClientId</maml:name>
           <maml:description>
             <maml:para>{{ Fill ClientId Description }}</maml:para>
@@ -229,7 +229,7 @@
         </dev:type>
         <dev:defaultValue>None</dev:defaultValue>
       </command:parameter>
-      <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
+      <command:parameter required="true" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
         <maml:name>ClientId</maml:name>
         <maml:description>
           <maml:para>{{ Fill ClientId Description }}</maml:para>
@@ -318,9 +318,16 @@
     <command:examples>
       <command:example>
         <maml:title>-------------------------- Example 1 --------------------------</maml:title>
-        <dev:code>PS C:\&gt; {{ Add example code here }}</dev:code>
+        <dev:code>PS C:\&gt; $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Interactive</dev:code>
         <dev:remarks>
-          <maml:para>{{ Add example description here }}</maml:para>
+          <maml:para>Gets a connection to MYORG using interactive authentication and stores the result in the `$c` variable for later use.</maml:para>
+        </dev:remarks>
+      </command:example>
+      <command:example>
+        <maml:title>-------------------------- Example 2 --------------------------</maml:title>
+        <dev:code>PS C:\&gt; $c = Get-DataverseConnection -url "https://myorg.crm4.dynamics.com" -clientid "3004eb1e-7a00-45e0-a1dc-6703735eac18" -clientsecret "itsasecret"</dev:code>
+        <dev:remarks>
+          <maml:para>Gets a connection to MYORG using Service Principal client ID and secret auth and stores the result in the `$c` variable for later use.</maml:para>
         </dev:remarks>
       </command:example>
     </command:examples>

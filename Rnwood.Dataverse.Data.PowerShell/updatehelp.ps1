@@ -8,4 +8,4 @@ if (-not(get-installedmodule Platyps -MinimumVersion 0.14.1 -ErrorAction silentl
 
 import-module $PSScriptRoot/Rnwood.Dataverse.Data.PowerShell.psd1
 
-update-markdownhelp -path $projectdir/docs
+update-markdownhelp -path $projectdir/docs -UpdateInputOutput

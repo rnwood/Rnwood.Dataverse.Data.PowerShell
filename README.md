@@ -19,6 +19,8 @@ Non features:
 
 # How to install
 
+> TODO: Currently, the version in the PowerShell gallery will work in PowerShell Core only. I am working on making a single module able to load and work in Desktop too. Build from source if you need this right away.
+
 This module is not signed (donation of funds for code signing certificate are welcome). So PowerShell must be configured to allow loading unsigned scripts.
 
 ```powershell
@@ -33,8 +35,54 @@ To update:
 ```
 Update-Module Rnwood.Dataverse.Data.PowerShell -Force
 ```
+# Quick Start and Examples
+Get a connection to a target Dataverse environment using the `Get-DataverseConnection` cmdlet.
 
-# Documentation
+*Example: Get a connection to MYORG... using interactive authentication:*
+```powershell
+$c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive
+```
+
+See the full documentation for `Get-DataverseConnection` for other non-interactive auth types.
+
+Every command that need a connection to a Dataverse environment exposes a `-Connection` parameter.  Use the value returned by the above (`$c` in example) here. 
+
+*Example: Get all `contact` records:*
+```powershell
+$c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive
+Get-DataverseRecord -connection $c -tablename contact
+```
+
+The cmdlets input and output normal PowerShell objects to/from the pipeline, so you can combine multiple command easily. You can also create multiple connections allowing you to work with more than one environment in the same script.
+
+*Example: Copy from one environment to another updating any records that already exist if a match with the same name already exists*
+```powershell
+$c1 = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive
+$c2 = Get-DataverseConnection -url https://anotherorg.crm11.dynamics.com -interactive
+
+Get-DataverseRecord -connection $c1 -tablename contact |
+   Set-DataverseRecord -connection $c2 -matchon fullname
+```
+
+You can also use other commands.
+
+*Example: Get all `contact` records and convert to JSON:*
+```powershell
+$c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive
+
+Get-DataverseRecord -connection $c -tablename contact | 
+   ConvertTo-JSON
+```
+
+## Main Cmdlets
+
+[Get-DataverseConnection](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseConnection.md) - Creates a connection to a Dataverse environment.
+[Get-DataverseRecord](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) - Query for existing records
+[Set-DataverseRecord](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) - Create or update records.
+[Remove-DataverseRecord](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) - Delete existing records.
+[Invoke-DataverseRequest](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) - Allows you to execute arbitrary Dataverse API requests.
+
+# Full Documentation
 You can see documentation using the standard PowerShell help and autocompletion systems.
 
 To see a complete list of cmdlets:

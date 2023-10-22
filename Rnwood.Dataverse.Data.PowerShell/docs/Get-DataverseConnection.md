@@ -8,13 +8,13 @@ schema: 2.0.0
 # Get-DataverseConnection
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Gets a connection to a Dataverse environment either interactively or silently.
 
 ## SYNTAX
 
 ### Authenticate with client secret
 ```
-Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> -ClientSecret <String> [<CommonParameters>]
+Get-DataverseConnection -ClientId <Guid> -Url <Uri> -ClientSecret <String> [<CommonParameters>]
 ```
 
 ### Authenticate interactively
@@ -34,16 +34,22 @@ Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> -Username <String> -Passwo
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Interactive
 ```
 
-{{ Add example description here }}
+Gets a connection to MYORG using interactive authentication and stores the result in the `$c` variable for later use.
+
+### Example 2
+```powershell
+PS C:\> $c = Get-DataverseConnection -url "https://myorg.crm4.dynamics.com" -clientid "3004eb1e-7a00-45e0-a1dc-6703735eac18" -clientsecret "itsasecret"
+```
+
+Gets a connection to MYORG using Service Principal client ID and secret auth and stores the result in the `$c` variable for later use.
 
 ## PARAMETERS
 
@@ -94,7 +100,19 @@ Accept wildcard characters: False
 
 ```yaml
 Type: Guid
-Parameter Sets: (All)
+Parameter Sets: Authenticate with client secret
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: Guid
+Parameter Sets: Authenticate interactively, Authenticate using the device code flow, Authenticate with username and password
 Aliases:
 
 Required: False
@@ -170,7 +188,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
-
 ## OUTPUTS
 
 ### System.Object
