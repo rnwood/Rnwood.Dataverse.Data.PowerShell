@@ -40,6 +40,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private const string PARAMSET_CLIENTSECRET = "Authenticate with client secret";
 		private const string PARAMSET_INTERACTIVE = "Authenticate interactively";
+		private const string PARAMSET_DEVICECODE = "Authenticate using the device code flow";
+		private const string PARAMSET_USERNAMEPASSWORD = "Authenticate with username and password";
 
 
 		[Parameter]
@@ -52,7 +54,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public string ClientSecret { get; set; }
 
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE)]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD)]
 		public string Username { get; set; }
+
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD)]
+		public string Password { get; set; }
+
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_INTERACTIVE)]
+		public SwitchParameter Interactive { get; set; }
+
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEVICECODE)]
+		public SwitchParameter DeviceCode { get; set; }
 
 		protected override void BeginProcessing()
 		{
@@ -61,27 +74,54 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			switch (ParameterSetName)
 			{
 				case PARAMSET_INTERACTIVE:
-					var publicClient = PublicClientApplicationBuilder
-						.Create(ClientId.ToString())
-						.WithRedirectUri("http://localhost")
-						.Build();
+					{
+						var publicClient = PublicClientApplicationBuilder
+							.Create(ClientId.ToString())
+							.WithRedirectUri("http://localhost")
+							.Build();
 
-					WriteObject(new ServiceClient(Url, url => GetTokenInteractive(publicClient, url)));
+						WriteObject(new ServiceClient(Url, url => GetTokenInteractive(publicClient, url)));
 
-					break;
+						break;
+					}
+
+				case PARAMSET_USERNAMEPASSWORD:
+					{
+						var publicClient = PublicClientApplicationBuilder
+							.Create(ClientId.ToString())
+							.WithRedirectUri("http://localhost")
+							.Build();
+
+						WriteObject(new ServiceClient(Url, url => GetTokenWithUsernamePassword(publicClient, url)));
+
+						break;
+					}
+
+				case PARAMSET_DEVICECODE:
+					{
+						var publicClient = PublicClientApplicationBuilder
+							.Create(ClientId.ToString())
+							.WithRedirectUri("http://localhost")
+							.Build();
+
+						WriteObject(new ServiceClient(Url, url => GetTokenWithDeviceCode(publicClient, url)));
+
+						break;
+					}
 
 				case PARAMSET_CLIENTSECRET:
-					var confApp = ConfidentialClientApplicationBuilder
-					.Create(ClientId.ToString())
-					.WithRedirectUri("http://localhost")
-					.WithClientSecret(ClientSecret)
-					.WithTenantId("bd6c851f-e0dc-4d6d-ab4c-99452fe28387")
-					.Build();
+					{
+						var confApp = ConfidentialClientApplicationBuilder
+						.Create(ClientId.ToString())
+						.WithRedirectUri("http://localhost")
+						.WithClientSecret(ClientSecret)
+						.WithTenantId("bd6c851f-e0dc-4d6d-ab4c-99452fe28387")
+						.Build();
 
-					WriteObject(new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url)));
+						WriteObject(new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url)));
 
-
-					break;
+						break;
+					}
 
 				default:
 					throw new NotImplementedException(ParameterSetName);
@@ -99,6 +139,51 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			return authResult.AccessToken;
 		}
 
+		private async Task<string> GetTokenWithUsernamePassword(IPublicClientApplication app, string url)
+		{
+			Uri scope = new Uri(Url, "/.default");
+			string[] scopes = new[] { scope.ToString() };
+
+
+			AuthenticationResult authResult = await app.AcquireTokenByUsernamePassword(scopes, Username, Password).ExecuteAsync();
+
+
+			return authResult.AccessToken;
+
+		}
+
+		private async Task<string> GetTokenWithDeviceCode(IPublicClientApplication app, string url)
+		{
+			Uri scope = new Uri(Url, "/.default");
+			string[] scopes = new[] { scope.ToString() };
+
+			AuthenticationResult authResult = null;
+			if (!string.IsNullOrEmpty(Username))
+			{
+				try
+				{
+
+					authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync();
+				}
+				catch (MsalUiRequiredException)
+				{
+
+				}
+			}
+
+			if (authResult == null) {
+				authResult = await app.AcquireTokenWithDeviceCode(scopes, (dcr) => 
+				{
+					Host.UI.WriteLine(dcr.Message);
+					return Task.FromResult(0);
+				}).ExecuteAsync();
+			}
+
+			Username = authResult.Account.Username; 
+
+			return authResult.AccessToken;
+
+		}
 
 		private async Task<string> GetTokenInteractive(IPublicClientApplication app, string url)
 		{
@@ -106,22 +191,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			string[] scopes = new[] { scope.ToString() };
 
 
-			AuthenticationResult authResult;
+			AuthenticationResult authResult = null;
 
-			try
+			if (!string.IsNullOrEmpty(Username))
 			{
+				try
+				{
 
-				authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync();
+					authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync();
+				}
+				catch (MsalUiRequiredException)
+				{
+
+				}
 			}
-			catch (MsalUiRequiredException)
+
+			if (authResult == null)
 			{
 				authResult = await app.AcquireTokenInteractive(scopes).ExecuteAsync();
-
+				Username = authResult.Account.Username;
 			}
 
+
 			return authResult.AccessToken;
-
-
 
 		}
 	}

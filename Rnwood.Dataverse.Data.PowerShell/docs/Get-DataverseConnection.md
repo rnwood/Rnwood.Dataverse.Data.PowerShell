@@ -19,7 +19,18 @@ Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> -ClientSecret <String> [<C
 
 ### Authenticate interactively
 ```
-Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] [<CommonParameters>]
+Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] [-Interactive] [<CommonParameters>]
+```
+
+### Authenticate using the device code flow
+```
+Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] [-DeviceCode] [<CommonParameters>]
+```
+
+### Authenticate with username and password
+```
+Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> -Username <String> -Password <String>
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -56,10 +67,22 @@ Accept wildcard characters: False
 
 ```yaml
 Type: String
-Parameter Sets: Authenticate interactively
+Parameter Sets: Authenticate interactively, Authenticate using the device code flow
 Aliases:
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with username and password
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -87,6 +110,51 @@ Accept wildcard characters: False
 ```yaml
 Type: String
 Parameter Sets: Authenticate with client secret
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DeviceCode
+{{ Fill DeviceCode Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Authenticate using the device code flow
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Interactive
+{{ Fill Interactive Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Authenticate interactively
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Password
+{{ Fill Password Description }}
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with username and password
 Aliases:
 
 Required: True

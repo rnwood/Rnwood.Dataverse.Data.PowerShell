@@ -1,7 +1,10 @@
 ﻿param($projectdir)
 $projectdir=$projectdir.Trim('""')
 $ErrorActionPreference="Stop"
-install-module -scope CurrentUser PlatyPs -force
+
+if (-not(get-installedmodule Platyps -MinimumVersion 0.14.1 -ErrorAction silentlycontinue)) {
+	install-module -scope CurrentUser PlatyPs -force
+}
 
 import-module $PSScriptRoot/Rnwood.Dataverse.Data.PowerShell.psd1
 
