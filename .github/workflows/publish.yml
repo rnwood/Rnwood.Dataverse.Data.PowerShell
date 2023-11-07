@@ -15,5 +15,9 @@ jobs:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
         shell: pwsh
         run: |
-          dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj -o out/Rnwood.Dataverse.Data.PowerShell
+          dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj
+          if (test-path out/Rnwood.Dataverse.Data.PowerShell) {
+            remove-item -force -recurse out/Rnwood.Dataverse.Data.PowerShell
+          }
+          copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
