@@ -19,8 +19,6 @@ Non features:
 
 # How to install
 
-> TODO: Currently, the version in the PowerShell gallery will work in PowerShell Core only. I am working on making a single module able to load and work in Desktop too. Build from source if you need this right away.
-
 This module is not signed (donation of funds for code signing certificate are welcome). So PowerShell must be configured to allow loading unsigned scripts.
 
 ```powershell
