@@ -31,9 +31,6 @@
     <None Update="Set-DataverseRecordsFolder.psm1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="test.ps1">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="buildhelp.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

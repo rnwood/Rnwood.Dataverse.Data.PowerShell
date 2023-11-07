@@ -33,5 +33,5 @@
     <Copy SourceFiles="@(FSOutputs)" DestinationFolder="$(OutDir)\%(RecursiveDir)" />
 
   </Target>
-
+  
 </Project>
