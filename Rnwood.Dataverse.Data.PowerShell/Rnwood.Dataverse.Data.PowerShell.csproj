@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <Target Name="BuildFrameworkSpecifics" AfterTargets="Build">
-    <MSBuild Projects="../Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific/Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.csproj" Targets="Build" Properties="Configuration=$(Configuration)" BuildInParallel="true">
+    <MSBuild Projects="../Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific/Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration)" BuildInParallel="true">
       
     </MSBuild>
     <ItemGroup>
