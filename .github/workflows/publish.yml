@@ -1,7 +1,6 @@
 name: Publish PowerShell Module
 
 on:
-  workflow_dispatch:
   release:
     types: [created]
 
@@ -15,6 +14,9 @@ jobs:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
         shell: pwsh
         run: |
+          $versionnumber = $env:GITHUB_REF -replace "refs/tags/", ""
+          $manifestpath = "Rnwood.Dataverse.Data.PowerShell//Rnwood.Dataverse.Data.PowerShell.psd1"
+          (get-content -raw -encoding UTF8 $manifestpath ) -replace "ModuleVersion ?=.*", "ModuleVersion = `"$versionnumber`"" | set-content -raw -encoding UTF8 $manifestpath
           dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj
           if (test-path out/Rnwood.Dataverse.Data.PowerShell) {
             remove-item -force -recurse out/Rnwood.Dataverse.Data.PowerShell

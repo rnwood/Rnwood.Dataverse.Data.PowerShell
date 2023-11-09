@@ -96,7 +96,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             public Func<OrganizationServiceFault, bool> ResponseExceptionCompletion { get; set; }
 
             public PSObject InputObject { get; set; }
-        }
+
+			public override string ToString()
+			{
+                return Request.RequestName + " " + string.Join(", ", Request.Parameters.Select(p => $"{p.Key}='{p.Value}'"));
+			}
+		}
 
         private List<BatchItem> _nextBatchItems;
         private Guid? _nextBatchCallerId;
@@ -145,7 +150,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private void ProcessBatch()
         {
             if (_nextBatchItems.Count > 0 &&
-                ShouldProcess("Execute batch of requests:\n" + string.Join("\n", _nextBatchItems.Select(r => r.GetType()))))
+                ShouldProcess("Execute batch of requests:\n" + string.Join("\n", _nextBatchItems.Select(r => r.ToString()))))
             {
 
                 ExecuteMultipleRequest batchRequest = new ExecuteMultipleRequest()
