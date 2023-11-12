@@ -1,5 +1,5 @@
 ---
-external help file: Rnwood.Dataverse.Data.PowerShell.dll-Help.xml
+external help file: Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.dll-Help.xml
 Module Name: Rnwood.Dataverse.Data.PowerShell
 online version:
 schema: 2.0.0
@@ -14,7 +14,7 @@ schema: 2.0.0
 
 ### Simple
 ```
-Get-DataverseRecord -Connection <ServiceClient> -TableName <String> [-VerboseRecordCount] [-RecordCount]
+Get-DataverseRecord -Connection <ServiceClient> [-TableName] <String> [-VerboseRecordCount] [-RecordCount]
  [-FilterValues <Hashtable[]>] [-Criteria <FilterExpression>] [-Links <DataverseLinkEntity[]>]
  [-ExcludeFilterValues <Hashtable[]>] [-ExcludeFilterOr] [-ActiveOnly] [-Id <Guid[]>] [-Name <String[]>]
  [-ExcludeId <Guid[]>] [-Columns <String[]>] [-ExcludeColumns <String[]>] [-OrderBy <String[]>] [-Top <Int32>]
@@ -56,6 +56,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Columns
+List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default
+
+```yaml
+Type: String[]
+Parameter Sets: Simple
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnnection cmdlet, or string specifying Dataverse organization URL (e.g.
 http://server.com/MyOrg/)
@@ -77,6 +92,21 @@ Extra criteria to apply to query
 
 ```yaml
 Type: FilterExpression
+Parameter Sets: Simple
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExcludeColumns
+List of columns to exclude from records (default is none). Ignored if Columns parameter is used.s
+
+```yaml
+Type: String[]
 Parameter Sets: Simple
 Aliases:
 
@@ -135,6 +165,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -FetchXml
+FetchXml to use
+
+```yaml
+Type: String
+Parameter Sets: FetchXml
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -FilterValues
 List of hashsets of fields names,values to filter records by using an EQUALS condition (or ISNULL if null value).
 If more than one hashset is provided then they are logically combined using an OR condition.
@@ -158,6 +203,21 @@ List of primary keys (IDs) of records to retrieve.
 
 ```yaml
 Type: Guid[]
+Parameter Sets: Simple
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeSystemColumns
+Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.
+
+```yaml
+Type: SwitchParameter
 Parameter Sets: Simple
 Aliases:
 
@@ -262,6 +322,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -TableName
+Logical name of entity for which to retrieve records
+
+```yaml
+Type: String
+Parameter Sets: Simple
+Aliases: EntityName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Top
 Number of records to limit result to.
 Default is all results.
@@ -293,87 +368,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Columns
-List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default
-
-```yaml
-Type: String[]
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ExcludeColumns
-List of columns to exclude from records (default is none). Ignored if Columns parameter is used.s
-
-```yaml
-Type: String[]
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -FetchXml
-FetchXml to use
-
-```yaml
-Type: String
-Parameter Sets: FetchXml
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IncludeSystemColumns
-Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TableName
-Logical name of entity for which to retrieve records
-
-```yaml
-Type: String
-Parameter Sets: Simple
-Aliases: EntityName
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### None
+
 ## OUTPUTS
 
 ### System.Object

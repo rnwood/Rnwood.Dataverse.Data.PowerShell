@@ -1,5 +1,5 @@
 ---
-external help file: Rnwood.Dataverse.Data.PowerShell.dll-Help.xml
+external help file: Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.dll-Help.xml
 Module Name: Rnwood.Dataverse.Data.PowerShell
 online version:
 schema: 2.0.0
@@ -52,48 +52,6 @@ PS C:\> $c = Get-DataverseConnection -url "https://myorg.crm4.dynamics.com" -cli
 Gets a connection to MYORG using Service Principal client ID and secret auth and stores the result in the `$c` variable for later use.
 
 ## PARAMETERS
-
-### -Url
-{{ Fill Url Description }}
-
-```yaml
-Type: Uri
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Username
-{{ Fill Username Description }}
-
-```yaml
-Type: String
-Parameter Sets: Authenticate interactively, Authenticate using the device code flow
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-```yaml
-Type: String
-Parameter Sets: Authenticate with username and password
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### -ClientId
 {{ Fill ClientId Description }}
@@ -182,12 +140,55 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Url
+{{ Fill Url Description }}
+
+```yaml
+Type: Uri
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Username
+{{ Fill Username Description }}
+
+```yaml
+Type: String
+Parameter Sets: Authenticate interactively, Authenticate using the device code flow
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with username and password
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### None
+
 ## OUTPUTS
 
 ### System.Object

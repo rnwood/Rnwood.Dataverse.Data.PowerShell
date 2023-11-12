@@ -1,5 +1,5 @@
 ---
-external help file: Rnwood.Dataverse.Data.PowerShell.dll-Help.xml
+external help file: Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.dll-Help.xml
 Module Name: Rnwood.Dataverse.Data.PowerShell
 online version:
 schema: 2.0.0
@@ -45,6 +45,21 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CallerId
+If specified, the creation/updates will be done on behalf of the user with the specified ID. For best performance, sort the records using this value since a new batch request is needed each time this value changes.
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
@@ -144,6 +159,21 @@ Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
+### -LookupColumns
+Hashset of lookup column name in the target entity to column name in the referred to entity with which to find the records.
+
+```yaml
+Type: Hashtable
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -MatchOn
 List of list of field names that identify an existing record to update based on the values of those fields in the InputObject.
 These are used if a record with and Id matching the value of the Id cannot be found.
@@ -194,8 +224,53 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -NoUpdateColumns
+List of column names which will not be included when updating existing records.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -PassThru
 If specified, the InputObject is written to the pipeline with an Id property set indicating the primary key of the affected record (even if nothing was updated).
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TableName
+Logical name of entity
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: EntityName
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -UpdateAllColumns
+If specified an update containing all supplied columns will be issued without retrieving the existing record for comparison (default is to remove unchanged columns). Id must be provided
 
 ```yaml
 Type: SwitchParameter
@@ -241,91 +316,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -CallerId
-If specified, the creation/updates will be done on behalf of the user with the specified ID. For best performance, sort the records using this value since a new batch request is needed each time this value changes.
-
-```yaml
-Type: Guid
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -LookupColumns
-Hashset of lookup column name in the target entity to column name in the referred to entity with which to find the records.
-
-```yaml
-Type: Hashtable
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -NoUpdateColumns
-List of column names which will not be included when updating existing records.
-
-```yaml
-Type: String[]
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TableName
-Logical name of entity
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases: EntityName
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -UpdateAllColumns
-If specified an update containing all supplied columns will be issued without retrieving the existing record for comparison (default is to remove unchanged columns). Id must be provided
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### System.Management.Automation.PSObject
+
 ### System.String
+
 ### System.String[]
+
 ### System.Guid
+
 ### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=7.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+
 ## OUTPUTS
 
 ### System.Object

@@ -1,11 +1,11 @@
 ---
-external help file: Rnwood.Dataverse.Data.PowerShell.dll-Help.xml
+external help file: Get-DataverseRecordsFolder.psm1-help.xml
 Module Name: Rnwood.Dataverse.Data.PowerShell
 online version:
 schema: 2.0.0
 ---
 
-# Get-DataverseWhoAmI
+# Get-DataverseRecordsFolder
 
 ## SYNOPSIS
 {{ Fill in the Synopsis }}
@@ -13,7 +13,7 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Get-DataverseWhoAmI -Connection <ServiceClient> [<CommonParameters>]
+Get-DataverseRecordsFolder [-InputPath] <String> [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,17 +30,16 @@ PS C:\> {{ Add example code here }}
 
 ## PARAMETERS
 
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/)
+### -InputPath
+{{ Fill InputPath Description }}
 
 ```yaml
-Type: ServiceClient
+Type: String
 Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: Named
+Position: 0
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -52,6 +51,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
+
 ## OUTPUTS
 
 ### System.Object

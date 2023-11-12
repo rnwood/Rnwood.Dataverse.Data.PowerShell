@@ -15,8 +15,20 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="buildhelp.ps1">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Update="Get-DataverseRecordsFolder.psm1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Set-DataverseRecordsFolder.psm1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="test.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="updatehelp.ps1">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
@@ -29,6 +41,15 @@
     </ItemGroup>
     <Copy SourceFiles="@(FSOutputs)" DestinationFolder="$(OutDir)\%(RecursiveDir)" />
 
+  </Target>
+
+  <Target Name="BuildHelp" DependsOnTargets="BuildFrameworkSpecifics" AfterTargets="Build">
+    <Message Text="Building help to $(TargetDir)" Importance="high"/>
+    <Message Text='pwsh -file "$(ProjectDir)updatehelp.ps1" -projectdir "$(ProjectDir.TrimEnd("\\"))" -outdir "$(TargetDir.TrimEnd("\\"))"' Importance="high"/>
+    <Exec Command='pwsh -file "$(ProjectDir)updatehelp.ps1" -projectdir "$(ProjectDir.TrimEnd("\\"))" -outdir "$(TargetDir.TrimEnd("\\"))"' />
+    <Message Text='pwsh -file "$(ProjectDir)build.ps1" -projectdir "$(ProjectDir.TrimEnd("\\"))" -outdir "$(TargetDir.TrimEnd("\\"))"' Importance="high"/>
+
+    <Exec Command='pwsh -file "$(ProjectDir)buildhelp.ps1" -projectdir "$(ProjectDir.TrimEnd("\\"))" -outdir "$(TargetDir.TrimEnd("\\"))"' />
   </Target>
   
 </Project>

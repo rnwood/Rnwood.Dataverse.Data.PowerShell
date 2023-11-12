@@ -10,7 +10,6 @@
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -24,24 +23,4 @@
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.1.9" />
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" />
   </ItemGroup>
-  <ItemGroup>
-    <None Update="Get-DataverseRecordsFolder.psm1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Set-DataverseRecordsFolder.psm1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="buildhelp.ps1">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="updatehelp.ps1">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <!--<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="pwsh &quot;$(Outdir)/updatehelp.ps1&quot; &quot;$(ProjectDir)&quot;" />
-  </Target>
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="pwsh &quot;$(ProjectDir)/buildhelp.ps1&quot; &quot;$(ProjectDir)&quot;" />
-  </Target>-->
 </Project>

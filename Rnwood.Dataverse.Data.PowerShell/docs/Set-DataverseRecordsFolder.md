@@ -1,11 +1,11 @@
 ---
-external help file: Rnwood.Dataverse.Data.PowerShell.dll-Help.xml
+external help file: Set-DataverseRecordsFolder.psm1-help.xml
 Module Name: Rnwood.Dataverse.Data.PowerShell
 online version:
 schema: 2.0.0
 ---
 
-# Invoke-DataverseRequest
+# Set-DataverseRecordsFolder
 
 ## SYNOPSIS
 {{ Fill in the Synopsis }}
@@ -13,7 +13,7 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Invoke-DataverseRequest -Connection <ServiceClient> -Request <OrganizationRequest> [<CommonParameters>]
+Set-DataverseRecordsFolder [-OutputPath] <String> [[-InputObject] <PSObject>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,33 +30,33 @@ PS C:\> {{ Add example code here }}
 
 ## PARAMETERS
 
-### -Connection
-{{ Fill Connection Description }}
+### -InputObject
+{{ Fill InputObject Description }}
 
 ```yaml
-Type: ServiceClient
+Type: PSObject
 Parameter Sets: (All)
 Aliases:
 
-Required: True
-Position: Named
+Required: False
+Position: 1
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
-### -Request
-Request to execute
+### -OutputPath
+{{ Fill OutputPath Description }}
 
 ```yaml
-Type: OrganizationRequest
+Type: String
 Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: Named
+Position: 0
 Default value: None
-Accept pipeline input: True (ByValue)
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
@@ -65,7 +65,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### Microsoft.Xrm.Sdk.OrganizationRequest
+### System.Management.Automation.PSObject
+
 ## OUTPUTS
 
 ### System.Object
