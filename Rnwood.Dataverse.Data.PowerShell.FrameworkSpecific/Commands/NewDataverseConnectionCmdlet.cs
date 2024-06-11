@@ -1,5 +1,7 @@
 ﻿using Microsoft.Identity.Client;
 using Microsoft.PowerPlatform.Dataverse.Client;
+using Microsoft.Xrm.Sdk;
+using Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,48 +13,31 @@ using System.Threading.Tasks;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
-	[Cmdlet(VerbsCommon.Get, "DataverseConnection")]
-	public class GetDataverseConnectionCmdlet : PSCmdlet
+	[Cmdlet(VerbsCommon.New, "DataverseConnection")]
+	[Alias("Get-DataverseConnection")]
+	[OutputType(typeof(DataverseConnection))]
+	public class NewDataverseConnectionCmdlet : PSCmdlet
 	{
-		public GetDataverseConnectionCmdlet()
-		{
-		}
-
-		static GetDataverseConnectionCmdlet()
-		{
-			AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
-		}
-
-		private static System.Reflection.Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
-		{
-			string assyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-
-			string assyName = args.Name.Split(',')[0];
-			string assyFile = assyDir + "/" + assyName + ".dll";
-
-			if (File.Exists(assyFile))
-			{
-				return Assembly.LoadFrom(assyFile);
-			}
-
-			return null;
-		}
 
 		private const string PARAMSET_CLIENTSECRET = "Authenticate with client secret";
 		private const string PARAMSET_INTERACTIVE = "Authenticate interactively";
 		private const string PARAMSET_DEVICECODE = "Authenticate using the device code flow";
 		private const string PARAMSET_USERNAMEPASSWORD = "Authenticate with username and password";
+		private const string PARAMSET_EXISTINGCONNECTION = "Use existing SDK connection";
 
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_EXISTINGCONNECTION)]
+		public IOrganizationService OrganizationService { get; set; }
 
-		public const string CLIENTID_HELP = "Client ID to use for authentication. By default the MS provided ID for PAC CLI (`9cee029c-6210-4654-90bb-17e6e9d36617`) is used to make it easy to get started.";
-
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client ID to use for authentication.")]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = CLIENTID_HELP)]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = CLIENTID_HELP)]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = CLIENTID_HELP)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET)]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE)]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE)]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD)]
 		public Guid ClientId { get; set; } = new Guid("9cee029c-6210-4654-90bb-17e6e9d36617");
 
-		[Parameter(Mandatory = true)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_INTERACTIVE)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEVICECODE)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD)]
 		public Uri Url { get; set; }
 
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET)]
@@ -72,12 +57,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEVICECODE)]
 		public SwitchParameter DeviceCode { get; set; }
 
+		/// <inheritdoc/>
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();
 
 			switch (ParameterSetName)
 			{
+				case PARAMSET_EXISTINGCONNECTION:
+					WriteObject(new DataverseConnection(OrganizationService, "Existing connection"));
+					break;
 				case PARAMSET_INTERACTIVE:
 					{
 						var publicClient = PublicClientApplicationBuilder
@@ -85,7 +74,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							.WithRedirectUri("http://localhost")
 							.Build();
 
-						WriteObject(new ServiceClient(Url, url => GetTokenInteractive(publicClient, url)));
+						WriteObject(new DataverseConnection(new ServiceClient(Url, url => GetTokenInteractive(publicClient, url)), Url.ToString()));
 
 						break;
 					}
@@ -97,7 +86,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							.WithRedirectUri("http://localhost")
 							.Build();
 
-						WriteObject(new ServiceClient(Url, url => GetTokenWithUsernamePassword(publicClient, url)));
+						WriteObject(new DataverseConnection(new ServiceClient(Url, url => GetTokenWithUsernamePassword(publicClient, url)), Url.ToString()));
 
 						break;
 					}
@@ -109,7 +98,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							.WithRedirectUri("http://localhost")
 							.Build();
 
-						WriteObject(new ServiceClient(Url, url => GetTokenWithDeviceCode(publicClient, url)));
+						WriteObject(new DataverseConnection(new ServiceClient(Url, url => GetTokenWithDeviceCode(publicClient, url)), Url.ToString()));
 
 						break;
 					}
@@ -123,7 +112,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						.WithTenantId("bd6c851f-e0dc-4d6d-ab4c-99452fe28387")
 						.Build();
 
-						WriteObject(new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url)));
+						WriteObject(new DataverseConnection(new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url)), Url.ToString()));
 
 						break;
 					}
@@ -176,15 +165,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				}
 			}
 
-			if (authResult == null) {
-				authResult = await app.AcquireTokenWithDeviceCode(scopes, (dcr) => 
+			if (authResult == null)
+			{
+				authResult = await app.AcquireTokenWithDeviceCode(scopes, (dcr) =>
 				{
 					Host.UI.WriteLine(dcr.Message);
 					return Task.FromResult(0);
 				}).ExecuteAsync();
 			}
 
-			Username = authResult.Account.Username; 
+			Username = authResult.Account.Username;
 
 			return authResult.AccessToken;
 

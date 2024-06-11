@@ -13,4 +13,4 @@ write-host "Using module: $modulepath"
 
 import-module $modulepath
 
-update-markdownhelpmodule -path $projectdir/docs -UpdateInputOutput
+update-markdownhelpmodule -path $projectdir/docs -UpdateInputOutput -refreshmodulepage

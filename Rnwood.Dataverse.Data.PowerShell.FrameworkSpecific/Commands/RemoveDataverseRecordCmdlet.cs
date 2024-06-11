@@ -6,7 +6,8 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
-
+using Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific;
+using Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Commands.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,10 +18,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     [Cmdlet(VerbsCommon.Remove, "DataverseRecord", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     ///<summary>Deletes records from a Dataverse organization.</summary>
-    public class RemoveDataverseRecordCmdlet : OrganizationServiceCmdlet
+    public class RemoveDataverseRecordCmdlet : DataverseCmdlet
     {
         [Parameter(Mandatory = true)]
-        public override ServiceClient Connection { get; set; }
+        public override DataverseConnection Connection { get; set; }
 
         [Parameter(ValueFromPipeline = true)]
         public PSObject InputObject { get; set; }
@@ -53,9 +54,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     getRecordWithMMColumns.ColumnSet = new ColumnSet(manyToManyRelationshipMetadata.Entity1IntersectAttribute, manyToManyRelationshipMetadata.Entity2IntersectAttribute);
                     getRecordWithMMColumns.Criteria.AddCondition(metadata.PrimaryIdAttribute, ConditionOperator.Equal, id);
 
-                    Entity record = Connection.RetrieveMultiple(getRecordWithMMColumns).Entities.Single();
+                    Entity record = Connection.Service.RetrieveMultiple(getRecordWithMMColumns).Entities.Single();
 
-                    Connection.Execute(new DisassociateRequest()
+                    Connection.Service.Execute(new DisassociateRequest()
                     {
                         Target = new EntityReference(manyToManyRelationshipMetadata.Entity1LogicalName,
                                                      record.GetAttributeValue<Guid>(
@@ -77,7 +78,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 if (ShouldProcess(string.Format("Delete record {0}:{1}", entityName, id)))
                 {
-                    Connection.Delete(entityName, id);
+                    Connection.Service.Delete(entityName, id);
                 }
                 WriteVerbose(string.Format("Deleted record {0}:{1}", entityName, id));
             }
@@ -87,7 +88,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.BeginProcessing();
 
-            metadataFactory = new EntityMetadataFactory(Connection);
+            metadataFactory = new EntityMetadataFactory(Connection.Service);
         }
 
         private EntityMetadataFactory metadataFactory;

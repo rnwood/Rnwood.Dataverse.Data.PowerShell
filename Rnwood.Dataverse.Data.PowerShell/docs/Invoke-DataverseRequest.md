@@ -13,7 +13,7 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Invoke-DataverseRequest -Connection <ServiceClient> -Request <OrganizationRequest> [<CommonParameters>]
+Invoke-DataverseRequest -Connection <DataverseConnection> -Request <OrganizationRequest> [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -22,7 +22,7 @@ Invoke-DataverseRequest -Connection <ServiceClient> -Request <OrganizationReques
 ## EXAMPLES
 
 ### Example 1
-```powershell
+```
 PS C:\> {{ Add example code here }}
 ```
 
@@ -34,7 +34,7 @@ PS C:\> {{ Add example code here }}
 {{ Fill Connection Description }}
 
 ```yaml
-Type: ServiceClient
+Type: DataverseConnection
 Parameter Sets: (All)
 Aliases:
 
@@ -66,10 +66,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### Microsoft.Xrm.Sdk.OrganizationRequest
-
 ## OUTPUTS
 
-### System.Object
 ## NOTES
 
 ## RELATED LINKS

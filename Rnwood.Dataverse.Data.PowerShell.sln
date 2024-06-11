@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rnwood.Dataverse.Data.Power
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rnwood.Dataverse.Data.PowerShell.Tests", "Rnwood.Dataverse.Data.PowerShell.Tests\Rnwood.Dataverse.Data.PowerShell.Tests.csproj", "{4D65B2DB-2861-4464-BCB3-FDC2686AEC45}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rnwood.Dataverse.Data.PowerShell", "Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.csproj", "{793CE90C-21FA-4FC6-BDF3-73659BC6FEC0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rnwood.Dataverse.Data.PowerShell", "Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.csproj", "{793CE90C-21FA-4FC6-BDF3-73659BC6FEC0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

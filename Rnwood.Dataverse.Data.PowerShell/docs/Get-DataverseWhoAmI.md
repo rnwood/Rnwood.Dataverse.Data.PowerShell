@@ -13,7 +13,7 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Get-DataverseWhoAmI -Connection <ServiceClient> [<CommonParameters>]
+Get-DataverseWhoAmI -Connection <DataverseConnection> [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -22,7 +22,7 @@ Get-DataverseWhoAmI -Connection <ServiceClient> [<CommonParameters>]
 ## EXAMPLES
 
 ### Example 1
-```powershell
+```
 PS C:\> {{ Add example code here }}
 ```
 
@@ -35,7 +35,7 @@ DataverseConnection instance obtained from Get-DataverseConnnection cmdlet, or s
 http://server.com/MyOrg/)
 
 ```yaml
-Type: ServiceClient
+Type: DataverseConnection
 Parameter Sets: (All)
 Aliases:
 
@@ -51,11 +51,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
-
 ## OUTPUTS
 
-### System.Object
 ## NOTES
 
 ## RELATED LINKS

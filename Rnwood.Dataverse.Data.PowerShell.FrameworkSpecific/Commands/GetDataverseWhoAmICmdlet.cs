@@ -5,22 +5,24 @@ using System.Text;
 using System.Management.Automation;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
+using Microsoft.Xrm.Sdk;
+using Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     [Cmdlet(VerbsCommon.Get, "DataverseWhoAmI")]
     ///<summary>Retrieves details about the current Dataverse user and organization specified by the connection provided.</summary>
-    public class GetDataverseWhoAmICmdlet : OrganizationServiceCmdlet
+    public class GetDataverseWhoAmICmdlet : DataverseCmdlet
     {
-        [Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
-        public override ServiceClient Connection { get; set; }
+        [Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from New-DataverseConnnection cmdlet")]
+        public override DataverseConnection Connection { get; set; }
 
         protected override void BeginProcessing()
         {
             base.BeginProcessing();
 
             WhoAmIRequest request = new WhoAmIRequest();
-            WhoAmIResponse response = (WhoAmIResponse)Connection.Execute(request);
+            WhoAmIResponse response = (WhoAmIResponse)Connection.Service.Execute(request);
 
             WriteObject(response);
         }

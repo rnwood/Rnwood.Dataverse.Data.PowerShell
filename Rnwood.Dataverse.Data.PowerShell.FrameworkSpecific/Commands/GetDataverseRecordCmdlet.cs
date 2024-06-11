@@ -6,7 +6,8 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
-
+using Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific;
+using Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Commands.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -19,28 +20,39 @@ using System.Xml.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
-	[Cmdlet(VerbsCommon.Get, "DataverseRecord")]
-	///<summary>Retrieves records from a Dataverse organization.</summary>
-	public class GetDataverseRecordCmdlet : OrganizationServiceCmdlet
+    [Cmdlet(VerbsCommon.Get, "DataverseRecord")]
+	public class GetDataverseRecordCmdlet : DataverseCmdlet
 	{
-		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
-		public override ServiceClient Connection { get; set; }
+		/// <summary>
+		/// DataverseConnection instance obtained from New-DataverseConnnection cmdlet
+		/// </summary>
+		[Parameter(Mandatory = true)]
+		public override DataverseConnection Connection { get; set; }
 
 		private const string PARAMSET_FETCHXML = "FetchXml";
 
 		private const string PARAMSET_SIMPLE = "Simple";
 
-		[Parameter(ParameterSetName=PARAMSET_SIMPLE, Mandatory = true, Position = 0, HelpMessage = "Logical name of table for which to retrieve records")]
+		/// <summary>
+		/// Logical name of table for which to retrieve records
+		/// </summary>
+		[Parameter(ParameterSetName=PARAMSET_SIMPLE, Mandatory = true, Position = 0)]
 		[Alias("EntityName")]
 		public string TableName { get; set; }
 
-		[Parameter(HelpMessage = "If set writes total record count matching query to verbose output")]
+		/// <summary>
+		/// If set, writes total record count matching query to verbose output
+		/// </summary>
+		[Parameter()]
 		public SwitchParameter VerboseRecordCount { get; set; }
 
-		[Parameter(HelpMessage = "If set, writes total record count matching query to output instead of results")]
+		/// <summary>
+		/// If set, writes total record count matching query to output instead of results
+		/// </summary>
+		[Parameter()]
 		public SwitchParameter RecordCount { get; set; }
 
-		[Parameter(ParameterSetName = PARAMSET_FETCHXML, HelpMessage = "FetchXml to use")]
+		[Parameter(ParameterSetName = PARAMSET_FETCHXML, HelpMessage = "FetchXML to use")]
 		public string FetchXml
 		{
 			get;
@@ -159,8 +171,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			base.BeginProcessing();
 
-			entityConverter = new DataverseEntityConverter(Connection);
-			entiyMetadataFactory = new EntityMetadataFactory(Connection);
+			entityConverter = new DataverseEntityConverter(Connection.Service);
+			entiyMetadataFactory = new EntityMetadataFactory(Connection.Service);
 
 			entityMetadata = entiyMetadataFactory.GetMetadata(TableName);
 		}
@@ -331,7 +343,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			QueryExpression query;
 			FetchXmlToQueryExpressionRequest translateQueryRequest = new FetchXmlToQueryExpressionRequest { FetchXml = FetchXml };
-			var translateQueryResponse = (FetchXmlToQueryExpressionResponse)Connection.Execute(translateQueryRequest);
+			var translateQueryResponse = (FetchXmlToQueryExpressionResponse)Connection.Service.Execute(translateQueryRequest);
 			query = translateQueryResponse.Query;
 			return query;
 		}
@@ -368,7 +380,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			do
 			{
-				response = (RetrieveMultipleResponse)Connection.Execute(request);
+				response = (RetrieveMultipleResponse)Connection.Service.Execute(request);
 
 				pageInfo.PageNumber++;
 				pageInfo.PagingCookie = response.EntityCollection.PagingCookie;

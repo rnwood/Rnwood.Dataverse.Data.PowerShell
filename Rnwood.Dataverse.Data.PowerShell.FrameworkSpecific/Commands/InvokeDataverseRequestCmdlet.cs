@@ -7,15 +7,16 @@ using Microsoft.Crm.Sdk.Messages;
 
 using Microsoft.Xrm.Sdk;
 using Microsoft.PowerPlatform.Dataverse.Client;
+using Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     [Cmdlet("Invoke", "DataverseRequest")]
     ///<summary>Invokes a Dataverse request.</summary>
-    public class InvokeDataverseRequestCmdlet : OrganizationServiceCmdlet
+    public class InvokeDataverseRequestCmdlet : DataverseCmdlet
     {
         [Parameter(Mandatory = true)]
-        public override ServiceClient Connection { get; set; }
+        public override DataverseConnection Connection { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage="Request to execute", ValueFromRemainingArguments=true, ValueFromPipeline=true)]
         public  OrganizationRequest Request { get; set; }
@@ -29,7 +30,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            WriteObject(Connection.Execute(Request));
+            WriteObject(Connection.Service.Execute(Request));
         }
     }
 }
