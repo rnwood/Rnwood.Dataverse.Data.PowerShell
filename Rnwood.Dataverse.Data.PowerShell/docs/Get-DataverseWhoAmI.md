@@ -8,31 +8,29 @@ schema: 2.0.0
 # Get-DataverseWhoAmI
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves details about the current Dataverse user and organization specified by the connection provided.
 
 ## SYNTAX
 
 ```
-Get-DataverseWhoAmI -Connection <ServiceClient> [<CommonParameters>]
+Get-DataverseWhoAmI -Connection <ServiceClient> [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Get-DataverseWhoAmI -Connection $c
 ```
 
-{{ Add example description here }}
+Returns info for the existing connection `$c`.
 
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/)
+DataverseConnection instance obtained from Get-DataverseConnnection cmdlet
 
 ```yaml
 Type: ServiceClient
@@ -46,16 +44,31 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+See standard PS docs.
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### None
-
 ## OUTPUTS
 
 ### System.Object
 ## NOTES
+See https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.whoamiresponse?view=dataverse-sdk-latest
 
 ## RELATED LINKS

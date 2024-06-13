@@ -28,7 +28,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             HelpMessage = "Object containing values to be used. Property names must match the logical names of Dataverse columns in the specified table and the property values are used to set the values of the Dataverse record being created/updated. The properties may include ownerid, statecode and statuscode which will assign and change the record state/status.")]
         public PSObject InputObject { get; set; }
 
-        [Parameter(HelpMessage = "Controls the maximum number of requests sent to Dataverse in one batch (where possible) to include throughput. Specify 1 to disable.")]
+        [Parameter()]
         public uint BatchSize { get; set; } = 100;
 
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of table")]

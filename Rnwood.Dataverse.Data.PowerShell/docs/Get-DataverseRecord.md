@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseRecord
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves records from Dataverse tables using a variety of strategies to specify what should be retrieved.
 
 ## SYNTAX
 
@@ -18,17 +18,18 @@ Get-DataverseRecord -Connection <ServiceClient> [-TableName] <String> [-VerboseR
  [-FilterValues <Hashtable[]>] [-Criteria <FilterExpression>] [-Links <DataverseLinkEntity[]>]
  [-ExcludeFilterValues <Hashtable[]>] [-ExcludeFilterOr] [-ActiveOnly] [-Id <Guid[]>] [-Name <String[]>]
  [-ExcludeId <Guid[]>] [-Columns <String[]>] [-ExcludeColumns <String[]>] [-OrderBy <String[]>] [-Top <Int32>]
- [-PageSize <Int32>] [-LookupValuesReturnName] [-IncludeSystemColumns] [<CommonParameters>]
+ [-PageSize <Int32>] [-LookupValuesReturnName] [-IncludeSystemColumns] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ### FetchXml
 ```
 Get-DataverseRecord -Connection <ServiceClient> [-VerboseRecordCount] [-RecordCount] [-FetchXml <String>]
- [-Top <Int32>] [-PageSize <Int32>] [-LookupValuesReturnName] [<CommonParameters>]
+ [-Top <Int32>] [-PageSize <Int32>] [-LookupValuesReturnName] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
 
 ## EXAMPLES
 
@@ -72,8 +73,7 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/)
+DataverseConnection instance obtained from Get-DataverseConnnection cmdlet.
 
 ```yaml
 Type: ServiceClient
@@ -88,7 +88,7 @@ Accept wildcard characters: False
 ```
 
 ### -Criteria
-Extra criteria to apply to query
+Extra criteria to apply to query. This is specified using the Dataverse SDK type `FilterExpression`.
 
 ```yaml
 Type: FilterExpression
@@ -103,7 +103,7 @@ Accept wildcard characters: False
 ```
 
 ### -ExcludeColumns
-List of columns to exclude from records (default is none). Ignored if Columns parameter is used.s
+List of columns to exclude from records (default is none). Ignored if Columns parameter is used.
 
 ```yaml
 Type: String[]
@@ -166,7 +166,7 @@ Accept wildcard characters: False
 ```
 
 ### -FetchXml
-FetchXml to use
+FetchXml to use. See https://learn.microsoft.com/en-us/power-apps/developer/data-platform/fetchxml/overview
 
 ```yaml
 Type: String
@@ -229,7 +229,7 @@ Accept wildcard characters: False
 ```
 
 ### -Links
-Link entities to apply to query
+Link entities to apply to query. Specified using the Dataverse SDK type `LinkEntity`
 
 ```yaml
 Type: DataverseLinkEntity[]
@@ -368,13 +368,27 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+See standard PS docs.
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### None
-
 ## OUTPUTS
 
 ### System.Object

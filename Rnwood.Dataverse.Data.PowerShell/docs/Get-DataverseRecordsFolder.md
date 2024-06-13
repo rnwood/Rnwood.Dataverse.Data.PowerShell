@@ -8,30 +8,31 @@ schema: 2.0.0
 # Get-DataverseRecordsFolder
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Reads a folder of JSON files written out by `Set-DataverseRecordFolder` and converts back into a stream of PS objects.
+Together these commands can be used to extract and import data to and from files, for instance for inclusion in source control, or build/deployment assets.
 
 ## SYNTAX
 
 ```
-Get-DataverseRecordsFolder [-InputPath] <String> [<CommonParameters>]
+Get-DataverseRecordsFolder [-InputPath] <String> [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Get-DataversRecordsFolder -InputPath data/contacts | Set-DataverseRecord -connection $c
 ```
 
-{{ Add example description here }}
+Reads files from `data/contacts` and uses them to create/update records in Dataverse using the existing connection `$c`.
+See documentation for `Set-DataverseRecord` as there are option to control how/if existing records will be matched and updated.
 
 ## PARAMETERS
 
 ### -InputPath
-{{ Fill InputPath Description }}
+Path to folder to read JSON files from.
 
 ```yaml
 Type: String
@@ -45,13 +46,27 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+See standard PS docs.
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### None
-
 ## OUTPUTS
 
 ### System.Object

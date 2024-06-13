@@ -3,7 +3,7 @@
     <TargetFrameworks>net6.0;net462</TargetFrameworks>
     <AssemblyTitle>Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific</AssemblyTitle>
     <Product>Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific</Product>
-    <Copyright>Copyright © 2023</Copyright>
+    <Copyright>Copyright © 2023-2024</Copyright>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>

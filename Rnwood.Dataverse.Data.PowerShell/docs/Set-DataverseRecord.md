@@ -8,7 +8,7 @@ schema: 2.0.0
 # Set-DataverseRecord
 
 ## SYNOPSIS
-Creates or updates Dataverse records.
+Creates or updates Dataverse records including M:M association/disassociation, status and assignment changes.
 
 ## SYNTAX
 
@@ -16,25 +16,59 @@ Creates or updates Dataverse records.
 Set-DataverseRecord -Connection <ServiceClient> -InputObject <PSObject> [-BatchSize <UInt32>]
  -TableName <String> [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>] [-PassThru]
  [-NoUpdate] [-NoCreate] [-NoUpdateColumns <String[]>] [-CallerId <Guid>] [-UpdateAllColumns] [-CreateOnly]
- [-Upsert] [-LookupColumns <Hashtable>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Upsert] [-LookupColumns <Hashtable>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+
+By default, this command will check for existing record matching the input object's primary key(s) and will update if there is a match and there are changes, or create if not. 
+
+The `TableName` and `Id` properties will normally be read from the pipeine if present, but can be overriden as separate arguments.
+
+See the various options below which can vary if/how the record is matched and if new records will be created or not.
+
+Primitive types (text, number, yes/no) can be specified directly using the PowerShell numeric/string/bool types etc. A conversion will be attempted from other types.
+
+Date and date/time columns can be specified directly using the PowerShell DateTime type. A conversion will be attempted from string and other types, but take care to include TZ offset.
+
+Choice (option set), State and Status columns will accept any or:
+- Numeric value of the choice
+- Label
+- $null or empty string
+
+Lookup and UniqueIdentifier columns will accept any of:
+ - the name of the target record (as long as it is unique)
+ - the Id of a record in one of the tables the lookup targets
+ - an object which has `TableName`/`LogicalName`/`EntityName` and `Id` properties. This includes `EntityReference` instances from the SDK and values as returned from `Get-DataverseRecord`.
+ - $null or empty string.
+
+Party list columns accept a collection of objects each of which need to be convertible to a `activityparty` table record using the rules above.
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> [PSCustomObject] @{"TableName"="contact"; "lastname"="Simpson"} | Set-DataverseRecord -connection $c
 ```
 
-{{ Add example description here }}
+Creates a new contact record with a last name.
+
+### Example 2
+```powershell
+PS C:\> Get-DataverseRecord -connection $c -columns statuscode | ForEach-Object { $_.statuscode = "Inactive"} | Set-DataverseRecord -connection $c
+```
+
+Retrieves all existing contacts and sets their status reason to `Inactive`.
 
 ## PARAMETERS
 
 ### -BatchSize
-{{ Fill BatchSize Description }}
+Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable.
+
+When value is 1, requests are sent to Dataverse one request at a time. When > 1, batching is used. 
+
+Note that the batch will continue on error and any errors will be returned once the batch has completed. The error contains the input record to allow correlation.
 
 ```yaml
 Type: UInt32
@@ -79,8 +113,7 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/)
+DataverseConnection instance obtained from Get-DataverseConnnection cmdlet,
 
 ```yaml
 Type: ServiceClient
@@ -316,21 +349,31 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+See standard PS docs.
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### System.Management.Automation.PSObject
-
 ### System.String
-
 ### System.String[]
-
 ### System.Guid
-
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=7.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
-
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Object

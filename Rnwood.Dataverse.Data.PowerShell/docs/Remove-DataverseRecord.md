@@ -8,26 +8,33 @@ schema: 2.0.0
 # Remove-DataverseRecord
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Deletes an existing Dataverse record.
 
 ## SYNTAX
 
 ```
 Remove-DataverseRecord -Connection <ServiceClient> [-InputObject <PSObject>] -TableName <String> -Id <Guid>
- [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The `TableName` and `Id` can be read from the pipeline when piping in a record obtained from `get-dataverserecord` instead of being specified separately. This allows you to delete a stream of records from the pipeline.
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> get-dataverserecord -connection $c -tablename contact | remove-dataverserecord -connection $c
 ```
 
-{{ Add example description here }}
+Deletes all contact records.
+
+### Example 2
+```powershell
+PS C:\> remove-dataverserecord -connection $c -tablename contact -id 4CE66D51-C605-4429-8565-8C7AFA4B9550
+```
+
+Deletes the single contact with the specified ID.
 
 ## PARAMETERS
 
@@ -47,7 +54,7 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-{{ Fill Connection Description }}
+DataverseConnection instance obtained from Get-DataverseConnnection cmdlet
 
 ```yaml
 Type: ServiceClient
@@ -77,7 +84,7 @@ Accept wildcard characters: False
 ```
 
 ### -InputObject
-{{ Fill InputObject Description }}
+Record from pipeline. This allows piping in record to delete.
 
 ```yaml
 Type: PSObject
@@ -122,17 +129,29 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+See standard PS docs.
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### System.Management.Automation.PSObject
-
 ### System.String
-
 ### System.Guid
-
 ## OUTPUTS
 
 ### System.Object

@@ -75,10 +75,18 @@ Get-DataverseRecord -connection $c -tablename contact |
 ## Main Cmdlets
 
 [Get-DataverseConnection](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseConnection.md) - Creates a connection to a Dataverse environment.
+
 [Get-DataverseRecord](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) - Query for existing records
+
 [Set-DataverseRecord](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) - Create or update records.
+
 [Remove-DataverseRecord](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) - Delete existing records.
+
 [Invoke-DataverseRequest](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) - Allows you to execute arbitrary Dataverse API requests.
+
+[Set-DataverseRecordsFolder](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecordsFolder.md) - Helper function to write stream of records to a folder each as individual JSON files. 
+
+[Get-DataverseRecordsFolder](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecordsFolder.md) - Helper function to read  stream of records from a folder containing each as individual JSON files. 
 
 # Full Documentation
 You can see documentation using the standard PowerShell help and autocompletion systems.

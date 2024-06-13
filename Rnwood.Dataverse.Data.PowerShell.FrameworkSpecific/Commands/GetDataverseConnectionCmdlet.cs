@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
 	[Cmdlet(VerbsCommon.Get, "DataverseConnection")]
+	[OutputType(typeof(ServiceClient))]
 	public class GetDataverseConnectionCmdlet : PSCmdlet
 	{
 		public GetDataverseConnectionCmdlet()
@@ -42,14 +43,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private const string PARAMSET_INTERACTIVE = "Authenticate interactively";
 		private const string PARAMSET_DEVICECODE = "Authenticate using the device code flow";
 		private const string PARAMSET_USERNAMEPASSWORD = "Authenticate with username and password";
+		private const string PARAMSET_CONNECTIONSTRING = "Authenticate with Dataverse SDK connection string.";
 
 
-		public const string CLIENTID_HELP = "Client ID to use for authentication. By default the MS provided ID for PAC CLI (`9cee029c-6210-4654-90bb-17e6e9d36617`) is used to make it easy to get started.";
-
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client ID to use for authentication.")]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = CLIENTID_HELP)]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = CLIENTID_HELP)]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = CLIENTID_HELP)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET)]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE)]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE)]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD)]
 		public Guid ClientId { get; set; } = new Guid("9cee029c-6210-4654-90bb-17e6e9d36617");
 
 		[Parameter(Mandatory = true)]
@@ -72,12 +72,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEVICECODE)]
 		public SwitchParameter DeviceCode { get; set; }
 
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CONNECTIONSTRING)]
+		public string ConnectionString { get; set; }
+
+
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();
 
+			
+
+
 			switch (ParameterSetName)
 			{
+				case PARAMSET_CONNECTIONSTRING:
+					WriteObject(new ServiceClient(ConnectionString));
+					break;
+
 				case PARAMSET_INTERACTIVE:
 					{
 						var publicClient = PublicClientApplicationBuilder

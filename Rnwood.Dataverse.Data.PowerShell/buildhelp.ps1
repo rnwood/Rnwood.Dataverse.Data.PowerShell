@@ -7,7 +7,8 @@ if (-not(get-installedmodule Platyps -MinimumVersion 0.14.1 -ErrorAction silentl
 }
 
 if (test-path $outdir\en-GB\) {
-	remove-item -recurse -force $outdir\en-GB\
+	remove-item -verbose -recurse -force $outdir\en-GB\
 }
 
-New-ExternalHelp $projectdir/docs -OutputPath $outdir\en-GB\ -force
+
+New-ExternalHelp -verbose -path $projectdir/docs -OutputPath $outdir\en-GB\
