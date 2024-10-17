@@ -106,6 +106,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						var publicClient = PublicClientApplicationBuilder
 							.Create(ClientId.ToString())
 							.WithRedirectUri("http://localhost")
+							.WithAuthority(AadAuthorityAudience.AzureAdMultipleOrgs)
 							.Build();
 
 						WriteObject(new ServiceClient(Url, url => GetTokenWithUsernamePassword(publicClient, url)));
@@ -159,7 +160,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
-
 
 			AuthenticationResult authResult = await app.AcquireTokenByUsernamePassword(scopes, Username, Password).ExecuteAsync();
 
