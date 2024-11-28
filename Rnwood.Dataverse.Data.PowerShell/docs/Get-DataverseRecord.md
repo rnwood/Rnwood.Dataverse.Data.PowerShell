@@ -14,7 +14,7 @@ Retrieves records from Dataverse tables using a variety of strategies to specify
 
 ### Simple
 ```
-Get-DataverseRecord -Connection <ServiceClient> [-TableName] <String> [-VerboseRecordCount] [-RecordCount]
+Get-DataverseRecord -Connection <ServiceClient> -TableName <String> [-VerboseRecordCount] [-RecordCount]
  [-FilterValues <Hashtable[]>] [-Criteria <FilterExpression>] [-Links <DataverseLinkEntity[]>]
  [-ExcludeFilterValues <Hashtable[]>] [-ExcludeFilterOr] [-ActiveOnly] [-Id <Guid[]>] [-Name <String[]>]
  [-ExcludeId <Guid[]>] [-Columns <String[]>] [-ExcludeColumns <String[]>] [-OrderBy <String[]>] [-Top <Int32>]
@@ -66,7 +66,7 @@ Parameter Sets: Simple
 Aliases: EntityName
 
 Required: True
-Position: 0
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False

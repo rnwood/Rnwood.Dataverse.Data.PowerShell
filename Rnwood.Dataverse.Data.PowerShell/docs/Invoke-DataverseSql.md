@@ -13,8 +13,9 @@ Invokes a Dataverse SQL query using Sql4Cds and writes any resulting rows to the
 ## SYNTAX
 
 ```
-Invoke-DataverseSql -Connection <ServiceClient> -Sql <String> [-Parameters <PSObject>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Invoke-DataverseSql -Connection <ServiceClient> -Sql <String> [-UseTdsEndpoint <Boolean>]
+ [-Parameters <PSObject>] [-BatchSize <Int32>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -50,7 +51,6 @@ Cat2     28/11/2024 16:42:30
 
 Returns the rows from the SELECT query matching the @lastname parameters which are supplied via the pipeline. The query is executed once for each of the pipeline objects.
 
-
 ## PARAMETERS
 
 ### -Connection
@@ -65,6 +65,23 @@ Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parameters
+Specifies values for the `@parameters` used in the Sql. This can be a Hashtable or any PSObject with properties.
+
+This can be read from the pipeline to allow the query to be executed once per input object using different values.
+
+```yaml
+Type: PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
@@ -97,13 +114,11 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Parameters
-Specifies values for the `@parameters` used in the Sql. This can be a Hashtable or any PSObject with properties.
-
-This can be read from the pipeline to allow the query to be executed once per input object using different values.
+### -BatchSize
+{{ Fill BatchSize Description }}
 
 ```yaml
-Type: PSObject
+Type: Int32
 Parameter Sets: (All)
 Aliases:
 
@@ -114,19 +129,64 @@ Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
+### -UseTdsEndpoint
+{{ Fill UseTdsEndpoint Description }}
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
+### System.String
+### System.Management.Automation.PSObject
 ## OUTPUTS
 
 ### System.Object
-One object is output for each row returned by the query. Properties on the object match the names and values of the returned rows.
-
-
 ## NOTES
 A special thanks to Mark Carrington for his amazing open-source project that has enabled this.
 
 ## RELATED LINKS
-https://github.com/MarkMpn/Sql4Cds
+
+[https://github.com/MarkMpn/Sql4Cds](https://github.com/MarkMpn/Sql4Cds)
