@@ -115,7 +115,7 @@ Accept wildcard characters: False
 ```
 
 ### -BatchSize
-{{ Fill BatchSize Description }}
+Controls the batch size used by Sql4Cds.
 
 ```yaml
 Type: Int32
@@ -130,7 +130,7 @@ Accept wildcard characters: False
 ```
 
 ### -UseTdsEndpoint
-{{ Fill UseTdsEndpoint Description }}
+Let Sql4Cds use the TDS endpoint or not for compatible queries. The default is to not use this.
 
 ```yaml
 Type: Boolean
@@ -160,7 +160,7 @@ Accept wildcard characters: False
 ```
 
 ### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+Shows what would happen if the cmdlet runs. The cmdlet is not run. Does not apply to read only queries.
 
 ```yaml
 Type: SwitchParameter
