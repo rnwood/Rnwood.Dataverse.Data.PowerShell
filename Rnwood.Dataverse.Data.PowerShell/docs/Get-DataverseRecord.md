@@ -42,36 +42,6 @@ PS C:\> {{ Add example code here }}
 
 ## PARAMETERS
 
-### -ActiveOnly
-If specified only active records (statecode=0 or isactive=true) will be output
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Columns
-List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default
-
-```yaml
-Type: String[]
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnnection cmdlet.
 
@@ -87,42 +57,27 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Criteria
-Extra criteria to apply to query. This is specified using the Dataverse SDK type `FilterExpression`.
+### -TableName
+Logical name of entity for which to retrieve records
 
 ```yaml
-Type: FilterExpression
+Type: String
 Parameter Sets: Simple
-Aliases:
+Aliases: EntityName
 
-Required: False
-Position: Named
+Required: True
+Position: 0
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ExcludeColumns
-List of columns to exclude from records (default is none). Ignored if Columns parameter is used.
-
-```yaml
-Type: String[]
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ExcludeFilterOr
-If specified the exclude filters will be logically combined using OR instead of the default of AND
+### -VerboseRecordCount
+If set writes total record count matching query to verbose output
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: Simple
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -132,30 +87,12 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ExcludeFilterValues
-List of hashsets of fields names,values to filter records by using an NOTEQUALS condition (or ISNOTNULL if null value).
-If more than one hashset is provided then they are logically combined using an AND condition by default.
-e.g.
-@{firstname="bob", age=25}, @{firstname="sue"} will find records where (firstname\<\>bob AND age\<\>25) OR (firstname\<\>sue)
+### -RecordCount
+If set writes total record count matching query to output output instead of results
 
 ```yaml
-Type: Hashtable[]
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ExcludeId
-List of record ids to exclude
-
-```yaml
-Type: Guid[]
-Parameter Sets: Simple
+Type: SwitchParameter
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -198,26 +135,11 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Id
-List of primary keys (IDs) of records to retrieve.
+### -Criteria
+Extra criteria to apply to query. This is specified using the Dataverse SDK type `FilterExpression`.
 
 ```yaml
-Type: Guid[]
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IncludeSystemColumns
-Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.
-
-```yaml
-Type: SwitchParameter
+Type: FilterExpression
 Parameter Sets: Simple
 Aliases:
 
@@ -243,13 +165,60 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -LookupValuesReturnName
-Outputs Names for lookup values.
-The default behaviour is to output the ID.
+### -ExcludeFilterValues
+List of hashsets of fields names,values to filter records by using an NOTEQUALS condition (or ISNOTNULL if null value).
+If more than one hashset is provided then they are logically combined using an AND condition by default.
+e.g.
+@{firstname="bob", age=25}, @{firstname="sue"} will find records where (firstname\<\>bob AND age\<\>25) OR (firstname\<\>sue)
+
+```yaml
+Type: Hashtable[]
+Parameter Sets: Simple
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExcludeFilterOr
+If specified the exclude filters will be logically combined using OR instead of the default of AND
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: (All)
+Parameter Sets: Simple
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ActiveOnly
+If specified only active records (statecode=0 or isactive=true) will be output
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Simple
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Id
+List of primary keys (IDs) of records to retrieve.
+
+```yaml
+Type: Guid[]
+Parameter Sets: Simple
 Aliases:
 
 Required: False
@@ -261,6 +230,51 @@ Accept wildcard characters: False
 
 ### -Name
 List of names (primary attribute value) of records to retrieve.
+
+```yaml
+Type: String[]
+Parameter Sets: Simple
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExcludeId
+List of record ids to exclude
+
+```yaml
+Type: Guid[]
+Parameter Sets: Simple
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Columns
+List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default
+
+```yaml
+Type: String[]
+Parameter Sets: Simple
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExcludeColumns
+List of columns to exclude from records (default is none). Ignored if Columns parameter is used.
 
 ```yaml
 Type: String[]
@@ -291,52 +305,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -PageSize
-Number of records to request per page.
-Default is 1000.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -RecordCount
-If set writes total record count matching query to output output instead of results
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TableName
-Logical name of entity for which to retrieve records
-
-```yaml
-Type: String
-Parameter Sets: Simple
-Aliases: EntityName
-
-Required: True
-Position: 0
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Top
 Number of records to limit result to.
 Default is all results.
@@ -353,12 +321,44 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -VerboseRecordCount
-If set writes total record count matching query to verbose output
+### -PageSize
+Number of records to request per page.
+Default is 1000.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LookupValuesReturnName
+Outputs Names for lookup values.
+The default behaviour is to output the ID.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeSystemColumns
+Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Simple
 Aliases:
 
 Required: False
@@ -388,10 +388,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
 ## OUTPUTS
 
-### System.Object
 ## NOTES
 
 ## RELATED LINKS

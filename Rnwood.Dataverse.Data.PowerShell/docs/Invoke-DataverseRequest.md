@@ -98,7 +98,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### Microsoft.Xrm.Sdk.OrganizationRequest
 ## OUTPUTS
 
-### System.Object
 ## NOTES
 
 ## RELATED LINKS

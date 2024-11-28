@@ -63,6 +63,38 @@ Retrieves all existing contacts and sets their status reason to `Inactive`.
 
 ## PARAMETERS
 
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnnection cmdlet,
+
+```yaml
+Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+Object containing values to be used.
+Property names must match the logical names of Dataverse fields in the specified entity and the property values are used to set the values of the Dataverse record being created/updated.
+The properties may include ownerid, statecode and statuscode which will assign and change the record state/status.
+
+```yaml
+Type: PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
 ### -BatchSize
 Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable.
 
@@ -82,77 +114,15 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -CallerId
-If specified, the creation/updates will be done on behalf of the user with the specified ID. For best performance, sort the records using this value since a new batch request is needed each time this value changes.
+### -TableName
+Logical name of entity
 
 ```yaml
-Type: Guid
+Type: String
 Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet,
-
-```yaml
-Type: ServiceClient
-Parameter Sets: (All)
-Aliases:
+Aliases: EntityName
 
 Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CreateOnly
-If specified, no check for existing record is made and records will always be attempted to be created.
-Use this option when it's known that no existing matching records will exist to improve performance.
-See the -noupdate option for an alternative.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Id
-ID of record to be created or updated.
-
-```yaml
-Type: Guid
-Parameter Sets: (All)
-Aliases:
-
-Required: False
 Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName)
@@ -175,35 +145,18 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -InputObject
-Object containing values to be used.
-Property names must match the logical names of Dataverse fields in the specified entity and the property values are used to set the values of the Dataverse record being created/updated.
-The properties may include ownerid, statecode and statuscode which will assign and change the record state/status.
+### -Id
+ID of record to be created or updated.
 
 ```yaml
-Type: PSObject
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
-```
-
-### -LookupColumns
-Hashset of lookup column name in the target entity to column name in the referred to entity with which to find the records.
-
-```yaml
-Type: Hashtable
+Type: Guid
 Parameter Sets: (All)
 Aliases:
 
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
@@ -227,8 +180,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -NoCreate
-If specified then no records will be created even if no existing records matching the ID and or MatchOn fields is found.
+### -PassThru
+If specified, the InputObject is written to the pipeline with an Id property set indicating the primary key of the affected record (even if nothing was updated).
 
 ```yaml
 Type: SwitchParameter
@@ -257,6 +210,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -NoCreate
+If specified then no records will be created even if no existing records matching the ID and or MatchOn fields is found.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -NoUpdateColumns
 List of column names which will not be included when updating existing records.
 
@@ -272,30 +240,15 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -PassThru
-If specified, the InputObject is written to the pipeline with an Id property set indicating the primary key of the affected record (even if nothing was updated).
+### -CallerId
+If specified, the creation/updates will be done on behalf of the user with the specified ID. For best performance, sort the records using this value since a new batch request is needed each time this value changes.
 
 ```yaml
-Type: SwitchParameter
+Type: Guid
 Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TableName
-Logical name of entity
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases: EntityName
-
-Required: True
 Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName)
@@ -317,6 +270,23 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -CreateOnly
+If specified, no check for existing record is made and records will always be attempted to be created.
+Use this option when it's known that no existing matching records will exist to improve performance.
+See the -noupdate option for an alternative.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Upsert
 If specified, upsert request will be used to create/update existing records as appropriate.
 -MatchOn is not supported with this option
@@ -325,6 +295,36 @@ If specified, upsert request will be used to create/update existing records as a
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LookupColumns
+Hashset of lookup column name in the target entity to column name in the referred to entity with which to find the records.
+
+```yaml
+Type: Hashtable
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
 
 Required: False
 Position: Named
@@ -373,10 +373,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.String
 ### System.String[]
 ### System.Guid
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Guid
 ## OUTPUTS
 
-### System.Object
 ## NOTES
 
 ## RELATED LINKS
