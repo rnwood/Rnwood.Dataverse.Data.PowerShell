@@ -108,6 +108,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ConnectionString
+Specifies the conneciton string to authenticate with - see https://learn.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with Dataverse SDK connection string.
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -DeviceCode
 Triggers device code authentication where you will be given a URL to visit and a code to complete authentication in web browser.
 
@@ -210,21 +225,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ConnectionString
-Specifies the conneciton string to authenticate with - see https://learn.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect
-
-```yaml
-Type: String
-Parameter Sets: Authenticate with Dataverse SDK connection string.
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -233,7 +233,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.PowerPlatform.Dataverse.Client.ServiceClient
 ## NOTES
 
 ## RELATED LINKS
