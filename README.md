@@ -84,6 +84,9 @@ Get-DataverseRecord -connection $c -tablename contact |
 
 [Invoke-DataverseRequest](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) - Allows you to execute arbitrary Dataverse API requests.
 
+[Invoke-DataverseSql](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) - Execute SQL queries against Dataverse using Sql4Cds. `CREATE`, `DELETE`, `INSERT` and `UPDATE` are all supported.
+
+
 [Set-DataverseRecordsFolder](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecordsFolder.md) - Helper function to write stream of records to a folder each as individual JSON files. 
 
 [Get-DataverseRecordsFolder](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecordsFolder.md) - Helper function to read  stream of records from a folder containing each as individual JSON files. 
