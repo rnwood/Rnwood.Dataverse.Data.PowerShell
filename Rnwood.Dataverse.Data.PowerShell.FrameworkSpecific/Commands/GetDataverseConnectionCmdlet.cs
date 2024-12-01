@@ -4,8 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Management.Automation;
+using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 
@@ -80,13 +82,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			base.BeginProcessing();
 
-			
 
+			ServiceClient result;
 
 			switch (ParameterSetName)
 			{
 				case PARAMSET_CONNECTIONSTRING:
-					WriteObject(new ServiceClient(ConnectionString));
+					result = new ServiceClient(ConnectionString);
 					break;
 
 				case PARAMSET_INTERACTIVE:
@@ -96,7 +98,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							.WithRedirectUri("http://localhost")
 							.Build();
 
-						WriteObject(new ServiceClient(Url, url => GetTokenInteractive(publicClient, url)));
+						result = new ServiceClient(Url, url => GetTokenInteractive(publicClient, url));
 
 						break;
 					}
@@ -109,7 +111,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							.WithAuthority(AadAuthorityAudience.AzureAdMultipleOrgs)
 							.Build();
 
-						WriteObject(new ServiceClient(Url, url => GetTokenWithUsernamePassword(publicClient, url)));
+						result = new ServiceClient(Url, url => GetTokenWithUsernamePassword(publicClient, url));
 
 						break;
 					}
@@ -121,7 +123,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							.WithRedirectUri("http://localhost")
 							.Build();
 
-						WriteObject(new ServiceClient(Url, url => GetTokenWithDeviceCode(publicClient, url)));
+						result = new ServiceClient(Url, url => GetTokenWithDeviceCode(publicClient, url));
 
 						break;
 					}
@@ -135,7 +137,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						.WithTenantId("bd6c851f-e0dc-4d6d-ab4c-99452fe28387")
 						.Build();
 
-						WriteObject(new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url)));
+						result = new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url));
 
 						break;
 					}
@@ -144,6 +146,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					throw new NotImplementedException(ParameterSetName);
 			}
 
+			result.EnableAffinityCookie = false;
+
+			// Bump up the min threads reserved for this app to ramp connections faster - minWorkerThreads defaults to 4, minIOCP defaults to 4 
+			ThreadPool.SetMinThreads(100, 100);
+			// Change max connections from .NET to a remote service default: 2
+			System.Net.ServicePointManager.DefaultConnectionLimit = 65000;
+			// Turn off the Expect 100 to continue message - 'true' will cause the caller to wait until it round-trip confirms a connection to the server 
+			System.Net.ServicePointManager.Expect100Continue = false;
+			// Can decrease overall transmission overhead but can cause delay in data packet arrival
+			System.Net.ServicePointManager.UseNagleAlgorithm = false;
+
+			WriteObject(result);
 		}
 
 		private async Task<string> GetTokenWithClientSecret(IConfidentialClientApplication app, string url)

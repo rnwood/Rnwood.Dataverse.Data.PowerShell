@@ -127,9 +127,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.BeginProcessing();
 
             recordCount = 0;
-            entityConverter = new DataverseEntityConverter(Connection);
+			entityMetadataFactory = new EntityMetadataFactory(Connection);
+			entityConverter = new DataverseEntityConverter(Connection, entityMetadataFactory);
+          
 
-            if (BatchSize > 1)
+
+			if (BatchSize > 1)
             {
                 _nextBatchItems = new List<BatchItem>();
             }
@@ -218,8 +221,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         private int recordCount;
-
-        private DataverseEntityConverter entityConverter;
+		private EntityMetadataFactory entityMetadataFactory;
+		private DataverseEntityConverter entityConverter;
 
         private ConvertToDataverseEntityOptions GetConversionOptions()
         {
@@ -276,7 +279,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
-            EntityMetadata entityMetadata = new EntityMetadataFactory(Connection).GetMetadata(TableName);
+            EntityMetadata entityMetadata = entityMetadataFactory.GetMetadata(TableName);
 
             Entity existingRecord;
 
@@ -732,7 +735,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private string GetColumnSummary(Entity entity)
         {
-            DataverseEntityConverter converter = new DataverseEntityConverter(Connection);
+            DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
             PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(entity.Attributes.Select(a => a.Key).ToArray()), a => ValueType.Raw);
 
             return string.Join("\n", psObject.Properties.Select(a => a.Name + " = " + Ellipsis((a.Value ?? "<null>").ToString())));
@@ -779,7 +782,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             else if (targetUpdate.Attributes.Any())
             {
-                DataverseEntityConverter converter = new DataverseEntityConverter(Connection);
+                DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
 
                 UpdateRequest request = new UpdateRequest() { Target = target };
                 string updatedColumnSummary = GetColumnSummary(targetUpdate);
