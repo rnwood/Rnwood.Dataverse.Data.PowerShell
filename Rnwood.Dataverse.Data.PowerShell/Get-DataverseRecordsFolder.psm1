@@ -2,13 +2,21 @@
 
 function Get-DataverseRecordsFolder {
 	[CmdletBinding()]
-	param([Parameter(Mandatory)][string] $InputPath)
+	param(
+		[Parameter(Mandatory)][string] $InputPath,
+		[switch] $deletions
+	)
 
 	begin {
 	}
 
 	process {
-		get-childitem $InputPath -filter *.json | foreach-object {
+
+		$path = $InputPath
+		if ($deletions) {
+			$path = "$InputPath/deletions"
+		}
+		get-childitem $path -filter *.json | foreach-object {
 			get-content $_.fullname -encoding utf8 | convertfrom-json
 		}
 	}

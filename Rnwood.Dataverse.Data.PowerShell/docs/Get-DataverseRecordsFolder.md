@@ -14,7 +14,8 @@ Together these commands can be used to extract and import data to and from files
 ## SYNTAX
 
 ```
-Get-DataverseRecordsFolder [-InputPath] <String> [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseRecordsFolder [-InputPath] <String> [-deletions] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -53,6 +54,21 @@ See standard PS docs.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -deletions
+{{ Fill deletions Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named
