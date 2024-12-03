@@ -24,7 +24,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
         public override ServiceClient Connection { get; set; }
 
-        [Parameter(Mandatory = true, ValueFromPipeline = true,
+        [Parameter(Mandatory = true, ValueFromPipeline = true, ValueFromRemainingArguments =true,
             HelpMessage = "Object containing values to be used. Property names must match the logical names of Dataverse columns in the specified table and the property values are used to set the values of the Dataverse record being created/updated. The properties may include ownerid, statecode and statuscode which will assign and change the record state/status.")]
         public PSObject InputObject { get; set; }
 
@@ -97,9 +97,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             public PSObject InputObject { get; set; }
 
+			private object FormatValue(object value)
+			{
+				return value is EntityReference er ? $"{er.LogicalName}:{er.Id}" : value?.ToString();
+			}
+
 			public override string ToString()
 			{
-                return Request.RequestName + " " + string.Join(", ", Request.Parameters.Select(p => $"{p.Key}='{p.Value}'"));
+                return Request.RequestName + " " + string.Join(", ", Request.Parameters.Select(p => $"{p.Key}='{FormatValue(p.Value)}'"));
 			}
 		}
 
