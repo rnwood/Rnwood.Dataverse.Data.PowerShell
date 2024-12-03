@@ -13,9 +13,9 @@ Invokes a Dataverse SQL query using Sql4Cds and writes any resulting rows to the
 ## SYNTAX
 
 ```
-Invoke-DataverseSql -Connection <ServiceClient> -Sql <String> [-UseTdsEndpoint <Boolean>]
- [-Parameters <PSObject>] [-BatchSize <Int32>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseSql -Connection <ServiceClient> -Sql <String> [-UseTdsEndpoint <Boolean>] [-Timeout <Int32>]
+ [-Parameters <PSObject>] [-BatchSize <Int32>] [-MaxDegreeOfParallelism <Int32>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -125,7 +125,7 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: True (ByValue)
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
@@ -166,6 +166,36 @@ Shows what would happen if the cmdlet runs. The cmdlet is not run. Does not appl
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Timeout
+Timeout for query to execute. See Sql4Cds docs.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MaxDegreeOfParallelism
+Maximum number of threads to use. See Sql4Cds docs.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named
