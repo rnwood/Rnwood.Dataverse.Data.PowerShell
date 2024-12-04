@@ -8,31 +8,31 @@ schema: 2.0.0
 # Set-DataverseRecordsFolder
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Writes a list of Dataverse records to a folder of JSON files.
 
 ## SYNTAX
 
 ```
-Set-DataverseRecordsFolder [-OutputPath] <String> [[-InputObject] <PSObject>]
+Set-DataverseRecordsFolder [-OutputPath] <String> [[-InputObject] <PSObject>] [-withdeletions]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Writes a list of Dataverse records to a folder where each file represents a single record. The files are named using the `Id` property.
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Get-DataverseRecord -connection $connection -tablename contact | Set-DataverseRecordsFolder data/contacts
 ```
 
-{{ Add example description here }}
+Writes all contacts to the folder `data/contacts`.
 
 ## PARAMETERS
 
 ### -InputObject
-{{ Fill InputObject Description }}
+Dataverse record(s) to write. Generally should be piped in from the pipeline.
 
 ```yaml
 Type: PSObject
@@ -47,7 +47,7 @@ Accept wildcard characters: False
 ```
 
 ### -OutputPath
-{{ Fill OutputPath Description }}
+Path to write output to
 
 ```yaml
 Type: String
@@ -68,6 +68,21 @@ See standard PS docs.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -withdeletions
+Output a list of deletions (records that were there last time, but are no longer present in the inputs) to `deletions` subfolder of output
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named

@@ -11,8 +11,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 using System.Text;
-using System.Windows.Markup;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -35,6 +35,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		[Parameter()]
 		public uint BatchSize { get; set; } = 100;
+
+		[Parameter]
+		public SwitchParameter IfExists { get; set; }
 
 		private class BatchItem
 		{
@@ -119,19 +122,42 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				if (_nextBatchItems != null)
 				{
 					WriteVerbose(string.Format("Added delete of {0}:{1} to batch", entityName, id));
-					QueueBatchItem(new BatchItem(InputObject, request, (response) => { DeleteCompletion(InputObject, entityName, id, (DeleteResponse)response); }));
+					QueueBatchItem(new BatchItem(InputObject, request, (response) => { DeleteCompletion(InputObject, entityName, id, (DeleteResponse)response); }, ex =>
+					{
+						if (IfExists.IsPresent && ex.ErrorCode == -2147220969)
+						{
+							WriteVerbose(string.Format("Record {0}:{1} was not present", entityName, id));
+							return true;
+						}
+
+						return false;
+					}));
 				}
 				else
-				{ 
+				{
 					if (ShouldProcess(string.Format("Delete record {0}:{1}", entityName, id)))
 					{
-						Connection.Delete(entityName, id);
+						try
+						{
+							Connection.Delete(entityName, id);
+						}
+						catch (FaultException ex)
+						{
+							if (IfExists.IsPresent && ex.HResult == -2147220969)
+							{
+								WriteVerbose(string.Format("Record {0}:{1} was not present", entityName, id));
+							}
+							else
+							{
+								throw;
+							}
+						}
 					}
 				}
 			}
 		}
 
-		private void DeleteCompletion(PSObject inputObject, string entityName, Guid id , DeleteResponse response)
+		private void DeleteCompletion(PSObject inputObject, string entityName, Guid id, DeleteResponse response)
 		{
 			WriteVerbose(string.Format("Deleted record {0}:{1}", entityName, id));
 		}

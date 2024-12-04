@@ -174,8 +174,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Timeout
-Timeout for query to execute. See Sql4Cds docs.
+### -MaxDegreeOfParallelism
+Maximum number of threads to use. See Sql4Cds docs.
 
 ```yaml
 Type: Int32
@@ -189,8 +189,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -MaxDegreeOfParallelism
-Maximum number of threads to use. See Sql4Cds docs.
+### -Timeout
+Timeout for query to execute. See Sql4Cds docs.
 
 ```yaml
 Type: Int32

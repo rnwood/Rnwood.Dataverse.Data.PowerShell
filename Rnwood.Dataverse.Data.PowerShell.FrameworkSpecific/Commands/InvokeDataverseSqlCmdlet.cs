@@ -104,7 +104,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private void OnSqlConnection_Progress(object sender, ProgressEventArgs e)
 		{
-			_progressPercentage = (int)(100.0 * (e.Progress ?? 0));
+			_progressPercentage = Math.Min(100, (int)(100.0 * (e.Progress ?? 0)) );
 			_progressMessage = e.Message;
 		}
 
