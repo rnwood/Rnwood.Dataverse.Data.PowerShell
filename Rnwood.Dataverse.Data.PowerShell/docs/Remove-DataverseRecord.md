@@ -14,7 +14,8 @@ Deletes an existing Dataverse record.
 
 ```
 Remove-DataverseRecord -Connection <ServiceClient> [-InputObject <PSObject>] -TableName <String> -Id <Guid>
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-BatchSize <UInt32>] [-IfExists] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -136,6 +137,40 @@ The cmdlet is not run.
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -BatchSize
+Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable.
+
+When value is 1, requests are sent to Dataverse one request at a time. When > 1, batching is used. 
+
+Note that the batch will continue on error and any errors will be returned once the batch has completed. The error contains the input record to allow correlation.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IfExists
+{{ Fill IfExists Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named

@@ -14,10 +14,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
 	internal class DataverseEntityConverter
 	{
-		public DataverseEntityConverter(IOrganizationService service)
+		public DataverseEntityConverter(IOrganizationService service, EntityMetadataFactory entityMetadataFactory)
 		{
 			this.service = service;
-			this.entityMetadataFactory = new EntityMetadataFactory(service);
+			this.entityMetadataFactory = entityMetadataFactory;
 		}
 
 		private IOrganizationService service;

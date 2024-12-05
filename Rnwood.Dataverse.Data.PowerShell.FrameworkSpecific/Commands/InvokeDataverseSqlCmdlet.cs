@@ -37,12 +37,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter]
 		public bool UseTdsEndpoint { get; set; }
 
+		[Parameter]
+		public int Timeout { get; set; } = 600;
+
 		[Parameter(ValueFromPipeline = true)]
 		public PSObject Parameters { get; set; }
 
-		[Parameter(ValueFromPipeline = true)]
+		[Parameter]
 		public int? BatchSize { get; private set; }
 
+		[Parameter]
+		public int? MaxDegreeOfParallelism { get; private set; }
+	
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();
@@ -62,8 +68,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				_sqlConnection.BatchSize = BatchSize.Value;
 			}
 
+			if (MaxDegreeOfParallelism.HasValue)
+			{
+				_sqlConnection.MaxDegreeOfParallelism = MaxDegreeOfParallelism.Value;
+			}
+
 			_command = _sqlConnection.CreateCommand();
 			_command.CommandText = Sql;
+			_command.CommandTimeout = Timeout;
 			_commandPrepared = false;
 
 			_progressPercentage = 0;
@@ -78,7 +90,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			{
 				Task task = new Task(() =>
 				{
-					ea.Cancel = !ShouldContinue($"{operation} {ea.Count} rows in table '{ea.Metadata.LogicalName}?'", "Continue?");
+					ea.Cancel = !ShouldProcess($"{operation} {ea.Count} rows in table '{ea.Metadata.LogicalName}?'");
 				});
 				_pendingConfirmations.Enqueue(task);
 				task.Wait();
@@ -92,7 +104,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private void OnSqlConnection_Progress(object sender, ProgressEventArgs e)
 		{
-			_progressPercentage = (int)(100.0 * (e.Progress ?? 0));
+			_progressPercentage = Math.Min(100, (int)(100.0 * (e.Progress ?? 0)) );
 			_progressMessage = e.Message;
 		}
 

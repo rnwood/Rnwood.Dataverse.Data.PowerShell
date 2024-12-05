@@ -159,9 +159,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			base.BeginProcessing();
 
-			entityConverter = new DataverseEntityConverter(Connection);
 			entiyMetadataFactory = new EntityMetadataFactory(Connection);
-
+			entityConverter = new DataverseEntityConverter(Connection, entiyMetadataFactory);
 			entityMetadata = entiyMetadataFactory.GetMetadata(TableName);
 		}
 
