@@ -14,7 +14,7 @@ Writes a list of Dataverse records to a folder of JSON files.
 
 ```
 Set-DataverseRecordsFolder [-OutputPath] <String> [[-InputObject] <PSObject>] [-withdeletions]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-idproperties <String[]>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -81,6 +81,21 @@ Output a list of deletions (records that were there last time, but are no longer
 
 ```yaml
 Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -idproperties
+Specifies the list of properties that will be used to generate a unique name for each file. By default this is "Id".
+
+```yaml
+Type: String[]
 Parameter Sets: (All)
 Aliases:
 

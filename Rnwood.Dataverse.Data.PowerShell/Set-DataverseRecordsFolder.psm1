@@ -5,7 +5,8 @@ function Set-DataverseRecordsFolder {
 	param(
 		[Parameter(Mandatory)][string] $OutputPath, 
 		[Parameter(ValueFromPipeline=$true)] [PSObject] $InputObject,
-		[switch] $withdeletions
+		[switch] $withdeletions,
+		[string[]]$idproperties = @("Id")
 	)
 
 	begin {
@@ -26,9 +27,16 @@ function Set-DataverseRecordsFolder {
 	}
 
 	process {
-		$name = $_.Id
+		$name = ($idproperties | ForEach-Object { $InputObject.$_ }) -join "-"
+		# Replace invalid filenam chars
+		$name = $name.Split([IO.Path]::GetInvalidFileNameChars()) -join '_'
 		$filename = "${name}.json"
 		$InputObject | convertto-json -depth 100 | out-file -encoding utf8 (join-path $OutputPath $filename)
+
+		if ($newfiles -contains $filename) {
+			throw "The properties $idproperties do not result in a unique filename. The value ''$filename' was generated more than once."
+		}
+
 		$newfiles += $filename
 	}
 
