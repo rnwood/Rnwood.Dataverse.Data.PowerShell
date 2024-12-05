@@ -13,8 +13,8 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Set-DataverseRecordsFolder [-OutputPath] <String> [[-InputObject] <PSObject>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Set-DataverseRecordsFolder [-OutputPath] <String> [[-InputObject] <PSObject>] [-withdeletions]
+ [-idproperties <String[]>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -68,6 +68,36 @@ See standard PS docs.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -withdeletions
+Output a list of deletions (records that were there last time, but are no longer present in the inputs) to `deletions` subfolder of output
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -idproperties
+Specifies the list of properties that will be used to generate a unique name for each file. By default this is "Id".
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named
