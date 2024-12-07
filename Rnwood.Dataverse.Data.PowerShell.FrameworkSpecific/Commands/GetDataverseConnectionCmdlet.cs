@@ -1,10 +1,16 @@
-﻿using Microsoft.Identity.Client;
+﻿using FakeItEasy;
+using Microsoft.Extensions.Logging;
+using Microsoft.Identity.Client;
 using Microsoft.PowerPlatform.Dataverse.Client;
+using Microsoft.PowerPlatform.Dataverse.Client.Model;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Management.Automation;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -46,7 +52,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private const string PARAMSET_DEVICECODE = "Authenticate using the device code flow";
 		private const string PARAMSET_USERNAMEPASSWORD = "Authenticate with username and password";
 		private const string PARAMSET_CONNECTIONSTRING = "Authenticate with Dataverse SDK connection string.";
+		private const string PARAMSET_MOCK = "Return a mock connection";
 
+		[Parameter(Mandatory =true, ParameterSetName =PARAMSET_MOCK) ]
+		public EntityMetadata[] Mock { get; set; }
 
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET)]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE)]
@@ -87,6 +96,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			switch (ParameterSetName)
 			{
+				case PARAMSET_MOCK:
+
+					FakeXrmEasy.XrmFakedContext xrmFakeContext = new FakeXrmEasy.XrmFakedContext();
+					xrmFakeContext.InitializeMetadata(Mock);
+					
+					ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
+					result = (ServiceClient) contructor.Invoke(new object[] { xrmFakeContext.GetOrganizationService() ,new HttpClient(A.Fake<HttpMessageHandler>()), "https://fakeorg.crm.dynamics.com", null, null });
+					break;
+
 				case PARAMSET_CONNECTIONSTRING:
 					result = new ServiceClient(ConnectionString);
 					break;

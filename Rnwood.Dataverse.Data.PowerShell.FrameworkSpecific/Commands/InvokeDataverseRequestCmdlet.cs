@@ -81,7 +81,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				if (ParameterSetName == "NameAndInputs")
 				{
 					Request = new OrganizationRequest(RequestName);
-					Request.Parameters.AddRange(Parameters.Cast<KeyValuePair<string, object>>());
+					Request.Parameters.AddRange(Parameters.Cast<DictionaryEntry>().Select(e => new KeyValuePair<string, object>((string)e.Key, e.Value)));
 				}
 
 				WriteObject(Connection.Execute(Request));

@@ -68,6 +68,7 @@ Invokes `myapi_EscalateCase` by using just the request name and parameters using
 ```powershell
 PS C:\>invoke-dataverserequest -connection $c -method POST myapi_Example -CustomHeaders @{"foo"="bar"} -Body @{"a"=1; "b"=3}
 ```
+
 Invokes the `GET` `myapi_Example` REST API using custom headers and body
 
 ## PARAMETERS
