@@ -73,6 +73,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		public Entity ConvertToDataverseEntity(PSObject psObject, string entityName, ConvertToDataverseEntityOptions options)
 		{
+			if (psObject.ImmediateBaseObject is Entity e)
+			{
+				return e;
+			}
+
+			if (psObject.ImmediateBaseObject is Hashtable ht)
+			{
+				psObject = new PSObject();
+				foreach(var kvp in ht.Cast<DictionaryEntry>())
+				{
+					psObject.Properties.Add(new PSNoteProperty((string)kvp.Key, kvp.Value));
+				}
+			}
+
 			EntityMetadata entityMetadata = entityMetadataFactory.GetMetadata(entityName);
 
 			Entity result = new Entity(entityName);
