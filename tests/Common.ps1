@@ -1,5 +1,11 @@
 BeforeAll {
-    import-module "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0/Rnwood.Dataverse.Data.PowerShell.psd1"
+
+    if ($env:TESTMODULEPATH) {
+        import-module $env:TESTMODULEPATH + "/Rnwood.Dataverse.Data.PowerShell.psd1"
+    } else {
+        import-module "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0/Rnwood.Dataverse.Data.PowerShell.psd1"
+    }
+     
     Add-Type -AssemblyName "System.Runtime.Serialization"
 
     # Define the DataContractSerializer

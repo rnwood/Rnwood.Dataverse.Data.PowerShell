@@ -27,9 +27,10 @@ jobs:
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
 
-          pushd tests
+          $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
+
           Install-Module -force Pester
-          Invoke-Pester -output detailed
+          Invoke-Pester -output detailed -path tests
           if ($LASTEXITCODE -ne 0) {
             throw "Tests failed"
           }
