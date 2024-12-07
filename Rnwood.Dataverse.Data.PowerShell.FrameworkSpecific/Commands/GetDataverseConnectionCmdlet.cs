@@ -102,7 +102,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					xrmFakeContext.InitializeMetadata(Mock);
 
 					ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
-					result = (ServiceClient)contructor.Invoke(new object[] { xrmFakeContext.GetOrganizationService(), new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", null, null });
+					result = (ServiceClient)contructor.Invoke(new object[] { xrmFakeContext.GetOrganizationService(), new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9,2), A.Fake<ILogger>() });
 					break;
 
 				case PARAMSET_CONNECTIONSTRING:
@@ -187,7 +187,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 			{
-				return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
+				return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}")});
 			}
 		}
 
