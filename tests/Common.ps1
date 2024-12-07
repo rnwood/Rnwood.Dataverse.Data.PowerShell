@@ -1,7 +1,7 @@
 BeforeAll {
 
     if ($env:TESTMODULEPATH) {
-        import-module $env:TESTMODULEPATH + "/Rnwood.Dataverse.Data.PowerShell.psd1"
+        import-module "${env:TESTMODULEPATH}/Rnwood.Dataverse.Data.PowerShell.psd1"
     } else {
         import-module "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0/Rnwood.Dataverse.Data.PowerShell.psd1"
     }
