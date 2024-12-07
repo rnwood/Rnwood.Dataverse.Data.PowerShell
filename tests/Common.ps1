@@ -1,5 +1,5 @@
 BeforeAll {
-    import-module "..\Rnwood.Dataverse.Data.PowerShell\bin\Debug\netstandard2.0\Rnwood.Dataverse.Data.PowerShell.psd1"
+    import-module "$PSScriptRoot\..\Rnwood.Dataverse.Data.PowerShell\bin\Debug\netstandard2.0\Rnwood.Dataverse.Data.PowerShell.psd1"
     Add-Type -AssemblyName "System.Runtime.Serialization"
 
     # Define the DataContractSerializer

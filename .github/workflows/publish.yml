@@ -8,7 +8,7 @@ on:
     types: [published]
 
 jobs:
-  publish-to-gallery:
+  main:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
