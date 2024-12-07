@@ -26,7 +26,9 @@ jobs:
             remove-item -force -recurse out/Rnwood.Dataverse.Data.PowerShell
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
-
+      - name: Test - pwsh
+        shell: pwsh
+        run: |  
           $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
 
           Install-Module -force Pester
@@ -34,7 +36,16 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "Tests failed"
           }
-          popd  
+      - name: Test - powershell
+        shell: powershell
+        run: |  
+          $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
+
+          Install-Module -force Pester
+          Invoke-Pester -output detailed -path tests
+          if ($LASTEXITCODE -ne 0) {
+            throw "Tests failed"
+          }
       - name: Publish
         if: github.event_name == 'release' && github.event.action == 'published'
         env:

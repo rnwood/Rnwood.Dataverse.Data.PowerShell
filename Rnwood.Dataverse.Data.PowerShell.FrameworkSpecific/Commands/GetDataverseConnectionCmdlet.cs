@@ -100,9 +100,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 					FakeXrmEasy.XrmFakedContext xrmFakeContext = new FakeXrmEasy.XrmFakedContext();
 					xrmFakeContext.InitializeMetadata(Mock);
-					
+
 					ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
-					result = (ServiceClient) contructor.Invoke(new object[] { xrmFakeContext.GetOrganizationService() ,new HttpClient(A.Fake<HttpMessageHandler>()), "https://fakeorg.crm.dynamics.com", null, null });
+					result = (ServiceClient)contructor.Invoke(new object[] { xrmFakeContext.GetOrganizationService(), new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9,2), A.Fake<ILogger>() });
 					break;
 
 				case PARAMSET_CONNECTIONSTRING:
@@ -176,6 +176,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			System.Net.ServicePointManager.UseNagleAlgorithm = false;
 
 			WriteObject(result);
+		}
+
+		private static HttpMessageHandler GetFakeHttpHandler()
+		{
+			return new FakeHttpMessageHandler();
+		}
+
+		class FakeHttpMessageHandler : HttpMessageHandler
+		{
+			protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+			{
+				return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}")});
+			}
 		}
 
 		private async Task<string> GetTokenWithClientSecret(IConfidentialClientApplication app, string url)
