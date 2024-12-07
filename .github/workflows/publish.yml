@@ -1,6 +1,9 @@
-name: Publish PowerShell Module
+name: Build / publish
 
 on:
+  push:
+  pull_request:
+    types: [opened, reopened]
   release:
     types: [published]
 
@@ -9,17 +12,32 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build and publish
-        env:
-          NUGET_KEY: ${{ secrets.NUGET_KEY }}
+      - name: Build
         shell: pwsh
-        run: |
-          $versionnumber = $env:GITHUB_REF -replace "refs/tags/", ""
-          $manifestpath = "Rnwood.Dataverse.Data.PowerShell//Rnwood.Dataverse.Data.PowerShell.psd1"
-          (get-content -raw -encoding UTF8 $manifestpath ) -replace "ModuleVersion ?=.*", "ModuleVersion = `"$versionnumber`"" | set-content -encoding UTF8 $manifestpath
+        run: |       
+          if ($env:GITHUB_REF -like "refs/tags/*") {
+            $versionnumber = $env:GITHUB_REF -replace "refs/tags/", ""
+            $manifestpath = "Rnwood.Dataverse.Data.PowerShell//Rnwood.Dataverse.Data.PowerShell.psd1"
+            (get-content -raw -encoding UTF8 $manifestpath ) -replace "ModuleVersion ?=.*", "ModuleVersion = `"$versionnumber`"" | set-content -encoding UTF8 $manifestpath
+          }
+
           dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj
           if (test-path out/Rnwood.Dataverse.Data.PowerShell) {
             remove-item -force -recurse out/Rnwood.Dataverse.Data.PowerShell
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
+
+          pushd tests
+          Install-Module -force Pester
+          Invoke-Pester -output detailed
+          if ($LASTEXITCODE -ne 0) {
+            throw "Tests failed"
+          }
+          popd  
+      - name: Publish
+        if: github.event_name == 'release' && github.event.action == 'published'
+        env:
+          NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        shell: pwsh
+        run: |
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
