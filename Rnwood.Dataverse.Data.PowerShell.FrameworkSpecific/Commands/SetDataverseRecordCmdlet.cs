@@ -32,7 +32,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public uint BatchSize { get; set; } = 100;
 
 		[Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of table")]
-		[Alias("EntityName")]
+		[Alias("EntityName", "LogicalName")]
 		public string TableName { get; set; }
 
 		[Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "List of properties on the input object which are ignored and not attemted to be mapped to the record. Default is none.")]

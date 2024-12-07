@@ -120,7 +120,7 @@ Logical name of entity
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: EntityName
+Aliases: EntityName, LogicalName
 
 Required: True
 Position: Named
