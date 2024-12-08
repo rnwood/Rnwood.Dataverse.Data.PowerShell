@@ -18,6 +18,7 @@
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.13.1" />
     <PackageReference Include="DotNetZip" Version="1.16.0" />
     <PackageReference Include="FakeXrmEasy.9" Version="1.58.1" />
     <PackageReference Include="MarkMpn.Sql4Cds.Engine" Version="9.4.1" />

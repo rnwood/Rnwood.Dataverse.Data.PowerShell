@@ -16,6 +16,12 @@ See the examples for this pattern below.
 
 ## SYNTAX
 
+### Authenticate with managed identity
+```
+Get-DataverseConnection -ManagedIdentity <ManagedIdentityTypes> -Url <Uri> [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
+```
+
 ### Return a mock connection
 ```
 Get-DataverseConnection -Mock <EntityMetadata[]> -Url <Uri> [-ProgressAction <ActionPreference>]
@@ -232,11 +238,26 @@ Accept wildcard characters: False
 ```
 
 ### -Mock
-{{ Fill Mock Description }}
+Returns a mock connection using the provided entity metadata.
 
 ```yaml
 Type: EntityMetadata[]
 Parameter Sets: Return a mock connection
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ManagedIdentity
+Specifies the type of managed identity to use.
+
+```yaml
+Type: ManagedIdentityTypes
+Parameter Sets: Authenticate with managed identity
 Aliases:
 
 Required: True
