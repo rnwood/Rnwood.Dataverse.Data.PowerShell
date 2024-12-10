@@ -42,6 +42,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(HelpMessage = "Specifies the types of business logic (for example plugins) to bypass")]
 		public override BusinessLogicTypes[] BypassBusinessLogicExecution { get; set; }
 
+
+		[Parameter(HelpMessage = "Specifies the IDs of plugin steps to bypass")]
+		public override Guid[] BypassBusinessLogicExecutionStepIds { get; set; }
+
 		private class BatchItem
 		{
 			public BatchItem(PSObject inputObject, OrganizationRequest request, Action<OrganizationResponse> responseCompletion) : this(inputObject, request, responseCompletion, null)
