@@ -35,7 +35,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public string Sql { get; set; }
 
 		[Parameter]
-		public bool UseTdsEndpoint { get; set; }
+		public SwitchParameter UseTdsEndpoint { get; set; }
 
 		[Parameter]
 		public int Timeout { get; set; } = 600;
@@ -44,10 +44,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public PSObject Parameters { get; set; }
 
 		[Parameter]
-		public int? BatchSize { get; private set; }
+		public int? BatchSize { get; set; }
 
 		[Parameter]
-		public int? MaxDegreeOfParallelism { get; private set; }
+		public int? MaxDegreeOfParallelism { get; set; }
+
+		[Parameter(HelpMessage = "Bypasses custom plugins. See Sql4Cds docs.")]
+		public SwitchParameter BypassCustomPluginExecution { get; set; }
 	
 		protected override void BeginProcessing()
 		{
@@ -62,6 +65,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			this._sqlConnection.PreInsert += GetOnSqlConnectionConfirmatonRequiredHandler("Create");
 			this._sqlConnection.PreDelete += GetOnSqlConnectionConfirmatonRequiredHandler("Delete");
 			this._sqlConnection.PreUpdate += GetOnSqlConnectionConfirmatonRequiredHandler("Update");
+
+			if (BypassCustomPluginExecution)
+			{
+				_sqlConnection.BypassCustomPlugins = true;
+			}
 
 			if (BatchSize.HasValue)
 			{

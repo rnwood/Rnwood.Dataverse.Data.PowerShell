@@ -13,8 +13,8 @@ Invokes a Dataverse SQL query using Sql4Cds and writes any resulting rows to the
 ## SYNTAX
 
 ```
-Invoke-DataverseSql -Connection <ServiceClient> -Sql <String> [-UseTdsEndpoint <Boolean>] [-Timeout <Int32>]
- [-Parameters <PSObject>] [-BatchSize <Int32>] [-MaxDegreeOfParallelism <Int32>]
+Invoke-DataverseSql -Connection <ServiceClient> -Sql <String> [-UseTdsEndpoint] [-Timeout <Int32>]
+ [-Parameters <PSObject>] [-BatchSize <Int32>] [-MaxDegreeOfParallelism <Int32>] [-BypassCustomPluginExecution]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -133,7 +133,7 @@ Accept wildcard characters: False
 Let Sql4Cds use the TDS endpoint or not for compatible queries. The default is to not use this.
 
 ```yaml
-Type: Boolean
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 
@@ -194,6 +194,21 @@ Timeout for query to execute. See Sql4Cds docs.
 
 ```yaml
 Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -BypassCustomPluginExecution
+Bypasses custom plugins. See Sql4Cds docs.
+
+```yaml
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 

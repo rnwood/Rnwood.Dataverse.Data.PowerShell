@@ -18,7 +18,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
 	[Cmdlet(VerbsCommon.Remove, "DataverseRecord", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
 	///<summary>Deletes records from a Dataverse organization.</summary>
-	public class RemoveDataverseRecordCmdlet : OrganizationServiceCmdlet
+	public class RemoveDataverseRecordCmdlet : CustomLogicBypassableOrganizationServiceCmdlet
 	{
 		[Parameter(Mandatory = true)]
 		public override ServiceClient Connection { get; set; }
@@ -38,6 +38,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		[Parameter]
 		public SwitchParameter IfExists { get; set; }
+
+		[Parameter(HelpMessage = "Specifies the types of business logic (for example plugins) to bypass")]
+		public override BusinessLogicTypes[] BypassBusinessLogicExecution { get; set; }
+
+
+		[Parameter(HelpMessage = "Specifies the IDs of plugin steps to bypass")]
+		public override Guid[] BypassBusinessLogicExecutionStepIds { get; set; }
 
 		private class BatchItem
 		{
@@ -97,20 +104,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 					Entity record = Connection.RetrieveMultiple(getRecordWithMMColumns).Entities.Single();
 
-					Connection.Execute(new DisassociateRequest()
+					DisassociateRequest request = new DisassociateRequest()
 					{
 						Target = new EntityReference(manyToManyRelationshipMetadata.Entity1LogicalName,
-													 record.GetAttributeValue<Guid>(
-														 manyToManyRelationshipMetadata.Entity1IntersectAttribute)),
+																		 record.GetAttributeValue<Guid>(
+																			 manyToManyRelationshipMetadata.Entity1IntersectAttribute)),
 						RelatedEntities =
-							new EntityReferenceCollection()
-								{
+												new EntityReferenceCollection()
+													{
 									new EntityReference(manyToManyRelationshipMetadata.Entity2LogicalName,
 														record.GetAttributeValue<Guid>(
 															manyToManyRelationshipMetadata.Entity2IntersectAttribute))
-								},
+													},
 						Relationship = new Relationship(manyToManyRelationshipMetadata.SchemaName) { PrimaryEntityRole = EntityRole.Referencing }
-					});
+					};
+					ApplyBypassBusinessLogicExecution(request);
+					Connection.Execute(request);
 
 					WriteVerbose(string.Format("Deleted intersect record {0}:{1}", entityName, id));
 				}
@@ -118,6 +127,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			else
 			{
 				DeleteRequest request = new DeleteRequest { Target = new EntityReference(entityName, id) };
+				ApplyBypassBusinessLogicExecution(request);
 
 				if (_nextBatchItems != null)
 				{
@@ -139,7 +149,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					{
 						try
 						{
-							Connection.Delete(entityName, id);
+							DeleteRequest deleteRequest = new DeleteRequest { Target = new EntityReference(entityName, id) };
+							ApplyBypassBusinessLogicExecution(deleteRequest);
+							Connection.Execute(deleteRequest);
 						}
 						catch (FaultException ex)
 						{
@@ -200,6 +212,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					Requests = new OrganizationRequestCollection(),
 					RequestId = Guid.NewGuid()
 				};
+				ApplyBypassBusinessLogicExecution(batchRequest);
 
 				batchRequest.Requests.AddRange(_nextBatchItems.Select(i => i.Request));
 

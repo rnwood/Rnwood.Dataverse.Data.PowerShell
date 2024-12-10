@@ -16,8 +16,8 @@ Creates or updates Dataverse records including M:M association/disassociation, s
 Set-DataverseRecord -Connection <ServiceClient> -InputObject <PSObject> [-BatchSize <UInt32>]
  -TableName <String> [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>] [-PassThru]
  [-NoUpdate] [-NoCreate] [-NoUpdateColumns <String[]>] [-CallerId <Guid>] [-UpdateAllColumns] [-CreateOnly]
- [-Upsert] [-LookupColumns <Hashtable>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+ [-Upsert] [-LookupColumns <Hashtable>] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -356,6 +356,21 @@ The cmdlet is not run.
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -BypassBusinessLogicExecution
+Specifies the types of business logic (for example plugins) to bypass
+
+```yaml
+Type: BusinessLogicTypes[]
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named

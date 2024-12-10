@@ -14,8 +14,8 @@ Deletes an existing Dataverse record.
 
 ```
 Remove-DataverseRecord -Connection <ServiceClient> [-InputObject <PSObject>] -TableName <String> -Id <Guid>
- [-BatchSize <UInt32>] [-IfExists] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+ [-BatchSize <UInt32>] [-IfExists] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -169,6 +169,21 @@ Accept wildcard characters: False
 
 ```yaml
 Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -BypassBusinessLogicExecution
+Specifies the types of business logic (for example plugins) to bypass
+
+```yaml
+Type: BusinessLogicTypes[]
 Parameter Sets: (All)
 Aliases:
 
