@@ -10,10 +10,12 @@ using System.Text;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
-    public abstract class OrganizationServiceCmdlet : PSCmdlet
+
+
+	public abstract class OrganizationServiceCmdlet : PSCmdlet
     {
         public abstract ServiceClient Connection { get; set; }
 
 
-    }
+	}
 }

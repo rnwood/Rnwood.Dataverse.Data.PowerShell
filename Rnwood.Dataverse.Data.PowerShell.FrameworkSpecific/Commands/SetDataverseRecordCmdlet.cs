@@ -19,7 +19,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	///<summary>Creates or updates records in a Dataverse environment. If a matching record is found then it will be updated, otherwise a new record is created (some options can override this).
 	///This command can also handle creation/update of intersect records(many to many relationships).</summary>
 
-	public class SetDataverseRecordCmdlet : OrganizationServiceCmdlet
+	public class SetDataverseRecordCmdlet : CustomLogicBypassableOrganizationServiceCmdlet
 	{
 		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
 		public override ServiceClient Connection { get; set; }
@@ -74,6 +74,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			get;
 			set;
 		}
+
+		[Parameter(HelpMessage = "Specifies the types of business logic (for example plugins) to bypass")]
+		public override BusinessLogicTypes[] BypassBusinessLogicExecution { get; set; }
 
 		private class BatchItem
 		{
@@ -182,6 +185,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					Requests = new OrganizationRequestCollection(),
 					RequestId = Guid.NewGuid()
 				};
+				ApplyBypassBusinessLogicExecution(batchRequest);
 
 				batchRequest.Requests.AddRange(_nextBatchItems.Select(i => i.Request));
 
@@ -336,6 +340,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						Assignee = ownerid,
 						Target = target.ToEntityReference()
 					};
+					ApplyBypassBusinessLogicExecution(request);
 
 					if (_nextBatchItems != null)
 					{
@@ -382,6 +387,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						State = stateCode,
 						Status = statuscode
 					};
+					ApplyBypassBusinessLogicExecution(request);
 
 					if (_nextBatchItems != null)
 					{
@@ -450,6 +456,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						PrimaryEntityRole = EntityRole.Referencing
 					},
 				};
+				ApplyBypassBusinessLogicExecution(request);
 
 				if (_nextBatchItems != null)
 				{
@@ -588,6 +595,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						PrimaryEntityRole = EntityRole.Referencing
 					},
 				};
+				ApplyBypassBusinessLogicExecution(request);
 
 				if (_nextBatchItems != null)
 				{
@@ -634,6 +642,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				{
 					Target = targetCreate
 				};
+				ApplyBypassBusinessLogicExecution(request);
 
 				if (_nextBatchItems != null)
 				{
@@ -802,6 +811,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
 
 				UpdateRequest request = new UpdateRequest() { Target = target };
+				ApplyBypassBusinessLogicExecution(request);
 				string updatedColumnSummary = GetColumnSummary(targetUpdate);
 
 				if (_nextBatchItems != null)
