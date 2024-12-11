@@ -19,7 +19,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FakeXrmEasy.9" Version="1.58.1" />
-    <PackageReference Include="MarkMpn.Sql4Cds.Engine" Version="9.5.0" />
+    <PackageReference Include="MarkMpn.Sql4Cds.Engine" Version="9.4.1" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.66.2" />
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.1.9" />
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" />

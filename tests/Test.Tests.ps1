@@ -3,6 +3,7 @@
 Describe 'Get-DataverseRecord' {
 
         It "Converts to a PS object with properties using native PS types" {
+            import-module Rnwood.Dataverse.Data.PowerShell
             $connection = getMockConnection
             
             $in = new-object Microsoft.Xrm.Sdk.Entity "contact"
@@ -41,6 +42,7 @@ Describe 'Get-DataverseRecord' {
         }
 
         It "Converts to a PS object with Id and TableName implcit props" {
+            import-module Rnwood.Dataverse.Data.PowerShell
             $connection = getMockConnection
             
             $in = new-object Microsoft.Xrm.Sdk.Entity "contact"
@@ -59,6 +61,7 @@ Describe 'Get-DataverseRecord' {
         }
 
         It "Given no filters, gets all records even beyond the page limit" {
+            import-module Rnwood.Dataverse.Data.PowerShell
             $connection = getMockConnection
             1..10 | ForEach-Object{ @{"firstname"="$_"} } | Set-DataverseRecord -Connection $connection -TableName contact
             $result = Get-DataverseRecord -Connection $connection -TableName contact -PageSize 2
@@ -66,6 +69,7 @@ Describe 'Get-DataverseRecord' {
         }
 
         It "Given -Top X, gets first X records only" {
+            import-module Rnwood.Dataverse.Data.PowerShell
             $connection = getMockConnection
             1..9 | Sort-Object -Descending | ForEach-Object{ @{"firstname"="$_"} } | Set-DataverseRecord -Connection $connection -TableName contact
             $result = Get-DataverseRecord -Connection $connection -TableName contact -Top 5 -OrderBy firstname
@@ -74,6 +78,7 @@ Describe 'Get-DataverseRecord' {
         }
 
         It "Given -OrderBy, results are sorted ascending" {
+            import-module Rnwood.Dataverse.Data.PowerShell
             $connection = getMockConnection
             1..9 | Sort-Object -Descending | ForEach-Object{ @{"firstname"="$_"} } | Set-DataverseRecord -Connection $connection -TableName contact
             $result = Get-DataverseRecord -Connection $connection -TableName contact -OrderBy firstname
@@ -82,6 +87,7 @@ Describe 'Get-DataverseRecord' {
         }
 
         It "Given -OrderBy, results are sorted ascending on the server" {
+            import-module Rnwood.Dataverse.Data.PowerShell
             $connection = getMockConnection
             1..9 | Sort-Object -Descending | ForEach-Object{ @{"firstname"="$_"} } | Set-DataverseRecord -Connection $connection -TableName contact
             $result = Get-DataverseRecord -Connection $connection -TableName contact -OrderBy firstname -top 5
@@ -90,6 +96,7 @@ Describe 'Get-DataverseRecord' {
         }
 
         It "Given -OrderBy with -, results are sorted descending on the server" {
+            import-module Rnwood.Dataverse.Data.PowerShell
             $connection = getMockConnection
             1..9 | ForEach-Object{ @{"firstname"="$_"} } | Set-DataverseRecord -Connection $connection -TableName contact
             $result = Get-DataverseRecord -Connection $connection -TableName contact -OrderBy firstname- -top 5
@@ -98,6 +105,7 @@ Describe 'Get-DataverseRecord' {
         }
 
         It "Given -OrderBy a,b, results are sorted correctly" {
+            import-module Rnwood.Dataverse.Data.PowerShell
             $connection = getMockConnection
             "a", "b", "c" | ForEach-Object {
                 $letter=$_
@@ -113,6 +121,7 @@ Describe 'Get-DataverseRecord' {
         }
 
         It "Given -OrderBy a,b-, results are sorted correctly" {
+            import-module Rnwood.Dataverse.Data.PowerShell
             $connection = getMockConnection
             "a", "b", "c" | ForEach-Object {
                 $letter=$_
@@ -128,6 +137,7 @@ Describe 'Get-DataverseRecord' {
         }
 
         It "Given filter values, results are filtered using Equals" {
+            import-module Rnwood.Dataverse.Data.PowerShell
             $connection = getMockConnection
             @{"firstname"="Rob"; "lastname"="One"},  
             @{"firstname"="Joe"; "lastname"="One"},
@@ -141,6 +151,7 @@ Describe 'Get-DataverseRecord' {
         }
 
         It "Given multiple filter values, results are filtered using Equals and combined with AND" {
+            import-module Rnwood.Dataverse.Data.PowerShell
             $connection = getMockConnection
             @{"firstname"="Rob"; "lastname"="One"},  
             @{"firstname"="Joe"; "lastname"="One"},
@@ -154,6 +165,7 @@ Describe 'Get-DataverseRecord' {
         }
 
         It "Given multiple filter elements, results are filtered using Equals and combined with OR" {
+            import-module Rnwood.Dataverse.Data.PowerShell
             $connection = getMockConnection
             @{"firstname"="Rob"; "lastname"="One"},  
             @{"firstname"="Joe"; "lastname"="One"},
@@ -168,6 +180,7 @@ Describe 'Get-DataverseRecord' {
         }
 
         It "Given exclude filter values, results are filtered using not qquals" {
+            import-module Rnwood.Dataverse.Data.PowerShell
             $connection = getMockConnection
             @{"firstname"="Rob"; "lastname"="One"},  
             @{"firstname"="Joe"; "lastname"="One"},
