@@ -17,6 +17,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Commands
 		static ModuleInitProvider()
 		{
 			AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
+
+			Assembly.Load(new AssemblyName("Microsoft.Xrm.Sdk"));
 		}
 
 		private static System.Reflection.Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)

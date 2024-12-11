@@ -24,7 +24,7 @@ Describe "Module" {
             Import-Module Rnwood.Dataverse.Data.PowerShell
 
             try {
-                $connection = Get-DataverseConnection -url ($env:E2ETESTS_URL) -ClientId ($env:E2ETESTS_CLIENTID) -ClientSecret ($env:E2ETESTS_CLIENTSECRET)
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
                 Get-DataverseRecord -Connection $connection -TableName systemuser
             } catch {
                 throw "Failed: " + ($_ | Format-Table -force * | Out-String)
