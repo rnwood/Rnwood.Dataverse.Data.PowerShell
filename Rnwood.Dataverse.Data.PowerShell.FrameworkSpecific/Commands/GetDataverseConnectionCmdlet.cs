@@ -27,26 +27,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 		}
 
-		static GetDataverseConnectionCmdlet()
-		{
-			AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
-		}
-
-		private static System.Reflection.Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
-		{
-			string assyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-
-			string assyName = args.Name.Split(',')[0];
-			string assyFile = assyDir + "/" + assyName + ".dll";
-
-			if (File.Exists(assyFile))
-			{
-				return Assembly.LoadFrom(assyFile);
-			}
-
-			return null;
-		}
-
 		private const string PARAMSET_CLIENTSECRET = "Authenticate with client secret";
 		private const string PARAMSET_INTERACTIVE = "Authenticate interactively";
 		private const string PARAMSET_DEVICECODE = "Authenticate using the device code flow";
