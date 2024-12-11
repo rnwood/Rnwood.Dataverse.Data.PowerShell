@@ -46,6 +46,34 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "Tests failed"
           }
+      - name: E2E Test - pwsh
+        shell: pwsh
+        env:
+          E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
+          E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
+          E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
+        run: |  
+          $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
+
+          Install-Module -force Pester
+          Invoke-Pester -output detailed -path e2e-tests
+          if ($LASTEXITCODE -ne 0) {
+            throw "Tests failed"
+          } 
+          - name: E2E Test - powershell
+          shell: powershell
+          env:
+            E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
+            E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
+            E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
+          run: |  
+            $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
+  
+            Install-Module -force Pester
+            Invoke-Pester -output detailed -path e2e-tests
+            if ($LASTEXITCODE -ne 0) {
+              throw "Tests failed"
+            }          
       - name: Publish
         if: github.event_name == 'release' && github.event.action == 'published'
         env:
