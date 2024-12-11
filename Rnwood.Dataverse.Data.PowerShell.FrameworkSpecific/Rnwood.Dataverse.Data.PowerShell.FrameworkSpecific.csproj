@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net462</TargetFrameworks>
+    <TargetFrameworks>net8.0;net462</TargetFrameworks>
     <AssemblyTitle>Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific</AssemblyTitle>
     <Product>Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific</Product>
     <Copyright>Copyright © 2023-2024</Copyright>
@@ -19,9 +19,9 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FakeXrmEasy.9" Version="1.58.1" />
-    <PackageReference Include="MarkMpn.Sql4Cds.Engine" Version="9.4.1" />
+    <PackageReference Include="MarkMpn.Sql4Cds.Engine" Version="9.5.0" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.66.2" />
-    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.1.9" />
+    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.2" />
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" />
   </ItemGroup>
 </Project>
