@@ -33,4 +33,12 @@ BeforeAll {
 
         get-dataverseconnection -url https://fake.crm.dynamics.com/ -mock $metadata
     }
+
+    AfterEach {
+        if (Get-Module Rnwood.Dataverse.Data.PowerShell) {
+            Remove-Module Rnwood.Dataverse.Data.PowerShell
+        }
+    }
 }
+
+
