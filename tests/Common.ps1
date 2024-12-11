@@ -7,7 +7,6 @@ BeforeAll {
     }
      
     Add-Type -AssemblyName "System.Runtime.Serialization"
-    Add-Type -AssemblyName "Microsoft.Xrm.Sdk"
 
     # Define the DataContractSerializer
     $serializer = New-Object System.Runtime.Serialization.DataContractSerializer([Microsoft.Xrm.Sdk.Metadata.EntityMetadata])

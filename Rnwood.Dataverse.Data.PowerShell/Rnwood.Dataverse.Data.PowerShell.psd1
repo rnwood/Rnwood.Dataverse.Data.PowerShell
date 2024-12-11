@@ -65,14 +65,14 @@ PrivateData = @{
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
 NestedModules = 
 @(if ($PSEdition -eq 'Core') {
-	@(
+	@(
 		"net6.0/Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.dll",
 		"Get-DataverseRecordsFolder.psm1",
 		"Set-DataverseRecordsFolder.psm1"
 	)
 }
  else {
-	 @(
+	 @(
 		"net462/Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.dll",
 		"Get-DataverseRecordsFolder.psm1",
 		"Set-DataverseRecordsFolder.psm1"

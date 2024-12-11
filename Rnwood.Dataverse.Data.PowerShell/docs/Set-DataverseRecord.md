@@ -17,7 +17,8 @@ Set-DataverseRecord -Connection <ServiceClient> -InputObject <PSObject> [-BatchS
  -TableName <String> [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>] [-PassThru]
  [-NoUpdate] [-NoCreate] [-NoUpdateColumns <String[]>] [-CallerId <Guid>] [-UpdateAllColumns] [-CreateOnly]
  [-Upsert] [-LookupColumns <Hashtable>] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -369,6 +370,21 @@ Specifies the types of business logic (for example plugins) to bypass
 
 ```yaml
 Type: BusinessLogicTypes[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -BypassBusinessLogicExecutionStepIds
+Specifies the IDs of plugin steps to bypass
+
+```yaml
+Type: Guid[]
 Parameter Sets: (All)
 Aliases:
 
