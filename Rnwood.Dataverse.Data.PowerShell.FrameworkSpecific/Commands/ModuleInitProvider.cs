@@ -14,14 +14,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Commands
 	[CmdletProvider("Dataverse", ProviderCapabilities.None)]
 	public class ModuleInitProvider : DriveCmdletProvider
 	{
-		protected override Collection<PSDriveInfo> InitializeDefaultDrives()
+		static ModuleInitProvider()
 		{
 			AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
 
-			var assy = Assembly.Load(new AssemblyName("Microsoft.Xrm.Sdk"));
-			WriteVerbose($"Loaded Dataverse SDK from {assy.Location}");
-
-			return base.InitializeDefaultDrives();
+			Assembly.Load(new AssemblyName("Microsoft.Xrm.Sdk"));
 		}
 
 		private static System.Reflection.Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
