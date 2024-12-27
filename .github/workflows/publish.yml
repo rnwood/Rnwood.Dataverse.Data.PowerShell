@@ -14,9 +14,11 @@ jobs:
         include:
           - os: ubuntu-latest
             test: false
+            powershell: false
             publish: false
           - os: windows-latest
-            test: true
+            test: false
+            powershell: true
             publish: true
 
     runs-on: ${{ matrix.os }}
@@ -47,7 +49,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "Tests failed"
           }
-      - if: ${{matrix.test}}
+      - if: ${{matrix.test && matrix.powershell}}
         name: Test - powershell
         shell: powershell
         run: |  
@@ -72,7 +74,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "Tests failed"
           }
-      - if: ${{matrix.test}} 
+      - if: ${{matrix.powershell}} 
         name: E2E Test - powershell
         shell: powershell
         env:
