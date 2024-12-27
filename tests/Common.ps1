@@ -7,7 +7,7 @@ BeforeAll {
         $source = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0/"
     }
 
-    $tempmodulefolder = "${env:TEMP}/$([Guid]::NewGuid())"
+    $tempmodulefolder = "$([IO.Path]::GetTempPath())/$([Guid]::NewGuid())"
     new-item -ItemType Directory $tempmodulefolder
     copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Data.PowerShell
     $env:PSModulePath = $tempmodulefolder;
