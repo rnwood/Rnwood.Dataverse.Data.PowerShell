@@ -130,11 +130,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 					case PARAMSET_CLIENTSECRET:
 						{
+							var parameters = WwwAuthenticateParameters.CreateFromAuthenticationResponseAsync(Url + "/api/data/v9.2/").Result;
+
 							var confApp = ConfidentialClientApplicationBuilder
 							.Create(ClientId.ToString())
 							.WithRedirectUri("http://localhost")
 							.WithClientSecret(ClientSecret)
-							.WithAuthority(AadAuthorityAudience.AzureAdMyOrg)
+							.WithAuthority(parameters[0].Authority)
 							.Build();
 
 							result = new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url));
