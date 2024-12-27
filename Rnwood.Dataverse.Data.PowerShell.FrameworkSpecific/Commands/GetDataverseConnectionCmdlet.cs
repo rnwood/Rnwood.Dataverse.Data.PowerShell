@@ -134,7 +134,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							.Create(ClientId.ToString())
 							.WithRedirectUri("http://localhost")
 							.WithClientSecret(ClientSecret)
-							.WithAuthority(AadAuthorityAudience.AzureAdMultipleOrgs)
+							.WithAuthority(AadAuthorityAudience.AzureAdMyOrg)
 							.Build();
 
 							result = new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url));
