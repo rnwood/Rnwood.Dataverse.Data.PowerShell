@@ -3,19 +3,17 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.PowerPlatform.Dataverse.Client;
-using Microsoft.PowerPlatform.Dataverse.Client.Model;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Management.Automation;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using AuthenticationResult = Microsoft.Identity.Client.AuthenticationResult;
 
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
