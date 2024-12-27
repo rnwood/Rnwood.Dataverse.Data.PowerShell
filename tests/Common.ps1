@@ -34,6 +34,14 @@ BeforeAll {
         get-dataverseconnection -url https://fake.crm.dynamics.com/ -mock $metadata
     }
 
+    function newPwsh([scriptblock] $scriptblock) {
+        if ([System.Environment]::OSVersion.Platform -eq "Unix") {
+            pwsh -noninteractive -noprofile -command $scriptblock
+        } else {
+            cmd /c pwsh -noninteractive -noprofile -command $scriptblock
+        }
+    }
+
     AfterEach {
         if (Get-Module Rnwood.Dataverse.Data.PowerShell) {
             Remove-Module Rnwood.Dataverse.Data.PowerShell
