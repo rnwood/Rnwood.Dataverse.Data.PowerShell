@@ -160,7 +160,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				WriteObject(result);
 			} catch (Exception e)
 			{
-				WriteError(new ErrorRecord(e, "dataverse-failed-connect", ErrorCategory.ConnectionError, null) { ErrorDetails = new ErrorDetails($"Failed to connect to Dataverse: {e}")})
+				WriteError(new ErrorRecord(e, "dataverse-failed-connect", ErrorCategory.ConnectionError, null) { ErrorDetails = new ErrorDetails($"Failed to connect to Dataverse: {e}") });
 			}
 		}
 
