@@ -69,93 +69,99 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		protected override void BeginProcessing()
 		{
-			base.BeginProcessing();
-
-
-			ServiceClient result;
-
-			switch (ParameterSetName)
+			try
 			{
-				case PARAMSET_MOCK:
+				base.BeginProcessing();
 
-					FakeXrmEasy.XrmFakedContext xrmFakeContext = new FakeXrmEasy.XrmFakedContext();
-					xrmFakeContext.InitializeMetadata(Mock);
 
-					ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
-					result = (ServiceClient)contructor.Invoke(new object[] { xrmFakeContext.GetOrganizationService(), new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9,2), A.Fake<ILogger>() });
-					break;
+				ServiceClient result;
 
-				case PARAMSET_CONNECTIONSTRING:
-					result = new ServiceClient(ConnectionString);
-					break;
+				switch (ParameterSetName)
+				{
+					case PARAMSET_MOCK:
 
-				case PARAMSET_INTERACTIVE:
-					{
-						var publicClient = PublicClientApplicationBuilder
-							.Create(ClientId.ToString())
-							.WithRedirectUri("http://localhost")
-							.Build();
+						FakeXrmEasy.XrmFakedContext xrmFakeContext = new FakeXrmEasy.XrmFakedContext();
+						xrmFakeContext.InitializeMetadata(Mock);
 
-						result = new ServiceClient(Url, url => GetTokenInteractive(publicClient, url));
-
+						ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
+						result = (ServiceClient)contructor.Invoke(new object[] { xrmFakeContext.GetOrganizationService(), new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9, 2), A.Fake<ILogger>() });
 						break;
-					}
 
-				case PARAMSET_USERNAMEPASSWORD:
-					{
-						var publicClient = PublicClientApplicationBuilder
+					case PARAMSET_CONNECTIONSTRING:
+						result = new ServiceClient(ConnectionString);
+						break;
+
+					case PARAMSET_INTERACTIVE:
+						{
+							var publicClient = PublicClientApplicationBuilder
+								.Create(ClientId.ToString())
+								.WithRedirectUri("http://localhost")
+								.Build();
+
+							result = new ServiceClient(Url, url => GetTokenInteractive(publicClient, url));
+
+							break;
+						}
+
+					case PARAMSET_USERNAMEPASSWORD:
+						{
+							var publicClient = PublicClientApplicationBuilder
+								.Create(ClientId.ToString())
+								.WithRedirectUri("http://localhost")
+								.WithAuthority(AadAuthorityAudience.AzureAdMultipleOrgs)
+								.Build();
+
+							result = new ServiceClient(Url, url => GetTokenWithUsernamePassword(publicClient, url));
+
+							break;
+						}
+
+					case PARAMSET_DEVICECODE:
+						{
+							var publicClient = PublicClientApplicationBuilder
+								.Create(ClientId.ToString())
+								.WithRedirectUri("http://localhost")
+								.Build();
+
+							result = new ServiceClient(Url, url => GetTokenWithDeviceCode(publicClient, url));
+
+							break;
+						}
+
+					case PARAMSET_CLIENTSECRET:
+						{
+							var confApp = ConfidentialClientApplicationBuilder
 							.Create(ClientId.ToString())
 							.WithRedirectUri("http://localhost")
+							.WithClientSecret(ClientSecret)
 							.WithAuthority(AadAuthorityAudience.AzureAdMultipleOrgs)
 							.Build();
 
-						result = new ServiceClient(Url, url => GetTokenWithUsernamePassword(publicClient, url));
+							result = new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url));
 
-						break;
-					}
+							break;
+						}
 
-				case PARAMSET_DEVICECODE:
-					{
-						var publicClient = PublicClientApplicationBuilder
-							.Create(ClientId.ToString())
-							.WithRedirectUri("http://localhost")
-							.Build();
+					default:
+						throw new NotImplementedException(ParameterSetName);
+				}
 
-						result = new ServiceClient(Url, url => GetTokenWithDeviceCode(publicClient, url));
+				result.EnableAffinityCookie = false;
 
-						break;
-					}
+				// Bump up the min threads reserved for this app to ramp connections faster - minWorkerThreads defaults to 4, minIOCP defaults to 4 
+				ThreadPool.SetMinThreads(100, 100);
+				// Change max connections from .NET to a remote service default: 2
+				System.Net.ServicePointManager.DefaultConnectionLimit = 65000;
+				// Turn off the Expect 100 to continue message - 'true' will cause the caller to wait until it round-trip confirms a connection to the server 
+				System.Net.ServicePointManager.Expect100Continue = false;
+				// Can decrease overall transmission overhead but can cause delay in data packet arrival
+				System.Net.ServicePointManager.UseNagleAlgorithm = false;
 
-				case PARAMSET_CLIENTSECRET:
-					{
-						var confApp = ConfidentialClientApplicationBuilder
-						.Create(ClientId.ToString())
-						.WithRedirectUri("http://localhost")
-						.WithClientSecret(ClientSecret)
-						.WithAuthority(AadAuthorityAudience.AzureAdMultipleOrgs)
-						.Build();
-
-						result = new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url));
-
-						break;
-					}
-
-				default:
-					throw new NotImplementedException(ParameterSetName);
+				WriteObject(result);
+			} catch (Exception e)
+			{
+				WriteError(new ErrorRecord(e, "dataverse-failed-connect", ErrorCategory.ConnectionError, null) { ErrorDetails = new ErrorDetails($"Failed to connect to Dataverse: {e}")})
 			}
-
-			result.EnableAffinityCookie = false;
-
-			// Bump up the min threads reserved for this app to ramp connections faster - minWorkerThreads defaults to 4, minIOCP defaults to 4 
-			ThreadPool.SetMinThreads(100, 100);
-			// Change max connections from .NET to a remote service default: 2
-			System.Net.ServicePointManager.DefaultConnectionLimit = 65000;
-			// Turn off the Expect 100 to continue message - 'true' will cause the caller to wait until it round-trip confirms a connection to the server 
-			System.Net.ServicePointManager.Expect100Continue = false;
-			// Can decrease overall transmission overhead but can cause delay in data packet arrival
-			System.Net.ServicePointManager.UseNagleAlgorithm = false;
-
-			WriteObject(result);
 		}
 
 		private static HttpMessageHandler GetFakeHttpHandler()
