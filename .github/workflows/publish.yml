@@ -13,10 +13,10 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            powershell: false
+            test: false
             publish: false
           - os: windows-latest
-            powershell: true
+            test: true
             publish: true
 
     runs-on: ${{ matrix.os }}
@@ -36,7 +36,8 @@ jobs:
             remove-item -force -recurse out/Rnwood.Dataverse.Data.PowerShell
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
-      - name: Test - pwsh
+      - if: ${{matrix.test}}
+        name: Test - pwsh
         shell: pwsh
         run: |  
           $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
@@ -46,7 +47,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "Tests failed"
           }
-      - if: ${{matrix.powershell}}
+      - if: ${{matrix.test}}
         name: Test - powershell
         shell: powershell
         run: |  
@@ -71,7 +72,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "Tests failed"
           }
-      - if: ${{matrix.powershell}} 
+      - if: ${{matrix.test}} 
         name: E2E Test - powershell
         shell: powershell
         env:
