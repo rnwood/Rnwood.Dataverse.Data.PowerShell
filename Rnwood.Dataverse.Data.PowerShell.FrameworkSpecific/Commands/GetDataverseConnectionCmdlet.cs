@@ -1,20 +1,21 @@
 ﻿using FakeItEasy;
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.PowerPlatform.Dataverse.Client;
-using Microsoft.PowerPlatform.Dataverse.Client.Model;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
 using System.Management.Automation;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
-using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using AuthenticationResult = Microsoft.Identity.Client.AuthenticationResult;
 
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -69,93 +70,124 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		protected override void BeginProcessing()
 		{
-			base.BeginProcessing();
-
-
-			ServiceClient result;
-
-			switch (ParameterSetName)
+			try
 			{
-				case PARAMSET_MOCK:
+				base.BeginProcessing();
 
-					FakeXrmEasy.XrmFakedContext xrmFakeContext = new FakeXrmEasy.XrmFakedContext();
-					xrmFakeContext.InitializeMetadata(Mock);
 
-					ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
-					result = (ServiceClient)contructor.Invoke(new object[] { xrmFakeContext.GetOrganizationService(), new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9,2), A.Fake<ILogger>() });
-					break;
+				ServiceClient result;
 
-				case PARAMSET_CONNECTIONSTRING:
-					result = new ServiceClient(ConnectionString);
-					break;
+				switch (ParameterSetName)
+				{
+					case PARAMSET_MOCK:
 
-				case PARAMSET_INTERACTIVE:
-					{
-						var publicClient = PublicClientApplicationBuilder
+						FakeXrmEasy.XrmFakedContext xrmFakeContext = new FakeXrmEasy.XrmFakedContext();
+						xrmFakeContext.InitializeMetadata(Mock);
+
+						ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
+						result = (ServiceClient)contructor.Invoke(new object[] { xrmFakeContext.GetOrganizationService(), new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9, 2), A.Fake<ILogger>() });
+						break;
+
+					case PARAMSET_CONNECTIONSTRING:
+						result = new ServiceClient(ConnectionString);
+						break;
+
+					case PARAMSET_INTERACTIVE:
+						{
+							var publicClient = PublicClientApplicationBuilder
+								.Create(ClientId.ToString())
+								.WithRedirectUri("http://localhost")
+								.Build();
+
+							result = new ServiceClient(Url, url => GetTokenInteractive(publicClient, url));
+
+							break;
+						}
+
+					case PARAMSET_USERNAMEPASSWORD:
+						{
+							var publicClient = PublicClientApplicationBuilder
+								.Create(ClientId.ToString())
+								.WithRedirectUri("http://localhost")
+								.WithAuthority(AadAuthorityAudience.AzureAdMultipleOrgs)
+								.Build();
+
+							result = new ServiceClient(Url, url => GetTokenWithUsernamePassword(publicClient, url));
+
+							break;
+						}
+
+					case PARAMSET_DEVICECODE:
+						{
+							var publicClient = PublicClientApplicationBuilder
+								.Create(ClientId.ToString())
+								.WithRedirectUri("http://localhost")
+								.Build();
+
+							result = new ServiceClient(Url, url => GetTokenWithDeviceCode(publicClient, url));
+
+							break;
+						}
+
+					case PARAMSET_CLIENTSECRET:
+						{
+							string authority = GetAuthority();
+
+							var confApp = ConfidentialClientApplicationBuilder
 							.Create(ClientId.ToString())
 							.WithRedirectUri("http://localhost")
+							.WithClientSecret(ClientSecret)
+							.WithAuthority(authority)
 							.Build();
 
-						result = new ServiceClient(Url, url => GetTokenInteractive(publicClient, url));
+							result = new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url));
 
-						break;
-					}
+							break;
+						}
 
-				case PARAMSET_USERNAMEPASSWORD:
-					{
-						var publicClient = PublicClientApplicationBuilder
-							.Create(ClientId.ToString())
-							.WithRedirectUri("http://localhost")
-							.WithAuthority(AadAuthorityAudience.AzureAdMultipleOrgs)
-							.Build();
+					default:
+						throw new NotImplementedException(ParameterSetName);
+				}
 
-						result = new ServiceClient(Url, url => GetTokenWithUsernamePassword(publicClient, url));
+				result.EnableAffinityCookie = false;
 
-						break;
-					}
+				// Bump up the min threads reserved for this app to ramp connections faster - minWorkerThreads defaults to 4, minIOCP defaults to 4 
+				ThreadPool.SetMinThreads(100, 100);
+				// Change max connections from .NET to a remote service default: 2
+				System.Net.ServicePointManager.DefaultConnectionLimit = 65000;
+				// Turn off the Expect 100 to continue message - 'true' will cause the caller to wait until it round-trip confirms a connection to the server 
+				System.Net.ServicePointManager.Expect100Continue = false;
+				// Can decrease overall transmission overhead but can cause delay in data packet arrival
+				System.Net.ServicePointManager.UseNagleAlgorithm = false;
 
-				case PARAMSET_DEVICECODE:
-					{
-						var publicClient = PublicClientApplicationBuilder
-							.Create(ClientId.ToString())
-							.WithRedirectUri("http://localhost")
-							.Build();
+				WriteObject(result);
+			} catch (Exception e)
+			{
+				WriteError(new ErrorRecord(e, "dataverse-failed-connect", ErrorCategory.ConnectionError, null) { ErrorDetails = new ErrorDetails($"Failed to connect to Dataverse: {e}") });
+			}
+		}
 
-						result = new ServiceClient(Url, url => GetTokenWithDeviceCode(publicClient, url));
+		private string GetAuthority()
+		{
+			string authority;
+			using (HttpClient httpClient = new HttpClient())
+			{
 
-						break;
-					}
+				HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get,
+Url + "/api/data/v9.2/");
 
-				case PARAMSET_CLIENTSECRET:
-					{
-						var confApp = ConfidentialClientApplicationBuilder
-						.Create(ClientId.ToString())
-						.WithRedirectUri("http://localhost")
-						.WithClientSecret(ClientSecret)
-						.WithTenantId("bd6c851f-e0dc-4d6d-ab4c-99452fe28387")
-						.Build();
+				HttpResponseMessage httpResponse = httpClient.SendAsync(httpRequestMessage).Result;
+				var header = httpResponse.Headers.GetValues("WWW-Authenticate").First();
 
-						result = new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url));
+				//Bearer authorization_uri=https://login.microsoftonline.com/bd6c851f-e0dc-4d6d-ab4c-99452fe28387/oauth2/authorize, resource_id=https://orgxyz.crm11.dynamics.com/
+				var match = Regex.Match(header, ".*authorization_uri=([^ ,]+).*");
+				var authUri = match.Groups[1].Value;
 
-						break;
-					}
+				authority = authUri.Replace("/oauth2/authorize", "");
 
-				default:
-					throw new NotImplementedException(ParameterSetName);
 			}
 
-			result.EnableAffinityCookie = false;
-
-			// Bump up the min threads reserved for this app to ramp connections faster - minWorkerThreads defaults to 4, minIOCP defaults to 4 
-			ThreadPool.SetMinThreads(100, 100);
-			// Change max connections from .NET to a remote service default: 2
-			System.Net.ServicePointManager.DefaultConnectionLimit = 65000;
-			// Turn off the Expect 100 to continue message - 'true' will cause the caller to wait until it round-trip confirms a connection to the server 
-			System.Net.ServicePointManager.Expect100Continue = false;
-			// Can decrease overall transmission overhead but can cause delay in data packet arrival
-			System.Net.ServicePointManager.UseNagleAlgorithm = false;
-
-			WriteObject(result);
+			return authority;
 		}
 
 		private static HttpMessageHandler GetFakeHttpHandler()
