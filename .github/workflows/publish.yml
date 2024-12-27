@@ -87,7 +87,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "Tests failed"
           }      
-      - if: ${{ matrix.publish }} && github.event_name == 'release' && github.event.action == 'published'
+      - if: ${{ matrix.publish && github.event_name == 'release' && github.event.action == 'published' }}
         name: Publish
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
