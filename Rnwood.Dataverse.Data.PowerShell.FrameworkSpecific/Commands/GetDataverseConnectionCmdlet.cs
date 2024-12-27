@@ -1,6 +1,7 @@
 ﻿using FakeItEasy;
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.PowerPlatform.Dataverse.Client.Model;
 using Microsoft.Xrm.Sdk;
@@ -130,7 +131,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 					case PARAMSET_CLIENTSECRET:
 						{
-							var parameters = WwwAuthenticateParameters.CreateFromAuthenticationResponseAsync(Url + "/api/data/v9.2/").Result;
+
+							IReadOnlyList<WwwAuthenticateParameters> parameters;
+							using (HttpClient httpClient = new HttpClient())
+							{
+
+								HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get,
+			Url + "/api/data/v9.2/");
+
+								HttpResponseMessage httpResponse = httpClient.SendAsync(httpRequestMessage).Result;
+								parameters = WwwAuthenticateParameters.CreateFromAuthenticationHeaders(httpResponse.Headers);
+
+							}
 
 							var confApp = ConfidentialClientApplicationBuilder
 							.Create(ClientId.ToString())
