@@ -34,7 +34,7 @@ Describe "Module" {
 
     It "Given SDK assemblies are already loaded, it can be loaded successfully" {
 
-        cmd /c pwsh -noninteractive -noprofile -command {
+        newPwsh {
             $env:PSModulePath = $env:ChildProcessPSModulePath
             if ([appdomain]::CurrentDomain.GetAssemblies() | Where-Object{ $_.GetName().Name -eq "Microsoft.Xrm.Sdk"}) {
                 throw "Expected assembly to not be already loaded"

@@ -7,7 +7,7 @@ BeforeAll {
         $source = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0/"
     }
 
-    $tempmodulefolder = "${env:TEMP}/$([Guid]::NewGuid())"
+    $tempmodulefolder = "$([IO.Path]::GetTempPath())/$([Guid]::NewGuid())"
     new-item -ItemType Directory $tempmodulefolder
     copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Data.PowerShell
     $env:PSModulePath = $tempmodulefolder;
@@ -32,6 +32,14 @@ BeforeAll {
         }
 
         get-dataverseconnection -url https://fake.crm.dynamics.com/ -mock $metadata
+    }
+
+    function newPwsh([scriptblock] $scriptblock) {
+        if ([System.Environment]::OSVersion.Platform -eq "Unix") {
+            pwsh -noninteractive -noprofile -command $scriptblock
+        } else {
+            cmd /c pwsh -noninteractive -noprofile -command $scriptblock
+        }
     }
 
     AfterEach {

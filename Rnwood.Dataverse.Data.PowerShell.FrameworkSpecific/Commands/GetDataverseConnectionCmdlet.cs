@@ -1,7 +1,16 @@
-﻿using FakeItEasy;
+﻿#if NETCOREAPP
+using FakeItEasy;
+using FakeXrmEasy.Core;
+using FakeXrmEasy.Middleware;
+using FakeXrmEasy;
+﻿using FakeXrmEasy.Abstractions;
+using FakeXrmEasy.Abstractions.Enums;
+using FakeXrmEasy.Middleware.Crud;
+using FakeXrmEasy.Middleware.Messages;
+using FakeXrmEasy.FakeMessageExecutors;
+#endif
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -33,10 +42,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private const string PARAMSET_DEVICECODE = "Authenticate using the device code flow";
 		private const string PARAMSET_USERNAMEPASSWORD = "Authenticate with username and password";
 		private const string PARAMSET_CONNECTIONSTRING = "Authenticate with Dataverse SDK connection string.";
+
+#if NETCOREAPP
 		private const string PARAMSET_MOCK = "Return a mock connection";
 
 		[Parameter(Mandatory =true, ParameterSetName =PARAMSET_MOCK) ]
 		public EntityMetadata[] Mock { get; set; }
+#endif
 
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET)]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE)]
@@ -79,14 +91,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 				switch (ParameterSetName)
 				{
+#if NETCOREAPP
 					case PARAMSET_MOCK:
 
-						FakeXrmEasy.XrmFakedContext xrmFakeContext = new FakeXrmEasy.XrmFakedContext();
+						IXrmFakedContext xrmFakeContext = MiddlewareBuilder
+                        .New()
+                        .AddCrud()
+						.AddFakeMessageExecutors(Assembly.GetAssembly(typeof(FakeXrmEasy.FakeMessageExecutors.RetrieveEntityRequestExecutor)))
+						.UseMessages()
+                        .UseCrud()
+                        .SetLicense(FakeXrmEasyLicense.RPL_1_5)
+                        .Build();
 						xrmFakeContext.InitializeMetadata(Mock);
 
 						ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
 						result = (ServiceClient)contructor.Invoke(new object[] { xrmFakeContext.GetOrganizationService(), new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9, 2), A.Fake<ILogger>() });
 						break;
+#endif
 
 					case PARAMSET_CONNECTIONSTRING:
 						result = new ServiceClient(ConnectionString);
@@ -161,7 +182,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				System.Net.ServicePointManager.UseNagleAlgorithm = false;
 
 				WriteObject(result);
-			} catch (Exception e)
+			}
+			catch (Exception e)
 			{
 				WriteError(new ErrorRecord(e, "dataverse-failed-connect", ErrorCategory.ConnectionError, null) { ErrorDetails = new ErrorDetails($"Failed to connect to Dataverse: {e}") });
 			}
@@ -199,7 +221,7 @@ Url + "/api/data/v9.2/");
 		{
 			protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 			{
-				return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}")});
+				return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}") });
 			}
 		}
 
@@ -244,15 +266,16 @@ Url + "/api/data/v9.2/");
 				}
 			}
 
-			if (authResult == null) {
-				authResult = await app.AcquireTokenWithDeviceCode(scopes, (dcr) => 
+			if (authResult == null)
+			{
+				authResult = await app.AcquireTokenWithDeviceCode(scopes, (dcr) =>
 				{
 					Host.UI.WriteLine(dcr.Message);
 					return Task.FromResult(0);
 				}).ExecuteAsync();
 			}
 
-			Username = authResult.Account.Username; 
+			Username = authResult.Account.Username;
 
 			return authResult.AccessToken;
 
