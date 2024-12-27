@@ -7,10 +7,12 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management.Automation;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AuthenticationResult = Microsoft.Identity.Client.AuthenticationResult;
@@ -129,24 +131,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 					case PARAMSET_CLIENTSECRET:
 						{
-
-							IReadOnlyList<WwwAuthenticateParameters> parameters;
-							using (HttpClient httpClient = new HttpClient())
-							{
-
-								HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get,
-			Url + "/api/data/v9.2/");
-
-								HttpResponseMessage httpResponse = httpClient.SendAsync(httpRequestMessage).Result;
-								parameters = WwwAuthenticateParameters.CreateFromAuthenticationHeaders(httpResponse.Headers);
-
-							}
+							string authority = GetAuthority();
 
 							var confApp = ConfidentialClientApplicationBuilder
 							.Create(ClientId.ToString())
 							.WithRedirectUri("http://localhost")
 							.WithClientSecret(ClientSecret)
-							.WithAuthority(parameters[0].Authority)
+							.WithAuthority(authority)
 							.Build();
 
 							result = new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url));
@@ -174,6 +165,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			{
 				WriteError(new ErrorRecord(e, "dataverse-failed-connect", ErrorCategory.ConnectionError, null) { ErrorDetails = new ErrorDetails($"Failed to connect to Dataverse: {e}") });
 			}
+		}
+
+		private string GetAuthority()
+		{
+			string authority;
+			using (HttpClient httpClient = new HttpClient())
+			{
+
+				HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get,
+Url + "/api/data/v9.2/");
+
+				HttpResponseMessage httpResponse = httpClient.SendAsync(httpRequestMessage).Result;
+				var header = httpResponse.Headers.GetValues("WWW-Authenticate").First();
+
+				//Bearer authorization_uri=https://login.microsoftonline.com/bd6c851f-e0dc-4d6d-ab4c-99452fe28387/oauth2/authorize, resource_id=https://orgxyz.crm11.dynamics.com/
+				var match = Regex.Match(header, ".*authorization_uri=([^ ,]+).*");
+				var authUri = match.Groups[1].Value;
+
+				authority = authUri.Replace("/oauth2/authorize", "");
+
+			}
+
+			return authority;
 		}
 
 		private static HttpMessageHandler GetFakeHttpHandler()
