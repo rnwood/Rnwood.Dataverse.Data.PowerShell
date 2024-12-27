@@ -1,7 +1,6 @@
 ﻿using FakeItEasy;
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
