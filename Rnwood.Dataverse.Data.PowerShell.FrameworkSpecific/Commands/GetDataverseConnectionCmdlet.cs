@@ -7,6 +7,7 @@ using FakeXrmEasy;
 using FakeXrmEasy.Abstractions.Enums;
 using FakeXrmEasy.Middleware.Crud;
 using FakeXrmEasy.Middleware.Messages;
+using FakeXrmEasy.FakeMessageExecutors;
 #endif
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
@@ -96,9 +97,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						IXrmFakedContext xrmFakeContext = MiddlewareBuilder
                         .New()
                         .AddCrud()
-                        
-                        .UseCrud()
+						.AddFakeMessageExecutors(Assembly.GetAssembly(typeof(FakeXrmEasy.FakeMessageExecutors.RetrieveEntityRequestExecutor)))
 						.UseMessages()
+                        .UseCrud()
                         .SetLicense(FakeXrmEasyLicense.RPL_1_5)
                         .Build();
 						xrmFakeContext.InitializeMetadata(Mock);
