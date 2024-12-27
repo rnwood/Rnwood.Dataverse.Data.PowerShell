@@ -6,6 +6,7 @@ using FakeXrmEasy;
 ﻿using FakeXrmEasy.Abstractions;
 using FakeXrmEasy.Abstractions.Enums;
 using FakeXrmEasy.Middleware.Crud;
+using FakeXrmEasy.Middleware.Messages;
 #endif
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
@@ -97,6 +98,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         .AddCrud()
                         
                         .UseCrud()
+						.UseMessages()
                         .SetLicense(FakeXrmEasyLicense.RPL_1_5)
                         .Build();
 						xrmFakeContext.InitializeMetadata(Mock);
