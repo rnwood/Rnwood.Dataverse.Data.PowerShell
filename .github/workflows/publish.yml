@@ -16,7 +16,7 @@ jobs:
             test: false
             publish: false
           - os: windows-latest
-            test: false
+            test: true
             publish: true
 
     runs-on: ${{ matrix.os }}

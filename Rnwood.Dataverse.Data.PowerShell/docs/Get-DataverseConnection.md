@@ -16,6 +16,12 @@ See the examples for this pattern below.
 
 ## SYNTAX
 
+### Return a mock connection
+```
+Get-DataverseConnection -Mock <EntityMetadata[]> -Url <Uri> [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
+```
+
 ### Authenticate with client secret
 ```
 Get-DataverseConnection -ClientId <Guid> -Url <Uri> -ClientSecret <String> [-ProgressAction <ActionPreference>]
@@ -219,6 +225,21 @@ Parameter Sets: (All)
 Aliases: proga
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Mock
+{{ Fill Mock Description }}
+
+```yaml
+Type: EntityMetadata[]
+Parameter Sets: Return a mock connection
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
