@@ -1,5 +1,11 @@
 ﻿#if NETCOREAPP
 using FakeItEasy;
+using FakeXrmEasy.Core;
+using FakeXrmEasy.Middleware;
+using FakeXrmEasy;
+﻿using FakeXrmEasy.Abstractions;
+using FakeXrmEasy.Abstractions.Enums;
+using FakeXrmEasy.Middleware.Crud;
 #endif
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
@@ -86,7 +92,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 #if NETCOREAPP
 					case PARAMSET_MOCK:
 
-						FakeXrmEasy.XrmFakedContext xrmFakeContext = new FakeXrmEasy.XrmFakedContext();
+						IXrmFakedContext xrmFakeContext = MiddlewareBuilder
+                        .New()
+                        .AddCrud()
+                        
+                        .UseCrud()
+                        .SetLicense(FakeXrmEasyLicense.RPL_1_5)
+                        .Build();
 						xrmFakeContext.InitializeMetadata(Mock);
 
 						ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
@@ -167,7 +179,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				System.Net.ServicePointManager.UseNagleAlgorithm = false;
 
 				WriteObject(result);
-			} catch (Exception e)
+			}
+			catch (Exception e)
 			{
 				WriteError(new ErrorRecord(e, "dataverse-failed-connect", ErrorCategory.ConnectionError, null) { ErrorDetails = new ErrorDetails($"Failed to connect to Dataverse: {e}") });
 			}
@@ -205,7 +218,7 @@ Url + "/api/data/v9.2/");
 		{
 			protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 			{
-				return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}")});
+				return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}") });
 			}
 		}
 
@@ -250,15 +263,16 @@ Url + "/api/data/v9.2/");
 				}
 			}
 
-			if (authResult == null) {
-				authResult = await app.AcquireTokenWithDeviceCode(scopes, (dcr) => 
+			if (authResult == null)
+			{
+				authResult = await app.AcquireTokenWithDeviceCode(scopes, (dcr) =>
 				{
 					Host.UI.WriteLine(dcr.Message);
 					return Task.FromResult(0);
 				}).ExecuteAsync();
 			}
 
-			Username = authResult.Account.Username; 
+			Username = authResult.Account.Username;
 
 			return authResult.AccessToken;
 
