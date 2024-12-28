@@ -17,7 +17,9 @@ BeforeAll {
 
     function getMockConnection() {
         if (-not $metadata) {
-            Import-Module Rnwood.Dataverse.Data.PowerShell
+            if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
+                Import-Module Rnwood.Dataverse.Data.PowerShell
+            }
             Add-Type -AssemblyName "System.Runtime.Serialization"
 
             # Define the DataContractSerializer

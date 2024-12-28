@@ -30,7 +30,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private const string PARAMSET_SIMPLE = "Simple";
 
-		[Parameter(ParameterSetName=PARAMSET_SIMPLE, Mandatory = true, Position = 0, HelpMessage = "Logical name of table for which to retrieve records")]
+		[Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = true, Position = 0, HelpMessage = "Logical name of table for which to retrieve records")]
 		[Alias("EntityName")]
 		public string TableName { get; set; }
 
@@ -47,7 +47,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			set;
 		}
 
-		[Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of hashsets of column names, values to filter records by using an EQUALS condition (or ISNULL if null value). If more than one hashset is provided then they are logically combined using an OR condition. e.g. @{firstname=\"bob\", age=25}, @{firstname=\"sue\"} will find records where (firstname=bob AND age=25) OR (firstname=sue)")]
+		[Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of hashsets of @{\"columnnames(:operator)\"=\"value\"} to filter records by. If operator is not specified, uses an EQUALS condition (or ISNULL if null value). If more than one hashset is provided then they are logically combined using an OR condition. e.g. @{firstname=\"bob\", age=25}, @{firstname=\"sue\"} will find records where (firstname=bob AND age=25) OR (firstname=sue)")]
 		public Hashtable[] FilterValues
 		{
 			get;
@@ -270,14 +270,31 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					FilterExpression includeFilterExpression = includesFilterExpression.AddFilter(LogicalOperator.And);
 					foreach (DictionaryEntry filterValue in filterValues)
 					{
-						if (filterValue.Value == null)
+						ConditionOperator op = filterValue.Value == null ? ConditionOperator.Null : ConditionOperator.Equal;
+
+						string[] keyBits = ((string)filterValue.Key).Split(':');
+						string fieldName = keyBits[0];
+						if (keyBits.Length == 2)
 						{
-							includeFilterExpression.AddCondition((string)filterValue.Key, ConditionOperator.Null);
+							try
+							{
+								op = (ConditionOperator)Enum.Parse(typeof(ConditionOperator), keyBits[1]);
+							} catch (ArgumentException e)
+							{
+								throw new InvalidDataException($"The key '{filterValue.Key}' is invalid. {e.Message}. Valid operators are {string.Join(", ", Enum.GetNames(typeof(ConditionOperator)))}");
+
+							}
+						} else if (keyBits.Length > 2)
+						{
+							throw new InvalidDataException($"The key '{filterValue.Key}' is invalid. Valid formats are 'fieldname' or 'fieldname:operator'");
 						}
-						else
+
+						if (filterValue.Value is Array array)
 						{
-							includeFilterExpression.AddCondition((string)filterValue.Key, ConditionOperator.Equal,
-																 filterValue.Value);
+							includeFilterExpression.AddCondition(fieldName, op, (object[])array);
+						} else
+						{
+							includeFilterExpression.AddCondition(fieldName, op, filterValue.Value);
 						}
 					}
 				}

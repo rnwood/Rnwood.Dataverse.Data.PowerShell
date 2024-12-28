@@ -60,6 +60,39 @@ Describe 'Get-DataverseRecord' {
         $result.TableName | Should -be "contact"
     }
 
+    It "Given filter with no explicit operator, gets all records matching using equals" {
+        
+        $connection = getMockConnection
+        1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname"="1"}
+        $result | Should -HaveCount 1
+        $result[0].firstname | Should -Be "1"
+    }
+
+    It "Given filter with explicit operator, gets all records matching using that operator" {
+        
+        $connection = getMockConnection
+        1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname:Like"="1%"}
+        $result | Should -HaveCount 2
+    }
+
+    It "Given filter with explicit operator not requiring a value, gets all records matching using that operator" {
+        
+        $connection = getMockConnection
+        1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname:Null"=""}
+        $result | Should -HaveCount 0
+    }
+
+    It "Given filter with explicit operator requiring multiple values, gets all records matching using that operator" {
+        
+        $connection = getMockConnection
+        1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname:In"=("1", "2")}
+        $result | Should -HaveCount 2
+    }
+
     It "Given no filters, gets all records even beyond the page limit" {
         
         $connection = getMockConnection

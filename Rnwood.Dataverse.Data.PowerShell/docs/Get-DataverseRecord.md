@@ -35,10 +35,17 @@ Get-DataverseRecord -Connection <ServiceClient> [-VerboseRecordCount] [-RecordCo
 
 ### Example 1
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Get-DataverseRecord -connection $connection -tablename contact
 ```
 
-{{ Add example description here }}
+Get all contacts returning all non-system columns.
+
+### Example 2
+```powershell
+PS C:\> Get-DataverseRecord -connection $connection -tablename contact -columns firstname -filtervalues @{"firstname:Like"="Rob%"}
+```
+
+Get all contacts where firstname starts with 'Rob' and return the firstname column only.
 
 ## PARAMETERS
 
@@ -118,10 +125,15 @@ Accept wildcard characters: False
 ```
 
 ### -FilterValues
-List of hashsets of fields names,values to filter records by using an EQUALS condition (or ISNULL if null value).
+List of hashsets of @{"fieldname"="value"} or @{"fieldname:operator"="value"} to filter records by. If operator is not provided, uses an EQUALS condition (or ISNULL if null value).
 If more than one hashset is provided then they are logically combined using an OR condition.
 e.g.
 @{firstname="bob", age=25}, @{firstname="sue"} will find records where (firstname=bob AND age=25) OR (firstname=sue)
+
+Valid operators:
+Equal, NotEqual, GreaterThan, LessThan, GreaterEqual, LessEqual, Like, NotLike, In, NotIn, Between, NotBetween, Null, NotNull, Yesterday, Today, Tomorrow, Last7Days, Next7Days, LastWeek, ThisWeek, NextWeek, LastMonth, ThisMonth, NextMonth, On, OnOrBefore, OnOrAfter, LastYear, ThisYear, NextYear, LastXHours, NextXHours, LastXDays, NextXDays, LastXWeeks, NextXWeeks, LastXMonths, NextXMonths, LastXYears, NextXYears, EqualUserId, NotEqualUserId, EqualBusinessId, NotEqualBusinessId, ChildOf, Mask, NotMask, MasksSelect, Contains, DoesNotContain, EqualUserLanguage, NotOn, OlderThanXMonths, BeginsWith, DoesNotBeginWith, EndsWith, DoesNotEndWith, ThisFiscalYear, ThisFiscalPeriod, NextFiscalYear, NextFiscalPeriod, LastFiscalYear, LastFiscalPeriod, LastXFiscalYears, LastXFiscalPeriods, NextXFiscalYears, NextXFiscalPeriods, InFiscalYear, InFiscalPeriod, InFiscalPeriodAndYear, InOrBeforeFiscalPeriodAndYear, InOrAfterFiscalPeriodAndYear, EqualUserTeams, EqualUserOrUserTeams, Under, NotUnder, UnderOrEqual, Above, AboveOrEqual, EqualUserOrUserHierarchy, EqualUserOrUserHierarchyAndTeams, OlderThanXYears, OlderThanXWeeks, OlderThanXDays, OlderThanXHours, OlderThanXMinutes, ContainValues, DoesNotContainValues, EqualRoleBusinessId
+
+The type of value must use those expected by the SDK for the column type and operator.
 
 ```yaml
 Type: Hashtable[]
