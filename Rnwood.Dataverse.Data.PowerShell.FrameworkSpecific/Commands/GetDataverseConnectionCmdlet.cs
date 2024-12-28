@@ -1,5 +1,4 @@
-﻿#if NETCOREAPP
-using FakeItEasy;
+﻿using FakeItEasy;
 using FakeXrmEasy.Core;
 using FakeXrmEasy.Middleware;
 using FakeXrmEasy;
@@ -8,7 +7,6 @@ using FakeXrmEasy.Abstractions.Enums;
 using FakeXrmEasy.Middleware.Crud;
 using FakeXrmEasy.Middleware.Messages;
 using FakeXrmEasy.FakeMessageExecutors;
-#endif
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using Microsoft.PowerPlatform.Dataverse.Client;
@@ -43,12 +41,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private const string PARAMSET_USERNAMEPASSWORD = "Authenticate with username and password";
 		private const string PARAMSET_CONNECTIONSTRING = "Authenticate with Dataverse SDK connection string.";
 
-#if NETCOREAPP
 		private const string PARAMSET_MOCK = "Return a mock connection";
 
 		[Parameter(Mandatory =true, ParameterSetName =PARAMSET_MOCK) ]
 		public EntityMetadata[] Mock { get; set; }
-#endif
 
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET)]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE)]
@@ -91,7 +87,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 				switch (ParameterSetName)
 				{
-#if NETCOREAPP
 					case PARAMSET_MOCK:
 
 						IXrmFakedContext xrmFakeContext = MiddlewareBuilder
@@ -107,7 +102,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
 						result = (ServiceClient)contructor.Invoke(new object[] { xrmFakeContext.GetOrganizationService(), new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9, 2), A.Fake<ILogger>() });
 						break;
-#endif
 
 					case PARAMSET_CONNECTIONSTRING:
 						result = new ServiceClient(ConnectionString);
