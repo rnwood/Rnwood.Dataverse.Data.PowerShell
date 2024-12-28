@@ -48,7 +48,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		}
 
 		[Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of hashsets of @{\"columnnames(:operator)\"=\"value\"} to filter records by. If operator is not specified, uses an EQUALS condition (or ISNULL if null value). If more than one hashset is provided then they are logically combined using an OR condition. e.g. @{firstname=\"bob\", age=25}, @{firstname=\"sue\"} will find records where (firstname=bob AND age=25) OR (firstname=sue)")]
-		[Alias("Criteria")]
 		public Hashtable[] FilterValues
 		{
 			get;
