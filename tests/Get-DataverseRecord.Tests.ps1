@@ -89,7 +89,7 @@ Describe 'Get-DataverseRecord' {
         
         $connection = getMockConnection
         1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname:In"=@("1", "2")}
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname:In"=("1", "2")}
         $result | Should -HaveCount 2
     }
 

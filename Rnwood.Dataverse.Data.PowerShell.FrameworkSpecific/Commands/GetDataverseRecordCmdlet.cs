@@ -289,8 +289,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							throw new InvalidDataException($"The key '{filterValue.Key}' is invalid. Valid formats are 'fieldname' or 'fieldname:operator'");
 						}
 
-						includeFilterExpression.AddCondition(fieldName, op,
-															 filterValue.Value);
+						if (filterValue.Value is Array array)
+						{
+							includeFilterExpression.AddCondition(fieldName, op, (object[])array);
+						} else
+						{
+							includeFilterExpression.AddCondition(fieldName, op, filterValue.Value);
+						}
 					}
 				}
 			}
