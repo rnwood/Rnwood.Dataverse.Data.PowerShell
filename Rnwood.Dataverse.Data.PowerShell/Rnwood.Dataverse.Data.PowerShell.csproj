@@ -43,7 +43,7 @@
 
   </Target>
 
-  <Target Name="BuildHelp" DependsOnTargets="BuildFrameworkSpecifics" AfterTargets="Build">
+  <Target Name="BuildHelp" DependsOnTargets="BuildFrameworkSpecifics" AfterTargets="Build" Inputs="$(ProjectDir)/docs" Outputs="$(TargetDir)/en-GB">
     <Message Text="Building help to $(TargetDir)" Importance="high" />
     <Message Text="pwsh -file &quot;$(ProjectDir)updatehelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\\&quot;))&quot;" Importance="high" />
     <Exec Command="pwsh -file &quot;$(ProjectDir)updatehelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\\&quot;))&quot;" />
