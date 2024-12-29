@@ -41,7 +41,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of record to be created or updated.")]
 		public Guid Id { get; set; }
 
-		[Parameter(Mandatory = false, HelpMessage = "List of list of column names that identify an existing record to update based on the values of those columns in the InputObject. These are used if a record with and Id matching the value of the Id cannot be found. The first list that returns a match is used. e.g. (\"firstname\", \"lastname\"), \"fullname\" will try to find an existing record based on the firstname AND listname from the InputObject and if not found it will try by fullname. Not supported with -Upsert")]
+		[Parameter(Mandatory = false, HelpMessage = "List of list of column names that identify an existing record to update based on the values of those columns in the InputObject. For update/create these are used if a record with and Id matching the value of the Id cannot be found. The first list that returns a match is used. e.g. (\"firstname\", \"lastname\"), \"fullname\" will try to find an existing record based on the firstname AND listname from the InputObject and if not found it will try by fullname. For upsert only a single list is allowed and it must match the properties of an alternate key defined on the table.")]
 		public string[][] MatchOn { get; set; }
 
 		[Parameter(HelpMessage = "If specified, the InputObject is written to the pipeline with an Id property set indicating the primary key of the affected record (even if nothing was updated).")]
@@ -110,7 +110,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				if (value is EntityReference er)
 				{
 					return $"{er.LogicalName}:{er.Id}";
-				} 
+				}
 
 				if (value is Entity en)
 				{
@@ -432,13 +432,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			bool result = true;
 
-			if (NoCreate || NoUpdate || MatchOn != null)
+			if (NoCreate || NoUpdate)
 			{
-				throw new ArgumentException("-NoCreate, -NoUpdate and -MatchOn are not supported with -Upsert");
+				throw new ArgumentException("-NoCreate and -NoUpdate are not supported with -Upsert");
 			}
 
 			if (entityMetadata.IsIntersect.GetValueOrDefault())
 			{
+				if (MatchOn != null)
+				{
+					throw new ArgumentException("-MatchOn is not supported for -Upsert of M:M");
+				}
+
 				ManyToManyRelationshipMetadata manyToManyRelationshipMetadata = entityMetadata.ManyToManyRelationships[0];
 
 				EntityReference record1 = new EntityReference(manyToManyRelationshipMetadata.Entity1LogicalName,
@@ -487,6 +492,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			else
 			{
 				Entity targetUpdate = new Entity(target.LogicalName) { Id = target.Id };
+
+				if (MatchOn != null)
+				{
+					if (MatchOn.Length > 1)
+					{
+						throw new NotSupportedException("MatchOn must only have a single array when used with Upsert");
+					}
+
+					var key = entityMetadataFactory.GetMetadata(target.LogicalName).Keys.FirstOrDefault(k => k.KeyAttributes.Length == MatchOn[0].Length && k.KeyAttributes.All(a => MatchOn[0].Contains(a)));
+					if (key == null)
+					{
+						throw new ArgumentException($"MatchOn must match a key that is defined on the table");
+					}
+
+					targetUpdate.KeyAttributes = new KeyAttributeCollection();
+
+					foreach (var matchOnField in MatchOn[0])
+					{
+						targetUpdate.KeyAttributes.Add(matchOnField, target.GetAttributeValue<object>(matchOnField));
+					}
+				}
+
 				targetUpdate.Attributes.AddRange(target.Attributes.Where(a => !dontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
 
 				string columnSummary = GetColumnSummary(targetUpdate);
@@ -498,35 +525,50 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 				if (_nextBatchItems != null)
 				{
-					if (target.Id == Guid.Empty)
+					if (targetUpdate.Id == Guid.Empty && targetUpdate.KeyAttributes.Count == 0)
 					{
 						targetUpdate.Id = Guid.NewGuid();
 					}
 
 					var inputObject = InputObject;
 
-					WriteVerbose(string.Format("Added upsert of new record {0}:{1} to batch - columns:\n{2}", TableName, targetUpdate.Id, columnSummary));
-					QueueBatchItem(new BatchItem(InputObject, request, (response) => { UpsertCompletion(targetUpdate, inputObject, columnSummary, (UpsertResponse)response); }), CallerId);
+					WriteVerbose(string.Format("Added upsert of new record {0}:{1} to batch - columns:\n{2}", TableName, GetKeySummary(targetUpdate), columnSummary));
+					QueueBatchItem(new BatchItem(InputObject, request, (response) => { UpsertCompletion(targetUpdate, inputObject, (UpsertResponse)response); }), CallerId);
 				}
 				else
 				{
-					if (ShouldProcess(string.Format("Upsert record {0}:{1} columns:\n{2}", TableName, targetUpdate.Id, columnSummary)))
+					if (ShouldProcess(string.Format("Upsert record {0}:{1} columns:\n{2}", TableName, GetKeySummary(targetUpdate), columnSummary)))
 					{
 						try
 						{
 							UpsertResponse response = (UpsertResponse)Connection.Execute(request);
-							UpsertCompletion(targetUpdate, InputObject, columnSummary, response);
+							UpsertCompletion(targetUpdate, InputObject, response);
 						}
 						catch (Exception e)
 						{
 							result = false;
-							WriteError(new ErrorRecord(new Exception(string.Format("Error creating record {0}:{1} {2}, columns: {3}", TableName, targetUpdate.Id, e.Message, columnSummary), e), null, ErrorCategory.InvalidResult, InputObject));
+							WriteError(new ErrorRecord(new Exception(string.Format("Error creating record {0}:{1} {2}, columns: {3}", TableName, GetKeySummary(targetUpdate), e.Message, columnSummary), e), null, ErrorCategory.InvalidResult, InputObject));
 						}
 					}
 				}
 			}
 
 			return result;
+		}
+
+		private static string GetKeySummary(Entity record)
+		{
+			if (record.Id != Guid.Empty)
+			{
+				return record.Id.ToString();
+			}
+
+			if (record.KeyAttributes.Any())
+			{
+				return string.Join(",", record.KeyAttributes.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+			}
+
+			return "<No ID>"; 
 		}
 
 		private void AssociateUpsertGetIdCompletion(OrganizationResponse response, PSObject inputObject)
@@ -542,24 +584,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			WriteObject(inputObject);
 		}
 
-		private void UpsertCompletion(Entity targetUpdate, PSObject inputObject, string columnSummary, UpsertResponse response)
+		private void UpsertCompletion(Entity targetUpdate, PSObject inputObject, UpsertResponse response)
 		{
-			Guid id = response.Target.Id;
+			targetUpdate.Id = response.Target.Id;
 
 			if (inputObject.Properties.Any(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase)))
 			{
 				inputObject.Properties.Remove("Id");
 			}
 
-			inputObject.Properties.Add(new PSNoteProperty("Id", id));
+			inputObject.Properties.Add(new PSNoteProperty("Id", targetUpdate.Id));
+
+			string columnSummary = GetColumnSummary(targetUpdate);
 
 			if (response.RecordCreated)
 			{
-				WriteVerbose(string.Format("Upsert created new record {0}:{1} columns:\n{2}", TableName, targetUpdate.Id, columnSummary));
+				WriteVerbose(string.Format("Upsert created new record {0}:{1} columns:\n{2}", TableName, GetKeySummary(targetUpdate), columnSummary));
 			}
 			else
 			{
-				WriteVerbose(string.Format("Upsert updated existing record {0}:{1} columns:\n{2}", TableName, targetUpdate.Id, columnSummary));
+				WriteVerbose(string.Format("Upsert updated existing record {0}:{1} columns:\n{2}", TableName, GetKeySummary(targetUpdate), columnSummary));
 			}
 
 			if (PassThru.IsPresent)
@@ -897,16 +941,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					{
 						QueryByAttribute matchOnQuery = new QueryByAttribute(TableName);
 						matchOnQuery.TopCount = 2;
-
-						if (entityMetadata.Attributes.Any(a => string.Equals(a.LogicalName, "statecode", StringComparison.OrdinalIgnoreCase)))
-						{
-							matchOnQuery.AddAttributeValue("statecode", 0);
-						}
-
-						if (entityMetadata.Attributes.Any(a => string.Equals(a.LogicalName, "isdisabled", StringComparison.OrdinalIgnoreCase)))
-						{
-							matchOnQuery.AddAttributeValue("isdisabled", false);
-						}
 
 						foreach (string matchOnColumn in matchOnColumnList)
 						{
