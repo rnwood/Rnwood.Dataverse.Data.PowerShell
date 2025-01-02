@@ -225,4 +225,17 @@ Describe 'Get-DataverseRecord' {
         $result | SHould -HaveCount 1
         $result.firstname | Should -be "Joe"
     }
+
+    It "Given fetchxml, it works" {
+        $connection = getMockConnection
+        @{"firstname" = "Rob"; "lastname" = "One" },  
+        @{"firstname" = "Joe"; "lastname" = "One" },
+        @{"firstname" = "Rob"; "lastname" = "Two" } | 
+        Set-DataverseRecord -connection $connection -TableName contact
+
+        $result = Get-DataverseRecord -Connection $connection -fetchxml "<fetch> <entity name='contact'> <attribute name='firstname' /> <filter type='and'> <condition attribute='firstname' operator='eq' value='Rob' /> </filter> </entity></fetch>"
+        $result | Should -HaveCount 2
+
+
+    }
 }

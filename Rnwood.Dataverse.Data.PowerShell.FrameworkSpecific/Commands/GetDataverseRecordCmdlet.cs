@@ -158,10 +158,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();
-
-			entiyMetadataFactory = new EntityMetadataFactory(Connection);
-			entityConverter = new DataverseEntityConverter(Connection, entiyMetadataFactory);
-			entityMetadata = entiyMetadataFactory.GetMetadata(TableName);
 		}
 
 		protected override void ProcessRecord()
@@ -202,6 +198,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				default:
 					throw new NotImplementedException($"ParameterSetName not implemented: {ParameterSetName}");
 			}
+
+			entiyMetadataFactory = new EntityMetadataFactory(Connection);
+			entityConverter = new DataverseEntityConverter(Connection, entiyMetadataFactory);
+			entityMetadata = entiyMetadataFactory.GetMetadata(query.EntityName);
 
 			if (RecordCount || VerboseRecordCount)
 			{
