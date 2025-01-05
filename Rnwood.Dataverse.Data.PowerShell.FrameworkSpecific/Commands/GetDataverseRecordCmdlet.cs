@@ -185,23 +185,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private void ExecuteQuery()
 		{
+			entiyMetadataFactory = new EntityMetadataFactory(Connection);
+			entityConverter = new DataverseEntityConverter(Connection, entiyMetadataFactory);
+
 			QueryExpression query;
 
 			switch (ParameterSetName)
 			{
 				case PARAMSET_FETCHXML:
 					query = GetFetchXmlQuery();
+					entityMetadata = entiyMetadataFactory.GetMetadata(query.EntityName);
 					break;
 				case PARAMSET_SIMPLE:
+					entityMetadata = entiyMetadataFactory.GetMetadata(TableName);
 					query = GetSimpleQuery();
 					break;
 				default:
 					throw new NotImplementedException($"ParameterSetName not implemented: {ParameterSetName}");
 			}
-
-			entiyMetadataFactory = new EntityMetadataFactory(Connection);
-			entityConverter = new DataverseEntityConverter(Connection, entiyMetadataFactory);
-			entityMetadata = entiyMetadataFactory.GetMetadata(query.EntityName);
 
 			if (RecordCount || VerboseRecordCount)
 			{

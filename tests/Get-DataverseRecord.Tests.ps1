@@ -238,4 +238,22 @@ Describe 'Get-DataverseRecord' {
 
 
     }
+
+    It "Given -Id, it retrieves the records with those IDs" {
+
+        $ids = 1..3 | ForEach-Object{ [Guid]::NewGuid() }
+
+        $connection = getMockConnection
+        @{"firstname" = "Rob"; "lastname" = "One"; "contactid"=$ids[0] },  
+        @{"firstname" = "Joe"; "lastname" = "One"; "contactid"=$ids[1] },
+        @{"firstname" = "Rob"; "lastname" = "Two"; "contactid"=$ids[2] } | 
+        Set-DataverseRecord -connection $connection -TableName contact
+
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -id $ids[0], $ids[1]
+        $result | Should -HaveCount 2
+        $result[0].Id | Should -be $ids[0]
+        $result[1].Id | Should -be $ids[1]
+
+
+    }
 }
