@@ -349,22 +349,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -LookupValuesReturnName
-Outputs Names for lookup values.
-The default behaviour is to output the ID.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -IncludeSystemColumns
 Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.
 
@@ -387,6 +371,22 @@ See standard PS docs.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LookupValuesReturnName
+Outputs Names for lookup values.
+The default behaviour is to output the ID.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named
