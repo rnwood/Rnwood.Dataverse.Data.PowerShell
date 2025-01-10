@@ -597,32 +597,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 case AttributeTypeCode.Status:
                 case AttributeTypeCode.State:
                     {
-                        if (!string.IsNullOrWhiteSpace(stringValue))
-                        {
-                            EnumAttributeMetadata pickListAttributeMetadata = (EnumAttributeMetadata)attributeMetadata;
-                            convertedValue = pickListAttributeMetadata.OptionSet.Options
-                                .Where(o => string.Equals(o.Label.UserLocalizedLabel.Label, stringValue, StringComparison.OrdinalIgnoreCase))
-                                .Select(o => new OptionSetValue(o.Value.Value))
-                                .FirstOrDefault();
-
-                            if (convertedValue == null)
-                            {
-                                int intValue;
-                                if (int.TryParse(stringValue, out intValue))
-                                {
-                                    convertedValue = new OptionSetValue(intValue);
-                                }
-                            }
-
-                            if (convertedValue == null)
-                            {
-                                throw new FormatException(string.Format("Could not find options set value for matching label or value for string '{0}' for attribute {1}", stringValue, propertyName));
-                            }
-                        }
-                        else
-                        {
-                            convertedValue = null;
-                        }
+                        convertedValue = ConvertPicklistToDataverseValue(propertyName, attributeMetadata, stringValue);
                         break;
                     }
                 case AttributeTypeCode.Owner:
@@ -821,22 +796,60 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             break;
                         }
 
-                        if (!(psValue is IEnumerable enumerable))
+                        if (psValue is string || psValue is int || !(psValue is IEnumerable enumerable))
                         {
                             enumerable = new[] { psValue };
                         }
 
                         OptionSetValueCollection optionSetValues = new OptionSetValueCollection();
-                        foreach (var item in enumerable)
+                        foreach (var itemPsValue in enumerable)
                         {
+                            string itemStringValue = Convert.ToString(itemPsValue);
 
+                            optionSetValues.Add(ConvertPicklistToDataverseValue(propertyName, attributeMetadata, itemStringValue));
                         }
 
                         convertedValue = optionSetValues;
 
                     }
+                    else
+                    {
+                        throw new NotImplementedException("Conversion to column type " + attributeMetadata.AttributeType.Value + " not implemented");
+                    }
+                    break;
+            }
 
-                    throw new NotImplementedException("Conversion to column type " + attributeMetadata.AttributeType.Value + " not implemented");
+            return convertedValue;
+        }
+
+        private static OptionSetValue ConvertPicklistToDataverseValue(string propertyName, AttributeMetadata attributeMetadata, string stringValue)
+        {
+            OptionSetValue convertedValue;
+            if (!string.IsNullOrWhiteSpace(stringValue))
+            {
+                EnumAttributeMetadata pickListAttributeMetadata = (EnumAttributeMetadata)attributeMetadata;
+                convertedValue = pickListAttributeMetadata.OptionSet.Options
+                    .Where(o => string.Equals(o.Label.UserLocalizedLabel.Label, stringValue, StringComparison.OrdinalIgnoreCase))
+                    .Select(o => new OptionSetValue(o.Value.Value))
+                    .FirstOrDefault();
+
+                if (convertedValue == null)
+                {
+                    int intValue;
+                    if (int.TryParse(stringValue, out intValue))
+                    {
+                        convertedValue = new OptionSetValue(intValue);
+                    }
+                }
+
+                if (convertedValue == null)
+                {
+                    throw new FormatException(string.Format("Could not find options set value for matching label or value for string '{0}' for attribute {1}", stringValue, propertyName));
+                }
+            }
+            else
+            {
+                convertedValue = null;
             }
 
             return convertedValue;
