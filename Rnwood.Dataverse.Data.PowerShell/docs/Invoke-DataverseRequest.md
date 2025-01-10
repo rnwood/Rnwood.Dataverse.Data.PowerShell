@@ -20,14 +20,14 @@ Invoke-DataverseRequest -Connection <ServiceClient> -Request <OrganizationReques
 
 ### NameAndInputs
 ```
-Invoke-DataverseRequest -Connection <ServiceClient> -RequestName <String> [-Parameters <Hashtable>]
+Invoke-DataverseRequest -Connection <ServiceClient> [-RequestName] <String> [[-Parameters] <Hashtable>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### REST
 ```
-Invoke-DataverseRequest -Connection <ServiceClient> -Method <HttpMethod> -Path <String> [-Body <PSObject>]
- [-CustomHeaders <Hashtable>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Invoke-DataverseRequest -Connection <ServiceClient> [-Method] <HttpMethod> [-Path] <String>
+ [[-Body] <PSObject>] [-CustomHeaders <Hashtable>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -73,84 +73,6 @@ Invokes the `GET` `myapi_Example` REST API using custom headers and body
 
 ## PARAMETERS
 
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet
-
-```yaml
-Type: ServiceClient
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Request
-Request to execute using the `OrganizationRequest` class or subclass from the SDK.
-
-See
-https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.organizationrequest?view=dataverse-sdk-latest
-
-```yaml
-Type: OrganizationRequest
-Parameter Sets: Request
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-See standard PS docs.
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Parameters
-{{ Fill Parameters Description }}
-
-```yaml
-Type: Hashtable
-Parameter Sets: NameAndInputs
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -RequestName
-{{ Fill RequestName Description }}
-
-```yaml
-Type: String
-Parameter Sets: NameAndInputs
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Body
 {{ Fill Body Description }}
 
@@ -160,33 +82,18 @@ Parameter Sets: REST
 Aliases:
 
 Required: False
-Position: Named
+Position: 2
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Method
-{{ Fill Method Description }}
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnnection cmdlet
 
 ```yaml
-Type: HttpMethod
-Parameter Sets: REST
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Path
-{{ Fill Path Description }}
-
-```yaml
-Type: String
-Parameter Sets: REST
+Type: ServiceClient
+Parameter Sets: (All)
 Aliases:
 
 Required: True
@@ -211,13 +118,109 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Method
+{{ Fill Method Description }}
+
+```yaml
+Type: HttpMethod
+Parameter Sets: REST
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parameters
+{{ Fill Parameters Description }}
+
+```yaml
+Type: Hashtable
+Parameter Sets: NameAndInputs
+Aliases:
+
+Required: False
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Path
+{{ Fill Path Description }}
+
+```yaml
+Type: String
+Parameter Sets: REST
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Request
+Request to execute using the `OrganizationRequest` class or subclass from the SDK.
+
+See
+https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.organizationrequest?view=dataverse-sdk-latest
+
+```yaml
+Type: OrganizationRequest
+Parameter Sets: Request
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -RequestName
+{{ Fill RequestName Description }}
+
+```yaml
+Type: String
+Parameter Sets: NameAndInputs
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+See standard PS docs.
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
+### Microsoft.Xrm.Sdk.OrganizationRequest
+
 ## OUTPUTS
 
+### System.Object
 ## NOTES
 
 ## RELATED LINKS

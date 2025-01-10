@@ -809,14 +809,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		}
 
 		private string GetColumnSummary(Entity entity)
-		{
-			DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
-			PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(entity.Attributes.Select(a => a.Key).ToArray()), a => ValueType.Raw);
+        {
+            DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
+            PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(entity.Attributes.Select(a => a.Key).ToArray()), a => ValueType.Raw);
 
-			return string.Join("\n", psObject.Properties.Select(a => a.Name + " = " + Ellipsis((a.Value ?? "<null>").ToString())));
-		}
+            return string.Join("\n", psObject.Properties.Select(a => a.Name + " = " + Ellipsis((GetValueSummary(a.Value)).ToString())));
+        }
 
-		private string[] dontUpdateDirectlyColumnNames = new[] { "statuscode", "statecode", "ownerid" };
+        private static object GetValueSummary(object value)
+        {
+			if ((!(value is string)) && value is IEnumerable enumberable)
+			{
+				return "[" + string.Join(", ", enumberable.Cast<object>().Select( i=>GetValueSummary(i))) + "]";
+			}
+
+            return value ?? "<null>";
+        }
+
+        private string[] dontUpdateDirectlyColumnNames = new[] { "statuscode", "statecode", "ownerid" };
 
 		private void UpdateExistingRecord(EntityMetadata entityMetadata, Entity target, Entity existingRecord)
 		{
@@ -1019,6 +1029,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					((column.Value == null || column.Value as string == "") && !existingRecord.Contains(column.Key)))
 				{
 					target.Attributes.Remove(column.Key);
+				} else if (existingRecord.GetAttributeValue<object>(column.Key) is OptionSetValueCollection existingCollection && target.GetAttributeValue<object>(column.Key) is OptionSetValueCollection targetCollection)
+				{
+					if (existingCollection.Count == targetCollection.Count && targetCollection.All(existingCollection.Contains))
+					{
+						target.Attributes.Remove(column.Key);
+					}
 				}
 			}
 
