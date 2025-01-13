@@ -85,6 +85,15 @@ Describe 'Get-DataverseRecord' {
         $result | Should -HaveCount 0
     }
 
+    It "Given filter with implicit operator not requiring a value, gets all records matching using that operator" {
+        
+        $connection = getMockConnection
+        1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
+        @{"firstname" = "" } | Set-DataverseRecord -Connection $connection -TableName contact
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname"="$null"}
+        $result | Should -HaveCount 1
+    }
+
     It "Given filter with explicit operator requiring multiple values, gets all records matching using that operator" {
         
         $connection = getMockConnection
