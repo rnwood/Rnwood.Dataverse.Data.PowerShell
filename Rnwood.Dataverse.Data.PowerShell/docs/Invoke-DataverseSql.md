@@ -53,51 +53,6 @@ Returns the rows from the SELECT query matching the @lastname parameters which a
 
 ## PARAMETERS
 
-### -BatchSize
-Controls the batch size used by Sql4Cds.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -BypassCustomPluginExecution
-Bypasses custom plugins. See Sql4Cds docs.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnnection cmdlet
 
@@ -107,21 +62,6 @@ Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -MaxDegreeOfParallelism
-Maximum number of threads to use. See Sql4Cds docs.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -160,8 +100,22 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Timeout
-Timeout for query to execute. See Sql4Cds docs.
+### -ProgressAction
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -BatchSize
+Controls the batch size used by Sql4Cds.
 
 ```yaml
 Type: Int32
@@ -190,6 +144,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -WhatIf
 Shows what would happen if the cmdlet runs. The cmdlet is not run. Does not apply to read only queries.
 
@@ -205,12 +174,43 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
+### -MaxDegreeOfParallelism
+Maximum number of threads to use. See Sql4Cds docs.
 
 ```yaml
-Type: ActionPreference
+Type: Int32
 Parameter Sets: (All)
-Aliases: proga
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Timeout
+Timeout for query to execute. See Sql4Cds docs.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -BypassCustomPluginExecution
+Bypasses custom plugins. See Sql4Cds docs.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named
@@ -225,9 +225,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.String
-
 ### System.Management.Automation.PSObject
-
 ## OUTPUTS
 
 ### System.Object
