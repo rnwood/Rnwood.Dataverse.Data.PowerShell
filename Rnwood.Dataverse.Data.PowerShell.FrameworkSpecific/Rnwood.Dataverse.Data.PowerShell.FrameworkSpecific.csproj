@@ -18,6 +18,7 @@
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Castle.Core" Version="5.1.1" />
     <PackageReference Include="MarkMpn.Sql4Cds.Engine" Version="9.6.0" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.69.1" />
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.3" />
