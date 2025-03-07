@@ -35,4 +35,24 @@ Describe "Module" {
             throw "Failed"
         }
     }
+
+    It "Can connect to a real env and query some data with SQL" {
+        pwsh -noninteractive -noprofile -command {
+            $env:PSModulePath = $env:ChildProcessPSModulePath
+           
+
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+
+            try {
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+                Invoke-DataverseSql -Connection $connection -Sql "SELECT * FROM systemuser"
+            } catch {
+                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+            }
+        }
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed"
+        }
+    }
 }
