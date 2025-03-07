@@ -14,7 +14,7 @@ Writes a list of Dataverse records to a folder of JSON files.
 
 ```
 Set-DataverseRecordsFolder [-OutputPath] <String> [[-InputObject] <PSObject>] [-withdeletions]
- [[-idproperties] <String[]>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-idproperties <String[]>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -61,16 +61,16 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -idproperties
-Specifies the list of properties that will be used to generate a unique name for each file. By default this is "Id".
+### -ProgressAction
+See standard PS docs.
 
 ```yaml
-Type: String[]
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases:
+Aliases: proga
 
 Required: False
-Position: 2
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -91,13 +91,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-See standard PS docs.
+### -idproperties
+Specifies the list of properties that will be used to generate a unique name for each file. By default this is "Id".
 
 ```yaml
-Type: ActionPreference
+Type: String[]
 Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named
@@ -112,7 +112,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Management.Automation.PSObject
-
 ## OUTPUTS
 
 ### System.Object

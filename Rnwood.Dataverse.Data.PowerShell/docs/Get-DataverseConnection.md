@@ -159,21 +159,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Mock
-{{ Fill Mock Description }}
-
-```yaml
-Type: EntityMetadata[]
-Parameter Sets: Return a mock connection
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Password
 Password to authenticate with.
 
@@ -246,17 +231,30 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Mock
+{{ Fill Mock Description }}
+
+```yaml
+Type: EntityMetadata[]
+Parameter Sets: Return a mock connection
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### None
-
 ## OUTPUTS
 
 ### Microsoft.PowerPlatform.Dataverse.Client.ServiceClient
-
 ## NOTES
 
 ## RELATED LINKS
