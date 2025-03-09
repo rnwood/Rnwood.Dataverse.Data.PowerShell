@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net462</TargetFrameworks>
+    <TargetFrameworks>net6.0;net462</TargetFrameworks>
     <AssemblyTitle>Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific</AssemblyTitle>
     <Product>Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific</Product>
     <Copyright>Copyright © 2023-2024</Copyright>
@@ -41,7 +41,7 @@
     <PackageReference Include="System.ServiceModel.Primitives" Version="[4.10.3]" />
     <PackageReference Include="System.ServiceModel.Http" Version="[4.10.3]" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <PackageReference Include="FakeXrmEasy.v9">
       <Version>3.4.2</Version>
     </PackageReference>
