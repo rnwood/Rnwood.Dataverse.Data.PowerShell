@@ -23,6 +23,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AuthenticationResult = Microsoft.Identity.Client.AuthenticationResult;
+using System.Security;
 
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -234,7 +235,7 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-			AuthenticationResult authResult = await app.AcquireTokenByUsernamePassword(scopes, Username, Password).ExecuteAsync();
+			AuthenticationResult authResult = await app.AcquireTokenByUsernamePassword(scopes, Username, new NetworkCredential("", Password).SecurePassword).ExecuteAsync();
 
 
 			return authResult.AccessToken;
