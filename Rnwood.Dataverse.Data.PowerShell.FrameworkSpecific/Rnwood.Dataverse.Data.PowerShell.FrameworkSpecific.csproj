@@ -43,12 +43,12 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <PackageReference Include="FakeXrmEasy.v9">
-      <Version>3.4.2</Version>
+      <Version>3.6.0</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <PackageReference Include="FakeXrmEasy.v9">
-      <Version>2.6.1</Version>
+      <Version>3.6.0</Version>
     </PackageReference>
   </ItemGroup>
 </Project>
