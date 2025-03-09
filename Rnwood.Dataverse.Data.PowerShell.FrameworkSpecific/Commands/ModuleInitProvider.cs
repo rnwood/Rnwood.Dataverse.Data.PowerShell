@@ -20,6 +20,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Commands
 
 
 			Assembly.Load(new AssemblyName("Microsoft.Xrm.Sdk"));
+			Assembly.Load(new AssemblyName("System.ServiceModel.Primitives"));
 		}
 
 		private static System.Reflection.Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
