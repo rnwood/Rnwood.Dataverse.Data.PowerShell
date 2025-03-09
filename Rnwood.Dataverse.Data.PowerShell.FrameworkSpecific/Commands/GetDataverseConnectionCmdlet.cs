@@ -1,13 +1,4 @@
-﻿using FakeItEasy;
-using FakeXrmEasy.Core;
-using FakeXrmEasy.Middleware;
-using FakeXrmEasy;
-﻿using FakeXrmEasy.Abstractions;
-using FakeXrmEasy.Abstractions.Enums;
-using FakeXrmEasy.Middleware.Crud;
-using FakeXrmEasy.Middleware.Messages;
-using FakeXrmEasy.FakeMessageExecutors;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
@@ -40,11 +31,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private const string PARAMSET_DEVICECODE = "Authenticate using the device code flow";
 		private const string PARAMSET_USERNAMEPASSWORD = "Authenticate with username and password";
 		private const string PARAMSET_CONNECTIONSTRING = "Authenticate with Dataverse SDK connection string.";
-
-		private const string PARAMSET_MOCK = "Return a mock connection";
-
-		[Parameter(Mandatory =true, ParameterSetName =PARAMSET_MOCK) ]
-		public EntityMetadata[] Mock { get; set; }
 
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET)]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE)]
@@ -87,21 +73,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 				switch (ParameterSetName)
 				{
-					case PARAMSET_MOCK:
-
-						IXrmFakedContext xrmFakeContext = MiddlewareBuilder
-                        .New()
-                        .AddCrud()
-						.AddFakeMessageExecutors(Assembly.GetAssembly(typeof(FakeXrmEasy.FakeMessageExecutors.RetrieveEntityRequestExecutor)))
-						.UseMessages()
-                        .UseCrud()
-                        .SetLicense(FakeXrmEasyLicense.RPL_1_5)
-                        .Build();
-						xrmFakeContext.InitializeMetadata(Mock);
-
-						ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
-						result = (ServiceClient)contructor.Invoke(new object[] { xrmFakeContext.GetOrganizationService(), new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9, 2), A.Fake<ILogger>() });
-						break;
 
 					case PARAMSET_CONNECTIONSTRING:
 						result = new ServiceClient(ConnectionString);
