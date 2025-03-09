@@ -31,8 +31,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Commands
 
 			if (File.Exists(assyFile))
 			{
+				Console.WriteLine("Resolved assembly " + args.Name);
 				return Assembly.LoadFrom(assyFile);
 			}
+
+			Console.WriteLine("Did not resolve assembly " + args.Name);
 
 			return null;
 		}
