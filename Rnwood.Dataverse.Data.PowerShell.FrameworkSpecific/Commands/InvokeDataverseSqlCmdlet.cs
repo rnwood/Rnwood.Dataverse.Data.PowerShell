@@ -131,7 +131,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		protected override void ProcessRecord()
 		{
-			WriteProgress(new ProgressRecord(1, $"Running query '{Sql}'", _progressMessage) { PercentComplete = 0, RecordType = ProgressRecordType.Processing });
+			WriteProgressAndVerbose(new ProgressRecord(1, $"Running query '{Sql}'", _progressMessage) { PercentComplete = 0, RecordType = ProgressRecordType.Processing });
 
 
 			base.ProcessRecord();
@@ -180,7 +180,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				//Wait for either the original task to complete, or a fixed wait
 				Task.WaitAny(task, Task.Delay(100));
 
-				WriteProgress(new ProgressRecord(1, $"Running query '{Sql}'", _progressMessage) { PercentComplete = _progressPercentage, RecordType = ProgressRecordType.Processing });
+				WriteProgressAndVerbose(new ProgressRecord(1, $"Running query '{Sql}'", _progressMessage) { PercentComplete = _progressPercentage, RecordType = ProgressRecordType.Processing });
 
 				while (_infoMessages.TryDequeue(out var infoMessage))
 				{
@@ -217,8 +217,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				}
 			}
 
-			WriteProgress(new ProgressRecord(1, @"Running query '{Sql}'", "Done") { PercentComplete = 100, RecordType = ProgressRecordType.Completed });
+			WriteProgressAndVerbose(new ProgressRecord(1, @"Running query '{Sql}'", "Done") { PercentComplete = 100, RecordType = ProgressRecordType.Completed });
 
+		}
+
+		private void WriteProgressAndVerbose(ProgressRecord progressRecord)
+		{
+			WriteProgress(progressRecord);
+			WriteVerbose($"{progressRecord.Activity}: {progressRecord.StatusDescription} {progressRecord.PercentComplete}%");
 		}
 	}
 }
