@@ -68,6 +68,7 @@ NestedModules =
 	@(
 		"net6.0/Rnwood.Dataverse.Data.PowerShell.Loader.dll",
 		"net6.0/Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll",
+		"net6.0/Microsoft.Xrm.Sdk.dll",
 		"Get-DataverseRecordsFolder.psm1",
 		"Set-DataverseRecordsFolder.psm1"
 	)
@@ -76,6 +77,7 @@ NestedModules =
 	 @(
 		"net462/Rnwood.Dataverse.Data.PowerShell.Loader.dll",
 		"net462/Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll",
+		"net462/Microsoft.Xrm.Sdk.dll",
 		"Get-DataverseRecordsFolder.psm1",
 		"Set-DataverseRecordsFolder.psm1"
 	 )
