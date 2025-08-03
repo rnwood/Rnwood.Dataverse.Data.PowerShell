@@ -24,9 +24,6 @@ jobs:
           - os: windows-latest
             publish: false
             powershell_version: latest
-          - os: ubuntu-latest
-            publish: false
-            powershell_version: '5'
           - os: windows-latest
             publish: true
             powershell_version: '5'
