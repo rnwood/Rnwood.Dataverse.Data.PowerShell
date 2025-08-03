@@ -13,15 +13,29 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            powershell: false
             publish: false
+            powershell_version: "7.4.11"
           - os: windows-latest
-            powershell: true
+            publish: false
+            powershell_version: "7.4.11"
+          - os: ubuntu-latest
+            publish: false
+            powershell_version: latest
+          - os: windows-latest
+            publish: false
+            powershell_version: latest
+          - os: windows-latest
             publish: true
+            powershell_version: '5'
 
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - if: ${{ matrix.powershell_version != '5' }}
+        name: Install PowerShell ${{ matrix.powershell_version }}
+        uses: PSModule/install-powershell@v1
+        with:
+          Version: ${{ matrix.powershell_version }}
       - name: Build
         shell: pwsh
         run: |       
@@ -36,9 +50,11 @@ jobs:
             remove-item -force -recurse out/Rnwood.Dataverse.Data.PowerShell
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
-      - name: Test - pwsh
+      - if: ${{ matrix.powershell_version != '5' }}
+        name: Test - pwsh
         shell: pwsh
-        run: |  
+        run: |
+          Write-Host "Using PowerShell $($PSVersionTable.PSVersion)"    
           $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
 
           Install-Module -force Pester
@@ -46,7 +62,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "Tests failed"
           }
-      - if: ${{ matrix.powershell }}
+      - if:  ${{ matrix.powershell_version == '5' }}
         name: Test - powershell
         shell: powershell
         run: |  
@@ -57,13 +73,15 @@ jobs:
             if ($LASTEXITCODE -ne 0) {
               throw "Tests failed"
             }
-      - name: E2E Test - pwsh
+      - if: ${{ matrix.powershell_version != '5' }}
+        name: E2E Test - pwsh
         shell: pwsh
         env:
           E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
           E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
           E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
         run: |  
+          Write-Host "Using PowerShell $($PSVersionTable.PSVersion)"
           $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
 
           Install-Module -force Pester
@@ -71,7 +89,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "Tests failed"
           }
-      - if: ${{matrix.powershell}} 
+      - if:  ${{ matrix.powershell_version == '5' }}
         name: E2E Test - powershell
         shell: powershell
         env:
