@@ -47,9 +47,9 @@ Describe "Module" {
             $modulefolder = (Get-Module -ListAvailable Rnwood.Dataverse.Data.PowerShell).ModuleBase
 
             if ($PSVersionTable.PSEdition -eq "Core") {
-                add-type -AssemblyName $modulefolder/net6.0/Microsoft.Xrm.Sdk.dll
+                add-type -AssemblyName $modulefolder/cmdlets/net6.0/Microsoft.Xrm.Sdk.dll
             } else {
-                add-type -AssemblyName $modulefolder/net462/Microsoft.Xrm.Sdk.dll
+                add-type -AssemblyName $modulefolder/cmdlets/net462/Microsoft.Xrm.Sdk.dll
             }
 
             Import-Module Rnwood.Dataverse.Data.PowerShell
