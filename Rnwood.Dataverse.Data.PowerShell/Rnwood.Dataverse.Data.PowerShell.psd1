@@ -74,8 +74,8 @@ NestedModules =
 }
  else {
 	 @(
-		"loader/net461/Rnwood.Dataverse.Data.PowerShell.Loader.dll",
-		"cmdlets/net461/Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll",
+		"loader/net462/Rnwood.Dataverse.Data.PowerShell.Loader.dll",
+		"cmdlets/net462/Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll",
 		"Get-DataverseRecordsFolder.psm1",
 		"Set-DataverseRecordsFolder.psm1"
 	 )

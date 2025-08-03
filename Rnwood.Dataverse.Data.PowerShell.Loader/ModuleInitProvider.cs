@@ -13,9 +13,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 	{
 		public void OnImport()
 		{
-			string basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/../../cmdlets/net6.0";
 
 #if NET
+			string basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/../../cmdlets/net6.0";
 			var alc = new CmdletsLoadContext(basePath);
 
 			AssemblyLoadContext.Default.Resolving += (s, args) =>
@@ -31,7 +31,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 			//Load the assembly
 			AssemblyLoadContext.Default.LoadFromAssemblyName(new AssemblyName("Rnwood.Dataverse.Data.PowerShell.Cmdlets"));
 #else
-
+			string basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/../../cmdlets/net462";
 
 			AppDomain.CurrentDomain.AssemblyResolve += (s, args) =>
 			{
