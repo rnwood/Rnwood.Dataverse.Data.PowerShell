@@ -16,12 +16,22 @@ jobs:
             powershell: false
             publish: false
             pwsh: true
-            pwsh_version: ["7.4.11", "latest"]
+            pwsh_version: "7.4.11"
           - os: windows-latest
             powershell: false
             publish: false
             pwsh: true
-            pwsh_version: ["7.4.11", "latest"]
+            pwsh_version: "7.4.11"
+          - os: ubuntu-latest
+            powershell: false
+            publish: false
+            pwsh: true
+            pwsh_version: latest
+          - os: windows-latest
+            powershell: false
+            publish: false
+            pwsh: true
+            pwsh_version: latest
           - os: ubuntu-latest
             powershell: true
             publish: false
