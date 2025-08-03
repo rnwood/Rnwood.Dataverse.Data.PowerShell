@@ -15,13 +15,32 @@ jobs:
           - os: ubuntu-latest
             powershell: false
             publish: false
+            pwsh: true
+            pwsh_version: ["7.4.11", "latest"]
+          - os: windows-latest
+            powershell: false
+            publish: false
+            pwsh: true
+            pwsh_version: ["7.4.11", "latest"]
+          - os: ubuntu-latest
+            powershell: true
+            publish: false
+            pwsh: false
+            pwsh_version: ignored
           - os: windows-latest
             powershell: true
             publish: true
+            pwsh: false
+            pwsh_version: ignored
 
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - if: ${{ matrix.pwsh }}
+        name: Install PowerShell ${{ matrix.pwsh_version }}
+        uses: PSModule/install-powershell@v1
+        with:
+          Version: ${{ matrix.pwsh_version }}
       - name: Build
         shell: pwsh
         run: |       
@@ -36,9 +55,11 @@ jobs:
             remove-item -force -recurse out/Rnwood.Dataverse.Data.PowerShell
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
-      - name: Test - pwsh
+      - if: ${{ matrix.pwsh }}
+        name: Test - pwsh
         shell: pwsh
-        run: |  
+        run: |
+          Write-Host "Using PowerShell $($PSVersionTable.PSVersion)"    
           $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
 
           Install-Module -force Pester
@@ -57,13 +78,15 @@ jobs:
             if ($LASTEXITCODE -ne 0) {
               throw "Tests failed"
             }
-      - name: E2E Test - pwsh
+      - if: ${{ matrix.pwsh }}
+        name: E2E Test - pwsh
         shell: pwsh
         env:
           E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
           E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
           E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
         run: |  
+          Write-Host "Using PowerShell $($PSVersionTable.PSVersion)"
           $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
 
           Install-Module -force Pester
