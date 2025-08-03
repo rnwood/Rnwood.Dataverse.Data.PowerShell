@@ -40,9 +40,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 
 				if (File.Exists(path))
 				{
+					Console.WriteLine("Assembly " + assemblyName.Name + " redirected");
 					return Assembly.LoadFrom(path);
 				}
 
+				Console.WriteLine("Assembly " + assemblyName.Name + " not resolved");
 				return null;
 			};
 #endif
@@ -68,7 +70,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 
 				if (File.Exists(path))
 				{
-				Console.WriteLine("Assembly " + assemblyName.Name + " redirected");
+					Console.WriteLine("Assembly " + assemblyName.Name + " redirected");
 					return LoadFromAssemblyPath(path);
 				} else {
 					Console.WriteLine("Assembly " + assemblyName.Name + " not resolved");
