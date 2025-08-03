@@ -28,30 +28,40 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private ConcurrentQueue<string> _infoMessages;
 		private ConcurrentQueue<Task> _pendingConfirmations;
 
-		[Parameter(Mandatory = true)]
+		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
+
 		public override ServiceClient Connection { get; set; }
 
 		[Parameter(Mandatory = true, HelpMessage = "SQL to execute. See Sql4Cds docs.", ValueFromRemainingArguments = true)]
 		public string Sql { get; set; }
 
-		[Parameter]
+		[Parameter(HelpMessage = "Uses the TDS endpoint for supported queries. See Sql4Cds docs")]
 		public SwitchParameter UseTdsEndpoint { get; set; }
 
-		[Parameter]
+		[Parameter(HelpMessage = "Sets the command timeout. See Sql4Cds docs")]
 		public int Timeout { get; set; } = 600;
 
-		[Parameter(ValueFromPipeline = true)]
+		[Parameter(ValueFromPipeline = true, HelpMessage ="Specifies the values to use as parameters for the query. When reading from the pipelines, each input object will execute the query once.")]
 		public PSObject Parameters { get; set; }
 
-		[Parameter]
+		[Parameter(HelpMessage = "Sets the max batch size. See Sql4Cds docs")]
 		public int? BatchSize { get; set; }
 
-		[Parameter]
+		[Parameter(HelpMessage = "Sets the max degree of paralleism. See Sql4Cds docs")]
 		public int? MaxDegreeOfParallelism { get; set; }
 
 		[Parameter(HelpMessage = "Bypasses custom plugins. See Sql4Cds docs.")]
 		public SwitchParameter BypassCustomPluginExecution { get; set; }
-	
+
+		[Parameter(HelpMessage = "Uses bulk delete for supported DELETE operations. See Sql4Cds docs.")]
+		public SwitchParameter UseBulkDelete { get; set; }
+
+		[Parameter(HelpMessage = "Returns lookup column values as simple Guid as opposed to SqlEntityReference type. See Sql4Cds docs.")]
+		public SwitchParameter ReturnEntityReferenceAsGuid { get; set; }
+
+		[Parameter(HelpMessage = "When working with date values, this property indicates the local time zone should be used. See Sql4Cds docs.")]
+		public SwitchParameter UseLocalTimezone { get; set; }
+
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();
@@ -60,6 +70,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_sqlConnection.UseTDSEndpoint = false;
 			_sqlConnection.Progress += OnSqlConnection_Progress;
 			_sqlConnection.UseTDSEndpoint = UseTdsEndpoint;
+			_sqlConnection.UseBulkDelete = UseBulkDelete;
+			_sqlConnection.ReturnEntityReferenceAsGuid = ReturnEntityReferenceAsGuid;
+			_sqlConnection.UseLocalTimeZone = UseLocalTimezone;
 			_sqlConnection.InfoMessage += OnSqlConnection_InfoMessage;
 
 			this._sqlConnection.PreInsert += GetOnSqlConnectionConfirmatonRequiredHandler("Create");
@@ -80,6 +93,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			{
 				_sqlConnection.MaxDegreeOfParallelism = MaxDegreeOfParallelism.Value;
 			}
+
 
 			_command = _sqlConnection.CreateCommand();
 			_command.CommandText = Sql;

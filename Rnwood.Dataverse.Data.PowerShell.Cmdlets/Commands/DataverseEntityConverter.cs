@@ -618,9 +618,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 nameProp = customObj.Properties.FirstOrDefault(p => p.Name.Equals("EntityName", StringComparison.OrdinalIgnoreCase));
                             }
 
-                            if (nameProp == null)
+							if (nameProp == null)
+							{
+								nameProp = customObj.Properties.FirstOrDefault(p => p.Name.Equals("LogicalName", StringComparison.OrdinalIgnoreCase));
+							}
+
+							if (nameProp == null)
                             {
-                                throw new FormatException("Could not convert value to entity reference. TableName(/EntityName) property is missing");
+                                throw new FormatException("Could not convert value to entity reference. TableName(/EntityName/LogicalName) property is missing");
                             }
 
                             convertedValue = new EntityReference((string)nameProp.Value, Guid.Parse(customObj.Properties["Id"].Value.ToString()));
@@ -653,7 +658,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                         }
                                     }
                                     else if (key.Equals("TableName", StringComparison.OrdinalIgnoreCase)
-                                        || key.Equals("EntityName", StringComparison.OrdinalIgnoreCase))
+                                        || key.Equals("EntityName", StringComparison.OrdinalIgnoreCase)
+										|| key.Equals("LogicalName", StringComparison.OrdinalIgnoreCase))
                                     {
                                         entityName = value;
                                     }
@@ -662,7 +668,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                             if (string.IsNullOrEmpty(entityName) || !id.HasValue)
                             {
-                                throw new FormatException(string.Format("Could not convert value '{0}' to entity reference. Either TableName(/EntityName) or Id value is missing or invalid", stringValue));
+                                throw new FormatException(string.Format("Could not convert value '{0}' to entity reference. Either TableName(/EntityName/LogicalName) or Id value is missing or invalid", stringValue));
                             }
 
                             convertedValue = new EntityReference(entityName, id.Value);
