@@ -9,8 +9,5 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Cmdlets\Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj"/>
-  </ItemGroup>
 
 </Project>

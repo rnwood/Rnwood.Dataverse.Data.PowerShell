@@ -13,11 +13,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 	{
 		public void OnImport()
 		{
-			string basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+			string basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/../../cmdlets/net6.0";
 
-#if NETCOREAPP
-			new CmdletsLoadContext(basePath).LoadFromAssemblyName(new AssemblyName( "Rnwood.Dataverse.Data.PowerShell.Cmdlets"));
+#if NET
+			var alc = new CmdletsLoadContext(basePath);
+
+			AssemblyLoadContext.Default.Resolving += (s, args) =>
+			{
+				AssemblyName assemblyName = new AssemblyName(args.Name);
+				if (assemblyName.Name == "Rnwood.Dataverse.Data.PowerShell.Cmdlets" || assemblyName.Name == "Microsoft.ApplicationInsights") {
+					return alc.LoadFromAssemblyName(assemblyName);
+				}
+
+				return null;
+			};
+
+			//Load the assembly
+			AssemblyLoadContext.Default.LoadFromAssemblyName(new AssemblyName("Rnwood.Dataverse.Data.PowerShell.Cmdlets"));
 #else
+
+
 			AppDomain.CurrentDomain.AssemblyResolve += (s, args) =>
 			{
 				AssemblyName assemblyName = new AssemblyName(args.Name);
@@ -32,10 +47,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 			};
 #endif
 
+
 		}
 
 
-#if NETCOREAPP
+#if NET
 
 		public class CmdletsLoadContext : AssemblyLoadContext
 		{
@@ -52,7 +68,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 
 				if (File.Exists(path))
 				{
+				Console.WriteLine("Assembly " + assemblyName.Name + " redirected");
 					return LoadFromAssemblyPath(path);
+				} else {
+					Console.WriteLine("Assembly " + assemblyName.Name + " not resolved");
 				}
 
 				return null;
