@@ -26,15 +26,15 @@ jobs:
             powershell_version: latest
           - os: ubuntu-latest
             publish: false
-            powershell_version: "5"
+            powershell_version: '5'
           - os: windows-latest
             publish: true
-            powershell_version: "5"
+            powershell_version: '5'
 
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - if: ${{ matrix.powershell_version != "5" }}
+      - if: ${{ matrix.powershell_version != '5' }}
         name: Install PowerShell ${{ matrix.powershell_version }}
         uses: PSModule/install-powershell@v1
         with:
@@ -53,7 +53,7 @@ jobs:
             remove-item -force -recurse out/Rnwood.Dataverse.Data.PowerShell
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
-      - if: ${{ matrix.powershell_version != "5" }}
+      - if: ${{ matrix.powershell_version != '5' }}
         name: Test - pwsh
         shell: pwsh
         run: |
@@ -65,7 +65,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "Tests failed"
           }
-      - if:  ${{ matrix.powershell_version == "5" }}
+      - if:  ${{ matrix.powershell_version == '5' }}
         name: Test - powershell
         shell: powershell
         run: |  
@@ -76,7 +76,7 @@ jobs:
             if ($LASTEXITCODE -ne 0) {
               throw "Tests failed"
             }
-      - if: ${{ matrix.powershell_version != "5" }}
+      - if: ${{ matrix.powershell_version != '5' }}
         name: E2E Test - pwsh
         shell: pwsh
         env:
@@ -92,7 +92,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "Tests failed"
           }
-      - if:  ${{ matrix.powershell_version == "5" }}
+      - if:  ${{ matrix.powershell_version == '5' }}
         name: E2E Test - powershell
         shell: powershell
         env:
