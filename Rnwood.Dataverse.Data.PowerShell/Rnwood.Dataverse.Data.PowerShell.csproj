@@ -15,6 +15,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Loader\Rnwood.Dataverse.Data.PowerShell.Loader.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="buildhelp.ps1">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
@@ -32,24 +36,33 @@
     </None>
   </ItemGroup>
 
-  <Target Name="BuildFrameworkSpecifics" AfterTargets="Build">
-    <MSBuild Projects="../Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific/Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration)" BuildInParallel="true">
-      
+  <Target Name="BuildCmdlets" AfterTargets="Build">
+    <MSBuild Projects="../Rnwood.Dataverse.Data.PowerShell.Cmdlets/Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration)" BuildInParallel="true">
     </MSBuild>
     <ItemGroup>
-      <FSOutputs Include="../Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific/bin/$(Configuration)/**" />
+      <CmdletsOutputs Include="../Rnwood.Dataverse.Data.PowerShell.Cmdlets/bin/$(Configuration)/**" />
     </ItemGroup>
-    <Copy SourceFiles="@(FSOutputs)" DestinationFolder="$(OutDir)\%(RecursiveDir)" />
+    <Copy SourceFiles="@(CmdletsOutputs)" DestinationFolder="$(OutDir)\cmdlets\%(RecursiveDir)" />
 
   </Target>
 
-  <Target Name="BuildHelp" DependsOnTargets="BuildFrameworkSpecifics" AfterTargets="Build" Inputs="$(ProjectDir)/docs" Outputs="$(TargetDir)/en-GB">
+  <Target Name="BuildLoader" AfterTargets="Build">
+    <MSBuild Projects="../Rnwood.Dataverse.Data.PowerShell.Loader/Rnwood.Dataverse.Data.PowerShell.Loader.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration)" BuildInParallel="true">
+    </MSBuild>
+    <ItemGroup>
+      <LoaderOutputs Include="../Rnwood.Dataverse.Data.PowerShell.Loader/bin/$(Configuration)/**" />
+    </ItemGroup>
+    <Copy SourceFiles="@(LoaderOutputs)" DestinationFolder="$(OutDir)\loader\%(RecursiveDir)" />
+
+  </Target>
+
+  <!--<Target Name="BuildHelp" DependsOnTargets="BuildFrameworkSpecifics" AfterTargets="Build" Inputs="$(ProjectDir)/docs" Outputs="$(TargetDir)/en-GB">
     <Message Text="Building help to $(TargetDir)" Importance="high" />
     <Message Text="pwsh -file &quot;$(ProjectDir)updatehelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\\&quot;))&quot;" Importance="high" />
     <Exec Command="pwsh -file &quot;$(ProjectDir)updatehelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\\&quot;))&quot;" />
     <Message Text="pwsh -file &quot;$(ProjectDir)build.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\\&quot;))&quot;" Importance="high" />
 
     <Exec Command="pwsh -file &quot;$(ProjectDir)buildhelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\\&quot;))&quot;" />
-  </Target>
+  </Target>-->
   
 </Project>
