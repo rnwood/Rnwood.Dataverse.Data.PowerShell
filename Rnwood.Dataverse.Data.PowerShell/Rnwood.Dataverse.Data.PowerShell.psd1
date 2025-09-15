@@ -17,7 +17,7 @@ CompanyName = 'Rob Wood'
 Description = 'Dataverse data manipulation cmdlets'
 
 # Copyright statement for this module
-Copyright = '(c) 2024 Robert Wood <rob@rnwood.co.uk>. See licence.'
+Copyright = '(c) 2024-2025 Robert Wood <rob@rnwood.co.uk>. See licence.'
 
 CompatiblePSEditions = @("Core", "Desktop")
 
