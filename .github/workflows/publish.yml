@@ -30,7 +30,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - if: ${{ matrix.powershell_version != '5' }}
         name: Install PowerShell ${{ matrix.powershell_version }}
         uses: PSModule/install-powershell@v1
