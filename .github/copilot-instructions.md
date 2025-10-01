@@ -10,49 +10,31 @@ Cross-platform PowerShell module (~206MB, 1339 files) for Microsoft Dataverse da
 - PowerShell 5.1+ or PowerShell 7+
 - Pester module for testing
 
-### Complete Build Sequence (Total time: ~45 seconds from clean)
+### Complete Build Sequence (Total time: ~30 seconds from clean)
 ```bash
 # 1. Clean (takes 1-3 seconds)
 dotnet clean
 
-# 2. Build cmdlets (takes 13 seconds - includes restore on first build)
-dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell.Cmdlets/Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj
+# 2. Build the solution (takes 25-30 seconds - includes restore, build all projects)
+dotnet build -c Release
 
-# 3. Build loader (takes 2 seconds)
-dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell.Loader/Rnwood.Dataverse.Data.PowerShell.Loader.csproj
-
-# 4. Build main project with --no-dependencies (takes 28 seconds - runs updatehelp.ps1 and buildhelp.ps1)
-dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj --no-dependencies
-
-# 5. Copy to out/ for testing (REQUIRED)
-rm -rf out
-mkdir -p out
-cp -r Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
+# 3. Set module path for testing
+export TESTMODULEPATH="$(pwd)/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0"
 ```
 
 **IMPORTANT BUILD NOTES:**
-- Step 4 runs `updatehelp.ps1` which accesses www.powershellgallery.com to install PlatyPS module. This will FAIL in firewalled environments.
-- If PowerShell Gallery is blocked, you'll get: `error MSB3073: The command "pwsh -file .../updatehelp.ps1..." exited with code 1`
-- **WORKAROUND for firewalled environments:** Skip step 4. Instead, manually assemble the module by copying cmdlets/loader outputs:
-  ```bash
-  # After steps 2-3, manually assemble without running BuildHelp target
-  mkdir -p Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0
-  cp Rnwood.Dataverse.Data.PowerShell/*.psd1 Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/
-  cp Rnwood.Dataverse.Data.PowerShell/*.psm1 Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/
-  mkdir -p Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/cmdlets
-  cp -r Rnwood.Dataverse.Data.PowerShell.Cmdlets/bin/Release/* Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/cmdlets/
-  mkdir -p Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/loader
-  cp -r Rnwood.Dataverse.Data.PowerShell.Loader/bin/Release/* Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/loader/
-  # Then continue with step 5
-  ```
+- The build automatically compiles all three projects (Cmdlets, Loader, Module) and assembles them
+- Build targets (BuildCmdlets, BuildLoader) automatically copy outputs to bin/Release/netstandard2.0/cmdlets/ and .../loader/
+- The build may run `updatehelp.ps1` which accesses www.powershellgallery.com to install PlatyPS module
+- If PowerShell Gallery is blocked, you may get: `error MSB3073: The command "pwsh -file .../updatehelp.ps1..." exited with code 1`
+- If help generation fails, the module will still build and work correctly - help files are optional
 - Expect 17-20 NU1701 warnings about .NET Framework package compatibility - these are NORMAL and safe to ignore
-- Main project build targets (BuildCmdlets, BuildLoader) automatically copy outputs to bin/Release/netstandard2.0/cmdlets/ and .../loader/
-- Build creates en-GB/ help directory with MAML XML files (163KB+ of generated help)
+- Build creates en-GB/ help directory with MAML XML files (163KB+ of generated help) if PlatyPS is available
 
 ### Testing Sequence (Total time: ~15-30 seconds)
 ```powershell
 # 1. Set module path to built output (REQUIRED)
-$env:TESTMODULEPATH = (Resolve-Path "out/Rnwood.Dataverse.Data.PowerShell")
+$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0")
 
 # 2. Install Pester if not present (first time only, takes 30+ seconds)
 Install-Module -Force Pester
