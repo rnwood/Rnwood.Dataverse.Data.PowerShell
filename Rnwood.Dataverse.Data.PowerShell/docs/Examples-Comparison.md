@@ -11,6 +11,10 @@ This document provides examples of common Dataverse operations using `Rnwood.Dat
 - [Working with Attachments](#working-with-attachments)
 - [Invoking Custom Requests](#invoking-custom-requests)
 - [Metadata Operations](#metadata-operations)
+- [Solution Management](#solution-management)
+- [User and Team Operations](#user-and-team-operations)
+- [Plugin and Workflow Management](#plugin-and-workflow-management)
+- [Advanced Query Scenarios](#advanced-query-scenarios)
 
 ## Connection
 
@@ -446,6 +450,497 @@ SELECT TOP 1 lastname, createdon
 FROM contact
 WHERE lastname = @lastname
 "@
+```
+
+## Solution Management
+
+### Example: Delete a Solution
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$solutionUniqueName = 'mysolution'
+$solutions = Get-CrmRecords -EntityLogicalName solution -FilterAttribute uniquename -FilterOperator eq -FilterValue $solutionUniqueName
+
+if ($solutions.Count -eq 1) {
+    $solutionId = $solutions.CrmRecords[0].ReturnProperty_Id
+    $conn.Delete("solution", $solutionId)
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$solutionUniqueName = 'mysolution'
+
+# Query for the solution
+$solution = Get-DataverseRecord -Connection $conn -TableName solution -Filter @{uniquename = $solutionUniqueName}
+
+if ($solution) {
+    Remove-DataverseRecord -Connection $conn -TableName solution -Id $solution.Id
+}
+```
+
+### Example: Export a Solution
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$solutionName = "MySolution"
+Export-CrmSolution -conn $conn -SolutionName $solutionName -Managed $false -ExportPath "C:\Solutions\"
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$solutionName = "MySolution"
+
+# Create export request
+$request = New-Object Microsoft.Crm.Sdk.Messages.ExportSolutionRequest
+$request.SolutionName = $solutionName
+$request.Managed = $false
+
+$response = Invoke-DataverseRequest -Connection $conn -Request $request
+
+# Save the solution file
+[System.IO.File]::WriteAllBytes("C:\Solutions\$solutionName.zip", $response.ExportSolutionFile)
+```
+
+### Example: Import a Solution
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+Import-CrmSolution -conn $conn -SolutionFilePath "C:\Solutions\MySolution.zip"
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$solutionBytes = [System.IO.File]::ReadAllBytes("C:\Solutions\MySolution.zip")
+
+$request = New-Object Microsoft.Crm.Sdk.Messages.ImportSolutionRequest
+$request.CustomizationFile = $solutionBytes
+$request.PublishWorkflows = $true
+$request.OverwriteUnmanagedCustomizations = $false
+
+Invoke-DataverseRequest -Connection $conn -Request $request
+```
+
+### Example: List All Solutions
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$solutions = Get-CrmRecords -EntityLogicalName solution -Fields uniquename,friendlyname,version
+$solutions.CrmRecords | Select-Object uniquename,friendlyname,version
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using Get-DataverseRecord
+$solutions = Get-DataverseRecord -Connection $conn -TableName solution -Columns uniquename,friendlyname,version
+
+$solutions | Select-Object uniquename,friendlyname,version
+
+# Or using SQL
+Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT uniquename, friendlyname, version
+FROM solution
+WHERE ismanaged = 0
+ORDER BY friendlyname
+"@
+```
+
+## User and Team Operations
+
+### Example: Add User to Team
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+Add-CrmUserToTeam -TeamId $teamId -UserId $userId
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Create the team membership association
+$request = New-Object Microsoft.Xrm.Sdk.Messages.AddMembersTeamRequest
+$request.TeamId = $teamId
+$request.MemberIds = @($userId)
+
+Invoke-DataverseRequest -Connection $conn -Request $request
+```
+
+### Example: Assign Security Role to User
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+Add-CrmUserToSecurityRole -UserId $userId -SecurityRoleId $roleId
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Create the role assignment association
+$request = New-Object Microsoft.Crm.Sdk.Messages.AssignRequest
+$request.Target = New-Object Microsoft.Xrm.Sdk.EntityReference("systemuser", $userId)
+$request.Assignee = New-Object Microsoft.Xrm.Sdk.EntityReference("role", $roleId)
+
+Invoke-DataverseRequest -Connection $conn -Request $request
+
+# Or use SQL to add role
+Invoke-DataverseSql -Connection $conn -Sql @"
+INSERT INTO systemuserroles (systemuserid, roleid)
+VALUES ('$userId', '$roleId')
+"@
+```
+
+### Example: Get All Users in a Team
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$teamId = "guid-here"
+$members = Get-CrmRecords -EntityLogicalName systemuser -FetchXml @"
+<fetch>
+  <entity name='systemuser'>
+    <attribute name='fullname' />
+    <attribute name='internalemailaddress' />
+    <link-entity name='teammembership' from='systemuserid' to='systemuserid'>
+      <filter>
+        <condition attribute='teamid' operator='eq' value='$teamId' />
+      </filter>
+    </link-entity>
+  </entity>
+</fetch>
+"@
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$teamId = "guid-here"
+
+# Using FetchXML
+$fetchXml = @"
+<fetch>
+  <entity name='systemuser'>
+    <attribute name='fullname' />
+    <attribute name='internalemailaddress' />
+    <link-entity name='teammembership' from='systemuserid' to='systemuserid'>
+      <filter>
+        <condition attribute='teamid' operator='eq' value='$teamId' />
+      </filter>
+    </link-entity>
+  </entity>
+</fetch>
+"@
+$members = Get-DataverseRecord -Connection $conn -FetchXml $fetchXml
+
+# Or using SQL (simpler)
+$members = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT u.fullname, u.internalemailaddress
+FROM systemuser u
+INNER JOIN teammembership tm ON u.systemuserid = tm.systemuserid
+WHERE tm.teamid = '$teamId'
+"@
+```
+
+### Example: Disable All Users Except Administrators
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$users = Get-CrmRecords -EntityLogicalName systemuser -FilterAttribute isdisabled -FilterOperator eq -FilterValue $false
+
+foreach ($user in $users.CrmRecords) {
+    # Check if user is admin (has System Administrator role)
+    $roles = Get-CrmUserSecurityRoles -UserId $user.systemuserid
+    $isAdmin = $roles | Where-Object { $_.Name -eq "System Administrator" }
+    
+    if (-not $isAdmin) {
+        Set-CrmRecordState -EntityLogicalName systemuser -Id $user.systemuserid -StateCode Disabled -StatusCode Disabled
+    }
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Get all non-admin users using SQL
+$nonAdminUsers = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT u.systemuserid
+FROM systemuser u
+WHERE u.isdisabled = 0
+AND u.systemuserid NOT IN (
+    SELECT sur.systemuserid
+    FROM systemuserroles sur
+    INNER JOIN role r ON sur.roleid = r.roleid
+    WHERE r.name = 'System Administrator'
+)
+"@
+
+# Disable each user
+foreach ($user in $nonAdminUsers) {
+    $request = New-Object Microsoft.Crm.Sdk.Messages.SetStateRequest
+    $request.EntityMoniker = New-Object Microsoft.Xrm.Sdk.EntityReference("systemuser", $user.systemuserid)
+    $request.State = New-Object Microsoft.Xrm.Sdk.OptionSetValue(1) # Disabled
+    $request.Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(2) # Disabled
+    
+    Invoke-DataverseRequest -Connection $conn -Request $request
+}
+```
+
+## Plugin and Workflow Management
+
+### Example: Disable All Plugin Steps
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Get all custom assemblies
+$assemblies = Get-CrmRecords -EntityLogicalName pluginassembly `
+    -FilterAttribute customizationlevel -FilterOperator eq -FilterValue 1
+
+$steps = @()
+foreach ($assembly in $assemblies.CrmRecords) {
+    $sdkmessages = Get-CrmSdkMessageProcessingStepsForPluginAssembly `
+        -PluginAssemblyName $assembly.name
+    
+    $steps += $sdkmessages | Where-Object { $_.statecode -eq 'Enabled' }
+}
+
+# Disable all enabled steps
+foreach ($step in $steps) {
+    Set-CrmRecordState -EntityLogicalName sdkmessageprocessingstep `
+        -Id $step.sdkmessageprocessingstepid `
+        -StateCode Disabled -StatusCode Disabled
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Get all enabled plugin steps for custom assemblies
+$steps = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT s.sdkmessageprocessingstepid, s.name
+FROM sdkmessageprocessingstep s
+INNER JOIN pluginassembly pa ON s.pluginassemblyid = pa.pluginassemblyid
+WHERE pa.customizationlevel = 1
+AND s.statecode = 0
+"@
+
+# Disable all steps
+foreach ($step in $steps) {
+    $request = New-Object Microsoft.Crm.Sdk.Messages.SetStateRequest
+    $request.EntityMoniker = New-Object Microsoft.Xrm.Sdk.EntityReference("sdkmessageprocessingstep", $step.sdkmessageprocessingstepid)
+    $request.State = New-Object Microsoft.Xrm.Sdk.OptionSetValue(1) # Disabled
+    $request.Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(2) # Disabled
+    
+    Invoke-DataverseRequest -Connection $conn -Request $request
+}
+```
+
+### Example: List All Workflows
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$workflows = Get-CrmRecords -EntityLogicalName workflow `
+    -FilterAttribute type -FilterOperator eq -FilterValue 1 `
+    -Fields name,statecode,primaryentity
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using Get-DataverseRecord
+$workflows = Get-DataverseRecord -Connection $conn -TableName workflow `
+    -Filter @{type = 1} `
+    -Columns name,statecode,primaryentity
+
+# Or using SQL
+$workflows = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT name, statecode, primaryentity
+FROM workflow
+WHERE type = 1
+ORDER BY name
+"@
+```
+
+## Advanced Query Scenarios
+
+### Example: Query with Multiple Filters (AND/OR Logic)
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$fetch = @"
+<fetch>
+  <entity name='contact'>
+    <attribute name='fullname' />
+    <filter type='and'>
+      <condition attribute='statecode' operator='eq' value='0' />
+      <filter type='or'>
+        <condition attribute='address1_city' operator='eq' value='Seattle' />
+        <condition attribute='address1_city' operator='eq' value='Redmond' />
+      </filter>
+    </filter>
+  </entity>
+</fetch>
+"@
+$contacts = Get-CrmRecordsByFetch -Fetch $fetch
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using FetchXML
+$fetchXml = @"
+<fetch>
+  <entity name='contact'>
+    <attribute name='fullname' />
+    <filter type='and'>
+      <condition attribute='statecode' operator='eq' value='0' />
+      <filter type='or'>
+        <condition attribute='address1_city' operator='eq' value='Seattle' />
+        <condition attribute='address1_city' operator='eq' value='Redmond' />
+      </filter>
+    </filter>
+  </entity>
+</fetch>
+"@
+$contacts = Get-DataverseRecord -Connection $conn -FetchXml $fetchXml
+
+# Or using SQL (much simpler!)
+$contacts = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT fullname
+FROM contact
+WHERE statecode = 0
+AND (address1_city = 'Seattle' OR address1_city = 'Redmond')
+"@
+```
+
+### Example: Query with Aggregation
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$fetch = @"
+<fetch aggregate='true'>
+  <entity name='opportunity'>
+    <attribute name='estimatedvalue' aggregate='sum' alias='totalvalue' />
+    <attribute name='ownerid' groupby='true' alias='owner' />
+  </entity>
+</fetch>
+"@
+$results = Get-CrmRecordsByFetch -Fetch $fetch
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using FetchXML
+$fetchXml = @"
+<fetch aggregate='true'>
+  <entity name='opportunity'>
+    <attribute name='estimatedvalue' aggregate='sum' alias='totalvalue' />
+    <attribute name='ownerid' groupby='true' alias='owner' />
+  </entity>
+</fetch>
+"@
+$results = Get-DataverseRecord -Connection $conn -FetchXml $fetchXml
+
+# Or using SQL (much more familiar!)
+$results = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT ownerid, SUM(estimatedvalue) as totalvalue
+FROM opportunity
+GROUP BY ownerid
+"@
+```
+
+### Example: Query with Linked Entities (Joins)
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$fetch = @"
+<fetch>
+  <entity name='contact'>
+    <attribute name='fullname' />
+    <link-entity name='account' from='accountid' to='parentcustomerid' alias='parent'>
+      <attribute name='name' />
+      <filter>
+        <condition attribute='revenue' operator='gt' value='1000000' />
+      </filter>
+    </link-entity>
+  </entity>
+</fetch>
+"@
+$contacts = Get-CrmRecordsByFetch -Fetch $fetch
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using FetchXML
+$fetchXml = @"
+<fetch>
+  <entity name='contact'>
+    <attribute name='fullname' />
+    <link-entity name='account' from='accountid' to='parentcustomerid' alias='parent'>
+      <attribute name='name' />
+      <filter>
+        <condition attribute='revenue' operator='gt' value='1000000' />
+      </filter>
+    </link-entity>
+  </entity>
+</fetch>
+"@
+$contacts = Get-DataverseRecord -Connection $conn -FetchXml $fetchXml
+
+# Or using SQL (standard SQL JOIN syntax!)
+$contacts = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT c.fullname, a.name as accountname
+FROM contact c
+INNER JOIN account a ON c.parentcustomerid = a.accountid
+WHERE a.revenue > 1000000
+"@
+```
+
+### Example: Bulk Delete Records
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Create bulk delete request
+$fetch = @"
+<fetch>
+  <entity name='contact'>
+    <filter>
+      <condition attribute='statecode' operator='eq' value='1' />
+    </filter>
+  </entity>
+</fetch>
+"@
+
+$request = New-Object Microsoft.Crm.Sdk.Messages.BulkDeleteRequest
+$request.QuerySet = @()
+$fetchQuery = New-Object Microsoft.Xrm.Sdk.Query.FetchExpression($fetch)
+$request.QuerySet += $fetchQuery
+$request.JobName = "Delete Inactive Contacts"
+$request.StartDateTime = [DateTime]::Now
+$request.RecurrencePattern = [string]::Empty
+$request.SendEmailNotification = $false
+
+$conn.Execute($request)
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using SQL DELETE (simpler!)
+Invoke-DataverseSql -Connection $conn -Sql @"
+DELETE FROM contact
+WHERE statecode = 1
+"@
+
+# Or using traditional bulk delete request
+$fetch = @"
+<fetch>
+  <entity name='contact'>
+    <filter>
+      <condition attribute='statecode' operator='eq' value='1' />
+    </filter>
+  </entity>
+</fetch>
+"@
+
+$request = New-Object Microsoft.Crm.Sdk.Messages.BulkDeleteRequest
+$fetchQuery = New-Object Microsoft.Xrm.Sdk.Query.FetchExpression($fetch)
+$request.QuerySet = @($fetchQuery)
+$request.JobName = "Delete Inactive Contacts"
+$request.StartDateTime = [DateTime]::Now
+$request.RecurrencePattern = [string]::Empty
+$request.SendEmailNotification = $false
+
+Invoke-DataverseRequest -Connection $conn -Request $request
 ```
 
 ## Key Differences and Advantages
