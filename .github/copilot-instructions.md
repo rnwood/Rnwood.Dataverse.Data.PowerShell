@@ -1,0 +1,212 @@
+# Rnwood.Dataverse.Data.PowerShell - Copilot Agent Instructions
+
+## Repository Summary
+Cross-platform PowerShell module (~206MB, 1339 files) for Microsoft Dataverse data manipulation. Targets .NET 6.0 (PowerShell Core 7+) and .NET Framework 4.6.2 (PowerShell Desktop 5.1+) for Windows/Linux/macOS. Written in C# (cmdlets) with PowerShell scripts (build/test). Three projects: Cmdlets (SDK wrappers), Loader (assembly resolution), Module (manifest/docs).
+
+## Build Instructions - VALIDATED AND WORKING
+
+### Prerequisites
+- .NET SDK 6.0+ (tested with 9.0.305)
+- PowerShell 5.1+ or PowerShell 7+
+- Pester module for testing
+
+### Complete Build Sequence (Total time: ~45 seconds from clean)
+```bash
+# 1. Clean (takes 1-3 seconds)
+dotnet clean
+
+# 2. Build cmdlets (takes 13 seconds - includes restore on first build)
+dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell.Cmdlets/Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj
+
+# 3. Build loader (takes 2 seconds)
+dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell.Loader/Rnwood.Dataverse.Data.PowerShell.Loader.csproj
+
+# 4. Build main project with --no-dependencies (takes 28 seconds - runs updatehelp.ps1 and buildhelp.ps1)
+dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj --no-dependencies
+
+# 5. Copy to out/ for testing (REQUIRED)
+rm -rf out
+mkdir -p out
+cp -r Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
+```
+
+**IMPORTANT BUILD NOTES:**
+- Step 4 runs `updatehelp.ps1` which accesses www.powershellgallery.com to install PlatyPS module. This will FAIL in firewalled environments.
+- If PowerShell Gallery is blocked, you'll get: `error MSB3073: The command "pwsh -file .../updatehelp.ps1..." exited with code 1`
+- **WORKAROUND for firewalled environments:** Skip step 4. Instead, manually assemble the module by copying cmdlets/loader outputs:
+  ```bash
+  # After steps 2-3, manually assemble without running BuildHelp target
+  mkdir -p Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0
+  cp Rnwood.Dataverse.Data.PowerShell/*.psd1 Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/
+  cp Rnwood.Dataverse.Data.PowerShell/*.psm1 Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/
+  mkdir -p Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/cmdlets
+  cp -r Rnwood.Dataverse.Data.PowerShell.Cmdlets/bin/Release/* Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/cmdlets/
+  mkdir -p Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/loader
+  cp -r Rnwood.Dataverse.Data.PowerShell.Loader/bin/Release/* Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/loader/
+  # Then continue with step 5
+  ```
+- Expect 17-20 NU1701 warnings about .NET Framework package compatibility - these are NORMAL and safe to ignore
+- Main project build targets (BuildCmdlets, BuildLoader) automatically copy outputs to bin/Release/netstandard2.0/cmdlets/ and .../loader/
+- Build creates en-GB/ help directory with MAML XML files (163KB+ of generated help)
+
+### Testing Sequence (Total time: ~15-30 seconds)
+```powershell
+# 1. Set module path to built output (REQUIRED)
+$env:TESTMODULEPATH = (Resolve-Path "out/Rnwood.Dataverse.Data.PowerShell")
+
+# 2. Install Pester if not present (first time only, takes 30+ seconds)
+Install-Module -Force Pester
+
+# 3. Run unit tests (takes 15-30 seconds)
+Invoke-Pester -Output Detailed -Path tests
+
+# E2E tests require real Dataverse environment credentials
+# Set E2ETESTS_URL, E2ETESTS_CLIENTID, E2ETESTS_CLIENTSECRET environment variables
+# Invoke-Pester -Output Detailed -Path e2e-tests
+```
+
+**TEST NOTES:**
+- Tests copy module to temp directory to avoid file locking issues
+- Tests use FakeXrmEasy to mock Dataverse IOrganizationService
+- `tests/contact.xml` contains serialized EntityMetadata for mock connection
+- Tests spawn child PowerShell processes to test module loading
+- ALWAYS set $env:TESTMODULEPATH before running tests
+
+## Project Architecture & Key Files
+
+### Root Directory Files
+- `Rnwood.Dataverse.Data.PowerShell.sln` - Solution with 3 projects
+- `README.md` - 126 lines, examples of CRUD operations, installation, auth methods
+- `.gitignore` - Standard .NET/VS ignore patterns
+- `.github/workflows/publish.yml` - CI/CD: builds on Windows+Ubuntu × PS 5/7.4.11/latest, runs tests, publishes to Gallery on release
+- `renovate.json` - Automated dependency updates
+
+### Project 1: Rnwood.Dataverse.Data.PowerShell.Cmdlets/
+**Purpose:** C# cmdlet implementations (multi-targeting net6.0;net462)  
+**Key Files:**
+- `Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj` - Multi-target project, CopyLocalLockFileAssemblies=true
+- `Commands/GetDataverseConnectionCmdlet.cs` - Creates ServiceClient with 5 auth modes: Interactive, UsernamePassword, ClientSecret, DeviceCode, Mock
+- `Commands/GetDataverseRecordCmdlet.cs` - Queries with QueryExpression/FetchXML, automatic paging, outputs PSObjects
+- `Commands/SetDataverseRecordCmdlet.cs` - Create/update/upsert with batching (OrganizationServiceProxy.Execute with ExecuteMultipleRequest)
+- `Commands/RemoveDataverseRecordCmdlet.cs` - Delete records with batching support
+- `Commands/InvokeDataverseRequestCmdlet.cs` - Execute arbitrary OrganizationRequest
+- `Commands/InvokeDataverseSqlCmdlet.cs` - SQL queries using MarkMpn.Sql4Cds.Engine
+- `Commands/DataverseEntityConverter.cs` - 864 lines, critical type conversion:
+  - `GetPSValue()` - Entity → PSObject (OptionSetValue → label, EntityReference → PSObject with Id/LogicalName/Name)
+  - `GetDataverseValue()` - PSObject → Entity (string → EntityReference by name lookup, label → OptionSetValue)
+  - `GetAllColumnNames()` - Lists attributes, excludes system columns unless includeSystemColumns=true
+  - Handles dates with timezone conversion, Money, Guid, PartyList, MultiSelectPicklist, State/Status codes
+- `Commands/OrganizationServiceCmdlet.cs` - Base class with Connection parameter
+- `Commands/CustomLogicBypassableOrganizationServiceCmdlet.cs` - Base with BypassBusinessLogicExecutionStepIds
+
+**Dependencies (from .csproj):**
+- Microsoft.PowerPlatform.Dataverse.Client 1.2.3
+- MarkMpn.Sql4Cds.Engine 10.1.0
+- PowerShellStandard.Library 5.1.1
+- System.ServiceModel.Primitives/Http 4.10.3
+- FakeXrmEasy.v9 3.7.0 (net6.0) or 2.8.0 (net462)
+
+### Project 2: Rnwood.Dataverse.Data.PowerShell.Loader/
+**Purpose:** Assembly loading for both .NET runtimes (multi-targeting net6.0;net462)  
+**Key Files:**
+- `ModuleInitProvider.cs` - Implements IModuleAssemblyInitializer.OnImport()
+  - For net6.0: Creates CmdletsLoadContext : AssemblyLoadContext, loads from cmdlets/net6.0/
+  - For net462: Hooks AppDomain.AssemblyResolve, loads from cmdlets/net462/
+  - Ensures Microsoft.Xrm.Sdk and other SDK assemblies load from correct location
+
+### Project 3: Rnwood.Dataverse.Data.PowerShell/
+**Purpose:** PowerShell module manifest and build orchestration (netstandard2.0)  
+**Key Files:**
+- `Rnwood.Dataverse.Data.PowerShell.psd1` - Module manifest, ModuleVersion 100.0.0 (replaced in CI from git tag)
+- `Get-DataverseRecordsFolder.psm1` - Helper to read records from JSON files in folder
+- `Set-DataverseRecordsFolder.psm1` - Helper to write records to JSON files in folder
+- `docs/*.md` - 9 cmdlet documentation files (Get-DataverseConnection, Get-DataverseRecord, Set-DataverseRecord, Remove-DataverseRecord, Invoke-DataverseRequest, Invoke-DataverseSql, Get/Set-DataverseRecordsFolder, Get-DataverseWhoAmI)
+- `updatehelp.ps1` - Runs Update-MarkdownHelpModule to refresh docs from cmdlet attributes (REQUIRES PowerShell Gallery access)
+- `buildhelp.ps1` - Runs New-ExternalHelp to generate MAML XML from markdown to en-GB/
+- `Rnwood.Dataverse.Data.PowerShell.csproj` - Build targets:
+  - `BuildCmdlets` - Builds Cmdlets project, copies bin/$(Configuration)/** to $(OutDir)/cmdlets/
+  - `BuildLoader` - Builds Loader project, copies bin/$(Configuration)/** to $(OutDir)/loader/
+  - `BuildHelp` - Runs updatehelp.ps1 then buildhelp.ps1 (DependsOnTargets="BuildCmdlets", inputs/outputs for incremental build)
+
+### Test Files
+- `tests/Module.Tests.ps1` - Tests module loads correctly, SDK assemblies resolve, works with pre-loaded assemblies
+- `tests/Get-DataverseRecord.Tests.ps1` - Tests QueryExpression, FetchXML, filters, column selection, mock connection
+- `tests/Common.ps1` - Shared setup: copies module to temp, sets PSModulePath, getMockConnection() using FakeXrmEasy with contact.xml metadata
+- `tests/contact.xml` - 2.2MB serialized EntityMetadata for 'contact' entity (used by DataContractSerializer in tests)
+- `tests/updatemetadata.ps1` - Script to regenerate contact.xml from real environment
+- `e2e-tests/Module.Tests.ps1` - Connects to real Dataverse with client secret, queries systemuser table, runs SQL
+
+## CI/CD Pipeline (.github/workflows/publish.yml)
+**Matrix:** os=[ubuntu-latest, windows-latest] × powershell_version=['5', '7.4.11', 'latest'] × publish=[true/false once]  
+**Steps:**
+1. Checkout, install PowerShell version
+2. Build: Sets version from $env:GITHUB_REF if tag, builds main project, copies to out/
+3. Test (pwsh): Sets $env:TESTMODULEPATH, installs Pester, runs tests, checks $LASTEXITCODE
+4. Test (powershell on Windows PS5): Same as above but with powershell.exe
+5. E2E Test: Sets E2ETESTS_* env vars from secrets, runs e2e-tests
+6. Publish (if matrix.publish && release): Runs Publish-Module to PowerShell Gallery
+
+## Common Development Tasks
+
+### Adding a New Cmdlet
+1. Create `Rnwood.Dataverse.Data.PowerShell.Cmdlets/Commands/YourNewCmdlet.cs`
+2. Inherit from PSCmdlet or OrganizationServiceCmdlet
+3. Add `[Cmdlet(VerbsCommon.Get, "YourNoun")]` and `[OutputType(typeof(YourType))]`
+4. Define parameters with `[Parameter(Mandatory=true, ParameterSetName="ByX")]`
+5. Override ProcessRecord() or BeginProcessing()/EndProcessing() for pipeline
+6. Build: `dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell.Cmdlets/Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj`
+7. Run updatehelp.ps1 to generate markdown (or manually create docs/YourCmdlet.md)
+8. Build main project to generate MAML help
+9. Test with mock connection in tests/
+
+### Modifying Type Conversion
+- Edit `DataverseEntityConverter.cs`
+- Add case to `GetPSValue()` for new AttributeType (e.g., case AttributeTypeCode.BigInt)
+- Add logic to `GetDataverseValue()` for converting PSObject property to Dataverse value
+- Handle metadata lookups (EntityMetadata, AttributeMetadata) via IOrganizationService.Execute(RetrieveEntityRequest)
+- Test with FakeXrmEasy mock - add metadata to tests/contact.xml if needed
+
+### Debugging Failed Tests
+- Tests copy module to %TEMP%/[GUID]/Rnwood.Dataverse.Data.PowerShell
+- Check $env:TESTMODULEPATH is set correctly
+- Tests spawn child pwsh processes - add verbose output to see what's happening
+- FakeXrmEasy limitations: doesn't support all operations, may need to mock additional metadata
+
+## Coding Conventions
+
+### C# Cmdlets
+- Use `[Cmdlet(Verb, "Noun")]` with approved verbs (Get, Set, Remove, Invoke)
+- Use `[Parameter(Mandatory=$bool, Position=$int, ValueFromPipeline=$bool, ParameterSetName=$string)]`
+- Use `[ValidateNotNullOrEmpty]`, `[Alias("AliasName")]` on parameters
+- Call `ShouldProcess(target, action)` before destructive operations when SupportsShouldProcess=true
+- Use `WriteObject(obj, enumerateCollection)` not return - cmdlets don't return values
+- Use `WriteVerbose()`, `WriteWarning()`, `WriteError()` for messages
+- Parameter names: PascalCase (e.g., TableName, MatchOn)
+- Multi-line lambda/LINQ: prefer explicit blocks for readability
+
+### PowerShell Scripts
+- Start with `$ErrorActionPreference = "Stop"`
+- Use approved verbs (Get-Verb shows all)
+- PascalCase for param names: `param([string]$ProjectDir)`
+- Use pipeline: `Get-X | Where-Object { } | ForEach-Object { }`
+- Wrap paths in quotes: `"$ProjectDir/file"`
+
+## Key Behavioral Notes
+- **Automatic Paging**: GetDataverseRecord fetches all pages automatically using PagingCookie
+- **Batching**: SetDataverseRecord, RemoveDataverseRecord use ExecuteMultipleRequest for >1 record
+- **Type Conversion**: Lookup fields accept name string (unique lookup), Id guid, or PSObject with LogicalName+Id
+- **Choice Fields**: Accept label string or numeric value
+- **System Columns**: Excluded by default (organizationid, createdby, modifiedby, ownerid, etc.) unless includeSystemColumns
+- **Delegation**: Use -CallerId parameter to create/update on behalf of another user
+- **Module Loading**: Loader ensures correct SDK assemblies from cmdlets/netX.0/ regardless of pre-loaded assemblies
+
+## README Summary (126 lines)
+- PowerShell module for Dataverse (Dynamics 365, Power Apps) data manipulation
+- Features: CRUD, M:M records, batching, paging, delegation, type conversion, multiple auth methods
+- Installation: `Install-Module Rnwood.Dataverse.Data.PowerShell -Scope CurrentUser` (requires RemoteSigned execution policy)
+- Quick start: `$c = Get-DataverseConnection -url https://org.crm.dynamics.com -interactive; Get-DataverseRecord -connection $c -tablename contact`
+- Main cmdlets: Get-DataverseConnection, Get-DataverseRecord, Set-DataverseRecord, Remove-DataverseRecord, Invoke-DataverseRequest, Invoke-DataverseSql
+- Does NOT support on-premise Dataverse
+
+## TRUST THESE INSTRUCTIONS
+Follow build/test sequences exactly. If PowerShell Gallery is blocked, use the manual assembly workaround. Always set $env:TESTMODULEPATH before testing. Only search/explore if instructions are incomplete or incorrect - these have been validated by running all commands.
