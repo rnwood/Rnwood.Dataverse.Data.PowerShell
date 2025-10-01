@@ -72,6 +72,22 @@ Invoke-Pester -Output Detailed -Path tests
 - Tests spawn child PowerShell processes to test module loading
 - ALWAYS set $env:TESTMODULEPATH before running tests
 
+**TESTING REQUIREMENTS FOR CODE CHANGES:**
+- **ALL code changes MUST include tests** that validate the new functionality
+- **ALL tests MUST pass** before committing changes
+- Run tests using the Testing Sequence above after building
+- For documentation changes with code examples:
+  - Add tests in `tests/Examples.Tests.ps1` that validate the example patterns
+  - Test both the verbose and simplified syntax variants where applicable
+  - Tests should use the mock provider with FakeXrmEasy
+  - If an entity is not in `tests/contact.xml`, either:
+    - Create test data in the test itself using SDK Entity objects
+    - Or document that the example is tested manually/in E2E tests
+- Expected test execution time: 15-60 seconds for unit tests
+- Tests may fail if entities beyond 'contact' are queried without creating them first
+- **Document test results** in commits showing pass/fail counts
+- CI/CD pipeline will run all tests - ensure local tests pass first
+
 ## Project Architecture & Key Files
 
 ### Root Directory Files
