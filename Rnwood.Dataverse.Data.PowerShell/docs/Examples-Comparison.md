@@ -20,6 +20,9 @@ This document provides examples of common Dataverse operations using `Rnwood.Dat
 - [Organization Settings](#organization-settings)
 - [Multi-Organization Operations](#multi-organization-operations)
 - [Duplicate Detection](#duplicate-detection)
+- [Business Process Flows](#business-process-flows)
+- [Ribbon Customizations](#ribbon-customizations)
+- [Views and Quick Find](#views-and-quick-find)
 
 ## Connection
 
@@ -1280,6 +1283,269 @@ $request.ToRecipients = @()
 $request.CCRecipients = @()
 
 Invoke-DataverseRequest -Connection $conn -Request $request
+```
+
+## Business Process Flows
+
+### Example: Get All Business Process Flow Stages
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Retrieve all stages
+$stages = Get-CrmRecords -conn $conn -EntityLogicalName processstage -Fields * -AllRows
+
+# Display with processed information
+$stages.CrmRecords | Select-Object primaryentitytypecode, `
+    @{name='processname'; expression={$_.processid}}, `
+    @{name='processid';expression={$_.processid_Property.Value.Id}}, `
+    processstageid, stagecategory, stagename | Sort-Object primaryentitytypecode
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using Get-DataverseRecord (simpler)
+$stages = Get-DataverseRecord -Connection $conn -TableName processstage `
+    -Columns primaryentitytypecode,processid,processstageid,stagecategory,stagename
+
+# Or using SQL for better querying
+$stages = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT 
+    ps.primaryentitytypecode,
+    w.name as processname,
+    ps.processid,
+    ps.processstageid,
+    ps.stagecategory,
+    ps.stagename
+FROM processstage ps
+INNER JOIN workflow w ON ps.processid = w.workflowid
+ORDER BY ps.primaryentitytypecode, ps.stagename
+"@
+
+$stages | Format-Table
+```
+
+### Example: Get Active Stages for a Specific Entity
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$fetch = @"
+<fetch>
+  <entity name='processstage'>
+    <attribute name='stagename' />
+    <attribute name='stagecategory' />
+    <filter>
+      <condition attribute='primaryentitytypecode' operator='eq' value='lead' />
+    </filter>
+  </entity>
+</fetch>
+"@
+$leadStages = Get-CrmRecordsByFetch -conn $conn -Fetch $fetch
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using SQL (much simpler)
+$leadStages = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT stagename, stagecategory, processid
+FROM processstage
+WHERE primaryentitytypecode = 'lead'
+ORDER BY stagename
+"@
+```
+
+## Ribbon Customizations
+
+### Example: Export Application Ribbon
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$exportPath = "C:\RibbonExports"
+Export-CrmApplicationRibbonXml -conn $conn -RibbonFilePath $exportPath
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$exportPath = "C:\RibbonExports"
+
+# Create the request
+$request = New-Object Microsoft.Crm.Sdk.Messages.RetrieveApplicationRibbonRequest
+
+$response = Invoke-DataverseRequest -Connection $conn -Request $request
+
+# Save the ribbon XML
+$ribbonXml = $response.CompressedApplicationRibbonXml
+[System.IO.File]::WriteAllBytes("$exportPath\ApplicationRibbon.xml", $ribbonXml)
+```
+
+### Example: Export Entity Ribbons
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$entities = @("account", "contact", "opportunity", "lead")
+$exportPath = "C:\RibbonExports"
+
+foreach($entity in $entities) {
+    Export-CrmEntityRibbonXml -conn $conn -EntityLogicalName $entity -RibbonFilePath $exportPath
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$entities = @("account", "contact", "opportunity", "lead")
+$exportPath = "C:\RibbonExports"
+
+foreach($entity in $entities) {
+    $request = New-Object Microsoft.Crm.Sdk.Messages.RetrieveEntityRibbonRequest
+    $request.EntityName = $entity
+    $request.RibbonLocationFilter = [Microsoft.Crm.Sdk.Messages.RibbonLocationFilters]::All
+    
+    $response = Invoke-DataverseRequest -Connection $conn -Request $request
+    
+    # Save the ribbon XML
+    $ribbonXml = $response.CompressedEntityXml
+    [System.IO.File]::WriteAllBytes("$exportPath\$entity-Ribbon.xml", $ribbonXml)
+}
+```
+
+### Example: List All Ribbon-Enabled Entities
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$entities = Get-CrmEntityAllMetadata -conn $conn -EntityFilters Entity
+$ribbonEnabled = $entities | Where-Object { $_.IsCustomizable.Value -and $_.IsValidForAdvancedFind.Value }
+$ribbonEnabled.LogicalName
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using SQL to query metadata
+$ribbonEnabled = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT name, displayname
+FROM metadata.entity
+WHERE iscustomizable = 1 
+AND isvalidforadvancedfind = 1
+AND ismanaged = 0
+ORDER BY name
+"@
+
+$ribbonEnabled | Format-Table
+```
+
+## Views and Quick Find
+
+### Example: Get Quick Find Search Fields
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Get all QuickFind views (querytype of 4)
+$views = Get-CrmRecords -EntityLogicalName savedquery `
+    -FilterAttribute querytype -FilterOperator eq -FilterValue 4 `
+    -Fields name,fetchxml,returnedtypecode
+
+$results = @()
+foreach($view in $views.CrmRecords) {
+    $entityname = $view.returnedtypecode
+    $xml = [xml]$view.fetchxml
+    $filters = $xml.fetch.entity.filter.condition | Where-Object { $_.value -eq "{0}" }
+    
+    $results += [PSCustomObject]@{
+        Entity = $entityname
+        SearchFieldCount = $filters.Count
+        SearchFields = ($filters.attribute -join ", ")
+    }
+}
+
+$results | Sort-Object Entity | Format-Table
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Get all QuickFind views using SQL
+$views = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT savedqueryid, name, fetchxml, returnedtypecode
+FROM savedquery
+WHERE querytype = 4
+ORDER BY returnedtypecode
+"@
+
+$results = @()
+foreach($view in $views) {
+    $xml = [xml]$view.fetchxml
+    $filters = $xml.fetch.entity.filter.condition | Where-Object { $_.value -eq "{0}" }
+    
+    $results += [PSCustomObject]@{
+        Entity = $view.returnedtypecode
+        ViewName = $view.name
+        SearchFieldCount = $filters.Count
+        SearchFields = ($filters.attribute -join ", ")
+    }
+}
+
+$results | Format-Table
+```
+
+### Example: Get All Views for an Entity
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$views = Get-CrmRecords -EntityLogicalName savedquery `
+    -FilterAttribute returnedtypecode -FilterOperator eq -FilterValue "account" `
+    -Fields name,querytype,isdefault
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using Get-DataverseRecord
+$views = Get-DataverseRecord -Connection $conn -TableName savedquery `
+    -Filter @{returnedtypecode = "account"} `
+    -Columns name,querytype,isdefault
+
+# Or using SQL for richer queries
+$views = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT 
+    name,
+    CASE querytype
+        WHEN 0 THEN 'Saved View'
+        WHEN 1 THEN 'Quick Find'
+        WHEN 2 THEN 'Advanced Find'
+        WHEN 4 THEN 'Quick Find'
+        WHEN 8 THEN 'Lookup'
+        ELSE 'Other'
+    END as viewtype,
+    isdefault,
+    isquickfindquery
+FROM savedquery
+WHERE returnedtypecode = 'account'
+ORDER BY name
+"@
+
+$views | Format-Table
+```
+
+### Example: Get Personal Views for Current User
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$userId = (Invoke-CrmWhoAmI).UserId
+$personalViews = Get-CrmRecords -EntityLogicalName userquery `
+    -FilterAttribute ownerid -FilterOperator eq -FilterValue $userId `
+    -Fields name,returnedtypecode
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$whoami = Get-DataverseWhoAmI -Connection $conn
+$userId = $whoami.UserId
+
+# Using SQL
+$personalViews = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT name, returnedtypecode, fetchxml
+FROM userquery
+WHERE ownerid = '$userId'
+ORDER BY returnedtypecode, name
+"@
+
+$personalViews | Format-Table
 ```
 
 ## Key Differences and Advantages

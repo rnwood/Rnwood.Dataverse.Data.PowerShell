@@ -229,4 +229,218 @@ Describe "Examples-Comparison Documentation Tests" {
             $results.Count | Should -BeGreaterThan 0
         }
     }
+
+    Context "Solution Management Examples" {
+        It "Can query for solutions" {
+            # Create a mock solution record
+            $solution = New-Object Microsoft.Xrm.Sdk.Entity("solution")
+            $solution.Id = $solution["solutionid"] = [Guid]::NewGuid()
+            $solution["uniquename"] = "TestSolution"
+            $solution["friendlyname"] = "Test Solution"
+            $solution["version"] = "1.0.0.0"
+            
+            $solution | Set-DataverseRecord -Connection $script:conn
+            
+            # Query for solutions
+            $solutions = Get-DataverseRecord -Connection $script:conn -TableName solution
+            $solutions | Should -Not -BeNull
+        }
+    }
+
+    Context "User and Team Operations Examples" {
+        It "Can invoke WhoAmI to get current user" {
+            $whoami = Get-DataverseWhoAmI -Connection $script:conn
+            $whoami | Should -Not -BeNull
+            $whoami.UserId | Should -Not -BeNullOrEmpty
+            $whoami.BusinessUnitId | Should -Not -BeNullOrEmpty
+            $whoami.OrganizationId | Should -Not -BeNullOrEmpty
+        }
+
+        It "Can query system users" {
+            # Create a mock user
+            $user = New-Object Microsoft.Xrm.Sdk.Entity("systemuser")
+            $user.Id = $user["systemuserid"] = [Guid]::NewGuid()
+            $user["fullname"] = "Test User"
+            $user["internalemailaddress"] = "test@example.com"
+            
+            $user | Set-DataverseRecord -Connection $script:conn
+            
+            # Query users
+            $users = Get-DataverseRecord -Connection $script:conn -TableName systemuser
+            $users | Should -Not -BeNull
+        }
+    }
+
+    Context "Workflow and Async Job Examples" {
+        It "Can query workflow definitions" {
+            # Create a mock workflow
+            $workflow = New-Object Microsoft.Xrm.Sdk.Entity("workflow")
+            $workflow.Id = $workflow["workflowid"] = [Guid]::NewGuid()
+            $workflow["name"] = "Test Workflow"
+            $workflow["type"] = 1
+            
+            $workflow | Set-DataverseRecord -Connection $script:conn
+            
+            # Query workflows
+            $workflows = Get-DataverseRecord -Connection $script:conn -TableName workflow
+            $workflows | Should -Not -BeNull
+        }
+
+        It "Can query async operations" {
+            # Create a mock async operation
+            $asyncOp = New-Object Microsoft.Xrm.Sdk.Entity("asyncoperation")
+            $asyncOp.Id = $asyncOp["asyncoperationid"] = [Guid]::NewGuid()
+            $asyncOp["name"] = "Test Operation"
+            $asyncOp["operationtype"] = 10
+            $asyncOp["statuscode"] = 20
+            
+            $asyncOp | Set-DataverseRecord -Connection $script:conn
+            
+            # Query async operations
+            $operations = Get-DataverseRecord -Connection $script:conn -TableName asyncoperation
+            $operations | Should -Not -BeNull
+        }
+    }
+
+    Context "Organization Settings Examples" {
+        It "Can retrieve organization settings" {
+            $whoami = Get-DataverseWhoAmI -Connection $script:conn
+            $orgId = $whoami.OrganizationId
+            
+            # Query organization record
+            $org = Get-DataverseRecord -Connection $script:conn -TableName organization -Id $orgId
+            $org | Should -Not -BeNull
+        }
+    }
+
+    Context "Invoke-DataverseRequest Examples" {
+        It "Can execute WhoAmI request using Invoke-DataverseRequest" {
+            $request = New-Object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
+            $response = Invoke-DataverseRequest -Connection $script:conn -Request $request
+            
+            $response | Should -Not -BeNull
+            $response.UserId | Should -Not -BeNullOrEmpty
+        }
+
+        It "Can execute multiple requests" {
+            $request1 = New-Object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
+            $response1 = Invoke-DataverseRequest -Connection $script:conn -Request $request1
+            
+            $request2 = New-Object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
+            $response2 = Invoke-DataverseRequest -Connection $script:conn -Request $request2
+            
+            $response1.UserId | Should -Be $response2.UserId
+        }
+    }
+
+    Context "Business Process Flow Examples" {
+        It "Can query process stages" {
+            # Create a mock process stage
+            $stage = New-Object Microsoft.Xrm.Sdk.Entity("processstage")
+            $stage.Id = $stage["processstageid"] = [Guid]::NewGuid()
+            $stage["stagename"] = "Qualify"
+            $stage["primaryentitytypecode"] = "lead"
+            $stage["stagecategory"] = 0
+            
+            $stage | Set-DataverseRecord -Connection $script:conn
+            
+            # Query stages
+            $stages = Get-DataverseRecord -Connection $script:conn -TableName processstage
+            $stages | Should -Not -BeNull
+        }
+    }
+
+    Context "Views and Saved Queries Examples" {
+        It "Can query saved queries (system views)" {
+            # Create a mock saved query
+            $view = New-Object Microsoft.Xrm.Sdk.Entity("savedquery")
+            $view.Id = $view["savedqueryid"] = [Guid]::NewGuid()
+            $view["name"] = "Active Contacts"
+            $view["returnedtypecode"] = "contact"
+            $view["querytype"] = 0
+            
+            $view | Set-DataverseRecord -Connection $script:conn
+            
+            # Query views
+            $views = Get-DataverseRecord -Connection $script:conn -TableName savedquery
+            $views | Should -Not -BeNull
+        }
+
+        It "Can query user queries (personal views)" {
+            # Create a mock user query
+            $userView = New-Object Microsoft.Xrm.Sdk.Entity("userquery")
+            $userView.Id = $userView["userqueryid"] = [Guid]::NewGuid()
+            $userView["name"] = "My Contacts"
+            $userView["returnedtypecode"] = "contact"
+            
+            $userView | Set-DataverseRecord -Connection $script:conn
+            
+            # Query personal views
+            $personalViews = Get-DataverseRecord -Connection $script:conn -TableName userquery
+            $personalViews | Should -Not -BeNull
+        }
+    }
+
+    Context "FetchXML Query Examples" {
+        It "Can execute FetchXML queries" {
+            # Create test data
+            $contact = New-Object Microsoft.Xrm.Sdk.Entity("contact")
+            $contact.Id = $contact["contactid"] = [Guid]::NewGuid()
+            $contact["firstname"] = "FetchXML"
+            $contact["lastname"] = "Test"
+            $contact | Set-DataverseRecord -Connection $script:conn
+            
+            # Execute FetchXML
+            $fetchXml = @"
+<fetch>
+  <entity name='contact'>
+    <attribute name='firstname' />
+    <attribute name='lastname' />
+  </entity>
+</fetch>
+"@
+            $results = Get-DataverseRecord -Connection $script:conn -FetchXml $fetchXml
+            $results | Should -Not -BeNull
+        }
+
+        It "Can execute FetchXML with filters" {
+            # Create test data
+            $contact1 = New-Object Microsoft.Xrm.Sdk.Entity("contact")
+            $contact1.Id = $contact1["contactid"] = [Guid]::NewGuid()
+            $contact1["firstname"] = "Filter"
+            $contact1["lastname"] = "Smith"
+            $contact1 | Set-DataverseRecord -Connection $script:conn
+            
+            # Execute FetchXML with filter
+            $fetchXml = @"
+<fetch>
+  <entity name='contact'>
+    <attribute name='firstname' />
+    <filter>
+      <condition attribute='lastname' operator='eq' value='Smith' />
+    </filter>
+  </entity>
+</fetch>
+"@
+            $results = Get-DataverseRecord -Connection $script:conn -FetchXml $fetchXml
+            $results | Should -Not -BeNull
+        }
+    }
+
+    Context "Record Counting Examples" {
+        It "Can count all records in a table" {
+            # Create some test data
+            3..5 | ForEach-Object {
+                $contact = New-Object Microsoft.Xrm.Sdk.Entity("contact")
+                $contact.Id = $contact["contactid"] = [Guid]::NewGuid()
+                $contact["firstname"] = "Count$_"
+                $contact["lastname"] = "Test"
+                $contact | Set-DataverseRecord -Connection $script:conn
+            }
+            
+            # Count records
+            $count = Get-DataverseRecord -Connection $script:conn -TableName contact -RecordCount
+            $count | Should -BeGreaterThan 0
+        }
+    }
 }
