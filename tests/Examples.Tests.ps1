@@ -322,6 +322,13 @@ Describe "Examples-Comparison Documentation Tests" {
             $response.UserId | Should -Not -BeNullOrEmpty
         }
 
+        It "Can execute WhoAmI using RequestName parameter (simpler syntax)" {
+            $response = Invoke-DataverseRequest -Connection $script:conn -RequestName "WhoAmI"
+            
+            $response | Should -Not -BeNull
+            $response.UserId | Should -Not -BeNullOrEmpty
+        }
+
         It "Can execute multiple requests" {
             $request1 = New-Object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
             $response1 = Invoke-DataverseRequest -Connection $script:conn -Request $request1
@@ -330,6 +337,70 @@ Describe "Examples-Comparison Documentation Tests" {
             $response2 = Invoke-DataverseRequest -Connection $script:conn -Request $request2
             
             $response1.UserId | Should -Be $response2.UserId
+        }
+
+        It "Can execute SetState request using RequestName and Parameters" {
+            # Create a test workflow
+            $workflow = New-Object Microsoft.Xrm.Sdk.Entity("workflow")
+            $workflowId = $workflow.Id = $workflow["workflowid"] = [Guid]::NewGuid()
+            $workflow["name"] = "Test Workflow"
+            $workflow | Set-DataverseRecord -Connection $script:conn
+            
+            # Use simplified syntax to change state
+            $response = Invoke-DataverseRequest -Connection $script:conn -RequestName "SetState" -Parameters @{
+                EntityMoniker = New-Object Microsoft.Xrm.Sdk.EntityReference("workflow", $workflowId)
+                State = New-Object Microsoft.Xrm.Sdk.OptionSetValue(0)
+                Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(1)
+            }
+            
+            # Should not throw
+            $response | Should -Not -BeNull
+        }
+
+        It "Can use AddMemberList request with RequestName syntax" {
+            # Create test marketing list and contact
+            $list = New-Object Microsoft.Xrm.Sdk.Entity("list")
+            $listId = $list.Id = $list["listid"] = [Guid]::NewGuid()
+            $list["listname"] = "Test List"
+            $list | Set-DataverseRecord -Connection $script:conn
+            
+            $contact = New-Object Microsoft.Xrm.Sdk.Entity("contact")
+            $contactId = $contact.Id = $contact["contactid"] = [Guid]::NewGuid()
+            $contact["firstname"] = "List"
+            $contact["lastname"] = "Member"
+            $contact | Set-DataverseRecord -Connection $script:conn
+            
+            # Use simplified syntax
+            { Invoke-DataverseRequest -Connection $script:conn -RequestName "AddMemberList" -Parameters @{
+                ListId = $listId
+                EntityId = $contactId
+            } } | Should -Not -Throw
+        }
+
+        It "Can use PublishDuplicateRule request with RequestName syntax" {
+            # Create a test duplicate rule
+            $rule = New-Object Microsoft.Xrm.Sdk.Entity("duplicaterule")
+            $ruleId = $rule.Id = $rule["duplicateruleid"] = [Guid]::NewGuid()
+            $rule["name"] = "Test Rule"
+            $rule | Set-DataverseRecord -Connection $script:conn
+            
+            # Use simplified syntax
+            { Invoke-DataverseRequest -Connection $script:conn -RequestName "PublishDuplicateRule" -Parameters @{
+                DuplicateRuleId = $ruleId
+            } } | Should -Not -Throw
+        }
+
+        It "Can compare verbose vs simplified syntax results" {
+            # Verbose syntax
+            $request1 = New-Object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
+            $response1 = Invoke-DataverseRequest -Connection $script:conn -Request $request1
+            
+            # Simplified syntax
+            $response2 = Invoke-DataverseRequest -Connection $script:conn -RequestName "WhoAmI"
+            
+            # Both should return same results
+            $response1.UserId | Should -Be $response2.UserId
+            $response1.OrganizationId | Should -Be $response2.OrganizationId
         }
     }
 
