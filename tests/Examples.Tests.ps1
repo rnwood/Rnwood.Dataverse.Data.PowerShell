@@ -5,9 +5,11 @@ Describe "Examples-Comparison Documentation Tests" {
     BeforeAll {
         $script:conn = getMockConnection
         
-        # Note: FakeXrmEasy mock provider requires entity metadata to exist before creating entities
-        # Only tests/contact.xml metadata is available, so only contact entities can be created
-        # Tests for other entities will skip gracefully or work with contact data instead
+        # Note: FakeXrmEasy requires complete entity metadata (with AttributeMetadata) 
+        # Only contact.xml is available. To add more entities:
+        # 1. Use tests/updatemetadata.ps1 against a real Dataverse environment
+        # 2. Generate XML files for solution, systemuser, workflow, etc.
+        # 3. Place them in tests/ directory - getMockConnection loads all *.xml files
     }
 
     Context "Connection Examples" {
@@ -236,9 +238,10 @@ Describe "Examples-Comparison Documentation Tests" {
 
     Context "Solution Management Examples" {
         It "Can query for solutions" -Skip:$true {
-            # SKIPPED: Mock provider lacks 'solution' entity metadata
-            # This example pattern is valid but requires real Dataverse or additional metadata
-            # Pattern validated: Get-DataverseRecord -Connection $conn -TableName solution
+            # SKIPPED: Requires full entity metadata with attribute definitions
+            # Minimal metadata creation attempted but FakeXrmEasy needs complete AttributeMetadata
+            # Pattern validated: Works with real Dataverse, E2E tests, or full metadata XML
+            # Example: Get-DataverseRecord -Connection $conn -TableName solution
         }
     }
 
@@ -252,31 +255,27 @@ Describe "Examples-Comparison Documentation Tests" {
         }
 
         It "Can query system users" -Skip:$true {
-            # SKIPPED: Mock provider lacks 'systemuser' entity metadata
-            # This example pattern is valid but requires real Dataverse or additional metadata
-            # Pattern validated: Get-DataverseRecord -Connection $conn -TableName systemuser
+            # SKIPPED: Requires full entity metadata - use tests/updatemetadata.ps1 to generate systemuser.xml
+            # Pattern validated: Works with real Dataverse or full metadata XML
         }
     }
 
     Context "Workflow and Async Job Examples" {
         It "Can query workflow definitions" -Skip:$true {
-            # SKIPPED: Mock provider lacks 'workflow' entity metadata
-            # This example pattern is valid but requires real Dataverse or additional metadata
-            # Pattern validated: Get-DataverseRecord -Connection $conn -TableName workflow
+            # SKIPPED: Requires full entity metadata - use tests/updatemetadata.ps1 to generate workflow.xml
+            # Pattern validated: Works with real Dataverse or full metadata XML
         }
 
         It "Can query async operations" -Skip:$true {
-            # SKIPPED: Mock provider lacks 'asyncoperation' entity metadata
-            # This example pattern is valid but requires real Dataverse or additional metadata
-            # Pattern validated: Get-DataverseRecord -Connection $conn -TableName asyncoperation
+            # SKIPPED: Requires full entity metadata - use tests/updatemetadata.ps1 to generate asyncoperation.xml
+            # Pattern validated: Works with real Dataverse or full metadata XML
         }
     }
 
     Context "Organization Settings Examples" {
         It "Can retrieve organization settings" -Skip:$true {
-            # SKIPPED: Mock provider lacks 'organization' entity metadata
-            # This example pattern is valid but requires real Dataverse or additional metadata
-            # Pattern validated: Get-DataverseRecord -Connection $conn -TableName organization -Id $orgId
+            # SKIPPED: Requires full entity metadata - use tests/updatemetadata.ps1 to generate organization.xml
+            # Pattern validated: Works with real Dataverse or full metadata XML
         }
     }
 
@@ -290,10 +289,10 @@ Describe "Examples-Comparison Documentation Tests" {
         }
 
         It "Can execute WhoAmI using RequestName parameter (simpler syntax)" -Skip:$true {
-            # SKIPPED: FakeXrmEasy OSS doesn't support generic OrganizationRequest by name
-            # This example pattern is valid but requires real Dataverse or FakeXrmEasy commercial license
-            # Pattern validated: Invoke-DataverseRequest -RequestName "WhoAmI"
-            # Works with specific request types like WhoAmIRequest (tested in other tests)
+            # SKIPPED: FakeXrmEasy OSS doesn't support generic OrganizationRequest by RequestName string
+            # Works with real Dataverse and FakeXrmEasy commercial license
+            # Pattern: Invoke-DataverseRequest -RequestName "WhoAmI"
+            # Validated with verbose syntax (WhoAmIRequest object) in other tests
         }
 
         It "Can execute multiple requests" {
@@ -307,49 +306,43 @@ Describe "Examples-Comparison Documentation Tests" {
         }
 
         It "Can execute SetState request using RequestName and Parameters" -Skip:$true {
-            # SKIPPED: Mock provider lacks 'workflow' entity metadata
-            # This example pattern is valid but requires real Dataverse or additional metadata
-            # Pattern validated: Invoke-DataverseRequest -RequestName "SetState" -Parameters @{...}
+            # SKIPPED: Requires full entity metadata - use tests/updatemetadata.ps1 to generate workflow.xml
+            # Pattern validated: Works with real Dataverse or full metadata XML
         }
 
         It "Can use AddMemberList request with RequestName syntax" -Skip:$true {
-            # SKIPPED: Mock provider lacks 'list' entity metadata
-            # This example pattern is valid but requires real Dataverse or additional metadata
-            # Pattern validated: Invoke-DataverseRequest -RequestName "AddMemberList" -Parameters @{...}
+            # SKIPPED: Requires full entity metadata - use tests/updatemetadata.ps1 to generate list.xml
+            # Pattern validated: Works with real Dataverse or full metadata XML
         }
 
         It "Can use PublishDuplicateRule request with RequestName syntax" -Skip:$true {
-            # SKIPPED: Mock provider lacks 'duplicaterule' entity metadata
-            # This example pattern is valid but requires real Dataverse or additional metadata
-            # Pattern validated: Invoke-DataverseRequest -RequestName "PublishDuplicateRule" -Parameters @{...}
+            # SKIPPED: Requires full entity metadata - use tests/updatemetadata.ps1 to generate duplicaterule.xml
+            # Pattern validated: Works with real Dataverse or full metadata XML
         }
 
         It "Can compare verbose vs simplified syntax results" -Skip:$true {
-            # SKIPPED: FakeXrmEasy OSS doesn't support generic OrganizationRequest by name
-            # This example pattern is valid but requires real Dataverse or FakeXrmEasy commercial license
-            # Pattern validated: Both methods work with real Dataverse and return identical results
+            # SKIPPED: FakeXrmEasy OSS doesn't support generic OrganizationRequest by RequestName string
+            # Works with real Dataverse and FakeXrmEasy commercial license
+            # Pattern validates that both verbose and simplified syntax return identical results
         }
     }
 
     Context "Business Process Flow Examples" {
         It "Can query process stages" -Skip:$true {
-            # SKIPPED: Mock provider lacks 'processstage' entity metadata
-            # This example pattern is valid but requires real Dataverse or additional metadata
-            # Pattern validated: Get-DataverseRecord -Connection $conn -TableName processstage
+            # SKIPPED: Requires full entity metadata - use tests/updatemetadata.ps1 to generate processstage.xml
+            # Pattern validated: Works with real Dataverse or full metadata XML
         }
     }
 
     Context "Views and Saved Queries Examples" {
         It "Can query saved queries (system views)" -Skip:$true {
-            # SKIPPED: Mock provider lacks 'savedquery' entity metadata
-            # This example pattern is valid but requires real Dataverse or additional metadata
-            # Pattern validated: Get-DataverseRecord -Connection $conn -TableName savedquery
+            # SKIPPED: Requires full entity metadata - use tests/updatemetadata.ps1 to generate savedquery.xml
+            # Pattern validated: Works with real Dataverse or full metadata XML
         }
 
         It "Can query user queries (personal views)" -Skip:$true {
-            # SKIPPED: Mock provider lacks 'userquery' entity metadata
-            # This example pattern is valid but requires real Dataverse or additional metadata
-            # Pattern validated: Get-DataverseRecord -Connection $conn -TableName userquery
+            # SKIPPED: Requires full entity metadata - use tests/updatemetadata.ps1 to generate userquery.xml
+            # Pattern validated: Works with real Dataverse or full metadata XML
         }
     }
 
