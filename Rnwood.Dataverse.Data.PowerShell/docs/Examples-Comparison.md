@@ -15,6 +15,11 @@ This document provides examples of common Dataverse operations using `Rnwood.Dat
 - [User and Team Operations](#user-and-team-operations)
 - [Plugin and Workflow Management](#plugin-and-workflow-management)
 - [Advanced Query Scenarios](#advanced-query-scenarios)
+- [Workflow and Async Job Management](#workflow-and-async-job-management)
+- [Marketing Lists](#marketing-lists)
+- [Organization Settings](#organization-settings)
+- [Multi-Organization Operations](#multi-organization-operations)
+- [Duplicate Detection](#duplicate-detection)
 
 ## Connection
 
@@ -939,6 +944,340 @@ $request.JobName = "Delete Inactive Contacts"
 $request.StartDateTime = [DateTime]::Now
 $request.RecurrencePattern = [string]::Empty
 $request.SendEmailNotification = $false
+
+Invoke-DataverseRequest -Connection $conn -Request $request
+```
+
+## Workflow and Async Job Management
+
+### Example: Cancel Waiting Workflows
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Create fetch query for waiting workflows
+$fetch = @"
+<fetch>
+  <entity name='asyncoperation'>
+    <attribute name='asyncoperationid' />
+    <filter type='and'>
+      <condition attribute='operationtype' operator='eq' value='10' />
+      <condition attribute='statuscode' operator='eq' value='10' />
+    </filter>
+  </entity>
+</fetch>
+"@
+
+$jobs = Get-CrmRecordsByFetch -conn $conn -Fetch $fetch
+
+foreach($job in $jobs.CrmRecords) {
+    $job.statecode = New-CrmOptionSetValue 3
+    $job.statuscode = New-CrmOptionSetValue 32
+    Set-CrmRecord -conn $conn -CrmRecord $job
+    Remove-CrmRecord -conn $conn -EntityLogicalName asyncoperation -Id $job.asyncoperationid
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using SQL for simpler querying
+$waitingJobs = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT asyncoperationid
+FROM asyncoperation
+WHERE operationtype = 10 AND statuscode = 10
+"@
+
+foreach($job in $waitingJobs) {
+    # Cancel the workflow
+    $request = New-Object Microsoft.Crm.Sdk.Messages.SetStateRequest
+    $request.EntityMoniker = New-Object Microsoft.Xrm.Sdk.EntityReference("asyncoperation", $job.asyncoperationid)
+    $request.State = New-Object Microsoft.Xrm.Sdk.OptionSetValue(3)
+    $request.Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(32)
+    Invoke-DataverseRequest -Connection $conn -Request $request
+    
+    # Then remove
+    Remove-DataverseRecord -Connection $conn -TableName asyncoperation -Id $job.asyncoperationid
+}
+```
+
+### Example: Monitor Long-Running Workflows
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$fetch = @"
+<fetch>
+  <entity name='asyncoperation'>
+    <attribute name='name' />
+    <attribute name='startedon' />
+    <filter>
+      <condition attribute='operationtype' operator='eq' value='10' />
+      <condition attribute='statuscode' operator='eq' value='20' />
+    </filter>
+  </entity>
+</fetch>
+"@
+$runningJobs = Get-CrmRecordsByFetch -conn $conn -Fetch $fetch
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using SQL for cleaner queries
+$runningJobs = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT name, startedon, DATEDIFF(minute, startedon, GETUTCDATE()) as runtime_minutes
+FROM asyncoperation
+WHERE operationtype = 10 AND statuscode = 20
+ORDER BY startedon
+"@
+
+# Show long-running workflows
+$runningJobs | Where-Object { $_.runtime_minutes -gt 60 } | Format-Table
+```
+
+## Marketing Lists
+
+### Example: Add Members to Marketing List
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$marketingListId = "107E563B-7D21-40A5-AF6B-C8975E9C3860"
+$contactId = "C69F9B23-F3B2-403F-A1CF-C81FEF71126F"
+
+$addMember = New-Object Microsoft.Crm.Sdk.Messages.AddMemberListRequest
+$addMember.EntityId = $contactId
+$addMember.ListId = $marketingListId
+
+$conn.ExecuteCrmOrganizationRequest($addMember)
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$marketingListId = "107E563B-7D21-40A5-AF6B-C8975E9C3860"
+$contactId = "C69F9B23-F3B2-403F-A1CF-C81FEF71126F"
+
+$request = New-Object Microsoft.Crm.Sdk.Messages.AddMemberListRequest
+$request.EntityId = $contactId
+$request.ListId = $marketingListId
+
+Invoke-DataverseRequest -Connection $conn -Request $request
+```
+
+### Example: Remove Members from Marketing List
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$removeMember = New-Object Microsoft.Crm.Sdk.Messages.RemoveMemberListRequest
+$removeMember.EntityId = $contactId
+$removeMember.ListId = $marketingListId
+
+$conn.ExecuteCrmOrganizationRequest($removeMember)
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$request = New-Object Microsoft.Crm.Sdk.Messages.RemoveMemberListRequest
+$request.EntityId = $contactId
+$request.ListId = $marketingListId
+
+Invoke-DataverseRequest -Connection $conn -Request $request
+```
+
+### Example: Get All Members of a Marketing List
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$fetch = @"
+<fetch>
+  <entity name='contact'>
+    <attribute name='fullname' />
+    <attribute name='emailaddress1' />
+    <link-entity name='listmember' from='entityid' to='contactid'>
+      <filter>
+        <condition attribute='listid' operator='eq' value='$marketingListId' />
+      </filter>
+    </link-entity>
+  </entity>
+</fetch>
+"@
+$members = Get-CrmRecordsByFetch -conn $conn -Fetch $fetch
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using SQL (much simpler)
+$members = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT c.fullname, c.emailaddress1
+FROM contact c
+INNER JOIN listmember lm ON c.contactid = lm.entityid
+WHERE lm.listid = '$marketingListId'
+"@
+```
+
+## Organization Settings
+
+### Example: Update Organization Settings
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$orgId = (Invoke-CrmWhoAmI).OrganizationId
+$updateFields = @{
+    "UnResolveEmailAddressIfMultipleMatch" = $false
+}
+Set-CrmRecord -conn $conn -EntityLogicalName organization -Id $orgId -Fields $updateFields
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$whoami = Get-DataverseWhoAmI -Connection $conn
+$orgId = $whoami.OrganizationId
+
+Set-DataverseRecord -Connection $conn -TableName organization -Id $orgId -Fields @{
+    unresolveemailaddressifmultiplematch = $false
+}
+```
+
+### Example: Get Organization Settings
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$orgId = (Invoke-CrmWhoAmI).OrganizationId
+$org = Get-CrmRecord -EntityLogicalName organization -Id $orgId -Fields *
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$whoami = Get-DataverseWhoAmI -Connection $conn
+$org = Get-DataverseRecord -Connection $conn -TableName organization -Id $whoami.OrganizationId
+
+# Or using SQL to get specific settings
+$settings = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT name, isemailenabledfordelegation, maxuploadfilesize, allowlegacyclientexperience
+FROM organization
+"@
+```
+
+## Multi-Organization Operations
+
+### Example: Connect and Operate Across Multiple Organizations
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Load connections from CSV
+$connectionsSource = Import-Csv -Path ".\connections.csv"
+$conns = @()
+
+foreach($connectionSource in $connectionsSource) {
+    $password = ConvertTo-SecureString -String $connectionSource.Password -AsPlainText -Force
+    $cred = New-Object System.Management.Automation.PSCredential ($connectionSource.User, $password)
+    
+    if($connectionSource.Type -eq "Online") {
+        $conn = Get-CrmConnection -Credential $cred -OnLineType Office365 `
+            -DeploymentRegion $connectionSource.DeploymentRegion `
+            -OrganizationName $connectionSource.OrganizationName
+    }
+    $conns += $conn
+}
+
+# Create records in all organizations
+foreach($conn in $conns) {
+    New-CrmRecord -conn $conn -EntityLogicalName account -Fields @{"name"="Sample Account"}
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Load connections from CSV
+$connectionsSource = Import-Csv -Path ".\connections.csv"
+$conns = @()
+
+foreach($connectionSource in $connectionsSource) {
+    $conn = Get-DataverseConnection -Url $connectionSource.Url `
+        -Username $connectionSource.User `
+        -Password (ConvertTo-SecureString -String $connectionSource.Password -AsPlainText -Force)
+    $conns += $conn
+}
+
+# Create records in all organizations
+foreach($conn in $conns) {
+    Set-DataverseRecord -Connection $conn -TableName account -Fields @{name = "Sample Account"}
+}
+
+# Or copy data from one org to another
+$sourceConn = $conns[0]
+$targetConn = $conns[1]
+
+$accounts = Get-DataverseRecord -Connection $sourceConn -TableName account -Top 100
+$accounts | Set-DataverseRecord -Connection $targetConn
+```
+
+## Duplicate Detection
+
+### Example: Publish Duplicate Detection Rule
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$ruleId = "guid-here"
+
+$request = New-Object Microsoft.Crm.Sdk.Messages.PublishDuplicateRuleRequest
+$request.DuplicateRuleId = $ruleId
+
+$conn.Execute($request)
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$ruleId = "guid-here"
+
+$request = New-Object Microsoft.Crm.Sdk.Messages.PublishDuplicateRuleRequest
+$request.DuplicateRuleId = $ruleId
+
+Invoke-DataverseRequest -Connection $conn -Request $request
+```
+
+### Example: Unpublish Duplicate Detection Rule
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$request = New-Object Microsoft.Crm.Sdk.Messages.UnpublishDuplicateRuleRequest
+$request.DuplicateRuleId = $ruleId
+
+$conn.Execute($request)
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$request = New-Object Microsoft.Crm.Sdk.Messages.UnpublishDuplicateRuleRequest
+$request.DuplicateRuleId = $ruleId
+
+Invoke-DataverseRequest -Connection $conn -Request $request
+```
+
+### Example: Run Duplicate Detection Job
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression("account")
+$query.ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet($true)
+
+$request = New-Object Microsoft.Crm.Sdk.Messages.BulkDetectDuplicatesRequest
+$request.Query = $query
+$request.JobName = "Detect Duplicate Accounts"
+$request.SendEmailNotification = $false
+$request.ToRecipients = @()
+$request.CCRecipients = @()
+
+$conn.Execute($request)
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression("account")
+$query.ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet($true)
+
+$request = New-Object Microsoft.Crm.Sdk.Messages.BulkDetectDuplicatesRequest
+$request.Query = $query
+$request.JobName = "Detect Duplicate Accounts"
+$request.SendEmailNotification = $false
+$request.ToRecipients = @()
+$request.CCRecipients = @()
 
 Invoke-DataverseRequest -Connection $conn -Request $request
 ```
