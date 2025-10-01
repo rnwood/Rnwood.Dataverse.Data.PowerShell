@@ -91,6 +91,10 @@ Get-DataverseRecord -connection $c -tablename contact |
 
 [Get-DataverseRecordsFolder](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecordsFolder.md) - Helper function to read  stream of records from a folder containing each as individual JSON files. 
 
+## Migration from Microsoft.Xrm.Data.PowerShell
+
+If you're migrating from `Microsoft.Xrm.Data.PowerShell`, see the [Examples Comparison Guide](Rnwood.Dataverse.Data.PowerShell/docs/Examples-Comparison.md) which shows side-by-side examples of common operations in both modules.
+
 # Full Documentation
 You can see documentation using the standard PowerShell help and autocompletion systems.
 
