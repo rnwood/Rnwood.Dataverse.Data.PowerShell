@@ -100,7 +100,7 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
 Type: ServiceClient
@@ -270,11 +270,28 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.String
 ### System.Management.Automation.PSObject
+
+Can accept parameter values from pipeline objects when using the `-Parameters` parameter. Each input object is used once to execute the SQL query with its properties as parameter values.
+
+### System.String
+
+SQL query string can be provided via pipeline (though typically specified as a parameter).
+
 ## OUTPUTS
 
-### System.Object
+### System.Management.Automation.PSObject
+
+For SELECT queries, returns PowerShell objects representing the result rows. Each object contains properties matching the column names in the result set.
+
+Column values are converted similar to `Get-DataverseRecord`:
+- **Lookup columns**: Return as SqlEntityReference objects (or Guid if `-ReturnEntityReferenceAsGuid` is used)
+- **Choice/Picklist columns**: Return as their underlying numeric values
+- **Date/DateTime columns**: Converted based on `-UseLocalTimezone` setting
+- **Other types**: Returned in their native Sql4Cds types
+
+For INSERT, UPDATE, DELETE queries, the affected row count is written to verbose output and no objects are returned to the pipeline.
+
 ## NOTES
 A special thanks to Mark Carrington for his amazing open-source project that has enabled this.
 

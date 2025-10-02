@@ -28,7 +28,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private ConcurrentQueue<string> _infoMessages;
 		private ConcurrentQueue<Task> _pendingConfirmations;
 
-		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
+		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
 
 		public override ServiceClient Connection { get; set; }
 

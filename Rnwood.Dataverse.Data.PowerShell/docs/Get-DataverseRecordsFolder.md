@@ -20,11 +20,20 @@ Get-DataverseRecordsFolder [-InputPath] <String> [-deletions] [-ProgressAction <
 
 ## DESCRIPTION
 
+This helper cmdlet reads JSON files from a folder (typically created by Set-DataverseRecordsFolder) and emits them as PowerShell objects to the pipeline.
+
+Each JSON file in the folder is deserialized into a PowerShell object. This is useful for:
+- Reading data from source control
+- Importing data during build/deployment
+- Testing scenarios
+
+When used with the `-deletions` switch, it reads from the 'deletions' subfolder instead, which contains records that were present in a previous export but are no longer present.
+
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> Get-DataversRecordsFolder -InputPath data/contacts | Set-DataverseRecord -connection $c
+PS C:\> Get-DataverseRecordsFolder -InputPath data/contacts | Set-DataverseRecord -connection $c
 ```
 
 Reads files from `data/contacts` and uses them to create/update records in Dataverse using the existing connection `$c`.
@@ -48,7 +57,7 @@ Accept wildcard characters: False
 ```
 
 ### -deletions
-{{ Fill deletions Description }}
+If specified, reads from the 'deletions' subfolder instead of the main folder. This allows reading records that were present previously but have been deleted.
 
 ```yaml
 Type: SwitchParameter
@@ -83,9 +92,20 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
+
+This cmdlet does not accept pipeline input.
+
 ## OUTPUTS
 
-### System.Object
+### System.Management.Automation.PSObject
+
+Returns PowerShell objects representing records from the folder. Each JSON file is deserialized into a PSObject with properties matching the Dataverse record structure:
+- **Id** (Guid): The primary key of the record
+- **TableName** (String): The logical name of the table
+- **Column properties**: One property per column stored in the JSON
+
+The objects returned have the same structure as those from `Get-DataverseRecord` and can be piped directly to `Set-DataverseRecord` for import.
+
 ## NOTES
 
 ## RELATED LINKS

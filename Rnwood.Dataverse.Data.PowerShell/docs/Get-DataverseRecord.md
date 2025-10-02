@@ -31,6 +31,18 @@ Get-DataverseRecord -Connection <ServiceClient> [-VerboseRecordCount] [-RecordCo
 
 ## DESCRIPTION
 
+This cmdlet retrieves records from Dataverse tables using either QueryExpression (via simple parameters) or FetchXML.
+
+The cmdlet supports:
+- Filtering by ID, name, or custom filter expressions
+- Column selection (including excluding specific columns)
+- Ordering and pagination
+- Lookup value handling (can return name or ID)
+- System column exclusion by default
+- Automatic paging through all results
+
+Results are returned as PowerShell objects with properties matching the column names.
+
 ## EXAMPLES
 
 ### Example 1
@@ -80,7 +92,7 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 
 ```yaml
 Type: ServiceClient
@@ -401,9 +413,51 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
+
+This cmdlet does not accept pipeline input.
+
 ## OUTPUTS
 
-### System.Collections.Generic.IEnumerable`1[[System.Management.Automation.PSObject, System.Management.Automation, Version=7.4.6.500, Culture=neutral, PublicKeyToken=31bf3856ad364e35]]
+### System.Management.Automation.PSObject
+
+Returns PowerShell objects representing Dataverse records. Each object contains:
+- **Id** (Guid): The primary key of the record
+- **TableName** (String): The logical name of the table (e.g., "contact", "account")
+- **Column properties**: One property per column in the result set
+
+**Column Value Conversion (Dataverse → PowerShell):**
+
+The cmdlet converts Dataverse column types to PowerShell-friendly formats:
+
+**Lookup/Owner/Customer columns:**
+- By default, returns the **name** (string) of the related record
+- With `-LookupValuesReturnName` disabled, returns a PSObject with `Id`, `LogicalName`, and `Name` properties
+- Returns `$null` if the lookup is empty
+
+**Choice/Picklist/State/Status columns:**
+- By default, returns the **label** (string) of the selected option
+- Returns the numeric value if the label cannot be resolved
+
+**Date/DateTime columns:**
+- Returns DateTime objects converted to **local time**
+- Special handling for scheduling entities with timezone-specific dates
+
+**Money columns:**
+- Returns the decimal value (without the Money wrapper)
+
+**Unique Identifier columns:**
+- For regular columns, returns Guid values
+- For M:M relationship tables, returns the **name** of the related record instead of the Guid (unless raw values requested)
+
+**PartyList columns (e.g., email recipients):**
+- Returns an array of PSObjects, each representing an activity party record
+
+**Multi-Select Picklist columns:**
+- Returns an array of label strings (or numeric values if labels unavailable)
+
+**All other column types:**
+- String, Integer, Decimal, Boolean, etc. are returned as their native PowerShell types
+
 ## NOTES
 
 ## RELATED LINKS

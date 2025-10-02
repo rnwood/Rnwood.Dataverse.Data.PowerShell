@@ -32,6 +32,20 @@ Invoke-DataverseRequest -Connection <ServiceClient> [-Method] <HttpMethod> [-Pat
 
 ## DESCRIPTION
 
+This cmdlet allows you to execute any Dataverse request message.
+
+Three parameter sets are supported:
+1. **Request** - Pass an OrganizationRequest object from the SDK
+2. **NameAndInputs** - Specify request name and parameters as a hashtable (simpler)
+3. **REST** - Execute raw REST API calls with custom HTTP method, path, headers and body
+
+This is useful for:
+- Executing custom actions/API messages
+- Calling Dataverse SDK messages not wrapped by specific cmdlets
+- Making raw REST API calls for advanced scenarios
+
+The response from the request is returned to the pipeline.
+
 ## EXAMPLES
 
 ### Example 1
@@ -74,7 +88,7 @@ Invokes the `GET` `myapi_Example` REST API using custom headers and body
 ## PARAMETERS
 
 ### -Body
-{{ Fill Body Description }}
+Body of the REST API request. Can be a string (JSON) or a PSObject which will be converted to JSON.
 
 ```yaml
 Type: PSObject
@@ -89,7 +103,7 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
 Type: ServiceClient
@@ -104,7 +118,7 @@ Accept wildcard characters: False
 ```
 
 ### -CustomHeaders
-{{ Fill CustomHeaders Description }}
+Hashtable of custom HTTP headers to include in the REST API request.
 
 ```yaml
 Type: Hashtable
@@ -119,7 +133,7 @@ Accept wildcard characters: False
 ```
 
 ### -Method
-{{ Fill Method Description }}
+HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).
 
 ```yaml
 Type: HttpMethod
@@ -134,7 +148,7 @@ Accept wildcard characters: False
 ```
 
 ### -Parameters
-{{ Fill Parameters Description }}
+Hashtable of parameters to pass to the request. Keys are parameter names and values are parameter values.
 
 ```yaml
 Type: Hashtable
@@ -149,7 +163,7 @@ Accept wildcard characters: False
 ```
 
 ### -Path
-{{ Fill Path Description }}
+Path portion of the REST API URL (e.g., 'api/data/v9.2/contacts' or 'myapi_Example').
 
 ```yaml
 Type: String
@@ -182,7 +196,7 @@ Accept wildcard characters: False
 ```
 
 ### -RequestName
-{{ Fill RequestName Description }}
+Name of the Dataverse request to execute. This should be the message name (e.g., WhoAmI, RetrieveMultiple, or a custom action name like myapi_EscalateCase).
 
 ```yaml
 Type: String
@@ -217,9 +231,21 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### Microsoft.Xrm.Sdk.OrganizationRequest
+
+When using the "Request" parameter set, accepts OrganizationRequest objects from the Dataverse SDK. The request can be any message type (standard or custom actions).
+
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Xrm.Sdk.OrganizationResponse
+
+Returns the response from executing the request. The specific response type depends on the request executed:
+- **WhoAmIResponse**: Contains UserId, BusinessUnitId, OrganizationId
+- **RetrieveResponse**: Contains an Entity object
+- **RetrieveMultipleResponse**: Contains an EntityCollection
+- **Custom action responses**: Contain OutputParameters dictionary with action outputs
+
+For REST API calls (REST parameter set), returns the deserialized JSON response as a PSObject.
+
 ## NOTES
 
 ## RELATED LINKS

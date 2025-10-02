@@ -21,7 +21,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 	public class SetDataverseRecordCmdlet : CustomLogicBypassableOrganizationServiceCmdlet
 	{
-		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
+		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
 		public override ServiceClient Connection { get; set; }
 
 		[Parameter(Mandatory = true, ValueFromPipeline = true, ValueFromRemainingArguments = true,

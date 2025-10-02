@@ -54,6 +54,20 @@ Get-DataverseConnection -Url <Uri> -ConnectionString <String> [-ProgressAction <
 
 ## DESCRIPTION
 
+This cmdlet establishes a connection to a Microsoft Dataverse environment which can then be used with other cmdlets in this module.
+
+All commands that need a connection to Dataverse expect you to provide the connection in `-connection` parameter.
+So you can store the output of this command in a variable and pass it to each command that needs it.
+See the examples for this pattern below.
+
+Multiple authentication methods are supported:
+- Interactive authentication (browser-based)
+- Device code flow (for remote/headless scenarios)
+- Username/password
+- Client secret (for service principal authentication)
+- Connection string (for advanced scenarios)
+- Mock connection (for testing)
+
 ## EXAMPLES
 
 ### Example 1
@@ -160,7 +174,7 @@ Accept wildcard characters: False
 ```
 
 ### -Mock
-{{ Fill Mock Description }}
+Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.
 
 ```yaml
 Type: EntityMetadata[]
@@ -252,9 +266,22 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
+
+This cmdlet does not accept pipeline input.
+
 ## OUTPUTS
 
 ### Microsoft.PowerPlatform.Dataverse.Client.ServiceClient
+
+Returns a ServiceClient object representing the authenticated connection to Dataverse. This object should be stored in a variable and passed to the `-Connection` parameter of other cmdlets in this module.
+
+The ServiceClient provides:
+- Authenticated access to the Dataverse organization
+- Methods for executing requests (though typically you'll use cmdlets instead)
+- Connection state and organization information
+
+Store the connection in a variable and pass it to other cmdlets, for example: `Get-DataverseRecord -Connection $connection -TableName contact`
+
 ## NOTES
 
 ## RELATED LINKS

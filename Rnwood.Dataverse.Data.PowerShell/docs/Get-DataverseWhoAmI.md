@@ -18,6 +18,15 @@ Get-DataverseWhoAmI -Connection <ServiceClient> [-ProgressAction <ActionPreferen
 
 ## DESCRIPTION
 
+This cmdlet executes the Dataverse WhoAmI message and returns information about the authenticated user and organization.
+
+The response includes:
+- BusinessUnitId - The ID of the user's business unit
+- UserId - The ID of the authenticated user
+- OrganizationId - The ID of the organization
+
+This is useful for verifying authentication and determining the context in which operations will be performed.
+
 ## EXAMPLES
 
 ### Example 1
@@ -30,7 +39,7 @@ Returns info for the existing connection `$c`.
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
 Type: ServiceClient
@@ -65,9 +74,25 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
+
+This cmdlet does not accept pipeline input.
+
 ## OUTPUTS
 
 ### Microsoft.Crm.Sdk.Messages.WhoAmIResponse
+
+Returns a WhoAmIResponse object containing information about the authenticated user and organization:
+- **UserId** (Guid): The unique identifier of the authenticated user
+- **BusinessUnitId** (Guid): The unique identifier of the user's business unit
+- **OrganizationId** (Guid): The unique identifier of the organization
+
+This is useful for:
+- Verifying authentication succeeded
+- Determining the security context for operations
+- Logging and auditing purposes
+
+Access these properties directly on the response object, for example: `$whoami.UserId` after calling `$whoami = Get-DataverseWhoAmI -Connection $connection`
+
 ## NOTES
 See https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.whoamiresponse?view=dataverse-sdk-latest
 

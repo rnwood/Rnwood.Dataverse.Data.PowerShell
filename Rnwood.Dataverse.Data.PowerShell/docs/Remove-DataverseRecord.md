@@ -106,7 +106,7 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
 Type: ServiceClient
@@ -136,7 +136,7 @@ Accept wildcard characters: False
 ```
 
 ### -IfExists
-{{ Fill IfExists Description }}
+If specified, the cmdlet will not raise an error if the record does not exist.
 
 ```yaml
 Type: SwitchParameter
@@ -217,11 +217,27 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Management.Automation.PSObject
+
+PowerShell objects representing Dataverse records to delete. Typically piped from `Get-DataverseRecord`. The object must contain:
+- **Id** (Guid): The primary key of the record to delete
+- **TableName** (String): The logical name of the table
+
+These properties are automatically present in objects returned by `Get-DataverseRecord`, making it easy to pipe records for deletion.
+
 ### System.String
+
+The `-TableName` parameter can accept string input from the pipeline by property name.
+
 ### System.Guid
+
+The `-Id` parameter can accept Guid input from the pipeline by property name.
+
 ## OUTPUTS
 
-### System.Object
+### None
+
+This cmdlet does not produce output unless an error occurs. Use `-Verbose` to see deletion progress.
+
 ## NOTES
 
 ## RELATED LINKS
