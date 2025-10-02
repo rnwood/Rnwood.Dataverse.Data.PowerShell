@@ -408,7 +408,7 @@ PowerShell objects representing records to create or update. The object properti
 - **TableName** (optional): If provided, overrides the `-TableName` parameter
 - **Column properties**: Property names must match logical column names in Dataverse
 
-#### Column Value Conversion (PowerShell → Dataverse)
+**Column Value Conversion (PowerShell → Dataverse):**
 
 The cmdlet converts PowerShell values to Dataverse column types:
 

@@ -425,7 +425,7 @@ Returns PowerShell objects representing Dataverse records. Each object contains:
 - **TableName** (String): The logical name of the table (e.g., "contact", "account")
 - **Column properties**: One property per column in the result set
 
-#### Column Value Conversion (Dataverse → PowerShell)
+**Column Value Conversion (Dataverse → PowerShell):**
 
 The cmdlet converts Dataverse column types to PowerShell-friendly formats:
 
