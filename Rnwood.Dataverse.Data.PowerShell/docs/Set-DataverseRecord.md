@@ -402,13 +402,68 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Management.Automation.PSObject
+
+PowerShell objects representing records to create or update. The object properties map to Dataverse columns:
+- **Id** (optional): If provided, used to identify the record to update
+- **TableName** (optional): If provided, overrides the `-TableName` parameter
+- **Column properties**: Property names must match logical column names in Dataverse
+
+#### Column Value Conversion (PowerShell → Dataverse)
+
+The cmdlet converts PowerShell values to Dataverse column types:
+
+**Lookup/Owner/Customer columns** - Accept any of:
+- **String (name)**: Looks up the record by its primary name attribute (must be unique)
+- **Guid**: The ID of the related record (for single-target lookups)
+- **PSObject** with `TableName`/`LogicalName`/`EntityName` and `Id` properties
+- **String format**: `"TableName=account;Id=<guid>"` or `"LogicalName=contact;Id=<guid>"`
+- `$null` or empty string to clear the lookup
+
+**Choice/Picklist/State/Status columns** - Accept any of:
+- **String (label)**: The display label of the option (e.g., "Active", "Inactive")
+- **Integer**: The numeric value of the option
+- `$null` or empty string to clear the value
+
+**Date/DateTime columns:**
+- **DateTime objects**: Automatically converted to UTC (assumes local time if unspecified)
+- **String**: Parsed as local time and converted to UTC
+- Special handling for scheduling entities with timezone-specific dates
+
+**Money columns:**
+- **Decimal** or **numeric values**: Automatically wrapped in Money object
+
+**Unique Identifier columns:**
+- **Guid**: Used directly
+- **String (name)**: For M:M relationship tables, looks up by name (must be unique)
+
+**PartyList columns (e.g., email recipients):**
+- **Array of PSObjects**: Each object is converted to an `activityparty` record
+
+**Multi-Select Picklist columns:**
+- **Array of strings (labels)**: Converted to option values
+- **Array of integers**: Used as option values directly
+
+**Primitive types** (String, Integer, Decimal, Boolean, etc.):
+- Converted using PowerShell's standard type conversion
+
 ### System.String
+
+Can be piped from `-TableName` parameter.
+
 ### System.String[]
+
+Can be piped from array parameters like `-IgnoreProperties`.
+
 ### System.Guid
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+
+Can be piped from `-Id` or `-CallerId` parameters.
+
 ## OUTPUTS
 
-### System.Object
+### System.Management.Automation.PSObject
+
+When `-PassThru` is specified, outputs the input object with an `Id` property added or updated to reflect the affected record's primary key.
+
 ## NOTES
 
 ## RELATED LINKS

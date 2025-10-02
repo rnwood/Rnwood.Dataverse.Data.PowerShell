@@ -112,9 +112,20 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Management.Automation.PSObject
+
+PowerShell objects representing Dataverse records to write to JSON files. Typically piped from `Get-DataverseRecord`. Each object should contain:
+- **Id** (Guid): The primary key (used by default to generate filename)
+- **TableName** (String): The logical name of the table
+- **Column properties**: All properties are serialized to JSON
+
+Use the `-idproperties` parameter to specify different properties for generating unique filenames (e.g., use "name" instead of "Id").
+
 ## OUTPUTS
 
-### System.Object
+### None
+
+This cmdlet does not produce output. Files are written to the specified folder path. Use `-Verbose` to see write progress.
+
 ## NOTES
 
 ## RELATED LINKS

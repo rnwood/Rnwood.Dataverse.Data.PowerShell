@@ -266,9 +266,26 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
+
+This cmdlet does not accept pipeline input.
+
 ## OUTPUTS
 
 ### Microsoft.PowerPlatform.Dataverse.Client.ServiceClient
+
+Returns a ServiceClient object representing the authenticated connection to Dataverse. This object should be stored in a variable and passed to the `-Connection` parameter of other cmdlets in this module.
+
+The ServiceClient provides:
+- Authenticated access to the Dataverse organization
+- Methods for executing requests (though typically you'll use cmdlets instead)
+- Connection state and organization information
+
+**Example usage:**
+```powershell
+$connection = Get-DataverseConnection -Url https://org.crm.dynamics.com -Interactive
+Get-DataverseRecord -Connection $connection -TableName contact
+```
+
 ## NOTES
 
 ## RELATED LINKS
