@@ -1,5 +1,36 @@
 ﻿set-strictmode -version 3.0
 
+<#
+.SYNOPSIS
+Writes a list of Dataverse records to a folder of JSON files.
+
+.DESCRIPTION
+Writes a list of Dataverse records to a folder where each file represents a single record. The files are named using the Id property (or properties specified via -idproperties).
+
+.PARAMETER OutputPath
+Path to write output to.
+
+.PARAMETER InputObject
+Dataverse record(s) to write. Generally should be piped in from the pipeline.
+
+.PARAMETER withdeletions
+Output a list of deletions (records that were there last time, but are no longer present in the inputs) to 'deletions' subfolder of output.
+
+.PARAMETER idproperties
+Specifies the list of properties that will be used to generate a unique name for each file. By default this is "Id".
+
+.EXAMPLE
+Get-DataverseRecord -connection $connection -tablename contact | Set-DataverseRecordsFolder data/contacts
+
+Writes all contacts to the folder `data/contacts`.
+
+.INPUTS
+System.Management.Automation.PSObject
+
+.OUTPUTS
+System.Object
+
+#>
 function Set-DataverseRecordsFolder {
 	[CmdletBinding()]
 	param(

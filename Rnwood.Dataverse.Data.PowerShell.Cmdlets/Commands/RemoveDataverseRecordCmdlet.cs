@@ -20,10 +20,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	///<summary>Deletes records from a Dataverse organization.</summary>
 	public class RemoveDataverseRecordCmdlet : CustomLogicBypassableOrganizationServiceCmdlet
 	{
-		[Parameter(Mandatory = true)]
+		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnnection cmdlet")]
 		public override ServiceClient Connection { get; set; }
 
-		[Parameter(ValueFromPipeline = true)]
+		[Parameter(ValueFromPipeline = true, HelpMessage = "Record from pipeline. This allows piping in record to delete.")]
 		public PSObject InputObject { get; set; }
 
 		[Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of table")]
@@ -33,10 +33,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Id of record to process")]
 		public Guid Id { get; set; }
 
-		[Parameter()]
+		[Parameter(HelpMessage = "Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable. When value is 1, requests are sent to Dataverse one request at a time. When > 1, batching is used. Note that the batch will continue on error and any errors will be returned once the batch has completed. The error contains the input record to allow correlation.")]
 		public uint BatchSize { get; set; } = 100;
 
-		[Parameter]
+		[Parameter(HelpMessage = "If specified, the cmdlet will not raise an error if the record does not exist.")]
 		public SwitchParameter IfExists { get; set; }
 
 		[Parameter(HelpMessage = "Specifies the types of business logic (for example plugins) to bypass")]

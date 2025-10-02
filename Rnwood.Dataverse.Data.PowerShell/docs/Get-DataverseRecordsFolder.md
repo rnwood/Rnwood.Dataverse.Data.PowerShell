@@ -48,7 +48,7 @@ Accept wildcard characters: False
 ```
 
 ### -deletions
-{{ Fill deletions Description }}
+If specified, reads from the 'deletions' subfolder instead of the main folder. This allows reading records that were present previously but have been deleted.
 
 ```yaml
 Type: SwitchParameter

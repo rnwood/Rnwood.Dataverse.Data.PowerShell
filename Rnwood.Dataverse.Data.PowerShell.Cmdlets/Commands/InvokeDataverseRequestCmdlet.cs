@@ -16,28 +16,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	///<summary>Invokes a Dataverse request.</summary>
 	public class InvokeDataverseRequestCmdlet : OrganizationServiceCmdlet
 	{
-		[Parameter(Mandatory = true)]
+		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnnection cmdlet")]
 		public override ServiceClient Connection { get; set; }
 
 		[Parameter(ParameterSetName = "Request", Mandatory = true, HelpMessage = "Request to execute", ValueFromRemainingArguments = true, ValueFromPipeline = true)]
 		public OrganizationRequest Request { get; set; }
 
-		[Parameter(ParameterSetName = "NameAndInputs", Mandatory = true, Position = 0)]
+		[Parameter(ParameterSetName = "NameAndInputs", Mandatory = true, Position = 0, HelpMessage = "Name of the Dataverse request to execute. This should be the message name (e.g., WhoAmI, RetrieveMultiple, or a custom action name like myapi_EscalateCase).")]
 		public string RequestName { get; set; }
 
-		[Parameter(ParameterSetName = "NameAndInputs", Mandatory = false, Position = 1)]
+		[Parameter(ParameterSetName = "NameAndInputs", Mandatory = false, Position = 1, HelpMessage = "Hashtable of parameters to pass to the request. Keys are parameter names and values are parameter values.")]
 		public Hashtable Parameters { get; set; } = new Hashtable();
 
-		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 0)]
+		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 0, HelpMessage = "HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).")]
 		public System.Net.Http.HttpMethod Method { get; set; }
 
-		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 1)]
+		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 1, HelpMessage = "Path portion of the REST API URL (e.g., 'api/data/v9.2/contacts' or 'myapi_Example').")]
 		public string Path { get; set; }
 
-		[Parameter(ParameterSetName = "REST", Mandatory = false, Position = 2)]
+		[Parameter(ParameterSetName = "REST", Mandatory = false, Position = 2, HelpMessage = "Body of the REST API request. Can be a string (JSON) or a PSObject which will be converted to JSON.")]
 		public PSObject Body { get; set; } = "";
 
-		[Parameter(ParameterSetName = "REST", Mandatory = false)]
+		[Parameter(ParameterSetName = "REST", Mandatory = false, HelpMessage = "Hashtable of custom HTTP headers to include in the REST API request.")]
 		public Hashtable CustomHeaders { get; set; } = new Hashtable();
 		protected override void BeginProcessing()
 		{

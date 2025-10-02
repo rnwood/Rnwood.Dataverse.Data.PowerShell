@@ -160,7 +160,7 @@ Accept wildcard characters: False
 ```
 
 ### -Mock
-{{ Fill Mock Description }}
+Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.
 
 ```yaml
 Type: EntityMetadata[]

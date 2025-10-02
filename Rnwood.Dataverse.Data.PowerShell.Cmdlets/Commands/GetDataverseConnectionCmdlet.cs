@@ -44,36 +44,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private const string PARAMSET_MOCK = "Return a mock connection";
 
-		[Parameter(Mandatory =true, ParameterSetName =PARAMSET_MOCK) ]
+		[Parameter(Mandatory =true, ParameterSetName =PARAMSET_MOCK, HelpMessage = "Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.") ]
 		public EntityMetadata[] Mock { get; set; }
 
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET)]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE)]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE)]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		public Guid ClientId { get; set; } = new Guid("9cee029c-6210-4654-90bb-17e6e9d36617");
 
-		[Parameter(Mandatory = true)]
+		[Parameter(Mandatory = true, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
 		public Uri Url { get; set; }
 
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client secret to authenticate with, as registered for the Entra ID application.")]
 		public string ClientSecret { get; set; }
 
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE)]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE)]
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD)]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Username to authenticate with.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Username to authenticate with.")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Username to authenticate with.")]
 		public string Username { get; set; }
 
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Password to authenticate with.")]
 		public string Password { get; set; }
 
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_INTERACTIVE)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Triggers interactive authentication, where browser will be opened for user to interactively log in.")]
 		public SwitchParameter Interactive { get; set; }
 
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEVICECODE)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Triggers device code authentication where you will be given a URL to visit and a code to complete authentication in web browser.")]
 		public SwitchParameter DeviceCode { get; set; }
 
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CONNECTIONSTRING)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CONNECTIONSTRING, HelpMessage = "Specifies the connection string to authenticate with - see https://learn.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect")]
 		public string ConnectionString { get; set; }
 
 
