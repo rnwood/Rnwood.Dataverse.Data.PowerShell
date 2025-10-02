@@ -31,6 +31,18 @@ Get-DataverseRecord -Connection <ServiceClient> [-VerboseRecordCount] [-RecordCo
 
 ## DESCRIPTION
 
+This cmdlet retrieves records from Dataverse tables using either QueryExpression (via simple parameters) or FetchXML.
+
+The cmdlet supports:
+- Filtering by ID, name, or custom filter expressions
+- Column selection (including excluding specific columns)
+- Ordering and pagination
+- Lookup value handling (can return name or ID)
+- System column exclusion by default
+- Automatic paging through all results
+
+Results are returned as PowerShell objects with properties matching the column names.
+
 ## EXAMPLES
 
 ### Example 1
@@ -80,7 +92,7 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 
 ```yaml
 Type: ServiceClient

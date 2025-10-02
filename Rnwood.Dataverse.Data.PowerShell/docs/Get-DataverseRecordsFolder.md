@@ -20,6 +20,15 @@ Get-DataverseRecordsFolder [-InputPath] <String> [-deletions] [-ProgressAction <
 
 ## DESCRIPTION
 
+This helper cmdlet reads JSON files from a folder (typically created by Set-DataverseRecordsFolder) and emits them as PowerShell objects to the pipeline.
+
+Each JSON file in the folder is deserialized into a PowerShell object. This is useful for:
+- Reading data from source control
+- Importing data during build/deployment
+- Testing scenarios
+
+When used with the `-deletions` switch, it reads from the 'deletions' subfolder instead, which contains records that were present in a previous export but are no longer present.
+
 ## EXAMPLES
 
 ### Example 1

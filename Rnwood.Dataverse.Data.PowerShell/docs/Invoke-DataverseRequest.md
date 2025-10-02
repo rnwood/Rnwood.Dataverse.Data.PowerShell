@@ -32,6 +32,20 @@ Invoke-DataverseRequest -Connection <ServiceClient> [-Method] <HttpMethod> [-Pat
 
 ## DESCRIPTION
 
+This cmdlet allows you to execute any Dataverse request message.
+
+Three parameter sets are supported:
+1. **Request** - Pass an OrganizationRequest object from the SDK
+2. **NameAndInputs** - Specify request name and parameters as a hashtable (simpler)
+3. **REST** - Execute raw REST API calls with custom HTTP method, path, headers and body
+
+This is useful for:
+- Executing custom actions/API messages
+- Calling Dataverse SDK messages not wrapped by specific cmdlets
+- Making raw REST API calls for advanced scenarios
+
+The response from the request is returned to the pipeline.
+
 ## EXAMPLES
 
 ### Example 1
@@ -89,7 +103,7 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
 Type: ServiceClient

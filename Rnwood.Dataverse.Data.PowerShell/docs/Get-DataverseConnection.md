@@ -54,6 +54,20 @@ Get-DataverseConnection -Url <Uri> -ConnectionString <String> [-ProgressAction <
 
 ## DESCRIPTION
 
+This cmdlet establishes a connection to a Microsoft Dataverse environment which can then be used with other cmdlets in this module.
+
+All commands that need a connection to Dataverse expect you to provide the connection in `-connection` parameter.
+So you can store the output of this command in a variable and pass it to each command that needs it.
+See the examples for this pattern below.
+
+Multiple authentication methods are supported:
+- Interactive authentication (browser-based)
+- Device code flow (for remote/headless scenarios)
+- Username/password
+- Client secret (for service principal authentication)
+- Connection string (for advanced scenarios)
+- Mock connection (for testing)
+
 ## EXAMPLES
 
 ### Example 1

@@ -106,7 +106,7 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
 Type: ServiceClient
