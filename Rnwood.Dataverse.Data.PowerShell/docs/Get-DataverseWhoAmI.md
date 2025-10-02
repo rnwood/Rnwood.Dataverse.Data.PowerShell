@@ -91,11 +91,7 @@ This is useful for:
 - Determining the security context for operations
 - Logging and auditing purposes
 
-**Example:**
-```powershell
-$whoami = Get-DataverseWhoAmI -Connection $connection
-Write-Host "Connected as user: $($whoami.UserId)"
-```
+Access these properties directly on the response object, for example: `$whoami.UserId` after calling `$whoami = Get-DataverseWhoAmI -Connection $connection`
 
 ## NOTES
 See https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.whoamiresponse?view=dataverse-sdk-latest

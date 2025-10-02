@@ -280,11 +280,7 @@ The ServiceClient provides:
 - Methods for executing requests (though typically you'll use cmdlets instead)
 - Connection state and organization information
 
-**Example usage:**
-```powershell
-$connection = Get-DataverseConnection -Url https://org.crm.dynamics.com -Interactive
-Get-DataverseRecord -Connection $connection -TableName contact
-```
+Store the connection in a variable and pass it to other cmdlets, for example: `Get-DataverseRecord -Connection $connection -TableName contact`
 
 ## NOTES
 
