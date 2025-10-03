@@ -191,14 +191,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
         elseif ($propType.FullName -like "Microsoft.Xrm.Sdk.OptionSetValue*") {
             $code += @"
-        [Parameter(Mandatory = false, HelpMessage = "$propName parameter")]
+        [Parameter(Mandatory = false, HelpMessage = "$propName - EntityReference to the related record")]
         public object $propName { get; set; }
 
 "@
         }
         elseif ($propType.FullName -like "Microsoft.Xrm.Sdk.Entity*" -and $propType.Name -eq "Entity") {
             $code += @"
-        [Parameter(Mandatory = false, HelpMessage = "$propName parameter")]
+        [Parameter(Mandatory = false, HelpMessage = "$propName - PSObject representing an Entity record")]
         public PSObject $propName { get; set; }
 
 "@
