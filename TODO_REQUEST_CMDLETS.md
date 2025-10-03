@@ -2,12 +2,12 @@
 
 ## Summary
 Total Request Types: 337
-Currently Implemented: 10
-Remaining: 327
+Currently Implemented: 17
+Remaining: 320
 
 ## Current Implementation Status
 
-### ✅ Completed (10 cmdlets)
+### ✅ Completed (17 cmdlets)
 1. AssignRequest → `Set-DataverseRecordOwner`
 2. SetStateRequest → `Set-DataverseRecordState`  
 3. ExecuteWorkflowRequest → `Invoke-DataverseWorkflow`
@@ -18,6 +18,13 @@ Remaining: 327
 8. AddMembersTeamRequest → `Add-DataverseTeamMembers`
 9. RemoveMembersTeamRequest → `Remove-DataverseTeamMembers`
 10. PublishXmlRequest → `Publish-DataverseCustomization`
+11. SendEmailRequest → `Send-DataverseEmail`
+12. LockSalesOrderPricingRequest → `Lock-DataverseSalesOrderPricing`
+13. UnlockSalesOrderPricingRequest → `Unlock-DataverseSalesOrderPricing`
+14. LockInvoicePricingRequest → `Lock-DataverseInvoicePricing`
+15. UnlockInvoicePricingRequest → `Unlock-DataverseInvoicePricing`
+16. MergeRequest → `Merge-DataverseRecord`
+17. RouteToRequest → `Set-DataverseRecordRoute`
 
 ## Implementation Instructions
 
@@ -92,13 +99,13 @@ Use `-Skip:$true` if FakeXrmEasy doesn't support the request.
 - [ ] UpdateRequest → Part of Set-DataverseRecord
 - [ ] DeleteRequest → Part of Remove-DataverseRecord
 - [ ] RetrieveMultipleRequest → Part of Get-DataverseRecord
-- [ ] SendEmailRequest → `Send-DataverseEmail`
-- [ ] LockSalesOrderPricingRequest → `Lock-DataverseSalesOrderPricing`
-- [ ] UnlockSalesOrderPricingRequest → `Unlock-DataverseSalesOrderPricing`
-- [ ] LockInvoicePricingRequest → `Lock-DataverseInvoicePricing`
-- [ ] UnlockInvoicePricingRequest → `Unlock-DataverseInvoicePricing`
-- [ ] MergeRequest → `Merge-DataverseRecord`
-- [ ] RouteToRequest → `Set-DataverseRecordRoute`
+- [x] SendEmailRequest → `Send-DataverseEmail`
+- [x] LockSalesOrderPricingRequest → `Lock-DataverseSalesOrderPricing`
+- [x] UnlockSalesOrderPricingRequest → `Unlock-DataverseSalesOrderPricing`
+- [x] LockInvoicePricingRequest → `Lock-DataverseInvoicePricing`
+- [x] UnlockInvoicePricingRequest → `Unlock-DataverseInvoicePricing`
+- [x] MergeRequest → `Merge-DataverseRecord`
+- [x] RouteToRequest → `Set-DataverseRecordRoute`
 
 ### 🟠 Priority 2: Team & Security Management
 - [ ] AddUserToRecordTeamRequest → `Add-DataverseRecordTeamMember`
