@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Management.Automation;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
@@ -13,8 +14,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     {
         [Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet")]
         public override ServiceClient Connection { get; set; }
-        [Parameter(Mandatory = false, HelpMessage = "QueryExpression parameter")]
+        
+        // Query parameter sets for PowerShell-friendly usage
+        [Parameter(ParameterSetName = "QueryObject", Mandatory = false, HelpMessage = "QueryBase object from the SDK (QueryExpression or FetchExpression)")]
         public Microsoft.Xrm.Sdk.Query.QueryBase QueryExpression { get; set; }
+        
+        [Parameter(ParameterSetName = "FetchXml", Mandatory = true, HelpMessage = "FetchXML query string")]
+        public string FetchXml { get; set; }
+        
+        [Parameter(ParameterSetName = "Filter", Mandatory = true, HelpMessage = "Hashtable with filter conditions")]
+        public Hashtable Filter { get; set; }
+        
+        [Parameter(ParameterSetName = "Filter", Mandatory = true, HelpMessage = "Logical name of the Dataverse table to query")]
+        [Parameter(ParameterSetName = "FetchXml", Mandatory = false, HelpMessage = "Logical name of the Dataverse table (optional with FetchXML)")]
+        public string TableName { get; set; }
+        
         [Parameter(Mandatory = false, HelpMessage = "FriendlyName parameter")]
         public String FriendlyName { get; set; }
         [Parameter(Mandatory = false, HelpMessage = "ExecuteImmediately parameter")]
@@ -39,7 +53,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.ProcessRecord();
 
             var request = new PropagateByExpressionRequest();
-            request.QueryExpression = QueryExpression;            request.FriendlyName = FriendlyName;            request.ExecuteImmediately = ExecuteImmediately;            if (Activity != null)
+            
+            // Handle query parameter conversion
+            if (ParameterSetName == "FetchXml" || ParameterSetName == "Filter")
+            {
+                request.QueryExpression = DataverseComplexTypeConverter.ToQueryBase(FetchXml, Filter, TableName);
+            }
+            else
+            {
+                request.QueryExpression = QueryExpression;
+            }
+            
+            request.FriendlyName = FriendlyName;
+            request.ExecuteImmediately = ExecuteImmediately;
+            if (Activity != null)
             {
                 var entity = new Entity();
                 foreach (PSPropertyInfo prop in Activity.Properties)
@@ -51,11 +78,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 request.Activity = entity;
             }
-            request.TemplateId = TemplateId;            request.OwnershipOptions = OwnershipOptions;            request.PostWorkflowEvent = PostWorkflowEvent;            if (Owner != null)
+            request.TemplateId = TemplateId;
+            request.OwnershipOptions = OwnershipOptions;
+            request.PostWorkflowEvent = PostWorkflowEvent;
+            if (Owner != null)
             {
                 request.Owner = DataverseTypeConverter.ToEntityReference(Owner, null, "Owner");
             }
-            request.SendEmail = SendEmail;            request.QueueId = QueueId;
+            request.SendEmail = SendEmail;
+            request.QueueId = QueueId;
             if (ShouldProcess("Executing PropagateByExpressionRequest", "PropagateByExpressionRequest"))
             {
                 var response = (PropagateByExpressionResponse)Connection.Execute(request);

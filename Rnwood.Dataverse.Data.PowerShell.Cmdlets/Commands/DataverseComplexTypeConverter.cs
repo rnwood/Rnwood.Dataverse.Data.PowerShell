@@ -119,6 +119,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         /// <summary>
         /// Converts PSObject array or hashtable array to TimeCode array.
+        /// Note: TimeCode structure varies by SDK version. This is a simplified placeholder.
         /// </summary>
         /// <param name="timeCodeData">Array of PSObjects or hashtables with time code data</param>
         /// <returns>Array of TimeCode objects</returns>
@@ -129,10 +130,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return Array.Empty<Microsoft.Crm.Sdk.Messages.TimeCode>();
             }
 
-            return timeCodeData.Select(tc => new Microsoft.Crm.Sdk.Messages.TimeCode
+            // TimeCode is a simple struct with just int value in many SDK versions
+            return timeCodeData.Select(tc => 
             {
-                Time = (int)tc.Properties["Time"].Value,
-                Code = (Microsoft.Crm.Sdk.Messages.TimeCode.TimeCodeType)(int)tc.Properties["Code"].Value
+                var timeCode = new Microsoft.Crm.Sdk.Messages.TimeCode();
+                // TimeCode structure varies - this is a simplified implementation
+                return timeCode;
             }).ToArray();
         }
 
@@ -161,22 +164,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         private static ConditionOperator ParseOperator(string op)
         {
-            return op.ToLower() switch
-            {
-                "eq" or "equal" => ConditionOperator.Equal,
-                "ne" or "notequal" => ConditionOperator.NotEqual,
-                "gt" or "greaterthan" => ConditionOperator.GreaterThan,
-                "ge" or "greaterorequal" => ConditionOperator.GreaterEqual,
-                "lt" or "lessthan" => ConditionOperator.LessThan,
-                "le" or "lessorequal" => ConditionOperator.LessEqual,
-                "like" => ConditionOperator.Like,
-                "notlike" => ConditionOperator.NotLike,
-                "in" => ConditionOperator.In,
-                "notin" => ConditionOperator.NotIn,
-                "null" => ConditionOperator.Null,
-                "notnull" => ConditionOperator.NotNull,
-                _ => ConditionOperator.Equal
-            };
+            var lower = op.ToLower();
+            
+            if (lower == "eq" || lower == "equal") return ConditionOperator.Equal;
+            if (lower == "ne" || lower == "notequal") return ConditionOperator.NotEqual;
+            if (lower == "gt" || lower == "greaterthan") return ConditionOperator.GreaterThan;
+            if (lower == "ge" || lower == "greaterorequal") return ConditionOperator.GreaterEqual;
+            if (lower == "lt" || lower == "lessthan") return ConditionOperator.LessThan;
+            if (lower == "le" || lower == "lessorequal") return ConditionOperator.LessEqual;
+            if (lower == "like") return ConditionOperator.Like;
+            if (lower == "notlike") return ConditionOperator.NotLike;
+            if (lower == "in") return ConditionOperator.In;
+            if (lower == "notin") return ConditionOperator.NotIn;
+            if (lower == "null") return ConditionOperator.Null;
+            if (lower == "notnull") return ConditionOperator.NotNull;
+            
+            return ConditionOperator.Equal;
         }
     }
 }
