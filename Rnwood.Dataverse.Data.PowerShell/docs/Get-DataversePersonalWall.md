@@ -15,6 +15,16 @@ This cmdlet wraps the `RetrievePersonalWallRequest` SDK message. It executes the
 
 Executes RetrievePersonalWallRequest SDK message.
 
+### Type Conversion
+
+This cmdlet follows the standard type conversion patterns:
+
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
+
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
+
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
+
 ## PARAMETERS
 
 ### -Connection
@@ -32,7 +42,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -PageNumber
-Parameter for the RetrievePersonalWallRequest operation.
+Parameter for the RetrievePersonalWallRequest operation
 
 ```yaml
 Type: Int32
@@ -46,7 +56,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -PageSize
-Parameter for the RetrievePersonalWallRequest operation.
+Parameter for the RetrievePersonalWallRequest operation
 
 ```yaml
 Type: Int32
@@ -60,7 +70,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -CommentsPerPost
-Parameter for the RetrievePersonalWallRequest operation.
+Parameter for the RetrievePersonalWallRequest operation
 
 ```yaml
 Type: Int32
@@ -74,7 +84,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -StartDate
-Parameter for the RetrievePersonalWallRequest operation.
+Parameter for the RetrievePersonalWallRequest operation
 
 ```yaml
 Type: DateTime
@@ -88,7 +98,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -EndDate
-Parameter for the RetrievePersonalWallRequest operation.
+Parameter for the RetrievePersonalWallRequest operation
 
 ```yaml
 Type: DateTime
@@ -102,7 +112,12 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -Type
-Parameter for the RetrievePersonalWallRequest operation.
+Reference to a Dataverse record. Can be:
+- **EntityReference** object from the SDK
+- **PSObject** with Id and TableName properties (e.g., from Get-DataverseRecord)
+- **Guid** value (requires corresponding TableName parameter)
+
+The cmdlet uses DataverseTypeConverter to handle the conversion automatically.
 
 ```yaml
 Type: object
@@ -116,7 +131,12 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -Source
-Parameter for the RetrievePersonalWallRequest operation.
+Reference to a Dataverse record. Can be:
+- **EntityReference** object from the SDK
+- **PSObject** with Id and TableName properties (e.g., from Get-DataverseRecord)
+- **Guid** value (requires corresponding TableName parameter)
+
+The cmdlet uses DataverseTypeConverter to handle the conversion automatically.
 
 ```yaml
 Type: object
@@ -130,7 +150,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -SortDirection
-Parameter for the RetrievePersonalWallRequest operation.
+Parameter for the RetrievePersonalWallRequest operation
 
 ```yaml
 Type: Boolean
@@ -144,7 +164,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -Keyword
-Parameter for the RetrievePersonalWallRequest operation.
+Parameter for the RetrievePersonalWallRequest operation
 
 ```yaml
 Type: String

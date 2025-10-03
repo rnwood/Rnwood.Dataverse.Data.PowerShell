@@ -15,6 +15,16 @@ This cmdlet wraps the `DeliverImmediatePromoteEmailRequest` SDK message. It exec
 
 Executes DeliverImmediatePromoteEmailRequest SDK message.
 
+### Type Conversion
+
+This cmdlet follows the standard type conversion patterns:
+
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
+
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
+
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
+
 ## PARAMETERS
 
 ### -Connection
@@ -32,7 +42,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -EmailId
-Parameter for the DeliverImmediatePromoteEmailRequest operation.
+Parameter for the DeliverImmediatePromoteEmailRequest operation
 
 ```yaml
 Type: Guid
@@ -46,7 +56,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -MessageId
-Parameter for the DeliverImmediatePromoteEmailRequest operation.
+Parameter for the DeliverImmediatePromoteEmailRequest operation
 
 ```yaml
 Type: String
@@ -60,7 +70,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -Subject
-Parameter for the DeliverImmediatePromoteEmailRequest operation.
+Parameter for the DeliverImmediatePromoteEmailRequest operation
 
 ```yaml
 Type: String
@@ -74,7 +84,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -From
-Parameter for the DeliverImmediatePromoteEmailRequest operation.
+Parameter for the DeliverImmediatePromoteEmailRequest operation
 
 ```yaml
 Type: String
@@ -88,7 +98,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -To
-Parameter for the DeliverImmediatePromoteEmailRequest operation.
+Parameter for the DeliverImmediatePromoteEmailRequest operation
 
 ```yaml
 Type: String
@@ -102,7 +112,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -Cc
-Parameter for the DeliverImmediatePromoteEmailRequest operation.
+Parameter for the DeliverImmediatePromoteEmailRequest operation
 
 ```yaml
 Type: String
@@ -116,7 +126,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -Bcc
-Parameter for the DeliverImmediatePromoteEmailRequest operation.
+Parameter for the DeliverImmediatePromoteEmailRequest operation
 
 ```yaml
 Type: String
@@ -130,7 +140,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -ReceivedOn
-Parameter for the DeliverImmediatePromoteEmailRequest operation.
+Parameter for the DeliverImmediatePromoteEmailRequest operation
 
 ```yaml
 Type: DateTime
@@ -144,7 +154,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -SubmittedBy
-Parameter for the DeliverImmediatePromoteEmailRequest operation.
+Parameter for the DeliverImmediatePromoteEmailRequest operation
 
 ```yaml
 Type: String
@@ -158,7 +168,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -Importance
-Parameter for the DeliverImmediatePromoteEmailRequest operation.
+Parameter for the DeliverImmediatePromoteEmailRequest operation
 
 ```yaml
 Type: String
@@ -172,7 +182,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -Body
-Parameter for the DeliverImmediatePromoteEmailRequest operation.
+Parameter for the DeliverImmediatePromoteEmailRequest operation
 
 ```yaml
 Type: String
@@ -186,7 +196,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -EWSUrl
-Parameter for the DeliverImmediatePromoteEmailRequest operation.
+Parameter for the DeliverImmediatePromoteEmailRequest operation
 
 ```yaml
 Type: String
@@ -200,7 +210,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -AttachmentToken
-Parameter for the DeliverImmediatePromoteEmailRequest operation.
+Parameter for the DeliverImmediatePromoteEmailRequest operation
 
 ```yaml
 Type: String
@@ -214,7 +224,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -ExtraProperties
-Parameter for the DeliverImmediatePromoteEmailRequest operation.
+Parameter for the DeliverImmediatePromoteEmailRequest operation
 
 ```yaml
 Type: PSObject

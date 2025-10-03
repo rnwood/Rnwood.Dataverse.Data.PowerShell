@@ -1,144 +1,52 @@
----
-external help file: Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll-Help.xml
-Module Name: Rnwood.Dataverse.Data.PowerShell
-online version:
-schema: 2.0.0
----
-
 # Get-DataverseConnection
 
 ## SYNOPSIS
-Gets a connection to a Dataverse environment either interactively or silently and returns it.
-
-All commands that need a connection to Dataverse expect you to provide the connection in `-connection` parameter.
-So you can store the output of this command in a variable and pass it to each command that needs it.
-See the examples for this pattern below.
+Executes the Get-DataverseConnection operation.
 
 ## SYNTAX
 
-### Return a mock connection
 ```
-Get-DataverseConnection -Mock <EntityMetadata[]> -Url <Uri> [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
-```
-
-### Authenticate with client secret
-```
-Get-DataverseConnection -ClientId <Guid> -Url <Uri> -ClientSecret <String> [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
-```
-
-### Authenticate interactively
-```
-Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] [-Interactive]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
-### Authenticate using the device code flow
-```
-Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] [-DeviceCode]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
-### Authenticate with username and password
-```
-Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> -Username <String> -Password <String>
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
-### Authenticate with Dataverse SDK connection string.
-```
-Get-DataverseConnection -Url <Uri> -ConnectionString <String> [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
-```
-
-### Authenticate with DefaultAzureCredential
-```
-Get-DataverseConnection -Url <Uri> [-DefaultAzureCredential] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
-```
-
-### Authenticate with ManagedIdentityCredential
-```
-Get-DataverseConnection -Url <Uri> [-ManagedIdentity] [-ManagedIdentityClientId <String>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection -Connection <ServiceClient> [-ClientId <Guid>] [-Url <Uri>] [-ClientSecret <string>] [-Username <string>] [-Password <string>] [-Interactive <SwitchParameter>] [-DeviceCode <SwitchParameter>] [-ConnectionString <string>] [-DefaultAzureCredential <SwitchParameter>] [-ManagedIdentity <SwitchParameter>] [-ManagedIdentityClientId <string>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 
-This cmdlet establishes a connection to a Microsoft Dataverse environment which can then be used with other cmdlets in this module.
+This cmdlet wraps the `OrganizationRequest` SDK message. It executes the operation through the Dataverse Organization Service.
 
-All commands that need a connection to Dataverse expect you to provide the connection in `-connection` parameter.
-So you can store the output of this command in a variable and pass it to each command that needs it.
-See the examples for this pattern below.
+Executes the Get-DataverseConnection operation.
 
-Multiple authentication methods are supported:
-- Interactive authentication (browser-based)
-- Device code flow (for remote/headless scenarios)
-- Username/password
-- Client secret (for service principal authentication)
-- DefaultAzureCredential (automatic credential discovery for Azure environments)
-- ManagedIdentityCredential (for Azure managed identity authentication)
-- Connection string (for advanced scenarios)
-- Mock connection (for testing)
+### Type Conversion
 
-## EXAMPLES
+This cmdlet follows the standard type conversion patterns:
 
-### Example 1
-```powershell
-PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Interactive
-```
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
 
-Gets a connection to MYORG using interactive authentication and stores the result in the `$c` variable for later use.
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
 
-### Example 2
-```powershell
-PS C:\> $c = Get-DataverseConnection -url "https://myorg.crm4.dynamics.com" -clientid "3004eb1e-7a00-45e0-a1dc-6703735eac18" -clientsecret "itsasecret"
-```
-
-Gets a connection to MYORG using Service Principal client ID and secret auth and stores the result in the `$c` variable for later use.
-
-### Example 3
-```powershell
-PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -DefaultAzureCredential
-```
-
-Gets a connection to MYORG using DefaultAzureCredential, which automatically discovers credentials from the environment (environment variables, managed identity, Visual Studio, Azure CLI, Azure PowerShell, or interactive browser). This is ideal for Azure-hosted applications.
-
-### Example 4
-```powershell
-PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ManagedIdentity
-```
-
-Gets a connection to MYORG using the system-assigned managed identity. This is useful when running in Azure environments like Azure Functions, App Service, or VMs with managed identity enabled.
-
-### Example 5
-```powershell
-PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ManagedIdentity -ManagedIdentityClientId "12345678-1234-1234-1234-123456789abc"
-```
-
-Gets a connection to MYORG using a user-assigned managed identity with the specified client ID.
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
 
 ## PARAMETERS
 
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
+
+```yaml
+Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 ### -ClientId
-Client ID to use for authentication. By default the MS provided ID for PAC CLI (`9cee029c-6210-4654-90bb-17e6e9d36617`) is used to make it easy to get started.
+Parameter for the OrganizationRequest operation
 
 ```yaml
 Type: Guid
-Parameter Sets: Authenticate with client secret
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-```yaml
-Type: Guid
-Parameter Sets: Authenticate interactively, Authenticate using the device code flow, Authenticate with username and password
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -147,191 +55,27 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
-### -ClientSecret
-Client secret to authenticate with, as registered for the Entra ID application.
-
-```yaml
-Type: String
-Parameter Sets: Authenticate with client secret
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ConnectionString
-Specifies the conneciton string to authenticate with - see https://learn.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect
-
-```yaml
-Type: String
-Parameter Sets: Authenticate with Dataverse SDK connection string.
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -DefaultAzureCredential
-Use DefaultAzureCredential for authentication. This will try multiple authentication methods in order: environment variables, managed identity, Visual Studio, Azure CLI, Azure PowerShell, and interactive browser.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Authenticate with DefaultAzureCredential
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -DeviceCode
-Triggers device code authentication where you will be given a URL to visit and a code to complete authentication in web browser.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Authenticate using the device code flow
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Interactive
-Triggers interactive authentication, where browser will be opened for user to interactively log in.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Authenticate interactively
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ManagedIdentity
-Use ManagedIdentityCredential for authentication. Authenticates using the managed identity assigned to the Azure resource.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Authenticate with ManagedIdentityCredential
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ManagedIdentityClientId
-Client ID of the user-assigned managed identity. If not specified, the system-assigned managed identity will be used.
-
-```yaml
-Type: String
-Parameter Sets: Authenticate with ManagedIdentityCredential
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Mock
-Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.
-
-```yaml
-Type: EntityMetadata[]
-Parameter Sets: Return a mock connection
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Password
-Password to authenticate with.
-
-```yaml
-Type: String
-Parameter Sets: Authenticate with username and password
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Url
-URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com
+Parameter for the OrganizationRequest operation
 
 ```yaml
 Type: Uri
 Parameter Sets: (All)
 Aliases:
 
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Username
-Username to authenticate with.
-
-```yaml
-Type: String
-Parameter Sets: Authenticate interactively, Authenticate using the device code flow
-Aliases:
-
 Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
+### -ClientSecret
+Parameter for the OrganizationRequest operation
 
 ```yaml
-Type: String
-Parameter Sets: Authenticate with username and password
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-See standard PS documentation.
-
-```yaml
-Type: ActionPreference
+Type: string
 Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named
@@ -339,7 +83,118 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
+### -Username
+Parameter for the OrganizationRequest operation
 
+```yaml
+Type: string
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+### -Password
+Parameter for the OrganizationRequest operation
+
+```yaml
+Type: string
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+### -Interactive
+Parameter for the OrganizationRequest operation
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+### -DeviceCode
+Parameter for the OrganizationRequest operation
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+### -ConnectionString
+Parameter for the OrganizationRequest operation
+
+```yaml
+Type: string
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+### -DefaultAzureCredential
+Parameter for the OrganizationRequest operation
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+### -ManagedIdentity
+Parameter for the OrganizationRequest operation
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+### -ManagedIdentityClientId
+Parameter for the OrganizationRequest operation
+
+```yaml
+Type: string
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -347,21 +202,18 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### None
 
-This cmdlet does not accept pipeline input.
-
 ## OUTPUTS
 
-### Microsoft.PowerPlatform.Dataverse.Client.ServiceClient
+### ServiceClient
 
-Returns a ServiceClient object representing the authenticated connection to Dataverse. This object should be stored in a variable and passed to the `-Connection` parameter of other cmdlets in this module.
-
-The ServiceClient provides:
-- Authenticated access to the Dataverse organization
-- Methods for executing requests (though typically you'll use cmdlets instead)
-- Connection state and organization information
-
-Store the connection in a variable and pass it to other cmdlets, for example: `Get-DataverseRecord -Connection $connection -TableName contact`
+Returns the response from the `OrganizationRequest` operation.
 
 ## NOTES
 
+This cmdlet is auto-generated and wraps the Dataverse SDK message.
+
 ## RELATED LINKS
+
+[Invoke-DataverseRequest](Invoke-DataverseRequest.md)
+
+[Get-DataverseConnection](Get-DataverseConnection.md)

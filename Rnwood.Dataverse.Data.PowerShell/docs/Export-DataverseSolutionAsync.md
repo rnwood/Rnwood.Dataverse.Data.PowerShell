@@ -15,6 +15,16 @@ This cmdlet wraps the `ExportSolutionAsyncRequest` SDK message. It executes the 
 
 Executes ExportSolutionAsyncRequest SDK message.
 
+### Type Conversion
+
+This cmdlet follows the standard type conversion patterns:
+
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
+
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
+
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
+
 ## PARAMETERS
 
 ### -Connection
@@ -32,7 +42,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -SolutionName
-Parameter for the ExportSolutionAsyncRequest operation.
+Parameter for the ExportSolutionAsyncRequest operation
 
 ```yaml
 Type: String
@@ -46,7 +56,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -Managed
-Parameter for the ExportSolutionAsyncRequest operation.
+Parameter for the ExportSolutionAsyncRequest operation
 
 ```yaml
 Type: Boolean
@@ -60,7 +70,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -TargetVersion
-Parameter for the ExportSolutionAsyncRequest operation.
+Parameter for the ExportSolutionAsyncRequest operation
 
 ```yaml
 Type: String
@@ -74,7 +84,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -ExportAutoNumberingSettings
-Parameter for the ExportSolutionAsyncRequest operation.
+Parameter for the ExportSolutionAsyncRequest operation
 
 ```yaml
 Type: Boolean
@@ -88,7 +98,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -ExportCalendarSettings
-Parameter for the ExportSolutionAsyncRequest operation.
+Parameter for the ExportSolutionAsyncRequest operation
 
 ```yaml
 Type: Boolean
@@ -102,7 +112,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -ExportCustomizationSettings
-Parameter for the ExportSolutionAsyncRequest operation.
+Parameter for the ExportSolutionAsyncRequest operation
 
 ```yaml
 Type: Boolean
@@ -116,7 +126,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -ExportEmailTrackingSettings
-Parameter for the ExportSolutionAsyncRequest operation.
+Parameter for the ExportSolutionAsyncRequest operation
 
 ```yaml
 Type: Boolean
@@ -130,7 +140,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -ExportGeneralSettings
-Parameter for the ExportSolutionAsyncRequest operation.
+Parameter for the ExportSolutionAsyncRequest operation
 
 ```yaml
 Type: Boolean
@@ -144,7 +154,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -ExportMarketingSettings
-Parameter for the ExportSolutionAsyncRequest operation.
+Parameter for the ExportSolutionAsyncRequest operation
 
 ```yaml
 Type: Boolean
@@ -158,7 +168,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -ExportOutlookSynchronizationSettings
-Parameter for the ExportSolutionAsyncRequest operation.
+Parameter for the ExportSolutionAsyncRequest operation
 
 ```yaml
 Type: Boolean
@@ -172,7 +182,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -ExportRelationshipRoles
-Parameter for the ExportSolutionAsyncRequest operation.
+Parameter for the ExportSolutionAsyncRequest operation
 
 ```yaml
 Type: Boolean
@@ -186,7 +196,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -ExportIsvConfig
-Parameter for the ExportSolutionAsyncRequest operation.
+Parameter for the ExportSolutionAsyncRequest operation
 
 ```yaml
 Type: Boolean
@@ -200,7 +210,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -ExportSales
-Parameter for the ExportSolutionAsyncRequest operation.
+Parameter for the ExportSolutionAsyncRequest operation
 
 ```yaml
 Type: Boolean
@@ -214,7 +224,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -ExportExternalApplications
-Parameter for the ExportSolutionAsyncRequest operation.
+Parameter for the ExportSolutionAsyncRequest operation
 
 ```yaml
 Type: Boolean

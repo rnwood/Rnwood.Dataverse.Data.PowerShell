@@ -106,6 +106,16 @@ This cmdlet wraps the ``$requestType`` SDK message. It executes the operation th
 
 $summary
 
+### Type Conversion
+
+This cmdlet follows the standard type conversion patterns:
+
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
+
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
+
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
+
 ## PARAMETERS
 
 ### -Connection
@@ -128,9 +138,56 @@ Accept wildcard characters: False
         foreach ($param in $parameters) {
             $pipelineInput = if ($content -match "ValueFromPipelineByPropertyName.*\s+public\s+\w+\s+$($param.Name)") { "True (ByPropertyName)" } else { "False" }
             
+            # Generate type-specific parameter descriptions based on the conversion patterns
+            $paramDescription = "Parameter for the $requestType operation"
+            
+            if ($param.Type -eq "EntityReference" -or $param.Type -eq "Object") {
+                $paramDescription = @"
+Reference to a Dataverse record. Can be:
+- **EntityReference** object from the SDK
+- **PSObject** with Id and TableName properties (e.g., from Get-DataverseRecord)
+- **Guid** value (requires corresponding TableName parameter)
+
+The cmdlet uses DataverseTypeConverter to handle the conversion automatically.
+"@
+            }
+            elseif ($param.Type -eq "EntityReference[]" -or $param.Type -eq "Object[]") {
+                $paramDescription = @"
+Array of references to Dataverse records. Each element can be:
+- **EntityReference** object from the SDK
+- **PSObject** with Id and TableName properties (e.g., from Get-DataverseRecord)
+- **Guid** value (requires corresponding TableName parameter)
+
+The cmdlet uses DataverseTypeConverter to handle the conversion automatically.
+"@
+            }
+            elseif ($param.Type -eq "Entity") {
+                $paramDescription = @"
+PSObject representing a Dataverse Entity record. Properties should match the logical names of columns in the target table.
+
+The cmdlet converts the PSObject to an Entity object using DataverseEntityConverter, following these rules:
+- Property names map to attribute logical names
+- Values are converted to appropriate SDK types (Money, EntityReference, OptionSetValue, etc.)
+- For lookup fields, accepts Guid, EntityReference, or PSObject with Id and TableName
+- For choice fields (picklists), accepts numeric value or string label
+"@
+            }
+            elseif ($param.Type -eq "OptionSetValue") {
+                $paramDescription = @"
+OptionSet (picklist) value. Can be:
+- **Numeric value** (option set integer code)
+- **String label** (display name of the option)
+
+The cmdlet uses DataverseTypeConverter to handle the conversion automatically.
+"@
+            }
+            elseif ($param.Name -match "TableName|EntityName|EntityLogicalName") {
+                $paramDescription = "Logical name of the Dataverse table (entity). Required when providing Guid values for record references instead of EntityReference or PSObject."
+            }
+            
             $markdown += @"
 ### -$($param.Name)
-Parameter for the $requestType operation.
+$paramDescription
 
 ``````yaml
 Type: $($param.Type)

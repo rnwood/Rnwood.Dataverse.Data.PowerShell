@@ -1,95 +1,31 @@
----
-external help file: Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll-Help.xml
-Module Name: Rnwood.Dataverse.Data.PowerShell
-online version:
-schema: 2.0.0
----
-
 # Get-DataverseRecord
 
 ## SYNOPSIS
-Retrieves records from Dataverse tables using a variety of strategies to specify what should be retrieved.
+Executes the Get-DataverseRecord operation.
 
 ## SYNTAX
 
-### Simple
 ```
-Get-DataverseRecord -Connection <ServiceClient> [-TableName] <String> [-VerboseRecordCount] [-RecordCount]
- [-FilterValues <Hashtable[]>] [-Criteria <FilterExpression>] [-Links <DataverseLinkEntity[]>]
- [-ExcludeFilterValues <Hashtable[]>] [-ExcludeFilterOr] [-ActiveOnly] [-Id <Guid[]>] [-Name <String[]>]
- [-ExcludeId <Guid[]>] [-Columns <String[]>] [-ExcludeColumns <String[]>] [-OrderBy <String[]>] [-Top <Int32>]
- [-PageSize <Int32>] [-LookupValuesReturnName] [-IncludeSystemColumns] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
-```
-
-### FetchXml
-```
-Get-DataverseRecord -Connection <ServiceClient> [-VerboseRecordCount] [-RecordCount] [-FetchXml <String>]
- [-Top <Int32>] [-PageSize <Int32>] [-LookupValuesReturnName] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseRecord -Connection <ServiceClient> [-VerboseRecordCount <SwitchParameter>] [-RecordCount <SwitchParameter>] [-FetchXml <string>] [-Criteria <FilterExpression>] [-ExcludeFilterOr <SwitchParameter>] [-ActiveOnly <SwitchParameter>] [-LookupValuesReturnName <SwitchParameter>] [-IncludeSystemColumns <SwitchParameter>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 
-This cmdlet retrieves records from Dataverse tables using either QueryExpression (via simple parameters) or FetchXML.
+This cmdlet wraps the `RetrieveMultipleRequest` SDK message. It executes the operation through the Dataverse Organization Service.
 
-The cmdlet supports:
-- Filtering by ID, name, or custom filter expressions
-- Column selection (including excluding specific columns)
-- Ordering and pagination
-- Lookup value handling (can return name or ID)
-- System column exclusion by default
-- Automatic paging through all results
+Executes the Get-DataverseRecord operation.
 
-Results are returned as PowerShell objects with properties matching the column names.
+### Type Conversion
 
-## EXAMPLES
+This cmdlet follows the standard type conversion patterns:
 
-### Example 1
-```powershell
-PS C:\> Get-DataverseRecord -connection $connection -tablename contact
-```
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
 
-Get all contacts returning all non-system columns.
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
 
-### Example 2
-```powershell
-PS C:\> Get-DataverseRecord -connection $connection -tablename contact -columns firstname -filtervalues @{"firstname:Like"="Rob%"}
-```
-
-Get all contacts where firstname starts with 'Rob' and return the firstname column only.
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
 
 ## PARAMETERS
-
-### -ActiveOnly
-If specified only active records (statecode=0 or isactive=true) will be output
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Columns
-List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default
-
-```yaml
-Type: String[]
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
@@ -105,13 +41,54 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
+### -VerboseRecordCount
+Parameter for the RetrieveMultipleRequest operation
 
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+### -RecordCount
+Parameter for the RetrieveMultipleRequest operation
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+### -FetchXml
+Parameter for the RetrieveMultipleRequest operation
+
+```yaml
+Type: string
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 ### -Criteria
-Extra criteria to apply to query. This is specified using the Dataverse SDK type `FilterExpression`.
+Parameter for the RetrieveMultipleRequest operation
 
 ```yaml
 Type: FilterExpression
-Parameter Sets: Simple
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -120,28 +97,12 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
-### -ExcludeColumns
-List of columns to exclude from records (default is none). Ignored if Columns parameter is used.
-
-```yaml
-Type: String[]
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -ExcludeFilterOr
-If specified the exclude filters will be logically combined using OR instead of the default of AND
+Parameter for the RetrieveMultipleRequest operation
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: Simple
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -150,99 +111,12 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
-### -ExcludeFilterValues
-List of hashsets of fields names,values to filter records by using an NOTEQUALS condition (or ISNOTNULL if null value).
-If more than one hashset is provided then they are logically combined using an AND condition by default.
-e.g.
-@{firstname="bob", age=25}, @{firstname="sue"} will find records where (firstname\<\>bob AND age\<\>25) OR (firstname\<\>sue)
-
-```yaml
-Type: Hashtable[]
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ExcludeId
-List of record ids to exclude
-
-```yaml
-Type: Guid[]
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -FetchXml
-FetchXml to use. See https://learn.microsoft.com/en-us/power-apps/developer/data-platform/fetchxml/overview
-
-```yaml
-Type: String
-Parameter Sets: FetchXml
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -FilterValues
-List of hashsets of @{"fieldname"="value"} or @{"fieldname:operator"="value"} to filter records by. If operator is not provided, uses an EQUALS condition (or ISNULL if null value).
-If more than one hashset is provided then they are logically combined using an OR condition.
-e.g.
-@{firstname="bob", age=25}, @{firstname="sue"} will find records where (firstname=bob AND age=25) OR (firstname=sue)
-
-Valid operators:
-Equal, NotEqual, GreaterThan, LessThan, GreaterEqual, LessEqual, Like, NotLike, In, NotIn, Between, NotBetween, Null, NotNull, Yesterday, Today, Tomorrow, Last7Days, Next7Days, LastWeek, ThisWeek, NextWeek, LastMonth, ThisMonth, NextMonth, On, OnOrBefore, OnOrAfter, LastYear, ThisYear, NextYear, LastXHours, NextXHours, LastXDays, NextXDays, LastXWeeks, NextXWeeks, LastXMonths, NextXMonths, LastXYears, NextXYears, EqualUserId, NotEqualUserId, EqualBusinessId, NotEqualBusinessId, ChildOf, Mask, NotMask, MasksSelect, Contains, DoesNotContain, EqualUserLanguage, NotOn, OlderThanXMonths, BeginsWith, DoesNotBeginWith, EndsWith, DoesNotEndWith, ThisFiscalYear, ThisFiscalPeriod, NextFiscalYear, NextFiscalPeriod, LastFiscalYear, LastFiscalPeriod, LastXFiscalYears, LastXFiscalPeriods, NextXFiscalYears, NextXFiscalPeriods, InFiscalYear, InFiscalPeriod, InFiscalPeriodAndYear, InOrBeforeFiscalPeriodAndYear, InOrAfterFiscalPeriodAndYear, EqualUserTeams, EqualUserOrUserTeams, Under, NotUnder, UnderOrEqual, Above, AboveOrEqual, EqualUserOrUserHierarchy, EqualUserOrUserHierarchyAndTeams, OlderThanXYears, OlderThanXWeeks, OlderThanXDays, OlderThanXHours, OlderThanXMinutes, ContainValues, DoesNotContainValues, EqualRoleBusinessId
-
-The type of value must use those expected by the SDK for the column type and operator.
-
-```yaml
-Type: Hashtable[]
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Id
-List of primary keys (IDs) of records to retrieve.
-
-```yaml
-Type: Guid[]
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IncludeSystemColumns
-Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.
+### -ActiveOnly
+Parameter for the RetrieveMultipleRequest operation
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: Simple
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -251,25 +125,8 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
-### -Links
-Link entities to apply to query. Specified using the Dataverse SDK type `LinkEntity`
-
-```yaml
-Type: DataverseLinkEntity[]
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -LookupValuesReturnName
-Outputs Names for lookup values.
-The default behaviour is to output the ID.
+Parameter for the RetrieveMultipleRequest operation
 
 ```yaml
 Type: SwitchParameter
@@ -282,57 +139,8 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
-### -Name
-List of names (primary attribute value) of records to retrieve.
-
-```yaml
-Type: String[]
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -OrderBy
-List of fields to order records by.
-Suffix field name with - to sort descending.
-e.g "age-", "lastname" will sort by age descending then lastname ascending
-
-```yaml
-Type: String[]
-Parameter Sets: Simple
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -PageSize
-Number of records to request per page.
-Default is 1000.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -RecordCount
-If set writes total record count matching query to output output instead of results
+### -IncludeSystemColumns
+Parameter for the RetrieveMultipleRequest operation
 
 ```yaml
 Type: SwitchParameter
@@ -345,68 +153,6 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
-### -TableName
-Logical name of entity for which to retrieve records
-
-```yaml
-Type: String
-Parameter Sets: Simple
-Aliases: EntityName
-
-Required: True
-Position: 0
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Top
-Number of records to limit result to.
-Default is all results.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -VerboseRecordCount
-If set writes total record count matching query to verbose output
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-See standard PS docs.
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -414,50 +160,18 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### None
 
-This cmdlet does not accept pipeline input.
-
 ## OUTPUTS
 
-### System.Management.Automation.PSObject
+### OrganizationResponse
 
-Returns PowerShell objects representing Dataverse records. Each object contains:
-- **Id** (Guid): The primary key of the record
-- **TableName** (String): The logical name of the table (e.g., "contact", "account")
-- **Column properties**: One property per column in the result set
-
-**Column Value Conversion (Dataverse → PowerShell):**
-
-The cmdlet converts Dataverse column types to PowerShell-friendly formats:
-
-**Lookup/Owner/Customer columns:**
-- By default, returns the **name** (string) of the related record
-- With `-LookupValuesReturnName` disabled, returns a PSObject with `Id`, `LogicalName`, and `Name` properties
-- Returns `$null` if the lookup is empty
-
-**Choice/Picklist/State/Status columns:**
-- By default, returns the **label** (string) of the selected option
-- Returns the numeric value if the label cannot be resolved
-
-**Date/DateTime columns:**
-- Returns DateTime objects converted to **local time**
-- Special handling for scheduling entities with timezone-specific dates
-
-**Money columns:**
-- Returns the decimal value (without the Money wrapper)
-
-**Unique Identifier columns:**
-- For regular columns, returns Guid values
-- For M:M relationship tables, returns the **name** of the related record instead of the Guid (unless raw values requested)
-
-**PartyList columns (e.g., email recipients):**
-- Returns an array of PSObjects, each representing an activity party record
-
-**Multi-Select Picklist columns:**
-- Returns an array of label strings (or numeric values if labels unavailable)
-
-**All other column types:**
-- String, Integer, Decimal, Boolean, etc. are returned as their native PowerShell types
+Returns the response from the `RetrieveMultipleRequest` operation.
 
 ## NOTES
 
+This cmdlet is auto-generated and wraps the Dataverse SDK message.
+
 ## RELATED LINKS
+
+[Invoke-DataverseRequest](Invoke-DataverseRequest.md)
+
+[Get-DataverseConnection](Get-DataverseConnection.md)

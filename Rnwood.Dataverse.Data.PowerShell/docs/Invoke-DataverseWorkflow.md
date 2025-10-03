@@ -1,10 +1,3 @@
----
-external help file: Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll-Help.xml
-Module Name: Rnwood.Dataverse.Data.PowerShell
-online version:
-schema: 2.0.0
----
-
 # Invoke-DataverseWorkflow
 
 ## SYNOPSIS
@@ -13,39 +6,29 @@ Executes a workflow against a specific record.
 ## SYNTAX
 
 ```
-Invoke-DataverseWorkflow -Connection <ServiceClient> -EntityId <Guid> -WorkflowId <Guid> 
- [-InputArguments <Hashtable>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Invoke-DataverseWorkflow -Connection <ServiceClient> [-EntityId <Guid>] [-WorkflowId <Guid>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 
-This cmdlet executes a Dataverse workflow (process) against a specific record using the ExecuteWorkflowRequest message.
+This cmdlet wraps the `OrganizationRequest` SDK message. It executes the operation through the Dataverse Organization Service.
 
-Workflows in Dataverse can automate business processes. This cmdlet allows you to:
-- Trigger on-demand workflows programmatically
-- Pass input parameters to workflows that accept them
-- Execute workflows as part of larger automation scripts
+Executes a workflow against a specific record.
 
-## EXAMPLES
+### Type Conversion
 
-### Example 1
-```powershell
-PS C:\> Invoke-DataverseWorkflow -Connection $c -EntityId $accountId -WorkflowId $workflowId
-```
+This cmdlet follows the standard type conversion patterns:
 
-Executes a workflow against a specific account record.
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
 
-### Example 2
-```powershell
-PS C:\> Invoke-DataverseWorkflow -Connection $c -EntityId $recordId -WorkflowId $workflowId -InputArguments @{ "Param1" = "Value1"; "Param2" = 123 }
-```
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
 
-Executes a workflow with input arguments.
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
 
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 
 ```yaml
 Type: ServiceClient
@@ -58,42 +41,25 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
 ### -EntityId
-ID of the record to execute the workflow against
+Parameter for the OrganizationRequest operation
 
 ```yaml
 Type: Guid
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
-
 ### -WorkflowId
-ID of the workflow to execute
+Parameter for the OrganizationRequest operation
 
 ```yaml
 Type: Guid
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -InputArguments
-Optional input arguments for the workflow as a hashtable
-
-```yaml
-Type: Hashtable
 Parameter Sets: (All)
 Aliases:
 
@@ -103,27 +69,25 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
-### -ProgressAction
-See standard PS docs.
-
 ### CommonParameters
-This cmdlet supports the common parameters.
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
-### System.Guid
-
-Can accept EntityId from the pipeline.
+### None
 
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.ExecuteWorkflowResponse
+### ExecuteWorkflowResponse
 
-Returns an ExecuteWorkflowResponse object containing the ID of the asynchronous operation job that was created.
+Returns the response from the `OrganizationRequest` operation.
 
 ## NOTES
 
-See https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.executeworkflowrequest?view=dataverse-sdk-latest
+This cmdlet is auto-generated and wraps the Dataverse SDK message.
 
 ## RELATED LINKS
+
+[Invoke-DataverseRequest](Invoke-DataverseRequest.md)
+
+[Get-DataverseConnection](Get-DataverseConnection.md)

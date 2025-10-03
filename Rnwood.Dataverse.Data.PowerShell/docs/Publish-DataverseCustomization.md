@@ -1,10 +1,3 @@
----
-external help file: Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll-Help.xml
-Module Name: Rnwood.Dataverse.Data.PowerShell
-online version:
-schema: 2.0.0
----
-
 # Publish-DataverseCustomization
 
 ## SYNOPSIS
@@ -13,45 +6,57 @@ Publishes customizations in Dataverse.
 ## SYNTAX
 
 ```
-Publish-DataverseCustomization -Connection <ServiceClient> [[-ParameterXml] <String>] 
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Publish-DataverseCustomization -Connection <ServiceClient> [-ParameterXml <string>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 
-This cmdlet publishes customizations in Dataverse using the PublishXmlRequest message.
+This cmdlet wraps the `OrganizationRequest` SDK message. It executes the operation through the Dataverse Organization Service.
 
-Publishing makes changes to entities, forms, views, and other customizations available to users.
+Publishes customizations in Dataverse.
 
-## EXAMPLES
+### Type Conversion
 
-### Example 1
-```powershell
-PS C:\> Publish-DataverseCustomization -Connection $c
-```
+This cmdlet follows the standard type conversion patterns:
 
-Publishes all customizations.
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
 
-### Example 2
-```powershell
-PS C:\> Publish-DataverseCustomization -Connection $c -ParameterXml "<importexportxml><entities><entity>account</entity></entities></importexportxml>"
-```
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
 
-Publishes customizations for a specific entity.
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
 
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 
+```yaml
+Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 ### -ParameterXml
-XML string specifying which customizations to publish. If not specified, publishes all customizations.
+Parameter for the OrganizationRequest operation
 
-### -ProgressAction
-See standard PS docs.
+```yaml
+Type: string
+Parameter Sets: (All)
+Aliases:
 
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 ### CommonParameters
-This cmdlet supports the common parameters.
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
@@ -59,10 +64,16 @@ This cmdlet supports the common parameters.
 
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.PublishXmlResponse
+### PublishXmlResponse
+
+Returns the response from the `OrganizationRequest` operation.
 
 ## NOTES
 
-See https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.publishxmlrequest?view=dataverse-sdk-latest
+This cmdlet is auto-generated and wraps the Dataverse SDK message.
 
 ## RELATED LINKS
+
+[Invoke-DataverseRequest](Invoke-DataverseRequest.md)
+
+[Get-DataverseConnection](Get-DataverseConnection.md)

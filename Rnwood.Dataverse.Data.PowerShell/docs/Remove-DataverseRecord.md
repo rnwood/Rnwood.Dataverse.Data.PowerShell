@@ -1,54 +1,79 @@
----
-external help file: Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll-Help.xml
-Module Name: Rnwood.Dataverse.Data.PowerShell
-online version:
-schema: 2.0.0
----
-
 # Remove-DataverseRecord
 
 ## SYNOPSIS
-Deletes an existing Dataverse record.
+Deletes records from a Dataverse organization.
 
 ## SYNTAX
 
 ```
-Remove-DataverseRecord -Connection <ServiceClient> [-InputObject <PSObject>] -TableName <String> -Id <Guid>
- [-BatchSize <UInt32>] [-IfExists] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
- [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Remove-DataverseRecord -Connection <ServiceClient> [-InputObject <PSObject>] [-Id <Guid>] [-BatchSize <uint>] [-IfExists <SwitchParameter>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-The `TableName` and `Id` can be read from the pipeline when piping in a record obtained from `get-dataverserecord` instead of being specified separately. This allows you to delete a stream of records from the pipeline.
 
-## EXAMPLES
+This cmdlet wraps the `DisassociateRequest` SDK message. It executes the operation through the Dataverse Organization Service.
 
-### Example 1
-```powershell
-PS C:\> get-dataverserecord -connection $c -tablename contact | remove-dataverserecord -connection $c
-```
+Deletes records from a Dataverse organization.
 
-Deletes all contact records.
+### Type Conversion
 
-### Example 2
-```powershell
-PS C:\> remove-dataverserecord -connection $c -tablename contact -id 4CE66D51-C605-4429-8565-8C7AFA4B9550
-```
+This cmdlet follows the standard type conversion patterns:
 
-Deletes the single contact with the specified ID.
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
+
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
+
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
 
 ## PARAMETERS
 
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
+
+```yaml
+Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+### -InputObject
+Parameter for the DisassociateRequest operation
+
+```yaml
+Type: PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+### -Id
+Parameter for the DisassociateRequest operation
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
 ### -BatchSize
-Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable.
-
-When value is 1, requests are sent to Dataverse one request at a time. When > 1, batching is used. 
-
-Note that the batch will continue on error and any errors will be returned once the batch has completed. The error contains the input record to allow correlation.
+Parameter for the DisassociateRequest operation
 
 ```yaml
-Type: UInt32
+Type: uint
 Parameter Sets: (All)
 Aliases:
 
@@ -58,15 +83,13 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
-### -BypassBusinessLogicExecution
-Specifies the types of business logic (for example plugins) to bypass
+### -IfExists
+Parameter for the DisassociateRequest operation
 
 ```yaml
-Type: BusinessLogicTypes[]
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
-Accepted values: CustomSync, CustomAsync
 
 Required: False
 Position: Named
@@ -74,14 +97,13 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
-### -BypassBusinessLogicExecutionStepIds
-Specifies the IDs of plugin steps to bypass
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
-Type: Guid[]
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
+Aliases: wi
 
 Required: False
 Position: Named
@@ -104,140 +126,25 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
-
-```yaml
-Type: ServiceClient
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Id
-Id of record to process
-
-```yaml
-Type: Guid
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -IfExists
-If specified, the cmdlet will not raise an error if the record does not exist.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -InputObject
-Record from pipeline. This allows piping in record to delete.
-
-```yaml
-Type: PSObject
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
-```
-
-### -TableName
-Name of entity
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases: EntityName
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-See standard PS docs.
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
-### System.Management.Automation.PSObject
-
-PowerShell objects representing Dataverse records to delete. Typically piped from `Get-DataverseRecord`. The object must contain:
-- **Id** (Guid): The primary key of the record to delete
-- **TableName** (String): The logical name of the table
-
-These properties are automatically present in objects returned by `Get-DataverseRecord`, making it easy to pipe records for deletion.
-
-### System.String
-
-The `-TableName` parameter can accept string input from the pipeline by property name.
-
-### System.Guid
-
-The `-Id` parameter can accept Guid input from the pipeline by property name.
+### None
 
 ## OUTPUTS
 
-### None
+### OrganizationResponse
 
-This cmdlet does not produce output unless an error occurs. Use `-Verbose` to see deletion progress.
+Returns the response from the `DisassociateRequest` operation.
 
 ## NOTES
 
+This cmdlet is auto-generated and wraps the Dataverse SDK message.
+
 ## RELATED LINKS
+
+[Invoke-DataverseRequest](Invoke-DataverseRequest.md)
+
+[Get-DataverseConnection](Get-DataverseConnection.md)

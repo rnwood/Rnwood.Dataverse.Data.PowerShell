@@ -15,6 +15,16 @@ This cmdlet wraps the `SearchByBodyKbArticleRequest` SDK message. It executes th
 
 Executes SearchByBodyKbArticleRequest SDK message.
 
+### Type Conversion
+
+This cmdlet follows the standard type conversion patterns:
+
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
+
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
+
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
+
 ## PARAMETERS
 
 ### -Connection
@@ -32,7 +42,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -SearchText
-Parameter for the SearchByBodyKbArticleRequest operation.
+Parameter for the SearchByBodyKbArticleRequest operation
 
 ```yaml
 Type: String
@@ -46,7 +56,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -SubjectId
-Parameter for the SearchByBodyKbArticleRequest operation.
+Parameter for the SearchByBodyKbArticleRequest operation
 
 ```yaml
 Type: Guid
@@ -60,7 +70,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -UseInflection
-Parameter for the SearchByBodyKbArticleRequest operation.
+Parameter for the SearchByBodyKbArticleRequest operation
 
 ```yaml
 Type: Boolean

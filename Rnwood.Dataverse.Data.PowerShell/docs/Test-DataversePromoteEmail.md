@@ -15,6 +15,16 @@ This cmdlet wraps the `CheckPromoteEmailRequest` SDK message. It executes the op
 
 Executes CheckPromoteEmailRequest SDK message.
 
+### Type Conversion
+
+This cmdlet follows the standard type conversion patterns:
+
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
+
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
+
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
+
 ## PARAMETERS
 
 ### -Connection
@@ -32,7 +42,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -MessageId
-Parameter for the CheckPromoteEmailRequest operation.
+Parameter for the CheckPromoteEmailRequest operation
 
 ```yaml
 Type: String
@@ -46,7 +56,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -Subject
-Parameter for the CheckPromoteEmailRequest operation.
+Parameter for the CheckPromoteEmailRequest operation
 
 ```yaml
 Type: String
@@ -60,7 +70,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -DirectionCode
-Parameter for the CheckPromoteEmailRequest operation.
+Parameter for the CheckPromoteEmailRequest operation
 
 ```yaml
 Type: Int32

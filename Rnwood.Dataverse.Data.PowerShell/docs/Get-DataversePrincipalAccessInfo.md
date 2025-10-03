@@ -15,6 +15,16 @@ This cmdlet wraps the `RetrievePrincipalAccessInfoRequest` SDK message. It execu
 
 Executes RetrievePrincipalAccessInfoRequest SDK message.
 
+### Type Conversion
+
+This cmdlet follows the standard type conversion patterns:
+
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
+
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
+
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
+
 ## PARAMETERS
 
 ### -Connection
@@ -32,7 +42,12 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -Principal
-Parameter for the RetrievePrincipalAccessInfoRequest operation.
+Reference to a Dataverse record. Can be:
+- **EntityReference** object from the SDK
+- **PSObject** with Id and TableName properties (e.g., from Get-DataverseRecord)
+- **Guid** value (requires corresponding TableName parameter)
+
+The cmdlet uses DataverseTypeConverter to handle the conversion automatically.
 
 ```yaml
 Type: object
@@ -46,7 +61,7 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 ### -ObjectId
-Parameter for the RetrievePrincipalAccessInfoRequest operation.
+Parameter for the RetrievePrincipalAccessInfoRequest operation
 
 ```yaml
 Type: Guid
@@ -60,7 +75,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -EntityName
-Parameter for the RetrievePrincipalAccessInfoRequest operation.
+Logical name of the Dataverse table (entity). Required when providing Guid values for record references instead of EntityReference or PSObject.
 
 ```yaml
 Type: String

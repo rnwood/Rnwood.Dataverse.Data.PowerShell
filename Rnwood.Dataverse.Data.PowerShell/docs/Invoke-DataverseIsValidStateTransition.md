@@ -15,6 +15,16 @@ This cmdlet wraps the `IsValidStateTransitionRequest` SDK message. It executes t
 
 Executes IsValidStateTransitionRequest SDK message.
 
+### Type Conversion
+
+This cmdlet follows the standard type conversion patterns:
+
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
+
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
+
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
+
 ## PARAMETERS
 
 ### -Connection
@@ -32,7 +42,12 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -Entity
-Parameter for the IsValidStateTransitionRequest operation.
+Reference to a Dataverse record. Can be:
+- **EntityReference** object from the SDK
+- **PSObject** with Id and TableName properties (e.g., from Get-DataverseRecord)
+- **Guid** value (requires corresponding TableName parameter)
+
+The cmdlet uses DataverseTypeConverter to handle the conversion automatically.
 
 ```yaml
 Type: object
@@ -46,7 +61,7 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 ### -NewState
-Parameter for the IsValidStateTransitionRequest operation.
+Parameter for the IsValidStateTransitionRequest operation
 
 ```yaml
 Type: String
@@ -60,7 +75,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -NewStatus
-Parameter for the IsValidStateTransitionRequest operation.
+Parameter for the IsValidStateTransitionRequest operation
 
 ```yaml
 Type: Int32

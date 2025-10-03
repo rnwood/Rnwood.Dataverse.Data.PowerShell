@@ -15,6 +15,16 @@ This cmdlet wraps the `GenerateQuoteFromOpportunityRequest` SDK message. It exec
 
 Executes GenerateQuoteFromOpportunityRequest SDK message.
 
+### Type Conversion
+
+This cmdlet follows the standard type conversion patterns:
+
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
+
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
+
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
+
 ## PARAMETERS
 
 ### -Connection
@@ -32,7 +42,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -OpportunityId
-Parameter for the GenerateQuoteFromOpportunityRequest operation.
+Parameter for the GenerateQuoteFromOpportunityRequest operation
 
 ```yaml
 Type: Guid
@@ -46,7 +56,12 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -ProcessInstanceId
-Parameter for the GenerateQuoteFromOpportunityRequest operation.
+Reference to a Dataverse record. Can be:
+- **EntityReference** object from the SDK
+- **PSObject** with Id and TableName properties (e.g., from Get-DataverseRecord)
+- **Guid** value (requires corresponding TableName parameter)
+
+The cmdlet uses DataverseTypeConverter to handle the conversion automatically.
 
 ```yaml
 Type: object

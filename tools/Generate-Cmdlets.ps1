@@ -184,29 +184,37 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         
         if ($propType.FullName -like "Microsoft.Xrm.Sdk.EntityReference*") {
             $code += @"
-        [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "$propName parameter")]
+        [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Reference to a Dataverse record. Can be: EntityReference object, PSObject with Id/TableName properties (e.g., from Get-DataverseRecord), or Guid value (requires corresponding TableName parameter). Conversion handled by DataverseTypeConverter.")]
         public object $propName { get; set; }
 
 "@
         }
         elseif ($propType.FullName -like "Microsoft.Xrm.Sdk.OptionSetValue*") {
             $code += @"
-        [Parameter(Mandatory = false, HelpMessage = "$propName - EntityReference to the related record")]
+        [Parameter(Mandatory = false, HelpMessage = "OptionSet (picklist) value. Can be: numeric value (option set integer code) or string label (display name of the option). Conversion handled by DataverseTypeConverter.")]
         public object $propName { get; set; }
 
 "@
         }
         elseif ($propType.FullName -like "Microsoft.Xrm.Sdk.Entity*" -and $propType.Name -eq "Entity") {
             $code += @"
-        [Parameter(Mandatory = false, HelpMessage = "$propName - PSObject representing an Entity record")]
+        [Parameter(Mandatory = false, HelpMessage = "PSObject representing a Dataverse Entity record. Properties should match the logical names of columns in the target table. For lookup fields, accepts Guid, EntityReference, or PSObject with Id/TableName. For choice fields (picklists), accepts numeric value or string label. Conversion handled by DataverseEntityConverter.")]
         public PSObject $propName { get; set; }
 
 "@
         }
         else {
             $simpleType = $propType.FullName -replace "^System\.", "" -replace "`1.*$", ""
+            
+            # Add more specific help based on property name patterns
+            $helpMessage = if ($propName -match "TableName|EntityName|EntityLogicalName") {
+                "Logical name of the Dataverse table (entity). Required when providing Guid values for record references instead of EntityReference or PSObject."
+            } else {
+                "$propName parameter for the $requestName operation."
+            }
+            
             $code += @"
-        [Parameter(Mandatory = false, HelpMessage = "$propName parameter")]
+        [Parameter(Mandatory = false, HelpMessage = "$helpMessage")]
         public $simpleType $propName { get; set; }
 
 "@

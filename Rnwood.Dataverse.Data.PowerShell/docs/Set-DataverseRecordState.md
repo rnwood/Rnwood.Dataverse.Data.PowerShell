@@ -1,58 +1,34 @@
----
-external help file: Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll-Help.xml
-Module Name: Rnwood.Dataverse.Data.PowerShell
-online version:
-schema: 2.0.0
----
-
 # Set-DataverseRecordState
 
 ## SYNOPSIS
-Changes the state and status of a Dataverse record.
+Changes the state and status of a record.
 
 ## SYNTAX
 
 ```
-Set-DataverseRecordState -Connection <ServiceClient> -Target <Object> [-TableName <String>] 
- -State <Object> -Status <Object> [-WhatIf] [-Confirm] [-ProgressAction <ActionPreference>] 
- [<CommonParameters>]
+Set-DataverseRecordState -Connection <ServiceClient> [-Target <object>] [-State <object>] [-Status <object>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 
-This cmdlet changes the state and status of a Dataverse record using the SetStateRequest message.
+This cmdlet wraps the `SetStateRequest` SDK message. It executes the operation through the Dataverse Organization Service.
 
-State and status control the lifecycle of records in Dataverse:
-- State represents major phases (e.g., Active = 0, Inactive = 1)
-- Status provides finer-grained control within each state
-- Valid combinations depend on the table's state/status metadata
+Changes the state and status of a record.
 
-Common uses include:
-- Activating or deactivating records
-- Setting custom status reasons
-- Managing workflow-controlled entities
+### Type Conversion
 
-## EXAMPLES
+This cmdlet follows the standard type conversion patterns:
 
-### Example 1
-```powershell
-PS C:\> Set-DataverseRecordState -Connection $c -Target $accountId -TableName "account" -State 1 -Status 2
-```
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
 
-Sets an account to Inactive state with status code 2.
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
 
-### Example 2
-```powershell
-PS C:\> Get-DataverseRecord -Connection $c -TableName account -Id $accountId | 
-         Set-DataverseRecordState -Connection $c -State 0 -Status 1
-```
-
-Activates an account via pipeline.
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
 
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 
 ```yaml
 Type: ServiceClient
@@ -65,29 +41,18 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
 ### -Target
-Reference to the record to update. Can be an EntityReference, a PSObject with Id and TableName properties, or a Guid (requires TableName parameter).
+Reference to a Dataverse record. Can be:
+- **EntityReference** object from the SDK
+- **PSObject** with Id and TableName properties (e.g., from Get-DataverseRecord)
+- **Guid** value (requires corresponding TableName parameter)
+
+The cmdlet uses DataverseTypeConverter to handle the conversion automatically.
 
 ```yaml
-Type: Object
+Type: object
 Parameter Sets: (All)
 Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -TableName
-Logical name of the table when Target is specified as a Guid
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases: EntityName, LogicalName
 
 Required: False
 Position: Named
@@ -95,60 +60,92 @@ Default value: None
 Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
-
 ### -State
-State code value to set. Can be an integer or an OptionSetValue.
+Reference to a Dataverse record. Can be:
+- **EntityReference** object from the SDK
+- **PSObject** with Id and TableName properties (e.g., from Get-DataverseRecord)
+- **Guid** value (requires corresponding TableName parameter)
+
+The cmdlet uses DataverseTypeConverter to handle the conversion automatically.
 
 ```yaml
-Type: Object
+Type: object
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
 ### -Status
-Status code value to set. Can be an integer or an OptionSetValue.
+Reference to a Dataverse record. Can be:
+- **EntityReference** object from the SDK
+- **PSObject** with Id and TableName properties (e.g., from Get-DataverseRecord)
+- **Guid** value (requires corresponding TableName parameter)
+
+The cmdlet uses DataverseTypeConverter to handle the conversion automatically.
 
 ```yaml
-Type: Object
+Type: object
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf / -Confirm
-Standard ShouldProcess parameters.
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
-### -ProgressAction
-See standard PS docs.
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
 
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
-### System.Object
-
-Can accept record references from the pipeline via the Target parameter.
+### None
 
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.SetStateResponse
+### SetStateResponse
 
-Returns a SetStateResponse object indicating the operation completed successfully.
+Returns the response from the `SetStateRequest` operation.
 
 ## NOTES
 
-See https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.setstaterequest?view=dataverse-sdk-latest
+This cmdlet is auto-generated and wraps the Dataverse SDK message.
 
 ## RELATED LINKS
+
+[Invoke-DataverseRequest](Invoke-DataverseRequest.md)
+
+[Get-DataverseConnection](Get-DataverseConnection.md)

@@ -1,10 +1,3 @@
----
-external help file: Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll-Help.xml
-Module Name: Rnwood.Dataverse.Data.PowerShell
-online version:
-schema: 2.0.0
----
-
 # Set-DataverseRecordOwner
 
 ## SYNOPSIS
@@ -13,55 +6,29 @@ Assigns a record to a different user or team.
 ## SYNTAX
 
 ```
-Set-DataverseRecordOwner -Connection <ServiceClient> -Target <Object> [-TableName <String>] 
- -Assignee <Object> [-AssigneeTableName <String>] [-WhatIf] [-Confirm] 
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Set-DataverseRecordOwner -Connection <ServiceClient> [-Target <object>] [-Assignee <object>] [-AssigneeTableName <string>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 
-This cmdlet assigns ownership of a Dataverse record to a different user or team using the AssignRequest message.
+This cmdlet wraps the `AssignRequest` SDK message. It executes the operation through the Dataverse Organization Service.
 
-Assignment is commonly used to:
-- Route records to different users or teams
-- Transfer ownership when users leave or change roles
-- Implement custom assignment logic based on business rules
+Assigns a record to a different user or team.
 
-The target record and assignee can be specified using:
-- EntityReference objects
-- PSObjects with Id and TableName properties (e.g., from Get-DataverseRecord)
-- Guid values (requires TableName/AssigneeTableName parameters)
+### Type Conversion
 
-## EXAMPLES
+This cmdlet follows the standard type conversion patterns:
 
-### Example 1
-```powershell
-PS C:\> Set-DataverseRecordOwner -Connection $c -Target $recordId -TableName "account" -Assignee $userId -AssigneeTableName "systemuser"
-```
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
 
-Assigns an account record to a specific user using Guid values.
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
 
-### Example 2
-```powershell
-PS C:\> $record = Get-DataverseRecord -Connection $c -TableName account -Id $accountId
-PS C:\> $user = Get-DataverseRecord -Connection $c -TableName systemuser -Id $userId
-PS C:\> Set-DataverseRecordOwner -Connection $c -Target $record -Assignee $user
-```
-
-Assigns an account to a user using PSObjects from Get-DataverseRecord.
-
-### Example 3
-```powershell
-PS C:\> Get-DataverseRecord -Connection $c -TableName account -Filter @{ownerid=$oldUserId} | 
-         Set-DataverseRecordOwner -Connection $c -Assignee $newUserId -AssigneeTableName "systemuser"
-```
-
-Reassigns all accounts owned by one user to another user via pipeline.
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
 
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 
 ```yaml
 Type: ServiceClient
@@ -74,29 +41,18 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
 ### -Target
-Reference to the record to assign. Can be an EntityReference, a PSObject with Id and TableName properties, or a Guid (requires TableName parameter).
+Reference to a Dataverse record. Can be:
+- **EntityReference** object from the SDK
+- **PSObject** with Id and TableName properties (e.g., from Get-DataverseRecord)
+- **Guid** value (requires corresponding TableName parameter)
+
+The cmdlet uses DataverseTypeConverter to handle the conversion automatically.
 
 ```yaml
-Type: Object
+Type: object
 Parameter Sets: (All)
 Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -TableName
-Logical name of the table when Target is specified as a Guid
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases: EntityName, LogicalName
 
 Required: False
 Position: Named
@@ -104,27 +60,16 @@ Default value: None
 Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
-
 ### -Assignee
-Reference to the user or team to assign the record to. Can be an EntityReference, a PSObject with Id and TableName properties, or a Guid (requires AssigneeTableName parameter).
+Reference to a Dataverse record. Can be:
+- **EntityReference** object from the SDK
+- **PSObject** with Id and TableName properties (e.g., from Get-DataverseRecord)
+- **Guid** value (requires corresponding TableName parameter)
+
+The cmdlet uses DataverseTypeConverter to handle the conversion automatically.
 
 ```yaml
-Type: Object
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -AssigneeTableName
-Logical name of the assignee table (systemuser or team) when Assignee is specified as a Guid
-
-```yaml
-Type: String
+Type: object
 Parameter Sets: (All)
 Aliases:
 
@@ -134,7 +79,20 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
+### -AssigneeTableName
+Logical name of the Dataverse table (entity). Required when providing Guid values for record references instead of EntityReference or PSObject.
 
+```yaml
+Type: string
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 ### -WhatIf
 Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
@@ -164,39 +122,25 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
-### -ProgressAction
-See standard PS docs.
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
-### System.Object
-
-Can accept record references from the pipeline via the Target parameter.
+### None
 
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.AssignResponse
+### AssignResponse
 
-Returns an AssignResponse object indicating the operation completed successfully.
+Returns the response from the `AssignRequest` operation.
 
 ## NOTES
 
-See https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.assignrequest?view=dataverse-sdk-latest
+This cmdlet is auto-generated and wraps the Dataverse SDK message.
 
 ## RELATED LINKS
+
+[Invoke-DataverseRequest](Invoke-DataverseRequest.md)
+
+[Get-DataverseConnection](Get-DataverseConnection.md)

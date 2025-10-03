@@ -15,6 +15,16 @@ This cmdlet wraps the `QualifyMemberListRequest` SDK message. It executes the op
 
 Executes QualifyMemberListRequest SDK message.
 
+### Type Conversion
+
+This cmdlet follows the standard type conversion patterns:
+
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
+
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
+
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
+
 ## PARAMETERS
 
 ### -Connection
@@ -32,7 +42,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -ListId
-Parameter for the QualifyMemberListRequest operation.
+Parameter for the QualifyMemberListRequest operation
 
 ```yaml
 Type: Guid
@@ -46,7 +56,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 ### -OverrideorRemove
-Parameter for the QualifyMemberListRequest operation.
+Parameter for the QualifyMemberListRequest operation
 
 ```yaml
 Type: Boolean

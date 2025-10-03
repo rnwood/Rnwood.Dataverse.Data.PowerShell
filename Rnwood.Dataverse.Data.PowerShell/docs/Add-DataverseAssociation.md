@@ -1,10 +1,3 @@
----
-external help file: Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll-Help.xml
-Module Name: Rnwood.Dataverse.Data.PowerShell
-online version:
-schema: 2.0.0
----
-
 # Add-DataverseAssociation
 
 ## SYNOPSIS
@@ -13,65 +6,136 @@ Creates a many-to-many relationship between records.
 ## SYNTAX
 
 ```
-Add-DataverseAssociation -Connection <ServiceClient> -Target <Object> [-TableName <String>] 
- -RelationshipName <String> -RelatedRecords <Object[]> [-RelatedTableName <String>] 
- [-WhatIf] [-Confirm] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Add-DataverseAssociation -Connection <ServiceClient> [-Target <object>] [-RelationshipName <string>] [-RelatedTableName <string>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 
-This cmdlet creates many-to-many relationships between records using the AssociateRequest message.
+This cmdlet wraps the `AssociateRequest` SDK message. It executes the operation through the Dataverse Organization Service.
 
-Common uses include:
-- Adding users to teams
-- Associating roles with users or teams
-- Linking records via custom many-to-many relationships
+Creates a many-to-many relationship between records.
 
-## EXAMPLES
+### Type Conversion
 
-### Example 1
-```powershell
-PS C:\> Add-DataverseAssociation -Connection $c -Target $userId -TableName "systemuser" -RelationshipName "systemuserroles_association" -RelatedRecords $roleId1,$roleId2 -RelatedTableName "role"
-```
+This cmdlet follows the standard type conversion patterns:
 
-Associates security roles with a user.
+- **EntityReference parameters**: Accept EntityReference objects, PSObjects with Id/TableName properties, or Guid values (with corresponding TableName parameter). Conversion handled by DataverseTypeConverter.ToEntityReference().
+
+- **Entity parameters**: Accept PSObjects representing records. Properties map to attribute logical names. Lookup fields accept Guid/EntityReference/PSObject. Choice fields accept numeric values or string labels. Conversion handled by DataverseEntityConverter.
+
+- **OptionSetValue parameters**: Accept numeric option codes or string labels. Conversion handled by DataverseTypeConverter.ToOptionSetValue().
 
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 
+```yaml
+Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 ### -Target
-Reference to the primary record
+Reference to a Dataverse record. Can be:
+- **EntityReference** object from the SDK
+- **PSObject** with Id and TableName properties (e.g., from Get-DataverseRecord)
+- **Guid** value (requires corresponding TableName parameter)
 
-### -TableName
-Logical name of the table when Target is specified as a Guid
+The cmdlet uses DataverseTypeConverter to handle the conversion automatically.
 
+```yaml
+Type: object
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
 ### -RelationshipName
-Name of the many-to-many relationship schema name (e.g., 'systemuserroles_association')
+Parameter for the AssociateRequest operation
 
-### -RelatedRecords
-References to the related records to associate
+```yaml
+Type: string
+Parameter Sets: (All)
+Aliases:
 
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 ### -RelatedTableName
-Logical name of the related table when RelatedRecords are specified as Guids
+Logical name of the Dataverse table (entity). Required when providing Guid values for record references instead of EntityReference or PSObject.
 
-### -WhatIf / -Confirm
-Standard ShouldProcess parameters.
+```yaml
+Type: string
+Parameter Sets: (All)
+Aliases:
 
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 ### CommonParameters
-This cmdlet supports the common parameters.
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
-### System.Object
+### None
 
 ## OUTPUTS
 
-### Microsoft.Xrm.Sdk.Messages.AssociateResponse
+### AssociateResponse
+
+Returns the response from the `AssociateRequest` operation.
 
 ## NOTES
 
-See https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.associaterequest?view=dataverse-sdk-latest
+This cmdlet is auto-generated and wraps the Dataverse SDK message.
 
 ## RELATED LINKS
+
+[Invoke-DataverseRequest](Invoke-DataverseRequest.md)
+
+[Get-DataverseConnection](Get-DataverseConnection.md)
