@@ -95,6 +95,8 @@ Get-DataverseRecord -connection $c -tablename contact |
 
 ## Main Cmdlets
 
+### Core Data Operations
+
 [Get-DataverseConnection](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseConnection.md) - Creates a connection to a Dataverse environment.
 
 [Get-DataverseRecord](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) - Query for existing records
@@ -107,6 +109,29 @@ Get-DataverseRecord -connection $c -tablename contact |
 
 [Invoke-DataverseSql](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) - Execute SQL queries against Dataverse using Sql4Cds. `CREATE`, `DELETE`, `INSERT` and `UPDATE` are all supported.
 
+### Specialized Request Cmdlets
+
+**Record Management:**
+- [Set-DataverseRecordOwner](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecordOwner.md) - Assign record ownership to users/teams
+- [Set-DataverseRecordState](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecordState.md) - Change record state and status
+
+**Associations:**
+- [Add-DataverseAssociation](Rnwood.Dataverse.Data.PowerShell/docs/Add-DataverseAssociation.md) - Create many-to-many relationships
+- [Remove-DataverseAssociation](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAssociation.md) - Remove many-to-many relationships
+
+**Security & Sharing:**
+- [Grant-DataverseAccess](Rnwood.Dataverse.Data.PowerShell/docs/Grant-DataverseAccess.md) - Share records with users/teams
+- [Revoke-DataverseAccess](Rnwood.Dataverse.Data.PowerShell/docs/Revoke-DataverseAccess.md) - Revoke record sharing
+
+**Team Management:**
+- [Add-DataverseTeamMembers](Rnwood.Dataverse.Data.PowerShell/docs/Add-DataverseTeamMembers.md) - Add users to teams
+- [Remove-DataverseTeamMembers](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseTeamMembers.md) - Remove users from teams
+
+**Automation:**
+- [Invoke-DataverseWorkflow](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseWorkflow.md) - Execute workflows
+- [Publish-DataverseCustomization](Rnwood.Dataverse.Data.PowerShell/docs/Publish-DataverseCustomization.md) - Publish customizations
+
+### Utilities
 
 [Set-DataverseRecordsFolder](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecordsFolder.md) - Helper function to write stream of records to a folder each as individual JSON files. 
 
