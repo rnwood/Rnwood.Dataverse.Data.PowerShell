@@ -1,4 +1,6 @@
-﻿using FakeItEasy;
+﻿using Azure.Core;
+using Azure.Identity;
+using FakeItEasy;
 using FakeXrmEasy.Core;
 using FakeXrmEasy.Middleware;
 using FakeXrmEasy;
@@ -41,6 +43,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private const string PARAMSET_DEVICECODE = "Authenticate using the device code flow";
 		private const string PARAMSET_USERNAMEPASSWORD = "Authenticate with username and password";
 		private const string PARAMSET_CONNECTIONSTRING = "Authenticate with Dataverse SDK connection string.";
+		private const string PARAMSET_DEFAULTAZURECREDENTIAL = "Authenticate with DefaultAzureCredential";
+		private const string PARAMSET_MANAGEDIDENTITY = "Authenticate with ManagedIdentityCredential";
 
 		private const string PARAMSET_MOCK = "Return a mock connection";
 
@@ -75,6 +79,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CONNECTIONSTRING, HelpMessage = "Specifies the connection string to authenticate with - see https://learn.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect")]
 		public string ConnectionString { get; set; }
+
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEFAULTAZURECREDENTIAL, HelpMessage = "Use DefaultAzureCredential for authentication. This will try multiple authentication methods in order: environment variables, managed identity, Visual Studio, Azure CLI, Azure PowerShell, and interactive browser.")]
+		public SwitchParameter DefaultAzureCredential { get; set; }
+
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "Use ManagedIdentityCredential for authentication. Authenticates using the managed identity assigned to the Azure resource.")]
+		public SwitchParameter ManagedIdentity { get; set; }
+
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "Client ID of the user-assigned managed identity. If not specified, the system-assigned managed identity will be used.")]
+		public string ManagedIdentityClientId { get; set; }
 
 
 		protected override void BeginProcessing()
@@ -157,6 +170,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							.Build();
 
 							result = new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url));
+
+							break;
+						}
+
+					case PARAMSET_DEFAULTAZURECREDENTIAL:
+						{
+							var credential = new Azure.Identity.DefaultAzureCredential();
+							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
+
+							break;
+						}
+
+					case PARAMSET_MANAGEDIDENTITY:
+						{
+							TokenCredential credential;
+							if (!string.IsNullOrEmpty(ManagedIdentityClientId))
+							{
+								credential = new ManagedIdentityCredential(ManagedIdentityClientId);
+							}
+							else
+							{
+								credential = new ManagedIdentityCredential();
+							}
+							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
 
 							break;
 						}
@@ -306,6 +343,15 @@ Url + "/api/data/v9.2/");
 
 			return authResult.AccessToken;
 
+		}
+
+		private async Task<string> GetTokenWithAzureCredential(TokenCredential credential, string url)
+		{
+			Uri scope = new Uri(Url, "/.default");
+			var tokenRequestContext = new TokenRequestContext(new[] { scope.ToString() });
+
+			var token = await credential.GetTokenAsync(tokenRequestContext, CancellationToken.None);
+			return token.Token;
 		}
 	}
 
