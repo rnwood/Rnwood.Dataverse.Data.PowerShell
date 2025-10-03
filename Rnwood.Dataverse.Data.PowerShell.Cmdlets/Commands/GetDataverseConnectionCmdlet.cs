@@ -4,7 +4,7 @@ using FakeItEasy;
 using FakeXrmEasy.Core;
 using FakeXrmEasy.Middleware;
 using FakeXrmEasy;
-﻿using FakeXrmEasy.Abstractions;
+using FakeXrmEasy.Abstractions;
 using FakeXrmEasy.Abstractions.Enums;
 using FakeXrmEasy.Middleware.Crud;
 using FakeXrmEasy.Middleware.Messages;
@@ -88,6 +88,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "Client ID of the user-assigned managed identity. If not specified, the system-assigned managed identity will be used.")]
 		public string ManagedIdentityClientId { get; set; }
+
+		[Parameter(Mandatory = false, HelpMessage = "Timeout for authentication operations. Defaults to 5 minutes.")]
+		public TimeSpan Timeout { get; set; } = TimeSpan.FromMinutes(5);
 
 
 		protected override void BeginProcessing()
@@ -230,14 +233,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get,
 Url + "/api/data/v9.2/");
 
-				HttpResponseMessage httpResponse = httpClient.SendAsync(httpRequestMessage).Result;
-				var header = httpResponse.Headers.GetValues("WWW-Authenticate").First();
+				using (var cts = new CancellationTokenSource(Timeout))
+				{
+					HttpResponseMessage httpResponse = httpClient.SendAsync(httpRequestMessage, cts.Token).GetAwaiter().GetResult();
+					var header = httpResponse.Headers.GetValues("WWW-Authenticate").First();
 
-				//Bearer authorization_uri=https://login.microsoftonline.com/bd6c851f-e0dc-4d6d-ab4c-99452fe28387/oauth2/authorize, resource_id=https://orgxyz.crm11.dynamics.com/
-				var match = Regex.Match(header, ".*authorization_uri=([^ ,]+).*");
-				var authUri = match.Groups[1].Value;
+					//Bearer authorization_uri=https://login.microsoftonline.com/bd6c851f-e0dc-4d6d-ab4c-99452fe28387/oauth2/authorize, resource_id=https://orgxyz.crm11.dynamics.com/
+					var match = Regex.Match(header, ".*authorization_uri=([^ ,]+).*");
+					var authUri = match.Groups[1].Value;
 
-				authority = authUri.Replace("/oauth2/authorize", "");
+					authority = authUri.Replace("/oauth2/authorize", "");
+				}
 
 			}
 
@@ -253,6 +259,11 @@ Url + "/api/data/v9.2/");
 		{
 			protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 			{
+				if (cancellationToken.IsCancellationRequested)
+				{
+					return Task.FromCanceled<HttpResponseMessage>(cancellationToken);
+				}
+
 				return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}") });
 			}
 		}
@@ -262,9 +273,11 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-
-			AuthenticationResult authResult = await app.AcquireTokenForClient(scopes).ExecuteAsync();
-			return authResult.AccessToken;
+			using (var cts = new CancellationTokenSource(Timeout))
+			{
+				AuthenticationResult authResult = await app.AcquireTokenForClient(scopes).ExecuteAsync(cts.Token);
+				return authResult.AccessToken;
+			}
 		}
 
 		private async Task<string> GetTokenWithUsernamePassword(IPublicClientApplication app, string url)
@@ -272,11 +285,13 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-			AuthenticationResult authResult = await app.AcquireTokenByUsernamePassword(scopes, Username, new NetworkCredential("", Password).SecurePassword).ExecuteAsync();
+			using (var cts = new CancellationTokenSource(Timeout))
+			{
+				AuthenticationResult authResult = await app.AcquireTokenByUsernamePassword(scopes, Username, new NetworkCredential("", Password).SecurePassword).ExecuteAsync(cts.Token);
 
+				return authResult.AccessToken;
 
-			return authResult.AccessToken;
-
+			}
 		}
 
 		private async Task<string> GetTokenWithDeviceCode(IPublicClientApplication app, string url)
@@ -284,33 +299,38 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-			AuthenticationResult authResult = null;
-			if (!string.IsNullOrEmpty(Username))
+			using (var cts = new CancellationTokenSource(Timeout))
 			{
-				try
+				AuthenticationResult authResult = null;
+				if (!string.IsNullOrEmpty(Username))
 				{
+					try
+					{
+						authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync(cts.Token);
+					}
+					catch (MsalUiRequiredException)
+					{
 
-					authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync();
+					}
 				}
-				catch (MsalUiRequiredException)
-				{
 
+				if (authResult == null)
+				{
+					authResult = await app.AcquireTokenWithDeviceCode(scopes, (dcr) =>
+					{
+						if (cts.Token.IsCancellationRequested)
+						{
+							return Task.FromCanceled(cts.Token);
+						}
+						Host.UI.WriteLine(dcr.Message);
+						return Task.CompletedTask;
+					}).ExecuteAsync(cts.Token);
 				}
+
+				Username = authResult.Account.Username;
+
+				return authResult.AccessToken;
 			}
-
-			if (authResult == null)
-			{
-				authResult = await app.AcquireTokenWithDeviceCode(scopes, (dcr) =>
-				{
-					Host.UI.WriteLine(dcr.Message);
-					return Task.FromResult(0);
-				}).ExecuteAsync();
-			}
-
-			Username = authResult.Account.Username;
-
-			return authResult.AccessToken;
-
 		}
 
 		private async Task<string> GetTokenInteractive(IPublicClientApplication app, string url)
@@ -318,31 +338,30 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-
-			AuthenticationResult authResult = null;
-
-			if (!string.IsNullOrEmpty(Username))
+			using (var cts = new CancellationTokenSource(Timeout))
 			{
-				try
+				AuthenticationResult authResult = null;
+
+				if (!string.IsNullOrEmpty(Username))
 				{
+					try
+					{
+						authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync(cts.Token);
+					}
+					catch (MsalUiRequiredException)
+					{
 
-					authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync();
+					}
 				}
-				catch (MsalUiRequiredException)
+
+				if (authResult == null)
 				{
-
+					authResult = await app.AcquireTokenInteractive(scopes).ExecuteAsync(cts.Token);
+					Username = authResult.Account.Username;
 				}
+
+				return authResult.AccessToken;
 			}
-
-			if (authResult == null)
-			{
-				authResult = await app.AcquireTokenInteractive(scopes).ExecuteAsync();
-				Username = authResult.Account.Username;
-			}
-
-
-			return authResult.AccessToken;
-
 		}
 
 		private async Task<string> GetTokenWithAzureCredential(TokenCredential credential, string url)
@@ -350,8 +369,11 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			var tokenRequestContext = new TokenRequestContext(new[] { scope.ToString() });
 
-			var token = await credential.GetTokenAsync(tokenRequestContext, CancellationToken.None);
-			return token.Token;
+			using (var cts = new CancellationTokenSource(Timeout))
+			{
+				var token = await credential.GetTokenAsync(tokenRequestContext, cts.Token);
+				return token.Token;
+			}
 		}
 	}
 
