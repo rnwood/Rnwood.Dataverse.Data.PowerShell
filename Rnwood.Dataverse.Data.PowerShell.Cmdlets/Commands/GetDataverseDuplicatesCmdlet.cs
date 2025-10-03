@@ -17,8 +17,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public PSObject BusinessEntity { get; set; }
         [Parameter(Mandatory = false, HelpMessage = "MatchingEntityName parameter")]
         public String MatchingEntityName { get; set; }
-        [Parameter(Mandatory = false, HelpMessage = "PagingInfo parameter")]
+        [Parameter(ParameterSetName = "PagingInfoObject", Mandatory = false, HelpMessage = "PagingInfo SDK object for pagination")]
         public Microsoft.Xrm.Sdk.Query.PagingInfo PagingInfo { get; set; }
+
+        [Parameter(ParameterSetName = "SimplePaging", Mandatory = false, HelpMessage = "Page number to retrieve (1-based)")]
+        public int PageNumber { get; set; } = 1;
+
+        [Parameter(ParameterSetName = "SimplePaging", Mandatory = false, HelpMessage = "Number of records per page")]
+        public int PageSize { get; set; } = 5000;
 
         protected override void ProcessRecord()
         {
@@ -37,7 +43,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 request.BusinessEntity = entity;
             }
-            request.MatchingEntityName = MatchingEntityName;            request.PagingInfo = PagingInfo;
+            request.MatchingEntityName = MatchingEntityName;            
+            
+            // Handle PowerShell-friendly parameter sets
+            if (ParameterSetName == "SimplePaging")
+            {
+                request.PagingInfo = DataverseComplexTypeConverter.ToPagingInfo(PageNumber, PageSize);
+            }
+            else
+            {
+                request.PagingInfo = PagingInfo;
+            }
+            
             var response = (RetrieveDuplicatesResponse)Connection.Execute(request);
             WriteObject(response);
         }
