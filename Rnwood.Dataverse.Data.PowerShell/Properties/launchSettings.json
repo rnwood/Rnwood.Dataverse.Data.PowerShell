@@ -2,12 +2,12 @@
   "profiles": {
     "Powershell Core": {
       "commandName": "Executable",
-      "executablePath": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "executablePath": "pwsh.exe",
       "commandLineArgs": "-noexit -noprofile -file test.ps1"
     },
     "Powershell Desktop": {
       "commandName": "Executable",
-      "executablePath": "c:\\windows\\system32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "executablePath": "powershell.exe",
       "commandLineArgs": "-noexit -noprofile -file test.ps1"
     }
   }

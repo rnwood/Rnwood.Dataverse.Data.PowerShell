@@ -50,7 +50,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: 0
+Position: 1
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -91,21 +91,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
-
-This cmdlet does not accept pipeline input.
-
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
-
-Returns PowerShell objects representing records from the folder. Each JSON file is deserialized into a PSObject with properties matching the Dataverse record structure:
-- **Id** (Guid): The primary key of the record
-- **TableName** (String): The logical name of the table
-- **Column properties**: One property per column stored in the JSON
-
-The objects returned have the same structure as those from `Get-DataverseRecord` and can be piped directly to `Set-DataverseRecord` for import.
-
 ## NOTES
 
 ## RELATED LINKS

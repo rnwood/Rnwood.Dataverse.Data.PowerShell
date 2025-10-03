@@ -231,21 +231,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### Microsoft.Xrm.Sdk.OrganizationRequest
-
-When using the "Request" parameter set, accepts OrganizationRequest objects from the Dataverse SDK. The request can be any message type (standard or custom actions).
-
 ## OUTPUTS
 
-### Microsoft.Xrm.Sdk.OrganizationResponse
-
-Returns the response from executing the request. The specific response type depends on the request executed:
-- **WhoAmIResponse**: Contains UserId, BusinessUnitId, OrganizationId
-- **RetrieveResponse**: Contains an Entity object
-- **RetrieveMultipleResponse**: Contains an EntityCollection
-- **Custom action responses**: Contain OutputParameters dictionary with action outputs
-
-For REST API calls (REST parameter set), returns the deserialized JSON response as a PSObject.
-
+### System.Object
 ## NOTES
 
 ## RELATED LINKS

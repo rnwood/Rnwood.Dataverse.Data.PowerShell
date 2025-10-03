@@ -4,7 +4,7 @@ using FakeItEasy;
 using FakeXrmEasy.Core;
 using FakeXrmEasy.Middleware;
 using FakeXrmEasy;
-﻿using FakeXrmEasy.Abstractions;
+using FakeXrmEasy.Abstractions;
 using FakeXrmEasy.Abstractions.Enums;
 using FakeXrmEasy.Middleware.Crud;
 using FakeXrmEasy.Middleware.Messages;
@@ -48,7 +48,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private const string PARAMSET_MOCK = "Return a mock connection";
 
-		[Parameter(Mandatory =true, ParameterSetName =PARAMSET_MOCK, HelpMessage = "Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.") ]
+		[Parameter(Mandatory =true, ParameterSetName =PARAMSET_MOCK, HelpMessage = "Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.")] 
 		public EntityMetadata[] Mock { get; set; }
 
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
@@ -89,13 +89,50 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "Client ID of the user-assigned managed identity. If not specified, the system-assigned managed identity will be used.")]
 		public string ManagedIdentityClientId { get; set; }
 
+		[Parameter(Mandatory = false, HelpMessage = "Timeout for authentication operations. Defaults to 5 minutes.")]
+		public uint Timeout { get; set; } = 5*60;
+
+		// Cancellation token source that is cancelled when the user hits Ctrl+C (StopProcessing)
+		private CancellationTokenSource _userCancellationCts;
 
 		protected override void BeginProcessing()
 		{
+			base.BeginProcessing();
+			// initialize cancellation token source for this pipeline invocation
+			_userCancellationCts = new CancellationTokenSource();
+		}
+
+		protected override void StopProcessing()
+		{
+			// Called when user presses Ctrl+C. Signal cancellation to any ongoing operations.
 			try
 			{
-				base.BeginProcessing();
+				_userCancellationCts?.Cancel();
+			}
+			catch { }
+			base.StopProcessing();
+		}
 
+		protected override void EndProcessing()
+		{
+			base.EndProcessing();
+			_userCancellationCts?.Dispose();
+			_userCancellationCts = null;
+		}
+
+		private CancellationTokenSource CreateLinkedCts(TimeSpan timeout)
+		{
+			var timeoutCts = new CancellationTokenSource(timeout);
+			return CancellationTokenSource.CreateLinkedTokenSource(_userCancellationCts?.Token ?? CancellationToken.None, timeoutCts.Token);
+		}
+
+		protected override void ProcessRecord()
+		{
+			try
+			{
+				base.ProcessRecord();
+
+				
 
 				ServiceClient result;
 
@@ -217,6 +254,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 			catch (Exception e)
 			{
+				// If cancellation was requested, throw a terminating PipelineStoppedException so PowerShell treats this as an interrupted operation
+				if (e is OperationCanceledException || e is TaskCanceledException || (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested))
+				{
+					ThrowTerminatingError(new ErrorRecord(new PipelineStoppedException(), "OperationStopped", ErrorCategory.OperationStopped, null));
+				}
+
 				WriteError(new ErrorRecord(e, "dataverse-failed-connect", ErrorCategory.ConnectionError, null) { ErrorDetails = new ErrorDetails($"Failed to connect to Dataverse: {e}") });
 			}
 		}
@@ -230,14 +273,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get,
 Url + "/api/data/v9.2/");
 
-				HttpResponseMessage httpResponse = httpClient.SendAsync(httpRequestMessage).Result;
-				var header = httpResponse.Headers.GetValues("WWW-Authenticate").First();
+				using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
+				{
+					HttpResponseMessage httpResponse = httpClient.SendAsync(httpRequestMessage, cts.Token).GetAwaiter().GetResult();
+					var header = httpResponse.Headers.GetValues("WWW-Authenticate").First();
 
-				//Bearer authorization_uri=https://login.microsoftonline.com/bd6c851f-e0dc-4d6d-ab4c-99452fe28387/oauth2/authorize, resource_id=https://orgxyz.crm11.dynamics.com/
-				var match = Regex.Match(header, ".*authorization_uri=([^ ,]+).*");
-				var authUri = match.Groups[1].Value;
+					//Bearer authorization_uri=https://login.microsoftonline.com/bd6c851f-e0dc-4d6d-ab4c-99452fe28387/oauth2/authorize, resource_id=https://orgxyz.crm11.dynamics.com/
+					var match = Regex.Match(header, ".*authorization_uri=([^ ,]+).*");
+					var authUri = match.Groups[1].Value;
 
-				authority = authUri.Replace("/oauth2/authorize", "");
+					authority = authUri.Replace("/oauth2/authorize", "");
+				}
 
 			}
 
@@ -253,6 +299,11 @@ Url + "/api/data/v9.2/");
 		{
 			protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 			{
+				if (cancellationToken.IsCancellationRequested)
+				{
+					return Task.FromCanceled<HttpResponseMessage>(cancellationToken);
+				}
+
 				return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}") });
 			}
 		}
@@ -262,9 +313,11 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-
-			AuthenticationResult authResult = await app.AcquireTokenForClient(scopes).ExecuteAsync();
-			return authResult.AccessToken;
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
+			{
+				AuthenticationResult authResult = await app.AcquireTokenForClient(scopes).ExecuteAsync(cts.Token);
+				return authResult.AccessToken;
+			}
 		}
 
 		private async Task<string> GetTokenWithUsernamePassword(IPublicClientApplication app, string url)
@@ -272,11 +325,13 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-			AuthenticationResult authResult = await app.AcquireTokenByUsernamePassword(scopes, Username, new NetworkCredential("", Password).SecurePassword).ExecuteAsync();
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
+			{
+				AuthenticationResult authResult = await app.AcquireTokenByUsernamePassword(scopes, Username, new NetworkCredential("", Password).SecurePassword).ExecuteAsync(cts.Token);
 
+				return authResult.AccessToken;
 
-			return authResult.AccessToken;
-
+			}
 		}
 
 		private async Task<string> GetTokenWithDeviceCode(IPublicClientApplication app, string url)
@@ -284,33 +339,38 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-			AuthenticationResult authResult = null;
-			if (!string.IsNullOrEmpty(Username))
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
 			{
-				try
+				AuthenticationResult authResult = null;
+				if (!string.IsNullOrEmpty(Username))
 				{
+					try
+					{
+						authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync(cts.Token);
+					}
+					catch (MsalUiRequiredException)
+					{
 
-					authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync();
+					}
 				}
-				catch (MsalUiRequiredException)
-				{
 
+				if (authResult == null)
+				{
+					authResult = await app.AcquireTokenWithDeviceCode(scopes, (dcr) =>
+					{
+						if (cts.Token.IsCancellationRequested)
+						{
+							return Task.FromCanceled(cts.Token);
+						}
+						Host.UI.WriteLine(dcr.Message);
+						return Task.CompletedTask;
+					}).ExecuteAsync(cts.Token);
 				}
+
+				Username = authResult.Account.Username;
+
+				return authResult.AccessToken;
 			}
-
-			if (authResult == null)
-			{
-				authResult = await app.AcquireTokenWithDeviceCode(scopes, (dcr) =>
-				{
-					Host.UI.WriteLine(dcr.Message);
-					return Task.FromResult(0);
-				}).ExecuteAsync();
-			}
-
-			Username = authResult.Account.Username;
-
-			return authResult.AccessToken;
-
 		}
 
 		private async Task<string> GetTokenInteractive(IPublicClientApplication app, string url)
@@ -318,31 +378,30 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-
-			AuthenticationResult authResult = null;
-
-			if (!string.IsNullOrEmpty(Username))
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
 			{
-				try
+				AuthenticationResult authResult = null;
+
+				if (!string.IsNullOrEmpty(Username))
 				{
+					try
+					{
+						authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync(cts.Token);
+					}
+					catch (MsalUiRequiredException)
+					{
 
-					authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync();
+					}
 				}
-				catch (MsalUiRequiredException)
+
+				if (authResult == null)
 				{
-
+					authResult = await app.AcquireTokenInteractive(scopes).ExecuteAsync(cts.Token);
+					Username = authResult.Account.Username;
 				}
+
+				return authResult.AccessToken;
 			}
-
-			if (authResult == null)
-			{
-				authResult = await app.AcquireTokenInteractive(scopes).ExecuteAsync();
-				Username = authResult.Account.Username;
-			}
-
-
-			return authResult.AccessToken;
-
 		}
 
 		private async Task<string> GetTokenWithAzureCredential(TokenCredential credential, string url)
@@ -350,10 +409,12 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			var tokenRequestContext = new TokenRequestContext(new[] { scope.ToString() });
 
-			var token = await credential.GetTokenAsync(tokenRequestContext, CancellationToken.None);
-			return token.Token;
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
+			{
+				var token = await credential.GetTokenAsync(tokenRequestContext, cts.Token);
+				return token.Token;
+			}
 		}
 	}
-
 
 }

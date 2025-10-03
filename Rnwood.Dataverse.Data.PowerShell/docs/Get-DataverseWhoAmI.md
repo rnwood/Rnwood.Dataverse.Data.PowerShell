@@ -74,25 +74,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
-
-This cmdlet does not accept pipeline input.
-
 ## OUTPUTS
 
 ### Microsoft.Crm.Sdk.Messages.WhoAmIResponse
-
-Returns a WhoAmIResponse object containing information about the authenticated user and organization:
-- **UserId** (Guid): The unique identifier of the authenticated user
-- **BusinessUnitId** (Guid): The unique identifier of the user's business unit
-- **OrganizationId** (Guid): The unique identifier of the organization
-
-This is useful for:
-- Verifying authentication succeeded
-- Determining the security context for operations
-- Logging and auditing purposes
-
-Access these properties directly on the response object, for example: `$whoami.UserId` after calling `$whoami = Get-DataverseWhoAmI -Connection $connection`
-
 ## NOTES
 See https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.whoamiresponse?view=dataverse-sdk-latest
 
