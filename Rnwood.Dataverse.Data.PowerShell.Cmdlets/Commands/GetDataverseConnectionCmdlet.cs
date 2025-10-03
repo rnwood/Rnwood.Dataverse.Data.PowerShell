@@ -48,7 +48,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private const string PARAMSET_MOCK = "Return a mock connection";
 
-		[Parameter(Mandatory =true, ParameterSetName =PARAMSET_MOCK, HelpMessage = "Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.") ]
+		[Parameter(Mandatory =true, ParameterSetName =PARAMSET_MOCK, HelpMessage = "Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.")] 
 		public EntityMetadata[] Mock { get; set; }
 
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
@@ -90,15 +90,49 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public string ManagedIdentityClientId { get; set; }
 
 		[Parameter(Mandatory = false, HelpMessage = "Timeout for authentication operations. Defaults to 5 minutes.")]
-		public TimeSpan Timeout { get; set; } = TimeSpan.FromMinutes(5);
+		public uint Timeout { get; set; } = 5*60;
 
+		// Cancellation token source that is cancelled when the user hits Ctrl+C (StopProcessing)
+		private CancellationTokenSource _userCancellationCts;
 
 		protected override void BeginProcessing()
 		{
+			base.BeginProcessing();
+			// initialize cancellation token source for this pipeline invocation
+			_userCancellationCts = new CancellationTokenSource();
+		}
+
+		protected override void StopProcessing()
+		{
+			// Called when user presses Ctrl+C. Signal cancellation to any ongoing operations.
 			try
 			{
-				base.BeginProcessing();
+				_userCancellationCts?.Cancel();
+			}
+			catch { }
+			base.StopProcessing();
+		}
 
+		protected override void EndProcessing()
+		{
+			base.EndProcessing();
+			_userCancellationCts?.Dispose();
+			_userCancellationCts = null;
+		}
+
+		private CancellationTokenSource CreateLinkedCts(TimeSpan timeout)
+		{
+			var timeoutCts = new CancellationTokenSource(timeout);
+			return CancellationTokenSource.CreateLinkedTokenSource(_userCancellationCts?.Token ?? CancellationToken.None, timeoutCts.Token);
+		}
+
+		protected override void ProcessRecord()
+		{
+			try
+			{
+				base.ProcessRecord();
+
+				
 
 				ServiceClient result;
 
@@ -220,6 +254,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 			catch (Exception e)
 			{
+				// If cancellation was requested, throw a terminating PipelineStoppedException so PowerShell treats this as an interrupted operation
+				if (e is OperationCanceledException || e is TaskCanceledException || (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested))
+				{
+					ThrowTerminatingError(new ErrorRecord(new PipelineStoppedException(), "OperationStopped", ErrorCategory.OperationStopped, null));
+				}
+
 				WriteError(new ErrorRecord(e, "dataverse-failed-connect", ErrorCategory.ConnectionError, null) { ErrorDetails = new ErrorDetails($"Failed to connect to Dataverse: {e}") });
 			}
 		}
@@ -233,7 +273,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get,
 Url + "/api/data/v9.2/");
 
-				using (var cts = new CancellationTokenSource(Timeout))
+				using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
 				{
 					HttpResponseMessage httpResponse = httpClient.SendAsync(httpRequestMessage, cts.Token).GetAwaiter().GetResult();
 					var header = httpResponse.Headers.GetValues("WWW-Authenticate").First();
@@ -273,7 +313,7 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-			using (var cts = new CancellationTokenSource(Timeout))
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
 			{
 				AuthenticationResult authResult = await app.AcquireTokenForClient(scopes).ExecuteAsync(cts.Token);
 				return authResult.AccessToken;
@@ -285,7 +325,7 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-			using (var cts = new CancellationTokenSource(Timeout))
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
 			{
 				AuthenticationResult authResult = await app.AcquireTokenByUsernamePassword(scopes, Username, new NetworkCredential("", Password).SecurePassword).ExecuteAsync(cts.Token);
 
@@ -299,7 +339,7 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-			using (var cts = new CancellationTokenSource(Timeout))
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
 			{
 				AuthenticationResult authResult = null;
 				if (!string.IsNullOrEmpty(Username))
@@ -338,7 +378,7 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-			using (var cts = new CancellationTokenSource(Timeout))
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
 			{
 				AuthenticationResult authResult = null;
 
@@ -369,13 +409,12 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			var tokenRequestContext = new TokenRequestContext(new[] { scope.ToString() });
 
-			using (var cts = new CancellationTokenSource(Timeout))
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
 			{
 				var token = await credential.GetTokenAsync(tokenRequestContext, cts.Token);
 				return token.Token;
 			}
 		}
 	}
-
 
 }
