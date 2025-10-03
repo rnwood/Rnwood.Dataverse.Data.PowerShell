@@ -35,7 +35,7 @@
     <NoWarn>1701;1702;NU1605</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.13.1" />
+    <PackageReference Include="Azure.Identity" Version="1.16.0" />
     <PackageReference Include="MarkMpn.Sql4Cds.Engine" Version="10.1.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.32" />
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.3" />
