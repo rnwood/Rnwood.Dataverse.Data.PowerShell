@@ -34,73 +34,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             SetStateRequest request = new SetStateRequest();
 
             // Convert Target to EntityReference
-            request.EntityMoniker = ConvertToEntityReference(Target, TableName);
+            request.EntityMoniker = DataverseTypeConverter.ToEntityReference(Target, TableName, "Target");
 
             // Convert State to OptionSetValue
-            request.State = ConvertToOptionSetValue(State, "State");
+            request.State = DataverseTypeConverter.ToOptionSetValue(State, "State");
 
             // Convert Status to OptionSetValue
-            request.Status = ConvertToOptionSetValue(Status, "Status");
+            request.Status = DataverseTypeConverter.ToOptionSetValue(Status, "Status");
 
             if (ShouldProcess($"Record {request.EntityMoniker.LogicalName} {request.EntityMoniker.Id}", $"Set state to {request.State.Value} and status to {request.Status.Value}"))
             {
                 SetStateResponse response = (SetStateResponse)Connection.Execute(request);
                 WriteObject(response);
             }
-        }
-
-        private EntityReference ConvertToEntityReference(object value, string tableName)
-        {
-            if (value is EntityReference entityRef)
-            {
-                return entityRef;
-            }
-            else if (value is PSObject psObj)
-            {
-                var idProp = psObj.Properties["Id"];
-                var tableNameProp = psObj.Properties["TableName"] ?? psObj.Properties["LogicalName"];
-
-                if (idProp != null && tableNameProp != null)
-                {
-                    return new EntityReference((string)tableNameProp.Value, (Guid)idProp.Value);
-                }
-            }
-            else if (value is Guid guid)
-            {
-                if (string.IsNullOrEmpty(tableName))
-                {
-                    throw new ArgumentException("TableName parameter is required when Target is specified as a Guid");
-                }
-                return new EntityReference(tableName, guid);
-            }
-            else if (value is string strValue && Guid.TryParse(strValue, out Guid parsedGuid))
-            {
-                if (string.IsNullOrEmpty(tableName))
-                {
-                    throw new ArgumentException("TableName parameter is required when Target is specified as a string Guid");
-                }
-                return new EntityReference(tableName, parsedGuid);
-            }
-
-            throw new ArgumentException("Unable to convert Target to EntityReference. Expected EntityReference, PSObject with Id and TableName properties, or Guid with TableName parameter.");
-        }
-
-        private OptionSetValue ConvertToOptionSetValue(object value, string parameterName)
-        {
-            if (value is OptionSetValue osv)
-            {
-                return osv;
-            }
-            else if (value is int intValue)
-            {
-                return new OptionSetValue(intValue);
-            }
-            else if (value is string strValue && int.TryParse(strValue, out int parsedInt))
-            {
-                return new OptionSetValue(parsedInt);
-            }
-
-            throw new ArgumentException($"Unable to convert {parameterName} to OptionSetValue. Expected OptionSetValue or integer value.");
         }
     }
 }

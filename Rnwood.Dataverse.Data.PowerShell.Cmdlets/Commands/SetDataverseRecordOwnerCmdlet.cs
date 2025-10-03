@@ -34,52 +34,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             AssignRequest request = new AssignRequest();
 
             // Convert Target to EntityReference
-            request.Target = ConvertToEntityReference(Target, TableName, "Target");
+            request.Target = DataverseTypeConverter.ToEntityReference(Target, TableName, "Target");
 
             // Convert Assignee to EntityReference
-            request.Assignee = ConvertToEntityReference(Assignee, AssigneeTableName, "Assignee");
+            request.Assignee = DataverseTypeConverter.ToEntityReference(Assignee, AssigneeTableName, "Assignee");
 
             if (ShouldProcess($"Record {request.Target.LogicalName} {request.Target.Id}", $"Assign to {request.Assignee.LogicalName} {request.Assignee.Id}"))
             {
                 AssignResponse response = (AssignResponse)Connection.Execute(request);
                 WriteObject(response);
             }
-        }
-
-        private EntityReference ConvertToEntityReference(object value, string tableName, string parameterName)
-        {
-            if (value is EntityReference entityRef)
-            {
-                return entityRef;
-            }
-            else if (value is PSObject psObj)
-            {
-                var idProp = psObj.Properties["Id"];
-                var tableNameProp = psObj.Properties["TableName"] ?? psObj.Properties["LogicalName"];
-
-                if (idProp != null && tableNameProp != null)
-                {
-                    return new EntityReference((string)tableNameProp.Value, (Guid)idProp.Value);
-                }
-            }
-            else if (value is Guid guid)
-            {
-                if (string.IsNullOrEmpty(tableName))
-                {
-                    throw new ArgumentException($"TableName parameter is required when {parameterName} is specified as a Guid");
-                }
-                return new EntityReference(tableName, guid);
-            }
-            else if (value is string strValue && Guid.TryParse(strValue, out Guid parsedGuid))
-            {
-                if (string.IsNullOrEmpty(tableName))
-                {
-                    throw new ArgumentException($"TableName parameter is required when {parameterName} is specified as a string Guid");
-                }
-                return new EntityReference(tableName, parsedGuid);
-            }
-
-            throw new ArgumentException($"Unable to convert {parameterName} to EntityReference. Expected EntityReference, PSObject with Id and TableName properties, or Guid with TableName parameter.");
         }
     }
 }
