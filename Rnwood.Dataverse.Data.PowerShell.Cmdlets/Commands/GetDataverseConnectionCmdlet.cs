@@ -30,10 +30,16 @@ using System.Security;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
+	/// <summary>
+	/// Establishes a connection to a Dataverse environment using various authentication methods.
+	/// </summary>
 	[Cmdlet(VerbsCommon.Get, "DataverseConnection")]
 	[OutputType(typeof(ServiceClient))]
 	public class GetDataverseConnectionCmdlet : PSCmdlet
 	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="GetDataverseConnectionCmdlet"/> class.
+		/// </summary>
 		public GetDataverseConnectionCmdlet()
 		{
 		}
@@ -48,53 +54,95 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private const string PARAMSET_MOCK = "Return a mock connection";
 
+		/// <summary>
+		/// Gets or sets the entity metadata for creating a mock connection.
+		/// </summary>
 		[Parameter(Mandatory =true, ParameterSetName =PARAMSET_MOCK, HelpMessage = "Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.")] 
 		public EntityMetadata[] Mock { get; set; }
 
+		/// <summary>
+		/// Gets or sets the client ID to use for authentication.
+		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		public Guid ClientId { get; set; } = new Guid("9cee029c-6210-4654-90bb-17e6e9d36617");
 
+		/// <summary>
+		/// Gets or sets the URL of the Dataverse environment to connect to.
+		/// </summary>
 		[Parameter(Mandatory = true, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
 		public Uri Url { get; set; }
 
+		/// <summary>
+		/// Gets or sets the client secret for authentication.
+		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client secret to authenticate with, as registered for the Entra ID application.")]
 		public string ClientSecret { get; set; }
 
+		/// <summary>
+		/// Gets or sets the username for authentication.
+		/// </summary>
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Username to authenticate with.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Username to authenticate with.")]
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Username to authenticate with.")]
 		public string Username { get; set; }
 
+		/// <summary>
+		/// Gets or sets the password for authentication.
+		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Password to authenticate with.")]
 		public string Password { get; set; }
 
+		/// <summary>
+		/// Gets or sets a value indicating whether to use interactive authentication.
+		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Triggers interactive authentication, where browser will be opened for user to interactively log in.")]
 		public SwitchParameter Interactive { get; set; }
 
+		/// <summary>
+		/// Gets or sets a value indicating whether to use device code authentication.
+		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Triggers device code authentication where you will be given a URL to visit and a code to complete authentication in web browser.")]
 		public SwitchParameter DeviceCode { get; set; }
 
+		/// <summary>
+		/// Gets or sets the connection string for authentication.
+		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CONNECTIONSTRING, HelpMessage = "Specifies the connection string to authenticate with - see https://learn.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect")]
 		public string ConnectionString { get; set; }
 
+		/// <summary>
+		/// Gets or sets a value indicating whether to use DefaultAzureCredential for authentication.
+		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEFAULTAZURECREDENTIAL, HelpMessage = "Use DefaultAzureCredential for authentication. This will try multiple authentication methods in order: environment variables, managed identity, Visual Studio, Azure CLI, Azure PowerShell, and interactive browser.")]
 		public SwitchParameter DefaultAzureCredential { get; set; }
 
+		/// <summary>
+		/// Gets or sets a value indicating whether to use managed identity for authentication.
+		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "Use ManagedIdentityCredential for authentication. Authenticates using the managed identity assigned to the Azure resource.")]
 		public SwitchParameter ManagedIdentity { get; set; }
 
+		/// <summary>
+		/// Gets or sets the client ID of the user-assigned managed identity.
+		/// </summary>
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "Client ID of the user-assigned managed identity. If not specified, the system-assigned managed identity will be used.")]
 		public string ManagedIdentityClientId { get; set; }
 
+		/// <summary>
+		/// Gets or sets the timeout for authentication operations in seconds.
+		/// </summary>
 		[Parameter(Mandatory = false, HelpMessage = "Timeout for authentication operations. Defaults to 5 minutes.")]
 		public uint Timeout { get; set; } = 5*60;
 
 		// Cancellation token source that is cancelled when the user hits Ctrl+C (StopProcessing)
 		private CancellationTokenSource _userCancellationCts;
 
+		/// <summary>
+		/// Initializes the cmdlet processing.
+		/// </summary>
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();
@@ -102,6 +150,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_userCancellationCts = new CancellationTokenSource();
 		}
 
+		/// <summary>
+		/// Called when the user cancels the cmdlet.
+		/// </summary>
 		protected override void StopProcessing()
 		{
 			// Called when user presses Ctrl+C. Signal cancellation to any ongoing operations.
@@ -113,6 +164,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			base.StopProcessing();
 		}
 
+		/// <summary>
+		/// Completes cmdlet processing.
+		/// </summary>
 		protected override void EndProcessing()
 		{
 			base.EndProcessing();
@@ -126,6 +180,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			return CancellationTokenSource.CreateLinkedTokenSource(_userCancellationCts?.Token ?? CancellationToken.None, timeoutCts.Token);
 		}
 
+		/// <summary>
+		/// Processes each record in the pipeline.
+		/// </summary>
 		protected override void ProcessRecord()
 		{
 			try

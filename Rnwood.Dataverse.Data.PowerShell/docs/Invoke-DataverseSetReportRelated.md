@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -Entities
-Gets the collection of entities.
+Gets or sets an array of entity type codes for the related entities. Required.
 
 ```yaml
 Type: Int32[]

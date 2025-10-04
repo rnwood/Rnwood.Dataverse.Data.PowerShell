@@ -12,33 +12,60 @@ using Newtonsoft.Json;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
-	[Cmdlet("Invoke", "DataverseRequest")]
 	///<summary>Invokes a Dataverse request.</summary>
+	[Cmdlet("Invoke", "DataverseRequest")]
 	public class InvokeDataverseRequestCmdlet : OrganizationServiceCmdlet
 	{
+		/// <summary>
+		/// DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+		/// </summary>
 		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet")]
 		public override ServiceClient Connection { get; set; }
-
+		/// <summary>
+		/// Request to execute
+		/// </summary>
 		[Parameter(ParameterSetName = "Request", Mandatory = true, HelpMessage = "Request to execute", ValueFromRemainingArguments = true, ValueFromPipeline = true)]
 		public OrganizationRequest Request { get; set; }
-
+		/// <summary>
+		/// Name of the Dataverse request to execute. This should be the message name (e.g., WhoAmI, RetrieveMultiple, or a custom action name like myapi_EscalateCase).
+		/// </summary>
 		[Parameter(ParameterSetName = "NameAndInputs", Mandatory = true, Position = 0, HelpMessage = "Name of the Dataverse request to execute. This should be the message name (e.g., WhoAmI, RetrieveMultiple, or a custom action name like myapi_EscalateCase).")]
 		public string RequestName { get; set; }
-
+		/// <summary>
+		/// Hashtable of parameters to pass to the request. Keys are parameter names and values are parameter values.
+		/// </summary>
 		[Parameter(ParameterSetName = "NameAndInputs", Mandatory = false, Position = 1, HelpMessage = "Hashtable of parameters to pass to the request. Keys are parameter names and values are parameter values.")]
 		public Hashtable Parameters { get; set; } = new Hashtable();
 
+		/// <summary>
+
+		/// HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).
+
+		/// </summary>
+
 		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 0, HelpMessage = "HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).")]
 		public System.Net.Http.HttpMethod Method { get; set; }
-
+		/// <summary>
+		/// Path portion of the REST API URL (e.g., 'api/data/v9.2/contacts' or 'myapi_Example').
+		/// </summary>
 		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 1, HelpMessage = "Path portion of the REST API URL (e.g., 'api/data/v9.2/contacts' or 'myapi_Example').")]
 		public string Path { get; set; }
-
+		/// <summary>
+		/// Body of the REST API request. Can be a string (JSON) or a PSObject which will be converted to JSON.
+		/// </summary>
 		[Parameter(ParameterSetName = "REST", Mandatory = false, Position = 2, HelpMessage = "Body of the REST API request. Can be a string (JSON) or a PSObject which will be converted to JSON.")]
 		public PSObject Body { get; set; } = "";
-
+		/// <summary>
+		/// Hashtable of custom HTTP headers to include in the REST API request.
+		/// </summary>
 		[Parameter(ParameterSetName = "REST", Mandatory = false, HelpMessage = "Hashtable of custom HTTP headers to include in the REST API request.")]
 		public Hashtable CustomHeaders { get; set; } = new Hashtable();
+		/// <summary>
+
+		/// Initializes the cmdlet.
+
+		/// </summary>
+
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();

@@ -16,8 +16,8 @@ using System.Collections.Concurrent;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
-	[Cmdlet("Invoke", "DataverseSql", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
 	///<summary>Invokes a Dataverse request.</summary>
+	[Cmdlet("Invoke", "DataverseSql", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
 	public class InvokeDataverseSqlCmdlet : OrganizationServiceCmdlet
 	{
 		private Sql4CdsConnection _sqlConnection;
@@ -27,40 +27,71 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private string _progressMessage;
 		private ConcurrentQueue<string> _infoMessages;
 		private ConcurrentQueue<Task> _pendingConfirmations;
-
+		/// <summary>
+		/// DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)
+		/// </summary>
 		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
 
 		public override ServiceClient Connection { get; set; }
-
+		/// <summary>
+		/// SQL to execute. See Sql4Cds docs.
+		/// </summary>
 		[Parameter(Mandatory = true, HelpMessage = "SQL to execute. See Sql4Cds docs.", ValueFromRemainingArguments = true)]
 		public string Sql { get; set; }
-
+		/// <summary>
+		/// Uses the TDS endpoint for supported queries. See Sql4Cds docs
+		/// </summary>
 		[Parameter(HelpMessage = "Uses the TDS endpoint for supported queries. See Sql4Cds docs")]
 		public SwitchParameter UseTdsEndpoint { get; set; }
-
+		/// <summary>
+		/// Sets the command timeout. See Sql4Cds docs
+		/// </summary>
 		[Parameter(HelpMessage = "Sets the command timeout. See Sql4Cds docs")]
 		public int Timeout { get; set; } = 600;
-
+		/// <summary>
+		/// Specifies the values to use as parameters for the query. When reading from the pipelines, each input object will execute the query once.
+		/// </summary>
 		[Parameter(ValueFromPipeline = true, HelpMessage ="Specifies the values to use as parameters for the query. When reading from the pipelines, each input object will execute the query once.")]
 		public PSObject Parameters { get; set; }
-
+		/// <summary>
+		/// Sets the max batch size. See Sql4Cds docs
+		/// </summary>
 		[Parameter(HelpMessage = "Sets the max batch size. See Sql4Cds docs")]
 		public int? BatchSize { get; set; }
-
+		/// <summary>
+		/// Sets the max degree of paralleism. See Sql4Cds docs
+		/// </summary>
 		[Parameter(HelpMessage = "Sets the max degree of paralleism. See Sql4Cds docs")]
 		public int? MaxDegreeOfParallelism { get; set; }
-
+		/// <summary>
+		/// Bypasses custom plugins. See Sql4Cds docs.
+		/// </summary>
 		[Parameter(HelpMessage = "Bypasses custom plugins. See Sql4Cds docs.")]
 		public SwitchParameter BypassCustomPluginExecution { get; set; }
-
+		/// <summary>
+		/// Uses bulk delete for supported DELETE operations. See Sql4Cds docs.
+		/// </summary>
 		[Parameter(HelpMessage = "Uses bulk delete for supported DELETE operations. See Sql4Cds docs.")]
 		public SwitchParameter UseBulkDelete { get; set; }
-
+		/// <summary>
+		/// Returns lookup column values as simple Guid as opposed to SqlEntityReference type. See Sql4Cds docs.
+		/// </summary>
 		[Parameter(HelpMessage = "Returns lookup column values as simple Guid as opposed to SqlEntityReference type. See Sql4Cds docs.")]
 		public SwitchParameter ReturnEntityReferenceAsGuid { get; set; }
-
+		/// <summary>
+		/// When working with date values, this property indicates the local time zone should be used. See Sql4Cds docs.
+		/// </summary>
 		[Parameter(HelpMessage = "When working with date values, this property indicates the local time zone should be used. See Sql4Cds docs.")]
 		public SwitchParameter UseLocalTimezone { get; set; }
+
+		/// <summary>
+
+
+		/// Initializes the cmdlet.
+
+
+		/// </summary>
+
 
 		protected override void BeginProcessing()
 		{
@@ -130,6 +161,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_progressMessage = e.Message;
 		}
 
+		/// <summary>
+
+
+		/// Completes cmdlet processing.
+
+
+		/// </summary>
+
+
 		protected override void EndProcessing()
 		{
 			base.EndProcessing();
@@ -142,6 +182,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_commandPrepared = false;
 
 		}
+
+		/// <summary>
+
+
+		/// Processes each record in the pipeline.
+
+
+		/// </summary>
+
 
 		protected override void ProcessRecord()
 		{

@@ -8,7 +8,7 @@ schema: 2.0.0
 # Invoke-DataverseDelete
 
 ## SYNOPSIS
-Contains the data that is needed to delete a record.
+Contains the data that's needed to submit a bulk delete job that deletes selected records in bulk. This job runs asynchronously in the background without blocking other activities.
 
 [Microsoft Learn: Microsoft.Xrm.Sdk.Messages.DeleteRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Xrm.Sdk.Messages.DeleteRequest)
 
@@ -21,7 +21,7 @@ Invoke-DataverseDelete -Connection <ServiceClient> -Target <PSObject>
 ```
 
 ## DESCRIPTION
-Contains the data that is needed to delete a record.
+Contains the data that's needed to submit a bulk delete job that deletes selected records in bulk. This job runs asynchronously in the background without blocking other activities.
 
 ## EXAMPLES
 

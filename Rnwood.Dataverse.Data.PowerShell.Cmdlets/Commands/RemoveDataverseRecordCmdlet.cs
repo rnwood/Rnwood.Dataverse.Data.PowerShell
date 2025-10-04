@@ -1,4 +1,4 @@
-﻿
+
 
 
 using Microsoft.PowerPlatform.Dataverse.Client;
@@ -16,37 +16,51 @@ using System.Text;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
-	[Cmdlet(VerbsCommon.Remove, "DataverseRecord", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
 	///<summary>Deletes records from a Dataverse organization.</summary>
+	[Cmdlet(VerbsCommon.Remove, "DataverseRecord", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
 	public class RemoveDataverseRecordCmdlet : CustomLogicBypassableOrganizationServiceCmdlet
 	{
+		/// <summary>
+		/// DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+		/// </summary>
 		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet")]
 		public override ServiceClient Connection { get; set; }
-
+		/// <summary>
+		/// Record from pipeline. This allows piping in record to delete.
+		/// </summary>
 		[Parameter(ValueFromPipeline = true, HelpMessage = "Record from pipeline. This allows piping in record to delete.")]
 		public PSObject InputObject { get; set; }
-
-		/// <summary>
-		/// The logical name of the table to operate on.
-		/// </summary>
-		[Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of table")]
-		[Alias("EntityName")]
-		[ArgumentCompleter(typeof(TableNameArgumentCompleter))]
-		public string TableName { get; set; }
-
+	/// <summary>
+	/// The logical name of the table to operate on.
+	/// </summary>
+	[Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of table")]
+	[Alias("EntityName")]
+	[ArgumentCompleter(typeof(TableNameArgumentCompleter))]
+	public string TableName { get; set; }
+	/// <summary>
+	/// Id of record to process
+	/// </summary>
 		[Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Id of record to process")]
 		public Guid Id { get; set; }
-
+		/// <summary>
+		/// Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable. When value is 1, requests are sent to Dataverse one request at a time. When > 1, batching is used. Note that the batch will continue on error and any errors will be returned once the batch has completed. The error contains the input record to allow correlation.
+		/// </summary>
 		[Parameter(HelpMessage = "Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable. When value is 1, requests are sent to Dataverse one request at a time. When > 1, batching is used. Note that the batch will continue on error and any errors will be returned once the batch has completed. The error contains the input record to allow correlation.")]
 		public uint BatchSize { get; set; } = 100;
-
+		/// <summary>
+		/// If specified, the cmdlet will not raise an error if the record does not exist.
+		/// </summary>
 		[Parameter(HelpMessage = "If specified, the cmdlet will not raise an error if the record does not exist.")]
 		public SwitchParameter IfExists { get; set; }
-
+		/// <summary>
+		/// Specifies the types of business logic (for example plugins) to bypass
+		/// </summary>
 		[Parameter(HelpMessage = "Specifies the types of business logic (for example plugins) to bypass")]
 		public override BusinessLogicTypes[] BypassBusinessLogicExecution { get; set; }
 
-
+		/// <summary>
+		/// Specifies the IDs of plugin steps to bypass
+		/// </summary>
 		[Parameter(HelpMessage = "Specifies the IDs of plugin steps to bypass")]
 		public override Guid[] BypassBusinessLogicExecutionStepIds { get; set; }
 
@@ -84,6 +98,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		}
 
 		private List<BatchItem> _nextBatchItems;
+
+	/// <summary>Processes each record in the pipeline.</summary>
+
 
 		protected override void ProcessRecord()
 		{
@@ -252,6 +269,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_nextBatchItems.Clear();
 		}
 
+	/// <summary>Initializes the cmdlet.</summary>
+
+
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();
@@ -265,6 +285,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		}
 
 		private EntityMetadataFactory metadataFactory;
+
+	/// <summary>Completes cmdlet processing.</summary>
+
 
 		protected override void EndProcessing()
 		{

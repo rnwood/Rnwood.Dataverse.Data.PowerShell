@@ -1,4 +1,4 @@
-﻿
+
 
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
@@ -19,10 +19,16 @@ using System.Xml.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
+	/// <summary>
+	/// Retrieves records from a Dataverse table using various query methods.
+	/// </summary>
     [Cmdlet(VerbsCommon.Get, "DataverseRecord")]
     [OutputType(typeof(IEnumerable<PSObject>))]
     public class GetDataverseRecordCmdlet : OrganizationServiceCmdlet
     {
+		/// <summary>
+		/// Gets or sets the Dataverse connection to use.
+		/// </summary>
         [Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
         public override ServiceClient Connection { get; set; }
 
@@ -30,169 +36,184 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private const string PARAMSET_SIMPLE = "Simple";
 
-    /// <summary>
-    /// The logical name of the table for which to retrieve records.
-    /// </summary>
-    [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = true, Position = 0, HelpMessage = "Logical name of table for which to retrieve records")]
-    [Alias("EntityName")]
-    [ArgumentCompleter(typeof(TableNameArgumentCompleter))]
-    public string TableName { get; set; }
+        /// <summary>
+        /// Gets or sets the logical name of the table to query.
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = true, Position = 0, HelpMessage = "Logical name of table for which to retrieve records")]
+        [Alias("EntityName")]
+        public string TableName { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether to write the total record count to verbose output.
+        /// </summary>
         [Parameter(HelpMessage = "If set writes total record count matching query to verbose output")]
         public SwitchParameter VerboseRecordCount { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether to return only the count of records instead of the records themselves.
+        /// </summary>
         [Parameter(HelpMessage = "If set, writes total record count matching query to output instead of results")]
         public SwitchParameter RecordCount { get; set; }
-
+        /// <summary>
+        /// FetchXml to use
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_FETCHXML, HelpMessage = "FetchXml to use")]
         public string FetchXml
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// List of hashsets of @{\
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of hashsets of @{\"columnnames(:operator)\"=\"value\"} to filter records by. If operator is not specified, uses an EQUALS condition (or ISNULL if null value). If more than one hashset is provided then they are logically combined using an OR condition. e.g. @{firstname=\"bob\", age=25}, @{firstname=\"sue\"} will find records where (firstname=bob AND age=25) OR (firstname=sue)")]
         public Hashtable[] FilterValues
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// Extra criteria to apply to query
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Extra criteria to apply to query")]
         public FilterExpression Criteria
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// Link entities to apply to query
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Link entities to apply to query")]
         public DataverseLinkEntity[] Links
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// List of hashsets of column names,values to filter records by using an NOTEQUALS condition (or ISNOTNULL if null value). If more than one hashset is provided then they are logically combined using an AND condition by default. e.g. @{firstname=\
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of hashsets of column names,values to filter records by using an NOTEQUALS condition (or ISNOTNULL if null value). If more than one hashset is provided then they are logically combined using an AND condition by default. e.g. @{firstname=\"bob\", age=25}, @{firstname=\"sue\"} will find records where (firstname<>bob AND age<>25) OR (firstname<>sue)")]
         public Hashtable[] ExcludeFilterValues
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// If specified the exclude filters will be logically combined using OR instead of the default of AND
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "If specified the exclude filters will be logically combined using OR instead of the default of AND")]
         public SwitchParameter ExcludeFilterOr
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// If specified only active records (statecode=0 or isactive=true) will be output
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "If specified only active records (statecode=0 or isactive=true) will be output")]
         public SwitchParameter ActiveOnly
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// List of primary keys (IDs) of records to retrieve.
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "List of primary keys (IDs) of records to retrieve.")]
         public Guid[] Id
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// List of names (primary attribute value) of records to retrieve.
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "List of names (primary attribute value) of records to retrieve.")]
         public string[] Name
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// List of record ids to exclude
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "List of record ids to exclude")]
         public Guid[] ExcludeId
         {
             get;
             set;
         }
-
-    /// <summary>
-    /// List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default
-    /// </summary>
-    [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default")]
-    [ArgumentCompleter(typeof(Rnwood.Dataverse.Data.PowerShell.Commands.ColumnNamesArgumentCompleter))]
-    public string[] Columns
+        /// <summary>
+        /// List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default")]
+        public string[] Columns
         {
             get;
             set;
         }
-
-    /// <summary>
-    /// List of columns to exclude from records (default is none). Ignored if Columns parameter is used.
-    /// </summary>
-    [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to exclude from records (default is none). Ignored if Columns parameter is used.s")]
-    [ArgumentCompleter(typeof(Rnwood.Dataverse.Data.PowerShell.Commands.ColumnNamesArgumentCompleter))]
-    public string[] ExcludeColumns
+        /// <summary>
+        /// List of columns to exclude from records (default is none). Ignored if Columns parameter is used.s
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to exclude from records (default is none). Ignored if Columns parameter is used.s")]
+        public string[] ExcludeColumns
         {
             get;
             set;
         }
-
-    /// <summary>
-    /// List of columns to order records by. Suffix column name with - to sort descending. e.g "age-", "lastname" will sort by age descending then lastname ascending
-    /// </summary>
-    [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to order records by. Suffix column name with - to sort descending. e.g \"age-\", \"lastname\" will sort by age descending then lastname ascending")]
-    [ArgumentCompleter(typeof(Rnwood.Dataverse.Data.PowerShell.Commands.ColumnNamesArgumentCompleter))]
-    public string[] OrderBy
+        /// <summary>
+        /// List of columns to order records by. Suffix column name with - to sort descending. e.g \
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to order records by. Suffix column name with - to sort descending. e.g \"age-\", \"lastname\" will sort by age descending then lastname ascending")]
+        public string[] OrderBy
         {
             get;
             set;
         }
-
-    /// <summary>
-    /// Number of records to limit result to. Default is all results.
-    /// </summary>
-    [Parameter(Mandatory = false, HelpMessage = "Number of records to limit result to. Default is all results.")]
-    public int? Top
+        /// <summary>
+        /// Number of records to limit result to. Default is all results.
+        /// </summary>
+        [Parameter(Mandatory = false, HelpMessage = "Number of records to limit result to. Default is all results.")]
+        public int? Top
         {
             get;
             set;
         }
-
-    /// <summary>
-    /// Number of records to request per page. Default is 1000.
-    /// </summary>
-    [Parameter(Mandatory = false, HelpMessage = "Number of records to request per page. Default is 1000.")]
-    public int? PageSize
+        /// <summary>
+        /// Number of records to request per page. Default is 1000.
+        /// </summary>
+        [Parameter(Mandatory = false, HelpMessage = "Number of records to request per page. Default is 1000.")]
+        public int? PageSize
         {
             get;
             set;
         }
-
-    /// <summary>
-    /// Outputs Names for lookup values. The default behaviour is to output the ID.
-    /// </summary>
-    [Parameter(HelpMessage = "Outputs Names for lookup values. The default behaviour is to output the ID.")]
-    public SwitchParameter LookupValuesReturnName { get; set; }
-
-    /// <summary>
-    /// Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.
-    /// </summary>
-    [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.")]
-    public SwitchParameter IncludeSystemColumns { get; set; }
+        /// <summary>
+        /// Outputs Names for lookup values. The default behaviour is to output the ID.
+        /// </summary>
+        [Parameter(HelpMessage = "Outputs Names for lookup values. The default behaviour is to output the ID.")]
+        public SwitchParameter LookupValuesReturnName { get; set; }
+        /// <summary>
+        /// Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.")]
+        public SwitchParameter IncludeSystemColumns { get; set; }
 
         private EntityMetadataFactory entiyMetadataFactory;
         private DataverseEntityConverter entityConverter;
         private EntityMetadata entityMetadata;
 
-        /// <summary>
-        /// BeginProcessing override for the cmdlet.
-        /// </summary>
-        protected override void BeginProcessing()
+    /// <summary>
+    /// Initializes the cmdlet and sets up required helpers.
+    /// </summary>
+    protected override void BeginProcessing()
         {
             base.BeginProcessing();
         }
 
         /// <summary>
-        /// ProcessRecord override that executes the query and writes results.
+        /// Processes each record by executing the configured query and writing results to the pipeline.
         /// </summary>
         protected override void ProcessRecord()
         {

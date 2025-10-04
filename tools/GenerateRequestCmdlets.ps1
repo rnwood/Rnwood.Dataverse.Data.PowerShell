@@ -255,7 +255,9 @@ function Get-ClassSummary {
 }
 
 # Returns $true if the given type is marked as deprecated/obsolete.
-function Is-Deprecated {
+# Temporarily disable approved verbs rule for this helper function. The function name intentionally uses the noun 'Deprecated' for readability.
+# PSScriptAnalyzer disable=PSUseApprovedVerbs
+function Test-DeprecatedType {
     param([Type]$type)
 
     if (-not $type) { return $false }
@@ -309,6 +311,7 @@ function Is-Deprecated {
 
     return $false
 }
+# PSScriptAnalyzer enable=PSUseApprovedVerbs
 
 # Find all OrganizationRequest types
 Write-Host "Searching for request types..."
@@ -371,7 +374,7 @@ $ClassSummaryOverrides = @{
 foreach ($requestType in $requestTypes) {
     $requestName = $requestType.Name
     # Skip deprecated/obsolete request types
-    if (Is-Deprecated $requestType) {
+    if (Test-DeprecatedType $requestType) {
         Write-Verbose "Skipping $($requestType.FullName) - marked as deprecated/obsolete"
         $skippedDeprecated++
         continue
