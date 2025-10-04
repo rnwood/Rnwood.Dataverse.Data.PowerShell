@@ -31,12 +31,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter()]
 		public uint BatchSize { get; set; } = 100;
 
-		[Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of table")]
-		[Alias("EntityName", "LogicalName")]
-		public string TableName { get; set; }
+	/// </summary>
+	[Parameter(HelpMessage = "Hashset of lookup column name in the target entity to column name in the referred to table with which to find the records.")]
+	[Alias("EntityName", "LogicalName")]
+	[ArgumentCompleter(typeof(TableNameArgumentCompleter))]
+	public string TableName { get; set; }
 
-		[Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "List of properties on the input object which are ignored and not attemted to be mapped to the record. Default is none.")]
-		public string[] IgnoreProperties { get; set; }
+        
+	/// <summary>
+	/// List of properties on the input object which are ignored and not attempted to be mapped to the record. Default is none.
+	/// </summary>
+	[Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "List of properties on the input object which are ignored and not attemted to be mapped to the record. Default is none.")]
+	[ArgumentCompleter(typeof(Rnwood.Dataverse.Data.PowerShell.Commands.PSObjectPropertyNameArgumentCompleter))]
+	public string[] IgnoreProperties { get; set; }
 
 		[Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of record to be created or updated.")]
 		public Guid Id { get; set; }
@@ -53,8 +60,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(HelpMessage = "If specified, then no records will be created even if no existing records matching the ID and or MatchOn columns is found.")]
 		public SwitchParameter NoCreate { get; set; }
 
-		[Parameter(HelpMessage = "List of column names which will not be included when updating existing records.")]
-		public string[] NoUpdateColumns { get; set; }
+	/// <summary>
+	/// List of column names which will not be included when updating existing records.
+	/// </summary>
+	[Parameter(HelpMessage = "List of column names which will not be included when updating existing records.")]
+	[ArgumentCompleter(typeof(Rnwood.Dataverse.Data.PowerShell.Commands.ColumnNamesArgumentCompleter))]
+	public string[] NoUpdateColumns { get; set; }
 
 		[Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "If specified, the creation/updates will be done on behalf of the user with the specified ID. For best performance, sort the records using this value since a new batch request is needed each time this value changes.")]
 		public Guid? CallerId { get; set; }
@@ -68,7 +79,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(HelpMessage = "If specified, upsert request will be used to create/update existing records as appropriate. -MatchOn is not supported with this option")]
 		public SwitchParameter Upsert { get; set; }
 
+		/// <summary>
+		/// Hashset mapping lookup column names in the target entity to column names in the referred-to table for resolving lookup references.
+		/// </summary>
 		[Parameter(Mandatory = false, HelpMessage = "Hashset of lookup column name in the target entity to column name in the referred to table with which to find the records.")]
+		[ArgumentCompleter(typeof(Rnwood.Dataverse.Data.PowerShell.Commands.ColumnNamesArgumentCompleter))]
 		public Hashtable LookupColumns
 		{
 			get;

@@ -47,7 +47,7 @@ Accept wildcard characters: False
 ```
 
 ### -Requests
-Gets or sets the collection of message requests to execute.
+Gets or sets the collection of requests to execute.
 
 ```yaml
 Type: OrganizationRequestCollection
@@ -101,7 +101,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -116,7 +116,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

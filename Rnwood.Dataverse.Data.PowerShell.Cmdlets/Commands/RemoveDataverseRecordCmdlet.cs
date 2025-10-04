@@ -26,8 +26,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(ValueFromPipeline = true, HelpMessage = "Record from pipeline. This allows piping in record to delete.")]
 		public PSObject InputObject { get; set; }
 
+		/// <summary>
+		/// The logical name of the table to operate on.
+		/// </summary>
 		[Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of table")]
 		[Alias("EntityName")]
+		[ArgumentCompleter(typeof(TableNameArgumentCompleter))]
 		public string TableName { get; set; }
 
 		[Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Id of record to process")]

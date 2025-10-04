@@ -30,9 +30,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private const string PARAMSET_SIMPLE = "Simple";
 
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = true, Position = 0, HelpMessage = "Logical name of table for which to retrieve records")]
-        [Alias("EntityName")]
-        public string TableName { get; set; }
+    /// <summary>
+    /// The logical name of the table for which to retrieve records.
+    /// </summary>
+    [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = true, Position = 0, HelpMessage = "Logical name of table for which to retrieve records")]
+    [Alias("EntityName")]
+    [ArgumentCompleter(typeof(TableNameArgumentCompleter))]
+    public string TableName { get; set; }
 
         [Parameter(HelpMessage = "If set writes total record count matching query to verbose output")]
         public SwitchParameter VerboseRecordCount { get; set; }
@@ -110,56 +114,86 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             set;
         }
 
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default")]
-        public string[] Columns
+    /// <summary>
+    /// List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default
+    /// </summary>
+    [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default")]
+    [ArgumentCompleter(typeof(Rnwood.Dataverse.Data.PowerShell.Commands.ColumnNamesArgumentCompleter))]
+    public string[] Columns
         {
             get;
             set;
         }
 
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to exclude from records (default is none). Ignored if Columns parameter is used.s")]
-        public string[] ExcludeColumns
+    /// <summary>
+    /// List of columns to exclude from records (default is none). Ignored if Columns parameter is used.
+    /// </summary>
+    [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to exclude from records (default is none). Ignored if Columns parameter is used.s")]
+    [ArgumentCompleter(typeof(Rnwood.Dataverse.Data.PowerShell.Commands.ColumnNamesArgumentCompleter))]
+    public string[] ExcludeColumns
         {
             get;
             set;
         }
 
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to order records by. Suffix column name with - to sort descending. e.g \"age-\", \"lastname\" will sort by age descending then lastname ascending")]
-        public string[] OrderBy
+    /// <summary>
+    /// List of columns to order records by. Suffix column name with - to sort descending. e.g "age-", "lastname" will sort by age descending then lastname ascending
+    /// </summary>
+    [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to order records by. Suffix column name with - to sort descending. e.g \"age-\", \"lastname\" will sort by age descending then lastname ascending")]
+    [ArgumentCompleter(typeof(Rnwood.Dataverse.Data.PowerShell.Commands.ColumnNamesArgumentCompleter))]
+    public string[] OrderBy
         {
             get;
             set;
         }
 
-        [Parameter(Mandatory = false, HelpMessage = "Number of records to limit result to. Default is all results.")]
-        public int? Top
+    /// <summary>
+    /// Number of records to limit result to. Default is all results.
+    /// </summary>
+    [Parameter(Mandatory = false, HelpMessage = "Number of records to limit result to. Default is all results.")]
+    public int? Top
         {
             get;
             set;
         }
 
-        [Parameter(Mandatory = false, HelpMessage = "Number of records to request per page. Default is 1000.")]
-        public int? PageSize
+    /// <summary>
+    /// Number of records to request per page. Default is 1000.
+    /// </summary>
+    [Parameter(Mandatory = false, HelpMessage = "Number of records to request per page. Default is 1000.")]
+    public int? PageSize
         {
             get;
             set;
         }
 
-        [Parameter(HelpMessage = "Outputs Names for lookup values. The default behaviour is to output the ID.")]
-        public SwitchParameter LookupValuesReturnName { get; set; }
+    /// <summary>
+    /// Outputs Names for lookup values. The default behaviour is to output the ID.
+    /// </summary>
+    [Parameter(HelpMessage = "Outputs Names for lookup values. The default behaviour is to output the ID.")]
+    public SwitchParameter LookupValuesReturnName { get; set; }
 
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.")]
-        public SwitchParameter IncludeSystemColumns { get; set; }
+    /// <summary>
+    /// Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.
+    /// </summary>
+    [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.")]
+    public SwitchParameter IncludeSystemColumns { get; set; }
 
         private EntityMetadataFactory entiyMetadataFactory;
         private DataverseEntityConverter entityConverter;
         private EntityMetadata entityMetadata;
 
+        /// <summary>
+        /// BeginProcessing override for the cmdlet.
+        /// </summary>
         protected override void BeginProcessing()
         {
             base.BeginProcessing();
         }
 
+        /// <summary>
+        /// ProcessRecord override that executes the query and writes results.
+        /// </summary>
         protected override void ProcessRecord()
         {
             base.ProcessRecord();

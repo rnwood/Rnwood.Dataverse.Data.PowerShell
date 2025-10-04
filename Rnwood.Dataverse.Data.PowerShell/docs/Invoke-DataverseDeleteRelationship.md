@@ -47,7 +47,7 @@ Accept wildcard characters: False
 ```
 
 ### -Name
-Gets or sets the name of the relationship to delete. Required.
+Gets or sets the key name.
 
 ```yaml
 Type: String
@@ -86,7 +86,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -101,7 +101,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

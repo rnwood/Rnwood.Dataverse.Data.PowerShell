@@ -48,7 +48,7 @@ Accept wildcard characters: False
 ```
 
 ### -Target
-Gets or sets an instance of an entity that you can use to create a new record. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
+Gets or sets the target, which is a recurring appointment master record to which the appointment is converted. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
 
 ```yaml
 Type: PSObject
@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -TargetIgnoreProperties
-Gets or sets an instance of an entity that you can use to create a new record. Required. Properties to ignore when converting Target PSObject to Entity.
+Gets or sets the target, which is a recurring appointment master record to which the appointment is converted. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Properties to ignore when converting Target PSObject to Entity.
 
 ```yaml
 Type: String[]
@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -TargetLookupColumns
-Gets or sets an instance of an entity that you can use to create a new record. Required. Hashtable specifying lookup columns for entity reference conversions in Target.
+Gets or sets the target, which is a recurring appointment master record to which the appointment is converted. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Hashtable specifying lookup columns for entity reference conversions in Target.
 
 ```yaml
 Type: Hashtable
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -TargetTableName
-Gets or sets an instance of an entity that you can use to create a new record. Required. The logical name of the table/entity type for the Target parameter.
+Gets or sets the target, which is a recurring appointment master record to which the appointment is converted. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. The logical name of the table/entity type for the Target parameter.
 
 ```yaml
 Type: String
@@ -132,7 +132,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -147,7 +147,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

@@ -47,7 +47,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityName
-Gets or sets the logical table name to check whether it can be the primary table in a one-to-many relationship. Required.
+Gets or sets the logical name of the entity.
 
 ```yaml
 Type: String
@@ -86,7 +86,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -101,7 +101,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

@@ -47,7 +47,7 @@ Accept wildcard characters: False
 ```
 
 ### -Query
-Gets or sets the query criteria for the retrieval. Required.
+Gets or sets the query representing the metadata to return.
 
 ```yaml
 Type: QueryBase
@@ -86,7 +86,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -101,7 +101,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

@@ -48,7 +48,7 @@ Accept wildcard characters: False
 ```
 
 ### -MetadataId
-Gets or sets the of the to be retrieved. Optional.
+The unique identifier for the attribute. Optional.
 
 ```yaml
 Type: Guid
@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -Name
-Gets or sets the name for the global choice to be retrieved. Optional.
+Gets or sets the key name.
 
 ```yaml
 Type: String
@@ -117,7 +117,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -132,7 +132,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

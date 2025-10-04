@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -Value
-Gets the value returned by the query.
+Gets or sets the value of the option to delete. Required.
 
 ```yaml
 Type: Int64
@@ -116,7 +116,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -131,7 +131,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

@@ -33,7 +33,7 @@ PS C:\> Invoke-DataverseRetrieveAttributeChangeHistory -Connection <ServiceClien
 ## PARAMETERS
 
 ### -AttributeLogicalName
-Gets the name of the attribute on which the aggregate, group by, or select operation was performed.
+Gets or sets the logical name of the choice column from which to delete the option value. Optional.
 
 ```yaml
 Type: String
@@ -117,7 +117,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -132,7 +132,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
