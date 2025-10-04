@@ -19,16 +19,16 @@ using System.Xml.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
-	/// <summary>
-	/// Retrieves records from a Dataverse table using various query methods.
-	/// </summary>
+    /// <summary>
+    /// Retrieves records from a Dataverse table using various query methods.
+    /// </summary>
     [Cmdlet(VerbsCommon.Get, "DataverseRecord")]
     [OutputType(typeof(IEnumerable<PSObject>))]
     public class GetDataverseRecordCmdlet : OrganizationServiceCmdlet
     {
-		/// <summary>
-		/// Gets or sets the Dataverse connection to use.
-		/// </summary>
+        /// <summary>
+        /// Gets or sets the Dataverse connection to use.
+        /// </summary>
         [Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
         public override ServiceClient Connection { get; set; }
 
@@ -39,6 +39,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the logical name of the table to query.
         /// </summary>
+        [ArgumentCompleter(typeof(TableNameArgumentCompleter))]
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = true, Position = 0, HelpMessage = "Logical name of table for which to retrieve records")]
         [Alias("EntityName")]
         public string TableName { get; set; }
@@ -64,9 +65,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             set;
         }
         /// <summary>
-        /// List of hashsets of @{\
+        /// One or more hashtables that define filters to apply to the query.
+        /// Each hashtable's entries are combined with AND; multiple hashtables are combined with OR.
+        /// Filter keys may be "column" or "column:Operator" where Operator is a
+        /// name from the ConditionOperator enum (e.g. GreaterThan, NotEqual).
+        /// Values may be a literal, an array (treated as IN), $null (treated as ISNULL),
+        /// or a nested hashtable with keys "value" and "operator" to specify operator and value
+        /// (e.g. @{age=@{value=25; operator='GreaterThan'}}).
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of hashsets of @{\"columnnames(:operator)\"=\"value\"} to filter records by. If operator is not specified, uses an EQUALS condition (or ISNULL if null value). If more than one hashset is provided then they are logically combined using an OR condition. e.g. @{firstname=\"bob\", age=25}, @{firstname=\"sue\"} will find records where (firstname=bob AND age=25) OR (firstname=sue)")]
+        [ArgumentCompleter(typeof(FilterValuesArgumentCompleter))]
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "One or more hashtables to filter records. Each hashtable's entries are combined with AND; multiple hashtables are combined with OR. Keys may be 'column' or 'column:Operator' (Operator is a ConditionOperator name). Values may be a literal, an array (treated as IN), $null (treated as ISNULL), or a nested hashtable with keys 'value' and 'operator' (e.g. @{age=@{value=25; operator='GreaterThan'}}). Examples: @{firstname='bob'; age=25}, @{firstname='sue'} => (firstname=bob AND age=25) OR (firstname=sue).")]
+        [Alias("IncludeFilter")]
         public Hashtable[] FilterValues
         {
             get;
@@ -91,18 +100,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             set;
         }
         /// <summary>
-        /// List of hashsets of column names,values to filter records by using an NOTEQUALS condition (or ISNOTNULL if null value). If more than one hashset is provided then they are logically combined using an AND condition by default. e.g. @{firstname=\
+    /// List of hashtables of field names/values to exclude. Defaults to a NOT EQUAL condition for values (or IS NOT NULL when $null is supplied).
+    /// Multiple hashtables are combined using AND by default; use -ExcludeFilterOr to combine them using OR instead.
+    /// For example: @{firstname="bob", age=25}, @{lastname="smith"}:
+    /// - Default (AND): excludes records matching both hashtables (firstname='bob' AND age=25) AND (lastname='smith').
+    /// - With -ExcludeFilterOr (OR): excludes records matching either hashtable (firstname='bob' AND age=25) OR (lastname='smith').
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of hashsets of column names,values to filter records by using an NOTEQUALS condition (or ISNOTNULL if null value). If more than one hashset is provided then they are logically combined using an AND condition by default. e.g. @{firstname=\"bob\", age=25}, @{firstname=\"sue\"} will find records where (firstname<>bob AND age<>25) OR (firstname<>sue)")]
+    [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of hashtables of field names/values to exclude. Defaults to a NOT EQUAL condition for values (or IS NOT NULL when $null is supplied). Multiple hashtables are combined using AND by default; use -ExcludeFilterOr to combine them using OR instead. e.g. @{firstname=\"bob\", age=25}, @{lastname=\"smith\"}")]
+        [Alias("ExcludeFilter")]
+        [ArgumentCompleter(typeof(FilterValuesArgumentCompleter))]
         public Hashtable[] ExcludeFilterValues
         {
             get;
             set;
         }
+
         /// <summary>
-        /// If specified the exclude filters will be logically combined using OR instead of the default of AND
+        /// When specified, multiple exclude hashtables are combined using OR instead of the default AND.
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "If specified the exclude filters will be logically combined using OR instead of the default of AND")]
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "If specified multiple hashtables exclude filters will be logically combined using OR instead of the default of AND")]
         public SwitchParameter ExcludeFilterOr
         {
             get;
@@ -147,6 +163,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default
         /// </summary>
+        [ArgumentCompleter(typeof(ColumnNamesArgumentCompleter))]
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default")]
         public string[] Columns
         {
@@ -156,6 +173,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// List of columns to exclude from records (default is none). Ignored if Columns parameter is used.s
         /// </summary>
+        [ArgumentCompleter(typeof(ColumnNamesArgumentCompleter))]
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to exclude from records (default is none). Ignored if Columns parameter is used.s")]
         public string[] ExcludeColumns
         {
@@ -204,10 +222,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private DataverseEntityConverter entityConverter;
         private EntityMetadata entityMetadata;
 
-    /// <summary>
-    /// Initializes the cmdlet and sets up required helpers.
-    /// </summary>
-    protected override void BeginProcessing()
+        /// <summary>
+        /// Initializes the cmdlet and sets up required helpers.
+        /// </summary>
+        protected override void BeginProcessing()
         {
             base.BeginProcessing();
         }
@@ -320,73 +338,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (FilterValues != null)
             {
                 FilterExpression includesFilterExpression = query.Criteria.AddFilter(LogicalOperator.Or);
-
-                foreach (Hashtable filterValues in FilterValues)
-                {
-                    FilterExpression includeFilterExpression = includesFilterExpression.AddFilter(LogicalOperator.And);
-                    foreach (DictionaryEntry filterValue in filterValues)
-                    {
-                        ConditionOperator op = filterValue.Value == null ? ConditionOperator.Null : ConditionOperator.Equal;
-
-                        string[] keyBits = ((string)filterValue.Key).Split(':');
-                        string fieldName = keyBits[0];
-                        if (keyBits.Length == 2)
-                        {
-                            try
-                            {
-                                op = (ConditionOperator)Enum.Parse(typeof(ConditionOperator), keyBits[1]);
-                            }
-                            catch (ArgumentException e)
-                            {
-                                throw new InvalidDataException($"The key '{filterValue.Key}' is invalid. {e.Message}. Valid operators are {string.Join(", ", Enum.GetNames(typeof(ConditionOperator)))}");
-
-                            }
-                        }
-                        else if (keyBits.Length > 2)
-                        {
-                            throw new InvalidDataException($"The key '{filterValue.Key}' is invalid. Valid formats are 'fieldname' or 'fieldname:operator'");
-                        }
-
-                        if (filterValue.Value is Array array)
-                        {
-                            includeFilterExpression.AddCondition(fieldName, op, (object[])array);
-                        }
-                        else if (new[] { ConditionOperator.Null, ConditionOperator.NotNull, ConditionOperator.EqualUserLanguage, ConditionOperator.EqualUserOrUserHierarchy, ConditionOperator.EqualUserOrUserHierarchyAndTeams, ConditionOperator.EqualUserOrUserTeams, ConditionOperator.EqualUserTeams, ConditionOperator.EqualRoleBusinessId }.Contains(op) ||
-                            (op.ToString().StartsWith("Next") && !op.ToString().StartsWith("NextX")) ||
-                            (op.ToString().StartsWith("Last") && !op.ToString().StartsWith("LastX")) ||
-                            (op.ToString().StartsWith("This"))
-                            )
-                        {
-                            includeFilterExpression.AddCondition(fieldName, op);
-                        }
-                        else
-                        {
-                            includeFilterExpression.AddCondition(fieldName, op, filterValue.Value);
-                        }
-                    }
-                }
+                ProcessHashFilterValues(includesFilterExpression, FilterValues, false);
             }
 
             if (ExcludeFilterValues != null)
             {
-                FilterExpression excludesFilterExpression = query.Criteria.AddFilter(ExcludeFilterOr.IsPresent ? LogicalOperator.Or : LogicalOperator.And);
-
-                foreach (Hashtable excludeFilterValues in ExcludeFilterValues)
-                {
-                    FilterExpression excludeFilterExpression = excludesFilterExpression.AddFilter(LogicalOperator.And);
-                    foreach (DictionaryEntry filterValue in excludeFilterValues)
-                    {
-                        if (filterValue.Value == null)
-                        {
-                            excludeFilterExpression.AddCondition((string)filterValue.Key, ConditionOperator.NotNull);
-                        }
-                        else
-                        {
-                            excludeFilterExpression.AddCondition((string)filterValue.Key, ConditionOperator.NotEqual,
-                                                                 filterValue.Value);
-                        }
-                    }
-                }
+                    // Build the inverted exclude filters. Top-level combination across the exclude
+                    // hashtables is AND by default (a record is excluded only if it matches all
+                    // provided hashtables). When -ExcludeFilterOr is specified the top-level
+                    // combination becomes OR (a record is excluded if it matches any provided hashtable).
+                    FilterExpression excludesFilterExpression = query.Criteria.AddFilter(ExcludeFilterOr.IsPresent ? LogicalOperator.Or : LogicalOperator.And);
+                    ProcessHashFilterValues(excludesFilterExpression, ExcludeFilterValues, true);
             }
 
             if (Criteria != null)
@@ -408,6 +370,137 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             return query;
+        }
+        private static void ProcessHashFilterValues(FilterExpression includesFilterExpression, Hashtable[] filterValuesArray, bool isExcludeFilter)
+        {
+            foreach (Hashtable filterValues in filterValuesArray)
+            {
+                // Each hashtable's entries should always be combined with AND
+                // (e.g. @{a=1; b=2} -> a=1 AND b=2). The outer filter expression
+                // controls whether the inverted hashtable-filters are combined
+                // using AND or OR when used as an exclude filter.
+                FilterExpression includeFilterExpression = includesFilterExpression.AddFilter(LogicalOperator.And);
+                foreach (DictionaryEntry filterValue in filterValues)
+                {
+                    ConditionOperator op = filterValue.Value == null ? ConditionOperator.Null : ConditionOperator.Equal;
+                    object value = filterValue.Value;
+
+                    string[] keyBits = ((string)filterValue.Key).Split(':');
+                    string fieldName = keyBits[0];
+                    if (keyBits.Length == 2)
+                    {
+                        try
+                        {
+                            op = (ConditionOperator)Enum.Parse(typeof(ConditionOperator), keyBits[1]);
+                        }
+                        catch (ArgumentException e)
+                        {
+                            throw new InvalidDataException($"The key '{filterValue.Key}' is invalid. {e.Message}. Valid operators are {string.Join(", ", Enum.GetNames(typeof(ConditionOperator)))}");
+
+                        }
+                    }
+                    else if (keyBits.Length > 2)
+                    {
+                        throw new InvalidDataException($"The key '{filterValue.Key}' is invalid. Valid formats are 'fieldname' or 'fieldname:operator'");
+                    }
+                    else if (filterValue.Value is Hashtable ht)
+                    {
+                        if (!ht.ContainsKey("operator"))
+                        {
+                            throw new InvalidDataException($"The operator for key '{filterValue.Key}' is missing. When using a hashtable value the key 'operator' must be specified. e.g. @{filterValue.Key}=@{{value=25; operator='GreaterThan'}}");
+                        }
+
+                        
+                        var opObj = ht["operator"];
+                              try
+                        {
+                            op = (ConditionOperator)Enum.Parse(typeof(ConditionOperator), opObj?.ToString() ?? "");
+                        }
+                        catch (ArgumentException e)
+                        {
+                            throw new InvalidDataException($"The operator for key '{filterValue.Key}' is invalid. {e.Message}. Valid operators are {string.Join(", ", Enum.GetNames(typeof(ConditionOperator)))}");
+                        }
+
+                        if (!OperatorIsValueLess(op))
+                        {
+                            if (!ht.ContainsKey("value"))
+                            {
+                                throw new InvalidDataException($"The value for key '{filterValue.Key}' is invalid. When using a hashtable value the key 'value' must be specified. e.g. @{filterValue.Key}=@{{value=25; operator='GreaterThan'}}");
+                            }
+
+                            value = ht["value"];
+                        }
+
+                    }
+
+                    if (isExcludeFilter)
+                    {
+                        op = InvertOperator(op);
+                    }
+
+                    if (OperatorIsValueLess(op))
+                    {
+                        includeFilterExpression.AddCondition(fieldName, op);
+                    }
+                    else if (value is Array array)
+                    {
+                        includeFilterExpression.AddCondition(fieldName, op, (object[])array);
+                    }
+                    else
+                    {
+                        includeFilterExpression.AddCondition(fieldName, op, value);
+                    }
+                }
+            }
+        }
+
+        private static ConditionOperator InvertOperator(ConditionOperator op)
+        {
+            switch (op)
+            {
+                case ConditionOperator.Equal:
+                    return ConditionOperator.NotEqual;
+                case ConditionOperator.NotEqual:
+                    return ConditionOperator.Equal;
+                case ConditionOperator.GreaterThan:
+                    return ConditionOperator.LessEqual;
+                case ConditionOperator.GreaterEqual:
+                    return ConditionOperator.LessThan;
+                case ConditionOperator.LessThan:
+                    return ConditionOperator.GreaterEqual;
+                case ConditionOperator.LessEqual:
+                    return ConditionOperator.GreaterThan;
+                case ConditionOperator.In:
+                    return ConditionOperator.NotIn;
+                case ConditionOperator.NotIn:
+                    return ConditionOperator.In;
+                case ConditionOperator.Like:
+                    return ConditionOperator.NotLike;
+                case ConditionOperator.NotLike:
+                    return ConditionOperator.Like;
+                case ConditionOperator.BeginsWith:
+                    return ConditionOperator.DoesNotBeginWith;
+                case ConditionOperator.DoesNotBeginWith:
+                    return ConditionOperator.BeginsWith;
+                case ConditionOperator.EndsWith:
+                    return ConditionOperator.DoesNotEndWith;
+                case ConditionOperator.DoesNotEndWith:
+                    return ConditionOperator.EndsWith;
+                case ConditionOperator.Null:
+                    return ConditionOperator.NotNull;
+                case ConditionOperator.NotNull:
+                    return ConditionOperator.Null;
+                default:
+                    throw new InvalidDataException($"The operator '{op}' cannot be inverted. Only Equal, NotEqual, GreaterThan, GreaterEqual, LessThan, LessEqual, In, NotIn, Like, NotLike, BeginsWith, DoesNotBeginWith, EndsWith, DoesNotEndWith, Null and NotNull can be inverted.");
+            }
+        }
+
+        private static bool OperatorIsValueLess(ConditionOperator op)
+        {
+            return new[] { ConditionOperator.Null, ConditionOperator.NotNull, ConditionOperator.EqualUserLanguage, ConditionOperator.EqualUserOrUserHierarchy, ConditionOperator.EqualUserOrUserHierarchyAndTeams, ConditionOperator.EqualUserOrUserTeams, ConditionOperator.EqualUserTeams, ConditionOperator.EqualRoleBusinessId }.Contains(op) ||
+                        (op.ToString().StartsWith("Next") && !op.ToString().StartsWith("NextX")) ||
+                        (op.ToString().StartsWith("Last") && !op.ToString().StartsWith("LastX")) ||
+                        op.ToString().StartsWith("This");
         }
 
         private QueryExpression GetFetchXmlQuery()
