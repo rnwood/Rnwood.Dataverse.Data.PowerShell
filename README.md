@@ -43,7 +43,28 @@ $c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive
 
 See the full documentation for `Get-DataverseConnection` for other non-interactive auth types.
 
-Every command that need a connection to a Dataverse environment exposes a `-Connection` parameter.  Use the value returned by the above (`$c` in example) here. 
+### Authentication Methods
+
+The module supports multiple authentication methods:
+- **Interactive**: Browser-based authentication (good for development)
+- **Device Code**: Authentication via device code flow (good for remote/headless scenarios)
+- **Username/Password**: Basic credential authentication
+- **Client Secret**: Service principal authentication (good for automation)
+- **DefaultAzureCredential**: Automatic credential discovery in Azure environments (tries environment variables, managed identity, Visual Studio, Azure CLI, Azure PowerShell, and interactive browser)
+- **ManagedIdentity**: Azure managed identity authentication (system-assigned or user-assigned)
+- **Connection String**: Advanced scenarios using connection strings
+
+*Example: Using DefaultAzureCredential in Azure environments:*
+```powershell
+$c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -DefaultAzureCredential
+```
+
+*Example: Using Managed Identity on Azure VM/Functions/App Service:*
+```powershell
+$c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -ManagedIdentity
+```
+
+Every command that need a connection to a Dataverse environment exposes a `-Connection` parameter.  Use the value returned by the above (`$c` in example) here.
 
 *Example: Get all `contact` records:*
 ```powershell

@@ -106,7 +106,7 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
 Type: ServiceClient
@@ -136,7 +136,7 @@ Accept wildcard characters: False
 ```
 
 ### -IfExists
-{{ Fill IfExists Description }}
+If specified, the cmdlet will not raise an error if the record does not exist.
 
 ```yaml
 Type: SwitchParameter

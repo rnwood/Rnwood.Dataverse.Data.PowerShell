@@ -12,7 +12,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     [OutputType(typeof(WhoAmIResponse))]
     public class GetDataverseWhoAmICmdlet : OrganizationServiceCmdlet
     {
-        [Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
+        [Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
         public override ServiceClient Connection { get; set; }
 
         protected override void BeginProcessing()

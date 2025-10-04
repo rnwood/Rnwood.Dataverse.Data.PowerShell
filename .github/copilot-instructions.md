@@ -15,21 +15,9 @@ Cross-platform PowerShell module (~206MB, 1339 files) for Microsoft Dataverse da
 # 1. Clean (takes 1-3 seconds)
 dotnet clean
 
-# 2. Build the solution (takes 25-30 seconds - includes restore, build all projects)
-dotnet build -c Release
+# 2. Build cmdlets (takes 13 seconds - includes restore on first build)
+dotnet build 
 
-# 3. Set module path for testing
-export TESTMODULEPATH="$(pwd)/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0"
-```
-
-**IMPORTANT BUILD NOTES:**
-- The build automatically compiles all three projects (Cmdlets, Loader, Module) and assembles them
-- Build targets (BuildCmdlets, BuildLoader) automatically copy outputs to bin/Release/netstandard2.0/cmdlets/ and .../loader/
-- The build may run `updatehelp.ps1` which accesses www.powershellgallery.com to install PlatyPS module
-- If PowerShell Gallery is blocked, you may get: `error MSB3073: The command "pwsh -file .../updatehelp.ps1..." exited with code 1`
-- If help generation fails, the module will still build and work correctly - help files are optional
-- Expect 17-20 NU1701 warnings about .NET Framework package compatibility - these are NORMAL and safe to ignore
-- Build creates en-GB/ help directory with MAML XML files (163KB+ of generated help) if PlatyPS is available
 
 ### Testing Sequence (Total time: ~15-30 seconds)
 ```powershell
@@ -205,6 +193,3 @@ Invoke-Pester -Output Detailed -Path tests
 - Quick start: `$c = Get-DataverseConnection -url https://org.crm.dynamics.com -interactive; Get-DataverseRecord -connection $c -tablename contact`
 - Main cmdlets: Get-DataverseConnection, Get-DataverseRecord, Set-DataverseRecord, Remove-DataverseRecord, Invoke-DataverseRequest, Invoke-DataverseSql
 - Does NOT support on-premise Dataverse
-
-## TRUST THESE INSTRUCTIONS
-Follow build/test sequences exactly. If PowerShell Gallery is blocked, use the manual assembly workaround. Always set $env:TESTMODULEPATH before testing. Only search/explore if instructions are incomplete or incorrect - these have been validated by running all commands.

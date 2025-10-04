@@ -20,11 +20,20 @@ Get-DataverseRecordsFolder [-InputPath] <String> [-deletions] [-ProgressAction <
 
 ## DESCRIPTION
 
+This helper cmdlet reads JSON files from a folder (typically created by Set-DataverseRecordsFolder) and emits them as PowerShell objects to the pipeline.
+
+Each JSON file in the folder is deserialized into a PowerShell object. This is useful for:
+- Reading data from source control
+- Importing data during build/deployment
+- Testing scenarios
+
+When used with the `-deletions` switch, it reads from the 'deletions' subfolder instead, which contains records that were present in a previous export but are no longer present.
+
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> Get-DataversRecordsFolder -InputPath data/contacts | Set-DataverseRecord -connection $c
+PS C:\> Get-DataverseRecordsFolder -InputPath data/contacts | Set-DataverseRecord -connection $c
 ```
 
 Reads files from `data/contacts` and uses them to create/update records in Dataverse using the existing connection `$c`.
@@ -41,14 +50,14 @@ Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: 0
+Position: 1
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
 ### -deletions
-{{ Fill deletions Description }}
+If specified, reads from the 'deletions' subfolder instead of the main folder. This allows reading records that were present previously but have been deleted.
 
 ```yaml
 Type: SwitchParameter
@@ -82,10 +91,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
 ## OUTPUTS
 
-### System.Object
+### System.Management.Automation.PSObject
 ## NOTES
 
 ## RELATED LINKS

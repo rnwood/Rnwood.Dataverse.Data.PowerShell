@@ -1,8 +1,10 @@
-﻿using FakeItEasy;
+﻿using Azure.Core;
+using Azure.Identity;
+using FakeItEasy;
 using FakeXrmEasy.Core;
 using FakeXrmEasy.Middleware;
 using FakeXrmEasy;
-﻿using FakeXrmEasy.Abstractions;
+using FakeXrmEasy.Abstractions;
 using FakeXrmEasy.Abstractions.Enums;
 using FakeXrmEasy.Middleware.Crud;
 using FakeXrmEasy.Middleware.Messages;
@@ -41,48 +43,96 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private const string PARAMSET_DEVICECODE = "Authenticate using the device code flow";
 		private const string PARAMSET_USERNAMEPASSWORD = "Authenticate with username and password";
 		private const string PARAMSET_CONNECTIONSTRING = "Authenticate with Dataverse SDK connection string.";
+		private const string PARAMSET_DEFAULTAZURECREDENTIAL = "Authenticate with DefaultAzureCredential";
+		private const string PARAMSET_MANAGEDIDENTITY = "Authenticate with ManagedIdentityCredential";
 
 		private const string PARAMSET_MOCK = "Return a mock connection";
 
-		[Parameter(Mandatory =true, ParameterSetName =PARAMSET_MOCK) ]
+		[Parameter(Mandatory =true, ParameterSetName =PARAMSET_MOCK, HelpMessage = "Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.")] 
 		public EntityMetadata[] Mock { get; set; }
 
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET)]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE)]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE)]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		public Guid ClientId { get; set; } = new Guid("9cee029c-6210-4654-90bb-17e6e9d36617");
 
-		[Parameter(Mandatory = true)]
+		[Parameter(Mandatory = true, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
 		public Uri Url { get; set; }
 
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client secret to authenticate with, as registered for the Entra ID application.")]
 		public string ClientSecret { get; set; }
 
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE)]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE)]
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD)]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Username to authenticate with.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Username to authenticate with.")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Username to authenticate with.")]
 		public string Username { get; set; }
 
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Password to authenticate with.")]
 		public string Password { get; set; }
 
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_INTERACTIVE)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Triggers interactive authentication, where browser will be opened for user to interactively log in.")]
 		public SwitchParameter Interactive { get; set; }
 
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEVICECODE)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Triggers device code authentication where you will be given a URL to visit and a code to complete authentication in web browser.")]
 		public SwitchParameter DeviceCode { get; set; }
 
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CONNECTIONSTRING)]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CONNECTIONSTRING, HelpMessage = "Specifies the connection string to authenticate with - see https://learn.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect")]
 		public string ConnectionString { get; set; }
 
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEFAULTAZURECREDENTIAL, HelpMessage = "Use DefaultAzureCredential for authentication. This will try multiple authentication methods in order: environment variables, managed identity, Visual Studio, Azure CLI, Azure PowerShell, and interactive browser.")]
+		public SwitchParameter DefaultAzureCredential { get; set; }
+
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "Use ManagedIdentityCredential for authentication. Authenticates using the managed identity assigned to the Azure resource.")]
+		public SwitchParameter ManagedIdentity { get; set; }
+
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "Client ID of the user-assigned managed identity. If not specified, the system-assigned managed identity will be used.")]
+		public string ManagedIdentityClientId { get; set; }
+
+		[Parameter(Mandatory = false, HelpMessage = "Timeout for authentication operations. Defaults to 5 minutes.")]
+		public uint Timeout { get; set; } = 5*60;
+
+		// Cancellation token source that is cancelled when the user hits Ctrl+C (StopProcessing)
+		private CancellationTokenSource _userCancellationCts;
 
 		protected override void BeginProcessing()
 		{
+			base.BeginProcessing();
+			// initialize cancellation token source for this pipeline invocation
+			_userCancellationCts = new CancellationTokenSource();
+		}
+
+		protected override void StopProcessing()
+		{
+			// Called when user presses Ctrl+C. Signal cancellation to any ongoing operations.
 			try
 			{
-				base.BeginProcessing();
+				_userCancellationCts?.Cancel();
+			}
+			catch { }
+			base.StopProcessing();
+		}
 
+		protected override void EndProcessing()
+		{
+			base.EndProcessing();
+			_userCancellationCts?.Dispose();
+			_userCancellationCts = null;
+		}
+
+		private CancellationTokenSource CreateLinkedCts(TimeSpan timeout)
+		{
+			var timeoutCts = new CancellationTokenSource(timeout);
+			return CancellationTokenSource.CreateLinkedTokenSource(_userCancellationCts?.Token ?? CancellationToken.None, timeoutCts.Token);
+		}
+
+		protected override void ProcessRecord()
+		{
+			try
+			{
+				base.ProcessRecord();
+
+				
 
 				ServiceClient result;
 
@@ -161,6 +211,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							break;
 						}
 
+					case PARAMSET_DEFAULTAZURECREDENTIAL:
+						{
+							var credential = new Azure.Identity.DefaultAzureCredential();
+							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
+
+							break;
+						}
+
+					case PARAMSET_MANAGEDIDENTITY:
+						{
+							TokenCredential credential;
+							if (!string.IsNullOrEmpty(ManagedIdentityClientId))
+							{
+								credential = new ManagedIdentityCredential(ManagedIdentityClientId);
+							}
+							else
+							{
+								credential = new ManagedIdentityCredential();
+							}
+							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
+
+							break;
+						}
+
 					default:
 						throw new NotImplementedException(ParameterSetName);
 				}
@@ -180,6 +254,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 			catch (Exception e)
 			{
+				// If cancellation was requested, throw a terminating PipelineStoppedException so PowerShell treats this as an interrupted operation
+				if (e is OperationCanceledException || e is TaskCanceledException || (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested))
+				{
+					ThrowTerminatingError(new ErrorRecord(new PipelineStoppedException(), "OperationStopped", ErrorCategory.OperationStopped, null));
+				}
+
 				WriteError(new ErrorRecord(e, "dataverse-failed-connect", ErrorCategory.ConnectionError, null) { ErrorDetails = new ErrorDetails($"Failed to connect to Dataverse: {e}") });
 			}
 		}
@@ -193,14 +273,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get,
 Url + "/api/data/v9.2/");
 
-				HttpResponseMessage httpResponse = httpClient.SendAsync(httpRequestMessage).Result;
-				var header = httpResponse.Headers.GetValues("WWW-Authenticate").First();
+				using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
+				{
+					HttpResponseMessage httpResponse = httpClient.SendAsync(httpRequestMessage, cts.Token).GetAwaiter().GetResult();
+					var header = httpResponse.Headers.GetValues("WWW-Authenticate").First();
 
-				//Bearer authorization_uri=https://login.microsoftonline.com/bd6c851f-e0dc-4d6d-ab4c-99452fe28387/oauth2/authorize, resource_id=https://orgxyz.crm11.dynamics.com/
-				var match = Regex.Match(header, ".*authorization_uri=([^ ,]+).*");
-				var authUri = match.Groups[1].Value;
+					//Bearer authorization_uri=https://login.microsoftonline.com/bd6c851f-e0dc-4d6d-ab4c-99452fe28387/oauth2/authorize, resource_id=https://orgxyz.crm11.dynamics.com/
+					var match = Regex.Match(header, ".*authorization_uri=([^ ,]+).*");
+					var authUri = match.Groups[1].Value;
 
-				authority = authUri.Replace("/oauth2/authorize", "");
+					authority = authUri.Replace("/oauth2/authorize", "");
+				}
 
 			}
 
@@ -216,6 +299,11 @@ Url + "/api/data/v9.2/");
 		{
 			protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 			{
+				if (cancellationToken.IsCancellationRequested)
+				{
+					return Task.FromCanceled<HttpResponseMessage>(cancellationToken);
+				}
+
 				return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}") });
 			}
 		}
@@ -225,9 +313,11 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-
-			AuthenticationResult authResult = await app.AcquireTokenForClient(scopes).ExecuteAsync();
-			return authResult.AccessToken;
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
+			{
+				AuthenticationResult authResult = await app.AcquireTokenForClient(scopes).ExecuteAsync(cts.Token);
+				return authResult.AccessToken;
+			}
 		}
 
 		private async Task<string> GetTokenWithUsernamePassword(IPublicClientApplication app, string url)
@@ -235,11 +325,13 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-			AuthenticationResult authResult = await app.AcquireTokenByUsernamePassword(scopes, Username, new NetworkCredential("", Password).SecurePassword).ExecuteAsync();
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
+			{
+				AuthenticationResult authResult = await app.AcquireTokenByUsernamePassword(scopes, Username, new NetworkCredential("", Password).SecurePassword).ExecuteAsync(cts.Token);
 
+				return authResult.AccessToken;
 
-			return authResult.AccessToken;
-
+			}
 		}
 
 		private async Task<string> GetTokenWithDeviceCode(IPublicClientApplication app, string url)
@@ -247,33 +339,38 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-			AuthenticationResult authResult = null;
-			if (!string.IsNullOrEmpty(Username))
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
 			{
-				try
+				AuthenticationResult authResult = null;
+				if (!string.IsNullOrEmpty(Username))
 				{
+					try
+					{
+						authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync(cts.Token);
+					}
+					catch (MsalUiRequiredException)
+					{
 
-					authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync();
+					}
 				}
-				catch (MsalUiRequiredException)
-				{
 
+				if (authResult == null)
+				{
+					authResult = await app.AcquireTokenWithDeviceCode(scopes, (dcr) =>
+					{
+						if (cts.Token.IsCancellationRequested)
+						{
+							return Task.FromCanceled(cts.Token);
+						}
+						Host.UI.WriteLine(dcr.Message);
+						return Task.CompletedTask;
+					}).ExecuteAsync(cts.Token);
 				}
+
+				Username = authResult.Account.Username;
+
+				return authResult.AccessToken;
 			}
-
-			if (authResult == null)
-			{
-				authResult = await app.AcquireTokenWithDeviceCode(scopes, (dcr) =>
-				{
-					Host.UI.WriteLine(dcr.Message);
-					return Task.FromResult(0);
-				}).ExecuteAsync();
-			}
-
-			Username = authResult.Account.Username;
-
-			return authResult.AccessToken;
-
 		}
 
 		private async Task<string> GetTokenInteractive(IPublicClientApplication app, string url)
@@ -281,33 +378,43 @@ Url + "/api/data/v9.2/");
 			Uri scope = new Uri(Url, "/.default");
 			string[] scopes = new[] { scope.ToString() };
 
-
-			AuthenticationResult authResult = null;
-
-			if (!string.IsNullOrEmpty(Username))
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
 			{
-				try
-				{
+				AuthenticationResult authResult = null;
 
-					authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync();
-				}
-				catch (MsalUiRequiredException)
+				if (!string.IsNullOrEmpty(Username))
 				{
+					try
+					{
+						authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync(cts.Token);
+					}
+					catch (MsalUiRequiredException)
+					{
 
+					}
 				}
+
+				if (authResult == null)
+				{
+					authResult = await app.AcquireTokenInteractive(scopes).ExecuteAsync(cts.Token);
+					Username = authResult.Account.Username;
+				}
+
+				return authResult.AccessToken;
 			}
+		}
 
-			if (authResult == null)
+		private async Task<string> GetTokenWithAzureCredential(TokenCredential credential, string url)
+		{
+			Uri scope = new Uri(Url, "/.default");
+			var tokenRequestContext = new TokenRequestContext(new[] { scope.ToString() });
+
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
 			{
-				authResult = await app.AcquireTokenInteractive(scopes).ExecuteAsync();
-				Username = authResult.Account.Username;
+				var token = await credential.GetTokenAsync(tokenRequestContext, cts.Token);
+				return token.Token;
 			}
-
-
-			return authResult.AccessToken;
-
 		}
 	}
-
 
 }

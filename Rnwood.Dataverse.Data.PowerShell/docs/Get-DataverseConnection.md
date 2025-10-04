@@ -18,41 +18,69 @@ See the examples for this pattern below.
 
 ### Return a mock connection
 ```
-Get-DataverseConnection -Mock <EntityMetadata[]> -Url <Uri> [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseConnection -Mock <EntityMetadata[]> -Url <Uri> [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with client secret
 ```
-Get-DataverseConnection -ClientId <Guid> -Url <Uri> -ClientSecret <String> [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseConnection -ClientId <Guid> -Url <Uri> -ClientSecret <String> [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate interactively
 ```
-Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] [-Interactive]
+Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] [-Interactive] [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate using the device code flow
 ```
-Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] [-DeviceCode]
+Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] [-DeviceCode] [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with username and password
 ```
-Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> -Username <String> -Password <String>
+Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> -Username <String> -Password <String> [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with Dataverse SDK connection string.
 ```
-Get-DataverseConnection -Url <Uri> -ConnectionString <String> [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseConnection -Url <Uri> -ConnectionString <String> [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### Authenticate with DefaultAzureCredential
+```
+Get-DataverseConnection -Url <Uri> [-DefaultAzureCredential] [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### Authenticate with ManagedIdentityCredential
+```
+Get-DataverseConnection -Url <Uri> [-ManagedIdentity] [-ManagedIdentityClientId <String>] [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
+
+This cmdlet establishes a connection to a Microsoft Dataverse environment which can then be used with other cmdlets in this module.
+
+All commands that need a connection to Dataverse expect you to provide the connection in `-connection` parameter.
+So you can store the output of this command in a variable and pass it to each command that needs it.
+See the examples for this pattern below.
+
+Multiple authentication methods are supported:
+- Interactive authentication (browser-based)
+- Device code flow (for remote/headless scenarios)
+- Username/password
+- Client secret (for service principal authentication)
+- DefaultAzureCredential (automatic credential discovery for Azure environments)
+- ManagedIdentityCredential (for Azure managed identity authentication)
+- Connection string (for advanced scenarios)
+- Mock connection (for testing)
 
 ## EXAMPLES
 
@@ -69,6 +97,27 @@ PS C:\> $c = Get-DataverseConnection -url "https://myorg.crm4.dynamics.com" -cli
 ```
 
 Gets a connection to MYORG using Service Principal client ID and secret auth and stores the result in the `$c` variable for later use.
+
+### Example 3
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -DefaultAzureCredential
+```
+
+Gets a connection to MYORG using DefaultAzureCredential, which automatically discovers credentials from the environment (environment variables, managed identity, Visual Studio, Azure CLI, Azure PowerShell, or interactive browser). This is ideal for Azure-hosted applications.
+
+### Example 4
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ManagedIdentity
+```
+
+Gets a connection to MYORG using the system-assigned managed identity. This is useful when running in Azure environments like Azure Functions, App Service, or VMs with managed identity enabled.
+
+### Example 5
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ManagedIdentity -ManagedIdentityClientId "12345678-1234-1234-1234-123456789abc"
+```
+
+Gets a connection to MYORG using a user-assigned managed identity with the specified client ID.
 
 ## PARAMETERS
 
@@ -129,6 +178,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -DefaultAzureCredential
+Use DefaultAzureCredential for authentication. This will try multiple authentication methods in order: environment variables, managed identity, Visual Studio, Azure CLI, Azure PowerShell, and interactive browser.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Authenticate with DefaultAzureCredential
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -DeviceCode
 Triggers device code authentication where you will be given a URL to visit and a code to complete authentication in web browser.
 
@@ -159,8 +223,38 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ManagedIdentity
+Use ManagedIdentityCredential for authentication. Authenticates using the managed identity assigned to the Azure resource.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Authenticate with ManagedIdentityCredential
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ManagedIdentityClientId
+Client ID of the user-assigned managed identity. If not specified, the system-assigned managed identity will be used.
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with ManagedIdentityCredential
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Mock
-{{ Fill Mock Description }}
+Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.
 
 ```yaml
 Type: EntityMetadata[]
@@ -183,6 +277,21 @@ Parameter Sets: Authenticate with username and password
 Aliases:
 
 Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Timeout
+Timeout for authentication operations. Defaults to 5 minutes.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

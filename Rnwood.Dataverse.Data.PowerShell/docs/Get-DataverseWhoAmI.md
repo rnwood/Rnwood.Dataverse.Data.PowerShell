@@ -18,6 +18,15 @@ Get-DataverseWhoAmI -Connection <ServiceClient> [-ProgressAction <ActionPreferen
 
 ## DESCRIPTION
 
+This cmdlet executes the Dataverse WhoAmI message and returns information about the authenticated user and organization.
+
+The response includes:
+- BusinessUnitId - The ID of the user's business unit
+- UserId - The ID of the authenticated user
+- OrganizationId - The ID of the organization
+
+This is useful for verifying authentication and determining the context in which operations will be performed.
+
 ## EXAMPLES
 
 ### Example 1
@@ -30,7 +39,7 @@ Returns info for the existing connection `$c`.
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnnection cmdlet
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
 Type: ServiceClient

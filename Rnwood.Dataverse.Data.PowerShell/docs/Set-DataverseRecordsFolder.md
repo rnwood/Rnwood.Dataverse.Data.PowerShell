@@ -31,21 +31,6 @@ Writes all contacts to the folder `data/contacts`.
 
 ## PARAMETERS
 
-### -InputObject
-Dataverse record(s) to write. Generally should be piped in from the pipeline.
-
-```yaml
-Type: PSObject
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 1
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
-```
-
 ### -OutputPath
 Path to write output to
 
@@ -55,24 +40,24 @@ Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: 0
+Position: 1
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -idproperties
-Specifies the list of properties that will be used to generate a unique name for each file. By default this is "Id".
+### -InputObject
+Dataverse record(s) to write. Generally should be piped in from the pipeline.
 
 ```yaml
-Type: String[]
+Type: PSObject
 Parameter Sets: (All)
 Aliases:
 
 Required: False
 Position: 2
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
@@ -87,6 +72,21 @@ Aliases:
 Required: False
 Position: Named
 Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -idproperties
+Specifies the list of properties that will be used to generate a unique name for each file. By default this is "Id".
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 3
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
