@@ -164,6 +164,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			base.StopProcessing();
 		}
 
+		/// <summary>
+		/// Completes cmdlet processing.
+		/// </summary>
 		protected override void EndProcessing()
 		{
 			base.EndProcessing();
@@ -177,6 +180,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			return CancellationTokenSource.CreateLinkedTokenSource(_userCancellationCts?.Token ?? CancellationToken.None, timeoutCts.Token);
 		}
 
+		/// <summary>
+		/// Processes each record in the pipeline.
+		/// </summary>
 		protected override void ProcessRecord()
 		{
 			try

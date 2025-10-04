@@ -84,6 +84,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(HelpMessage = "When working with date values, this property indicates the local time zone should be used. See Sql4Cds docs.")]
 		public SwitchParameter UseLocalTimezone { get; set; }
 
+		/// <summary>
+
+
+		/// Initializes the cmdlet.
+
+
+		/// </summary>
+
+
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();
@@ -152,6 +161,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_progressMessage = e.Message;
 		}
 
+		/// <summary>
+
+
+		/// Completes cmdlet processing.
+
+
+		/// </summary>
+
+
 		protected override void EndProcessing()
 		{
 			base.EndProcessing();
@@ -164,6 +182,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_commandPrepared = false;
 
 		}
+
+		/// <summary>
+
+
+		/// Processes each record in the pipeline.
+
+
+		/// </summary>
+
 
 		protected override void ProcessRecord()
 		{

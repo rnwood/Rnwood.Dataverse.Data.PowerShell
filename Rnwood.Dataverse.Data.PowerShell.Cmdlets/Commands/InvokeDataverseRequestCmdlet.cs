@@ -17,11 +17,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	public class InvokeDataverseRequestCmdlet : OrganizationServiceCmdlet
 	{
 		/// <summary>
-
 		/// DataverseConnection instance obtained from Get-DataverseConnection cmdlet
-
 		/// </summary>
-
 		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet")]
 		public override ServiceClient Connection { get; set; }
 		/// <summary>
@@ -42,12 +39,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		/// <summary>
 
-
 		/// HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).
 
-
 		/// </summary>
-
 
 		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 0, HelpMessage = "HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).")]
 		public System.Net.Http.HttpMethod Method { get; set; }
@@ -66,6 +60,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// </summary>
 		[Parameter(ParameterSetName = "REST", Mandatory = false, HelpMessage = "Hashtable of custom HTTP headers to include in the REST API request.")]
 		public Hashtable CustomHeaders { get; set; } = new Hashtable();
+		/// <summary>
+
+		/// Initializes the cmdlet.
+
+		/// </summary>
+
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();

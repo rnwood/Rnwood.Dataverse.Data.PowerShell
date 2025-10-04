@@ -21,11 +21,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	public class RemoveDataverseRecordCmdlet : CustomLogicBypassableOrganizationServiceCmdlet
 	{
 		/// <summary>
-
 		/// DataverseConnection instance obtained from Get-DataverseConnection cmdlet
-
 		/// </summary>
-
 		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet")]
 		public override ServiceClient Connection { get; set; }
 		/// <summary>
@@ -63,7 +60,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Specifies the IDs of plugin steps to bypass
 		/// </summary>
-
 		[Parameter(HelpMessage = "Specifies the IDs of plugin steps to bypass")]
 		public override Guid[] BypassBusinessLogicExecutionStepIds { get; set; }
 
@@ -101,6 +97,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		}
 
 		private List<BatchItem> _nextBatchItems;
+
+		/// <summary>
+
+
+		/// Processes each record in the pipeline.
+
+
+		/// </summary>
+
 
 		protected override void ProcessRecord()
 		{
@@ -269,6 +274,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_nextBatchItems.Clear();
 		}
 
+		/// <summary>
+
+
+		/// Initializes the cmdlet.
+
+
+		/// </summary>
+
+
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();
@@ -282,6 +296,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		}
 
 		private EntityMetadataFactory metadataFactory;
+
+		/// <summary>
+
+
+		/// Completes cmdlet processing.
+
+
+		/// </summary>
+
 
 		protected override void EndProcessing()
 		{

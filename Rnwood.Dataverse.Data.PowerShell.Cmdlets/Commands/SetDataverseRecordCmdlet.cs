@@ -34,12 +34,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		/// <summary>
 
-
 		/// Gets or sets the batch size for bulk operations.
 
-
 		/// </summary>
-
 
 		[Parameter()]
 		public uint BatchSize { get; set; } = 100;
@@ -122,7 +119,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Specifies the IDs of plugin steps to bypass
 		/// </summary>
-
 		[Parameter(HelpMessage = "Specifies the IDs of plugin steps to bypass")]
 		public override Guid[] BypassBusinessLogicExecutionStepIds { get; set; }
 
@@ -189,6 +185,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				ProcessBatch();
 			}
 		}
+
+		/// <summary>
+
+
+		/// Initializes the cmdlet.
+
+
+		/// </summary>
+
 
 		protected override void BeginProcessing()
 		{
@@ -279,6 +284,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_nextBatchCallerId = null;
 		}
 
+		/// <summary>
+
+
+		/// Completes cmdlet processing.
+
+
+		/// </summary>
+
+
 		protected override void EndProcessing()
 		{
 			base.EndProcessing();
@@ -320,6 +334,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			return options;
 		}
+
+		/// <summary>
+
+
+		/// Processes each record in the pipeline.
+
+
+		/// </summary>
+
 
 		protected override void ProcessRecord()
 		{
