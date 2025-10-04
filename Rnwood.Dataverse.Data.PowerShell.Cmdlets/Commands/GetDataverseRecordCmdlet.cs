@@ -54,115 +54,149 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(HelpMessage = "If set, writes total record count matching query to output instead of results")]
         public SwitchParameter RecordCount { get; set; }
-
+        /// <summary>
+        /// FetchXml to use
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_FETCHXML, HelpMessage = "FetchXml to use")]
         public string FetchXml
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// List of hashsets of @{\
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of hashsets of @{\"columnnames(:operator)\"=\"value\"} to filter records by. If operator is not specified, uses an EQUALS condition (or ISNULL if null value). If more than one hashset is provided then they are logically combined using an OR condition. e.g. @{firstname=\"bob\", age=25}, @{firstname=\"sue\"} will find records where (firstname=bob AND age=25) OR (firstname=sue)")]
         public Hashtable[] FilterValues
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// Extra criteria to apply to query
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Extra criteria to apply to query")]
         public FilterExpression Criteria
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// Link entities to apply to query
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Link entities to apply to query")]
         public DataverseLinkEntity[] Links
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// List of hashsets of column names,values to filter records by using an NOTEQUALS condition (or ISNOTNULL if null value). If more than one hashset is provided then they are logically combined using an AND condition by default. e.g. @{firstname=\
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of hashsets of column names,values to filter records by using an NOTEQUALS condition (or ISNOTNULL if null value). If more than one hashset is provided then they are logically combined using an AND condition by default. e.g. @{firstname=\"bob\", age=25}, @{firstname=\"sue\"} will find records where (firstname<>bob AND age<>25) OR (firstname<>sue)")]
         public Hashtable[] ExcludeFilterValues
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// If specified the exclude filters will be logically combined using OR instead of the default of AND
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "If specified the exclude filters will be logically combined using OR instead of the default of AND")]
         public SwitchParameter ExcludeFilterOr
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// If specified only active records (statecode=0 or isactive=true) will be output
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "If specified only active records (statecode=0 or isactive=true) will be output")]
         public SwitchParameter ActiveOnly
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// List of primary keys (IDs) of records to retrieve.
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "List of primary keys (IDs) of records to retrieve.")]
         public Guid[] Id
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// List of names (primary attribute value) of records to retrieve.
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "List of names (primary attribute value) of records to retrieve.")]
         public string[] Name
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// List of record ids to exclude
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "List of record ids to exclude")]
         public Guid[] ExcludeId
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default")]
         public string[] Columns
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// List of columns to exclude from records (default is none). Ignored if Columns parameter is used.s
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to exclude from records (default is none). Ignored if Columns parameter is used.s")]
         public string[] ExcludeColumns
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// List of columns to order records by. Suffix column name with - to sort descending. e.g \
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to order records by. Suffix column name with - to sort descending. e.g \"age-\", \"lastname\" will sort by age descending then lastname ascending")]
         public string[] OrderBy
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// Number of records to limit result to. Default is all results.
+        /// </summary>
         [Parameter(Mandatory = false, HelpMessage = "Number of records to limit result to. Default is all results.")]
         public int? Top
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// Number of records to request per page. Default is 1000.
+        /// </summary>
         [Parameter(Mandatory = false, HelpMessage = "Number of records to request per page. Default is 1000.")]
         public int? PageSize
         {
             get;
             set;
         }
-
+        /// <summary>
+        /// Outputs Names for lookup values. The default behaviour is to output the ID.
+        /// </summary>
         [Parameter(HelpMessage = "Outputs Names for lookup values. The default behaviour is to output the ID.")]
         public SwitchParameter LookupValuesReturnName { get; set; }
-
+        /// <summary>
+        /// Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.")]
         public SwitchParameter IncludeSystemColumns { get; set; }
 
