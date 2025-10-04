@@ -341,24 +341,16 @@ $conn.ExecuteCrmOrganizationRequest($caseClose)
 ```powershell
 $caseid = "9EFFD829-8D95-E611-80F3-5065F38B3191"
 
-# Create the incident resolution entity
+# Using specialized cmdlet (simplest)
 $resolution = @{
     subject = "closure subject"
     incidentid = $caseid
-    "incidentid@logicalname" = "incident"
 }
-$resolutionId = Set-DataverseRecord -Connection $conn -TableName incidentresolution -Fields $resolution
 
-# Create and execute the close request
-$request = New-Object Microsoft.Crm.Sdk.Messages.CloseIncidentRequest
-$request.Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(-1)
-
-$resolutionEntity = New-Object Microsoft.Xrm.Sdk.Entity("incidentresolution", $resolutionId)
-$resolutionEntity.Attributes["subject"] = "closure subject"
-$resolutionEntity.Attributes["incidentid"] = New-Object Microsoft.Xrm.Sdk.EntityReference("incident", $caseid)
-$request.IncidentResolution = $resolutionEntity
-
-Invoke-DataverseRequest -Connection $conn -Request $request
+Invoke-DataverseCloseIncident -Connection $conn `
+    -IncidentResolution $resolution `
+    -IncidentResolutionTableName incidentresolution `
+    -Status (New-Object Microsoft.Xrm.Sdk.OptionSetValue(-1))
 ```
 
 ### Example: Execute WhoAmI Request
@@ -499,18 +491,10 @@ Export-CrmSolution -conn $conn -SolutionName $solutionName -Managed $false -Expo
 ```powershell
 $solutionName = "MySolution"
 
-# Method 1: Using request object (verbose)
-$request = New-Object Microsoft.Crm.Sdk.Messages.ExportSolutionRequest
-$request.SolutionName = $solutionName
-$request.Managed = $false
-
-$response = Invoke-DataverseRequest -Connection $conn -Request $request
-
-# Method 2: Using request name and parameters (simpler)
-$response = Invoke-DataverseRequest -Connection $conn -RequestName "ExportSolution" -Parameters @{
-    SolutionName = $solutionName
-    Managed = $false
-}
+# Using specialized cmdlet (simplest)
+$response = Invoke-DataverseExportSolution -Connection $conn `
+    -SolutionName $solutionName `
+    -Managed $false
 
 # Save the solution file
 [System.IO.File]::WriteAllBytes("C:\Solutions\$solutionName.zip", $response.ExportSolutionFile)
@@ -527,20 +511,11 @@ Import-CrmSolution -conn $conn -SolutionFilePath "C:\Solutions\MySolution.zip"
 ```powershell
 $solutionBytes = [System.IO.File]::ReadAllBytes("C:\Solutions\MySolution.zip")
 
-# Method 1: Using request object (verbose)
-$request = New-Object Microsoft.Crm.Sdk.Messages.ImportSolutionRequest
-$request.CustomizationFile = $solutionBytes
-$request.PublishWorkflows = $true
-$request.OverwriteUnmanagedCustomizations = $false
-
-Invoke-DataverseRequest -Connection $conn -Request $request
-
-# Method 2: Using request name and parameters (simpler)
-Invoke-DataverseRequest -Connection $conn -RequestName "ImportSolution" -Parameters @{
-    CustomizationFile = $solutionBytes
-    PublishWorkflows = $true
-    OverwriteUnmanagedCustomizations = $false
-}
+# Using specialized cmdlet (simplest)
+Invoke-DataverseImportSolution -Connection $conn `
+    -CustomizationFile $solutionBytes `
+    -PublishWorkflows $true `
+    -OverwriteUnmanagedCustomizations $false
 ```
 
 ### Example: List All Solutions
@@ -578,18 +553,10 @@ Add-CrmUserToTeam -TeamId $teamId -UserId $userId
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Method 1: Using request object (verbose)
-$request = New-Object Microsoft.Xrm.Sdk.Messages.AddMembersTeamRequest
-$request.TeamId = $teamId
-$request.MemberIds = @($userId)
-
-Invoke-DataverseRequest -Connection $conn -Request $request
-
-# Method 2: Using request name and parameters (simpler)
-Invoke-DataverseRequest -Connection $conn -RequestName "AddMembersTeam" -Parameters @{
-    TeamId = $teamId
-    MemberIds = @($userId)
-}
+# Using specialized cmdlet (simplest)
+Invoke-DataverseAddMembersTeam -Connection $conn `
+    -TeamId $teamId `
+    -MemberIds @($userId)
 ```
 
 ### Example: Assign Security Role to User
@@ -696,22 +663,12 @@ AND u.systemuserid NOT IN (
 )
 "@
 
-# Disable each user
+# Disable each user using specialized cmdlet
 foreach ($user in $nonAdminUsers) {
-    # Method 1: Using request object (verbose)
-    $request = New-Object Microsoft.Crm.Sdk.Messages.SetStateRequest
-    $request.EntityMoniker = New-Object Microsoft.Xrm.Sdk.EntityReference("systemuser", $user.systemuserid)
-    $request.State = New-Object Microsoft.Xrm.Sdk.OptionSetValue(1) # Disabled
-    $request.Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(2) # Disabled
-    
-    Invoke-DataverseRequest -Connection $conn -Request $request
-    
-    # Method 2: Using request name and parameters (simpler)
-    Invoke-DataverseRequest -Connection $conn -RequestName "SetState" -Parameters @{
-        EntityMoniker = New-Object Microsoft.Xrm.Sdk.EntityReference("systemuser", $user.systemuserid)
-        State = New-Object Microsoft.Xrm.Sdk.OptionSetValue(1)
-        Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(2)
-    }
+    Invoke-DataverseSetState -Connection $conn `
+        -EntityMoniker (New-Object Microsoft.Xrm.Sdk.EntityReference("systemuser", $user.systemuserid)) `
+        -State (New-Object Microsoft.Xrm.Sdk.OptionSetValue(1)) `
+        -Status (New-Object Microsoft.Xrm.Sdk.OptionSetValue(2))
 }
 ```
 
@@ -752,22 +709,12 @@ WHERE pa.customizationlevel = 1
 AND s.statecode = 0
 "@
 
-# Disable all steps
+# Disable all steps using specialized cmdlet
 foreach ($step in $steps) {
-    # Method 1: Using request object (verbose)
-    $request = New-Object Microsoft.Crm.Sdk.Messages.SetStateRequest
-    $request.EntityMoniker = New-Object Microsoft.Xrm.Sdk.EntityReference("sdkmessageprocessingstep", $step.sdkmessageprocessingstepid)
-    $request.State = New-Object Microsoft.Xrm.Sdk.OptionSetValue(1) # Disabled
-    $request.Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(2) # Disabled
-    
-    Invoke-DataverseRequest -Connection $conn -Request $request
-    
-    # Method 2: Using request name and parameters (simpler)
-    Invoke-DataverseRequest -Connection $conn -RequestName "SetState" -Parameters @{
-        EntityMoniker = New-Object Microsoft.Xrm.Sdk.EntityReference("sdkmessageprocessingstep", $step.sdkmessageprocessingstepid)
-        State = New-Object Microsoft.Xrm.Sdk.OptionSetValue(1)
-        Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(2)
-    }
+    Invoke-DataverseSetState -Connection $conn `
+        -EntityMoniker (New-Object Microsoft.Xrm.Sdk.EntityReference("sdkmessageprocessingstep", $step.sdkmessageprocessingstepid)) `
+        -State (New-Object Microsoft.Xrm.Sdk.OptionSetValue(1)) `
+        -Status (New-Object Microsoft.Xrm.Sdk.OptionSetValue(2))
 }
 ```
 
@@ -1026,20 +973,11 @@ WHERE operationtype = 10 AND statuscode = 10
 "@
 
 foreach($job in $waitingJobs) {
-    # Cancel the workflow
-    # Method 1: Using request object (verbose)
-    $request = New-Object Microsoft.Crm.Sdk.Messages.SetStateRequest
-    $request.EntityMoniker = New-Object Microsoft.Xrm.Sdk.EntityReference("asyncoperation", $job.asyncoperationid)
-    $request.State = New-Object Microsoft.Xrm.Sdk.OptionSetValue(3)
-    $request.Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(32)
-    Invoke-DataverseRequest -Connection $conn -Request $request
-    
-    # Method 2: Using request name and parameters (simpler)
-    Invoke-DataverseRequest -Connection $conn -RequestName "SetState" -Parameters @{
-        EntityMoniker = New-Object Microsoft.Xrm.Sdk.EntityReference("asyncoperation", $job.asyncoperationid)
-        State = New-Object Microsoft.Xrm.Sdk.OptionSetValue(3)
-        Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(32)
-    }
+    # Cancel the workflow using specialized cmdlet
+    Invoke-DataverseSetState -Connection $conn `
+        -EntityMoniker (New-Object Microsoft.Xrm.Sdk.EntityReference("asyncoperation", $job.asyncoperationid)) `
+        -State (New-Object Microsoft.Xrm.Sdk.OptionSetValue(3)) `
+        -Status (New-Object Microsoft.Xrm.Sdk.OptionSetValue(32))
     
     # Then remove
     Remove-DataverseRecord -Connection $conn -TableName asyncoperation -Id $job.asyncoperationid
@@ -1100,18 +1038,10 @@ $conn.ExecuteCrmOrganizationRequest($addMember)
 $marketingListId = "107E563B-7D21-40A5-AF6B-C8975E9C3860"
 $contactId = "C69F9B23-F3B2-403F-A1CF-C81FEF71126F"
 
-# Method 1: Using request object (verbose)
-$request = New-Object Microsoft.Crm.Sdk.Messages.AddMemberListRequest
-$request.EntityId = $contactId
-$request.ListId = $marketingListId
-
-Invoke-DataverseRequest -Connection $conn -Request $request
-
-# Method 2: Using request name and parameters (simpler)
-Invoke-DataverseRequest -Connection $conn -RequestName "AddMemberList" -Parameters @{
-    EntityId = $contactId
-    ListId = $marketingListId
-}
+# Using specialized cmdlet (simplest)
+Invoke-DataverseAddMemberList -Connection $conn `
+    -EntityId $contactId `
+    -ListId $marketingListId
 ```
 
 ### Example: Remove Members from Marketing List
@@ -1127,18 +1057,10 @@ $conn.ExecuteCrmOrganizationRequest($removeMember)
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Method 1: Using request object (verbose)
-$request = New-Object Microsoft.Crm.Sdk.Messages.RemoveMemberListRequest
-$request.EntityId = $contactId
-$request.ListId = $marketingListId
-
-Invoke-DataverseRequest -Connection $conn -Request $request
-
-# Method 2: Using request name and parameters (simpler)
-Invoke-DataverseRequest -Connection $conn -RequestName "RemoveMemberList" -Parameters @{
-    EntityId = $contactId
-    ListId = $marketingListId
-}
+# Using specialized cmdlet (simplest)
+Invoke-DataverseRemoveMemberList -Connection $conn `
+    -EntityId $contactId `
+    -ListId $marketingListId
 ```
 
 ### Example: Get All Members of a Marketing List
@@ -1287,16 +1209,8 @@ $conn.Execute($request)
 ```powershell
 $ruleId = "guid-here"
 
-# Method 1: Using request object (verbose)
-$request = New-Object Microsoft.Crm.Sdk.Messages.PublishDuplicateRuleRequest
-$request.DuplicateRuleId = $ruleId
-
-Invoke-DataverseRequest -Connection $conn -Request $request
-
-# Method 2: Using request name and parameters (simpler)
-Invoke-DataverseRequest -Connection $conn -RequestName "PublishDuplicateRule" -Parameters @{
-    DuplicateRuleId = $ruleId
-}
+# Using specialized cmdlet (simplest)
+Invoke-DataversePublishDuplicateRule -Connection $conn -DuplicateRuleId $ruleId
 ```
 
 ### Example: Unpublish Duplicate Detection Rule
@@ -1311,16 +1225,8 @@ $conn.Execute($request)
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Method 1: Using request object (verbose)
-$request = New-Object Microsoft.Crm.Sdk.Messages.UnpublishDuplicateRuleRequest
-$request.DuplicateRuleId = $ruleId
-
-Invoke-DataverseRequest -Connection $conn -Request $request
-
-# Method 2: Using request name and parameters (simpler)
-Invoke-DataverseRequest -Connection $conn -RequestName "UnpublishDuplicateRule" -Parameters @{
-    DuplicateRuleId = $ruleId
-}
+# Using specialized cmdlet (simplest)
+Invoke-DataverseUnpublishDuplicateRule -Connection $conn -DuplicateRuleId $ruleId
 ```
 
 ### Example: Run Duplicate Detection Job
@@ -1345,24 +1251,13 @@ $conn.Execute($request)
 $query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression("account")
 $query.ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet($true)
 
-# Method 1: Using request object (verbose)
-$request = New-Object Microsoft.Crm.Sdk.Messages.BulkDetectDuplicatesRequest
-$request.Query = $query
-$request.JobName = "Detect Duplicate Accounts"
-$request.SendEmailNotification = $false
-$request.ToRecipients = @()
-$request.CCRecipients = @()
-
-Invoke-DataverseRequest -Connection $conn -Request $request
-
-# Method 2: Using request name and parameters (simpler)
-Invoke-DataverseRequest -Connection $conn -RequestName "BulkDetectDuplicates" -Parameters @{
-    Query = $query
-    JobName = "Detect Duplicate Accounts"
-    SendEmailNotification = $false
-    ToRecipients = @()
-    CCRecipients = @()
-}
+# Using specialized cmdlet (simplest)
+Invoke-DataverseBulkDetectDuplicates -Connection $conn `
+    -Query $query `
+    -JobName "Detect Duplicate Accounts" `
+    -SendEmailNotification $false `
+    -ToRecipients @() `
+    -CCRecipients @()
 ```
 
 ## Business Process Flows
@@ -1447,13 +1342,8 @@ Export-CrmApplicationRibbonXml -conn $conn -RibbonFilePath $exportPath
 ```powershell
 $exportPath = "C:\RibbonExports"
 
-# Method 1: Using request object (verbose)
-$request = New-Object Microsoft.Crm.Sdk.Messages.RetrieveApplicationRibbonRequest
-
-$response = Invoke-DataverseRequest -Connection $conn -Request $request
-
-# Method 2: Using request name (simpler - no parameters needed)
-$response = Invoke-DataverseRequest -Connection $conn -RequestName "RetrieveApplicationRibbon"
+# Using specialized cmdlet (simplest)
+$response = Invoke-DataverseRetrieveApplicationRibbon -Connection $conn
 
 # Save the ribbon XML
 $ribbonXml = $response.CompressedApplicationRibbonXml
@@ -1478,18 +1368,10 @@ $entities = @("account", "contact", "opportunity", "lead")
 $exportPath = "C:\RibbonExports"
 
 foreach($entity in $entities) {
-    # Method 1: Using request object (verbose)
-    $request = New-Object Microsoft.Crm.Sdk.Messages.RetrieveEntityRibbonRequest
-    $request.EntityName = $entity
-    $request.RibbonLocationFilter = [Microsoft.Crm.Sdk.Messages.RibbonLocationFilters]::All
-    
-    $response = Invoke-DataverseRequest -Connection $conn -Request $request
-    
-    # Method 2: Using request name and parameters (simpler)
-    $response = Invoke-DataverseRequest -Connection $conn -RequestName "RetrieveEntityRibbon" -Parameters @{
-        EntityName = $entity
-        RibbonLocationFilter = [Microsoft.Crm.Sdk.Messages.RibbonLocationFilters]::All
-    }
+    # Using specialized cmdlet (simplest)
+    $response = Invoke-DataverseRetrieveEntityRibbon -Connection $conn `
+        -EntityName $entity `
+        -RibbonLocationFilter ([Microsoft.Crm.Sdk.Messages.RibbonLocationFilters]::All)
     
     # Save the ribbon XML
     $ribbonXml = $response.CompressedEntityXml
