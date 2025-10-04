@@ -36,13 +36,22 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <HelpInput Include="docs\**\*.md" />
+    <HelpInput Include="updatehelp.ps1" />
+    <HelpInput Include="buildhelp.ps1" />
+    <!-- Use the cmdlets project's real build output as the input so we only trigger when the cmdlets assembly actually changes -->
+    <HelpInput Include="..\Rnwood.Dataverse.Data.PowerShell.Cmdlets\bin\$(Configuration)\**\Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll" />
+  </ItemGroup>
+
   <Target Name="BuildCmdlets" AfterTargets="Build">
     <MSBuild Projects="../Rnwood.Dataverse.Data.PowerShell.Cmdlets/Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration)" BuildInParallel="true">
     </MSBuild>
     <ItemGroup>
       <CmdletsOutputs Include="../Rnwood.Dataverse.Data.PowerShell.Cmdlets/bin/$(Configuration)/**" />
     </ItemGroup>
-    <Copy SourceFiles="@(CmdletsOutputs)" DestinationFolder="$(OutDir)\cmdlets\%(RecursiveDir)" />
+    <!-- Avoid touching timestamps for files that are identical to avoid spuriously updating downstream inputs -->
+    <Copy SourceFiles="@(CmdletsOutputs)" DestinationFolder="$(OutDir)\cmdlets\%(RecursiveDir)" SkipUnchangedFiles="true" />
 
   </Target>
 
@@ -52,17 +61,30 @@
     <ItemGroup>
       <LoaderOutputs Include="../Rnwood.Dataverse.Data.PowerShell.Loader/bin/$(Configuration)/**" />
     </ItemGroup>
-    <Copy SourceFiles="@(LoaderOutputs)" DestinationFolder="$(OutDir)\loader\%(RecursiveDir)" />
+    <Copy SourceFiles="@(LoaderOutputs)" DestinationFolder="$(OutDir)\loader\%(RecursiveDir)" SkipUnchangedFiles="true" />
 
   </Target>
 
-  <Target Name="BuildHelp" DependsOnTargets="BuildCmdlets" AfterTargets="Build" Inputs="$(ProjectDir)/docs" Outputs="$(TargetDir)/en-GB">
+  <!-- Use a stable intermediate-output stamp so MSBuild can compare inputs/outputs reliably across builds -->
+  <Target Name="BuildHelp" DependsOnTargets="BuildCmdlets" AfterTargets="Build" Inputs="@(HelpInput)" Outputs="$(IntermediateOutputPath)help.stamp">
     <Message Text="Building help to $(TargetDir)" Importance="high" />
-    <Message Text="pwsh -file &quot;$(ProjectDir)updatehelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\\&quot;))&quot;" Importance="high" />
-    <Exec Command="pwsh -file &quot;$(ProjectDir)updatehelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\\&quot;))&quot;" />
-    <Message Text="pwsh -file &quot;$(ProjectDir)buildhelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\\&quot;))&quot;" Importance="high" />
+    <Message Text="pwsh -file &quot;$(ProjectDir)updatehelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\&quot;))&quot;" Importance="high" />
+    <Exec Command="pwsh -file &quot;$(ProjectDir)updatehelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\&quot;))&quot;" />
+    <Message Text="pwsh -file &quot;$(ProjectDir)buildhelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\&quot;))&quot;" Importance="high" />
+    <Exec Command="pwsh -file &quot;$(ProjectDir)buildhelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\&quot;))&quot;" />
+    <!-- Ensure intermediate output directory exists -->
+    <MakeDir Directories="$(IntermediateOutputPath)" Condition="!Exists('$(IntermediateOutputPath)')" />
 
-    <Exec Command="pwsh -file &quot;$(ProjectDir)buildhelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\\&quot;))&quot;" />
+    <!-- Build an item list of lines to write to the stamp file (avoid concatenating item lists with strings) -->
+    <ItemGroup>
+      <HelpStampLines Include="Help generated at $(MSBuildThisFileFullPath)" />
+      <HelpStampLines Include="@(HelpInput -> '%(FullPath)')" />
+      <HelpStampLines Include="@(MSBuildAllProjects)" />
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(IntermediateOutputPath)help.stamp"
+                      Lines="@(HelpStampLines)"
+                      Overwrite="true" />
   </Target>
-  
+
 </Project>

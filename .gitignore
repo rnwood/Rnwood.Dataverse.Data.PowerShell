@@ -252,3 +252,9 @@ paket-files/
 *.sln.iml
 /Rnwood.Dataverse.Data.PowerShell/test.ps1
 /out
+
+# Ignore generated incremental build stamp files (created in OutDir during help/updatehelp runs)
+help.stamp
+updatehelp.stamp
+# Fallback: ignore any other generated .stamp files
+*.stamp

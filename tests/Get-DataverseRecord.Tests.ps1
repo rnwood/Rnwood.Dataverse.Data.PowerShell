@@ -29,7 +29,7 @@ Describe 'Get-DataverseRecord' {
 
         #Date
         $result.birthdate | Should -BeOfType [datetime]
-        $result.birthdate | Should -be $in["birthdate"]
+        $result.birthdate.Date | Should -be $in["birthdate"]
 
         # Choice
         $result.accountrolecode | Should -BeOfType [int]
@@ -69,7 +69,7 @@ Describe 'Get-DataverseRecord' {
         $result[0].firstname | Should -Be "1"
     }
 
-    It "Given filter with explicit operator, gets all records matching using that operator" {
+    It "Given filter with explicit operator (deprecated syntax), gets all records matching using that operator" {
         
         $connection = getMockConnection
         1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
@@ -77,11 +77,27 @@ Describe 'Get-DataverseRecord' {
         $result | Should -HaveCount 2
     }
 
-    It "Given filter with explicit operator not requiring a value, gets all records matching using that operator" {
+        It "Given filter with explicit operator, gets all records matching using that operator" {
+        
+        $connection = getMockConnection
+        1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname"=@{"operator"="Like"; "value"="1%"}}
+        $result | Should -HaveCount 2
+    }
+
+    It "Given filter with explicit operator not requiring a value (deprecated syntax), gets all records matching using that operator" {
         
         $connection = getMockConnection
         1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
         $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname:Null"=""}
+        $result | Should -HaveCount 0
+    }
+
+        It "Given filter with explicit operator not requiring a value, gets all records matching using that operator" {
+        
+        $connection = getMockConnection
+        1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname"=@{"operator"="Null"}}
         $result | Should -HaveCount 0
     }
 
@@ -98,7 +114,7 @@ Describe 'Get-DataverseRecord' {
         
         $connection = getMockConnection
         1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname:In"=("1", "2")}
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname"=@{"operator"="In"; "value"=("1", "2")}}
         $result | Should -HaveCount 2
     }
 
@@ -221,7 +237,7 @@ Describe 'Get-DataverseRecord' {
         $result.lastname | Should -be "One", "One"
     }
 
-    It "Given exclude filter values, results are filtered using not qquals" {
+    It "Given exclude filter values with no operator, results are excluded using equals" {
         
         $connection = getMockConnection
         @{"firstname" = "Rob"; "lastname" = "One" },  
@@ -230,6 +246,37 @@ Describe 'Get-DataverseRecord' {
         Set-DataverseRecord -connection $connection -TableName contact
 
         $result = Get-DataverseRecord -Connection $connection -TableName contact -ExcludeFilterValues @{"firstname" = "Rob" }
+        
+        $result | SHould -HaveCount 1
+        $result.firstname | Should -be "Joe"
+    }
+
+    It "Given multiple exclude filter values with no operator, results are excluded using equals" {
+        
+        $connection = getMockConnection
+        @{"firstname" = "Rob"; "lastname" = "One" },  
+        @{"firstname" = "Joe"; "lastname" = "Two" },
+        @{"firstname" = "Rob"; "lastname" = "Three" } | 
+        Set-DataverseRecord -connection $connection -TableName contact
+
+        $result = Get-DataverseRecord -Connection $connection -TableName contact `
+            -ExcludeFilterValues `
+                @{"lastname" = "One" },
+                @{"lastname" = "Three" }
+
+        $result | Should -HaveCount 1
+        $result.firstname | Should -be "Joe"
+    }
+
+    It "Given exclude filter values with an operator, results are filtered using that operator" {
+        
+        $connection = getMockConnection
+        @{"firstname" = "Rob"; "lastname" = "One" },  
+        @{"firstname" = "Joe"; "lastname" = "One" },
+        @{"firstname" = "Rob"; "lastname" = "Two" } | 
+        Set-DataverseRecord -connection $connection -TableName contact
+
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -ExcludeFilterValues @{"firstname" = @{operator="Equal"; value="Rob"} }
         
         $result | SHould -HaveCount 1
         $result.firstname | Should -be "Joe"
@@ -264,5 +311,79 @@ Describe 'Get-DataverseRecord' {
         $result[1].Id | Should -be $ids[1]
 
 
+    }
+
+    It "Given IncludeFilter with multiple hashtables, results are included using OR semantics" {
+        $connection = getMockConnection
+
+        @{"firstname" = "Rob"; "lastname" = "One" },
+        @{"firstname" = "Joe"; "lastname" = "One" },
+        @{"firstname" = "Rob"; "lastname" = "Two" } |
+            Set-DataverseRecord -Connection $connection -TableName contact
+
+        # IncludeFilter: lastname = One OR firstname = Joe -> matches Rob One and Joe One
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -IncludeFilter `
+            @{"lastname" = "One"}, `
+            @{"firstname" = "Joe"}
+
+        $result | Should -HaveCount 2
+        $result.firstname | Should -Be "Rob", "Joe"
+    }
+
+    It "Given ExcludeFilter with multiple hashtables, results are excluded using AND semantics" {
+        $connection = getMockConnection
+
+        @{"firstname" = "Rob"; "lastname" = "One" },
+        @{"firstname" = "Joe"; "lastname" = "One" },
+        @{"firstname" = "Rob"; "lastname" = "Two" },
+        @{"firstname" = "Mary"; "lastname" = "Two" } |
+            Set-DataverseRecord -Connection $connection -TableName contact
+
+        $result = Get-DataverseRecord -ColumnNames firstname, lastname -Connection $connection -TableName contact -ExcludeFilter `
+            @{"lastname" = "One"}, `
+            @{"firstname" = "Rob"}
+
+        $result | Should -HaveCount 3
+        $result[0].firstname | Should -Be "Joe"
+        $result[1].firstname | Should -Be "Rob"
+        $result[1].lastname | Should -Be "Two"
+        $result[2].firstname | Should -Be "Mary"
+    }
+
+     It "Given ExcludeFilter with multiple hashtables and the ExcludeFilterOr switch, results are excluded using OR semantics" {
+        $connection = getMockConnection
+
+        @{"firstname" = "Rob"; "lastname" = "One" },
+        @{"firstname" = "Joe"; "lastname" = "One" },
+        @{"firstname" = "Rob"; "lastname" = "Two" },
+        @{"firstname" = "Mary"; "lastname" = "Two" } |
+            Set-DataverseRecord -Connection $connection -TableName contact
+
+        # ExcludeFilter: lastname = One OR firstname = Rob -> excludes Rob One, Joe One, Rob Two -> leaves Mary Two
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -ExcludeFilter `
+            @{"lastname" = "One"}, `
+            @{"firstname" = "Rob"} -ExcludeFilterOr
+
+        $result | Should -HaveCount 1
+        $result[0].firstname | Should -Be "Mary"
+    }
+
+    It "Given IncludeFilter and ExcludeFilter together, include is applied then exclusions are removed" {
+        $connection = getMockConnection
+
+        @{"firstname" = "Rob"; "lastname" = "One" },
+        @{"firstname" = "Joe"; "lastname" = "One" },
+        @{"firstname" = "Rob"; "lastname" = "Two" },
+        @{"firstname" = "Mary"; "lastname" = "Two" } |
+            Set-DataverseRecord -Connection $connection -TableName contact
+
+        # Include: lastname = One OR firstname = Rob -> Rob One, Joe One, Rob Two
+        # Exclude: firstname = Rob -> removes Rob One and Rob Two -> leaves Joe One
+        $result = Get-DataverseRecord -Connection $connection -TableName contact `
+            -IncludeFilter @{"lastname" = "One"}, @{"firstname" = "Rob"} `
+            -ExcludeFilter @{"firstname" = "Rob"}
+
+        $result | Should -HaveCount 1
+        $result[0].firstname | Should -Be "Joe"
     }
 }

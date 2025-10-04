@@ -152,15 +152,15 @@ Accept wildcard characters: False
 ```
 
 ### -ExcludeFilterValues
-List of hashsets of fields names,values to filter records by using an NOTEQUALS condition (or ISNOTNULL if null value).
-If more than one hashset is provided then they are logically combined using an AND condition by default.
+List of hashtables of field names/values to exclude. Defaults to a NOT EQUAL condition for values (or ISNOTNULL when $null is supplied).
+Multiple hashtables are combined using AND by default; use -ExcludeFilterOr to combine them using OR instead.
 e.g.
-@{firstname="bob", age=25}, @{firstname="sue"} will find records where (firstname\<\>bob AND age\<\>25) OR (firstname\<\>sue)
+@{firstname="bob", age=25}, @{firstname="sue"} will find records where (firstname\<\>bob AND age\<\>25) AND (firstname\<\>sue)
 
 ```yaml
 Type: Hashtable[]
 Parameter Sets: Simple
-Aliases:
+Aliases: ExcludeFilter
 
 Required: False
 Position: Named
@@ -213,7 +213,7 @@ The type of value must use those expected by the SDK for the column type and ope
 ```yaml
 Type: Hashtable[]
 Parameter Sets: Simple
-Aliases:
+Aliases: IncludeFilter
 
 Required: False
 Position: Named
