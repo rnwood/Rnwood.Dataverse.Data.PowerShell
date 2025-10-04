@@ -663,12 +663,14 @@ AND u.systemuserid NOT IN (
 )
 "@
 
-# Disable each user using specialized cmdlet
+# Disable each user using SetState request
 foreach ($user in $nonAdminUsers) {
-    Invoke-DataverseSetState -Connection $conn `
-        -EntityMoniker (New-Object Microsoft.Xrm.Sdk.EntityReference("systemuser", $user.systemuserid)) `
-        -State (New-Object Microsoft.Xrm.Sdk.OptionSetValue(1)) `
-        -Status (New-Object Microsoft.Xrm.Sdk.OptionSetValue(2))
+    $request = New-Object Microsoft.Crm.Sdk.Messages.SetStateRequest
+    $request.EntityMoniker = New-Object Microsoft.Xrm.Sdk.EntityReference("systemuser", $user.systemuserid)
+    $request.State = New-Object Microsoft.Xrm.Sdk.OptionSetValue(1) # Disabled
+    $request.Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(2) # Disabled
+    
+    Invoke-DataverseRequest -Connection $conn -Request $request
 }
 ```
 
@@ -709,12 +711,14 @@ WHERE pa.customizationlevel = 1
 AND s.statecode = 0
 "@
 
-# Disable all steps using specialized cmdlet
+# Disable all steps using SetState request
 foreach ($step in $steps) {
-    Invoke-DataverseSetState -Connection $conn `
-        -EntityMoniker (New-Object Microsoft.Xrm.Sdk.EntityReference("sdkmessageprocessingstep", $step.sdkmessageprocessingstepid)) `
-        -State (New-Object Microsoft.Xrm.Sdk.OptionSetValue(1)) `
-        -Status (New-Object Microsoft.Xrm.Sdk.OptionSetValue(2))
+    $request = New-Object Microsoft.Crm.Sdk.Messages.SetStateRequest
+    $request.EntityMoniker = New-Object Microsoft.Xrm.Sdk.EntityReference("sdkmessageprocessingstep", $step.sdkmessageprocessingstepid)
+    $request.State = New-Object Microsoft.Xrm.Sdk.OptionSetValue(1) # Disabled
+    $request.Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(2) # Disabled
+    
+    Invoke-DataverseRequest -Connection $conn -Request $request
 }
 ```
 
@@ -973,11 +977,13 @@ WHERE operationtype = 10 AND statuscode = 10
 "@
 
 foreach($job in $waitingJobs) {
-    # Cancel the workflow using specialized cmdlet
-    Invoke-DataverseSetState -Connection $conn `
-        -EntityMoniker (New-Object Microsoft.Xrm.Sdk.EntityReference("asyncoperation", $job.asyncoperationid)) `
-        -State (New-Object Microsoft.Xrm.Sdk.OptionSetValue(3)) `
-        -Status (New-Object Microsoft.Xrm.Sdk.OptionSetValue(32))
+    # Cancel the workflow using SetState request
+    $request = New-Object Microsoft.Crm.Sdk.Messages.SetStateRequest
+    $request.EntityMoniker = New-Object Microsoft.Xrm.Sdk.EntityReference("asyncoperation", $job.asyncoperationid)
+    $request.State = New-Object Microsoft.Xrm.Sdk.OptionSetValue(3) # Canceled
+    $request.Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(32) # Canceled
+    
+    Invoke-DataverseRequest -Connection $conn -Request $request
     
     # Then remove
     Remove-DataverseRecord -Connection $conn -TableName asyncoperation -Id $job.asyncoperationid
