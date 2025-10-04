@@ -100,11 +100,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             set;
         }
         /// <summary>
-        /// List of hashtables of field names/values to exclude. Defaults to a NOT EQUAL condition for values (or ISNOTNULL when $null is supplied).
-        /// Multiple hashtables are combined using OR by default; use -ExcludeFilterOr to combine them using AND instead.
-        /// For example: @{firstname="bob", age=25}, @{firstname="sue"} matches records where (firstname&lt;&gt;bob AND age&lt;&gt;25) OR (firstname&lt;&gt;sue).
+    /// List of hashtables of field names/values to exclude. Defaults to a NOT EQUAL condition for values (or IS NOT NULL when $null is supplied).
+    /// Multiple hashtables are combined using AND by default; use -ExcludeFilterOr to combine them using OR instead.
+    /// For example: @{firstname="bob", age=25}, @{lastname="smith"}:
+    /// - Default (AND): excludes records matching both hashtables (firstname='bob' AND age=25) AND (lastname='smith').
+    /// - With -ExcludeFilterOr (OR): excludes records matching either hashtable (firstname='bob' AND age=25) OR (lastname='smith').
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of hashtables of field names/values to exclude. Defaults to NOT EQUAL for values (or ISNOTNULL for $null). Multiple hashtables are combined using OR by default; use -ExcludeFilterOr to combine them using AND instead. e.g. @{firstname=\"bob\", age=25}, @{firstname=\"sue\"}")]
+    [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of hashtables of field names/values to exclude. Defaults to a NOT EQUAL condition for values (or IS NOT NULL when $null is supplied). Multiple hashtables are combined using AND by default; use -ExcludeFilterOr to combine them using OR instead. e.g. @{firstname=\"bob\", age=25}, @{lastname=\"smith\"}")]
         [Alias("ExcludeFilter")]
         [ArgumentCompleter(typeof(FilterValuesArgumentCompleter))]
         public Hashtable[] ExcludeFilterValues
@@ -112,10 +114,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             get;
             set;
         }
+
         /// <summary>
-        /// If specified the exclude filters will be logically combined using OR instead of the default of AND
+        /// When specified, multiple exclude hashtables are combined using OR instead of the default AND.
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "If specified the exclude filters will be logically combined using OR instead of the default of AND")]
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "If specified multiple hashtables exclude filters will be logically combined using OR instead of the default of AND")]
         public SwitchParameter ExcludeFilterOr
         {
             get;
@@ -340,10 +343,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (ExcludeFilterValues != null)
             {
-                FilterExpression filterExpression = query.Criteria.AddFilter(LogicalOperator.Or);
-
-                FilterExpression excludesFilterExpression = query.Criteria.AddFilter(ExcludeFilterOr.IsPresent ? LogicalOperator.Or : LogicalOperator.And);
-                ProcessHashFilterValues(excludesFilterExpression, ExcludeFilterValues, true);
+                    // Build the inverted exclude filters. Top-level combination across the exclude
+                    // hashtables is AND by default (a record is excluded only if it matches all
+                    // provided hashtables). When -ExcludeFilterOr is specified the top-level
+                    // combination becomes OR (a record is excluded if it matches any provided hashtable).
+                    FilterExpression excludesFilterExpression = query.Criteria.AddFilter(ExcludeFilterOr.IsPresent ? LogicalOperator.Or : LogicalOperator.And);
+                    ProcessHashFilterValues(excludesFilterExpression, ExcludeFilterValues, true);
             }
 
             if (Criteria != null)
@@ -370,7 +375,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             foreach (Hashtable filterValues in filterValuesArray)
             {
-                FilterExpression includeFilterExpression = includesFilterExpression.AddFilter(isExcludeFilter ? LogicalOperator.Or : LogicalOperator.And);
+                // Each hashtable's entries should always be combined with AND
+                // (e.g. @{a=1; b=2} -> a=1 AND b=2). The outer filter expression
+                // controls whether the inverted hashtable-filters are combined
+                // using AND or OR when used as an exclude filter.
+                FilterExpression includeFilterExpression = includesFilterExpression.AddFilter(LogicalOperator.And);
                 foreach (DictionaryEntry filterValue in filterValues)
                 {
                     ConditionOperator op = filterValue.Value == null ? ConditionOperator.Null : ConditionOperator.Equal;
@@ -402,7 +411,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
 
                         
-                        var opObj = ht["Operator"];
+                        var opObj = ht["operator"];
                               try
                         {
                             op = (ConditionOperator)Enum.Parse(typeof(ConditionOperator), opObj?.ToString() ?? "");
@@ -419,7 +428,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 throw new InvalidDataException($"The value for key '{filterValue.Key}' is invalid. When using a hashtable value the key 'value' must be specified. e.g. @{filterValue.Key}=@{{value=25; operator='GreaterThan'}}");
                             }
 
-                            value = ht["Value"];
+                            value = ht["value"];
                         }
 
                     }

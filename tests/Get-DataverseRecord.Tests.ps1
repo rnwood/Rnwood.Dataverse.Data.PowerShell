@@ -251,7 +251,7 @@ Describe 'Get-DataverseRecord' {
         $result.firstname | Should -be "Joe"
     }
 
-    It "Given multiple exclude filter values with no operator, results are excluded using equals" {
+    It "Given multiple exclude filter values with no operator, results are excluded using equals using OR semantics" {
         
         $connection = getMockConnection
         @{"firstname" = "Rob"; "lastname" = "One" },  
@@ -330,7 +330,7 @@ Describe 'Get-DataverseRecord' {
         $result.firstname | Should -Be "Rob", "Joe"
     }
 
-    It "Given ExcludeFilter with multiple hashtables, results are excluded using AND semantics" {
+    It "Given ExcludeFilter with multiple hashtables and the ExcludeFilterOr, results are excluded using OR semantics" {
         $connection = getMockConnection
 
         @{"firstname" = "Rob"; "lastname" = "One" },
@@ -339,9 +339,9 @@ Describe 'Get-DataverseRecord' {
         @{"firstname" = "Mary"; "lastname" = "Two" } |
             Set-DataverseRecord -Connection $connection -TableName contact
 
-        $result = Get-DataverseRecord -ColumnNames firstname, lastname -Connection $connection -TableName contact -ExcludeFilter `
+        $result = Get-DataverseRecord -Columns firstname, lastname -Connection $connection -TableName contact -ExcludeFilter `
             @{"lastname" = "One"}, `
-            @{"firstname" = "Rob"}
+            @{"firstname" = "Rob"} -ExcludeFilterOr
 
         $result | Should -HaveCount 3
         $result[0].firstname | Should -Be "Joe"
@@ -350,7 +350,7 @@ Describe 'Get-DataverseRecord' {
         $result[2].firstname | Should -Be "Mary"
     }
 
-     It "Given ExcludeFilter with multiple hashtables and the ExcludeFilterOr switch, results are excluded using OR semantics" {
+     It "Given ExcludeFilter with multiple hashtables  switch, results are excluded using AND semantics" {
         $connection = getMockConnection
 
         @{"firstname" = "Rob"; "lastname" = "One" },
@@ -362,7 +362,7 @@ Describe 'Get-DataverseRecord' {
         # ExcludeFilter: lastname = One OR firstname = Rob -> excludes Rob One, Joe One, Rob Two -> leaves Mary Two
         $result = Get-DataverseRecord -Connection $connection -TableName contact -ExcludeFilter `
             @{"lastname" = "One"}, `
-            @{"firstname" = "Rob"} -ExcludeFilterOr
+            @{"firstname" = "Rob"} 
 
         $result | Should -HaveCount 1
         $result[0].firstname | Should -Be "Mary"

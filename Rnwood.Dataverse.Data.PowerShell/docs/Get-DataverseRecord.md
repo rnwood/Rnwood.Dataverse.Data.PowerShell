@@ -33,8 +33,7 @@ Get-DataverseRecord -Connection <ServiceClient> [-VerboseRecordCount] [-RecordCo
 
 This cmdlet retrieves records from Dataverse tables using either QueryExpression (via simple parameters) or FetchXML.
 
-The cmdlet supports:
-- Filtering by ID, name, or custom filter expressions
+- Filtering by ID, name, complex hashtable-based filters or custom SDK FilterExpression
 - Column selection (including excluding specific columns)
 - Ordering and pagination
 - Lookup value handling (can return name or ID)
@@ -58,6 +57,13 @@ PS C:\> Get-DataverseRecord -connection $connection -tablename contact -columns 
 ```
 
 Get all contacts where firstname starts with 'Rob' and return the firstname column only.
+
+### Example 3 (nested hashtable operator)
+```powershell
+PS C:\> Get-DataverseRecord -connection $connection -tablename contact -filtervalues @(@{ age = @{ value = 25; operator = 'GreaterThan' } })
+```
+
+Find contacts with age greater than 25 by using a nested hashtable to specify operator and value.
 
 ## PARAMETERS
 
@@ -152,10 +158,17 @@ Accept wildcard characters: False
 ```
 
 ### -ExcludeFilterValues
-List of hashtables of field names/values to exclude. Defaults to a NOT EQUAL condition for values (or ISNOTNULL when $null is supplied).
-Multiple hashtables are combined using AND by default; use -ExcludeFilterOr to combine them using OR instead.
-e.g.
-@{firstname="bob", age=25}, @{firstname="sue"} will find records where (firstname\<\>bob AND age\<\>25) AND (firstname\<\>sue)
+List of hashtables of field names/values to exclude. Values default to `Equal` (or `Null` when `$null` is supplied).
+Each hashtable's entries are combined with AND to form a sub-filter.
+Multiple hashtables are combined using `AND` by default (a record is excluded only if it matches all sub-filters); use `-ExcludeFilterOr` to combine them using `OR` instead (a record is excluded if it matches any sub-filter).
+
+Examples:
+- Default (AND):
+	`-ExcludeFilterValues @{ firstname = 'bob'; age = 25 }, @{ lastname = 'smith' }`
+	Excludes only records matching `(firstname = 'bob' AND age = 25) AND (lastname = 'smith')`.
+- With `-ExcludeFilterOr` (OR):
+	`-ExcludeFilterValues @{ firstname = 'bob'; age = 25 }, @{ lastname = 'smith' } -ExcludeFilterOr`
+	Excludes records matching `(firstname = 'bob' AND age = 25) OR (lastname = 'smith')`.
 
 ```yaml
 Type: Hashtable[]
@@ -200,15 +213,20 @@ Accept wildcard characters: False
 ```
 
 ### -FilterValues
-List of hashsets of @{"fieldname"="value"} or @{"fieldname:operator"="value"} to filter records by. If operator is not provided, uses an EQUALS condition (or ISNULL if null value).
-If more than one hashset is provided then they are logically combined using an OR condition.
-e.g.
-@{firstname="bob", age=25}, @{firstname="sue"} will find records where (firstname=bob AND age=25) OR (firstname=sue)
+One or more hashtables that define filters to apply to the query. Each hashtable's entries are combined with AND; multiple hashtables are combined with OR.
 
-Valid operators:
-Equal, NotEqual, GreaterThan, LessThan, GreaterEqual, LessEqual, Like, NotLike, In, NotIn, Between, NotBetween, Null, NotNull, Yesterday, Today, Tomorrow, Last7Days, Next7Days, LastWeek, ThisWeek, NextWeek, LastMonth, ThisMonth, NextMonth, On, OnOrBefore, OnOrAfter, LastYear, ThisYear, NextYear, LastXHours, NextXHours, LastXDays, NextXDays, LastXWeeks, NextXWeeks, LastXMonths, NextXMonths, LastXYears, NextXYears, EqualUserId, NotEqualUserId, EqualBusinessId, NotEqualBusinessId, ChildOf, Mask, NotMask, MasksSelect, Contains, DoesNotContain, EqualUserLanguage, NotOn, OlderThanXMonths, BeginsWith, DoesNotBeginWith, EndsWith, DoesNotEndWith, ThisFiscalYear, ThisFiscalPeriod, NextFiscalYear, NextFiscalPeriod, LastFiscalYear, LastFiscalPeriod, LastXFiscalYears, LastXFiscalPeriods, NextXFiscalYears, NextXFiscalPeriods, InFiscalYear, InFiscalPeriod, InFiscalPeriodAndYear, InOrBeforeFiscalPeriodAndYear, InOrAfterFiscalPeriodAndYear, EqualUserTeams, EqualUserOrUserTeams, Under, NotUnder, UnderOrEqual, Above, AboveOrEqual, EqualUserOrUserHierarchy, EqualUserOrUserHierarchyAndTeams, OlderThanXYears, OlderThanXWeeks, OlderThanXDays, OlderThanXHours, OlderThanXMinutes, ContainValues, DoesNotContainValues, EqualRoleBusinessId
+Filter keys may be `column` or `column:Operator` where `Operator` is a name from the `ConditionOperator` enum (for example `GreaterThan`, `NotEqual`).
 
-The type of value must use those expected by the SDK for the column type and operator.
+Values may be:
+- A literal (e.g. `"bob"`)
+- An array (treated as `IN`)
+- `$null` (treated as `IS NULL`)
+- A nested hashtable in the form `@{ value = <value>; operator = '<OperatorName>' }` to explicitly specify operator and value (for example `@{ age = @{ value = 25; operator = 'GreaterThan' } }`).
+
+When an operator is omitted a default `Equal` (or `Null`/`NotNull` for `$null`) is used. Valid operators are those exposed by the SDK's `ConditionOperator` enum; for full list see the SDK docs. The provided value types must match the column type expected by Dataverse for the chosen operator.
+
+Example:
+`-FilterValues @(@{firstname = 'bob'; age = 25}, @{firstname = 'sue'})` => `(firstname = 'bob' AND age = 25) OR (firstname = 'sue')`.
 
 ```yaml
 Type: Hashtable[]
@@ -238,7 +256,7 @@ Accept wildcard characters: False
 ```
 
 ### -IncludeSystemColumns
-Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.
+Include system columns in output. By default system columns are excluded; use this switch to include them. Ignored if `-Columns` parameter is used.
 
 ```yaml
 Type: SwitchParameter
@@ -253,7 +271,7 @@ Accept wildcard characters: False
 ```
 
 ### -Links
-Link entities to apply to query. Specified using the Dataverse SDK type `LinkEntity`
+Link entities to apply to query. Accepts `DataverseLinkEntity` objects (a lightweight wrapper around the SDK `LinkEntity` that allows easier pipeline usage and serialization). `DataverseLinkEntity` supports implicit conversion from `LinkEntity`.
 
 ```yaml
 Type: DataverseLinkEntity[]
