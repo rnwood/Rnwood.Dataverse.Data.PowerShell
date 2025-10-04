@@ -35,7 +35,7 @@ PS C:\> Invoke-DataverseDistributeCampaignActivity -Connection <ServiceClient> -
 ## PARAMETERS
 
 ### -Activity
-Gets or sets the activity to be distributed. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
+Gets or sets the activity to be distributed. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
 
 ```yaml
 Type: PSObject
@@ -50,7 +50,7 @@ Accept wildcard characters: False
 ```
 
 ### -ActivityIgnoreProperties
-Gets or sets the activity to be distributed. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Properties to ignore when converting Activity PSObject to Entity.
+Gets or sets the activity to be distributed. Required. Properties to ignore when converting Activity PSObject to Entity.
 
 ```yaml
 Type: String[]
@@ -65,7 +65,7 @@ Accept wildcard characters: False
 ```
 
 ### -ActivityLookupColumns
-Gets or sets the activity to be distributed. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Hashtable specifying lookup columns for entity reference conversions in Activity.
+Gets or sets the activity to be distributed. Required. Hashtable specifying lookup columns for entity reference conversions in Activity.
 
 ```yaml
 Type: Hashtable
@@ -80,7 +80,7 @@ Accept wildcard characters: False
 ```
 
 ### -ActivityTableName
-Gets or sets the activity to be distributed. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. The logical name of the table/entity type for the Activity parameter.
+Gets or sets the activity to be distributed. Required. The logical name of the table/entity type for the Activity parameter.
 
 ```yaml
 Type: String
@@ -95,27 +95,12 @@ Accept wildcard characters: False
 ```
 
 ### -CampaignActivityId
-Gets or sets the ID of the campaign activity. Required.
+Gets or sets the ID of the campaign activity for which the activity is distributed. Required.
 
 ```yaml
 Type: Guid
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
 
 Required: False
 Position: Named
@@ -140,7 +125,7 @@ Accept wildcard characters: False
 ```
 
 ### -Owner
-Gets or sets the owner for the activity. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the owner for the newly created activity. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject
@@ -155,7 +140,7 @@ Accept wildcard characters: False
 ```
 
 ### -OwnershipOptions
-Gets or sets the propagation ownership options. Required.
+Gets or sets the ownership options for the activity. Required.
 
 ```yaml
 Type: PropagationOwnershipOptions
@@ -171,7 +156,7 @@ Accept wildcard characters: False
 ```
 
 ### -PostWorkflowEvent
-Gets or sets a value that indicates whether an asynchronous job is used to distribute an activity, such as an email, fax, or letter, to the members of a list. Required.
+Gets or sets a value that indicates whether an asynchronous job is used to distribute activities, such as an email, fax, or letter, to the members of a list. Required.
 
 ```yaml
 Type: Boolean
@@ -201,7 +186,7 @@ Accept wildcard characters: False
 ```
 
 ### -QueueId
-Gets or sets the ID of the queue. Required
+Gets or sets the ID of the queue to which the created activity is added. Optional.
 
 ```yaml
 Type: Guid
@@ -231,27 +216,12 @@ Accept wildcard characters: False
 ```
 
 ### -TemplateId
-Sets the ID of the template (email template) that is used for the email notification.
+Gets or sets the ID of the email template. Required.
 
 ```yaml
 Type: Guid
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
 
 Required: False
 Position: Named
@@ -271,6 +241,36 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

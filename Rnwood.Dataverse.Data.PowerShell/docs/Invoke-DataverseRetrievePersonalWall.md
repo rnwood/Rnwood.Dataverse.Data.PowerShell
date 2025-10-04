@@ -48,21 +48,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -79,7 +64,7 @@ Accept wildcard characters: False
 ```
 
 ### -EndDate
-Gets or sets the end date and time. Required.
+Gets or sets the end date and time of the posts that you want to retrieve. Optional.
 
 ```yaml
 Type: DateTime
@@ -109,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -PageNumber
-Gets or sets the page number in the source file. Required.
+Gets or sets, for retrieval, a specific page of posts that is designated by its page number. Required.
 
 ```yaml
 Type: Int32
@@ -154,7 +139,7 @@ Accept wildcard characters: False
 ```
 
 ### -Source
-For internal use only. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets a value that specifies the source of the post. Optional.
 
 ```yaml
 Type: OptionSetValue
@@ -169,7 +154,7 @@ Accept wildcard characters: False
 ```
 
 ### -StartDate
-Gets or sets the start date of the range in UTC.
+Gets or sets the start date and time of the posts that you want to retrieve. Optional.
 
 ```yaml
 Type: DateTime
@@ -198,21 +183,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -ProgressAction
 {{ Fill ProgressAction Description }}
 
@@ -224,6 +194,36 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

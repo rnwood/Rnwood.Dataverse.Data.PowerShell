@@ -32,21 +32,6 @@ PS C:\> Invoke-DataverseQuerySchedule -Connection <ServiceClient> -ResourceId <G
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -63,7 +48,7 @@ Accept wildcard characters: False
 ```
 
 ### -End
-Gets or sets the end of the time period to expand.
+Gets or sets the end of the time slot.
 
 ```yaml
 Type: DateTime
@@ -93,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -Start
-Gets or sets the start of the period to expand.
+Gets or sets the start of the time slot.
 
 ```yaml
 Type: DateTime
@@ -108,28 +93,13 @@ Accept wildcard characters: False
 ```
 
 ### -TimeCodes
-Gets or sets the time codes to look for: Available, Busy, Unavailable, or Filter, which correspond to the resource IDs. Required.
+Gets or sets the time codes to look for: Available, Busy, Unavailable, or Filter.
 
 ```yaml
 Type: TimeCode[]
 Parameter Sets: (All)
 Aliases:
 Accepted values: Available, Busy, Unavailable, Filter
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
 
 Required: False
 Position: Named
@@ -149,6 +119,36 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

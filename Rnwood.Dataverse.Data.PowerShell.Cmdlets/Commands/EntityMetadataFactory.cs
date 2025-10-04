@@ -64,5 +64,37 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 			return result;
 		}
+
+		private List<EntityMetadata> _allEntityMetadata;
+
+		/// <summary>
+		/// Retrieves (and caches) all EntityMetadata objects for the organization.
+		/// </summary>
+		/// <returns>Collection of EntityMetadata objects.</returns>
+		public IEnumerable<EntityMetadata> GetAllEntityMetadata()
+		{
+			if (_allEntityMetadata == null)
+			{
+				var request = new RetrieveAllEntitiesRequest()
+				{
+					EntityFilters = EntityFilters.Entity,
+					RetrieveAsIfPublished = false
+				};
+
+				var response = (RetrieveAllEntitiesResponse)this.Connection.Execute(request);
+				_allEntityMetadata = response.EntityMetadata.Where(em => !string.IsNullOrWhiteSpace(em.LogicalName)).OrderBy(em => em.LogicalName).ToList();
+			}
+
+			return _allEntityMetadata;
+		}
+
+		/// <summary>
+		/// Retrieves (and caches) the logical names of all entities in the organization.
+		/// </summary>
+		/// <returns>Collection of logical entity names.</returns>
+		public IEnumerable<string> GetAllEntityLogicalNames()
+		{
+			return GetAllEntityMetadata().Select(em => em.LogicalName);
+		}
 	}
 }

@@ -270,7 +270,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.String
 ### System.Management.Automation.PSObject
 ## OUTPUTS
 
@@ -281,3 +280,4 @@ A special thanks to Mark Carrington for his amazing open-source project that has
 ## RELATED LINKS
 
 [https://github.com/MarkMpn/Sql4Cds](https://github.com/MarkMpn/Sql4Cds)
+

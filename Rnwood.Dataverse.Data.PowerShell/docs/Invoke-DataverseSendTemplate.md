@@ -33,21 +33,6 @@ PS C:\> Invoke-DataverseSendTemplate -Connection <ServiceClient> -TemplateId <Gu
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -109,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -RegardingId
-Gets or sets the ID of the record with which the email messages are associated.
+Gets or sets the ID of a record that the email is regarding. Required.
 
 ```yaml
 Type: Guid
@@ -124,7 +109,7 @@ Accept wildcard characters: False
 ```
 
 ### -RegardingType
-Gets or sets the type of the record with which the email messages are associated.
+Gets or sets the type of entity that is represented by the regarding ID. Required.
 
 ```yaml
 Type: String
@@ -139,7 +124,7 @@ Accept wildcard characters: False
 ```
 
 ### -Sender
-Gets or sets the sender of the email messages. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the sender of the email. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject
@@ -154,27 +139,12 @@ Accept wildcard characters: False
 ```
 
 ### -TemplateId
-Sets the ID of the template (email template) that is used for the email notification.
+Gets or sets the ID of the template to be used for the email. Required.
 
 ```yaml
 Type: Guid
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
 
 Required: False
 Position: Named
@@ -194,6 +164,36 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

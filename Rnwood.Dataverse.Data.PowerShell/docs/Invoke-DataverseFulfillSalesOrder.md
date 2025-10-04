@@ -33,21 +33,6 @@ PS C:\> Invoke-DataverseFulfillSalesOrder -Connection <ServiceClient> -OrderClos
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -64,7 +49,7 @@ Accept wildcard characters: False
 ```
 
 ### -OrderClose
-Gets or sets the close activity that is associated with the sales order (order) that you want to cancel. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
+Gets or sets the order close activity associated with the sales order (order) to be fulfilled. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
 
 ```yaml
 Type: PSObject
@@ -79,7 +64,7 @@ Accept wildcard characters: False
 ```
 
 ### -OrderCloseIgnoreProperties
-Gets or sets the close activity that is associated with the sales order (order) that you want to cancel. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Properties to ignore when converting OrderClose PSObject to Entity.
+Gets or sets the order close activity associated with the sales order (order) to be fulfilled. Required. Properties to ignore when converting OrderClose PSObject to Entity.
 
 ```yaml
 Type: String[]
@@ -94,7 +79,7 @@ Accept wildcard characters: False
 ```
 
 ### -OrderCloseLookupColumns
-Gets or sets the close activity that is associated with the sales order (order) that you want to cancel. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Hashtable specifying lookup columns for entity reference conversions in OrderClose.
+Gets or sets the order close activity associated with the sales order (order) to be fulfilled. Required. Hashtable specifying lookup columns for entity reference conversions in OrderClose.
 
 ```yaml
 Type: Hashtable
@@ -109,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -OrderCloseTableName
-Gets or sets the close activity that is associated with the sales order (order) that you want to cancel. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. The logical name of the table/entity type for the OrderClose parameter.
+Gets or sets the order close activity associated with the sales order (order) to be fulfilled. Required. The logical name of the table/entity type for the OrderClose parameter.
 
 ```yaml
 Type: String
@@ -124,27 +109,12 @@ Accept wildcard characters: False
 ```
 
 ### -Status
-Gets or sets the status of the contract. Required.
+Gets or sets a status of the sales order (order). Required.
 
 ```yaml
 Type: OptionSetValue
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
 
 Required: False
 Position: Named
@@ -164,6 +134,36 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

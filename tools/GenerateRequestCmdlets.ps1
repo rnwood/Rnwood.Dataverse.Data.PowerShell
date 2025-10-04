@@ -579,10 +579,16 @@ foreach ($requestType in $requestTypes) {
                 $lookupColsXml = $lookupColsHelp -replace '&','&amp;' -replace '<','&lt;' -replace '>','&gt;'
 
                 $parameterDeclarations += "        /// <summary>`n        /// $tableNameXml`n        /// </summary>"
-                $parameterDeclarations += "        [$tableNameAttribute]`n        public string ${paramName}TableName { get; set; }"
+                $parameterDeclarations += "        [$tableNameAttribute]`n        [ArgumentCompleter(typeof(TableNameArgumentCompleter))]`n        public string ${paramName}TableName { get; set; }"
                 $parameterDeclarations += "        /// <summary>`n        /// $ignorePropsXml`n        /// </summary>"
-                $parameterDeclarations += "        [$ignorePropsAttribute]`n        public string[] ${paramName}IgnoreProperties { get; set; }"
+                # Attach column-name completion for ignore-properties helper so users get column name suggestions
+                $parameterDeclarations += "        [$ignorePropsAttribute]`n        [ArgumentCompleter(typeof(Rnwood.Dataverse.Data.PowerShell.Commands.PSObjectPropertyNameArgumentCompleter))]`n        public string[] ${paramName}IgnoreProperties { get; set; }"
                 $parameterDeclarations += "        /// <summary>`n        /// $lookupColsXml`n        /// </summary>"
+                # Do NOT attach ColumnNamesArgumentCompleter to Hashtable parameters.
+                # Hashtable values are complex key/value mappings and PowerShell completion for
+                # ColumnNamesArgumentCompleter is not appropriate when the parameter is a Hashtable
+                # (completion would run for the whole hashtable value which is confusing).
+                # Keep the LookupColumns helper parameter but do not add the completer attribute.
                 $parameterDeclarations += "        [$lookupColsAttribute]`n        public Hashtable ${paramName}LookupColumns { get; set; }"
                 # Add helper parameters to parameter info so docs include them
                 $parameterInfos += @{ Name = "${paramName}TableName"; Type = "String"; Help = $tableNameHelp; Mandatory = ($mandatory -eq "true"); ValueFromPipeline = $false }

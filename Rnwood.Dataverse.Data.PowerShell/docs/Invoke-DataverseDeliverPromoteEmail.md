@@ -36,7 +36,7 @@ PS C:\> Invoke-DataverseDeliverPromoteEmail -Connection <ServiceClient> -EmailId
 ## PARAMETERS
 
 ### -Attachments
-Gets or sets a collection of activity mime attachment (email attachment) instances to attach to the email message. Required.
+Gets or sets a collection of activity mime attachment (email attachment) records to attach to the email message. Required.
 
 ```yaml
 Type: EntityCollection
@@ -51,7 +51,7 @@ Accept wildcard characters: False
 ```
 
 ### -Bcc
-Gets or sets the addresses of the blind carbon copy (Bcc) recipients for the email message.
+Gets or sets the addresses of the blind carbon copy (Bcc) recipients for the email message. Required.
 
 ```yaml
 Type: String
@@ -66,7 +66,7 @@ Accept wildcard characters: False
 ```
 
 ### -Body
-Gets or sets the Body for the request.
+Gets or sets the message body for the email. Required.
 
 ```yaml
 Type: String
@@ -81,27 +81,12 @@ Accept wildcard characters: False
 ```
 
 ### -Cc
-Gets or sets the addresses of the carbon copy (Cc) recipients for the email message.
+Gets or sets the addresses of the carbon copy (Cc) recipients for the email message. Required.
 
 ```yaml
 Type: String
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
 
 Required: False
 Position: Named
@@ -126,7 +111,7 @@ Accept wildcard characters: False
 ```
 
 ### -EmailId
-The ID of the Email.
+Gets or sets the ID of the email from which to create the email. Required.
 
 ```yaml
 Type: Guid
@@ -141,7 +126,7 @@ Accept wildcard characters: False
 ```
 
 ### -ExtraProperties
-For internal use only. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
+Gets or sets the extra properties for the email. Optional. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
 
 ```yaml
 Type: PSObject
@@ -156,7 +141,7 @@ Accept wildcard characters: False
 ```
 
 ### -ExtraPropertiesIgnoreProperties
-For internal use only. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Properties to ignore when converting ExtraProperties PSObject to Entity.
+Gets or sets the extra properties for the email. Optional. Properties to ignore when converting ExtraProperties PSObject to Entity.
 
 ```yaml
 Type: String[]
@@ -171,7 +156,7 @@ Accept wildcard characters: False
 ```
 
 ### -ExtraPropertiesLookupColumns
-For internal use only. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Hashtable specifying lookup columns for entity reference conversions in ExtraProperties.
+Gets or sets the extra properties for the email. Optional. Hashtable specifying lookup columns for entity reference conversions in ExtraProperties.
 
 ```yaml
 Type: Hashtable
@@ -186,7 +171,7 @@ Accept wildcard characters: False
 ```
 
 ### -ExtraPropertiesTableName
-For internal use only. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. The logical name of the table/entity type for the ExtraProperties parameter.
+Gets or sets the extra properties for the email. Optional. The logical name of the table/entity type for the ExtraProperties parameter.
 
 ```yaml
 Type: String
@@ -201,7 +186,7 @@ Accept wildcard characters: False
 ```
 
 ### -From
-Gets or sets the from address for the email message.
+Gets or sets the from address for the email message. Required.
 
 ```yaml
 Type: String
@@ -216,7 +201,7 @@ Accept wildcard characters: False
 ```
 
 ### -Importance
-Gets or sets the Importance for the request.
+Gets or sets the level of importance for the email message. Required.
 
 ```yaml
 Type: String
@@ -246,7 +231,7 @@ Accept wildcard characters: False
 ```
 
 ### -ReceivedOn
-Gets or sets the ReceivedOn for the request.
+Gets or sets the time the message was received on. Required.
 
 ```yaml
 Type: DateTime
@@ -276,7 +261,7 @@ Accept wildcard characters: False
 ```
 
 ### -SubmittedBy
-Gets or sets the SubmittedBy for the request.
+Gets or sets the email address of the account that is creating the email activity instance. Required.
 
 ```yaml
 Type: String
@@ -291,27 +276,12 @@ Accept wildcard characters: False
 ```
 
 ### -To
-Gets or sets the addresses of the recipients of the email message.
+Gets or sets the addresses of the recipients of the email message. Required.
 
 ```yaml
 Type: String
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
 
 Required: False
 Position: Named
@@ -331,6 +301,36 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

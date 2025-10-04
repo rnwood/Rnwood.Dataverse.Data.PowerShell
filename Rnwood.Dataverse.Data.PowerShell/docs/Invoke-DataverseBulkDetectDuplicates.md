@@ -34,27 +34,12 @@ PS C:\> Invoke-DataverseBulkDetectDuplicates -Connection <ServiceClient> -Query 
 ## PARAMETERS
 
 ### -CCRecipients
-Gets or sets an array of IDs for the system users (users) who are listed in the Cc box of the email notification. Required.
+Gets or sets an array of IDs for the system users (users) who are listed in the Cc box of the email notification.
 
 ```yaml
 Type: Guid[]
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
 
 Required: False
 Position: Named
@@ -79,7 +64,7 @@ Accept wildcard characters: False
 ```
 
 ### -JobName
-Gets or sets the name of an asynchronous bulk delete job. Required.
+Gets or sets the name of the asynchronous system job that detects and logs multiple duplicate records. Required.
 
 ```yaml
 Type: String
@@ -109,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -RecurrencePattern
-Gets or sets the recurrence pattern for the bulk delete job. Optional.
+Gets or sets the recurrence pattern for the asynchronous system job that detects multiple duplicate records. Optional.
 
 ```yaml
 Type: String
@@ -139,7 +124,7 @@ Accept wildcard characters: False
 ```
 
 ### -SendEmailNotification
-Gets or sets a value that indicates whether an email notification is sent after the bulk delete job has finished running. Required.
+Gets or sets a value that indicates whether an email notification is sent after the asynchronous system job that detects multiple duplicate records finishes running. Required.
 
 ```yaml
 Type: Boolean
@@ -169,27 +154,12 @@ Accept wildcard characters: False
 ```
 
 ### -ToRecipients
-Gets or sets an array of IDs for the system users (users) who are listed in the To box of an email notification. Required.
+Gets or sets an array of IDs for the system users (users) who are listed in the To box (recipients) of the email notification.
 
 ```yaml
 Type: Guid[]
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
 
 Required: False
 Position: Named
@@ -209,6 +179,36 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

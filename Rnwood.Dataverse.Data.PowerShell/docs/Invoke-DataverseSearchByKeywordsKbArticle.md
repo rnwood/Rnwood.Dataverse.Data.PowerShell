@@ -32,21 +32,6 @@ PS C:\> Invoke-DataverseSearchByKeywordsKbArticle -Connection <ServiceClient> -S
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -63,7 +48,7 @@ Accept wildcard characters: False
 ```
 
 ### -QueryExpression
-Gets or sets the query criteria to find knowledge articles with specified text. Required.
+Gets or sets the query criteria to find knowledge base articles with specified keywords. Required.
 
 ```yaml
 Type: QueryBase
@@ -78,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -SearchText
-Gets or sets the text to search for in knowledge articles. Required.
+Gets or sets the keywords in the article. Required.
 
 ```yaml
 Type: String
@@ -93,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -SubjectId
-Gets or sets the ID of the subject. Required.
+Gets or sets the ID of the knowledge base article subject. Required.
 
 ```yaml
 Type: Guid
@@ -108,27 +93,12 @@ Accept wildcard characters: False
 ```
 
 ### -UseInflection
-Gets or sets a value that indicates whether to use inflectional stem matching when searching for knowledge articles. Required.
+Gets or sets a value that indicates whether to use inflectional stem matching when searching for knowledge base articles with the specified keywords. Required.
 
 ```yaml
 Type: Boolean
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
 
 Required: False
 Position: Named
@@ -148,6 +118,36 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
