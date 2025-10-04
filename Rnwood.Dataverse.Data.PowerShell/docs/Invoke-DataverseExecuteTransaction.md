@@ -1,0 +1,135 @@
+---
+external help file: Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll-Help.xml
+Module Name: Rnwood.Dataverse.Data.PowerShell
+online version:
+schema: 2.0.0
+---
+
+# Invoke-DataverseExecuteTransaction
+
+## SYNOPSIS
+Contains the data that is needed to execute one or more message requests in a single database transaction, and optionally return a collection of results.
+
+[Microsoft Learn: Microsoft.Xrm.Sdk.Messages.ExecuteTransactionRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Xrm.Sdk.Messages.ExecuteTransactionRequest)
+
+## SYNTAX
+
+```
+Invoke-DataverseExecuteTransaction -Connection <ServiceClient> [-Requests <OrganizationRequestCollection>]
+ [-ReturnResponses <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+## DESCRIPTION
+Contains the data that is needed to execute one or more message requests in a single database transaction, and optionally return a collection of results.
+
+## EXAMPLES
+
+### Example 1
+```powershell
+PS C:\> Invoke-DataverseExecuteTransaction -Connection <ServiceClient> -Requests <OrganizationRequestCollection> -ReturnResponses <bool?>
+```
+
+## PARAMETERS
+
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+
+```yaml
+Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Requests
+Gets or sets the collection of message requests to execute.
+
+```yaml
+Type: OrganizationRequestCollection
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ReturnResponses
+Gets or sets a value indicating if responses are to be returned for each message request processed.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+## OUTPUTS
+
+### System.Object
+## NOTES
+
+## RELATED LINKS

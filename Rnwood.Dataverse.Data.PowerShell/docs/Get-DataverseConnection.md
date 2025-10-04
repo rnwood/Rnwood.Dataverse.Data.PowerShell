@@ -283,6 +283,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Timeout
+Timeout for authentication operations. Defaults to 5 minutes.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Url
 URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com
 
@@ -332,21 +347,6 @@ See standard PS documentation.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Timeout
-Timeout for authentication operations. Defaults to 5 minutes.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
 
 Required: False
 Position: Named

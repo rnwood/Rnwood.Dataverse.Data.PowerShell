@@ -7,17 +7,30 @@ using System.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
-	internal class EntityMetadataFactory
+	/// <summary>
+	/// Factory for retrieving and caching entity metadata from Dataverse.
+	/// </summary>
+	public class EntityMetadataFactory
 	{
 		private IOrganizationService Connection;
 
+		/// <summary>
+		/// Initializes a new instance of the EntityMetadataFactory class.
+		/// </summary>
+		/// <param name="Connection">The organization service connection to use for metadata retrieval.</param>
 		public EntityMetadataFactory(IOrganizationService Connection)
 		{
 			this.Connection = Connection;
 		}
 
 
-		internal AttributeMetadata GetAttribute(string entityName, string columnName)
+		/// <summary>
+		/// Gets the attribute metadata for the specified entity and column.
+		/// </summary>
+		/// <param name="entityName">The logical name of the entity.</param>
+		/// <param name="columnName">The logical name of the column.</param>
+		/// <returns>The attribute metadata, or null if not found.</returns>
+		public AttributeMetadata GetAttribute(string entityName, string columnName)
 		{
 			EntityMetadata entityMetadata = GetMetadata(entityName);
 
@@ -26,7 +39,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private readonly IDictionary<string, EntityMetadata> _entities = new Dictionary<string, EntityMetadata>();
 
-		internal EntityMetadata GetMetadata(string entityName)
+		/// <summary>
+		/// Gets the entity metadata for the specified entity.
+		/// </summary>
+		/// <param name="entityName">The logical name of the entity.</param>
+		/// <returns>The entity metadata.</returns>
+		public EntityMetadata GetMetadata(string entityName)
 		{
 			EntityMetadata result;
 
