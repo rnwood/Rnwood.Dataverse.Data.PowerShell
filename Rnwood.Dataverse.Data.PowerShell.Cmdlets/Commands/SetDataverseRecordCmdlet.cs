@@ -15,70 +15,110 @@ using System.Text;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
-	[Cmdlet(VerbsCommon.Set, "DataverseRecord", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
 	///<summary>Creates or updates records in a Dataverse environment. If a matching record is found then it will be updated, otherwise a new record is created (some options can override this).
 	///This command can also handle creation/update of intersect records(many to many relationships).</summary>
-
+	[Cmdlet(VerbsCommon.Set, "DataverseRecord", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
 	public class SetDataverseRecordCmdlet : CustomLogicBypassableOrganizationServiceCmdlet
 	{
+/// <summary>
+		/// DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)
+		/// </summary>
 		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
 		public override ServiceClient Connection { get; set; }
-
+		/// <summary>
+		/// Object containing values to be used. Property names must match the logical names of Dataverse columns in the specified table and the property values are used to set the values of the Dataverse record being created/updated. The properties may include ownerid, statecode and statuscode which will assign and change the record state/status.
+		/// </summary>
 		[Parameter(Mandatory = true, ValueFromPipeline = true, ValueFromRemainingArguments = true,
 			HelpMessage = "Object containing values to be used. Property names must match the logical names of Dataverse columns in the specified table and the property values are used to set the values of the Dataverse record being created/updated. The properties may include ownerid, statecode and statuscode which will assign and change the record state/status.")]
 		public PSObject InputObject { get; set; }
 
+		/// <summary>
+
+		/// Gets or sets the batch size for bulk operations.
+
+		/// </summary>
+
 		[Parameter()]
 		public uint BatchSize { get; set; } = 100;
-
+		/// <summary>
+		/// Logical name of table
+		/// </summary>
 		[Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of table")]
 		[Alias("EntityName", "LogicalName")]
 		public string TableName { get; set; }
-
+		/// <summary>
+		/// List of properties on the input object which are ignored and not attemted to be mapped to the record. Default is none.
+		/// </summary>
 		[Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "List of properties on the input object which are ignored and not attemted to be mapped to the record. Default is none.")]
 		public string[] IgnoreProperties { get; set; }
-
+		/// <summary>
+		/// ID of record to be created or updated.
+		/// </summary>
 		[Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of record to be created or updated.")]
 		public Guid Id { get; set; }
-
+		/// <summary>
+		/// List of list of column names that identify an existing record to update based on the values of those columns in the InputObject. For update/create these are used if a record with and Id matching the value of the Id cannot be found. The first list that returns a match is used. e.g. (\
+		/// </summary>
 		[Parameter(Mandatory = false, HelpMessage = "List of list of column names that identify an existing record to update based on the values of those columns in the InputObject. For update/create these are used if a record with and Id matching the value of the Id cannot be found. The first list that returns a match is used. e.g. (\"firstname\", \"lastname\"), \"fullname\" will try to find an existing record based on the firstname AND listname from the InputObject and if not found it will try by fullname. For upsert only a single list is allowed and it must match the properties of an alternate key defined on the table.")]
 		public string[][] MatchOn { get; set; }
-
+		/// <summary>
+		/// If specified, the InputObject is written to the pipeline with an Id property set indicating the primary key of the affected record (even if nothing was updated).
+		/// </summary>
 		[Parameter(HelpMessage = "If specified, the InputObject is written to the pipeline with an Id property set indicating the primary key of the affected record (even if nothing was updated).")]
 		public SwitchParameter PassThru { get; set; }
-
+		/// <summary>
+		/// If specified, existing records matching the ID and or MatchOn columns will not be updated.
+		/// </summary>
 		[Parameter(HelpMessage = "If specified, existing records matching the ID and or MatchOn columns will not be updated.")]
 		public SwitchParameter NoUpdate { get; set; }
-
+		/// <summary>
+		/// If specified, then no records will be created even if no existing records matching the ID and or MatchOn columns is found.
+		/// </summary>
 		[Parameter(HelpMessage = "If specified, then no records will be created even if no existing records matching the ID and or MatchOn columns is found.")]
 		public SwitchParameter NoCreate { get; set; }
-
+		/// <summary>
+		/// List of column names which will not be included when updating existing records.
+		/// </summary>
 		[Parameter(HelpMessage = "List of column names which will not be included when updating existing records.")]
 		public string[] NoUpdateColumns { get; set; }
-
+		/// <summary>
+		/// If specified, the creation/updates will be done on behalf of the user with the specified ID. For best performance, sort the records using this value since a new batch request is needed each time this value changes.
+		/// </summary>
 		[Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "If specified, the creation/updates will be done on behalf of the user with the specified ID. For best performance, sort the records using this value since a new batch request is needed each time this value changes.")]
 		public Guid? CallerId { get; set; }
-
+		/// <summary>
+		/// If specified, an update containing all supplied columns will be issued without retrieving the existing record for comparison (default is to remove unchanged columns). Id must be provided
+		/// </summary>
 		[Parameter(HelpMessage = "If specified, an update containing all supplied columns will be issued without retrieving the existing record for comparison (default is to remove unchanged columns). Id must be provided")]
 		public SwitchParameter UpdateAllColumns { get; set; }
-
+		/// <summary>
+		/// If specified, no check for existing record is made and records will always be attempted to be created. Use this option when it's known that no existing matching records will exist to improve performance. See the -noupdate option for an alternative.
+		/// </summary>
 		[Parameter(HelpMessage = "If specified, no check for existing record is made and records will always be attempted to be created. Use this option when it's known that no existing matching records will exist to improve performance. See the -noupdate option for an alternative.")]
 		public SwitchParameter CreateOnly { get; set; }
-
+		/// <summary>
+		/// If specified, upsert request will be used to create/update existing records as appropriate. -MatchOn is not supported with this option
+		/// </summary>
 		[Parameter(HelpMessage = "If specified, upsert request will be used to create/update existing records as appropriate. -MatchOn is not supported with this option")]
 		public SwitchParameter Upsert { get; set; }
-
+		/// <summary>
+		/// Hashset of lookup column name in the target entity to column name in the referred to table with which to find the records.
+		/// </summary>
 		[Parameter(Mandatory = false, HelpMessage = "Hashset of lookup column name in the target entity to column name in the referred to table with which to find the records.")]
 		public Hashtable LookupColumns
 		{
 			get;
 			set;
 		}
-
+		/// <summary>
+		/// Specifies the types of business logic (for example plugins) to bypass
+		/// </summary>
 		[Parameter(HelpMessage = "Specifies the types of business logic (for example plugins) to bypass")]
 		public override BusinessLogicTypes[] BypassBusinessLogicExecution { get; set; }
 
-
+		/// <summary>
+		/// Specifies the IDs of plugin steps to bypass
+		/// </summary>
 		[Parameter(HelpMessage = "Specifies the IDs of plugin steps to bypass")]
 		public override Guid[] BypassBusinessLogicExecutionStepIds { get; set; }
 
@@ -145,6 +185,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				ProcessBatch();
 			}
 		}
+
+		/// <summary>
+
+
+		/// Initializes the cmdlet.
+
+
+		/// </summary>
+
 
 		protected override void BeginProcessing()
 		{
@@ -235,6 +284,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_nextBatchCallerId = null;
 		}
 
+		/// <summary>
+
+
+		/// Completes cmdlet processing.
+
+
+		/// </summary>
+
+
 		protected override void EndProcessing()
 		{
 			base.EndProcessing();
@@ -276,6 +334,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			return options;
 		}
+
+		/// <summary>
+
+
+		/// Processes each record in the pipeline.
+
+
+		/// </summary>
+
 
 		protected override void ProcessRecord()
 		{
