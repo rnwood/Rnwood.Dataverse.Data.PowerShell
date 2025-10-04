@@ -12,8 +12,16 @@ using System.Text;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
-    internal class DataverseEntityConverter
+    /// <summary>
+    /// Converts between Dataverse entities and PowerShell objects.
+    /// </summary>
+    public class DataverseEntityConverter
     {
+        /// <summary>
+        /// Initializes a new instance of the DataverseEntityConverter class.
+        /// </summary>
+        /// <param name="service">The organization service.</param>
+        /// <param name="entityMetadataFactory">The entity metadata factory.</param>
         public DataverseEntityConverter(IOrganizationService service, EntityMetadataFactory entityMetadataFactory)
         {
             this.service = service;
@@ -23,6 +31,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private IOrganizationService service;
         private EntityMetadataFactory entityMetadataFactory;
 
+        /// <summary>
+        /// Converts an Entity to a PSObject.
+        /// </summary>
         public PSObject ConvertToPSObject(Entity entity, ColumnSet includedColumns, Func<AttributeMetadata, ValueType> getValueType)
         {
             PSObject result = new PSObject();
@@ -71,6 +82,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return result;
         }
 
+        /// <summary>
+        /// Converts a PSObject to an Entity.
+        /// </summary>
         public Entity ConvertToDataverseEntity(PSObject psObject, string entityName, ConvertToDataverseEntityOptions options)
         {
             if (psObject.ImmediateBaseObject is Entity e)
@@ -150,6 +164,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return result;
         }
 
+        /// <summary>
+        /// Gets all column names for an entity.
+        /// </summary>
         public static string[] GetAllColumnNames(EntityMetadata entityMetadata, bool includeSystemColumns, string[] excludeColumns)
         {
             string[] magicColumns = new string[0];
@@ -178,6 +195,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                  .ToArray();
         }
 
+        /// <summary>
+        /// Gets the PowerShell value for an entity attribute.
+        /// </summary>
         public object GetPSValue(Entity entity, EntityMetadata entityMetadata, AttributeMetadata attributeMetadata, Func<AttributeMetadata, ValueType> getValueType)
         {
             ValueType valueType = getValueType(attributeMetadata);
@@ -349,6 +369,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
+        /// <summary>
+        /// Converts a PowerShell value to a Dataverse value.
+        /// </summary>
         public object ConvertToDataverseValue(EntityMetadata entityMetadata, string propertyName, AttributeMetadata attributeMetadata, object psValue, ConvertToDataverseEntityColumnOptions columnOptions)
         {
             if (propertyName.Equals("calendarrules", StringComparison.OrdinalIgnoreCase)) //Magic attribute no metadata
@@ -859,6 +882,56 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             return convertedValue;
+        }
+
+        /// <summary>
+        /// Converts a PSObject to an EntityReference.
+        /// </summary>
+        /// <param name="psObject">The PSObject to convert. Must have Id property and one of: TableName, EntityName, or LogicalName properties.</param>
+        /// <returns>The converted EntityReference.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when psObject is null.</exception>
+        /// <exception cref="FormatException">Thrown when required properties are missing or invalid.</exception>
+        public static EntityReference ConvertPSObjectToEntityReference(PSObject psObject)
+        {
+            if (psObject == null)
+                throw new ArgumentNullException(nameof(psObject));
+
+            // Find the table/entity name property (case insensitive)
+            var nameProperty = psObject.Properties.FirstOrDefault(p => p.Name.Equals("TableName", StringComparison.OrdinalIgnoreCase));
+            if (nameProperty == null)
+            {
+                nameProperty = psObject.Properties.FirstOrDefault(p => p.Name.Equals("EntityName", StringComparison.OrdinalIgnoreCase));
+            }
+            if (nameProperty == null)
+            {
+                nameProperty = psObject.Properties.FirstOrDefault(p => p.Name.Equals("LogicalName", StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (nameProperty == null)
+            {
+                throw new FormatException("Could not convert value to entity reference. TableName(/EntityName/LogicalName) property is missing");
+            }
+
+            // Find the Id property
+            var idProperty = psObject.Properties.FirstOrDefault(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase));
+            if (idProperty == null)
+            {
+                throw new FormatException("Could not convert value to entity reference. Id property is missing");
+            }
+
+            // Convert the values
+            string tableName = nameProperty.Value?.ToString();
+            if (string.IsNullOrWhiteSpace(tableName))
+            {
+                throw new FormatException("Could not convert value to entity reference. TableName(/EntityName/LogicalName) property is null or empty");
+            }
+
+            if (!Guid.TryParse(idProperty.Value?.ToString(), out Guid id))
+            {
+                throw new FormatException("Could not convert value to entity reference. Id property is not a valid GUID");
+            }
+
+            return new EntityReference(tableName, id);
         }
     }
 }

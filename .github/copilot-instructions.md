@@ -16,38 +16,8 @@ Cross-platform PowerShell module (~206MB, 1339 files) for Microsoft Dataverse da
 dotnet clean
 
 # 2. Build cmdlets (takes 13 seconds - includes restore on first build)
-dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell.Cmdlets/Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj
+dotnet build 
 
-# 3. Build loader (takes 2 seconds)
-dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell.Loader/Rnwood.Dataverse.Data.PowerShell.Loader.csproj
-
-# 4. Build main project with --no-dependencies (takes 28 seconds - runs updatehelp.ps1 and buildhelp.ps1)
-dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj --no-dependencies
-
-# 5. Copy to out/ for testing (REQUIRED)
-rm -rf out
-mkdir -p out
-cp -r Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
-```
-
-**IMPORTANT BUILD NOTES:**
-- Step 4 runs `updatehelp.ps1` which accesses www.powershellgallery.com to install PlatyPS module. This will FAIL in firewalled environments.
-- If PowerShell Gallery is blocked, you'll get: `error MSB3073: The command "pwsh -file .../updatehelp.ps1..." exited with code 1`
-- **WORKAROUND for firewalled environments:** Skip step 4. Instead, manually assemble the module by copying cmdlets/loader outputs:
-  ```bash
-  # After steps 2-3, manually assemble without running BuildHelp target
-  mkdir -p Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0
-  cp Rnwood.Dataverse.Data.PowerShell/*.psd1 Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/
-  cp Rnwood.Dataverse.Data.PowerShell/*.psm1 Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/
-  mkdir -p Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/cmdlets
-  cp -r Rnwood.Dataverse.Data.PowerShell.Cmdlets/bin/Release/* Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/cmdlets/
-  mkdir -p Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/loader
-  cp -r Rnwood.Dataverse.Data.PowerShell.Loader/bin/Release/* Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/loader/
-  # Then continue with step 5
-  ```
-- Expect 17-20 NU1701 warnings about .NET Framework package compatibility - these are NORMAL and safe to ignore
-- Main project build targets (BuildCmdlets, BuildLoader) automatically copy outputs to bin/Release/netstandard2.0/cmdlets/ and .../loader/
-- Build creates en-GB/ help directory with MAML XML files (163KB+ of generated help)
 
 ### Testing Sequence (Total time: ~15-30 seconds)
 ```powershell
@@ -207,6 +177,3 @@ Invoke-Pester -Output Detailed -Path tests
 - Quick start: `$c = Get-DataverseConnection -url https://org.crm.dynamics.com -interactive; Get-DataverseRecord -connection $c -tablename contact`
 - Main cmdlets: Get-DataverseConnection, Get-DataverseRecord, Set-DataverseRecord, Remove-DataverseRecord, Invoke-DataverseRequest, Invoke-DataverseSql
 - Does NOT support on-premise Dataverse
-
-## TRUST THESE INSTRUCTIONS
-Follow build/test sequences exactly. If PowerShell Gallery is blocked, use the manual assembly workaround. Always set $env:TESTMODULEPATH before testing. Only search/explore if instructions are incomplete or incorrect - these have been validated by running all commands.
