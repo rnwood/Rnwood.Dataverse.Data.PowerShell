@@ -12,8 +12,8 @@ using Newtonsoft.Json;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
-	[Cmdlet("Invoke", "DataverseRequest")]
 	///<summary>Invokes a Dataverse request.</summary>
+	[Cmdlet("Invoke", "DataverseRequest")]
 	public class InvokeDataverseRequestCmdlet : OrganizationServiceCmdlet
 	{
 		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet")]

@@ -1,4 +1,4 @@
-﻿
+
 
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
@@ -19,10 +19,16 @@ using System.Xml.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
+	/// <summary>
+	/// Retrieves records from a Dataverse table using various query methods.
+	/// </summary>
     [Cmdlet(VerbsCommon.Get, "DataverseRecord")]
     [OutputType(typeof(IEnumerable<PSObject>))]
     public class GetDataverseRecordCmdlet : OrganizationServiceCmdlet
     {
+		/// <summary>
+		/// Gets or sets the Dataverse connection to use.
+		/// </summary>
         [Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
         public override ServiceClient Connection { get; set; }
 
@@ -30,13 +36,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private const string PARAMSET_SIMPLE = "Simple";
 
+        /// <summary>
+        /// Gets or sets the logical name of the table to query.
+        /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = true, Position = 0, HelpMessage = "Logical name of table for which to retrieve records")]
         [Alias("EntityName")]
         public string TableName { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether to write the total record count to verbose output.
+        /// </summary>
         [Parameter(HelpMessage = "If set writes total record count matching query to verbose output")]
         public SwitchParameter VerboseRecordCount { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether to return only the count of records instead of the records themselves.
+        /// </summary>
         [Parameter(HelpMessage = "If set, writes total record count matching query to output instead of results")]
         public SwitchParameter RecordCount { get; set; }
 

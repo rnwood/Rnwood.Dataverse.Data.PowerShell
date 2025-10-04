@@ -16,8 +16,8 @@ using System.Collections.Concurrent;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
-	[Cmdlet("Invoke", "DataverseSql", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
 	///<summary>Invokes a Dataverse request.</summary>
+	[Cmdlet("Invoke", "DataverseSql", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
 	public class InvokeDataverseSqlCmdlet : OrganizationServiceCmdlet
 	{
 		private Sql4CdsConnection _sqlConnection;
