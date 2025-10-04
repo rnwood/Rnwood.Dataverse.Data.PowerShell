@@ -13,8 +13,8 @@ Creates or updates Dataverse records including M:M association/disassociation, s
 ## SYNTAX
 
 ```
-Set-DataverseRecord -Connection <ServiceClient> -InputObject <PSObject> [-BatchSize <UInt32>]
- -TableName <String> [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>] [-PassThru]
+Set-DataverseRecord -Connection <ServiceClient> -InputObject <PSObject> -TableName <String>
+ [-BatchSize <UInt32>] [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>] [-PassThru]
  [-NoUpdate] [-NoCreate] [-NoUpdateColumns <String[]>] [-CallerId <Guid>] [-UpdateAllColumns] [-CreateOnly]
  [-Upsert] [-LookupColumns <Hashtable>] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
  [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
@@ -405,7 +405,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.String
 ### System.String[]
 ### System.Guid
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Object

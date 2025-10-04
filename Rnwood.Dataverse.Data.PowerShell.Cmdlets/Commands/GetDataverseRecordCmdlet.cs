@@ -204,20 +204,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private DataverseEntityConverter entityConverter;
         private EntityMetadata entityMetadata;
 
-        /// <summary>
-
-
-        /// Initializes the cmdlet.
-
-
-        /// </summary>
-
-
-        protected override void BeginProcessing()
+    /// <summary>
+    /// Initializes the cmdlet and sets up required helpers.
+    /// </summary>
+    protected override void BeginProcessing()
         {
             base.BeginProcessing();
         }
 
+        /// <summary>
+        /// Processes each record by executing the configured query and writing results to the pipeline.
+        /// </summary>
         protected override void ProcessRecord()
         {
             base.ProcessRecord();

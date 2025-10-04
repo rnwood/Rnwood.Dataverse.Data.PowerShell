@@ -255,7 +255,9 @@ function Get-ClassSummary {
 }
 
 # Returns $true if the given type is marked as deprecated/obsolete.
-function Is-Deprecated {
+# Temporarily disable approved verbs rule for this helper function. The function name intentionally uses the noun 'Deprecated' for readability.
+# PSScriptAnalyzer disable=PSUseApprovedVerbs
+function Test-DeprecatedType {
     param([Type]$type)
 
     if (-not $type) { return $false }
@@ -309,6 +311,7 @@ function Is-Deprecated {
 
     return $false
 }
+# PSScriptAnalyzer enable=PSUseApprovedVerbs
 
 # Find all OrganizationRequest types
 Write-Host "Searching for request types..."
@@ -371,7 +374,7 @@ $ClassSummaryOverrides = @{
 foreach ($requestType in $requestTypes) {
     $requestName = $requestType.Name
     # Skip deprecated/obsolete request types
-    if (Is-Deprecated $requestType) {
+    if (Test-DeprecatedType $requestType) {
         Write-Verbose "Skipping $($requestType.FullName) - marked as deprecated/obsolete"
         $skippedDeprecated++
         continue
@@ -579,10 +582,16 @@ foreach ($requestType in $requestTypes) {
                 $lookupColsXml = $lookupColsHelp -replace '&','&amp;' -replace '<','&lt;' -replace '>','&gt;'
 
                 $parameterDeclarations += "        /// <summary>`n        /// $tableNameXml`n        /// </summary>"
-                $parameterDeclarations += "        [$tableNameAttribute]`n        public string ${paramName}TableName { get; set; }"
+                $parameterDeclarations += "        [$tableNameAttribute]`n        [ArgumentCompleter(typeof(TableNameArgumentCompleter))]`n        public string ${paramName}TableName { get; set; }"
                 $parameterDeclarations += "        /// <summary>`n        /// $ignorePropsXml`n        /// </summary>"
-                $parameterDeclarations += "        [$ignorePropsAttribute]`n        public string[] ${paramName}IgnoreProperties { get; set; }"
+                # Attach column-name completion for ignore-properties helper so users get column name suggestions
+                $parameterDeclarations += "        [$ignorePropsAttribute]`n        [ArgumentCompleter(typeof(Rnwood.Dataverse.Data.PowerShell.Commands.PSObjectPropertyNameArgumentCompleter))]`n        public string[] ${paramName}IgnoreProperties { get; set; }"
                 $parameterDeclarations += "        /// <summary>`n        /// $lookupColsXml`n        /// </summary>"
+                # Do NOT attach ColumnNamesArgumentCompleter to Hashtable parameters.
+                # Hashtable values are complex key/value mappings and PowerShell completion for
+                # ColumnNamesArgumentCompleter is not appropriate when the parameter is a Hashtable
+                # (completion would run for the whole hashtable value which is confusing).
+                # Keep the LookupColumns helper parameter but do not add the completer attribute.
                 $parameterDeclarations += "        [$lookupColsAttribute]`n        public Hashtable ${paramName}LookupColumns { get; set; }"
                 # Add helper parameters to parameter info so docs include them
                 $parameterInfos += @{ Name = "${paramName}TableName"; Type = "String"; Help = $tableNameHelp; Mandatory = ($mandatory -eq "true"); ValueFromPipeline = $false }

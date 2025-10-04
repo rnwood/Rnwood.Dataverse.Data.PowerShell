@@ -32,21 +32,6 @@ PS C:\> Invoke-DataverseUpdateEntity -Connection <ServiceClient> -Entity <Entity
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -63,7 +48,7 @@ Accept wildcard characters: False
 ```
 
 ### -Entity
-Gets or sets the definition of the table. Required.
+Gets or sets the duplicate rule that you want updated. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
 
 ```yaml
 Type: EntityMetadata
@@ -78,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -HasActivities
-Gets or sets whether the entity will have a special relationship to activity tables and is a valid regarding object for the activity. Optional.
+Gets or sets whether the table is created that has a special relationship to activity entities a nd is a valid regarding object for the activity. Optional.
 
 ```yaml
 Type: Boolean
@@ -108,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -HasNotes
-Gets or sets whether the table will have a special relationship to the annotation table. Optional.
+Gets or sets whether the custom table that is created has a special relationship to the annotation table. Optional.
 
 ```yaml
 Type: Boolean
@@ -123,7 +108,7 @@ Accept wildcard characters: False
 ```
 
 ### -MergeLabels
-Gets or sets whether to merge the new labels with any existing labels. Required.
+Gets or sets whether the label metadata will be merged or overwritten. Required.
 
 ```yaml
 Type: Boolean
@@ -138,27 +123,12 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the unique name of the unmanaged solution that this table should be associated with. Optional.
+Gets or sets the name of the unmanaged solution to which you want to add this column. Optional.
 
 ```yaml
 Type: String
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
 
 Required: False
 Position: Named
@@ -178,6 +148,36 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

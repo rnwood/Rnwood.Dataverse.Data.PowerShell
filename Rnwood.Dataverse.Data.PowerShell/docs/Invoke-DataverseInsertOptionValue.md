@@ -34,27 +34,12 @@ PS C:\> Invoke-DataverseInsertOptionValue -Connection <ServiceClient> -OptionSet
 ## PARAMETERS
 
 ### -AttributeLogicalName
-Gets or sets the name of the column when updating a local choice column. Optional.
+Gets or sets the logical name of the choice column from which to delete the option value. Optional.
 
 ```yaml
 Type: String
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
 
 Required: False
 Position: Named
@@ -94,7 +79,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the table logical name when updating the local option set in a choice column. Optional.
+Gets or sets the logical name of the table that contains the column. Required.
 
 ```yaml
 Type: String
@@ -124,7 +109,7 @@ Accept wildcard characters: False
 ```
 
 ### -OptionSetName
-Gets or sets the name of the global option set. Optional.
+Gets or sets the name of the global choice that contains the value. Optional.
 
 ```yaml
 Type: String
@@ -154,7 +139,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the unique name of the unmanaged solution when updating a choice. Optional.
+Gets or sets the name of the unmanaged solution to which you want to add this column. Optional.
 
 ```yaml
 Type: String
@@ -169,27 +154,12 @@ Accept wildcard characters: False
 ```
 
 ### -Value
-Gets or sets the value for the option. Optional.
+Gets or sets the value of the option to delete. Required.
 
 ```yaml
 Type: Int32
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
 
 Required: False
 Position: Named
@@ -209,6 +179,36 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

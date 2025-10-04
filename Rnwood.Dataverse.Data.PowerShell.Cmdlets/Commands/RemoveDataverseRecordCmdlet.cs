@@ -1,4 +1,4 @@
-﻿
+
 
 
 using Microsoft.PowerPlatform.Dataverse.Client;
@@ -30,15 +30,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// </summary>
 		[Parameter(ValueFromPipeline = true, HelpMessage = "Record from pipeline. This allows piping in record to delete.")]
 		public PSObject InputObject { get; set; }
-		/// <summary>
-		/// Logical name of table
-		/// </summary>
-		[Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of table")]
-		[Alias("EntityName")]
-		public string TableName { get; set; }
-		/// <summary>
-		/// Id of record to process
-		/// </summary>
+	/// <summary>
+	/// The logical name of the table to operate on.
+	/// </summary>
+	[Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of table")]
+	[Alias("EntityName")]
+	[ArgumentCompleter(typeof(TableNameArgumentCompleter))]
+	public string TableName { get; set; }
+	/// <summary>
+	/// Id of record to process
+	/// </summary>
 		[Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Id of record to process")]
 		public Guid Id { get; set; }
 		/// <summary>
@@ -98,13 +99,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private List<BatchItem> _nextBatchItems;
 
-		/// <summary>
-
-
-		/// Processes each record in the pipeline.
-
-
-		/// </summary>
+	/// <summary>Processes each record in the pipeline.</summary>
 
 
 		protected override void ProcessRecord()
@@ -274,13 +269,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_nextBatchItems.Clear();
 		}
 
-		/// <summary>
-
-
-		/// Initializes the cmdlet.
-
-
-		/// </summary>
+	/// <summary>Initializes the cmdlet.</summary>
 
 
 		protected override void BeginProcessing()
@@ -297,13 +286,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private EntityMetadataFactory metadataFactory;
 
-		/// <summary>
-
-
-		/// Completes cmdlet processing.
-
-
-		/// </summary>
+	/// <summary>Completes cmdlet processing.</summary>
 
 
 		protected override void EndProcessing()

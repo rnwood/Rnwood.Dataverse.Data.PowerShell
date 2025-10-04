@@ -34,27 +34,12 @@ PS C:\> Invoke-DataverseUpdateOptionValue -Connection <ServiceClient> -OptionSet
 ## PARAMETERS
 
 ### -AttributeLogicalName
-Gets or sets the name of the column when updating a local choice in a picklist column. Optional.
+Gets or sets the logical name of the choice column from which to delete the option value. Optional.
 
 ```yaml
 Type: String
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
 
 Required: False
 Position: Named
@@ -94,7 +79,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name of the table when updating the local choice in a picklist column. Optional.
+Gets or sets the logical name of the table that contains the column. Required.
 
 ```yaml
 Type: String
@@ -109,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -Label
-Gets or sets the label for the option. Optional.
+Gets or sets the label for the option. Required.
 
 ```yaml
 Type: Label
@@ -124,7 +109,7 @@ Accept wildcard characters: False
 ```
 
 ### -MergeLabels
-Gets or sets whether to keep text defined for languages not included in the . Required.
+Gets or sets whether the label metadata will be merged or overwritten. Required.
 
 ```yaml
 Type: Boolean
@@ -139,7 +124,7 @@ Accept wildcard characters: False
 ```
 
 ### -OptionSetName
-Gets or sets the name of the global choice. Optional.
+Gets or sets the name of the global choice that contains the value. Optional.
 
 ```yaml
 Type: String
@@ -169,7 +154,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the name of the unmanaged solution that this global choice should be associated with. Optional.
+Gets or sets the name of the unmanaged solution to which you want to add this column. Optional.
 
 ```yaml
 Type: String
@@ -184,27 +169,12 @@ Accept wildcard characters: False
 ```
 
 ### -Value
-Gets or sets the value for the option. Required.
+Gets or sets the value of the option to delete. Required.
 
 ```yaml
 Type: Int32
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
 
 Required: False
 Position: Named
@@ -224,6 +194,36 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

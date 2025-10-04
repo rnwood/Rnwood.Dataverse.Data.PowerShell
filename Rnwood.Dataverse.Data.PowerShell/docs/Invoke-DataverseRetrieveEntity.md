@@ -32,21 +32,6 @@ PS C:\> Invoke-DataverseRetrieveEntity -Connection <ServiceClient> -EntityFilter
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -63,7 +48,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityFilters
-Gets or sets a filter to control how much data for the entity is retrieved.
+Gets or sets a filter to control how much data for each table is retrieved. Required.
 
 ```yaml
 Type: EntityFilters
@@ -79,7 +64,7 @@ Accept wildcard characters: False
 ```
 
 ### -LogicalName
-Gets or sets the logical name of the table to retrieve. Optional.
+Gets or sets the logical name of the column to delete. Required.
 
 ```yaml
 Type: String
@@ -94,7 +79,7 @@ Accept wildcard characters: False
 ```
 
 ### -MetadataId
-Gets or sets the unique identifier for the entity. Optional.
+The unique identifier for the attribute. Optional.
 
 ```yaml
 Type: Guid
@@ -109,27 +94,12 @@ Accept wildcard characters: False
 ```
 
 ### -RetrieveAsIfPublished
-Gets or sets whether to retrieve the table definition data that has not been published.
+Gets or sets whether to retrieve the metadata that has not been published. Required.
 
 ```yaml
 Type: Boolean
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
 
 Required: False
 Position: Named
@@ -149,6 +119,36 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
