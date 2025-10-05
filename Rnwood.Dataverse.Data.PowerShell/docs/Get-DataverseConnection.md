@@ -36,8 +36,8 @@ Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] [-Int
 
 ### Authenticate interactively with environment selection
 ```
-Get-DataverseConnection [-ClientId <Guid>] [-Username <String>] [-Interactive] [-SelectEnvironment] [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [-ClientId <Guid>] [-Username <String>] [-Interactive] [-SelectEnvironment]
+ [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate using the device code flow
@@ -48,8 +48,8 @@ Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] [-Dev
 
 ### Authenticate with username and password
 ```
-Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> -Username <String> -Password <String> [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] -Password <String>
+ [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with Dataverse SDK connection string.
@@ -237,22 +237,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SelectEnvironment
-Allows you to select from available Dataverse environments after authentication instead of specifying a URL.
-When this parameter is used with -Interactive, the cmdlet will authenticate first, then discover and display all available Dataverse environments for you to select from.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Authenticate interactively with environment selection
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -ManagedIdentity
 Use ManagedIdentityCredential for authentication. Authenticates using the managed identity assigned to the Azure resource.
 
@@ -313,6 +297,22 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -SelectEnvironment
+Allows you to select from available Dataverse environments after authentication instead of specifying a URL.
+When this parameter is used with -Interactive, the cmdlet will authenticate first, then discover and display all available Dataverse environments for you to select from.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Authenticate interactively with environment selection
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Timeout
 Timeout for authentication operations. Defaults to 5 minutes.
 
@@ -334,7 +334,7 @@ Not required when using -SelectEnvironment, as the environment will be selected 
 
 ```yaml
 Type: Uri
-Parameter Sets: Authenticate with client secret, Authenticate interactively, Authenticate using the device code flow, Authenticate with username and password, Authenticate with Dataverse SDK connection string., Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
+Parameter Sets: Return a mock connection, Authenticate with client secret, Authenticate interactively, Authenticate using the device code flow, Authenticate with username and password, Authenticate with Dataverse SDK connection string., Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
 Aliases:
 
 Required: True
@@ -349,22 +349,10 @@ Username to authenticate with.
 
 ```yaml
 Type: String
-Parameter Sets: Authenticate interactively, Authenticate interactively with environment selection, Authenticate using the device code flow
+Parameter Sets: Authenticate interactively, Authenticate interactively with environment selection, Authenticate using the device code flow, Authenticate with username and password
 Aliases:
 
 Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-```yaml
-Type: String
-Parameter Sets: Authenticate with username and password
-Aliases:
-
-Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False

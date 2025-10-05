@@ -68,4 +68,32 @@ Describe "Module" {
         }
     }
 
+    It "Get-DataverseConnection has SelectEnvironment parameter set" {
+        . $PSScriptRoot/Common.ps1
+        
+        # Import module if not already loaded
+        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+        }
+        
+        $cmd = Get-Command Get-DataverseConnection
+        $cmd | Should -Not -BeNull
+        
+        # Check that the parameter set exists
+        $parameterSets = $cmd.ParameterSets | Where-Object { $_.Name -eq "Authenticate interactively with environment selection" }
+        $parameterSets | Should -Not -BeNull
+        $parameterSets | Should -HaveCount 1
+        
+        # Check that SelectEnvironment parameter exists
+        $selectEnvParam = $cmd.Parameters["SelectEnvironment"]
+        $selectEnvParam | Should -Not -BeNull
+        $selectEnvParam.ParameterType.Name | Should -Be "SwitchParameter"
+        
+        # Verify URL is not required for this parameter set
+        $urlParam = $cmd.Parameters["Url"]
+        $urlParam | Should -Not -BeNull
+        $urlParamInSet = $parameterSets[0].Parameters | Where-Object { $_.Name -eq "Url" }
+        $urlParamInSet | Should -BeNull
+    }
+
 }
