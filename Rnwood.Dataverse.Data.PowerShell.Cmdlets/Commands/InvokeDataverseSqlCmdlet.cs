@@ -28,12 +28,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private ConcurrentQueue<string> _infoMessages;
 		private ConcurrentQueue<Task> _pendingConfirmations;
 		/// <summary>
-		/// DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)
-		/// </summary>
-		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
-
-		public override ServiceClient Connection { get; set; }
-		/// <summary>
 		/// SQL to execute. See Sql4Cds docs.
 		/// </summary>
 		[Parameter(Mandatory = true, HelpMessage = "SQL to execute. See Sql4Cds docs.", ValueFromRemainingArguments = true)]

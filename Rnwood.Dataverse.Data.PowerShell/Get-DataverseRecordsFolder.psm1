@@ -19,6 +19,12 @@ Get-DataverseRecordsFolder -InputPath data/contacts | Set-DataverseRecord -conne
 Reads files from `data/contacts` and uses them to create/update records in Dataverse using the existing connection `$c`.
 See documentation for `Set-DataverseRecord` as there are option to control how/if existing records will be matched and updated.
 
+.EXAMPLE
+Connect-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+Get-DataverseRecordsFolder -InputPath data/contacts | Set-DataverseRecord
+
+Reads files from `data/contacts` and uses them to create/update records in Dataverse using the default connection.
+
 .OUTPUTS
 System.Management.Automation.PSObject
 

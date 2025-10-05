@@ -743,9 +743,6 @@ $classSummary
     [Cmdlet("Invoke", "Dataverse$cmdletName", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     public class $cmdletClassName : OrganizationServiceCmdlet
     {
-        $connectionSummary
-        [Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet")]
-        public override ServiceClient Connection { get; set; }
 
         $($fieldDeclarations -join "`n")
 

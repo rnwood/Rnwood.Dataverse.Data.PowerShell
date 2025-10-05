@@ -26,10 +26,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Sdk
     public class InvokeDataverseCopyDynamicListToStaticCmdlet : OrganizationServiceCmdlet
     {
                 /// <summary>
-        /// DataverseConnection instance obtained from Get-DataverseConnection cmdlet
-        /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet")]
-        public override ServiceClient Connection { get; set; }
 
         
 

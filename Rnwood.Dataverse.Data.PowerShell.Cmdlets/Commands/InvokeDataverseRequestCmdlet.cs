@@ -17,11 +17,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	public class InvokeDataverseRequestCmdlet : OrganizationServiceCmdlet
 	{
 		/// <summary>
-		/// DataverseConnection instance obtained from Get-DataverseConnection cmdlet
-		/// </summary>
-		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet")]
-		public override ServiceClient Connection { get; set; }
-		/// <summary>
 		/// Request to execute
 		/// </summary>
 		[Parameter(ParameterSetName = "Request", Mandatory = true, HelpMessage = "Request to execute", ValueFromRemainingArguments = true, ValueFromPipeline = true)]

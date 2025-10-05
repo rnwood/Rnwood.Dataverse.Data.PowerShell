@@ -16,12 +16,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     public class GetDataverseWhoAmICmdlet : OrganizationServiceCmdlet
     {
 		/// <summary>
-		/// Gets or sets the Dataverse connection to use.
-		/// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
-        public override ServiceClient Connection { get; set; }
-
-		/// <summary>
 		/// Executes the WhoAmI request.
 		/// </summary>
         protected override void BeginProcessing()

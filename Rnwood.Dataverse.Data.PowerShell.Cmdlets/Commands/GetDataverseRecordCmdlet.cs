@@ -27,11 +27,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     public class GetDataverseRecordCmdlet : OrganizationServiceCmdlet
     {
         private const int MaxXorItems = 8;
-        /// <summary>
-        /// Gets or sets the Dataverse connection to use.
-        /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
-        public override ServiceClient Connection { get; set; }
 
         private const string PARAMSET_FETCHXML = "FetchXml";
 
