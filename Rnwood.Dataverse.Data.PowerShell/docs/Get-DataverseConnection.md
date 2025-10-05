@@ -34,6 +34,12 @@ Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] [-Int
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### Authenticate interactively with environment selection
+```
+Get-DataverseConnection [-ClientId <Guid>] [-Username <String>] [-Interactive] [-SelectEnvironment] [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ### Authenticate using the device code flow
 ```
 Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] [-DeviceCode] [-Timeout <UInt32>]
@@ -74,6 +80,7 @@ See the examples for this pattern below.
 
 Multiple authentication methods are supported:
 - Interactive authentication (browser-based)
+- Interactive authentication with environment selection (no URL required - select from available environments)
 - Device code flow (for remote/headless scenarios)
 - Username/password
 - Client secret (for service principal authentication)
@@ -119,6 +126,13 @@ PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Mana
 
 Gets a connection to MYORG using a user-assigned managed identity with the specified client ID.
 
+### Example 6
+```powershell
+PS C:\> $c = Get-DataverseConnection -Interactive -SelectEnvironment
+```
+
+Authenticates interactively and displays a list of available Dataverse environments for the user to select from. This is useful when you have access to multiple environments and don't want to manually specify the URL.
+
 ## PARAMETERS
 
 ### -ClientId
@@ -138,7 +152,7 @@ Accept wildcard characters: False
 
 ```yaml
 Type: Guid
-Parameter Sets: Authenticate interactively, Authenticate using the device code flow, Authenticate with username and password
+Parameter Sets: Authenticate interactively, Authenticate interactively with environment selection, Authenticate using the device code flow, Authenticate with username and password
 Aliases:
 
 Required: False
@@ -213,7 +227,23 @@ Triggers interactive authentication, where browser will be opened for user to in
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: Authenticate interactively
+Parameter Sets: Authenticate interactively, Authenticate interactively with environment selection
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SelectEnvironment
+Allows you to select from available Dataverse environments after authentication instead of specifying a URL.
+When this parameter is used with -Interactive, the cmdlet will authenticate first, then discover and display all available Dataverse environments for you to select from.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Authenticate interactively with environment selection
 Aliases:
 
 Required: True
@@ -300,10 +330,11 @@ Accept wildcard characters: False
 
 ### -Url
 URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com
+Not required when using -SelectEnvironment, as the environment will be selected interactively.
 
 ```yaml
 Type: Uri
-Parameter Sets: (All)
+Parameter Sets: Authenticate with client secret, Authenticate interactively, Authenticate using the device code flow, Authenticate with username and password, Authenticate with Dataverse SDK connection string., Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
 Aliases:
 
 Required: True
@@ -318,7 +349,7 @@ Username to authenticate with.
 
 ```yaml
 Type: String
-Parameter Sets: Authenticate interactively, Authenticate using the device code flow
+Parameter Sets: Authenticate interactively, Authenticate interactively with environment selection, Authenticate using the device code flow
 Aliases:
 
 Required: False

@@ -43,12 +43,18 @@ Get a connection to a target Dataverse environment using the `Get-DataverseConne
 $c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive
 ```
 
+*Example: Get a connection by selecting from available environments:*
+```powershell
+$c = Get-DataverseConnection -interactive -SelectEnvironment
+```
+
 See the full documentation for `Get-DataverseConnection` for other non-interactive auth types.
 
 ### Authentication Methods
 
 The module supports multiple authentication methods:
 - **Interactive**: Browser-based authentication (good for development)
+- **Interactive with Environment Selection**: Browser-based authentication with environment picker (no URL required)
 - **Device Code**: Authentication via device code flow (good for remote/headless scenarios)
 - **Username/Password**: Basic credential authentication
 - **Client Secret**: Service principal authentication (good for automation)
