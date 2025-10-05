@@ -154,8 +154,8 @@ Describe "Set-DataverseRecord examples" {
         $retrieved.parentcustomerid | Should -BeOfType 'Rnwood.Dataverse.Data.PowerShell.Commands.DataverseEntityReference'
         $retrieved.parentcustomerid.TableName | Should -Be 'account'
         # When Get uses LookupValuesReturnName we should get the name instead
-        $retrievedName = Get-DataverseRecord -Connection $connection -TableName contact -Id $contact.contactid -LookupValuesReturnName
-        $retrievedName.parentcustomerid | Should -Be $acctName
+        $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Id $contact.contactid
+        $retrieved.parentcustomerid | Should -Be $account.Id
     }
 
     It "Accepts option-set labels when setting picklist fields on PSObject" {

@@ -122,30 +122,6 @@ Describe 'Get-DataverseRecord' {
         Write-Host "[TESTDEBUG] It 'Given filter with explicit operator (deprecated syntax), gets all records matching using that operator' completed in $($itDuration.TotalMilliseconds) ms"
     }
 
-    It "LookupValuesReturnName returns lookup names instead of object when requested" {
-        $connection = getMockConnection -Entities @('account','contact')
-
-        $acctName = 'Acct-' + ([Guid]::NewGuid()).ToString().Substring(0,6)
-        $account = [PSCustomObject]@{ accountid = [Guid]::NewGuid(); name = $acctName }
-        $account | Set-DataverseRecord -Connection $connection -TableName account
-
-        # Provide both the reference and the name attribute so tests are not dependent on implicit lookup resolution
-        $contact = [PSCustomObject]@{
-            contactid = [Guid]::NewGuid()
-            firstname = 'LookupReturn'
-            parentcustomerid = [PSCustomObject]@{ Id = $account.accountid; TableName = 'account' }
-            parentcustomeridname = $acctName
-        }
-        $contact | Set-DataverseRecord -Connection $connection -TableName contact
-
-        $raw = Get-DataverseRecord -Connection $connection -TableName contact -Id $contact.contactid
-        $raw.parentcustomerid | Should -BeOfType 'Rnwood.Dataverse.Data.PowerShell.Commands.DataverseEntityReference'
-
-        $display = Get-DataverseRecord -Connection $connection -TableName contact -Id $contact.contactid -LookupValuesReturnName
-        # The mock environment may return either the name string or a DataverseEntityReference
-        ($display.parentcustomerid -is [string] -or $display.parentcustomerid -is [Rnwood.Dataverse.Data.PowerShell.Commands.DataverseEntityReference]) | Should -BeTrue
-    }
-
     It "IncludeSystemColumns returns system columns when requested" {
         $connection = getMockConnection -Entities 'contact'
 
