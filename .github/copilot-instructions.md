@@ -25,11 +25,14 @@ dotnet build
 # 1. Install Pester if not present (first time only, takes 30+ seconds)
 Install-Module -Force Pester
 
-# 2. Build the project (takes 10-15 seconds)
+# 2. Build the project (takes 10-15 seconds). STOP here if build fails.
 dotnet build # Ensure latest build
 
-# 3. Run unit tests (takes 15-30 seconds)
+# 3. Run unit tests (takes 15-30 seconds) - runs all tests in tests/
 Invoke-Pester -Output Detailed -Path tests
+
+# Always use -Path or -FullNameFilter to run specific test(s) when needed to save time
+Invoke-Pester -Output Detailed -Path tests -FullNameFilter 'Get-DataverseRecord Tests'
 
 # E2E tests require real Dataverse environment credentials
 # Set E2ETESTS_URL, E2ETESTS_CLIENTID, E2ETESTS_CLIENTSECRET environment variables
@@ -39,7 +42,7 @@ Invoke-Pester -Output Detailed -Path tests
 **TEST NOTES:**
 - Tests copy module to temp directory to avoid file locking issues
 - Tests use FakeXrmEasy to mock Dataverse IOrganizationService
-- `tests/metadata/contact.xml` contains serialized EntityMetadata for mock connection
+- `tests/metadata/*.xml` contains serialized EntityMetadata for mock connection
 - Tests spawn child PowerShell processes to test module loading
 
 **TESTING REQUIREMENTS FOR CODE CHANGES:**
@@ -117,9 +120,8 @@ Invoke-Pester -Output Detailed -Path tests
 ### Test Files
 - `tests/Module.Tests.ps1` - Tests module loads correctly, SDK assemblies resolve, works with pre-loaded assemblies
 - `tests/Get-DataverseRecord.Tests.ps1` - Tests QueryExpression, FetchXML, filters, column selection, mock connection
-- `tests/Common.ps1` - Shared setup: copies module to temp, sets PSModulePath, getMockConnection() using FakeXrmEasy with contact.xml metadata
-- `tests/metadata/contact.xml` - 2.2MB serialized EntityMetadata for 'contact' entity (used by DataContractSerializer in tests)
-- `tests/updatemetadata.ps1` - Script to regenerate contact.xml from real environment
+- `tests/Common.ps1` - Shared setup: copies module to temp, sets PSModulePath, getMockConnection() using FakeXrmEasy with *.xml metadata
+- `tests/metadata/*.xml` - serialized EntityMetadata for several entities (used by DataContractSerializer in tests)
 - `e2e-tests/Module.Tests.ps1` - Connects to real Dataverse with client secret, queries systemuser table, runs SQL
 
 ## CI/CD Pipeline (.github/workflows/publish.yml)
@@ -155,7 +157,7 @@ Invoke-Pester -Output Detailed -Path tests
 ### Debugging Failed Tests
 - Tests copy module to %TEMP%/[GUID]/Rnwood.Dataverse.Data.PowerShell
 - Tests spawn child pwsh processes - add verbose output to see what's happening
-- FakeXrmEasy limitations: doesn't support all operations, may need to mock additional metadata
+- FakeXrmEasy limitations: doesn't support all operations, may need to mock additional metadata or extend with custom fakes
 
 ## Coding Conventions
 

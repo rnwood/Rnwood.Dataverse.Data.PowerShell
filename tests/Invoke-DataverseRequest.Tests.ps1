@@ -46,14 +46,4 @@ Describe "Invoke-DataverseRequest examples" {
         # Ensure the request executes (FakeXrmEasy will accept the request even if it doesn't change state)
         { Invoke-DataverseRequest -Connection $connection -Request $request } | Should -Not -Throw
     }
-
-    It "Can use PublishDuplicateRule request with RequestName syntax" -Skip:$true {
-        # SKIPPED: FakeXrmEasy OSS doesn't support PublishDuplicateRuleRequest (only available in commercial/extended provider)
-    }
-
-    It "Can execute WhoAmI using RequestName parameter (simpler syntax)" -Skip:$true {
-        # FakeXrmEasy OSS doesn't support invoking OrganizationRequest by name string
-        # This test is intentionally skipped and validated in E2E or with commercial FakeXrmEasy
-    Invoke-DataverseRequest -Connection (getMockConnection -Entities 'systemuser') -RequestName "WhoAmI" | Should -Not -BeNull
-    }
 }

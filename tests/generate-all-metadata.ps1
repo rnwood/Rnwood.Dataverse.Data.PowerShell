@@ -11,21 +11,32 @@ Write-Host "================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Entities required for comprehensive test coverage
+# Default set of entities to collect metadata for. Add or remove entries as needed for your environment/tests.
 $entities = @(
     "account",
+    "contact",
+    "lead",
+    "opportunity",
+    "incident",
+    "task",
+    "email",
+    "phonecall",
+    "appointment",
+    "campaign",
+    "list",
     "solution",
     "systemuser",
     "team",
     "workflow",
     "asyncoperation",
     "organization",
-    "list",
     "duplicaterule",
     "processstage",
     "savedquery",
     "userquery",
     "annotation",
-    "incident",
+    "activitypointer",
+    "activityparty",
     "systemuserroles"
 )
 
@@ -53,7 +64,7 @@ foreach($entityname in $entities) {
         }).Results["EntityMetadata"]
         
         # Serialize to XML
-        $outputPath = Join-Path $PSScriptRoot "${entityname}.xml"
+        $outputPath = Join-Path $PSScriptRoot/metadata "${entityname}.xml"
         $outputStream = [IO.File]::OpenWrite($outputPath)
         $serializer.WriteObject($outputStream, $em)
         $outputStream.Close()
@@ -86,7 +97,7 @@ Write-Host "  Total size: $([Math]::Round($totalSize / 1MB, 2)) MB" -ForegroundC
 Write-Host ""
 
 if ($successCount -gt 0) {
-    Write-Host "Metadata files created in: $PSScriptRoot" -ForegroundColor Green
+    Write-Host "Metadata files created in: $PSScriptRoot/metadata" -ForegroundColor Green
     Write-Host ""
     Write-Host "Next steps:" -ForegroundColor Yellow
     Write-Host "  1. Run tests: Invoke-Pester -Path tests/Examples.Tests.ps1 -Output Detailed" -ForegroundColor Gray
@@ -95,6 +106,7 @@ if ($successCount -gt 0) {
 }
 
 if ($failCount -gt 0) {
-    Write-Host "Some entities failed. This may be normal if they don't exist in your environment." -ForegroundColor Yellow
-    Write-Host "Tests for those entities will be skipped." -ForegroundColor Yellow
+    Write-Host "Some entities failed to retrieve metadata. This may be normal if they don't exist in your environment." -ForegroundColor Yellow
+    Write-Host "IMPORTANT: Tests that require metadata files for those entities will FAIL until you add the corresponding XML files under tests/metadata/." -ForegroundColor Yellow
+    Write-Host "To include them, re-run this script against the missing entities or supply their logical names to the script." -ForegroundColor Yellow
 }
