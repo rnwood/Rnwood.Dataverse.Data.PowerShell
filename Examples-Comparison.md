@@ -168,7 +168,9 @@ $contacts = Get-CrmRecordsByFetch -conn $conn -Fetch $fetch
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
 # Simple filter
-$contacts = Get-DataverseRecord -Connection $conn -TableName contact -Columns fullname -Filter @{lastname = "Smith"}
+$contacts = Get-DataverseRecord -Connection $conn -TableName contact -Columns fullname -Filter @{
+  lastname = "Smith"
+}
 
 # Or with FetchXML for complex queries
 $fetchXml = @"
@@ -272,9 +274,18 @@ $response = New-CRMRecordsBatch -Entities $entities -conn $conn
 ```powershell
 # Simple - just pass PowerShell objects
 $accounts = @(
-    @{ name = "Company 1"; telephone1 = "555-0001" }
-    @{ name = "Company 2"; telephone1 = "555-0002" }
-    @{ name = "Company 3"; telephone1 = "555-0003" }
+  @{
+    name = "Company 1"
+    telephone1 = "555-0001"
+  }
+  @{
+    name = "Company 2"
+    telephone1 = "555-0002"
+  }
+  @{
+    name = "Company 3"
+    telephone1 = "555-0003"
+  }
 )
 
 # Batching is automatic when multiple records are passed
@@ -436,7 +447,9 @@ $results = Invoke-DataverseSql -Connection $conn -Sql @"
 SELECT fullname, createdon
 FROM contact
 WHERE lastname = @lastname
-"@ -Parameters @{ lastname = "Wood" }
+"@ -Parameters @{
+  lastname = "Wood"
+}
 
 $results | Format-Table
 ```
@@ -445,7 +458,14 @@ $results | Format-Table
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-@{lastname="Wood"}, @{lastname="Smith"} | Invoke-DataverseSql -Connection $conn -Sql @"
+@(
+  @{
+    lastname = "Wood"
+  },
+  @{
+    lastname = "Smith"
+  }
+) | Invoke-DataverseSql -Connection $conn -Sql @"
 SELECT TOP 1 lastname, createdon
 FROM contact
 WHERE lastname = @lastname
@@ -797,6 +817,220 @@ WHERE statecode = 0
 AND (address1_city = 'Seattle' OR address1_city = 'Redmond')
 "@
 ```
+
+### Example: Negation (NOT)
+
+Negation can be expressed concisely using `not` in the hashtable-based filters.
+
+**Microsoft.Xrm.Data.PowerShell (FetchXML):**
+```powershell
+$fetch = @"
+<fetch>
+  <entity name='contact'>
+    <filter>
+      <condition attribute='firstname' operator='ne' value='Rob' />
+    </filter>
+  </entity>
+</fetch>
+"@
+
+$contacts = Get-CrmRecordsByFetch -conn $conn -Fetch $fetch
+```
+
+**Rnwood.Dataverse.Data.PowerShell (hashtable grouping):**
+```powershell
+Get-DataverseRecord -Connection $conn -TableName contact -FilterValues @{
+  'not' = @{
+    firstname = 'Rob'
+  }
+}
+```
+
+### Note on XOR
+
+`xor` is supported to express "exactly one of" semantics and is more concise than writing the corresponding FetchXML. However, when used in exclude filters the complement of XOR requires enumerating multiple combinations; to avoid excessive processing the cmdlet limits `xor` groups to 8 items. For large numbers of alternatives prefer SQL or FetchXML.
+
+### Example: Complex Grouped Filters (concise hashtable syntax vs FetchXML)
+
+When you need to express more complex nested logical combinations of filters the
+concise hashtable-based grouping syntax in `Rnwood.Dataverse.Data.PowerShell` can
+be significantly simpler than writing equivalent FetchXML. Consider the
+predicate: ( (firstname = 'Rob' OR firstname = 'Joe') AND (lastname = 'One' OR lastname = 'Smith') )
+
+**Microsoft.Xrm.Data.PowerShell (FetchXML):**
+```powershell
+$fetch = @"
+<fetch>
+  <entity name='contact'>
+    <attribute name='fullname' />
+    <filter type='and'>
+      <filter type='or'>
+        <condition attribute='firstname' operator='eq' value='Rob' />
+        <condition attribute='firstname' operator='eq' value='Joe' />
+      </filter>
+      <filter type='or'>
+        <condition attribute='lastname' operator='eq' value='One' />
+        <condition attribute='lastname' operator='eq' value='Smith' />
+      </filter>
+    </filter>
+  </entity>
+</fetch>
+"@
+
+$contacts = Get-CrmRecordsByFetch -conn $conn -Fetch $fetch
+```
+
+**Rnwood.Dataverse.Data.PowerShell (hashtable grouping):**
+```powershell
+# The same predicate expressed concisely using nested hashtable groups:
+$contacts = Get-DataverseRecord -Connection $conn -TableName contact -FilterValues @{
+    'and' = @(
+    @{ 'or' = @(
+      @{
+        firstname = 'Rob'
+      },
+      @{
+        firstname = 'Joe'
+      }
+    ) },
+    @{ 'or' = @(
+      @{
+        lastname = 'One'
+      },
+      @{
+        lastname = 'Smith'
+      }
+    ) }
+    )
+}
+```
+
+Notes:
+- The hashtable syntax maps naturally to PowerShell objects and avoids manual XML construction.
+- Grouping keys are case-insensitive (`and` / `or`) and can be nested arbitrarily.
+- The same grouped structure can also be expressed as FetchXML or SQL if required, but the hashtable approach keeps complex logical structures readable and easier to build programmatically.
+
+### Example: Excluding with grouped filters
+
+When you want to exclude records that match a grouped condition, `Rnwood.Dataverse.Data.PowerShell` provides `-ExcludeFilterValues` which accepts the same grouping hashtables as `-FilterValues`.
+
+**Scenario:** Exclude records where firstname = 'Rob' OR lastname = 'Smith'.
+
+**Microsoft.Xrm.Data.PowerShell (FetchXML):**
+```powershell
+$fetch = @"
+<fetch>
+  <entity name='contact'>
+    <filter type='and'>
+      <condition attribute='firstname' operator='ne' value='Rob' />
+      <condition attribute='lastname' operator='ne' value='Smith' />
+    </filter>
+  </entity>
+</fetch>
+"@
+
+$contacts = Get-CrmRecordsByFetch -conn $conn -Fetch $fetch
+```
+
+**Rnwood.Dataverse.Data.PowerShell (ExcludeFilterValues):**
+```powershell
+Get-DataverseRecord -Connection $conn -TableName contact -ExcludeFilterValues @{
+  'or' = @(
+  @{
+    firstname = 'Rob'
+  },
+  @{
+    lastname = 'Smith'
+  }
+  )
+}
+```
+
+### Example: Include and Exclude Together
+
+Combine `-FilterValues` (include) and `-ExcludeFilterValues` to compose precise queries.
+
+**Scenario:** Include contacts whose lastname is 'One' or 'Two', but exclude those where exactly one of (emailaddress1 present, mobilephone present) — i.e. exclude contacts where exactly one of these contact methods exists.
+
+**Microsoft.Xrm.Data.PowerShell (FetchXML):**
+```powershell
+# The server-side equivalent filters for the complement of XOR (both present OR both absent)
+$fetch = @"
+<fetch>
+  <entity name='contact'>
+    <filter type='and'>
+      <filter type='or'>
+        <condition attribute='lastname' operator='eq' value='One' />
+        <condition attribute='lastname' operator='eq' value='Two' />
+      </filter>
+      <filter type='or'>
+        <filter type='and'>
+          <condition attribute='emailaddress1' operator='null' />
+          <condition attribute='mobilephone' operator='null' />
+        </filter>
+        <filter type='and'>
+          <condition attribute='emailaddress1' operator='not-null' />
+          <condition attribute='mobilephone' operator='not-null' />
+        </filter>
+      </filter>
+    </filter>
+  </entity>
+</fetch>
+"@
+
+$contacts = Get-CrmRecordsByFetch -conn $conn -Fetch $fetch
+```
+
+**Rnwood.Dataverse.Data.PowerShell (hashtable grouping):**
+```powershell
+Get-DataverseRecord -Connection $conn -TableName contact \
+  -FilterValues @{
+      'or' = @(
+      @{
+        lastname = 'One'
+      },
+      @{
+        lastname = 'Two'
+      }
+      )
+  } \
+  -ExcludeFilterValues @{
+      'xor' = @(
+      @{
+        emailaddress1 = @{
+          operator = 'NotNull'
+        }
+      },
+      @{
+        mobilephone = @{
+          operator = 'NotNull'
+        }
+      }
+      )
+  }
+```
+
+This example demonstrates exclusion based on an exclusive-or across two different attributes (presence of email vs presence of mobile). The hashtable `xor` expression keeps the exclusion intent concise; the FetchXML equivalent must express the complement explicitly so it can be executed server-side.
+
+### Example: XOR grouping
+
+`xor` provides a concise way to express "exactly one of" semantics. For example:
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+Get-DataverseRecord -Connection $conn -TableName contact -FilterValues @{
+  'xor' = @(
+  @{
+    firstname = 'Rob'
+  },
+  @{
+    firstname = 'Joe'
+  }
+  )
+}
+```
+
+Equivalent logic using FetchXML (expanded) requires writing the OR of two terms `(A AND NOT B) OR (B AND NOT A)` and becomes more verbose as the number of elements increases. When using `xor` with many items, be aware of combinatorial explosion (the cmdlet limits `xor` groups to 8 items to avoid excessive processing); for many items consider SQL or other server-side filtering instead.
 
 ### Example: Query with Aggregation
 
@@ -1167,7 +1401,9 @@ foreach($connectionSource in $connectionsSource) {
 
 # Create records in all organizations
 foreach($conn in $conns) {
-    New-CrmRecord -conn $conn -EntityLogicalName account -Fields @{"name"="Sample Account"}
+  New-CrmRecord -conn $conn -EntityLogicalName account -Fields @{
+    name = "Sample Account"
+  }
 }
 ```
 
@@ -1186,7 +1422,9 @@ foreach($connectionSource in $connectionsSource) {
 
 # Create records in all organizations
 foreach($conn in $conns) {
-    Set-DataverseRecord -Connection $conn -TableName account -Fields @{name = "Sample Account"}
+  Set-DataverseRecord -Connection $conn -TableName account -Fields @{
+    name = "Sample Account"
+  }
 }
 
 # Or copy data from one org to another

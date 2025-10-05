@@ -11,6 +11,8 @@ Features:
 - Automatic conversion for lookup type values in both input and output directions. You can use the name of the record to refer to a record you want to associate with as long as it's unique.
 - On behalf of (delegation) support to create/update records on behalf of another user.
 - Querying records using a variety of methods, with full support for returning the full result set across pages.
+ - Querying records using a variety of methods, with full support for returning the full result set across pages. Supports concise hashtable-based filters including grouped logical expressions (and/or) with arbitrary nesting depth.
+ - Querying records using a variety of methods, with full support for returning the full result set across pages. Supports concise hashtable-based filters including grouped logical expressions (and/or), negation (`not`) and exclusive-or (`xor`) with arbitrary nesting depth. Note: `xor` groups are limited to 8 items to avoid exponential expansion for certain exclusion scenarios.
 - Batching support to create/update/upsert many records in a single request to service.
 - Wide variety of auth options for both interactive and unattended use.
 
@@ -71,6 +73,84 @@ Every command that need a connection to a Dataverse environment exposes a `-Conn
 $c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive
 Get-DataverseRecord -connection $c -tablename contact
 ```
+
+*Example: Exclude records where firstname='Rob' or lastname='Smith':*
+```powershell
+Get-DataverseRecord -Connection $c -TableName contact -ExcludeFilterValues @{
+  'or' = @(
+    @{ firstname = 'Rob' },
+    @{ lastname = 'Smith' }
+  )
+}
+```
+
+*Example: Include lastnames One or Two, but exclude firstname Rob:* 
+```powershell
+Get-DataverseRecord -Connection $c -TableName contact -FilterValues @{
+  'or' = @(
+  @{
+    lastname = 'One'
+  },
+  @{
+    lastname = 'Two'
+  }
+  )
+} -ExcludeFilterValues @{
+  'xor' = @(
+    @{ emailaddress1 = @{
+      operator = 'NotNull'
+    } },
+    @{ mobilephone = @{
+      operator = 'NotNull'
+    } }
+  )
+}
+```
+
+*Example: Get contacts where (firstname = 'Rob' OR firstname = 'Joe') AND lastname = 'One':*
+```powershell
+$c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive
+Get-DataverseRecord -Connection $c -TableName contact -FilterValues @{
+  'and' = @(
+  @{ 'or' = @(
+    @{
+      firstname = 'Rob'
+    },
+    @{
+      firstname = 'Joe'
+    }
+  ) },
+  @{
+    lastname = 'One'
+  }
+  )
+}
+```
+
+*Example: Negation (NOT) — get contacts that do NOT have firstname 'Rob':*
+```powershell
+Get-DataverseRecord -Connection $c -TableName contact -FilterValues @{
+  'not' = @{
+      firstname = 'Rob'
+  }
+}
+```
+
+*Example: Exclusive-or (XOR) — exactly one of the subfilters matches:*
+```powershell
+Get-DataverseRecord -Connection $c -TableName contact -FilterValues @{
+  'xor' = @(
+  @{
+    firstname = 'Rob'
+  },
+  @{
+    firstname = 'Joe'
+  }
+  )
+}
+```
+
+Note: `xor` can cause combinatorial expansion when negated or used in complex exclude filters; the cmdlet enforces a limit of 8 items in an `xor` group. Use smaller XOR groups, FetchXML, or SQL for large conditions.
 
 The cmdlets input and output normal PowerShell objects to/from the pipeline, so you can combine multiple command easily. You can also create multiple connections allowing you to work with more than one environment in the same script.
 

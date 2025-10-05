@@ -53,14 +53,23 @@ Get all contacts returning all non-system columns.
 
 ### Example 2
 ```powershell
-PS C:\> Get-DataverseRecord -connection $connection -tablename contact -columns firstname -filtervalues @{"firstname:Like"="Rob%"}
+PS C:\> Get-DataverseRecord -connection $connection -tablename contact -columns firstname -filtervalues @{
+	"firstname:Like" = "Rob%"
+}
 ```
 
 Get all contacts where firstname starts with 'Rob' and return the firstname column only.
 
 ### Example 3 (nested hashtable operator)
 ```powershell
-PS C:\> Get-DataverseRecord -connection $connection -tablename contact -filtervalues @(@{ age = @{ value = 25; operator = 'GreaterThan' } })
+PS C:\> Get-DataverseRecord -connection $connection -tablename contact -filtervalues @(
+	@{
+		age = @{
+			value = 25
+			operator = 'GreaterThan'
+		}
+	}
+)
 ```
 
 Find contacts with age greater than 25 by using a nested hashtable to specify operator and value.
@@ -163,12 +172,38 @@ Each hashtable's entries are combined with AND to form a sub-filter.
 Multiple hashtables are combined using `AND` by default (a record is excluded only if it matches all sub-filters); use `-ExcludeFilterOr` to combine them using `OR` instead (a record is excluded if it matches any sub-filter).
 
 Examples:
+
 - Default (AND):
-	`-ExcludeFilterValues @{ firstname = 'bob'; age = 25 }, @{ lastname = 'smith' }`
-	Excludes only records matching `(firstname = 'bob' AND age = 25) AND (lastname = 'smith')`.
+
+
+
+-ExcludeFilterValues @(
+	@{
+		firstname = 'bob'
+		age = 25
+	},
+	@{
+		lastname = 'smith'
+	}
+)
+
+Excludes only records matching `(firstname = 'bob' AND age = 25) AND (lastname = 'smith')`.
+
 - With `-ExcludeFilterOr` (OR):
-	`-ExcludeFilterValues @{ firstname = 'bob'; age = 25 }, @{ lastname = 'smith' } -ExcludeFilterOr`
-	Excludes records matching `(firstname = 'bob' AND age = 25) OR (lastname = 'smith')`.
+
+
+
+-ExcludeFilterValues @(
+	@{
+		firstname = 'bob'
+		age = 25
+	},
+	@{
+		lastname = 'smith'
+	}
+) -ExcludeFilterOr
+
+Excludes records matching `(firstname = 'bob' AND age = 25) OR (lastname = 'smith')`.
 
 ```yaml
 Type: Hashtable[]
@@ -226,7 +261,138 @@ Values may be:
 When an operator is omitted a default `Equal` (or `Null`/`NotNull` for `$null`) is used. Valid operators are those exposed by the SDK's `ConditionOperator` enum; for full list see the SDK docs. The provided value types must match the column type expected by Dataverse for the chosen operator.
 
 Example:
-`-FilterValues @(@{firstname = 'bob'; age = 25}, @{firstname = 'sue'})` => `(firstname = 'bob' AND age = 25) OR (firstname = 'sue')`.
+
+
+
+-FilterValues @(
+	@{
+		firstname = 'bob'
+		age = 25
+	},
+	@{
+		firstname = 'sue'
+	}
+)
+
+=> `(firstname = 'bob' AND age = 25) OR (firstname = 'sue')`.
+
+Group filters using a wrapping hashtable with an `and` or `or` key
+to combine multiple sub-hashtables. This allows building complex
+logical expressions with arbitrary nesting depth. The value of the
+`and`/`or` key must be a hashtable or an array of hashtables.
+
+Examples:
+- Require both firstname='Rob' AND lastname='One':
+	
+
+-FilterValues @{
+	    'and' = @(
+	        @{
+	            firstname = 'Rob'
+	        },
+	        @{
+	            lastname = 'One'
+	        }
+	    )
+	}
+
+- Combine OR inside AND to match ( (firstname = 'Rob' OR firstname = 'Joe') AND lastname = 'One' ):
+	
+
+-FilterValues @{
+	    'and' = @(
+	        @{
+	            'or' = @(
+					@{
+						firstname = 'Rob'
+					},
+					@{
+						firstname = 'Joe'
+					}
+	            )
+	        },
+				@{
+					lastname = 'One'
+				}
+	    )
+	}
+
+Grouped exclude filters work the same way when passed to `-ExcludeFilterValues`.
+
+Examples for exclude filters:
+
+Exclude records where firstname is 'Rob':
+
+
+
+-ExcludeFilterValues @{
+	'not' = @{
+		firstname = 'Rob'
+	}
+}
+
+Exclude records where exactly one of several alternatives matches (XOR):
+
+
+
+-ExcludeFilterValues @{
+	'xor' = @(
+		@{
+			firstname = 'Rob'
+		},
+		@{
+			firstname = 'Joe'
+		}
+	)
+}
+
+Exclude where (firstname = 'Rob' AND lastname = 'One') OR lastname = 'Smith':
+
+
+
+-ExcludeFilterValues @{
+	'or' = @(
+		@{
+			firstname = 'Rob'
+			lastname = 'One'
+		},
+		@{
+			lastname = 'Smith'
+		}
+	)
+}
+
+Examples showing include + exclude together:
+
+Include contacts with lastname 'One' or 'Two' but exclude where exactly one of email vs mobile exists (XOR exclusion):
+
+
+
+-FilterValues @{
+	'or' = @(
+		@{
+			lastname = 'One'
+		},
+		@{
+			lastname = 'Two'
+		}
+	)
+} -ExcludeFilterValues @{
+	'xor' = @(
+		@{
+			emailaddress1 = @{
+				operator = 'NotNull'
+			}
+		},
+		@{
+			mobilephone = @{
+				operator = 'NotNull'
+			}
+		}
+	)
+}
+
+Warning: When using `xor` in an exclude filter the cmdlet must construct the complement (NOT XOR) which can expand combinatorially. To prevent excessive expansion the cmdlet enforces a maximum of 8 items inside an `xor` group; supplying more items will throw an error. For large alternative lists use FetchXML or SQL instead.
 
 ```yaml
 Type: Hashtable[]
