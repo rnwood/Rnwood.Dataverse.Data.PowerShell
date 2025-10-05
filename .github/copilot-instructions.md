@@ -21,11 +21,12 @@ dotnet build
 
 ### Testing Sequence (Total time: ~15-30 seconds)
 ```powershell
-# 1. Set module path to built output (REQUIRED)
-$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0")
 
-# 2. Install Pester if not present (first time only, takes 30+ seconds)
+# 1. Install Pester if not present (first time only, takes 30+ seconds)
 Install-Module -Force Pester
+
+# 2. Build the project (takes 10-15 seconds)
+dotnet build # Ensure latest build
 
 # 3. Run unit tests (takes 15-30 seconds)
 Invoke-Pester -Output Detailed -Path tests
@@ -38,9 +39,8 @@ Invoke-Pester -Output Detailed -Path tests
 **TEST NOTES:**
 - Tests copy module to temp directory to avoid file locking issues
 - Tests use FakeXrmEasy to mock Dataverse IOrganizationService
-- `tests/contact.xml` contains serialized EntityMetadata for mock connection
+- `tests/metadata/contact.xml` contains serialized EntityMetadata for mock connection
 - Tests spawn child PowerShell processes to test module loading
-- ALWAYS set $env:TESTMODULEPATH before running tests
 
 **TESTING REQUIREMENTS FOR CODE CHANGES:**
 - **ALL code changes MUST include tests** that validate the new functionality
@@ -50,11 +50,11 @@ Invoke-Pester -Output Detailed -Path tests
   - Add tests in `tests/Examples.Tests.ps1` that validate the example patterns
   - Test both the verbose and simplified syntax variants where applicable
   - Tests should use the mock provider with FakeXrmEasy
-  - If an entity is not in `tests/contact.xml`, either:
+  - If an entity is not in `tests/metadata/contact.xml`, either:
     - Create test data in the test itself using SDK Entity objects
     - Or document that the example is tested manually/in E2E tests
 - Expected test execution time: 15-60 seconds for unit tests
-- Tests may fail if entities beyond 'contact' are queried without creating them first
+- Tests may fail if entities beyond the available metadata are used. Request that the necessary metadata be added to `tests/*.xml` if needed.
 - **Document test results** in commits showing pass/fail counts
 - CI/CD pipeline will run all tests - ensure local tests pass first
 
@@ -118,7 +118,7 @@ Invoke-Pester -Output Detailed -Path tests
 - `tests/Module.Tests.ps1` - Tests module loads correctly, SDK assemblies resolve, works with pre-loaded assemblies
 - `tests/Get-DataverseRecord.Tests.ps1` - Tests QueryExpression, FetchXML, filters, column selection, mock connection
 - `tests/Common.ps1` - Shared setup: copies module to temp, sets PSModulePath, getMockConnection() using FakeXrmEasy with contact.xml metadata
-- `tests/contact.xml` - 2.2MB serialized EntityMetadata for 'contact' entity (used by DataContractSerializer in tests)
+- `tests/metadata/contact.xml` - 2.2MB serialized EntityMetadata for 'contact' entity (used by DataContractSerializer in tests)
 - `tests/updatemetadata.ps1` - Script to regenerate contact.xml from real environment
 - `e2e-tests/Module.Tests.ps1` - Connects to real Dataverse with client secret, queries systemuser table, runs SQL
 
@@ -127,7 +127,7 @@ Invoke-Pester -Output Detailed -Path tests
 **Steps:**
 1. Checkout, install PowerShell version
 2. Build: Sets version from $env:GITHUB_REF if tag, builds main project, copies to out/
-3. Test (pwsh): Sets $env:TESTMODULEPATH, installs Pester, runs tests, checks $LASTEXITCODE
+3. Test (pwsh): Sets $env:TESTMODULEPATH to point at the built module, installs Pester, runs tests, checks $LASTEXITCODE
 4. Test (powershell on Windows PS5): Same as above but with powershell.exe
 5. E2E Test: Sets E2ETESTS_* env vars from secrets, runs e2e-tests
 6. Publish (if matrix.publish && release): Runs Publish-Module to PowerShell Gallery
@@ -150,11 +150,10 @@ Invoke-Pester -Output Detailed -Path tests
 - Add case to `GetPSValue()` for new AttributeType (e.g., case AttributeTypeCode.BigInt)
 - Add logic to `GetDataverseValue()` for converting PSObject property to Dataverse value
 - Handle metadata lookups (EntityMetadata, AttributeMetadata) via IOrganizationService.Execute(RetrieveEntityRequest)
-- Test with FakeXrmEasy mock - add metadata to tests/contact.xml if needed
+- Test with FakeXrmEasy mock - add metadata to tests/metadata/contact.xml if needed
 
 ### Debugging Failed Tests
 - Tests copy module to %TEMP%/[GUID]/Rnwood.Dataverse.Data.PowerShell
-- Check $env:TESTMODULEPATH is set correctly
 - Tests spawn child pwsh processes - add verbose output to see what's happening
 - FakeXrmEasy limitations: doesn't support all operations, may need to mock additional metadata
 

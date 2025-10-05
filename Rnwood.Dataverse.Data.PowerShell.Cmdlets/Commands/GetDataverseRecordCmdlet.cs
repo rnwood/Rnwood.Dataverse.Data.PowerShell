@@ -853,7 +853,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             ColumnSet oldColumnSet = query.ColumnSet;
             query.ColumnSet = new ColumnSet(false);
 
+            var countStart = DateTime.UtcNow;
             long result = GetRecords(query).LongCount();
+            var countDuration = DateTime.UtcNow - countStart;
+            WriteVerbose($"Counting records for query took {countDuration.TotalMilliseconds} ms");
 
             query.ColumnSet = oldColumnSet;
             return result;
@@ -880,7 +883,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             do
             {
+                var reqStart = DateTime.UtcNow;
                 response = (RetrieveMultipleResponse)Connection.Execute(request);
+                var reqDuration = DateTime.UtcNow - reqStart;
+                WriteVerbose($"RetrieveMultiple request for page {pageInfo.PageNumber - 1} completed in {reqDuration.TotalMilliseconds} ms and returned {response.EntityCollection.Entities.Count} entities. MoreRecords={response.EntityCollection.MoreRecords}");
 
                 pageInfo.PageNumber++;
                 pageInfo.PagingCookie = response.EntityCollection.PagingCookie;
