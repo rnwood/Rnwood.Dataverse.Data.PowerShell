@@ -46,6 +46,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private const string PARAMSET_CLIENTSECRET = "Authenticate with client secret";
 		private const string PARAMSET_INTERACTIVE = "Authenticate interactively";
+		private const string PARAMSET_INTERACTIVE_SELECTENV = "Authenticate interactively with environment selection";
 		private const string PARAMSET_DEVICECODE = "Authenticate using the device code flow";
 		private const string PARAMSET_USERNAMEPASSWORD = "Authenticate with username and password";
 		private const string PARAMSET_CONNECTIONSTRING = "Authenticate with Dataverse SDK connection string.";
@@ -65,6 +66,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE_SELECTENV, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		public Guid ClientId { get; set; } = new Guid("9cee029c-6210-4654-90bb-17e6e9d36617");
@@ -72,7 +74,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Gets or sets the URL of the Dataverse environment to connect to.
 		/// </summary>
-		[Parameter(Mandatory = true, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CONNECTIONSTRING, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEFAULTAZURECREDENTIAL, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
 		public Uri Url { get; set; }
 
 		/// <summary>
@@ -85,8 +93,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// Gets or sets the username for authentication.
 		/// </summary>
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Username to authenticate with.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE_SELECTENV, HelpMessage = "Username to authenticate with.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Username to authenticate with.")]
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Username to authenticate with.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Username to authenticate with.")]
 		public string Username { get; set; }
 
 		/// <summary>
@@ -99,7 +108,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// Gets or sets a value indicating whether to use interactive authentication.
 		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Triggers interactive authentication, where browser will be opened for user to interactively log in.")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_INTERACTIVE_SELECTENV, HelpMessage = "Triggers interactive authentication, where browser will be opened for user to interactively log in.")]
 		public SwitchParameter Interactive { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether to select environment interactively.
+		/// </summary>
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_INTERACTIVE_SELECTENV, HelpMessage = "Allows you to select from available Dataverse environments after authentication instead of specifying a URL.")]
+		public SwitchParameter SelectEnvironment { get; set; }
 
 		/// <summary>
 		/// Gets or sets a value indicating whether to use device code authentication.
@@ -221,6 +237,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								.Create(ClientId.ToString())
 								.WithRedirectUri("http://localhost")
 								.Build();
+
+							result = new ServiceClient(Url, url => GetTokenInteractive(publicClient, url));
+
+							break;
+						}
+
+					case PARAMSET_INTERACTIVE_SELECTENV:
+						{
+							var publicClient = PublicClientApplicationBuilder
+								.Create(ClientId.ToString())
+								.WithRedirectUri("http://localhost")
+								.Build();
+
+							// First authenticate and discover environments
+							var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+							Url = new Uri(discoveryUrl);
 
 							result = new ServiceClient(Url, url => GetTokenInteractive(publicClient, url));
 
@@ -470,6 +502,90 @@ Url + "/api/data/v9.2/");
 			{
 				var token = await credential.GetTokenAsync(tokenRequestContext, cts.Token);
 				return token.Token;
+			}
+		}
+
+		private async Task<string> DiscoverAndSelectEnvironment(IPublicClientApplication app)
+		{
+			// Authenticate interactively to get access token for discovery
+			Uri discoveryScope = new Uri("https://globaldisco.crm.dynamics.com/.default");
+			string[] scopes = new[] { discoveryScope.ToString() };
+
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
+			{
+				AuthenticationResult authResult = null;
+
+				if (!string.IsNullOrEmpty(Username))
+				{
+					try
+					{
+						authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync(cts.Token);
+					}
+					catch (MsalUiRequiredException)
+					{
+					}
+				}
+
+				if (authResult == null)
+				{
+					authResult = await app.AcquireTokenInteractive(scopes).ExecuteAsync(cts.Token);
+					Username = authResult.Account.Username;
+				}
+
+				// Use ServiceClient.DiscoverOnlineOrganizationsAsync to get list of environments
+				var orgDetails = await ServiceClient.DiscoverOnlineOrganizationsAsync(
+					(uri) => Task.FromResult(authResult.AccessToken),
+					new Uri("https://globaldisco.crm.dynamics.com"),
+					null,
+					null,
+					cts.Token);
+
+				if (orgDetails == null || orgDetails.Count == 0)
+				{
+					throw new Exception("No Dataverse environments found for this user.");
+				}
+
+				// Display available environments and let user select
+				WriteObject("Available Dataverse environments:");
+				WriteObject("");
+
+				var orgList = orgDetails.ToList();
+				for (int i = 0; i < orgList.Count; i++)
+				{
+					var org = orgList[i];
+					WriteObject($"  {i + 1}. {org.FriendlyName} ({org.UniqueName})");
+					WriteObject($"      URL: {org.Endpoints[Microsoft.Xrm.Sdk.Discovery.EndpointType.WebApplication]}");
+					WriteObject("");
+				}
+
+				// Prompt for selection
+				int selection = -1;
+				while (selection < 1 || selection > orgList.Count)
+				{
+					try
+					{
+						Host.UI.Write("Select environment (1-" + orgList.Count + "): ");
+						var input = Host.UI.ReadLine();
+						selection = int.Parse(input);
+
+						if (selection < 1 || selection > orgList.Count)
+						{
+							Host.UI.WriteLine("Invalid selection. Please enter a number between 1 and " + orgList.Count);
+						}
+					}
+					catch
+					{
+						Host.UI.WriteLine("Invalid input. Please enter a number.");
+						selection = -1;
+					}
+				}
+
+				var selectedOrg = orgList[selection - 1];
+				var url = selectedOrg.Endpoints[Microsoft.Xrm.Sdk.Discovery.EndpointType.WebApplication];
+
+				WriteVerbose($"Selected environment: {selectedOrg.FriendlyName} ({url})");
+
+				return url;
 			}
 		}
 	}
