@@ -72,7 +72,10 @@ Invokes `myapi_EscalateCase` using without using a request type from the Dataver
 ```powershell
 PS C:\> $Target = new-object Microsoft.Xrm.Sdk.EntityReference "incident", "{DC66FE5D-B854-4F9D-BA63-4CEA4257A8E9}"
 PS C:\> $Priority = new-object Microsoft.Xrm.Sdk.OptionSetValue 1
-PS C:\> $response = Invoke-DataverseRequest -connection $c myapi_EscalateCase @{"Target"=$Target; "Priority=$Priority}
+PS C:\> $response = Invoke-DataverseRequest -connection $c myapi_EscalateCase @{
+	Target = $Target
+	Priority = $Priority
+}
 ```
 
 Invokes `myapi_EscalateCase` by using just the request name and parameters using existing connection `$c` and storing the response into a variable.
@@ -80,7 +83,14 @@ Invokes `myapi_EscalateCase` by using just the request name and parameters using
 ### Example 4
 
 ```powershell
-PS C:\>invoke-dataverserequest -connection $c -method POST myapi_Example -CustomHeaders @{"foo"="bar"} -Body @{"a"=1; "b"=3}
+PS C:\> invoke-dataverserequest -connection $c -method POST myapi_Example \
+	-CustomHeaders @{
+		foo = "bar"
+	} \
+	-Body @{
+		a = 1
+		b = 3
+	}
 ```
 
 Invokes the `GET` `myapi_Example` REST API using custom headers and body

@@ -26,6 +26,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     [OutputType(typeof(IEnumerable<PSObject>))]
     public class GetDataverseRecordCmdlet : OrganizationServiceCmdlet
     {
+        private const int MaxXorItems = 8;
         /// <summary>
         /// Gets or sets the Dataverse connection to use.
         /// </summary>
@@ -371,17 +372,294 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             return query;
         }
-        private static void ProcessHashFilterValues(FilterExpression includesFilterExpression, Hashtable[] filterValuesArray, bool isExcludeFilter)
+        private static void ProcessHashFilterValues(FilterExpression parentFilterExpression, Hashtable[] filterValuesArray, bool isExcludeFilter)
         {
             foreach (Hashtable filterValues in filterValuesArray)
             {
-                // Each hashtable's entries should always be combined with AND
-                // (e.g. @{a=1; b=2} -> a=1 AND b=2). The outer filter expression
-                // controls whether the inverted hashtable-filters are combined
-                // using AND or OR when used as an exclude filter.
-                FilterExpression includeFilterExpression = includesFilterExpression.AddFilter(LogicalOperator.And);
+                // Each hashtable represents a single sub-filter; by default its
+                // entries are combined with AND. We create a container filter for
+                // the hashtable so it integrates correctly with the parent
+                // expression which may combine multiple hashtables with OR/AND.
+                FilterExpression containerFilter = parentFilterExpression.AddFilter(LogicalOperator.And);
+
                 foreach (DictionaryEntry filterValue in filterValues)
                 {
+                    string key = filterValue.Key.ToString();
+
+                    // Support grouped subfilters with keys 'and' or 'or' whose
+                    // value is an array (or single) of hashtables. This allows
+                    // infinite depth recursion of groups such as:
+                    // @{ 'and' = @(@{a=1}, @{ 'or' = @(@{b=2}, @{c=3}) }) }
+                    if (string.Equals(key, "and", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(key, "or", StringComparison.OrdinalIgnoreCase))
+                    {
+                        LogicalOperator groupOperator = string.Equals(key, "and", StringComparison.OrdinalIgnoreCase) ? LogicalOperator.And : LogicalOperator.Or;
+
+                        // Normalize the value into a Hashtable[] so we can recurse
+                        // regardless of whether the caller supplied a single
+                        // hashtable or an array/list of them.
+                        List<Hashtable> nested = new List<Hashtable>();
+                        if (filterValue.Value is Hashtable singleHt)
+                        {
+                            nested.Add(singleHt);
+                        }
+                        else if (filterValue.Value is IEnumerable enumerable)
+                        {
+                            foreach (object o in enumerable)
+                            {
+                                try
+                                {
+                                    Hashtable nh = ToHashtable(o);
+                                    nested.Add(nh);
+                                }
+                                catch (InvalidDataException e)
+                                {
+                                    throw new InvalidDataException($"Grouped filter operator '{key}' must contain hashtables. {e.Message}");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidDataException($"Grouped filter operator '{key}' must contain a hashtable or an array of hashtables.");
+                        }
+
+                        // For exclude filters we must invert the group logical
+                        // operator to implement a NOT over the whole group using
+                        // De Morgan's laws (e.g. NOT(A OR B) == (NOT A) AND
+                        // (NOT B)). The leaf operators are still inverted when
+                        // isExcludeFilter is true so flipping the group operator
+                        // produces the correct semantics.
+                        LogicalOperator effectiveGroupOperator = groupOperator;
+                        if (isExcludeFilter)
+                        {
+                            effectiveGroupOperator = groupOperator == LogicalOperator.And ? LogicalOperator.Or : LogicalOperator.And;
+                        }
+
+                        // Create a grouping filter under the container with the
+                        // effective logical operator, then recurse to process the
+                        // nested hashtables into that group.
+                        FilterExpression groupFilter = containerFilter.AddFilter(effectiveGroupOperator);
+                        ProcessHashFilterValues(groupFilter, nested.ToArray(), isExcludeFilter);
+                        continue;
+                    }
+
+                    // Support a 'not' operator to negate a nested expression.
+                    // The semantics are: NOT(innerExpression). For a simple
+                    // hashtable inner expression (multiple fields combined by
+                    // AND) this is converted to an OR of the negated leaf
+                    // conditions per De Morgan's laws. If the inner expression
+                    // is itself a grouped expression (e.g. @{ 'or' = @(...)}),
+                    // the inversion of the group operator is applied and the
+                    // leaf operators are toggled by flipping isExcludeFilter.
+                    if (string.Equals(key, "not", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Normalize nested elements
+                        List<Hashtable> nested = new List<Hashtable>();
+
+                        if (filterValue.Value is Hashtable singleHt)
+                        {
+                            // If the single hashtable is itself a wrapper for
+                            // an explicit group (single key 'and'/'or'), treat
+                            // that specially so we invert the group operator.
+                            if (singleHt.Count == 1 && singleHt.Keys.Cast<object>().First() is string k &&
+                                (string.Equals(k, "and", StringComparison.OrdinalIgnoreCase) || string.Equals(k, "or", StringComparison.OrdinalIgnoreCase)))
+                            {
+                                // Extract inner list and operator
+                                var innerObj = singleHt[k];
+                                if (innerObj is IEnumerable ie)
+                                {
+                                    foreach (object o in ie)
+                                    {
+                                            try
+                                            {
+                                                Hashtable nh = ToHashtable(o);
+                                                nested.Add(nh);
+                                            }
+                                            catch (InvalidDataException e)
+                                            {
+                                                throw new InvalidDataException($"Grouped filter operator '{k}' must contain hashtables. {e.Message}");
+                                            }
+                                    }
+                                }
+                                else if (innerObj is Hashtable nh)
+                                {
+                                    nested.Add(nh);
+                                }
+                                else
+                                {
+                                    throw new InvalidDataException($"Grouped filter operator '{k}' must contain a hashtable or an array of hashtables.");
+                                }
+
+                                // The inner group operator is k. NOT(innerGroup)
+                                // requires the effective operator to be the
+                                // inverse of k (De Morgan). Compute that and
+                                // process nested with inverted leaf semantics.
+                                LogicalOperator innerOp = string.Equals(k, "and", StringComparison.OrdinalIgnoreCase) ? LogicalOperator.And : LogicalOperator.Or;
+                                LogicalOperator effective = innerOp == LogicalOperator.And ? LogicalOperator.Or : LogicalOperator.And;
+                                // Create grouping filter with effective operator
+                                FilterExpression groupFilter = containerFilter.AddFilter(effective);
+                                ProcessHashFilterValues(groupFilter, nested.ToArray(), !isExcludeFilter);
+                                continue;
+                            }
+
+                            // Otherwise break the hashtable into single-entry
+                            // hashtables so NOT(a=1 AND b=2) -> NOT(a=1) OR NOT(b=2)
+                            foreach (DictionaryEntry innerEntry in singleHt)
+                            {
+                                Hashtable single = new Hashtable();
+                                single.Add(innerEntry.Key, innerEntry.Value);
+                                nested.Add(single);
+                            }
+                        }
+                        else if (filterValue.Value is IEnumerable enumerable)
+                        {
+                            foreach (object o in enumerable)
+                            {
+                                try
+                                {
+                                    Hashtable nh = ToHashtable(o);
+                                    nested.Add(nh);
+                                }
+                                catch (InvalidDataException e)
+                                {
+                                    throw new InvalidDataException($"'not' operator must contain hashtables. {e.Message}");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidDataException($"'not' operator must contain a hashtable or an array of hashtables.");
+                        }
+
+                        // Default behaviour: array of hashtables is treated as
+                        // an AND group that we are negating, so its negation
+                        // should be combined with OR (De Morgan). Therefore we
+                        // create an OR group and recurse with inverted leaf
+                        // semantics.
+                        FilterExpression notGroup = containerFilter.AddFilter(LogicalOperator.Or);
+                        ProcessHashFilterValues(notGroup, nested.ToArray(), !isExcludeFilter);
+                        continue;
+                    }
+
+                    // Support exclusive-or grouping: 'xor'. Semantics: exactly
+                    // one of the nested hashtables is true. This is expanded to
+                    // an OR of terms where each term is (Ai AND NOT all others).
+                    if (string.Equals(key, "xor", StringComparison.OrdinalIgnoreCase))
+                    {
+                        List<Hashtable> nested = new List<Hashtable>();
+                        if (filterValue.Value is Hashtable singleHt)
+                        {
+                            nested.Add(singleHt);
+                        }
+                        else if (filterValue.Value is IEnumerable ie)
+                        {
+                            foreach (object o in ie)
+                            {
+                                try
+                                {
+                                    Hashtable nh = ToHashtable(o);
+                                    nested.Add(nh);
+                                }
+                                catch (InvalidDataException e)
+                                {
+                                    throw new InvalidDataException($"Grouped XOR operator must contain hashtables. {e.Message}");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidDataException($"Grouped XOR operator must contain a hashtable or an array of hashtables.");
+                        }
+
+                        int n = nested.Count;
+                        if (n > MaxXorItems)
+                        {
+                            throw new InvalidDataException($"The 'xor' group contains {n} items which would trigger exponential expansion ({Math.Pow(2, n):N0} combinations) for exclusion semantics. To avoid excessive computation, the maximum allowed items in an 'xor' group is {MaxXorItems}. Consider using a smaller group, FetchXML, SQL, or other logic.");
+                        }
+                        if (n == 0)
+                        {
+                            continue;
+                        }
+
+                        // If this is an include filter, expand XOR to OR of (Ai AND NOT others)
+                        if (!isExcludeFilter)
+                        {
+                            FilterExpression xorOuter = containerFilter.AddFilter(LogicalOperator.Or);
+                            for (int i = 0; i < n; i++)
+                            {
+                                // Term: Ai AND NOT(Aj for j != i)
+                                FilterExpression term = xorOuter.AddFilter(LogicalOperator.And);
+                                ProcessHashFilterValues(term, new[] { nested[i] }, isExcludeFilter);
+                                for (int j = 0; j < n; j++)
+                                {
+                                    if (j == i) continue;
+                                    Hashtable notHt = new Hashtable();
+                                    notHt.Add("not", nested[j]);
+                                    ProcessHashFilterValues(term, new[] { notHt }, isExcludeFilter);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // For exclude filters the semantics are: exclude rows
+                            // matching XOR(nested). To include the complement we
+                            // must add NOT XOR(nested) to the query which is the
+                            // union of two cases: zero true OR two-or-more true.
+                            // We generate combinations for the two-or-more case.
+                            List<Hashtable> complements = new List<Hashtable>();
+
+                            // Zero true: all NOT Aj
+                            Hashtable zeroHt = new Hashtable();
+                            List<Hashtable> zeroList = new List<Hashtable>();
+                            for (int j = 0; j < n; j++)
+                            {
+                                zeroList.Add(new Hashtable() { { "not", nested[j] } });
+                            }
+                            zeroHt.Add("and", zeroList.ToArray());
+                            complements.Add(zeroHt);
+
+                            // Two-or-more true: all combinations of size >= 2
+                            // This is exponential in n, but n is expected to be small
+                            // for typical usage.
+                            for (int k = 2; k <= n; k++)
+                            {
+                                foreach (var combo in GetCombinations(Enumerable.Range(0, n).ToArray(), k))
+                                {
+                                    Hashtable comboHt = new Hashtable();
+                                    List<Hashtable> comboList = new List<Hashtable>();
+                                    for (int idx = 0; idx < n; idx++)
+                                    {
+                                        if (combo.Contains(idx))
+                                        {
+                                            comboList.Add(nested[idx]);
+                                        }
+                                        else
+                                        {
+                                            comboList.Add(new Hashtable() { { "not", nested[idx] } });
+                                        }
+                                    }
+                                    comboHt.Add("and", comboList.ToArray());
+                                    complements.Add(comboHt);
+                                }
+                            }
+
+                            // Add complements as ORed terms; process them as normal
+                            // hashtables (we already constructed the required
+                            // NOTs explicitly) so pass isExcludeFilter=false when
+                            // recursing.
+                            FilterExpression xorCompOuter = containerFilter.AddFilter(LogicalOperator.Or);
+                            ProcessHashFilterValues(xorCompOuter, complements.ToArray(), false);
+                        }
+
+                        continue;
+                    }
+
+                    // If we get here the key should represent a field (optionally
+                    // with ':Operator' suffix) whose value is a literal/array/$null
+                    // or a nested hashtable in the { value=...; operator='...' }
+                    // form. This mirrors the previous behaviour but now supports
+                    // the presence of grouped subfilters alongside field
+                    // conditions.
                     ConditionOperator op = filterValue.Value == null ? ConditionOperator.Null : ConditionOperator.Equal;
                     object value = filterValue.Value;
 
@@ -410,9 +688,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             throw new InvalidDataException($"The operator for key '{filterValue.Key}' is missing. When using a hashtable value the key 'operator' must be specified. e.g. @{filterValue.Key}=@{{value=25; operator='GreaterThan'}}");
                         }
 
-                        
                         var opObj = ht["operator"];
-                              try
+                        try
                         {
                             op = (ConditionOperator)Enum.Parse(typeof(ConditionOperator), opObj?.ToString() ?? "");
                         }
@@ -440,15 +717,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (OperatorIsValueLess(op))
                     {
-                        includeFilterExpression.AddCondition(fieldName, op);
+                        containerFilter.AddCondition(fieldName, op);
                     }
                     else if (value is Array array)
                     {
-                        includeFilterExpression.AddCondition(fieldName, op, (object[])array);
+                        containerFilter.AddCondition(fieldName, op, (object[])array);
                     }
                     else
                     {
-                        includeFilterExpression.AddCondition(fieldName, op, value);
+                        containerFilter.AddCondition(fieldName, op, value);
                     }
                 }
             }
@@ -510,6 +787,65 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var translateQueryResponse = (FetchXmlToQueryExpressionResponse)Connection.Execute(translateQueryRequest);
             query = translateQueryResponse.Query;
             return query;
+        }
+
+        private static IEnumerable<int[]> GetCombinations(int[] items, int k)
+        {
+            // Simple recursive combinations generator
+            if (k == 0)
+            {
+                yield return new int[0];
+                yield break;
+            }
+
+            if (items.Length == k)
+            {
+                yield return items;
+                yield break;
+            }
+
+            for (int i = 0; i <= items.Length - k; i++)
+            {
+                int head = items[i];
+                int[] tail = items.Skip(i + 1).ToArray();
+                foreach (var comb in GetCombinations(tail, k - 1))
+                {
+                    int[] result = new int[comb.Length + 1];
+                    result[0] = head;
+                    Array.Copy(comb, 0, result, 1, comb.Length);
+                    yield return result;
+                }
+            }
+        }
+
+        private static Hashtable ToHashtable(object o)
+        {
+            if (o == null)
+            {
+                throw new InvalidDataException("Item is null and cannot be treated as a hashtable.");
+            }
+
+            if (o is Hashtable ht)
+            {
+                return ht;
+            }
+
+            if (o is PSObject pso)
+            {
+                return ToHashtable(pso.BaseObject);
+            }
+
+            if (o is IDictionary dict)
+            {
+                Hashtable h = new Hashtable();
+                foreach (DictionaryEntry de in dict)
+                {
+                    h.Add(de.Key, de.Value);
+                }
+                return h;
+            }
+
+            throw new InvalidDataException($"Item of type {o.GetType().FullName} cannot be converted to a hashtable.");
         }
 
         private long GetRecordCount(QueryExpression query)

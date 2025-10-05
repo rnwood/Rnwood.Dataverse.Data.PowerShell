@@ -31,7 +31,9 @@ If applicable (e.g. for UPDATE), the affected row count is written to verbose ou
 
 ### Example 1
 ```powershell
-PS C:\> Invoke-DataverseSql -connection $connection -sql "SELECT TOP 1 createdon FROM Contact WHERE lastname=@lastname" -parameters @{lastname="Wood"}
+PS C:\> Invoke-DataverseSql -connection $connection -sql "SELECT TOP 1 createdon FROM Contact WHERE lastname=@lastname" -parameters @{
+	lastname = "Wood"
+}
 
 createdon
 ---------
@@ -42,7 +44,14 @@ Returns the rows from the SELECT query matching the @lastname parameter which is
 
 ### Example 2
 ```powershell
-PS C:\> @{lastname="Wood"}, @{lastname="Cat2"} | Invoke-DataverseSql -connection $c -sql "SELECT TOP 1 lastname, createdon FROM Contact WHERE lastname=@lastname"
+PS C:\> @(
+)	@{
+		lastname = "Wood"
+	},
+	@{
+		lastname = "Cat2"
+	}
+) | Invoke-DataverseSql -connection $c -sql "SELECT TOP 1 lastname, createdon FROM Contact WHERE lastname=@lastname"
 
 lastname createdon
 -------- ---------

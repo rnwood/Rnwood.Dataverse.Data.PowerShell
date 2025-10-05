@@ -50,7 +50,10 @@ Party list columns accept a collection of objects each of which need to be conve
 
 ### Example 1
 ```powershell
-PS C:\> [PSCustomObject] @{"TableName"="contact"; "lastname"="Simpson"} | Set-DataverseRecord -connection $c
+PS C:\> [PSCustomObject] @{
+	TableName = "contact"
+	lastname = "Simpson"
+} | Set-DataverseRecord -connection $c
 ```
 
 Creates a new contact record with a last name.
