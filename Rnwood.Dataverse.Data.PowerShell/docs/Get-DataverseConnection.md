@@ -30,25 +30,19 @@ Get-DataverseConnection -ClientId <Guid> -Url <Uri> -ClientSecret <String> [-Tim
 
 ### Authenticate interactively
 ```
-Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] [-Interactive] [-Timeout <UInt32>]
+Get-DataverseConnection [-ClientId <Guid>] [-Url <Uri>] [-Username <String>] [-Interactive] [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
-### Authenticate interactively with environment selection
-```
-Get-DataverseConnection [-ClientId <Guid>] [-Username <String>] [-Interactive] [-SelectEnvironment]
- [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate using the device code flow
 ```
-Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] [-DeviceCode] [-Timeout <UInt32>]
+Get-DataverseConnection [-ClientId <Guid>] [-Url <Uri>] [-Username <String>] [-DeviceCode] [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with username and password
 ```
-Get-DataverseConnection [-ClientId <Guid>] -Url <Uri> [-Username <String>] -Password <String>
+Get-DataverseConnection [-ClientId <Guid>] [-Url <Uri>] -Username <String> -Password <String>
  [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -60,13 +54,13 @@ Get-DataverseConnection -Url <Uri> -ConnectionString <String> [-Timeout <UInt32>
 
 ### Authenticate with DefaultAzureCredential
 ```
-Get-DataverseConnection -Url <Uri> [-DefaultAzureCredential] [-Timeout <UInt32>]
+Get-DataverseConnection [-Url <Uri>] [-DefaultAzureCredential] [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with ManagedIdentityCredential
 ```
-Get-DataverseConnection -Url <Uri> [-ManagedIdentity] [-ManagedIdentityClientId <String>] [-Timeout <UInt32>]
+Get-DataverseConnection [-Url <Uri>] [-ManagedIdentity] [-ManagedIdentityClientId <String>] [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -79,13 +73,12 @@ So you can store the output of this command in a variable and pass it to each co
 See the examples for this pattern below.
 
 Multiple authentication methods are supported:
-- Interactive authentication (browser-based)
-- Interactive authentication with environment selection (no URL required - select from available environments)
-- Device code flow (for remote/headless scenarios)
-- Username/password
+- Interactive authentication (browser-based) - omit URL to select from available environments
+- Device code flow (for remote/headless scenarios) - omit URL to select from available environments
+- Username/password - omit URL to select from available environments
 - Client secret (for service principal authentication)
-- DefaultAzureCredential (automatic credential discovery for Azure environments)
-- ManagedIdentityCredential (for Azure managed identity authentication)
+- DefaultAzureCredential (automatic credential discovery for Azure environments) - omit URL to select from available environments
+- ManagedIdentityCredential (for Azure managed identity authentication) - omit URL to select from available environments
 - Connection string (for advanced scenarios)
 - Mock connection (for testing)
 
@@ -128,10 +121,10 @@ Gets a connection to MYORG using a user-assigned managed identity with the speci
 
 ### Example 6
 ```powershell
-PS C:\> $c = Get-DataverseConnection -Interactive -SelectEnvironment
+PS C:\> $c = Get-DataverseConnection -Interactive
 ```
 
-Authenticates interactively and displays a list of available Dataverse environments for the user to select from. This is useful when you have access to multiple environments and don't want to manually specify the URL.
+Authenticates interactively without specifying a URL. The cmdlet will automatically display a list of available Dataverse environments for the user to select from. This is useful when you have access to multiple environments and don't want to manually specify the URL.
 
 ## PARAMETERS
 
@@ -152,7 +145,7 @@ Accept wildcard characters: False
 
 ```yaml
 Type: Guid
-Parameter Sets: Authenticate interactively, Authenticate interactively with environment selection, Authenticate using the device code flow, Authenticate with username and password
+Parameter Sets: Authenticate interactively, Authenticate using the device code flow, Authenticate with username and password
 Aliases:
 
 Required: False
@@ -227,7 +220,7 @@ Triggers interactive authentication, where browser will be opened for user to in
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: Authenticate interactively, Authenticate interactively with environment selection
+Parameter Sets: Authenticate interactively
 Aliases:
 
 Required: True
@@ -297,22 +290,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SelectEnvironment
-Allows you to select from available Dataverse environments after authentication instead of specifying a URL.
-When this parameter is used with -Interactive, the cmdlet will authenticate first, then discover and display all available Dataverse environments for you to select from.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Authenticate interactively with environment selection
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Timeout
 Timeout for authentication operations. Defaults to 5 minutes.
 
@@ -330,14 +307,26 @@ Accept wildcard characters: False
 
 ### -Url
 URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com
-Not required when using -SelectEnvironment, as the environment will be selected interactively.
+Not required for interactive, device code, username/password, DefaultAzureCredential, or ManagedIdentity authentication - when omitted, you will be prompted to select from available environments.
 
 ```yaml
 Type: Uri
-Parameter Sets: Return a mock connection, Authenticate with client secret, Authenticate interactively, Authenticate using the device code flow, Authenticate with username and password, Authenticate with Dataverse SDK connection string., Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
+Parameter Sets: Return a mock connection, Authenticate with client secret, Authenticate with Dataverse SDK connection string.
 Aliases:
 
 Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: Uri
+Parameter Sets: Authenticate interactively, Authenticate using the device code flow, Authenticate with username and password, Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
+Aliases:
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -349,10 +338,22 @@ Username to authenticate with.
 
 ```yaml
 Type: String
-Parameter Sets: Authenticate interactively, Authenticate interactively with environment selection, Authenticate using the device code flow, Authenticate with username and password
+Parameter Sets: Authenticate interactively, Authenticate using the device code flow
 Aliases:
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with username and password
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False

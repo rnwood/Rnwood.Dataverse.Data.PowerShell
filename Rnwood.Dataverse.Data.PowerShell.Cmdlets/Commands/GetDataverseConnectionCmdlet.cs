@@ -46,7 +46,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private const string PARAMSET_CLIENTSECRET = "Authenticate with client secret";
 		private const string PARAMSET_INTERACTIVE = "Authenticate interactively";
-		private const string PARAMSET_INTERACTIVE_SELECTENV = "Authenticate interactively with environment selection";
 		private const string PARAMSET_DEVICECODE = "Authenticate using the device code flow";
 		private const string PARAMSET_USERNAMEPASSWORD = "Authenticate with username and password";
 		private const string PARAMSET_CONNECTIONSTRING = "Authenticate with Dataverse SDK connection string.";
@@ -66,7 +65,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE_SELECTENV, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		public Guid ClientId { get; set; } = new Guid("9cee029c-6210-4654-90bb-17e6e9d36617");
@@ -75,12 +73,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// Gets or sets the URL of the Dataverse environment to connect to.
 		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CONNECTIONSTRING, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DEFAULTAZURECREDENTIAL, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEFAULTAZURECREDENTIAL, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_MOCK, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
 		public Uri Url { get; set; }
 
@@ -94,9 +92,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// Gets or sets the username for authentication.
 		/// </summary>
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Username to authenticate with.")]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE_SELECTENV, HelpMessage = "Username to authenticate with.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Username to authenticate with.")]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Username to authenticate with.")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Username to authenticate with.")]
 		public string Username { get; set; }
 
 		/// <summary>
@@ -109,14 +106,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// Gets or sets a value indicating whether to use interactive authentication.
 		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Triggers interactive authentication, where browser will be opened for user to interactively log in.")]
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_INTERACTIVE_SELECTENV, HelpMessage = "Triggers interactive authentication, where browser will be opened for user to interactively log in.")]
 		public SwitchParameter Interactive { get; set; }
-
-		/// <summary>
-		/// Gets or sets a value indicating whether to select environment interactively.
-		/// </summary>
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_INTERACTIVE_SELECTENV, HelpMessage = "Allows you to select from available Dataverse environments after authentication instead of specifying a URL.")]
-		public SwitchParameter SelectEnvironment { get; set; }
 
 		/// <summary>
 		/// Gets or sets a value indicating whether to use device code authentication.
@@ -239,21 +229,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								.WithRedirectUri("http://localhost")
 								.Build();
 
-							result = new ServiceClient(Url, url => GetTokenInteractive(publicClient, url));
-
-							break;
-						}
-
-					case PARAMSET_INTERACTIVE_SELECTENV:
-						{
-							var publicClient = PublicClientApplicationBuilder
-								.Create(ClientId.ToString())
-								.WithRedirectUri("http://localhost")
-								.Build();
-
-							// First authenticate and discover environments
-							var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
-							Url = new Uri(discoveryUrl);
+							// If URL is not provided, discover and select environment
+							if (Url == null)
+							{
+								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+								Url = new Uri(discoveryUrl);
+							}
 
 							result = new ServiceClient(Url, url => GetTokenInteractive(publicClient, url));
 
@@ -268,6 +249,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								.WithAuthority(AadAuthorityAudience.AzureAdMultipleOrgs)
 								.Build();
 
+							// If URL is not provided, discover and select environment
+							if (Url == null)
+							{
+								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+								Url = new Uri(discoveryUrl);
+							}
+
 							result = new ServiceClient(Url, url => GetTokenWithUsernamePassword(publicClient, url));
 
 							break;
@@ -279,6 +267,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								.Create(ClientId.ToString())
 								.WithRedirectUri("http://localhost")
 								.Build();
+
+							// If URL is not provided, discover and select environment
+							if (Url == null)
+							{
+								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+								Url = new Uri(discoveryUrl);
+							}
 
 							result = new ServiceClient(Url, url => GetTokenWithDeviceCode(publicClient, url));
 
@@ -304,6 +299,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					case PARAMSET_DEFAULTAZURECREDENTIAL:
 						{
 							var credential = new Azure.Identity.DefaultAzureCredential();
+							
+							// If URL is not provided, discover and select environment
+							if (Url == null)
+							{
+								// For DefaultAzureCredential, we need to use interactive flow for discovery
+								var publicClient = PublicClientApplicationBuilder
+									.Create(ClientId.ToString())
+									.WithRedirectUri("http://localhost")
+									.Build();
+								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+								Url = new Uri(discoveryUrl);
+							}
+							
 							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
 
 							break;
@@ -320,6 +328,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							{
 								credential = new ManagedIdentityCredential();
 							}
+							
+							// If URL is not provided, discover and select environment
+							if (Url == null)
+							{
+								// For ManagedIdentity, we need to use interactive flow for discovery
+								var publicClient = PublicClientApplicationBuilder
+									.Create(ClientId.ToString())
+									.WithRedirectUri("http://localhost")
+									.Build();
+								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+								Url = new Uri(discoveryUrl);
+							}
+							
 							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
 
 							break;

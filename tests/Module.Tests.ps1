@@ -68,7 +68,7 @@ Describe "Module" {
         }
     }
 
-    It "Get-DataverseConnection has SelectEnvironment parameter set" {
+    It "Get-DataverseConnection supports optional URL for environment selection" {
         . $PSScriptRoot/Common.ps1
         
         # Import module if not already loaded
@@ -79,21 +79,21 @@ Describe "Module" {
         $cmd = Get-Command Get-DataverseConnection
         $cmd | Should -Not -BeNull
         
-        # Check that the parameter set exists
-        $parameterSets = $cmd.ParameterSets | Where-Object { $_.Name -eq "Authenticate interactively with environment selection" }
-        $parameterSets | Should -Not -BeNull
-        $parameterSets | Should -HaveCount 1
+        # Check that URL is optional in the interactive parameter set
+        $interactiveParamSet = $cmd.ParameterSets | Where-Object { $_.Name -eq "Authenticate interactively" }
+        $interactiveParamSet | Should -Not -BeNull
         
-        # Check that SelectEnvironment parameter exists
-        $selectEnvParam = $cmd.Parameters["SelectEnvironment"]
-        $selectEnvParam | Should -Not -BeNull
-        $selectEnvParam.ParameterType.Name | Should -Be "SwitchParameter"
-        
-        # Verify URL is not required for this parameter set
-        $urlParam = $cmd.Parameters["Url"]
+        $urlParam = $interactiveParamSet.Parameters | Where-Object { $_.Name -eq "Url" }
         $urlParam | Should -Not -BeNull
-        $urlParamInSet = $parameterSets[0].Parameters | Where-Object { $_.Name -eq "Url" }
-        $urlParamInSet | Should -BeNull
+        $urlParam.IsMandatory | Should -Be $false
+        
+        # Check that URL is also optional in device code parameter set
+        $deviceCodeParamSet = $cmd.ParameterSets | Where-Object { $_.Name -eq "Authenticate using the device code flow" }
+        $deviceCodeParamSet | Should -Not -BeNull
+        
+        $urlParamDeviceCode = $deviceCodeParamSet.Parameters | Where-Object { $_.Name -eq "Url" }
+        $urlParamDeviceCode | Should -Not -BeNull
+        $urlParamDeviceCode.IsMandatory | Should -Be $false
     }
 
 }
