@@ -29,7 +29,7 @@ The `TableName` and `Id` properties will normally be read from the pipeine if pr
 
 See the various options below which can vary if/how the record is matched and if new records will be created or not.
 
-### Data Type Conversion
+**Data Type Conversion:**
 
 Primitive types (text, number, yes/no) can be specified directly using the PowerShell numeric/string/bool types etc. A conversion will be attempted from other types.
 
@@ -48,18 +48,18 @@ Lookup and UniqueIdentifier columns will accept any of:
 
 Party list columns accept a collection of objects each of which need to be convertible to a `activityparty` table record using the rules above.
 
-### Batch Operations
+**Batch Operations:**
 
 When multiple records are passed through the pipeline or provided in a single invocation, this cmdlet automatically uses `ExecuteMultipleRequest` to batch operations for improved performance. 
 
-**Key Batch Behavior:**
+Key Batch Behavior:
 - Default batch size is 100 records per request (configurable via `-BatchSize` parameter)
 - Set `-BatchSize 1` to disable batching and send one request at a time
 - Batching continues on error - all operations are attempted and errors are reported at the end
 - Each error includes the input record for correlation
 - For best performance with `-CallerId`, sort records by caller ID since a new batch is needed when the caller changes
 
-**How Create vs Update is Determined:**
+How Create vs Update is Determined:
 
 The cmdlet follows this decision logic for each record:
 

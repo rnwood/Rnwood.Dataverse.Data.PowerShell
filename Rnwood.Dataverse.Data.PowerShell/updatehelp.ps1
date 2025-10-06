@@ -15,7 +15,19 @@ if (-not(get-installedmodule Platyps -MinimumVersion 0.14.1 -ErrorAction silentl
 $modulepath = "$outdir/Rnwood.Dataverse.Data.PowerShell.psd1"
 write-host "Using module: $modulepath"
 
-import-module $modulepath
+# Check if module exists before trying to import
+if (-not (Test-Path $modulepath)) {
+	write-host "Module not found at $modulepath - skipping help update (module not built yet)"
+	exit 0
+}
+
+# Try to import the module, exit gracefully if it fails
+try {
+	import-module $modulepath -ErrorAction Stop
+} catch {
+	write-host "Could not import module from $modulepath - skipping help update: $_"
+	exit 0
+}
 
 # --- Incremental-run guard: skip work if inputs haven't changed ---
 $stampFile = Join-Path $OutDir 'updatehelp.stamp'
