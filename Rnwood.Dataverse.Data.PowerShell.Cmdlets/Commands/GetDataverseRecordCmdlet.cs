@@ -94,6 +94,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Link entities to apply to query
         /// </summary>
+        [ArgumentCompleter(typeof(LinksArgumentCompleter))]
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Link entities to apply to query")]
         public DataverseLinkEntity[] Links
         {
