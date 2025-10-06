@@ -29,6 +29,8 @@ The `TableName` and `Id` properties will normally be read from the pipeine if pr
 
 See the various options below which can vary if/how the record is matched and if new records will be created or not.
 
+### Data Type Conversion
+
 Primitive types (text, number, yes/no) can be specified directly using the PowerShell numeric/string/bool types etc. A conversion will be attempted from other types.
 
 Date and date/time columns can be specified directly using the PowerShell DateTime type. A conversion will be attempted from string and other types, but take care to include TZ offset.
@@ -46,24 +48,175 @@ Lookup and UniqueIdentifier columns will accept any of:
 
 Party list columns accept a collection of objects each of which need to be convertible to a `activityparty` table record using the rules above.
 
+### Batch Operations
+
+When multiple records are passed through the pipeline or provided in a single invocation, this cmdlet automatically uses `ExecuteMultipleRequest` to batch operations for improved performance. 
+
+**Key Batch Behavior:**
+- Default batch size is 100 records per request (configurable via `-BatchSize` parameter)
+- Set `-BatchSize 1` to disable batching and send one request at a time
+- Batching continues on error - all operations are attempted and errors are reported at the end
+- Each error includes the input record for correlation
+- For best performance with `-CallerId`, sort records by caller ID since a new batch is needed when the caller changes
+
+**How Create vs Update is Determined:**
+
+The cmdlet follows this decision logic for each record:
+
+1. **With `-Upsert` switch:**
+   - Uses `UpsertRequest` which lets Dataverse decide based on alternate keys
+   - No check for existing record is performed
+   - Dataverse creates if no match, updates if match found
+   - `-MatchOn` must specify an alternate key defined on the table
+
+2. **With `-CreateOnly` switch:**
+   - Always attempts to create new records
+   - No check for existing record is performed
+   - Use when you know records don't exist (best performance)
+
+3. **With `-NoUpdate` switch:**
+   - Checks for existing records but will not update them
+   - Only creates new records when no match found
+
+4. **With `-NoCreate` switch:**
+   - Checks for existing records but will not create them
+   - Only updates records when match found
+
+5. **Default behavior (no switches):**
+   - Checks for existing record by:
+     - Primary ID if provided via `-Id` parameter or `Id` property
+     - `-MatchOn` columns if specified (tries each match set in order)
+   - If existing record found:
+     - Retrieves current values
+     - Removes unchanged columns (unless `-UpdateAllColumns` specified)
+     - Sends `UpdateRequest` if changes detected
+     - Skips update if nothing changed
+   - If no existing record found:
+     - Sends `CreateRequest` for new record
+
+After create/update, additional operations are batched if needed:
+- Assignment (`AssignRequest`) if `ownerid` column is set
+- Status change (`SetStateRequest`) if `statecode` or `statuscode` columns are set
+
 ## EXAMPLES
 
-### Example 1
+### Example 1: Create a single record
 ```powershell
 PS C:\> [PSCustomObject] @{
 	TableName = "contact"
 	lastname = "Simpson"
-} | Set-DataverseRecord -connection $c
+	firstname = "Homer"
+} | Set-DataverseRecord -Connection $c
 ```
 
-Creates a new contact record with a last name.
+Creates a new contact record with a last name and first name.
 
-### Example 2
+### Example 2: Update existing records
 ```powershell
-PS C:\> Get-DataverseRecord -connection $c -columns statuscode | ForEach-Object { $_.statuscode = "Inactive"} | Set-DataverseRecord -connection $c
+PS C:\> Get-DataverseRecord -Connection $c -TableName contact -Columns statuscode | 
+    ForEach-Object { $_.statuscode = "Inactive" } | 
+    Set-DataverseRecord -Connection $c
 ```
 
 Retrieves all existing contacts and sets their status reason to `Inactive`.
+
+### Example 3: Batch create multiple records
+```powershell
+PS C:\> $contacts = @(
+    @{ firstname = "John"; lastname = "Doe"; emailaddress1 = "john@example.com" }
+    @{ firstname = "Jane"; lastname = "Smith"; emailaddress1 = "jane@example.com" }
+    @{ firstname = "Bob"; lastname = "Johnson"; emailaddress1 = "bob@example.com" }
+)
+
+PS C:\> $contacts | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly
+```
+
+Creates multiple contact records in a single batch. The `-CreateOnly` switch improves performance by skipping the existence check since we know these are new records. By default, all 3 records will be sent in a single ExecuteMultipleRequest.
+
+### Example 4: Batch update with choice columns
+```powershell
+PS C:\> $accounts = Get-DataverseRecord -Connection $c -TableName account -Top 50
+
+PS C:\> $accounts | ForEach-Object { 
+    $_.industrycode = "Retail"  # Can use label name
+    $_.accountratingcode = 1     # Or numeric value
+} | Set-DataverseRecord -Connection $c
+```
+
+Retrieves 50 accounts and updates their industry (using label) and rating (using numeric value). Choice/option set columns accept either the numeric value or the display label.
+
+### Example 5: Batch operations with state/status changes
+```powershell
+PS C:\> $cases = Get-DataverseRecord -Connection $c -TableName incident -Filter @{ statecode = 0 }
+
+PS C:\> $cases | ForEach-Object {
+    $_.statuscode = "Resolved"  # Can use status label
+    $_.statecode = 1             # Or numeric state value
+} | Set-DataverseRecord -Connection $c
+```
+
+Closes all active cases by setting their state and status. The cmdlet automatically handles state/status changes as separate SetStateRequest operations after the main update.
+
+### Example 6: Upsert with alternate key
+```powershell
+PS C:\> @(
+    @{ emailaddress1 = "user1@example.com"; firstname = "Alice"; lastname = "Anderson" }
+    @{ emailaddress1 = "user2@example.com"; firstname = "Bob"; lastname = "Brown" }
+) | Set-DataverseRecord -Connection $c -TableName contact -Upsert -MatchOn emailaddress1
+```
+
+Uses upsert operation with alternate key on emailaddress1. If a contact with the email exists, it will be updated; otherwise a new one is created. Requires that `emailaddress1` is defined as an alternate key on the contact table.
+
+### Example 7: Control batch size
+```powershell
+PS C:\> $records = 1..500 | ForEach-Object {
+    @{ name = "Account $_"; telephone1 = "555-$_" }
+}
+
+PS C:\> $records | Set-DataverseRecord -Connection $c -TableName account -BatchSize 50 -CreateOnly
+```
+
+Creates 500 records in batches of 50. This will result in 10 ExecuteMultipleRequest calls, each containing 50 CreateRequest operations.
+
+### Example 8: Disable batching for detailed error handling
+```powershell
+PS C:\> $records | Set-DataverseRecord -Connection $c -TableName contact -BatchSize 1
+```
+
+Disables batching by setting BatchSize to 1. Each record is sent in a separate request, which stops immediately on first error rather than continuing through the batch.
+
+### Example 9: MatchOn with multiple columns
+```powershell
+PS C:\> @(
+    @{ firstname = "John"; lastname = "Doe"; telephone1 = "555-0001" }
+    @{ firstname = "Jane"; lastname = "Smith"; telephone1 = "555-0002" }
+) | Set-DataverseRecord -Connection $c -TableName contact -MatchOn ("firstname", "lastname")
+```
+
+Looks for existing contacts matching BOTH firstname AND lastname. If found, updates them; otherwise creates new records.
+
+### Example 10: Assignment with batching
+```powershell
+PS C:\> $newOwnerId = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+PS C:\> Get-DataverseRecord -Connection $c -TableName account -Top 100 | 
+    ForEach-Object { $_.ownerid = $newOwnerId } | 
+    Set-DataverseRecord -Connection $c
+```
+
+Reassigns 100 accounts to a new owner. The cmdlet handles this as update operations followed by AssignRequest operations, all batched together.
+
+### Example 11: Using lookup columns with names
+```powershell
+PS C:\> @{
+    firstname = "John"
+    lastname = "Doe"
+    parentcustomerid = "Contoso Ltd"  # Lookup by account name
+    "parentcustomerid@logicalname" = "account"
+} | Set-DataverseRecord -Connection $c -TableName contact
+```
+
+Creates a contact with a lookup to an account by name. The module will automatically resolve "Contoso Ltd" to the account's GUID if the name is unique.
 
 ## PARAMETERS
 

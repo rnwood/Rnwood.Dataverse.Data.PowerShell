@@ -259,6 +259,8 @@ $results | Sort-Object RecordsCount -Descending | Select-Object -First 10
 **Microsoft.Xrm.Data.PowerShell:**
 ```powershell
 # Complex - requires building Entity objects manually
+# Note: New-CRMRecordsBatch is from the Microsoft.Xrm.Data.PowerShell.Samples repository
+# (https://github.com/seanmcne/Microsoft.Xrm.Data.PowerShell.Samples), not built into the module
 [Microsoft.Xrm.Sdk.Entity[]]$entities = @()
 foreach($item in $data) {
     $entity = [Microsoft.Xrm.Sdk.Entity]::new('account')
@@ -273,6 +275,7 @@ $response = New-CRMRecordsBatch -Entities $entities -conn $conn
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
 # Simple - just pass PowerShell objects
+# Batching is built-in and automatic
 $accounts = @(
   @{
     name = "Company 1"
@@ -289,7 +292,14 @@ $accounts = @(
 )
 
 # Batching is automatic when multiple records are passed
+# Uses ExecuteMultipleRequest internally with default batch size of 100
 $accounts | Set-DataverseRecord -Connection $conn -TableName account
+
+# Or control batch size
+$accounts | Set-DataverseRecord -Connection $conn -TableName account -BatchSize 50
+
+# Or disable batching (send one request at a time)
+$accounts | Set-DataverseRecord -Connection $conn -TableName account -BatchSize 1
 ```
 
 ## Working with Attachments
