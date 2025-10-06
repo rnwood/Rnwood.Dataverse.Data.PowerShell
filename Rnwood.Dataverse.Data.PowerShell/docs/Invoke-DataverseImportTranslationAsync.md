@@ -14,9 +14,16 @@ Executes a ImportTranslationAsyncRequest against the Dataverse organization serv
 
 ## SYNTAX
 
+### Default (Default)
 ```
 Invoke-DataverseImportTranslationAsync [-TranslationFile <Byte[]>] [-ImportJobId <Guid>]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### FromFile
+```
+Invoke-DataverseImportTranslationAsync -InFile <String> [-ImportJobId <Guid>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -26,7 +33,7 @@ Executes a ImportTranslationAsyncRequest against the Dataverse organization serv
 
 ### Example 1
 ```powershell
-PS C:\> Invoke-DataverseImportTranslationAsync -Connection <ServiceClient> -TranslationFile <Byte[]> -ImportJobId <Guid>
+PS C:\> Invoke-DataverseImportTranslationAsync -Connection <ServiceClient> -TranslationFile <Byte[]> -InFile <String> -ImportJobId <Guid>
 ```
 
 ## PARAMETERS
@@ -41,7 +48,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -76,12 +83,27 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -InFile
+Gets or sets the path to a file containing the data to upload.
+
+```yaml
+Type: String
+Parameter Sets: FromFile
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -TranslationFile
 Gets or sets the compressed translations file. Required.
 
 ```yaml
 Type: Byte[]
-Parameter Sets: (All)
+Parameter Sets: Default
 Aliases:
 
 Required: False
@@ -101,7 +123,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

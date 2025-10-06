@@ -14,8 +14,16 @@ Contains the data that is needed to import translations from a compressed file.
 
 ## SYNTAX
 
+### Default (Default)
 ```
-Invoke-DataverseImportTranslation -Connection <ServiceClient> -TranslationFile <Byte[]> -InFile <String> -ImportJobId <Guid>
+Invoke-DataverseImportTranslation [-TranslationFile <Byte[]>] [-ImportJobId <Guid>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### FromFile
+```
+Invoke-DataverseImportTranslation -InFile <String> [-ImportJobId <Guid>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,28 +38,13 @@ PS C:\> Invoke-DataverseImportTranslation -Connection <ServiceClient> -Translati
 
 ## PARAMETERS
 
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
-Type: ServiceClient
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TranslationFile
-Gets or sets the compressed translations file. Required.
-
-```yaml
-Type: Byte[]
-Parameter Sets: (All)
-Aliases:
+Aliases: cf
 
 Required: False
 Position: Named
@@ -60,15 +53,15 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -InFile
-Gets or sets the path to a file containing the data to upload.
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
-Type: String
+Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -90,18 +83,75 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -InFile
+Gets or sets the path to a file containing the data to upload.
+
+```yaml
+Type: String
+Parameter Sets: FromFile
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TranslationFile
+Gets or sets the compressed translations file. Required.
+
+```yaml
+Type: Byte[]
+Parameter Sets: Default
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
-
-Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
 
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.ImportTranslationResponse
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ImportTranslationResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ImportTranslationResponse)
+### System.Object
 ## NOTES
 
 ## RELATED LINKS

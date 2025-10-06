@@ -14,6 +14,7 @@ Contains the data to asynchronously import a solution, stage it for upgrade, and
 
 ## SYNTAX
 
+### Default (Default)
 ```
 Invoke-DataverseStageAndUpgradeAsync [-OverwriteUnmanagedCustomizations <Boolean>]
  [-PublishWorkflows <Boolean>] [-CustomizationFile <Byte[]>] [-ImportJobId <Guid>]
@@ -23,6 +24,16 @@ Invoke-DataverseStageAndUpgradeAsync [-OverwriteUnmanagedCustomizations <Boolean
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
+### FromFile
+```
+Invoke-DataverseStageAndUpgradeAsync [-OverwriteUnmanagedCustomizations <Boolean>]
+ [-PublishWorkflows <Boolean>] -InFile <String> [-ImportJobId <Guid>] [-ConvertToManaged <Boolean>]
+ [-SkipProductUpdateDependencies <Boolean>] [-SkipQueueRibbonJob <Boolean>] [-AsyncRibbonProcessing <Boolean>]
+ [-ComponentParameters <EntityCollection>] [-SolutionParameters <SolutionParameters>]
+ [-LayerDesiredOrder <LayerDesiredOrder>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
 ## DESCRIPTION
 Contains the data to asynchronously import a solution, stage it for upgrade, and apply the upgrade as the default (when applicable).
 
@@ -30,7 +41,7 @@ Contains the data to asynchronously import a solution, stage it for upgrade, and
 
 ### Example 1
 ```powershell
-PS C:\> Invoke-DataverseStageAndUpgradeAsync -Connection <ServiceClient> -OverwriteUnmanagedCustomizations <Boolean> -PublishWorkflows <Boolean> -CustomizationFile <Byte[]> -ImportJobId <Guid> -ConvertToManaged <Boolean> -SkipProductUpdateDependencies <Boolean> -SkipQueueRibbonJob <Boolean> -AsyncRibbonProcessing <Boolean> -ComponentParameters <EntityCollection> -SolutionParameters <SolutionParameters> -LayerDesiredOrder <LayerDesiredOrder>
+PS C:\> Invoke-DataverseStageAndUpgradeAsync -Connection <ServiceClient> -OverwriteUnmanagedCustomizations <Boolean> -PublishWorkflows <Boolean> -CustomizationFile <Byte[]> -InFile <String> -ImportJobId <Guid> -ConvertToManaged <Boolean> -SkipProductUpdateDependencies <Boolean> -SkipQueueRibbonJob <Boolean> -AsyncRibbonProcessing <Boolean> -ComponentParameters <EntityCollection> -SolutionParameters <SolutionParameters> -LayerDesiredOrder <LayerDesiredOrder>
 ```
 
 ## PARAMETERS
@@ -75,7 +86,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -115,7 +126,7 @@ Gets or sets the compressed solutions file to import. Required.
 
 ```yaml
 Type: Byte[]
-Parameter Sets: (All)
+Parameter Sets: Default
 Aliases:
 
 Required: False
@@ -134,6 +145,21 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InFile
+Gets or sets the path to a file containing the data to upload.
+
+```yaml
+Type: String
+Parameter Sets: FromFile
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -240,7 +266,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

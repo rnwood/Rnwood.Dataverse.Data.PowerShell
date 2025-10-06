@@ -14,8 +14,26 @@ Contains the data that is needed to import a solution using an asynchronous job.
 
 ## SYNTAX
 
+### Default (Default)
 ```
-Invoke-DataverseImportSolutionAsync -Connection <ServiceClient> -OverwriteUnmanagedCustomizations <Boolean> -PublishWorkflows <Boolean> -CustomizationFile <Byte[]> -InFile <String> -ImportJobId <Guid> -ConvertToManaged <Boolean> -SkipProductUpdateDependencies <Boolean> -HoldingSolution <Boolean> -SkipQueueRibbonJob <Boolean> -LayerDesiredOrder <LayerDesiredOrder> -AsyncRibbonProcessing <Boolean> -ComponentParameters <EntityCollection> -SolutionParameters <SolutionParameters> -IsTemplateMode <Boolean> -TemplateSuffix <String> -TemplateDisplayNamePrefix <String>
+Invoke-DataverseImportSolutionAsync [-OverwriteUnmanagedCustomizations <Boolean>] [-PublishWorkflows <Boolean>]
+ [-CustomizationFile <Byte[]>] [-ImportJobId <Guid>] [-ConvertToManaged <Boolean>]
+ [-SkipProductUpdateDependencies <Boolean>] [-HoldingSolution <Boolean>] [-SkipQueueRibbonJob <Boolean>]
+ [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing <Boolean>]
+ [-ComponentParameters <EntityCollection>] [-SolutionParameters <SolutionParameters>]
+ [-IsTemplateMode <Boolean>] [-TemplateSuffix <String>] [-TemplateDisplayNamePrefix <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### FromFile
+```
+Invoke-DataverseImportSolutionAsync [-OverwriteUnmanagedCustomizations <Boolean>] [-PublishWorkflows <Boolean>]
+ -InFile <String> [-ImportJobId <Guid>] [-ConvertToManaged <Boolean>]
+ [-SkipProductUpdateDependencies <Boolean>] [-HoldingSolution <Boolean>] [-SkipQueueRibbonJob <Boolean>]
+ [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing <Boolean>]
+ [-ComponentParameters <EntityCollection>] [-SolutionParameters <SolutionParameters>]
+ [-IsTemplateMode <Boolean>] [-TemplateSuffix <String>] [-TemplateDisplayNamePrefix <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,6 +48,51 @@ PS C:\> Invoke-DataverseImportSolutionAsync -Connection <ServiceClient> -Overwri
 
 ## PARAMETERS
 
+### -AsyncRibbonProcessing
+For internal use only.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ComponentParameters
+Gets or sets the list of entities to overwrite values from the solution.
+
+```yaml
+Type: EntityCollection
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -38,7 +101,112 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ConvertToManaged
+Obsolete. The system will convert unmanaged solution components to managed when you import a managed solution.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CustomizationFile
+Gets or sets the compressed solutions file to import. Required.
+
+```yaml
+Type: Byte[]
+Parameter Sets: Default
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HoldingSolution
+Gets or sets whether to import the solution as a holding solution staged for upgrade.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ImportJobId
+The ID of the Import Job.
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InFile
+Gets or sets the path to a file containing the data to upload.
+
+```yaml
+Type: String
+Parameter Sets: FromFile
+Aliases:
+
 Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IsTemplateMode
+Internal use only.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LayerDesiredOrder
+For internal use only.
+
+```yaml
+Type: LayerDesiredOrder
+Parameter Sets: (All)
+Aliases:
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -75,83 +243,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -CustomizationFile
-Gets or sets the compressed solutions file to import. Required.
-
-```yaml
-Type: Byte[]
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -InFile
-Gets or sets the path to a file containing the data to upload.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ImportJobId
-The ID of the Import Job.
-
-```yaml
-Type: Guid
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ConvertToManaged
-Obsolete. The system will convert unmanaged solution components to managed when you import a managed solution.
-
-```yaml
-Type: Boolean
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -SkipProductUpdateDependencies
 Gets or sets whether enforcement of dependencies related to product updates should be skipped.
-
-```yaml
-Type: Boolean
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -HoldingSolution
-Gets or sets whether to import the solution as a holding solution staged for upgrade.
 
 ```yaml
 Type: Boolean
@@ -180,86 +273,11 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -LayerDesiredOrder
-For internal use only.
-
-```yaml
-Type: LayerDesiredOrder
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -AsyncRibbonProcessing
-For internal use only.
-
-```yaml
-Type: Boolean
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ComponentParameters
-Gets or sets the list of entities to overwrite values from the solution.
-
-```yaml
-Type: EntityCollection
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -SolutionParameters
 Gets or sets additional parameters for the solution.
 
 ```yaml
 Type: SolutionParameters
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IsTemplateMode
-Internal use only.
-
-```yaml
-Type: Boolean
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TemplateSuffix
-Internal use only.
-
-```yaml
-Type: String
 Parameter Sets: (All)
 Aliases:
 
@@ -285,18 +303,60 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -TemplateSuffix
+Internal use only.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
-
-Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
 
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.ImportSolutionAsyncResponse
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ImportSolutionAsyncResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ImportSolutionAsyncResponse)
+### System.Object
 ## NOTES
 
 ## RELATED LINKS

@@ -56,7 +56,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -OpportunityId
-Gets or sets the ID of the opportunity. Required.
+Gets or sets the ID of the opportunity to be used as the basis for the new invoice. Required.
 
 ```yaml
 Type: Guid
@@ -101,7 +101,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

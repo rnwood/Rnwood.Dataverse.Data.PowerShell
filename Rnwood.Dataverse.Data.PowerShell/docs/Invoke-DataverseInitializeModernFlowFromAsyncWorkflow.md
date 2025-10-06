@@ -15,7 +15,8 @@ For internal use only.
 ## SYNTAX
 
 ```
-Invoke-DataverseInitializeModernFlowFromAsyncWorkflow -Connection <ServiceClient> -WorkflowId <Guid>
+Invoke-DataverseInitializeModernFlowFromAsyncWorkflow [-WorkflowId <Guid>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,6 +31,21 @@ PS C:\> Invoke-DataverseInitializeModernFlowFromAsyncWorkflow -Connection <Servi
 
 ## PARAMETERS
 
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -38,7 +54,22 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -46,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -WorkflowId
-Gets or sets the ID of the Workflow.
+Gets or sets the ID of the workflow to execute. Required.
 
 ```yaml
 Type: Guid
@@ -60,18 +91,30 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
-
-Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
 
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.InitializeModernFlowFromAsyncWorkflowResponse
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.InitializeModernFlowFromAsyncWorkflowResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.InitializeModernFlowFromAsyncWorkflowResponse)
+### System.Object
 ## NOTES
 
 ## RELATED LINKS

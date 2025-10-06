@@ -41,7 +41,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -ContractId
-Gets or sets the ID of the contract. Required.
+Gets or sets the ID of the contract to be renewed. Required.
 
 ```yaml
 Type: Guid
@@ -116,7 +116,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

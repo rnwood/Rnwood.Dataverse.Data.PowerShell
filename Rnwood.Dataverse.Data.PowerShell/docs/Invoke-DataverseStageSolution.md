@@ -14,8 +14,15 @@ Contains the data needed to stage a solution.
 
 ## SYNTAX
 
+### Default (Default)
 ```
 Invoke-DataverseStageSolution [-CustomizationFile <Byte[]>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### FromFile
+```
+Invoke-DataverseStageSolution -InFile <String> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -26,7 +33,7 @@ Contains the data needed to stage a solution.
 
 ### Example 1
 ```powershell
-PS C:\> Invoke-DataverseStageSolution -Connection <ServiceClient> -CustomizationFile <Byte[]>
+PS C:\> Invoke-DataverseStageSolution -Connection <ServiceClient> -CustomizationFile <Byte[]> -InFile <String>
 ```
 
 ## PARAMETERS
@@ -41,7 +48,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -66,10 +73,25 @@ Gets or sets the compressed solutions file to import. Required.
 
 ```yaml
 Type: Byte[]
-Parameter Sets: (All)
+Parameter Sets: Default
 Aliases:
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InFile
+Gets or sets the path to a file containing the data to upload.
+
+```yaml
+Type: String
+Parameter Sets: FromFile
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -86,7 +108,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

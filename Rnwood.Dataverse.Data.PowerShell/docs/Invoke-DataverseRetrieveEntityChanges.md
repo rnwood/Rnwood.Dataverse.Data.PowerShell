@@ -33,7 +33,7 @@ PS C:\> Invoke-DataverseRetrieveEntityChanges -Connection <ServiceClient> -Entit
 ## PARAMETERS
 
 ### -Columns
-Gets or sets the columns to retrieve.
+List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default
 
 ```yaml
 Type: ColumnSet
@@ -57,7 +57,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -147,7 +147,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

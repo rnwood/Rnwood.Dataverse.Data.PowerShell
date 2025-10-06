@@ -15,7 +15,10 @@ Contains the data that is needed to submit an asynchronous system job that detec
 ## SYNTAX
 
 ```
-Invoke-DataverseBulkDetectDuplicates -Connection <ServiceClient> -Query <QueryBase> -JobName <String> -SendEmailNotification <Boolean> -TemplateId <Guid> -ToRecipients <Guid> -CCRecipients <Guid> -RecurrencePattern <String> -RecurrenceStartTime <DateTime>
+Invoke-DataverseBulkDetectDuplicates [-Query <QueryBase>] [-JobName <String>]
+ [-SendEmailNotification <Boolean>] [-TemplateId <Guid>] [-ToRecipients <Guid[]>] [-CCRecipients <Guid[]>]
+ [-RecurrencePattern <String>] [-RecurrenceStartTime <DateTime>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,6 +33,36 @@ PS C:\> Invoke-DataverseBulkDetectDuplicates -Connection <ServiceClient> -Query 
 
 ## PARAMETERS
 
+### -CCRecipients
+Gets or sets an array of IDs for the system users (users) who are listed in the Cc box of the email notification. Required.
+
+```yaml
+Type: Guid[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -38,7 +71,22 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -JobName
+Gets or sets the name of an asynchronous bulk delete job. Required.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -60,11 +108,26 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -JobName
-Gets or sets the name of an asynchronous bulk delete job. Required.
+### -RecurrencePattern
+Gets or sets the recurrence pattern for the bulk delete job. Optional.
 
 ```yaml
 Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RecurrenceStartTime
+Gets or sets the start date and time of an asynchronous system job that detects and logs multiple duplicate records. Optional.
+
+```yaml
+Type: DateTime
 Parameter Sets: (All)
 Aliases:
 
@@ -109,7 +172,7 @@ Accept wildcard characters: False
 Gets or sets an array of IDs for the system users (users) who are listed in the To box of an email notification. Required.
 
 ```yaml
-Type: Guid
+Type: Guid[]
 Parameter Sets: (All)
 Aliases:
 
@@ -120,13 +183,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -CCRecipients
-Gets or sets an array of IDs for the system users (users) who are listed in the Cc box of the email notification. Required.
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
-Type: Guid
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
+Aliases: wi
 
 Required: False
 Position: Named
@@ -135,28 +198,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -RecurrencePattern
-Gets or sets the recurrence pattern for the bulk delete job. Optional.
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: String
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -RecurrenceStartTime
-Gets or sets the start date and time of an asynchronous system job that detects and logs multiple duplicate records. Optional.
-
-```yaml
-Type: DateTime
-Parameter Sets: (All)
-Aliases:
+Aliases: proga
 
 Required: False
 Position: Named
@@ -168,15 +216,12 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
-Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
-
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.BulkDetectDuplicatesResponse
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.BulkDetectDuplicatesResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.BulkDetectDuplicatesResponse)
+### System.Object
 ## NOTES
 
 ## RELATED LINKS

@@ -57,42 +57,64 @@ try {
     $Script:AssemblyDir = $assemblyDir
 
     try {
-        Write-Host "Importing module manifest to initialize assembly resolution and load contexts"
-        # Prefer the built module in bin/Release/netstandard2.0 where nested loader DLLs are present
-        $builtManifestPath = Join-Path $PSScriptRoot "..\Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0\Rnwood.Dataverse.Data.PowerShell.psd1"
-        $moduleManifest = Resolve-Path $builtManifestPath -ErrorAction SilentlyContinue
-        if (-not $moduleManifest) {
-            # Fallback to project manifest location
-            $moduleManifest = Resolve-Path (Join-Path $PSScriptRoot "..\Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.psd1") -ErrorAction SilentlyContinue
-        }
-        if ($moduleManifest) {
-            Write-Host "Importing module: $($moduleManifest.Path)"
-            Import-Module -Name $moduleManifest.Path -Force -ErrorAction Stop
-            Write-Host "Module imported successfully"
-        } else {
-            Write-Warning "Module manifest not found; attempting to load specified assembly directly: $AssemblyPath"
-            if (Test-Path $AssemblyPath) {
-                try {
-                    [System.Reflection.Assembly]::LoadFrom($AssemblyPath) | Out-Null
-                    Write-Host "Loaded assembly: $AssemblyPath"
-                } catch {
-                    Write-Error ([string]::Format('Failed to load assembly {0}: {1}', $AssemblyPath, $_))
-                    exit 1
-                }
-            } else {
-                Write-Error "Neither module manifest nor assembly were available to load. Module manifest expected at: $PSScriptRoot\..\Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.psd1"
-                exit 1
-            }
-        }
-
-        # After import, examine currently loaded assemblies to find OrganizationRequest
+        # First check if OrganizationRequest type is already loaded
         $organizationRequestType = $null
         foreach ($assembly in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
             try {
                 $type = $assembly.GetType('Microsoft.Xrm.Sdk.OrganizationRequest', $false, $false)
-                if ($type) { $organizationRequestType = $type; Write-Host "Found OrganizationRequest type in: $($assembly.GetName().Name)"; break }
+                if ($type) { 
+                    $organizationRequestType = $type
+                    Write-Host "Found OrganizationRequest type already loaded in: $($assembly.GetName().Name)"
+                    break 
+                }
             } catch {
                 # continue
+            }
+        }
+
+        # If not already loaded, try loading the module or assembly
+        if (-not $organizationRequestType) {
+            Write-Host "Importing module manifest to initialize assembly resolution and load contexts"
+            # Prefer the built module in bin/Release/netstandard2.0 where nested loader DLLs are present
+            $builtManifestPath = Join-Path $PSScriptRoot "..\Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0\Rnwood.Dataverse.Data.PowerShell.psd1"
+            $moduleManifest = Resolve-Path $builtManifestPath -ErrorAction SilentlyContinue
+            if (-not $moduleManifest) {
+                # Fallback to project manifest location - but only if loader DLLs exist
+                $projectManifestPath = Join-Path $PSScriptRoot "..\Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.psd1"
+                $loaderPath = Join-Path $PSScriptRoot "..\Rnwood.Dataverse.Data.PowerShell\loader\net6.0\Rnwood.Dataverse.Data.PowerShell.Loader.dll"
+                if ((Test-Path $projectManifestPath) -and (Test-Path $loaderPath)) {
+                    $moduleManifest = Resolve-Path $projectManifestPath -ErrorAction SilentlyContinue
+                }
+            }
+            if ($moduleManifest) {
+                Write-Host "Importing module: $($moduleManifest.Path)"
+                Import-Module -Name $moduleManifest.Path -Force -ErrorAction Stop
+                Write-Host "Module imported successfully"
+            } else {
+                Write-Warning "Module manifest not found or incomplete; attempting to load specified assembly directly: $AssemblyPath"
+                if (Test-Path $AssemblyPath) {
+                    try {
+                        [System.Reflection.Assembly]::LoadFrom($AssemblyPath) | Out-Null
+                        Write-Host "Loaded assembly: $AssemblyPath"
+                    } catch {
+                        Write-Error ([string]::Format('Failed to load assembly {0}: {1}', $AssemblyPath, $_))
+                        exit 1
+                    }
+                } else {
+                    Write-Error "Neither module manifest nor assembly were available to load. Module manifest expected at: $PSScriptRoot\..\Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.psd1"
+                    exit 1
+                }
+            }
+
+            # After import, examine currently loaded assemblies to find OrganizationRequest
+            $organizationRequestType = $null
+            foreach ($assembly in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
+                try {
+                    $type = $assembly.GetType('Microsoft.Xrm.Sdk.OrganizationRequest', $false, $false)
+                    if ($type) { $organizationRequestType = $type; Write-Host "Found OrganizationRequest type in: $($assembly.GetName().Name)"; break }
+                } catch {
+                    # continue
+                }
             }
         }
 
@@ -775,9 +797,9 @@ foreach ($requestType in $requestTypes) {
     # Determine if we need parameter sets (for byte array properties with InFile)
     $needsParameterSets = $byteArrayProperties.Count -gt 0
     $cmdletAttribute = if ($needsParameterSets) {
-        "[Cmdlet(`"Invoke`", `"Dataverse`$cmdletName`", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium, DefaultParameterSetName = `"Default`")]"
+        "[Cmdlet(`"Invoke`", `"Dataverse$cmdletName`", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium, DefaultParameterSetName = `"Default`")]"
     } else {
-        "[Cmdlet(`"Invoke`", `"Dataverse`$cmdletName`", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]"
+        "[Cmdlet(`"Invoke`", `"Dataverse$cmdletName`", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]"
     }
 
     $code = @"

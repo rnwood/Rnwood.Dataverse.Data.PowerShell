@@ -58,7 +58,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -139,7 +139,7 @@ Accept wildcard characters: False
 ```
 
 ### -OptionSetName
-Gets or sets the name of the global choice that contains the value. Optional.
+Gets or sets the name of the global choice. Optional.
 
 ```yaml
 Type: String
@@ -208,7 +208,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

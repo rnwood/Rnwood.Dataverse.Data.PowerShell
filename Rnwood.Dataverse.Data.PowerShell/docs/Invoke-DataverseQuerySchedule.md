@@ -15,7 +15,9 @@ Contains the data that is needed to search the specified resource for an availab
 ## SYNTAX
 
 ```
-Invoke-DataverseQuerySchedule -Connection <ServiceClient> -ResourceId <Guid> -Start <DateTime> -End <DateTime> -TimeCodes <TimeCode[]>
+Invoke-DataverseQuerySchedule [-ResourceId <Guid>] [-Start <DateTime>] [-End <DateTime>]
+ [-TimeCodes <TimeCode[]>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,6 +32,21 @@ PS C:\> Invoke-DataverseQuerySchedule -Connection <ServiceClient> -ResourceId <G
 
 ## PARAMETERS
 
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -38,7 +55,22 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -End
+Gets or sets the end of the time period to expand.
+
+```yaml
+Type: DateTime
+Parameter Sets: (All)
+Aliases:
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -75,13 +107,14 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -End
-Gets or sets the end of the time period to expand.
+### -TimeCodes
+Gets or sets the time codes to look for: Available, Busy, Unavailable, or Filter, which correspond to the resource IDs. Required.
 
 ```yaml
-Type: DateTime
+Type: TimeCode[]
 Parameter Sets: (All)
 Aliases:
+Accepted values: Available, Busy, Unavailable, Filter
 
 Required: False
 Position: Named
@@ -90,13 +123,28 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -TimeCodes
-Gets or sets the time codes to look for: Available, Busy, Unavailable, or Filter, which correspond to the resource IDs. Required.
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
-Type: TimeCode[]
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
 
 Required: False
 Position: Named
@@ -108,15 +156,12 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
-Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
-
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.QueryScheduleResponse
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.QueryScheduleResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.QueryScheduleResponse)
+### System.Object
 ## NOTES
 
 ## RELATED LINKS
