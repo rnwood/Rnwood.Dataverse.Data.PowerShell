@@ -568,16 +568,16 @@ Url + "/api/data/v9.2/");
 				}
 
 				// Display available environments and let user select
-				WriteObject("Available Dataverse environments:");
-				WriteObject("");
+				Host.UI.WriteLine("Available Dataverse environments:");
+				Host.UI.WriteLine("");
 
 				var orgList = orgDetails.ToList();
 				for (int i = 0; i < orgList.Count; i++)
 				{
 					var org = orgList[i];
-					WriteObject($"  {i + 1}. {org.FriendlyName} ({org.UniqueName})");
-					WriteObject($"      URL: {org.Endpoints[Microsoft.Xrm.Sdk.Discovery.EndpointType.WebApplication]}");
-					WriteObject("");
+					Host.UI.WriteLine($"  {i + 1}. {org.FriendlyName} ({org.UniqueName})");
+					Host.UI.WriteLine($"      URL: {org.Endpoints[Microsoft.Xrm.Sdk.Discovery.EndpointType.WebApplication]}");
+					Host.UI.WriteLine("");
 				}
 
 				// Prompt for selection
@@ -605,7 +605,7 @@ Url + "/api/data/v9.2/");
 				var selectedOrg = orgList[selection - 1];
 				var url = selectedOrg.Endpoints[Microsoft.Xrm.Sdk.Discovery.EndpointType.WebApplication];
 
-				WriteVerbose($"Selected environment: {selectedOrg.FriendlyName} ({url})");
+				Host.UI.WriteLine($"Selected environment: {selectedOrg.FriendlyName} ({url})");
 
 				return url;
 			}
