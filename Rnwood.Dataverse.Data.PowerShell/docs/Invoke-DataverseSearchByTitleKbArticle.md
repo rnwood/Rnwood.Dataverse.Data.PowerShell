@@ -15,8 +15,8 @@ Contains the data that is needed to search for knowledge base articles that cont
 ## SYNTAX
 
 ```
-Invoke-DataverseSearchByTitleKbArticle -Connection <ServiceClient> [-SearchText <String>] [-SubjectId <Guid>]
- [-UseInflection <Boolean>] [-QueryExpression <QueryBase>] [-ProgressAction <ActionPreference>] [-WhatIf]
+Invoke-DataverseSearchByTitleKbArticle [-SearchText <String>] [-SubjectId <Guid>] [-UseInflection <Boolean>]
+ [-QueryExpression <QueryBase>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
 
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

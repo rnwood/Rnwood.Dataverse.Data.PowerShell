@@ -15,7 +15,7 @@ Contains data to apply record creation and update rules to activities in Dynamic
 ## SYNTAX
 
 ```
-Invoke-DataverseApplyRecordCreationAndUpdateRule -Connection <ServiceClient> -Target <PSObject>
+Invoke-DataverseApplyRecordCreationAndUpdateRule -Target <PSObject> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

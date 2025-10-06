@@ -15,9 +15,8 @@ Contains the data that is needed to retrieve schema information about all tables
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveAllEntities -Connection <ServiceClient> [-EntityFilters <EntityFilters>]
- [-RetrieveAsIfPublished <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseRetrieveAllEntities [-EntityFilters <EntityFilters>] [-RetrieveAsIfPublished <Boolean>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

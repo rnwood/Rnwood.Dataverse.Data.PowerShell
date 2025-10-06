@@ -15,7 +15,7 @@ Contains the data that is needed to unlock pricing for a sales order (order).
 ## SYNTAX
 
 ```
-Invoke-DataverseUnlockSalesOrderPricing -Connection <ServiceClient> [-SalesOrderId <Guid>]
+Invoke-DataverseUnlockSalesOrderPricing [-SalesOrderId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

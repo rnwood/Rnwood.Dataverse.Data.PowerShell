@@ -15,7 +15,7 @@ Contains the data that is needed to import translations from a compressed file.
 ## SYNTAX
 
 ```
-Invoke-DataverseImportFieldTranslation -Connection <ServiceClient> [-TranslationFile <Byte[]>]
+Invoke-DataverseImportFieldTranslation [-TranslationFile <Byte[]>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

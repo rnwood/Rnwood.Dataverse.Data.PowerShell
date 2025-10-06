@@ -15,12 +15,11 @@ Contains the data that is needed to create a quick campaign to distribute an act
 ## SYNTAX
 
 ```
-Invoke-DataverseCreateActivitiesList -Connection <ServiceClient> [-ListId <Guid>] [-FriendlyName <String>]
- [-Activity <PSObject>] [-ActivityTableName <String>] [-ActivityIgnoreProperties <String[]>]
- [-ActivityLookupColumns <Hashtable>] [-TemplateId <Guid>] [-Propagate <Boolean>]
- [-OwnershipOptions <PropagationOwnershipOptions>] [-Owner <PSObject>] [-sendEmail <Boolean>]
- [-PostWorkflowEvent <Boolean>] [-QueueId <Guid>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseCreateActivitiesList [-ListId <Guid>] [-FriendlyName <String>] [-Activity <PSObject>]
+ [-ActivityTableName <String>] [-ActivityIgnoreProperties <String[]>] [-ActivityLookupColumns <Hashtable>]
+ [-TemplateId <Guid>] [-Propagate <Boolean>] [-OwnershipOptions <PropagationOwnershipOptions>]
+ [-Owner <PSObject>] [-sendEmail <Boolean>] [-PostWorkflowEvent <Boolean>] [-QueueId <Guid>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -118,7 +117,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

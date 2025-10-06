@@ -15,13 +15,12 @@ Contains the data that is needed to create an email activity record from an inco
 ## SYNTAX
 
 ```
-Invoke-DataverseDeliverIncomingEmail -Connection <ServiceClient> [-MessageId <String>] [-Subject <String>]
- [-From <String>] [-To <String>] [-Cc <String>] [-Bcc <String>] [-ReceivedOn <DateTime>]
- [-SubmittedBy <String>] [-Importance <String>] [-Body <String>] [-Attachments <EntityCollection>]
- [-ExtraProperties <PSObject>] [-ExtraPropertiesTableName <String>]
- [-ExtraPropertiesIgnoreProperties <String[]>] [-ExtraPropertiesLookupColumns <Hashtable>]
- [-ValidateBeforeCreate <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseDeliverIncomingEmail [-MessageId <String>] [-Subject <String>] [-From <String>] [-To <String>]
+ [-Cc <String>] [-Bcc <String>] [-ReceivedOn <DateTime>] [-SubmittedBy <String>] [-Importance <String>]
+ [-Body <String>] [-Attachments <EntityCollection>] [-ExtraProperties <PSObject>]
+ [-ExtraPropertiesTableName <String>] [-ExtraPropertiesIgnoreProperties <String[]>]
+ [-ExtraPropertiesLookupColumns <Hashtable>] [-ValidateBeforeCreate <Boolean>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -119,7 +118,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

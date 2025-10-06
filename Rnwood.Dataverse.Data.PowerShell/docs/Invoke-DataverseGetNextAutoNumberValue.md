@@ -15,8 +15,8 @@ Executes a GetNextAutoNumberValueRequest against the Dataverse organization serv
 ## SYNTAX
 
 ```
-Invoke-DataverseGetNextAutoNumberValue -Connection <ServiceClient> [-EntityName <String>]
- [-AttributeName <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseGetNextAutoNumberValue [-EntityName <String>] [-AttributeName <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

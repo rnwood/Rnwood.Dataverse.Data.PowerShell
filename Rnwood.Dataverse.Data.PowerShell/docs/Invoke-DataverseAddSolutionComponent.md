@@ -15,10 +15,10 @@ Contains the data that is needed to add a solution component to an unmanaged sol
 ## SYNTAX
 
 ```
-Invoke-DataverseAddSolutionComponent -Connection <ServiceClient> [-ComponentId <Guid>] [-ComponentType <Int32>]
+Invoke-DataverseAddSolutionComponent [-ComponentId <Guid>] [-ComponentType <Int32>]
  [-SolutionUniqueName <String>] [-AddRequiredComponents <Boolean>] [-DoNotIncludeSubcomponents <Boolean>]
- [-IncludedComponentSettingsValues <String[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+ [-IncludedComponentSettingsValues <String[]>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -101,7 +101,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

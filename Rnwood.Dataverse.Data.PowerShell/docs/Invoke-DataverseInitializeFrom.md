@@ -15,9 +15,9 @@ Contains the data that is needed to initialize a new record from an existing rec
 ## SYNTAX
 
 ```
-Invoke-DataverseInitializeFrom -Connection <ServiceClient> [-EntityMoniker <PSObject>]
- [-TargetEntityName <String>] [-TargetFieldType <TargetFieldType>] [-SkipParentalRelationshipMapping <Boolean>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseInitializeFrom [-EntityMoniker <PSObject>] [-TargetEntityName <String>]
+ [-TargetFieldType <TargetFieldType>] [-SkipParentalRelationshipMapping <Boolean>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

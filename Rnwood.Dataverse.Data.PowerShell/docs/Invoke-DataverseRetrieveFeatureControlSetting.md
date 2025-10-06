@@ -15,8 +15,8 @@ Executes a RetrieveFeatureControlSettingRequest against the Dataverse organizati
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveFeatureControlSetting -Connection <ServiceClient> [-NamespaceValue <String>]
- [-FeatureControlName <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveFeatureControlSetting [-NamespaceValue <String>] [-FeatureControlName <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

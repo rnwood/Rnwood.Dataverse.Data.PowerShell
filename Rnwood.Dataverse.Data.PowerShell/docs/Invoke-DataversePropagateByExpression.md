@@ -15,12 +15,12 @@ Contains the data that is needed to create a quick campaign to distribute an act
 ## SYNTAX
 
 ```
-Invoke-DataversePropagateByExpression -Connection <ServiceClient> [-QueryExpression <QueryBase>]
- [-FriendlyName <String>] [-ExecuteImmediately <Boolean>] [-Activity <PSObject>] [-ActivityTableName <String>]
+Invoke-DataversePropagateByExpression [-QueryExpression <QueryBase>] [-FriendlyName <String>]
+ [-ExecuteImmediately <Boolean>] [-Activity <PSObject>] [-ActivityTableName <String>]
  [-ActivityIgnoreProperties <String[]>] [-ActivityLookupColumns <Hashtable>] [-TemplateId <Guid>]
  [-OwnershipOptions <PropagationOwnershipOptions>] [-PostWorkflowEvent <Boolean>] [-Owner <PSObject>]
- [-SendEmail <Boolean>] [-QueueId <Guid>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+ [-SendEmail <Boolean>] [-QueueId <Guid>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -118,7 +118,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

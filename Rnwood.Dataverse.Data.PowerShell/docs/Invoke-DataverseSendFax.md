@@ -15,7 +15,7 @@ Contains the data that is needed to send a fax.
 ## SYNTAX
 
 ```
-Invoke-DataverseSendFax -Connection <ServiceClient> [-FaxId <Guid>] [-IssueSend <Boolean>]
+Invoke-DataverseSendFax [-FaxId <Guid>] [-IssueSend <Boolean>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

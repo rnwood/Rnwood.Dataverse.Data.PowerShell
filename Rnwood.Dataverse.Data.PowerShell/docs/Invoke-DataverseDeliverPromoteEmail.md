@@ -15,12 +15,12 @@ Contains the data that is needed to create an email activity record from the spe
 ## SYNTAX
 
 ```
-Invoke-DataverseDeliverPromoteEmail -Connection <ServiceClient> [-EmailId <Guid>] [-MessageId <String>]
- [-Subject <String>] [-From <String>] [-To <String>] [-Cc <String>] [-Bcc <String>] [-ReceivedOn <DateTime>]
+Invoke-DataverseDeliverPromoteEmail [-EmailId <Guid>] [-MessageId <String>] [-Subject <String>]
+ [-From <String>] [-To <String>] [-Cc <String>] [-Bcc <String>] [-ReceivedOn <DateTime>]
  [-SubmittedBy <String>] [-Importance <String>] [-Body <String>] [-Attachments <EntityCollection>]
  [-ExtraProperties <PSObject>] [-ExtraPropertiesTableName <String>]
  [-ExtraPropertiesIgnoreProperties <String[]>] [-ExtraPropertiesLookupColumns <Hashtable>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -118,7 +118,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

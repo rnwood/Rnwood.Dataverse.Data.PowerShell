@@ -15,9 +15,8 @@ Contains the data that's needed to submit a bulk delete job that deletes selecte
 ## SYNTAX
 
 ```
-Invoke-DataverseDelete -Connection <ServiceClient> -Target <PSObject>
- [-ConcurrencyBehavior <ConcurrencyBehavior>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseDelete -Target <PSObject> [-ConcurrencyBehavior <ConcurrencyBehavior>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -71,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

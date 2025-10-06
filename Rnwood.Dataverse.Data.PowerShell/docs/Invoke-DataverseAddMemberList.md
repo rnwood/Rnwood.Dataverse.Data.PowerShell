@@ -15,7 +15,7 @@ Contains the data that is needed to add a member to a list (marketing list).
 ## SYNTAX
 
 ```
-Invoke-DataverseAddMemberList -Connection <ServiceClient> [-ListId <Guid>] [-EntityId <Guid>]
+Invoke-DataverseAddMemberList [-ListId <Guid>] [-EntityId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

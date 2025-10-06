@@ -15,8 +15,8 @@ Contains the data to retrieve a list of privileges for a system user (user) has 
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveUserSetOfPrivilegesByNames -Connection <ServiceClient> [-UserId <Guid>]
- [-PrivilegeNames <String[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveUserSetOfPrivilegesByNames [-UserId <Guid>] [-PrivilegeNames <String[]>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

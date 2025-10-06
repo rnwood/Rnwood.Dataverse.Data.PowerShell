@@ -15,7 +15,7 @@ Contains the data that is needed to lock the total price of products and service
 ## SYNTAX
 
 ```
-Invoke-DataverseLockInvoicePricing -Connection <ServiceClient> [-InvoiceId <Guid>]
+Invoke-DataverseLockInvoicePricing [-InvoiceId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

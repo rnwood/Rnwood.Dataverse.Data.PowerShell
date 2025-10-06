@@ -15,9 +15,9 @@ Contains the data that is needed to send an email message using a template.
 ## SYNTAX
 
 ```
-Invoke-DataverseSendEmailFromTemplate -Connection <ServiceClient> [-TemplateId <Guid>]
- [-RegardingType <String>] [-RegardingId <Guid>] -Target <PSObject> -TargetTableName <String>
- [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>] [-ProgressAction <ActionPreference>]
+Invoke-DataverseSendEmailFromTemplate [-TemplateId <Guid>] [-RegardingType <String>] [-RegardingId <Guid>]
+ -Target <PSObject> -TargetTableName <String> [-TargetIgnoreProperties <String[]>]
+ [-TargetLookupColumns <Hashtable>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -56,7 +56,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

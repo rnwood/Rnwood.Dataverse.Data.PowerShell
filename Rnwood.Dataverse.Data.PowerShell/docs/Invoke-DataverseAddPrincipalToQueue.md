@@ -15,8 +15,8 @@ Contains the data to add the specified principal to the list of queue members. I
 ## SYNTAX
 
 ```
-Invoke-DataverseAddPrincipalToQueue -Connection <ServiceClient> [-QueueId <Guid>] [-Principal <PSObject>]
- [-PrincipalTableName <String>] [-PrincipalIgnoreProperties <String[]>] [-PrincipalLookupColumns <Hashtable>]
+Invoke-DataverseAddPrincipalToQueue [-QueueId <Guid>] [-Principal <PSObject>] [-PrincipalTableName <String>]
+ [-PrincipalIgnoreProperties <String[]>] [-PrincipalLookupColumns <Hashtable>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

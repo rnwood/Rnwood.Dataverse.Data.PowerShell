@@ -15,9 +15,9 @@ Contains the data that is needed to create a new customer lookup column, and opt
 ## SYNTAX
 
 ```
-Invoke-DataverseCreateCustomerRelationships -Connection <ServiceClient> [-Lookup <LookupAttributeMetadata>]
+Invoke-DataverseCreateCustomerRelationships [-Lookup <LookupAttributeMetadata>]
  [-OneToManyRelationships <OneToManyRelationshipMetadata[]>] [-SolutionUniqueName <String>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

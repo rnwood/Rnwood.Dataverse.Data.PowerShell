@@ -15,7 +15,7 @@ Contains the data that is needed to calculate the value of a rollup column.
 ## SYNTAX
 
 ```
-Invoke-DataverseCalculateRollupField -Connection <ServiceClient> -Target <PSObject> [-FieldName <String>]
+Invoke-DataverseCalculateRollupField -Target <PSObject> [-FieldName <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

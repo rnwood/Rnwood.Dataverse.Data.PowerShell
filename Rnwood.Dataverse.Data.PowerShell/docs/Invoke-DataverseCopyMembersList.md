@@ -15,7 +15,7 @@ Contains the data that is needed to copy the members from the source list to the
 ## SYNTAX
 
 ```
-Invoke-DataverseCopyMembersList -Connection <ServiceClient> [-SourceListId <Guid>] [-TargetListId <Guid>]
+Invoke-DataverseCopyMembersList [-SourceListId <Guid>] [-TargetListId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

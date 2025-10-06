@@ -15,9 +15,9 @@ Contains the data that is needed to create future unexpanded instances for the r
 ## SYNTAX
 
 ```
-Invoke-DataverseCreateInstance -Connection <ServiceClient> -Target <PSObject> -TargetTableName <String>
+Invoke-DataverseCreateInstance -Target <PSObject> -TargetTableName <String>
  [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>] [-Count <Int32>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

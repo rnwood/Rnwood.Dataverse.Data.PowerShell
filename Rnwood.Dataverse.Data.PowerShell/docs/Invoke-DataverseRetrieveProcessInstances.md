@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve all the process instances for an en
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveProcessInstances -Connection <ServiceClient> [-EntityId <Guid>]
- [-EntityLogicalName <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveProcessInstances [-EntityId <Guid>] [-EntityLogicalName <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

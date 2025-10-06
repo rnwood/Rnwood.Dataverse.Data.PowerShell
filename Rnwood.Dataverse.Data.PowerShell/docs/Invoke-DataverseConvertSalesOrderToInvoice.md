@@ -15,8 +15,8 @@ Contains the data that is needed to convert a sales order to an invoice.
 ## SYNTAX
 
 ```
-Invoke-DataverseConvertSalesOrderToInvoice -Connection <ServiceClient> [-SalesOrderId <Guid>]
- [-ColumnSet <ColumnSet>] [-ProcessInstanceId <PSObject>] [-ProgressAction <ActionPreference>] [-WhatIf]
+Invoke-DataverseConvertSalesOrderToInvoice [-SalesOrderId <Guid>] [-ColumnSet <ColumnSet>]
+ [-ProcessInstanceId <PSObject>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
 
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

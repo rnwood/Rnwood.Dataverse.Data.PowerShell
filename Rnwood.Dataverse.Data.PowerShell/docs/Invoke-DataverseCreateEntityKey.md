@@ -15,8 +15,8 @@ Contains data that is needed to create an alternate key.
 ## SYNTAX
 
 ```
-Invoke-DataverseCreateEntityKey -Connection <ServiceClient> [-EntityKey <EntityKeyMetadata>]
- [-EntityName <String>] [-SolutionUniqueName <String>] [-ProgressAction <ActionPreference>] [-WhatIf]
+Invoke-DataverseCreateEntityKey [-EntityKey <EntityKeyMetadata>] [-EntityName <String>]
+ [-SolutionUniqueName <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
 
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

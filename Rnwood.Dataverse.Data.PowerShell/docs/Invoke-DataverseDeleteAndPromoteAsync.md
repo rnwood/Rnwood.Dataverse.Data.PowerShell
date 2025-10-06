@@ -15,7 +15,7 @@ Asynchronously replaces managed solution (A) plus all of its patches with manage
 ## SYNTAX
 
 ```
-Invoke-DataverseDeleteAndPromoteAsync -Connection <ServiceClient> [-UniqueName <String>]
+Invoke-DataverseDeleteAndPromoteAsync [-UniqueName <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

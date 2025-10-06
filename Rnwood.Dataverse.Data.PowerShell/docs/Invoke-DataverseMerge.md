@@ -15,9 +15,9 @@ Contains the data that's needed to merge the information from two entity records
 ## SYNTAX
 
 ```
-Invoke-DataverseMerge -Connection <ServiceClient> -Target <PSObject> [-SubordinateId <Guid>]
- [-UpdateContent <PSObject>] [-UpdateContentTableName <String>] [-UpdateContentIgnoreProperties <String[]>]
- [-UpdateContentLookupColumns <Hashtable>] [-PerformParentingChecks <Boolean>]
+Invoke-DataverseMerge -Target <PSObject> [-SubordinateId <Guid>] [-UpdateContent <PSObject>]
+ [-UpdateContentTableName <String>] [-UpdateContentIgnoreProperties <String[]>]
+ [-UpdateContentLookupColumns <Hashtable>] [-PerformParentingChecks <Boolean>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -56,7 +56,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

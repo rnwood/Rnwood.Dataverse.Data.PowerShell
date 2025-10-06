@@ -15,7 +15,7 @@ Contains the data that is needed to renew an entitlement.
 ## SYNTAX
 
 ```
-Invoke-DataverseRenewEntitlement -Connection <ServiceClient> [-EntitlementId <Guid>] [-Status <Int32>]
+Invoke-DataverseRenewEntitlement [-EntitlementId <Guid>] [-Status <Int32>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

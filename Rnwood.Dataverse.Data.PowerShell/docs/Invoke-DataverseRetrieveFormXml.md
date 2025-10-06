@@ -15,7 +15,7 @@ For internal use only.
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveFormXml -Connection <ServiceClient> [-EntityName <String>]
+Invoke-DataverseRetrieveFormXml [-EntityName <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

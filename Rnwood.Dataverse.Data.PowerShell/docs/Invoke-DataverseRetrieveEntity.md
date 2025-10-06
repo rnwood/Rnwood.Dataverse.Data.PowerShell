@@ -15,9 +15,9 @@ Contains the data that is needed to retrieve the definition of a table.
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveEntity -Connection <ServiceClient> [-EntityFilters <EntityFilters>]
- [-LogicalName <String>] [-MetadataId <Guid>] [-RetrieveAsIfPublished <Boolean>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveEntity [-EntityFilters <EntityFilters>] [-LogicalName <String>] [-MetadataId <Guid>]
+ [-RetrieveAsIfPublished <Boolean>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

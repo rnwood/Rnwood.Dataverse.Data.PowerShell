@@ -15,8 +15,8 @@ Contains the data that is needed to create and execute an asynchronous cleanup j
 ## SYNTAX
 
 ```
-Invoke-DataverseCreateAsyncJobToRevokeInheritedAccess -Connection <ServiceClient>
- [-RelationshipSchema <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseCreateAsyncJobToRevokeInheritedAccess [-RelationshipSchema <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

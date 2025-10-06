@@ -15,8 +15,8 @@ Contains the data that is needed to determine whether a solution component is cu
 ## SYNTAX
 
 ```
-Invoke-DataverseIsComponentCustomizable -Connection <ServiceClient> [-ComponentId <Guid>]
- [-ComponentType <Int32>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseIsComponentCustomizable [-ComponentId <Guid>] [-ComponentType <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -84,7 +84,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

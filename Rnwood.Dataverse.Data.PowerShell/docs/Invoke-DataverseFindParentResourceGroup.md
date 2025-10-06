@@ -15,8 +15,8 @@ Contains the data that is needed to find a parent resource group (scheduling gro
 ## SYNTAX
 
 ```
-Invoke-DataverseFindParentResourceGroup -Connection <ServiceClient> [-ParentId <Guid>] [-ChildrenIds <Guid[]>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseFindParentResourceGroup [-ParentId <Guid>] [-ChildrenIds <Guid[]>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,7 +15,7 @@ Contains the data that is needed to create a static list from the specified dyna
 ## SYNTAX
 
 ```
-Invoke-DataverseCopyDynamicListToStatic -Connection <ServiceClient> [-ListId <Guid>]
+Invoke-DataverseCopyDynamicListToStatic [-ListId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

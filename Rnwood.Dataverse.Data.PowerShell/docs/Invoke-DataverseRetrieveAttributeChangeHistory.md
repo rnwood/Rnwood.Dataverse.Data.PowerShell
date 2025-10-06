@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve all metadata changes to a specific 
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveAttributeChangeHistory -Connection <ServiceClient> -Target <PSObject>
- [-AttributeLogicalName <String>] [-PagingInfo <PagingInfo>] [-ProgressAction <ActionPreference>] [-WhatIf]
+Invoke-DataverseRetrieveAttributeChangeHistory -Target <PSObject> [-AttributeLogicalName <String>]
+ [-PagingInfo <PagingInfo>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
 
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

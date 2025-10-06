@@ -15,8 +15,8 @@ Contains the data that is needed to reassign all records that are owned by a spe
 ## SYNTAX
 
 ```
-Invoke-DataverseReassignObjectsSystemUser -Connection <ServiceClient> [-UserId <Guid>]
- [-ReassignPrincipal <PSObject>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseReassignObjectsSystemUser [-UserId <Guid>] [-ReassignPrincipal <PSObject>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

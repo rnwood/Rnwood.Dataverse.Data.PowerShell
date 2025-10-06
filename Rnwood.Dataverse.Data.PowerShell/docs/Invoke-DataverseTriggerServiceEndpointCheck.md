@@ -15,7 +15,7 @@ Contains the data that is needed to validate the configuration of a Microsoft Az
 ## SYNTAX
 
 ```
-Invoke-DataverseTriggerServiceEndpointCheck -Connection <ServiceClient> [-Entity <PSObject>]
+Invoke-DataverseTriggerServiceEndpointCheck [-Entity <PSObject>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

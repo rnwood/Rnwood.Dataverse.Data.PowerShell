@@ -15,9 +15,9 @@ Contains the data that is needed to set the state of a quote to Won.
 ## SYNTAX
 
 ```
-Invoke-DataverseWinQuote -Connection <ServiceClient> [-QuoteClose <PSObject>] [-QuoteCloseTableName <String>]
+Invoke-DataverseWinQuote [-QuoteClose <PSObject>] [-QuoteCloseTableName <String>]
  [-QuoteCloseIgnoreProperties <String[]>] [-QuoteCloseLookupColumns <Hashtable>] [-Status <OptionSetValue>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

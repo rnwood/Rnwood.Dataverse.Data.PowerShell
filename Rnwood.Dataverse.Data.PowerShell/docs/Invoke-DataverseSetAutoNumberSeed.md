@@ -15,8 +15,8 @@ Requests the seed number being used for autonumber generation.
 ## SYNTAX
 
 ```
-Invoke-DataverseSetAutoNumberSeed -Connection <ServiceClient> [-EntityName <String>] [-AttributeName <String>]
- [-Value <Int64>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseSetAutoNumberSeed [-EntityName <String>] [-AttributeName <String>] [-Value <Int64>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

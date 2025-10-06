@@ -15,7 +15,7 @@ Retrieve all shared links on the table row.
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveSharedLinks -Connection <ServiceClient> -Target <PSObject>
+Invoke-DataverseRetrieveSharedLinks -Target <PSObject> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

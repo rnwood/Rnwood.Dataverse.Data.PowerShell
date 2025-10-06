@@ -15,8 +15,8 @@ Contains the data that is needed to update the definition of a global choice.
 ## SYNTAX
 
 ```
-Invoke-DataverseUpdateOptionSet -Connection <ServiceClient> [-OptionSet <OptionSetMetadataBase>]
- [-MergeLabels <Boolean>] [-SolutionUniqueName <String>] [-ProgressAction <ActionPreference>] [-WhatIf]
+Invoke-DataverseUpdateOptionSet [-OptionSet <OptionSetMetadataBase>] [-MergeLabels <Boolean>]
+ [-SolutionUniqueName <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
 
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

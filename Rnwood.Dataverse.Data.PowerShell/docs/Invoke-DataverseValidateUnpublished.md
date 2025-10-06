@@ -15,7 +15,7 @@ Contains the data to validate that a mobile offline profile, including unpublish
 ## SYNTAX
 
 ```
-Invoke-DataverseValidateUnpublished -Connection <ServiceClient> -Target <PSObject>
+Invoke-DataverseValidateUnpublished -Target <PSObject> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

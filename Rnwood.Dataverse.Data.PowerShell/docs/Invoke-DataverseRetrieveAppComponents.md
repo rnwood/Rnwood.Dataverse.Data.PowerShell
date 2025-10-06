@@ -15,7 +15,7 @@ Contains the data to return components of an App.
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveAppComponents -Connection <ServiceClient> [-AppModuleId <Guid>]
+Invoke-DataverseRetrieveAppComponents [-AppModuleId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,7 +15,7 @@ Contains the data that is needed to remove a privilege from an existing role.
 ## SYNTAX
 
 ```
-Invoke-DataverseRemovePrivilegeRole -Connection <ServiceClient> [-RoleId <Guid>] [-PrivilegeId <Guid>]
+Invoke-DataverseRemovePrivilegeRole [-RoleId <Guid>] [-PrivilegeId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

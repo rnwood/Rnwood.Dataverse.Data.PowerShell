@@ -15,8 +15,8 @@ Contains the data to compute an address based on country and format parameters.
 ## SYNTAX
 
 ```
-Invoke-DataverseFormatAddress -Connection <ServiceClient> [-Line1 <String>] [-City <String>]
- [-StateOrProvince <String>] [-PostalCode <String>] [-Country <String>] [-ProgressAction <ActionPreference>]
+Invoke-DataverseFormatAddress [-Line1 <String>] [-City <String>] [-StateOrProvince <String>]
+ [-PostalCode <String>] [-Country <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

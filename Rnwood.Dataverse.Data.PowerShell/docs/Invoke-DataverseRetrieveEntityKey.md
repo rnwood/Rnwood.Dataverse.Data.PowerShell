@@ -15,8 +15,8 @@ Contains data that is needed to retrieve an alternate key.
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveEntityKey -Connection <ServiceClient> [-MetadataId <Guid>] [-LogicalName <String>]
- [-EntityLogicalName <String>] [-RetrieveAsIfPublished <Boolean>] [-ProgressAction <ActionPreference>]
+Invoke-DataverseRetrieveEntityKey [-MetadataId <Guid>] [-LogicalName <String>] [-EntityLogicalName <String>]
+ [-RetrieveAsIfPublished <Boolean>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

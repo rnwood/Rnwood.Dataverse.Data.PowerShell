@@ -15,7 +15,7 @@ Contains the data needed to download a solution file that was exported by an asy
 ## SYNTAX
 
 ```
-Invoke-DataverseDownloadSolutionExportData -Connection <ServiceClient> [-ExportJobId <Guid>]
+Invoke-DataverseDownloadSolutionExportData [-ExportJobId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

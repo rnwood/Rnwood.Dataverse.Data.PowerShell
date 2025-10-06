@@ -15,7 +15,7 @@ Contains the data that is needed to calculate the value of an opportunity that i
 ## SYNTAX
 
 ```
-Invoke-DataverseCalculateActualValueOpportunity -Connection <ServiceClient> [-OpportunityId <Guid>]
+Invoke-DataverseCalculateActualValueOpportunity [-OpportunityId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

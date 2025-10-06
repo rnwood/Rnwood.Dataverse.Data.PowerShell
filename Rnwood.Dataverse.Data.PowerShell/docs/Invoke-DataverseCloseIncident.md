@@ -15,10 +15,10 @@ Contains the data that is needed to close an incident (case).
 ## SYNTAX
 
 ```
-Invoke-DataverseCloseIncident -Connection <ServiceClient> [-IncidentResolution <PSObject>]
- [-IncidentResolutionTableName <String>] [-IncidentResolutionIgnoreProperties <String[]>]
- [-IncidentResolutionLookupColumns <Hashtable>] [-Status <OptionSetValue>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseCloseIncident [-IncidentResolution <PSObject>] [-IncidentResolutionTableName <String>]
+ [-IncidentResolutionIgnoreProperties <String[]>] [-IncidentResolutionLookupColumns <Hashtable>]
+ [-Status <OptionSetValue>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -56,7 +56,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

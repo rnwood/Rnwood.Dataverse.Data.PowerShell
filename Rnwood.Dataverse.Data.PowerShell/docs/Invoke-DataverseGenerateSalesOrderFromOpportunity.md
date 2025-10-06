@@ -15,8 +15,8 @@ Contains the data that is needed to generate a sales order (order) from an oppor
 ## SYNTAX
 
 ```
-Invoke-DataverseGenerateSalesOrderFromOpportunity -Connection <ServiceClient> [-OpportunityId <Guid>]
- [-ColumnSet <ColumnSet>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseGenerateSalesOrderFromOpportunity [-OpportunityId <Guid>] [-ColumnSet <ColumnSet>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

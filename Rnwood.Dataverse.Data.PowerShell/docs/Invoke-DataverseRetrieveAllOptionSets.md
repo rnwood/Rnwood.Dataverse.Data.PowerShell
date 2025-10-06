@@ -15,7 +15,7 @@ Contains the data that is needed to retrieve information about all global choice
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveAllOptionSets -Connection <ServiceClient> [-RetrieveAsIfPublished <Boolean>]
+Invoke-DataverseRetrieveAllOptionSets [-RetrieveAsIfPublished <Boolean>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,7 +15,7 @@ Deprecated. Contains the data that is needed to convert a product to a kit.
 ## SYNTAX
 
 ```
-Invoke-DataverseConvertProductToKit -Connection <ServiceClient> [-ProductId <Guid>]
+Invoke-DataverseConvertProductToKit [-ProductId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

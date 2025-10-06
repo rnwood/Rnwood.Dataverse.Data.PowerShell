@@ -15,8 +15,8 @@ Contains the data that is needed to delete a column.
 ## SYNTAX
 
 ```
-Invoke-DataverseDeleteAttribute -Connection <ServiceClient> [-LogicalName <String>]
- [-EntityLogicalName <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseDeleteAttribute [-LogicalName <String>] [-EntityLogicalName <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,8 +15,8 @@ Contains the data to retrieve all the activity pointer entities along with the p
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveTimelineWallRecords -Connection <ServiceClient> [-FetchXml <String>] -Target <PSObject>
- [-RollupType <Int32>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveTimelineWallRecords [-FetchXml <String>] -Target <PSObject> [-RollupType <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

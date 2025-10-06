@@ -15,10 +15,10 @@ Contains the data that is needed to convert a quote to a sales order.
 ## SYNTAX
 
 ```
-Invoke-DataverseConvertQuoteToSalesOrder -Connection <ServiceClient> [-QuoteId <Guid>] [-ColumnSet <ColumnSet>]
+Invoke-DataverseConvertQuoteToSalesOrder [-QuoteId <Guid>] [-ColumnSet <ColumnSet>]
  [-QuoteCloseDate <DateTime>] [-QuoteCloseStatus <OptionSetValue>] [-QuoteCloseSubject <String>]
- [-QuoteCloseDescription <String>] [-ProcessInstanceId <PSObject>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-QuoteCloseDescription <String>] [-ProcessInstanceId <PSObject>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -71,7 +71,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

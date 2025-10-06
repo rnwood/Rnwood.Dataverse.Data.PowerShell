@@ -15,8 +15,8 @@ Contains the data needed to retrieve the collection of the parent resource group
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveParentGroupsResourceGroup -Connection <ServiceClient> [-ResourceGroupId <Guid>]
- [-Query <QueryBase>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveParentGroupsResourceGroup [-ResourceGroupId <Guid>] [-Query <QueryBase>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

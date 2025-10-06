@@ -36,7 +36,7 @@ To update:
 Update-Module Rnwood.Dataverse.Data.PowerShell -Force
 ```
 # Quick Start and Examples
-Get a connection to a target Dataverse environment using the `Get-DataverseConnection` cmdlet.
+Get a connection to a target Dataverse environment using the `Get-DataverseConnection` cmdlet (also available as `Connect-DataverseConnection` alias).
 
 *Example: Get a connection to MYORG... using interactive authentication:*
 ```powershell
@@ -49,6 +49,25 @@ $c = Get-DataverseConnection -interactive
 ```
 
 See the full documentation for `Get-DataverseConnection` for other non-interactive auth types.
+
+### Default Connection
+
+You can set a connection as the default, so you don't have to pass `-Connection` to every cmdlet:
+
+*Example: Set a default connection and use it implicitly:*
+```powershell
+# Set a connection as default
+Connect-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive -SetAsDefault
+
+# Now you can omit -Connection from all cmdlets
+Get-DataverseRecord -tablename contact
+Set-DataverseRecord -tablename contact @{firstname="John"; lastname="Doe"}
+
+# You can retrieve the current default connection
+$currentDefault = Get-DataverseConnection -GetDefault
+```
+
+This is especially useful in interactive sessions and scripts where you're working with a single environment.
 
 ### Authentication Methods
 
@@ -71,12 +90,18 @@ $c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -DefaultAzure
 $c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -ManagedIdentity
 ```
 
-Every command that need a connection to a Dataverse environment exposes a `-Connection` parameter.  Use the value returned by the above (`$c` in example) here.
+Every command that needs a connection to a Dataverse environment exposes a `-Connection` parameter. This parameter is now optional - if not provided, the cmdlet will use the default connection (if one has been set with `-SetAsDefault`).
 
-*Example: Get all `contact` records:*
+*Example: Get all `contact` records using explicit connection:*
 ```powershell
 $c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive
 Get-DataverseRecord -connection $c -tablename contact
+```
+
+*Example: Get all `contact` records using default connection:*
+```powershell
+Connect-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive -SetAsDefault
+Get-DataverseRecord -tablename contact
 ```
 
 *Example: Exclude records where firstname='Rob' or lastname='Smith':*

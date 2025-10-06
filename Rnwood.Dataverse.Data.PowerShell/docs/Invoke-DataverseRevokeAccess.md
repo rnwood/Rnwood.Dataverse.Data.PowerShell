@@ -15,7 +15,7 @@ Contains the data that is needed to replace the access rights on the target reco
 ## SYNTAX
 
 ```
-Invoke-DataverseRevokeAccess -Connection <ServiceClient> -Target <PSObject> [-Revokee <PSObject>]
+Invoke-DataverseRevokeAccess -Target <PSObject> [-Revokee <PSObject>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

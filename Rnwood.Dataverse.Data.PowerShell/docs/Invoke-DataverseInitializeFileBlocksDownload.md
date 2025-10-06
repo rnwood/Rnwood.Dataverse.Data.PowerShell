@@ -15,8 +15,8 @@ Contains the data needed to initialize the download of one or more binary data b
 ## SYNTAX
 
 ```
-Invoke-DataverseInitializeFileBlocksDownload -Connection <ServiceClient> -Target <PSObject>
- [-FileAttributeName <String>] [-DataSource <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+Invoke-DataverseInitializeFileBlocksDownload -Target <PSObject> [-FileAttributeName <String>]
+ [-DataSource <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
  [<CommonParameters>]
 ```
 
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

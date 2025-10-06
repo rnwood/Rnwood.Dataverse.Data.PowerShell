@@ -15,10 +15,9 @@ Contains the data that is needed to update a duplicate rule (duplicate detection
 ## SYNTAX
 
 ```
-Invoke-DataverseCompoundUpdateDuplicateDetectionRule -Connection <ServiceClient> [-Entity <PSObject>]
- [-EntityTableName <String>] [-EntityIgnoreProperties <String[]>] [-EntityLookupColumns <Hashtable>]
- [-ChildEntities <EntityCollection>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseCompoundUpdateDuplicateDetectionRule [-Entity <PSObject>] [-EntityTableName <String>]
+ [-EntityIgnoreProperties <String[]>] [-EntityLookupColumns <Hashtable>] [-ChildEntities <EntityCollection>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -71,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

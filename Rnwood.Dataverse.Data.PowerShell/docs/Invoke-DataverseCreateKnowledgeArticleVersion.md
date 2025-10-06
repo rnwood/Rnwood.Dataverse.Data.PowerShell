@@ -15,8 +15,8 @@ Contains the data that is required to create a major or minor version of a knowl
 ## SYNTAX
 
 ```
-Invoke-DataverseCreateKnowledgeArticleVersion -Connection <ServiceClient> [-Source <PSObject>]
- [-IsMajor <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseCreateKnowledgeArticleVersion [-Source <PSObject>] [-IsMajor <Boolean>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

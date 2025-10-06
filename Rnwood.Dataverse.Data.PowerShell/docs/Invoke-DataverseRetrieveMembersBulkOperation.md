@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve the members of a bulk operation.
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveMembersBulkOperation -Connection <ServiceClient> [-BulkOperationId <Guid>]
- [-BulkOperationSource <Int32>] [-EntitySource <Int32>] [-Query <QueryBase>]
+Invoke-DataverseRetrieveMembersBulkOperation [-BulkOperationId <Guid>] [-BulkOperationSource <Int32>]
+ [-EntitySource <Int32>] [-Query <QueryBase>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -85,7 +85,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

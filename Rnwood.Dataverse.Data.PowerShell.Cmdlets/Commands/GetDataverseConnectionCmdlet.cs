@@ -34,6 +34,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	/// Establishes a connection to a Dataverse environment using various authentication methods.
 	/// </summary>
 	[Cmdlet(VerbsCommon.Get, "DataverseConnection")]
+	[Alias("Connect-DataverseConnection")]
 	[OutputType(typeof(ServiceClient))]
 	public class GetDataverseConnectionCmdlet : PSCmdlet
 	{
@@ -53,6 +54,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private const string PARAMSET_MANAGEDIDENTITY = "Authenticate with ManagedIdentityCredential";
 
 		private const string PARAMSET_MOCK = "Return a mock connection";
+		private const string PARAMSET_GETDEFAULT = "Get default connection";
+
+		/// <summary>
+		/// Gets or sets a value indicating whether to get the current default connection.
+		/// </summary>
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_GETDEFAULT, HelpMessage = "Gets the current default connection. Returns an error if no default connection is set.")]
+		public SwitchParameter GetDefault { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether to set this connection as the default.
+		/// </summary>
+		[Parameter(Mandatory = false, HelpMessage = "When set, this connection will be used as the default for cmdlets that don't have a connection parameter specified.")]
+		public SwitchParameter SetAsDefault { get; set; }
 
 		/// <summary>
 		/// Gets or sets the entity metadata for creating a mock connection.
@@ -192,6 +206,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// </summary>
 		protected override void ProcessRecord()
 		{
+			// Handle GetDefault specially to avoid wrapping its error
+			if (ParameterSetName == PARAMSET_GETDEFAULT)
+			{
+				base.ProcessRecord();
+				ServiceClient result = DefaultConnectionManager.DefaultConnection;
+				if (result == null)
+				{
+					ThrowTerminatingError(new ErrorRecord(
+						new InvalidOperationException("No default connection has been set. Use Get-DataverseConnection with -SetAsDefault or provide a -Connection parameter to cmdlets."),
+						"NoDefaultConnection",
+						ErrorCategory.InvalidOperation,
+						null));
+				}
+				WriteObject(result);
+				return;
+			}
+
 			try
 			{
 				base.ProcessRecord();
@@ -361,6 +392,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				// Can decrease overall transmission overhead but can cause delay in data packet arrival
 				System.Net.ServicePointManager.UseNagleAlgorithm = false;
 
+				// Set as default if requested
+				if (SetAsDefault)
+				{
+					DefaultConnectionManager.DefaultConnection = result;
+				}
+
 				WriteObject(result);
 			}
 			catch (Exception e)
@@ -369,6 +406,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				if (e is OperationCanceledException || e is TaskCanceledException || (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested))
 				{
 					ThrowTerminatingError(new ErrorRecord(new PipelineStoppedException(), "OperationStopped", ErrorCategory.OperationStopped, null));
+				}
+
+				// If it's already a PipelineStoppedException (from ThrowTerminatingError), rethrow it
+				if (e is PipelineStoppedException)
+				{
+					throw;
 				}
 
 				WriteError(new ErrorRecord(e, "dataverse-failed-connect", ErrorCategory.ConnectionError, null) { ErrorDetails = new ErrorDetails($"Failed to connect to Dataverse: {e}") });

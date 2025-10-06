@@ -15,8 +15,8 @@ Contains the data that is needed to validate the state transition.
 ## SYNTAX
 
 ```
-Invoke-DataverseIsValidStateTransition -Connection <ServiceClient> [-Entity <PSObject>] [-NewState <String>]
- [-NewStatus <Int32>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseIsValidStateTransition [-Entity <PSObject>] [-NewState <String>] [-NewStatus <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

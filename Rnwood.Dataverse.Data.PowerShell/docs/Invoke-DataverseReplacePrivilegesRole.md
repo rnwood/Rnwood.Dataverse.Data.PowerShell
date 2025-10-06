@@ -15,8 +15,8 @@ Contains the data that is needed to replace the privilege set of an existing rol
 ## SYNTAX
 
 ```
-Invoke-DataverseReplacePrivilegesRole -Connection <ServiceClient> [-RoleId <Guid>]
- [-Privileges <RolePrivilege[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseReplacePrivilegesRole [-RoleId <Guid>] [-Privileges <RolePrivilege[]>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

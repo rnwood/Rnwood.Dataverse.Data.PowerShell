@@ -15,10 +15,10 @@ Contains the data that is needed to set the state of an opportunity to Lost.
 ## SYNTAX
 
 ```
-Invoke-DataverseLoseOpportunity -Connection <ServiceClient> [-OpportunityClose <PSObject>]
- [-OpportunityCloseTableName <String>] [-OpportunityCloseIgnoreProperties <String[]>]
- [-OpportunityCloseLookupColumns <Hashtable>] [-Status <OptionSetValue>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseLoseOpportunity [-OpportunityClose <PSObject>] [-OpportunityCloseTableName <String>]
+ [-OpportunityCloseIgnoreProperties <String[]>] [-OpportunityCloseLookupColumns <Hashtable>]
+ [-Status <OptionSetValue>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -56,7 +56,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

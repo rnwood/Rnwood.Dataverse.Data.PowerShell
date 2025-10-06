@@ -15,10 +15,9 @@ Contains the data that is needed to update an existing record.
 ## SYNTAX
 
 ```
-Invoke-DataverseUpdate -Connection <ServiceClient> -Target <PSObject> -TargetTableName <String>
- [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>]
- [-ConcurrencyBehavior <ConcurrencyBehavior>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseUpdate -Target <PSObject> -TargetTableName <String> [-TargetIgnoreProperties <String[]>]
+ [-TargetLookupColumns <Hashtable>] [-ConcurrencyBehavior <ConcurrencyBehavior>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -72,7 +71,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

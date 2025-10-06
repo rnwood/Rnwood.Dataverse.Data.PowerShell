@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve all the entity records that are rel
 ## SYNTAX
 
 ```
-Invoke-DataverseRollup -Connection <ServiceClient> -Target <PSObject> [-Query <QueryBase>]
- [-RollupType <RollupType>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRollup -Target <PSObject> [-Query <QueryBase>] [-RollupType <RollupType>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

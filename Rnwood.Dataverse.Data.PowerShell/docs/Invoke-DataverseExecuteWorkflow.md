@@ -15,9 +15,9 @@ Contains the data that's needed to execute a workflow.
 ## SYNTAX
 
 ```
-Invoke-DataverseExecuteWorkflow -Connection <ServiceClient> [-EntityId <Guid>] [-WorkflowId <Guid>]
- [-InputArguments <InputArgumentCollection>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseExecuteWorkflow [-EntityId <Guid>] [-WorkflowId <Guid>]
+ [-InputArguments <InputArgumentCollection>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

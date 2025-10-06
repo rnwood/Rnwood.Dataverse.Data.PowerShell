@@ -15,8 +15,8 @@ Contains the data that is needed to check whether the incoming email message sho
 ## SYNTAX
 
 ```
-Invoke-DataverseCheckPromoteEmail -Connection <ServiceClient> [-MessageId <String>] [-Subject <String>]
- [-DirectionCode <Int32>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseCheckPromoteEmail [-MessageId <String>] [-Subject <String>] [-DirectionCode <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

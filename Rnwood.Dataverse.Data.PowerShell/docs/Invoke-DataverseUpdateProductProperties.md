@@ -15,8 +15,8 @@ Contains the data that is needed to update values of the property instances (dyn
 ## SYNTAX
 
 ```
-Invoke-DataverseUpdateProductProperties -Connection <ServiceClient> [-PropertyInstanceList <EntityCollection>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseUpdateProductProperties [-PropertyInstanceList <EntityCollection>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

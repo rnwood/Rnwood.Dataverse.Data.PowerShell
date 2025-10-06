@@ -15,8 +15,8 @@ Contains the data that is required to create translation of a knowledge article 
 ## SYNTAX
 
 ```
-Invoke-DataverseCreateKnowledgeArticleTranslation -Connection <ServiceClient> [-Source <PSObject>]
- [-Language <PSObject>] [-IsMajor <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+Invoke-DataverseCreateKnowledgeArticleTranslation [-Source <PSObject>] [-Language <PSObject>]
+ [-IsMajor <Boolean>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
  [<CommonParameters>]
 ```
 
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

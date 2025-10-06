@@ -15,8 +15,8 @@ Executes a RetrieveAadUserRolesRequest against the Dataverse organization servic
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveAadUserRoles -Connection <ServiceClient> [-DirectoryObjectId <Guid>]
- [-ColumnSet <ColumnSet>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveAadUserRoles [-DirectoryObjectId <Guid>] [-ColumnSet <ColumnSet>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

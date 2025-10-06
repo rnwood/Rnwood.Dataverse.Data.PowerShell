@@ -15,7 +15,7 @@ Contains the data that is needed to check whether the specified table can be the
 ## SYNTAX
 
 ```
-Invoke-DataverseCanBeReferenced -Connection <ServiceClient> [-EntityName <String>]
+Invoke-DataverseCanBeReferenced [-EntityName <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

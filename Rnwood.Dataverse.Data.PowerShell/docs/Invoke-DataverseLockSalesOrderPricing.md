@@ -15,7 +15,7 @@ Contains the data to lock sales order pricing.
 ## SYNTAX
 
 ```
-Invoke-DataverseLockSalesOrderPricing -Connection <ServiceClient> [-SalesOrderId <Guid>]
+Invoke-DataverseLockSalesOrderPricing [-SalesOrderId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

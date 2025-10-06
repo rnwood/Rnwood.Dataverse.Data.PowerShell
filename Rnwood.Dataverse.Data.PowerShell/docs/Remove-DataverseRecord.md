@@ -13,10 +13,10 @@ Deletes an existing Dataverse record.
 ## SYNTAX
 
 ```
-Remove-DataverseRecord -Connection <ServiceClient> [-InputObject <PSObject>] -TableName <String> -Id <Guid>
- [-BatchSize <UInt32>] [-IfExists] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
- [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Remove-DataverseRecord [-InputObject <PSObject>] -TableName <String> -Id <Guid> [-BatchSize <UInt32>]
+ [-IfExists] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
+ [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -113,7 +113,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

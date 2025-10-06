@@ -14,20 +14,21 @@ Invokes an arbitrary Dataverse request and returns the response.
 
 ### Request
 ```
-Invoke-DataverseRequest -Connection <ServiceClient> -Request <OrganizationRequest>
+Invoke-DataverseRequest -Request <OrganizationRequest> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### NameAndInputs
 ```
-Invoke-DataverseRequest -Connection <ServiceClient> [-RequestName] <String> [[-Parameters] <Hashtable>]
+Invoke-DataverseRequest [-RequestName] <String> [[-Parameters] <Hashtable>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### REST
 ```
-Invoke-DataverseRequest -Connection <ServiceClient> [-Method] <HttpMethod> [-Path] <String>
- [[-Body] <PSObject>] [-CustomHeaders <Hashtable>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Invoke-DataverseRequest [-Method] <HttpMethod> [-Path] <String> [[-Body] <PSObject>]
+ [-CustomHeaders <Hashtable>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -120,7 +121,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

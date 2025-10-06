@@ -15,7 +15,7 @@ Contains the data to create multiple records of the same type with a single web 
 ## SYNTAX
 
 ```
-Invoke-DataverseCreateMultiple -Connection <ServiceClient> -Targets <EntityCollection>
+Invoke-DataverseCreateMultiple -Targets <EntityCollection> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

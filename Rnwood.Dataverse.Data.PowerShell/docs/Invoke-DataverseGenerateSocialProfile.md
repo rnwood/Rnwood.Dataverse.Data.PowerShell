@@ -15,8 +15,8 @@ Contains the data to return an existing social profile record if one exists, oth
 ## SYNTAX
 
 ```
-Invoke-DataverseGenerateSocialProfile -Connection <ServiceClient> [-Entity <PSObject>]
- [-EntityTableName <String>] [-EntityIgnoreProperties <String[]>] [-EntityLookupColumns <Hashtable>]
+Invoke-DataverseGenerateSocialProfile [-Entity <PSObject>] [-EntityTableName <String>]
+ [-EntityIgnoreProperties <String[]>] [-EntityLookupColumns <Hashtable>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

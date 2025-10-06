@@ -15,8 +15,8 @@ Contains the data that is needed to create a workflow (process) from a workflow 
 ## SYNTAX
 
 ```
-Invoke-DataverseCreateWorkflowFromTemplate -Connection <ServiceClient> [-WorkflowName <String>]
- [-WorkflowTemplateId <Guid>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseCreateWorkflowFromTemplate [-WorkflowName <String>] [-WorkflowTemplateId <Guid>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

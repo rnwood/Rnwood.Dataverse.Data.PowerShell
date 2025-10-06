@@ -15,9 +15,9 @@ Contains the data that is needed to create a new copy of an unmanaged solution t
 ## SYNTAX
 
 ```
-Invoke-DataverseCloneAsSolution -Connection <ServiceClient> [-ParentSolutionUniqueName <String>]
- [-DisplayName <String>] [-VersionNumber <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseCloneAsSolution [-ParentSolutionUniqueName <String>] [-DisplayName <String>]
+ [-VersionNumber <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

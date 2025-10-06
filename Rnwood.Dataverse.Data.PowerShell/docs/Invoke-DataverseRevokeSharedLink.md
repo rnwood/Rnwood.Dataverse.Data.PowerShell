@@ -15,8 +15,8 @@ Revokes user access rights from a shared link.
 ## SYNTAX
 
 ```
-Invoke-DataverseRevokeSharedLink -Connection <ServiceClient> -Target <PSObject> [-SharedRights <AccessRights>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRevokeSharedLink -Target <PSObject> [-SharedRights <AccessRights>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

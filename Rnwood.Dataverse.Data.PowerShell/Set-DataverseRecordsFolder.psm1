@@ -24,6 +24,12 @@ Get-DataverseRecord -connection $connection -tablename contact | Set-DataverseRe
 
 Writes all contacts to the folder `data/contacts`.
 
+.EXAMPLE
+Connect-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+Get-DataverseRecord -tablename contact | Set-DataverseRecordsFolder data/contacts
+
+Writes all contacts to the folder `data/contacts` using the default connection.
+
 .INPUTS
 System.Management.Automation.PSObject
 

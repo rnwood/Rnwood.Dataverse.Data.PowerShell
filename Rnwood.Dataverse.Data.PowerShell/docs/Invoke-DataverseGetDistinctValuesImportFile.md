@@ -15,9 +15,9 @@ Contains the data that is needed to retrieve distinct values from the parse tabl
 ## SYNTAX
 
 ```
-Invoke-DataverseGetDistinctValuesImportFile -Connection <ServiceClient> [-ImportFileId <Guid>]
- [-columnNumber <Int32>] [-pageNumber <Int32>] [-recordsPerPage <Int32>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseGetDistinctValuesImportFile [-ImportFileId <Guid>] [-columnNumber <Int32>]
+ [-pageNumber <Int32>] [-recordsPerPage <Int32>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

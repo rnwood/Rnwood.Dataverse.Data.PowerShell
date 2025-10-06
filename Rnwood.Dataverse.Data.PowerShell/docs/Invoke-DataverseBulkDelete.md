@@ -15,10 +15,10 @@ Contains the data that's needed to submit a bulk delete job that deletes selecte
 ## SYNTAX
 
 ```
-Invoke-DataverseBulkDelete -Connection <ServiceClient> [-QuerySet <QueryExpression[]>] [-JobName <String>]
+Invoke-DataverseBulkDelete [-QuerySet <QueryExpression[]>] [-JobName <String>]
  [-SendEmailNotification <Boolean>] [-ToRecipients <Guid[]>] [-CCRecipients <Guid[]>]
  [-RecurrencePattern <String>] [-StartDateTime <DateTime>] [-SourceImportId <Guid>] [-RunNow <Boolean>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -71,7 +71,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,9 +15,8 @@ Contains the data that is needed to retrieve a global choice.
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveOptionSet -Connection <ServiceClient> [-Name <String>] [-MetadataId <Guid>]
- [-RetrieveAsIfPublished <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseRetrieveOptionSet [-Name <String>] [-MetadataId <Guid>] [-RetrieveAsIfPublished <Boolean>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

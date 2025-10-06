@@ -15,7 +15,7 @@ Contains the data needed to search for available time slots that fulfill the spe
 ## SYNTAX
 
 ```
-Invoke-DataverseSearch -Connection <ServiceClient> [-AppointmentRequest <AppointmentRequest>]
+Invoke-DataverseSearch [-AppointmentRequest <AppointmentRequest>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

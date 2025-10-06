@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve the collection of services that are
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveByResourcesService -Connection <ServiceClient> [-ResourceIds <Guid[]>]
- [-Query <QueryBase>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveByResourcesService [-ResourceIds <Guid[]>] [-Query <QueryBase>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

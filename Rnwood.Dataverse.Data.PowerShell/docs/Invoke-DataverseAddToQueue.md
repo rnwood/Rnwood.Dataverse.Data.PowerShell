@@ -15,10 +15,10 @@ Contains the data that is needed to move an entity record from a source queue to
 ## SYNTAX
 
 ```
-Invoke-DataverseAddToQueue -Connection <ServiceClient> -Target <PSObject> [-SourceQueueId <Guid>]
- [-DestinationQueueId <Guid>] [-QueueItemProperties <PSObject>] [-QueueItemPropertiesTableName <String>]
+Invoke-DataverseAddToQueue -Target <PSObject> [-SourceQueueId <Guid>] [-DestinationQueueId <Guid>]
+ [-QueueItemProperties <PSObject>] [-QueueItemPropertiesTableName <String>]
  [-QueueItemPropertiesIgnoreProperties <String[]>] [-QueueItemPropertiesLookupColumns <Hashtable>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -56,7 +56,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

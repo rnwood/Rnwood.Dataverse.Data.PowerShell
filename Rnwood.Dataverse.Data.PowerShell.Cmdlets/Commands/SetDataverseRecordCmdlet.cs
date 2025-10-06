@@ -20,11 +20,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	public class SetDataverseRecordCmdlet : CustomLogicBypassableOrganizationServiceCmdlet
 	{
 	/// <summary>
-	/// DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)
-	/// </summary>
-		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/)")]
-		public override ServiceClient Connection { get; set; }
-	/// <summary>
 	/// Object containing values to be used. Property names must match the logical names of Dataverse columns in the specified table and the property values are used to set the values of the Dataverse record being created/updated. The properties may include ownerid, statecode and statuscode which will assign and change the record state/status.
 	/// </summary>
 		[Parameter(Mandatory = true, ValueFromPipeline = true, ValueFromRemainingArguments = true,

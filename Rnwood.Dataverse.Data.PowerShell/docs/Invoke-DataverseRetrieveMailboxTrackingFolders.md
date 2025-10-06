@@ -15,7 +15,7 @@ Contains the data needed to retrieve folder-level tracking rules for a mailbox.
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveMailboxTrackingFolders -Connection <ServiceClient> [-MailboxId <String>]
+Invoke-DataverseRetrieveMailboxTrackingFolders [-MailboxId <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

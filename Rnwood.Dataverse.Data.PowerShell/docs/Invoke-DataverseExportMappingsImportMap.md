@@ -15,8 +15,8 @@ Contains the data that is needed to export a data map as an XML formatted data.
 ## SYNTAX
 
 ```
-Invoke-DataverseExportMappingsImportMap -Connection <ServiceClient> [-ImportMapId <Guid>]
- [-ExportIds <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseExportMappingsImportMap [-ImportMapId <Guid>] [-ExportIds <Boolean>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

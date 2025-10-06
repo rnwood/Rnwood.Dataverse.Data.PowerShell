@@ -15,7 +15,7 @@ Contains the data that is needed to set the state of a quote to Draft.
 ## SYNTAX
 
 ```
-Invoke-DataverseReviseQuote -Connection <ServiceClient> [-QuoteId <Guid>] [-ColumnSet <ColumnSet>]
+Invoke-DataverseReviseQuote [-QuoteId <Guid>] [-ColumnSet <ColumnSet>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

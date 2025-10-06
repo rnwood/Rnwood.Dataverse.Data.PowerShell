@@ -15,7 +15,7 @@ Executes a PublishAllXmlAsyncRequest against the Dataverse organization service.
 ## SYNTAX
 
 ```
-Invoke-DataversePublishAllXmlAsync -Connection <ServiceClient> [-ProgressAction <ActionPreference>] [-WhatIf]
+Invoke-DataversePublishAllXmlAsync [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

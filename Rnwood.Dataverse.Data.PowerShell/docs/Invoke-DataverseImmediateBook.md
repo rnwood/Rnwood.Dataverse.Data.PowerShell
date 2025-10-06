@@ -15,10 +15,9 @@ Contains the data to book an appointment transactionally, obeying the constraint
 ## SYNTAX
 
 ```
-Invoke-DataverseImmediateBook -Connection <ServiceClient> -Target <PSObject> -TargetTableName <String>
- [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>] [-AttachmentIds <String[]>]
- [-EWSUrl <String>] [-AttachmentToken <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseImmediateBook -Target <PSObject> -TargetTableName <String> [-TargetIgnoreProperties <String[]>]
+ [-TargetLookupColumns <Hashtable>] [-AttachmentIds <String[]>] [-EWSUrl <String>] [-AttachmentToken <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -86,7 +85,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

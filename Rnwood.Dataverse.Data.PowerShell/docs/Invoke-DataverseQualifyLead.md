@@ -15,10 +15,10 @@ Contains the data that is needed to qualify a lead and create account, contact, 
 ## SYNTAX
 
 ```
-Invoke-DataverseQualifyLead -Connection <ServiceClient> [-LeadId <PSObject>] [-CreateAccount <Boolean>]
- [-CreateContact <Boolean>] [-CreateOpportunity <Boolean>] [-OpportunityCurrencyId <PSObject>]
- [-OpportunityCustomerId <PSObject>] [-SourceCampaignId <PSObject>] [-Status <OptionSetValue>]
- [-ProcessInstanceId <PSObject>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseQualifyLead [-LeadId <PSObject>] [-CreateAccount <Boolean>] [-CreateContact <Boolean>]
+ [-CreateOpportunity <Boolean>] [-OpportunityCurrencyId <PSObject>] [-OpportunityCustomerId <PSObject>]
+ [-SourceCampaignId <PSObject>] [-Status <OptionSetValue>] [-ProcessInstanceId <PSObject>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -56,7 +56,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

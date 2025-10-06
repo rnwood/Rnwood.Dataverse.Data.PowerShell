@@ -13,12 +13,12 @@ Creates or updates Dataverse records including M:M association/disassociation, s
 ## SYNTAX
 
 ```
-Set-DataverseRecord -Connection <ServiceClient> -InputObject <PSObject> -TableName <String>
- [-BatchSize <UInt32>] [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>] [-PassThru]
- [-NoUpdate] [-NoCreate] [-NoUpdateColumns <String[]>] [-CallerId <Guid>] [-UpdateAllColumns] [-CreateOnly]
- [-Upsert] [-LookupColumns <Hashtable>] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
- [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Set-DataverseRecord -InputObject <PSObject> -TableName <String> [-BatchSize <UInt32>]
+ [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>] [-PassThru] [-NoUpdate] [-NoCreate]
+ [-NoUpdateColumns <String[]>] [-CallerId <Guid>] [-UpdateAllColumns] [-CreateOnly] [-Upsert]
+ [-LookupColumns <Hashtable>] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
+ [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -155,7 +155,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

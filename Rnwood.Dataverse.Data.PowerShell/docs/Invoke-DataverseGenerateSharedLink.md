@@ -15,8 +15,8 @@ Creates a link to a table row that can be shared with other system users.
 ## SYNTAX
 
 ```
-Invoke-DataverseGenerateSharedLink -Connection <ServiceClient> -Target <PSObject>
- [-SharedRights <AccessRights>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseGenerateSharedLink -Target <PSObject> [-SharedRights <AccessRights>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

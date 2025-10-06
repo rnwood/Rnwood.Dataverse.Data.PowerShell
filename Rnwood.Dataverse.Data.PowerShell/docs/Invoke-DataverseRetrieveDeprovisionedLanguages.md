@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve a list of language packs that are i
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveDeprovisionedLanguages -Connection <ServiceClient> [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveDeprovisionedLanguages [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

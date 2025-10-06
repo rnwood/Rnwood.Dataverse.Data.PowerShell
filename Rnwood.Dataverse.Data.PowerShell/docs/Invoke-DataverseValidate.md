@@ -15,7 +15,7 @@ Contains the data that is needed to verify that an appointment or service appoin
 ## SYNTAX
 
 ```
-Invoke-DataverseValidate -Connection <ServiceClient> [-Activities <EntityCollection>]
+Invoke-DataverseValidate [-Activities <EntityCollection>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

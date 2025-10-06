@@ -15,9 +15,8 @@ Contains the data that is needed to set or restore the data encryption key.
 ## SYNTAX
 
 ```
-Invoke-DataverseSetDataEncryptionKey -Connection <ServiceClient> [-EncryptionKey <String>]
- [-ChangeEncryptionKey <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseSetDataEncryptionKey [-EncryptionKey <String>] [-ChangeEncryptionKey <Boolean>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -70,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

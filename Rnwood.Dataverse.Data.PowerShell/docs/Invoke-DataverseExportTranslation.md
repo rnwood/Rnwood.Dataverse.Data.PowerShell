@@ -15,7 +15,7 @@ Contains the data that is needed to export all translations for a specific solut
 ## SYNTAX
 
 ```
-Invoke-DataverseExportTranslation -Connection <ServiceClient> [-SolutionName <String>]
+Invoke-DataverseExportTranslation [-SolutionName <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

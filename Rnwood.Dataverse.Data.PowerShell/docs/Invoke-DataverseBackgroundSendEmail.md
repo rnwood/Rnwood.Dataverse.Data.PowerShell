@@ -15,7 +15,7 @@ Contains the data that is needed to send email messages asynchronously.
 ## SYNTAX
 
 ```
-Invoke-DataverseBackgroundSendEmail -Connection <ServiceClient> [-Query <QueryBase>]
+Invoke-DataverseBackgroundSendEmail [-Query <QueryBase>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

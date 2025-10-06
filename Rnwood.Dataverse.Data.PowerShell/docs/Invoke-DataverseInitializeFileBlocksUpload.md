@@ -15,8 +15,9 @@ Contains the data needed to initialize file storage for receiving (uploading) on
 ## SYNTAX
 
 ```
-Invoke-DataverseInitializeFileBlocksUpload -Connection <ServiceClient> -Target <PSObject> [-FileName <String>]
- [-FileAttributeName <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseInitializeFileBlocksUpload -Target <PSObject> [-FileName <String>]
+ [-FileAttributeName <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

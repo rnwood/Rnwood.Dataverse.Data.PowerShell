@@ -15,9 +15,9 @@ Contains the data to retrieve privileges which the user gets through team member
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveUsersPrivilegesThroughTeams -Connection <ServiceClient> [-UserId <Guid>]
- [-ExcludeOrgDisabledPrivileges <Boolean>] [-IncludeSetupUserFiltering <Boolean>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveUsersPrivilegesThroughTeams [-UserId <Guid>] [-ExcludeOrgDisabledPrivileges <Boolean>]
+ [-IncludeSetupUserFiltering <Boolean>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

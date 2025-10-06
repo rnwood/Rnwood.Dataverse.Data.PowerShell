@@ -15,9 +15,9 @@ Contains the data that is needed to create a new form for a table that is based 
 ## SYNTAX
 
 ```
-Invoke-DataverseCopySystemForm -Connection <ServiceClient> -Target <PSObject> -TargetTableName <String>
+Invoke-DataverseCopySystemForm -Target <PSObject> -TargetTableName <String>
  [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>] [-SourceId <Guid>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

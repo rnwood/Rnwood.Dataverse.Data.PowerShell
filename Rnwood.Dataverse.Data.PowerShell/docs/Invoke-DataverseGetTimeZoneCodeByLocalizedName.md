@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve the time zone code for the specifie
 ## SYNTAX
 
 ```
-Invoke-DataverseGetTimeZoneCodeByLocalizedName -Connection <ServiceClient> [-LocalizedStandardName <String>]
- [-LocaleId <Int32>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseGetTimeZoneCodeByLocalizedName [-LocalizedStandardName <String>] [-LocaleId <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

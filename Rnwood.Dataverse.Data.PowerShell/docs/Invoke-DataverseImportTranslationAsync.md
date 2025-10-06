@@ -15,8 +15,8 @@ Executes a ImportTranslationAsyncRequest against the Dataverse organization serv
 ## SYNTAX
 
 ```
-Invoke-DataverseImportTranslationAsync -Connection <ServiceClient> [-TranslationFile <Byte[]>]
- [-ImportJobId <Guid>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseImportTranslationAsync [-TranslationFile <Byte[]>] [-ImportJobId <Guid>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

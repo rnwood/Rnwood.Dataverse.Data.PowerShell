@@ -21,11 +21,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	public class RemoveDataverseRecordCmdlet : CustomLogicBypassableOrganizationServiceCmdlet
 	{
 		/// <summary>
-		/// DataverseConnection instance obtained from Get-DataverseConnection cmdlet
-		/// </summary>
-		[Parameter(Mandatory = true, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet")]
-		public override ServiceClient Connection { get; set; }
-		/// <summary>
 		/// Record from pipeline. This allows piping in record to delete.
 		/// </summary>
 		[Parameter(ValueFromPipeline = true, HelpMessage = "Record from pipeline. This allows piping in record to delete.")]

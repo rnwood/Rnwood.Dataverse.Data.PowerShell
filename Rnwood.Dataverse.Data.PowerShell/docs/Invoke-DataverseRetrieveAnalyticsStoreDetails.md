@@ -15,8 +15,8 @@ Contains the data to retrieves Analytics Store (aka 'Azure Data Lake' Storage co
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveAnalyticsStoreDetails -Connection <ServiceClient> [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveAnalyticsStoreDetails [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

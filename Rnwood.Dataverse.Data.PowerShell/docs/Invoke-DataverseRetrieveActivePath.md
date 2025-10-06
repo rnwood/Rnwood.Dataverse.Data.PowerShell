@@ -15,7 +15,7 @@ Contains the data to retrieve a collection of stages currently in the active pat
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveActivePath -Connection <ServiceClient> [-ProcessInstanceId <Guid>]
+Invoke-DataverseRetrieveActivePath [-ProcessInstanceId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

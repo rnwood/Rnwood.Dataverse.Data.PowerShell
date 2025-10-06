@@ -15,9 +15,9 @@ Contains the data that is needed to perform a full-text search on knowledge arti
 ## SYNTAX
 
 ```
-Invoke-DataverseFullTextSearchKnowledgeArticle -Connection <ServiceClient> [-SearchText <String>]
- [-UseInflection <Boolean>] [-RemoveDuplicates <Boolean>] [-StateCode <Int32>] [-QueryExpression <QueryBase>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseFullTextSearchKnowledgeArticle [-SearchText <String>] [-UseInflection <Boolean>]
+ [-RemoveDuplicates <Boolean>] [-StateCode <Int32>] [-QueryExpression <QueryBase>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,7 +15,7 @@ Contains the data that is needed to route a queue item to a queue, a user, or a 
 ## SYNTAX
 
 ```
-Invoke-DataverseRouteTo -Connection <ServiceClient> -Target <PSObject> [-QueueItemId <Guid>]
+Invoke-DataverseRouteTo -Target <PSObject> [-QueueItemId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,8 +15,8 @@ Contains the data that is needed to set localized labels for a limited set of en
 ## SYNTAX
 
 ```
-Invoke-DataverseSetLocLabels -Connection <ServiceClient> [-EntityMoniker <PSObject>] [-AttributeName <String>]
- [-Labels <LocalizedLabel[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseSetLocLabels [-EntityMoniker <PSObject>] [-AttributeName <String>] [-Labels <LocalizedLabel[]>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,7 +15,7 @@ Contains the data that is needed to calculate price in an opportunity, quote, or
 ## SYNTAX
 
 ```
-Invoke-DataverseCalculatePrice -Connection <ServiceClient> -Target <PSObject> [-ParentId <Guid>]
+Invoke-DataverseCalculatePrice -Target <PSObject> [-ParentId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
