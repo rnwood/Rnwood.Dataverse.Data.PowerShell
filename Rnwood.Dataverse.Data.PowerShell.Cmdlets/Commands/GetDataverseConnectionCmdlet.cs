@@ -72,7 +72,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Gets or sets the URL of the Dataverse environment to connect to.
 		/// </summary>
-		[Parameter(Mandatory = true, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CONNECTIONSTRING, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEFAULTAZURECREDENTIAL, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_MOCK, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
 		public Uri Url { get; set; }
 
 		/// <summary>
@@ -222,6 +229,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								.WithRedirectUri("http://localhost")
 								.Build();
 
+							// If URL is not provided, discover and select environment
+							if (Url == null)
+							{
+								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+								Url = new Uri(discoveryUrl);
+							}
+
 							result = new ServiceClient(Url, url => GetTokenInteractive(publicClient, url));
 
 							break;
@@ -235,6 +249,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								.WithAuthority(AadAuthorityAudience.AzureAdMultipleOrgs)
 								.Build();
 
+							// If URL is not provided, discover and select environment
+							if (Url == null)
+							{
+								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+								Url = new Uri(discoveryUrl);
+							}
+
 							result = new ServiceClient(Url, url => GetTokenWithUsernamePassword(publicClient, url));
 
 							break;
@@ -246,6 +267,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								.Create(ClientId.ToString())
 								.WithRedirectUri("http://localhost")
 								.Build();
+
+							// If URL is not provided, discover and select environment
+							if (Url == null)
+							{
+								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+								Url = new Uri(discoveryUrl);
+							}
 
 							result = new ServiceClient(Url, url => GetTokenWithDeviceCode(publicClient, url));
 
@@ -271,6 +299,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					case PARAMSET_DEFAULTAZURECREDENTIAL:
 						{
 							var credential = new Azure.Identity.DefaultAzureCredential();
+							
+							// If URL is not provided, discover and select environment
+							if (Url == null)
+							{
+								// For DefaultAzureCredential, we need to use interactive flow for discovery
+								var publicClient = PublicClientApplicationBuilder
+									.Create(ClientId.ToString())
+									.WithRedirectUri("http://localhost")
+									.Build();
+								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+								Url = new Uri(discoveryUrl);
+							}
+							
 							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
 
 							break;
@@ -287,6 +328,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							{
 								credential = new ManagedIdentityCredential();
 							}
+							
+							// If URL is not provided, discover and select environment
+							if (Url == null)
+							{
+								// For ManagedIdentity, we need to use interactive flow for discovery
+								var publicClient = PublicClientApplicationBuilder
+									.Create(ClientId.ToString())
+									.WithRedirectUri("http://localhost")
+									.Build();
+								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+								Url = new Uri(discoveryUrl);
+							}
+							
 							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
 
 							break;
@@ -470,6 +524,90 @@ Url + "/api/data/v9.2/");
 			{
 				var token = await credential.GetTokenAsync(tokenRequestContext, cts.Token);
 				return token.Token;
+			}
+		}
+
+		private async Task<string> DiscoverAndSelectEnvironment(IPublicClientApplication app)
+		{
+			// Authenticate interactively to get access token for discovery
+			Uri discoveryScope = new Uri("https://globaldisco.crm.dynamics.com/.default");
+			string[] scopes = new[] { discoveryScope.ToString() };
+
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
+			{
+				AuthenticationResult authResult = null;
+
+				if (!string.IsNullOrEmpty(Username))
+				{
+					try
+					{
+						authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync(cts.Token);
+					}
+					catch (MsalUiRequiredException)
+					{
+					}
+				}
+
+				if (authResult == null)
+				{
+					authResult = await app.AcquireTokenInteractive(scopes).ExecuteAsync(cts.Token);
+					Username = authResult.Account.Username;
+				}
+
+				// Use ServiceClient.DiscoverOnlineOrganizationsAsync to get list of environments
+				var orgDetails = await ServiceClient.DiscoverOnlineOrganizationsAsync(
+					(uri) => Task.FromResult(authResult.AccessToken),
+					new Uri("https://globaldisco.crm.dynamics.com"),
+					null,
+					null,
+					cts.Token);
+
+				if (orgDetails == null || orgDetails.Count == 0)
+				{
+					throw new Exception("No Dataverse environments found for this user.");
+				}
+
+				// Display available environments and let user select
+				Host.UI.WriteLine("Available Dataverse environments:");
+				Host.UI.WriteLine("");
+
+				var orgList = orgDetails.ToList();
+				for (int i = 0; i < orgList.Count; i++)
+				{
+					var org = orgList[i];
+					Host.UI.WriteLine($"  {i + 1}. {org.FriendlyName} ({org.UniqueName})");
+					Host.UI.WriteLine($"      URL: {org.Endpoints[Microsoft.Xrm.Sdk.Discovery.EndpointType.WebApplication]}");
+					Host.UI.WriteLine("");
+				}
+
+				// Prompt for selection
+				int selection = -1;
+				while (selection < 1 || selection > orgList.Count)
+				{
+					try
+					{
+						Host.UI.Write("Select environment (1-" + orgList.Count + "): ");
+						var input = Host.UI.ReadLine();
+						selection = int.Parse(input);
+
+						if (selection < 1 || selection > orgList.Count)
+						{
+							Host.UI.WriteLine("Invalid selection. Please enter a number between 1 and " + orgList.Count);
+						}
+					}
+					catch
+					{
+						Host.UI.WriteLine("Invalid input. Please enter a number.");
+						selection = -1;
+					}
+				}
+
+				var selectedOrg = orgList[selection - 1];
+				var url = selectedOrg.Endpoints[Microsoft.Xrm.Sdk.Discovery.EndpointType.WebApplication];
+
+				Host.UI.WriteLine($"Selected environment: {selectedOrg.FriendlyName} ({url})");
+
+				return url;
 			}
 		}
 	}
