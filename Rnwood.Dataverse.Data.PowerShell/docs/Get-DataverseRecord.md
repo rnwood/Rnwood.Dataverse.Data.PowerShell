@@ -439,37 +439,34 @@ Accept wildcard characters: False
 ### -Links
 Link entities to apply to query. Accepts `DataverseLinkEntity` objects (a lightweight wrapper around the SDK `LinkEntity` that allows easier pipeline usage and serialization). `DataverseLinkEntity` supports implicit conversion from `LinkEntity` and from simplified hashtable syntax.
 
-**Simplified Syntax:**
-Provide a hashtable with a single key-value pair encoding the join relationship, plus optional keys for join type, alias, and filter:
+Simplified Syntax:
+Provide a hashtable with a single key-value pair encoding the join relationship, plus optional keys for join type, alias, and filter.
+Format: `@{ 'fromEntity.fromAttribute' = 'toEntity.toAttribute'; type = 'Inner'; alias = 'aliasName'; filter = @{...} }`
 
-```powershell
-@{
-    'contact.accountid' = 'account.accountid'  # from.fromId = to.toId
-    type  = 'Inner'                            # optional: 'Inner' (default) or 'LeftOuter'
-    alias = 'linkedAccount'                    # optional: alias for the linked entity
-    filter = @{                                # optional: filter conditions on the linked entity
-        name      = @{ operator = 'Like'; value = 'Contoso%' }
-        statecode = @{ operator = 'Equal'; value = 0 }
-    }
-}
-```
+- The key-value pair specifies the join: `'contact.accountid' = 'account.accountid'` joins from contact.accountid to account.accountid
+- `type` (optional): `'Inner'` (default) or `'LeftOuter'`
+- `alias` (optional): String alias for the linked entity
+- `filter` (optional): Hashtable with filter conditions using the same format as `-FilterValues`
 
-**Examples:**
+Example - Simple inner join:
 
-```powershell
-# Simple inner join from contact to account
+
 Get-DataverseRecord -Connection $conn -TableName contact -Links @{
     'contact.accountid' = 'account.accountid'
 }
 
-# Left outer join with alias
+Example - Left outer join with alias:
+
+
 Get-DataverseRecord -Connection $conn -TableName contact -Links @{
     'contact.accountid' = 'account.accountid'
     type = 'LeftOuter'
     alias = 'parentAccount'
 }
 
-# Join with filter on linked entity
+Example - Join with filter on linked entity:
+
+
 Get-DataverseRecord -Connection $conn -TableName contact -Links @{
     'contact.accountid' = 'account.accountid'
     filter = @{
@@ -477,20 +474,23 @@ Get-DataverseRecord -Connection $conn -TableName contact -Links @{
     }
 }
 
-# Multiple joins
+Example - Multiple joins:
+
+
 Get-DataverseRecord -Connection $conn -TableName contact -Links @(
     @{ 'contact.accountid' = 'account.accountid'; type = 'LeftOuter' },
     @{ 'contact.ownerid' = 'systemuser.systemuserid' }
 )
 
-# Using SDK LinkEntity (advanced)
+Example - Using SDK LinkEntity (advanced):
+
+
 $link = New-Object Microsoft.Xrm.Sdk.Query.LinkEntity
 $link.LinkFromEntityName = 'contact'
 $link.LinkFromAttributeName = 'accountid'
 $link.LinkToEntityName = 'account'
 $link.LinkToAttributeName = 'accountid'
 Get-DataverseRecord -Connection $conn -TableName contact -Links $link
-```
 
 ```yaml
 Type: DataverseLinkEntity[]
