@@ -15,9 +15,8 @@ Contains the data that is needed to add app components to a business app.
 ## SYNTAX
 
 ```
-Invoke-DataverseAddAppComponents -Connection <ServiceClient> [-AppId <Guid>]
- [-Components <EntityReferenceCollection>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseAddAppComponents [-AppId <Guid>] [-Components <EntityReferenceCollection>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -85,7 +84,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

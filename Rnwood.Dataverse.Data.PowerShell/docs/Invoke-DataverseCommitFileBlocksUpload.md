@@ -15,8 +15,8 @@ Contains the data needed to commit the uploaded data blocks to the file store.
 ## SYNTAX
 
 ```
-Invoke-DataverseCommitFileBlocksUpload -Connection <ServiceClient> [-FileName <String>] [-MimeType <String>]
- [-BlockList <String[]>] [-FileContinuationToken <String>] [-ProgressAction <ActionPreference>] [-WhatIf]
+Invoke-DataverseCommitFileBlocksUpload [-FileName <String>] [-MimeType <String>] [-BlockList <String[]>]
+ [-FileContinuationToken <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
 
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

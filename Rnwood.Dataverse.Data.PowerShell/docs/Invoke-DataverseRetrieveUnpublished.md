@@ -15,7 +15,7 @@ Contains the data that is needed to retrieve an unpublished record.
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveUnpublished -Connection <ServiceClient> -Target <PSObject> [-ColumnSet <ColumnSet>]
+Invoke-DataverseRetrieveUnpublished -Target <PSObject> [-ColumnSet <ColumnSet>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

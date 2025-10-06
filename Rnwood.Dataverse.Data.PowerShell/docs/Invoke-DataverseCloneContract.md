@@ -15,9 +15,8 @@ Contains the data that is needed to copy an existing contract and its line items
 ## SYNTAX
 
 ```
-Invoke-DataverseCloneContract -Connection <ServiceClient> [-ContractId <Guid>]
- [-IncludeCanceledLines <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseCloneContract [-ContractId <Guid>] [-IncludeCanceledLines <Boolean>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -13,10 +13,10 @@ Invokes a Dataverse SQL query using Sql4Cds and writes any resulting rows to the
 ## SYNTAX
 
 ```
-Invoke-DataverseSql -Connection <ServiceClient> -Sql <String> [-UseTdsEndpoint] [-Timeout <Int32>]
- [-Parameters <PSObject>] [-BatchSize <Int32>] [-MaxDegreeOfParallelism <Int32>] [-BypassCustomPluginExecution]
- [-UseBulkDelete] [-ReturnEntityReferenceAsGuid] [-UseLocalTimezone] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseSql -Sql <String> [-UseTdsEndpoint] [-Timeout <Int32>] [-Parameters <PSObject>]
+ [-BatchSize <Int32>] [-MaxDegreeOfParallelism <Int32>] [-BypassCustomPluginExecution] [-UseBulkDelete]
+ [-ReturnEntityReferenceAsGuid] [-UseLocalTimezone] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -116,7 +116,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -279,7 +279,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.String
 ### System.Management.Automation.PSObject
 ## OUTPUTS
 

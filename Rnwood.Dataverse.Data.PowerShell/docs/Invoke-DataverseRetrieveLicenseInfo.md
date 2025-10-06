@@ -15,7 +15,7 @@ Contains the data that is needed to retrieve the number of used and available li
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveLicenseInfo -Connection <ServiceClient> [-AccessMode <Int32>]
+Invoke-DataverseRetrieveLicenseInfo [-AccessMode <Int32>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

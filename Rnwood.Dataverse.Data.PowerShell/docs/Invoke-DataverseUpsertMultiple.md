@@ -15,7 +15,7 @@ Contains the data to create or update multiple records of the same type in a sin
 ## SYNTAX
 
 ```
-Invoke-DataverseUpsertMultiple -Connection <ServiceClient> -Targets <EntityCollection>
+Invoke-DataverseUpsertMultiple -Targets <EntityCollection> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

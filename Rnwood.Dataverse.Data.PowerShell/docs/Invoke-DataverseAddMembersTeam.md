@@ -15,7 +15,7 @@ Contains the data that is needed to add members to a team.
 ## SYNTAX
 
 ```
-Invoke-DataverseAddMembersTeam -Connection <ServiceClient> [-TeamId <Guid>] [-MemberIds <Guid[]>]
+Invoke-DataverseAddMembersTeam [-TeamId <Guid>] [-MemberIds <Guid[]>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

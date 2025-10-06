@@ -15,14 +15,14 @@ Contains the data needed to export a solution.
 ## SYNTAX
 
 ```
-Invoke-DataverseExportSolution -Connection <ServiceClient> [-SolutionName <String>] [-Managed <Boolean>]
- [-TargetVersion <String>] [-ExportAutoNumberingSettings <Boolean>] [-ExportCalendarSettings <Boolean>]
+Invoke-DataverseExportSolution [-SolutionName <String>] [-Managed <Boolean>] [-TargetVersion <String>]
+ [-ExportAutoNumberingSettings <Boolean>] [-ExportCalendarSettings <Boolean>]
  [-ExportCustomizationSettings <Boolean>] [-ExportEmailTrackingSettings <Boolean>]
  [-ExportGeneralSettings <Boolean>] [-ExportMarketingSettings <Boolean>]
  [-ExportOutlookSynchronizationSettings <Boolean>] [-ExportRelationshipRoles <Boolean>]
  [-ExportIsvConfig <Boolean>] [-ExportSales <Boolean>] [-ExportExternalApplications <Boolean>]
- [-ExportComponentsParams <ExportComponentsParams>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+ [-ExportComponentsParams <ExportComponentsParams>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -60,7 +60,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

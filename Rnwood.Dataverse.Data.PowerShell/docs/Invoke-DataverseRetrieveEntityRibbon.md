@@ -15,9 +15,8 @@ Contains the data that is needed to retrieve ribbon definitions for an entity.
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveEntityRibbon -Connection <ServiceClient> [-EntityName <String>]
- [-RibbonLocationFilter <RibbonLocationFilters>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseRetrieveEntityRibbon [-EntityName <String>] [-RibbonLocationFilter <RibbonLocationFilters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

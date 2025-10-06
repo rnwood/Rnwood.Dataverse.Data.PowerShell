@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve all resources that are related to t
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveByGroupResource -Connection <ServiceClient> [-ResourceGroupId <Guid>]
- [-Query <QueryBase>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveByGroupResource [-ResourceGroupId <Guid>] [-Query <QueryBase>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

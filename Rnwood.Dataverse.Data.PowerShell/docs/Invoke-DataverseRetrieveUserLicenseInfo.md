@@ -15,7 +15,7 @@ Contains the data needed to retrieve the license information for the specified s
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveUserLicenseInfo -Connection <ServiceClient> [-SystemUserId <Guid>]
+Invoke-DataverseRetrieveUserLicenseInfo [-SystemUserId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

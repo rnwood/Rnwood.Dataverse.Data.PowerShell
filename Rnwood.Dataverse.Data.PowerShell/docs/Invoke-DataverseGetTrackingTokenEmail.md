@@ -15,7 +15,7 @@ Contains the data that is needed to return a tracking token that can then be pas
 ## SYNTAX
 
 ```
-Invoke-DataverseGetTrackingTokenEmail -Connection <ServiceClient> [-Subject <String>]
+Invoke-DataverseGetTrackingTokenEmail [-Subject <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

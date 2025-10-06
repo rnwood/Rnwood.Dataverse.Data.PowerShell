@@ -15,9 +15,9 @@ Contains the data to create a multi-table lookup column.
 ## SYNTAX
 
 ```
-Invoke-DataverseCreatePolymorphicLookupAttribute -Connection <ServiceClient>
- [-Lookup <LookupAttributeMetadata>] [-OneToManyRelationships <OneToManyRelationshipMetadata[]>]
- [-SolutionUniqueName <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseCreatePolymorphicLookupAttribute [-Lookup <LookupAttributeMetadata>]
+ [-OneToManyRelationships <OneToManyRelationshipMetadata[]>] [-SolutionUniqueName <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,8 +15,8 @@ For internal use only.
 ## SYNTAX
 
 ```
-Invoke-DataverseSetFeatureStatus -Connection <ServiceClient> [-FeatureType <Int32>] [-Status <Boolean>]
- [-ConfigData <String>] [-IsSolutionUninstall <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf]
+Invoke-DataverseSetFeatureStatus [-FeatureType <Int32>] [-Status <Boolean>] [-ConfigData <String>]
+ [-IsSolutionUninstall <Boolean>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
 
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

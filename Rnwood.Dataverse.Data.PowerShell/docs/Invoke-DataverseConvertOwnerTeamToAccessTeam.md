@@ -15,7 +15,7 @@ Contains the data that is needed to convert a team of type owner to a team of ty
 ## SYNTAX
 
 ```
-Invoke-DataverseConvertOwnerTeamToAccessTeam -Connection <ServiceClient> [-TeamId <Guid>]
+Invoke-DataverseConvertOwnerTeamToAccessTeam [-TeamId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

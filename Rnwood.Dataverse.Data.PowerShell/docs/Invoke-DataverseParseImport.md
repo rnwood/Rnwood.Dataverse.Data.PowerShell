@@ -15,8 +15,8 @@ Contains the data that is needed to submit an asynchronous job that parses all i
 ## SYNTAX
 
 ```
-Invoke-DataverseParseImport -Connection <ServiceClient> [-ImportId <Guid>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseParseImport [-ImportId <Guid>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

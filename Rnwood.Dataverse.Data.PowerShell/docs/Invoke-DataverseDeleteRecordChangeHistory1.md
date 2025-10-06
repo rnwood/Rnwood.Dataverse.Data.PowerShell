@@ -15,7 +15,7 @@ For internal use only.
 ## SYNTAX
 
 ```
-Invoke-DataverseDeleteRecordChangeHistory1 -Connection <ServiceClient> -Target <PSObject>
+Invoke-DataverseDeleteRecordChangeHistory1 -Target <PSObject> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,9 +15,9 @@ Contains the data that is needed to remove associations between records.
 ## SYNTAX
 
 ```
-Invoke-DataverseDisassociate -Connection <ServiceClient> -Target <PSObject> [-Relationship <Relationship>]
- [-RelatedEntities <EntityReferenceCollection>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseDisassociate -Target <PSObject> [-Relationship <Relationship>]
+ [-RelatedEntities <EntityReferenceCollection>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

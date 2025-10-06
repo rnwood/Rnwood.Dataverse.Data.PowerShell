@@ -15,9 +15,9 @@ Contains the data that is needed to update an option set value in for a column.
 ## SYNTAX
 
 ```
-Invoke-DataverseUpdateStateValue -Connection <ServiceClient> [-OptionSetName <String>]
- [-AttributeLogicalName <String>] [-EntityLogicalName <String>] [-Value <Int32>] [-Label <Label>]
- [-Description <Label>] [-MergeLabels <Boolean>] [-DefaultStatusCode <Int32>]
+Invoke-DataverseUpdateStateValue [-OptionSetName <String>] [-AttributeLogicalName <String>]
+ [-EntityLogicalName <String>] [-Value <Int32>] [-Label <Label>] [-Description <Label>]
+ [-MergeLabels <Boolean>] [-DefaultStatusCode <Int32>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -71,7 +71,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

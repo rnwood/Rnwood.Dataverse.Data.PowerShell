@@ -15,7 +15,7 @@ Contains the data that is needed to execute a saved query (view) that has the sp
 ## SYNTAX
 
 ```
-Invoke-DataverseExecuteByIdSavedQuery -Connection <ServiceClient> [-EntityId <Guid>]
+Invoke-DataverseExecuteByIdSavedQuery [-EntityId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

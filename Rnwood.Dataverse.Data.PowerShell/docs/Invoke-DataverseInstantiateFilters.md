@@ -15,9 +15,8 @@ Contains the data that is needed to instantiate a set of filters for Dynamics 36
 ## SYNTAX
 
 ```
-Invoke-DataverseInstantiateFilters -Connection <ServiceClient>
- [-TemplateCollection <EntityReferenceCollection>] [-UserId <Guid>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseInstantiateFilters [-TemplateCollection <EntityReferenceCollection>] [-UserId <Guid>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

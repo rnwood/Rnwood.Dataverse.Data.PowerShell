@@ -15,7 +15,7 @@ Contains the data that is needed to submit an asynchronous job to unpublish a du
 ## SYNTAX
 
 ```
-Invoke-DataverseUnpublishDuplicateRule -Connection <ServiceClient> [-DuplicateRuleId <Guid>]
+Invoke-DataverseUnpublishDuplicateRule [-DuplicateRuleId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

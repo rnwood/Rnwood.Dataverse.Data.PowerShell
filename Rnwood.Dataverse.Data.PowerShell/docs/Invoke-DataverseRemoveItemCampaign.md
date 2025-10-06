@@ -15,7 +15,7 @@ Contains the data that is needed to remove an item from a campaign.This message 
 ## SYNTAX
 
 ```
-Invoke-DataverseRemoveItemCampaign -Connection <ServiceClient> [-CampaignId <Guid>] [-EntityId <Guid>]
+Invoke-DataverseRemoveItemCampaign [-CampaignId <Guid>] [-EntityId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

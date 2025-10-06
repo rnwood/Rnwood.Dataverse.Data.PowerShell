@@ -15,8 +15,8 @@ Contains the data that is needed to execute one or more message requests in a si
 ## SYNTAX
 
 ```
-Invoke-DataverseExecuteTransaction -Connection <ServiceClient> [-Requests <OrganizationRequestCollection>]
- [-ReturnResponses <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseExecuteTransaction [-Requests <OrganizationRequestCollection>] [-ReturnResponses <Boolean>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

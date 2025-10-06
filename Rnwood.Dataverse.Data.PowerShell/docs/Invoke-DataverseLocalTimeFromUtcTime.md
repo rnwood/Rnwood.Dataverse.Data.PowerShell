@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve the local time for the specified Co
 ## SYNTAX
 
 ```
-Invoke-DataverseLocalTimeFromUtcTime -Connection <ServiceClient> [-TimeZoneCode <Int32>] [-UtcTime <DateTime>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseLocalTimeFromUtcTime [-TimeZoneCode <Int32>] [-UtcTime <DateTime>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

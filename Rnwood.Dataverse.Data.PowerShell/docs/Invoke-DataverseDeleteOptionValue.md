@@ -15,8 +15,8 @@ Contains the data that is needed to delete an option value in a global or local 
 ## SYNTAX
 
 ```
-Invoke-DataverseDeleteOptionValue -Connection <ServiceClient> [-OptionSetName <String>]
- [-AttributeLogicalName <String>] [-EntityLogicalName <String>] [-Value <Int32>] [-SolutionUniqueName <String>]
+Invoke-DataverseDeleteOptionValue [-OptionSetName <String>] [-AttributeLogicalName <String>]
+ [-EntityLogicalName <String>] [-Value <Int32>] [-SolutionUniqueName <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

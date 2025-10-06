@@ -15,8 +15,8 @@ Executes a RetrieveAadUserSetOfPrivilegesByNamesRequest against the Dataverse or
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveAadUserSetOfPrivilegesByNames -Connection <ServiceClient> [-DirectoryObjectId <Guid>]
- [-PrivilegeNames <String[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveAadUserSetOfPrivilegesByNames [-DirectoryObjectId <Guid>] [-PrivilegeNames <String[]>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

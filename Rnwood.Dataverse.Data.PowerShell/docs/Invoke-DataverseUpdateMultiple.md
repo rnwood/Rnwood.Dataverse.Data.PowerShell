@@ -15,9 +15,8 @@ Contains the data to update multiple records of the same type with a single web 
 ## SYNTAX
 
 ```
-Invoke-DataverseUpdateMultiple -Connection <ServiceClient> -Targets <EntityCollection>
- [-ConcurrencyBehavior <ConcurrencyBehavior>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseUpdateMultiple -Targets <EntityCollection> [-ConcurrencyBehavior <ConcurrencyBehavior>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -71,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

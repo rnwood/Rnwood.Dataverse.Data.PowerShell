@@ -15,9 +15,9 @@ Contains the data that is needed to detect and retrieve duplicates for a specifi
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveDuplicates -Connection <ServiceClient> [-BusinessEntity <PSObject>]
- [-BusinessEntityTableName <String>] [-BusinessEntityIgnoreProperties <String[]>]
- [-BusinessEntityLookupColumns <Hashtable>] [-MatchingEntityName <String>] [-PagingInfo <PagingInfo>]
+Invoke-DataverseRetrieveDuplicates [-BusinessEntity <PSObject>] [-BusinessEntityTableName <String>]
+ [-BusinessEntityIgnoreProperties <String[]>] [-BusinessEntityLookupColumns <Hashtable>]
+ [-MatchingEntityName <String>] [-PagingInfo <PagingInfo>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -116,7 +116,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

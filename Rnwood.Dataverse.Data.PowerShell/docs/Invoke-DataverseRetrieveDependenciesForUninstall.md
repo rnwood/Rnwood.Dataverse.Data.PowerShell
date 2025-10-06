@@ -15,7 +15,7 @@ Contains the data that is needed to retrieve a list of the solution component de
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveDependenciesForUninstall -Connection <ServiceClient> [-SolutionUniqueName <String>]
+Invoke-DataverseRetrieveDependenciesForUninstall [-SolutionUniqueName <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

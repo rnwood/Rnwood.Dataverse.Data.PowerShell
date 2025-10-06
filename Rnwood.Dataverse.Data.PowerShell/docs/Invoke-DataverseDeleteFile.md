@@ -15,7 +15,7 @@ Contains the data needed to delete a stored binary file.
 ## SYNTAX
 
 ```
-Invoke-DataverseDeleteFile -Connection <ServiceClient> [-FileId <Guid>] [-ProgressAction <ActionPreference>]
+Invoke-DataverseDeleteFile [-FileId <Guid>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

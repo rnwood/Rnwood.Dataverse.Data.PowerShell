@@ -15,10 +15,10 @@ Contains the data that is needed to retrieve pages of posts, including comments 
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrievePersonalWall -Connection <ServiceClient> [-PageNumber <Int32>] [-PageSize <Int32>]
- [-CommentsPerPost <Int32>] [-StartDate <DateTime>] [-EndDate <DateTime>] [-Type <OptionSetValue>]
- [-Source <OptionSetValue>] [-SortDirection <Boolean>] [-Keyword <String>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrievePersonalWall [-PageNumber <Int32>] [-PageSize <Int32>] [-CommentsPerPost <Int32>]
+ [-StartDate <DateTime>] [-EndDate <DateTime>] [-Type <OptionSetValue>] [-Source <OptionSetValue>]
+ [-SortDirection <Boolean>] [-Keyword <String>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -71,7 +71,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

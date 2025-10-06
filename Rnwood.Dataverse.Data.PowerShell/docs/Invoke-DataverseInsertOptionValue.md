@@ -15,9 +15,9 @@ Contains the data that is needed to insert a new option value for a global choic
 ## SYNTAX
 
 ```
-Invoke-DataverseInsertOptionValue -Connection <ServiceClient> [-OptionSetName <String>]
- [-AttributeLogicalName <String>] [-EntityLogicalName <String>] [-Value <Int32>] [-Label <Label>]
- [-Description <Label>] [-ParentValues <Int32[]>] [-SolutionUniqueName <String>]
+Invoke-DataverseInsertOptionValue [-OptionSetName <String>] [-AttributeLogicalName <String>]
+ [-EntityLogicalName <String>] [-Value <Int32>] [-Label <Label>] [-Description <Label>]
+ [-ParentValues <Int32[]>] [-SolutionUniqueName <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -71,7 +71,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

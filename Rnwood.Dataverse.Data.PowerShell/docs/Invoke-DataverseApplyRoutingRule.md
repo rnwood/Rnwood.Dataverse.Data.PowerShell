@@ -15,7 +15,7 @@ Contains the data that is needed to apply the active routing rule to an incident
 ## SYNTAX
 
 ```
-Invoke-DataverseApplyRoutingRule -Connection <ServiceClient> -Target <PSObject>
+Invoke-DataverseApplyRoutingRule -Target <PSObject> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

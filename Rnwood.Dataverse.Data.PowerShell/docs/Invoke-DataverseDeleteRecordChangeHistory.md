@@ -15,7 +15,7 @@ Contains the data that is needed to delete all audit change history records for 
 ## SYNTAX
 
 ```
-Invoke-DataverseDeleteRecordChangeHistory -Connection <ServiceClient> -Target <PSObject>
+Invoke-DataverseDeleteRecordChangeHistory -Target <PSObject> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

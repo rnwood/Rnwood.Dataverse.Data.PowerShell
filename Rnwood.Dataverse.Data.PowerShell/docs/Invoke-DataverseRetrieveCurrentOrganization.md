@@ -15,7 +15,7 @@ Contains the data that's needed to retrieve information about the current organi
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveCurrentOrganization -Connection <ServiceClient> [-AccessType <EndpointAccessType>]
+Invoke-DataverseRetrieveCurrentOrganization [-AccessType <EndpointAccessType>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

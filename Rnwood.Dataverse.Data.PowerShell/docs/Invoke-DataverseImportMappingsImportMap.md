@@ -15,8 +15,8 @@ Contains the data that is needed to import the XML representation of a data map 
 ## SYNTAX
 
 ```
-Invoke-DataverseImportMappingsImportMap -Connection <ServiceClient> [-MappingsXml <String>]
- [-ReplaceIds <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseImportMappingsImportMap [-MappingsXml <String>] [-ReplaceIds <Boolean>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,9 +15,9 @@ Contains the data that is required to increment the per day view count of a know
 ## SYNTAX
 
 ```
-Invoke-DataverseIncrementKnowledgeArticleViewCount -Connection <ServiceClient> [-Source <PSObject>]
- [-ViewDate <DateTime>] [-Location <Int32>] [-Count <Int32>] [-ProgressAction <ActionPreference>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
+Invoke-DataverseIncrementKnowledgeArticleViewCount [-Source <PSObject>] [-ViewDate <DateTime>]
+ [-Location <Int32>] [-Count <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

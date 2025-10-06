@@ -15,9 +15,8 @@ Contains the data that is needed to retrieve table relationship metadata.
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveRelationship -Connection <ServiceClient> [-MetadataId <Guid>] [-Name <String>]
- [-RetrieveAsIfPublished <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseRetrieveRelationship [-MetadataId <Guid>] [-Name <String>] [-RetrieveAsIfPublished <Boolean>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

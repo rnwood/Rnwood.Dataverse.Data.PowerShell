@@ -15,8 +15,8 @@ Contains data that is needed to retrieve the changes for an record.
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveEntityChanges -Connection <ServiceClient> [-EntityName <String>]
- [-DataVersion <String>] [-PageInfo <PagingInfo>] [-Columns <ColumnSet>] [-GetGlobalMetadataVersion <Boolean>]
+Invoke-DataverseRetrieveEntityChanges [-EntityName <String>] [-DataVersion <String>] [-PageInfo <PagingInfo>]
+ [-Columns <ColumnSet>] [-GetGlobalMetadataVersion <Boolean>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

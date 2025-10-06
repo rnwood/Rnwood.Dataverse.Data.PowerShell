@@ -15,12 +15,12 @@ Contains the data to import a solution, stage it for upgrade, and apply the upgr
 ## SYNTAX
 
 ```
-Invoke-DataverseStageAndUpgrade -Connection <ServiceClient> [-OverwriteUnmanagedCustomizations <Boolean>]
- [-PublishWorkflows <Boolean>] [-CustomizationFile <Byte[]>] [-ImportJobId <Guid>]
- [-ConvertToManaged <Boolean>] [-SkipProductUpdateDependencies <Boolean>] [-SkipQueueRibbonJob <Boolean>]
- [-AsyncRibbonProcessing <Boolean>] [-ComponentParameters <EntityCollection>]
- [-SolutionParameters <SolutionParameters>] [-LayerDesiredOrder <LayerDesiredOrder>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseStageAndUpgrade [-OverwriteUnmanagedCustomizations <Boolean>] [-PublishWorkflows <Boolean>]
+ [-CustomizationFile <Byte[]>] [-ImportJobId <Guid>] [-ConvertToManaged <Boolean>]
+ [-SkipProductUpdateDependencies <Boolean>] [-SkipQueueRibbonJob <Boolean>] [-AsyncRibbonProcessing <Boolean>]
+ [-ComponentParameters <EntityCollection>] [-SolutionParameters <SolutionParameters>]
+ [-LayerDesiredOrder <LayerDesiredOrder>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -88,7 +88,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

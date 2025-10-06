@@ -15,9 +15,9 @@ Contains the data needed to link an instance of a report entity to related entit
 ## SYNTAX
 
 ```
-Invoke-DataverseSetReportRelated -Connection <ServiceClient> [-ReportId <Guid>] [-Entities <Int32[]>]
- [-Categories <Int32[]>] [-Visibility <Int32[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseSetReportRelated [-ReportId <Guid>] [-Entities <Int32[]>] [-Categories <Int32[]>]
+ [-Visibility <Int32[]>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

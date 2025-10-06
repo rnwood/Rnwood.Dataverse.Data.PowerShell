@@ -15,9 +15,8 @@ Contains the data that is needed to remove a user from the auto created access t
 ## SYNTAX
 
 ```
-Invoke-DataverseRemoveUserFromRecordTeam -Connection <ServiceClient> [-Record <PSObject>]
- [-TeamTemplateId <Guid>] [-SystemUserId <Guid>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseRemoveUserFromRecordTeam [-Record <PSObject>] [-TeamTemplateId <Guid>] [-SystemUserId <Guid>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

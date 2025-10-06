@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve a shared access signature URL to do
 ## SYNTAX
 
 ```
-Invoke-DataverseGetFileSasUrl -Connection <ServiceClient> -Target <PSObject> [-FileAttributeName <String>]
- [-DataSource <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseGetFileSasUrl -Target <PSObject> [-FileAttributeName <String>] [-DataSource <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

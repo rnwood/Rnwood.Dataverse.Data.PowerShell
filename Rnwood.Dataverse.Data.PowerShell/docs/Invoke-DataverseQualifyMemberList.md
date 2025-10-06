@@ -15,8 +15,8 @@ Contains the data that is needed to qualify the specified list and either overri
 ## SYNTAX
 
 ```
-Invoke-DataverseQualifyMemberList -Connection <ServiceClient> [-ListId <Guid>] [-MembersId <Guid[]>]
- [-OverrideorRemove <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseQualifyMemberList [-ListId <Guid>] [-MembersId <Guid[]>] [-OverrideorRemove <Boolean>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

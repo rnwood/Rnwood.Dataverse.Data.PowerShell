@@ -15,9 +15,9 @@ For internal use only.
 ## SYNTAX
 
 ```
-Invoke-DataverseImportSolutions -Connection <ServiceClient> [-OverwriteUnmanagedCustomizations <Boolean>]
- [-PublishWorkflows <Boolean>] [-CustomizationFiles <Byte[]>] [-ImportJobId <Guid>]
- [-ConvertToManaged <Boolean>] [-SkipProductUpdateDependencies <Boolean>] [-HoldingSolution <Boolean>]
+Invoke-DataverseImportSolutions [-OverwriteUnmanagedCustomizations <Boolean>] [-PublishWorkflows <Boolean>]
+ [-CustomizationFiles <Byte[]>] [-ImportJobId <Guid>] [-ConvertToManaged <Boolean>]
+ [-SkipProductUpdateDependencies <Boolean>] [-HoldingSolution <Boolean>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -56,7 +56,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

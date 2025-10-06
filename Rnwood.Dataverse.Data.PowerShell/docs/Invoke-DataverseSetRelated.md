@@ -15,7 +15,7 @@ Contains the data needed to create a relationship between a set of records that 
 ## SYNTAX
 
 ```
-Invoke-DataverseSetRelated -Connection <ServiceClient> -Target <EntityReference[]>
+Invoke-DataverseSetRelated -Target <EntityReference[]> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

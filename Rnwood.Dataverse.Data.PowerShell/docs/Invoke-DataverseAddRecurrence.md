@@ -15,8 +15,8 @@ Contains the data that is needed to add recurrence information to an existing ap
 ## SYNTAX
 
 ```
-Invoke-DataverseAddRecurrence -Connection <ServiceClient> -Target <PSObject> -TargetTableName <String>
- [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>] [-AppointmentId <Guid>]
+Invoke-DataverseAddRecurrence -Target <PSObject> -TargetTableName <String> [-TargetIgnoreProperties <String[]>]
+ [-TargetLookupColumns <Hashtable>] [-AppointmentId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

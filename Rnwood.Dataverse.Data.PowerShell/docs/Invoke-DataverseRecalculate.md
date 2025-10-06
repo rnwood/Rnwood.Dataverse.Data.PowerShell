@@ -15,8 +15,8 @@ Contains the data that is needed to recalculate system-computed values for rollu
 ## SYNTAX
 
 ```
-Invoke-DataverseRecalculate -Connection <ServiceClient> -Target <PSObject> [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRecalculate -Target <PSObject> [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

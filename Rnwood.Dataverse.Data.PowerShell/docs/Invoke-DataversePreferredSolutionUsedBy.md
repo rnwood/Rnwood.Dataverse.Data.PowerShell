@@ -15,7 +15,7 @@ Executes a PreferredSolutionUsedByRequest against the Dataverse organization ser
 ## SYNTAX
 
 ```
-Invoke-DataversePreferredSolutionUsedBy -Connection <ServiceClient> [-SolutionId <Guid>]
+Invoke-DataversePreferredSolutionUsedBy [-SolutionId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

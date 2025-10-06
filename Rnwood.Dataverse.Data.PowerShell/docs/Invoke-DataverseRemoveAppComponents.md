@@ -15,9 +15,8 @@ Contains the data that is needed to remove a component from an app.For the Web A
 ## SYNTAX
 
 ```
-Invoke-DataverseRemoveAppComponents -Connection <ServiceClient> [-AppId <Guid>]
- [-Components <EntityReferenceCollection>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseRemoveAppComponents [-AppId <Guid>] [-Components <EntityReferenceCollection>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -85,7 +84,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

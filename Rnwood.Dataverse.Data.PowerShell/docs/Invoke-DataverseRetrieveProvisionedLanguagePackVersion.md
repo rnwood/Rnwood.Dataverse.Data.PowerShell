@@ -15,7 +15,7 @@ Contains the data that is needed to retrieve the version of a provisioned langua
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveProvisionedLanguagePackVersion -Connection <ServiceClient> [-Language <Int32>]
+Invoke-DataverseRetrieveProvisionedLanguagePackVersion [-Language <Int32>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

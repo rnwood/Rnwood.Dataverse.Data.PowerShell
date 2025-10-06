@@ -15,7 +15,7 @@ Contains the data that is needed to assign the specified record to a new owner (
 ## SYNTAX
 
 ```
-Invoke-DataverseAssign -Connection <ServiceClient> -Target <PSObject> [-Assignee <PSObject>]
+Invoke-DataverseAssign -Target <PSObject> [-Assignee <PSObject>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

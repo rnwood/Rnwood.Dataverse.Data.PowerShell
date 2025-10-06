@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve the collection of users that report
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveAllChildUsersSystemUser -Connection <ServiceClient> [-EntityId <Guid>]
- [-ColumnSet <ColumnSet>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveAllChildUsersSystemUser [-EntityId <Guid>] [-ColumnSet <ColumnSet>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

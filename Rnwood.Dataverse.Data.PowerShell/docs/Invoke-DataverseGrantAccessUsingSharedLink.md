@@ -15,7 +15,7 @@ Adds a system user to the shared link access team of the target table row.
 ## SYNTAX
 
 ```
-Invoke-DataverseGrantAccessUsingSharedLink -Connection <ServiceClient> [-RecordUrlWithSharedLink <String>]
+Invoke-DataverseGrantAccessUsingSharedLink [-RecordUrlWithSharedLink <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

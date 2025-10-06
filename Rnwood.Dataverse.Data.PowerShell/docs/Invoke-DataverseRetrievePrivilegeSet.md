@@ -15,8 +15,8 @@ Contains the data needed to retrieve the set of privileges defined in the system
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrievePrivilegeSet -Connection <ServiceClient> [-ProgressAction <ActionPreference>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrievePrivilegeSet [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

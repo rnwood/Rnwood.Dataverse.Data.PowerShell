@@ -16,52 +16,66 @@ See the examples for this pattern below.
 
 ## SYNTAX
 
+### Get default connection
+```
+Get-DataverseConnection [-GetDefault] [-SetAsDefault] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
+```
+
 ### Return a mock connection
 ```
-Get-DataverseConnection -Mock <EntityMetadata[]> -Url <Uri> [-Timeout <UInt32>]
+Get-DataverseConnection -Mock <EntityMetadata[]> [ -Url <Uri>] [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] -Mock <EntityMetadata[]> [ -Url <Uri>] [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with client secret
 ```
-Get-DataverseConnection -ClientId <Guid> -Url <Uri> -ClientSecret <String> [-Timeout <UInt32>]
+Get-DataverseConnection -ClientId <Guid> [ -Url <Uri>] -ClientSecret <String> [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] -ClientId <Guid> [ -Url <Uri>] -ClientSecret <String> [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate interactively
 ```
-Get-DataverseConnection [-ClientId <Guid>] [-Url <Uri>] [-Username <String>] [-Interactive] [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [-ClientId <Guid>] [ -Url <Uri>] [-Username <String>] [-Interactive] [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] [-ClientId <Guid>] [ -Url <Uri>] [-Username <String>] [-Interactive]
+ [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate using the device code flow
 ```
-Get-DataverseConnection [-ClientId <Guid>] [-Url <Uri>] [-Username <String>] [-DeviceCode] [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [-ClientId <Guid>] [ -Url <Uri>] [-Username <String>] [-DeviceCode] [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] [-ClientId <Guid>] [ -Url <Uri>] [-Username <String>] [-DeviceCode]
+ [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with username and password
 ```
-Get-DataverseConnection [-ClientId <Guid>] [-Url <Uri>] -Username <String> -Password <String>
+Get-DataverseConnection [-ClientId <Guid>] [ -Url <Uri>] -Username <String> -Password <String> [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] [-ClientId <Guid>] [ -Url <Uri>] -Username <String> -Password <String>
  [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with Dataverse SDK connection string.
 ```
-Get-DataverseConnection -Url <Uri> -ConnectionString <String> [-Timeout <UInt32>]
+Get-DataverseConnection [ -Url <Uri>] -ConnectionString <String> [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] [ -Url <Uri>] -ConnectionString <String> [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with DefaultAzureCredential
 ```
-Get-DataverseConnection [-Url <Uri>] [-DefaultAzureCredential] [-Timeout <UInt32>]
+Get-DataverseConnection [ -Url <Uri>] [-DefaultAzureCredential] [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] [ -Url <Uri>] [-DefaultAzureCredential] [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with ManagedIdentityCredential
 ```
-Get-DataverseConnection [-Url <Uri>] [-ManagedIdentity] [-ManagedIdentityClientId <String>] [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [ -Url <Uri>] [-ManagedIdentity] [-ManagedIdentityClientId <String>] [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] [ -Url <Uri>] [-ManagedIdentity] [-ManagedIdentityClientId <String>]
+ [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -73,12 +87,12 @@ So you can store the output of this command in a variable and pass it to each co
 See the examples for this pattern below.
 
 Multiple authentication methods are supported:
-- Interactive authentication (browser-based) - omit URL to select from available environments
-- Device code flow (for remote/headless scenarios) - omit URL to select from available environments
-- Username/password - omit URL to select from available environments
+- Interactive authentication (browser-based)
+- Device code flow (for remote/headless scenarios)
+- Username/password
 - Client secret (for service principal authentication)
-- DefaultAzureCredential (automatic credential discovery for Azure environments) - omit URL to select from available environments
-- ManagedIdentityCredential (for Azure managed identity authentication) - omit URL to select from available environments
+- DefaultAzureCredential (automatic credential discovery for Azure environments)
+- ManagedIdentityCredential (for Azure managed identity authentication)
 - Connection string (for advanced scenarios)
 - Mock connection (for testing)
 
@@ -307,26 +321,13 @@ Accept wildcard characters: False
 
 ### -Url
 URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com
-Not required for interactive, device code, username/password, DefaultAzureCredential, or ManagedIdentity authentication - when omitted, you will be prompted to select from available environments.
 
 ```yaml
 Type: Uri
-Parameter Sets: Return a mock connection, Authenticate with client secret, Authenticate with Dataverse SDK connection string.
+Parameter Sets: Return a mock connection, Authenticate with client secret, Authenticate interactively, Authenticate using the device code flow, Authenticate with username and password, Authenticate with Dataverse SDK connection string., Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
 Aliases:
 
 Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-```yaml
-Type: Uri
-Parameter Sets: Authenticate interactively, Authenticate using the device code flow, Authenticate with username and password, Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
-Aliases:
-
-Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -367,6 +368,36 @@ See standard PS documentation.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -GetDefault
+Gets the current default connection. Returns an error if no default connection is set.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Get default connection
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SetAsDefault
+When set, this connection will be used as the default for cmdlets that don't have a connection parameter specified.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named

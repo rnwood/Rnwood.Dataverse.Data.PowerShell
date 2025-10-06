@@ -15,7 +15,7 @@ Contains the data needed to retrieve all private queues of a specified user and 
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveUserQueues -Connection <ServiceClient> [-UserId <Guid>] [-IncludePublic <Boolean>]
+Invoke-DataverseRetrieveUserQueues [-UserId <Guid>] [-IncludePublic <Boolean>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

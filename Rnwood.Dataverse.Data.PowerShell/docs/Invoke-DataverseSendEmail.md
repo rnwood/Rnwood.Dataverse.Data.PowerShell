@@ -15,8 +15,8 @@ Contains the data that is needed to send an email message.
 ## SYNTAX
 
 ```
-Invoke-DataverseSendEmail -Connection <ServiceClient> [-EmailId <Guid>] [-IssueSend <Boolean>]
- [-TrackingToken <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseSendEmail [-EmailId <Guid>] [-IssueSend <Boolean>] [-TrackingToken <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

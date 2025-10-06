@@ -15,7 +15,7 @@ Contains the data that is needed to delete the specified key for an entity.
 ## SYNTAX
 
 ```
-Invoke-DataverseDeleteEntityKey -Connection <ServiceClient> [-Name <String>] [-EntityLogicalName <String>]
+Invoke-DataverseDeleteEntityKey [-Name <String>] [-EntityLogicalName <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

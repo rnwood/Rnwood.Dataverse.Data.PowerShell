@@ -15,8 +15,8 @@ Contains the data that is needed to create a new global choice.
 ## SYNTAX
 
 ```
-Invoke-DataverseCreateOptionSet -Connection <ServiceClient> [-OptionSet <OptionSetMetadataBase>]
- [-SolutionUniqueName <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseCreateOptionSet [-OptionSet <OptionSetMetadataBase>] [-SolutionUniqueName <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

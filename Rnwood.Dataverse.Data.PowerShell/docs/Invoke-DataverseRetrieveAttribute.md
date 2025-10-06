@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve attribute metadata.
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveAttribute -Connection <ServiceClient> [-EntityLogicalName <String>]
- [-LogicalName <String>] [-ColumnNumber <Int32>] [-MetadataId <Guid>] [-RetrieveAsIfPublished <Boolean>]
+Invoke-DataverseRetrieveAttribute [-EntityLogicalName <String>] [-LogicalName <String>] [-ColumnNumber <Int32>]
+ [-MetadataId <Guid>] [-RetrieveAsIfPublished <Boolean>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

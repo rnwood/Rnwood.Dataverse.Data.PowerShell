@@ -15,8 +15,8 @@ Contains the data that is needed to add a user to the auto created access team f
 ## SYNTAX
 
 ```
-Invoke-DataverseAddUserToRecordTeam -Connection <ServiceClient> [-Record <PSObject>] [-TeamTemplateId <Guid>]
- [-SystemUserId <Guid>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseAddUserToRecordTeam [-Record <PSObject>] [-TeamTemplateId <Guid>] [-SystemUserId <Guid>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

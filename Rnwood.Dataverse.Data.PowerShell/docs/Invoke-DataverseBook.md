@@ -15,8 +15,8 @@ Contains the data that is needed to schedule or "book" an appointment, recurring
 ## SYNTAX
 
 ```
-Invoke-DataverseBook -Connection <ServiceClient> -Target <PSObject> -TargetTableName <String>
- [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>] [-ReturnNotifications <Boolean>]
+Invoke-DataverseBook -Target <PSObject> -TargetTableName <String> [-TargetIgnoreProperties <String[]>]
+ [-TargetLookupColumns <Hashtable>] [-ReturnNotifications <Boolean>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,7 +15,7 @@ Contains the data that is needed to reset the offline data filters for the calli
 ## SYNTAX
 
 ```
-Invoke-DataverseResetUserFilters -Connection <ServiceClient> [-QueryType <Int32>]
+Invoke-DataverseResetUserFilters [-QueryType <Int32>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

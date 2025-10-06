@@ -15,7 +15,7 @@ Contains the data that is needed to deprovision a language.
 ## SYNTAX
 
 ```
-Invoke-DataverseDeprovisionLanguage -Connection <ServiceClient> [-Language <Int32>]
+Invoke-DataverseDeprovisionLanguage [-Language <Int32>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

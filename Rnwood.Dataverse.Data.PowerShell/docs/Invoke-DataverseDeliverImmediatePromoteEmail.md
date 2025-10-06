@@ -15,13 +15,12 @@ Contains the data that is needed to deliver an email from an email client.
 ## SYNTAX
 
 ```
-Invoke-DataverseDeliverImmediatePromoteEmail -Connection <ServiceClient> [-EmailId <Guid>]
- [-MessageId <String>] [-Subject <String>] [-From <String>] [-To <String>] [-Cc <String>] [-Bcc <String>]
- [-ReceivedOn <DateTime>] [-SubmittedBy <String>] [-Importance <String>] [-Body <String>]
- [-AttachmentIds <String[]>] [-EWSUrl <String>] [-AttachmentToken <String>] [-ExtraProperties <PSObject>]
- [-ExtraPropertiesTableName <String>] [-ExtraPropertiesIgnoreProperties <String[]>]
- [-ExtraPropertiesLookupColumns <Hashtable>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseDeliverImmediatePromoteEmail [-EmailId <Guid>] [-MessageId <String>] [-Subject <String>]
+ [-From <String>] [-To <String>] [-Cc <String>] [-Bcc <String>] [-ReceivedOn <DateTime>]
+ [-SubmittedBy <String>] [-Importance <String>] [-Body <String>] [-AttachmentIds <String[]>] [-EWSUrl <String>]
+ [-AttachmentToken <String>] [-ExtraProperties <PSObject>] [-ExtraPropertiesTableName <String>]
+ [-ExtraPropertiesIgnoreProperties <String[]>] [-ExtraPropertiesLookupColumns <Hashtable>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -134,7 +133,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

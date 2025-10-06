@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve the entity forms that are available
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveFilteredForms -Connection <ServiceClient> [-EntityLogicalName <String>]
- [-FormType <OptionSetValue>] [-SystemUserId <Guid>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+Invoke-DataverseRetrieveFilteredForms [-EntityLogicalName <String>] [-FormType <OptionSetValue>]
+ [-SystemUserId <Guid>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
  [<CommonParameters>]
 ```
 
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

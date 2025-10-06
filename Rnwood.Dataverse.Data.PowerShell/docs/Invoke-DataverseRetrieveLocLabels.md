@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve localized labels for a limited set 
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveLocLabels -Connection <ServiceClient> [-EntityMoniker <PSObject>]
- [-AttributeName <String>] [-IncludeUnpublished <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf]
+Invoke-DataverseRetrieveLocLabels [-EntityMoniker <PSObject>] [-AttributeName <String>]
+ [-IncludeUnpublished <Boolean>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
 
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

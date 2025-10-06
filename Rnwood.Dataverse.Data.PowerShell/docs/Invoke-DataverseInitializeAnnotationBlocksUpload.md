@@ -15,8 +15,8 @@ Contains the data needed to initialize annotation storage for receiving (uploadi
 ## SYNTAX
 
 ```
-Invoke-DataverseInitializeAnnotationBlocksUpload -Connection <ServiceClient> -Target <PSObject>
- -TargetTableName <String> [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>]
+Invoke-DataverseInitializeAnnotationBlocksUpload -Target <PSObject> -TargetTableName <String>
+ [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

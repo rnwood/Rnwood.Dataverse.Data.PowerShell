@@ -15,8 +15,8 @@ Contains the parameters that are needed to create an email message from a templa
 ## SYNTAX
 
 ```
-Invoke-DataverseInstantiateTemplate -Connection <ServiceClient> [-TemplateId <Guid>] [-ObjectType <String>]
- [-ObjectId <Guid>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseInstantiateTemplate [-TemplateId <Guid>] [-ObjectType <String>] [-ObjectId <Guid>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

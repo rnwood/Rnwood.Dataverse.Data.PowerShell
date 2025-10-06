@@ -15,8 +15,8 @@ Contains data to perform bulk operations to cancel, resume, or pause workflows.
 ## SYNTAX
 
 ```
-Invoke-DataverseSyncBulkOperation -Connection <ServiceClient> [-QuerySet <QueryExpression[]>]
- [-OperationType <Int32>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseSyncBulkOperation [-QuerySet <QueryExpression[]>] [-OperationType <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

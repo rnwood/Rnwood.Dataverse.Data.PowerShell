@@ -15,11 +15,10 @@ Contains the data that is needed to check whether the incoming email message is 
 ## SYNTAX
 
 ```
-Invoke-DataverseCheckIncomingEmail -Connection <ServiceClient> [-MessageId <String>] [-Subject <String>]
- [-From <String>] [-To <String>] [-Cc <String>] [-Bcc <String>] [-ExtraProperties <PSObject>]
- [-ExtraPropertiesTableName <String>] [-ExtraPropertiesIgnoreProperties <String[]>]
- [-ExtraPropertiesLookupColumns <Hashtable>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseCheckIncomingEmail [-MessageId <String>] [-Subject <String>] [-From <String>] [-To <String>]
+ [-Cc <String>] [-Bcc <String>] [-ExtraProperties <PSObject>] [-ExtraPropertiesTableName <String>]
+ [-ExtraPropertiesIgnoreProperties <String[]>] [-ExtraPropertiesLookupColumns <Hashtable>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -87,7 +86,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

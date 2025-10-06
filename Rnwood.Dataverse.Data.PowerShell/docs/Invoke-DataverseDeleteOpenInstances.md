@@ -15,9 +15,10 @@ Contains the data that is needed to delete instances of a recurring appointment 
 ## SYNTAX
 
 ```
-Invoke-DataverseDeleteOpenInstances -Connection <ServiceClient> -Target <PSObject> -TargetTableName <String>
+Invoke-DataverseDeleteOpenInstances -Target <PSObject> -TargetTableName <String>
  [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>] [-SeriesEndDate <DateTime>]
- [-StateOfPastInstances <Int32>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-StateOfPastInstances <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +56,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

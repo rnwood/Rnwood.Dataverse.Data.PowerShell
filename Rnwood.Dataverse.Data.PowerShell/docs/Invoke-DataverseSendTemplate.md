@@ -15,10 +15,10 @@ Contains the data that is needed to send a bulk email message that is created fr
 ## SYNTAX
 
 ```
-Invoke-DataverseSendTemplate -Connection <ServiceClient> [-TemplateId <Guid>] [-Sender <PSObject>]
- [-RecipientType <String>] [-RecipientIds <Guid[]>] [-RegardingType <String>] [-RegardingId <Guid>]
- [-DeliveryPriorityCode <OptionSetValue>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseSendTemplate [-TemplateId <Guid>] [-Sender <PSObject>] [-RecipientType <String>]
+ [-RecipientIds <Guid[]>] [-RegardingType <String>] [-RegardingId <Guid>]
+ [-DeliveryPriorityCode <OptionSetValue>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -56,7 +56,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

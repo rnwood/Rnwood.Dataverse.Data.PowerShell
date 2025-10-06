@@ -15,8 +15,8 @@ Contains the data that is needed to remove a component from an unmanaged solutio
 ## SYNTAX
 
 ```
-Invoke-DataverseRemoveSolutionComponent -Connection <ServiceClient> [-ComponentId <Guid>]
- [-ComponentType <Int32>] [-SolutionUniqueName <String>] [-ProgressAction <ActionPreference>] [-WhatIf]
+Invoke-DataverseRemoveSolutionComponent [-ComponentId <Guid>] [-ComponentType <Int32>]
+ [-SolutionUniqueName <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
 
@@ -85,7 +85,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

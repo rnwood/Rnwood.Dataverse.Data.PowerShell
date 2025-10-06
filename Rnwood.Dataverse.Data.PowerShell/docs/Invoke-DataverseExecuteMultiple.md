@@ -15,9 +15,9 @@ Contains the data that is needed to execute one or more message requests as a si
 ## SYNTAX
 
 ```
-Invoke-DataverseExecuteMultiple -Connection <ServiceClient> [-Requests <OrganizationRequestCollection>]
- [-Settings <ExecuteMultipleSettings>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseExecuteMultiple [-Requests <OrganizationRequestCollection>]
+ [-Settings <ExecuteMultipleSettings>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

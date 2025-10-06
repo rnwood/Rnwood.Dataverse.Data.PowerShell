@@ -15,7 +15,7 @@ Contains the data that is needed to copy an existing product family, product, or
 ## SYNTAX
 
 ```
-Invoke-DataverseCloneProduct -Connection <ServiceClient> [-Source <PSObject>]
+Invoke-DataverseCloneProduct [-Source <PSObject>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

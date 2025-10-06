@@ -15,8 +15,8 @@ Contains the data that is needed to create a new column, and optionally, to add 
 ## SYNTAX
 
 ```
-Invoke-DataverseCreateAttribute -Connection <ServiceClient> [-Attribute <AttributeMetadata>]
- [-EntityName <String>] [-SolutionUniqueName <String>] [-ProgressAction <ActionPreference>] [-WhatIf]
+Invoke-DataverseCreateAttribute [-Attribute <AttributeMetadata>] [-EntityName <String>]
+ [-SolutionUniqueName <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
 
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

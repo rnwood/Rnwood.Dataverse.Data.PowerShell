@@ -15,7 +15,7 @@ Contains the data to queue UpdateRibbonClientMetadata to a background job.
 ## SYNTAX
 
 ```
-Invoke-DataverseQueueUpdateRibbonClientMetadata -Connection <ServiceClient>
+Invoke-DataverseQueueUpdateRibbonClientMetadata [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

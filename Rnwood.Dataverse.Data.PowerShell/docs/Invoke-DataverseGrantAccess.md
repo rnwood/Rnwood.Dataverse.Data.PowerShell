@@ -15,8 +15,8 @@ Contains the data that is needed to grant a security principal (user, team, or o
 ## SYNTAX
 
 ```
-Invoke-DataverseGrantAccess -Connection <ServiceClient> -Target <PSObject> [-PrincipalAccess <PrincipalAccess>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseGrantAccess -Target <PSObject> [-PrincipalAccess <PrincipalAccess>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

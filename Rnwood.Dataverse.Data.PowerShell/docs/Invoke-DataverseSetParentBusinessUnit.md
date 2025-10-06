@@ -15,7 +15,7 @@ Contains the data that is needed to set the parent business unit for a business 
 ## SYNTAX
 
 ```
-Invoke-DataverseSetParentBusinessUnit -Connection <ServiceClient> [-BusinessUnitId <Guid>] [-ParentId <Guid>]
+Invoke-DataverseSetParentBusinessUnit [-BusinessUnitId <Guid>] [-ParentId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,7 +15,7 @@ Contains the data that is needed to create a copy of the campaign response.
 ## SYNTAX
 
 ```
-Invoke-DataverseCopyCampaignResponse -Connection <ServiceClient> [-CampaignResponseId <PSObject>]
+Invoke-DataverseCopyCampaignResponse [-CampaignResponseId <PSObject>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

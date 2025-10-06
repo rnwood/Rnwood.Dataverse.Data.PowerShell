@@ -15,8 +15,8 @@ Contains data that is needed to submit a new asynchronous system job to create t
 ## SYNTAX
 
 ```
-Invoke-DataverseReactivateEntityKey -Connection <ServiceClient> [-EntityKeyLogicalName <String>]
- [-EntityLogicalName <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseReactivateEntityKey [-EntityKeyLogicalName <String>] [-EntityLogicalName <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

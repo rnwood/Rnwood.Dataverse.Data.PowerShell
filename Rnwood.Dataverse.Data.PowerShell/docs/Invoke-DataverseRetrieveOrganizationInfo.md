@@ -15,7 +15,7 @@ Contains the data that is needed to retrieve information about an organization s
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveOrganizationInfo -Connection <ServiceClient> [-ProgressAction <ActionPreference>]
+Invoke-DataverseRetrieveOrganizationInfo [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

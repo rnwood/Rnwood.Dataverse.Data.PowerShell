@@ -15,9 +15,8 @@ Contains the data that is needed to replace the access rights on the target reco
 ## SYNTAX
 
 ```
-Invoke-DataverseModifyAccess -Connection <ServiceClient> -Target <PSObject>
- [-PrincipalAccess <PrincipalAccess>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseModifyAccess -Target <PSObject> [-PrincipalAccess <PrincipalAccess>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

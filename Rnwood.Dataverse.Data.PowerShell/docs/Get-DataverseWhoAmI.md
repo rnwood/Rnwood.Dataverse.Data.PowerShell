@@ -13,7 +13,7 @@ Retrieves details about the current Dataverse user and organization specified by
 ## SYNTAX
 
 ```
-Get-DataverseWhoAmI -Connection <ServiceClient> [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseWhoAmI [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -46,7 +46,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

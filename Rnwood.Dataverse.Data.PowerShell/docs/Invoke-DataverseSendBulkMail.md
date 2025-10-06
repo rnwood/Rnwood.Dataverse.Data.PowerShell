@@ -15,8 +15,8 @@ Contains the data that is needed to send bulk email messages.
 ## SYNTAX
 
 ```
-Invoke-DataverseSendBulkMail -Connection <ServiceClient> [-Sender <PSObject>] [-TemplateId <Guid>]
- [-RegardingType <String>] [-RegardingId <Guid>] [-Query <QueryBase>] [-ProgressAction <ActionPreference>]
+Invoke-DataverseSendBulkMail [-Sender <PSObject>] [-TemplateId <Guid>] [-RegardingType <String>]
+ [-RegardingId <Guid>] [-Query <QueryBase>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

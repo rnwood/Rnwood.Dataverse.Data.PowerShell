@@ -15,8 +15,8 @@ Contains the data that is needed to add an item to a campaign.
 ## SYNTAX
 
 ```
-Invoke-DataverseAddItemCampaign -Connection <ServiceClient> [-CampaignId <Guid>] [-EntityId <Guid>]
- [-EntityName <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseAddItemCampaign [-CampaignId <Guid>] [-EntityId <Guid>] [-EntityName <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

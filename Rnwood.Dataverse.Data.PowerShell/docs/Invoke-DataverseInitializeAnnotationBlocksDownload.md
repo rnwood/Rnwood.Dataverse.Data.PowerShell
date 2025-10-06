@@ -15,7 +15,7 @@ Contains the data needed to initialize the download of one or more annotation da
 ## SYNTAX
 
 ```
-Invoke-DataverseInitializeAnnotationBlocksDownload -Connection <ServiceClient> -Target <PSObject>
+Invoke-DataverseInitializeAnnotationBlocksDownload -Target <PSObject> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

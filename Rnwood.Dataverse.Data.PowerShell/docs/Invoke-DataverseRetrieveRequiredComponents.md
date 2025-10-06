@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve a collection of solution components
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveRequiredComponents -Connection <ServiceClient> [-ObjectId <Guid>]
- [-ComponentType <Int32>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveRequiredComponents [-ObjectId <Guid>] [-ComponentType <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

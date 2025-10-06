@@ -15,7 +15,7 @@ Contains the data to retrieve the total entity record count from within the last
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveTotalRecordCount -Connection <ServiceClient> [-EntityNames <String[]>]
+Invoke-DataverseRetrieveTotalRecordCount [-EntityNames <String[]>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

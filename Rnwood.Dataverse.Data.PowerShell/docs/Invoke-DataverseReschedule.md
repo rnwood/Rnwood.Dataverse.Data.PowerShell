@@ -15,8 +15,8 @@ Contains the data that is needed to reschedule an appointment, recurring appoint
 ## SYNTAX
 
 ```
-Invoke-DataverseReschedule -Connection <ServiceClient> -Target <PSObject> -TargetTableName <String>
- [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>] [-ReturnNotifications <Boolean>]
+Invoke-DataverseReschedule -Target <PSObject> -TargetTableName <String> [-TargetIgnoreProperties <String[]>]
+ [-TargetLookupColumns <Hashtable>] [-ReturnNotifications <Boolean>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

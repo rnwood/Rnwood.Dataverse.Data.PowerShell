@@ -15,8 +15,8 @@ Contains the data that is needed to remove an item from a campaign activity.This
 ## SYNTAX
 
 ```
-Invoke-DataverseRemoveItemCampaignActivity -Connection <ServiceClient> [-CampaignActivityId <Guid>]
- [-ItemId <Guid>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRemoveItemCampaignActivity [-CampaignActivityId <Guid>] [-ItemId <Guid>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

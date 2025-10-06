@@ -15,13 +15,13 @@ Contains the data that is needed to import a solution using an asynchronous job.
 ## SYNTAX
 
 ```
-Invoke-DataverseImportSolutionAsync -Connection <ServiceClient> [-OverwriteUnmanagedCustomizations <Boolean>]
- [-PublishWorkflows <Boolean>] [-CustomizationFile <Byte[]>] [-ImportJobId <Guid>]
- [-ConvertToManaged <Boolean>] [-SkipProductUpdateDependencies <Boolean>] [-HoldingSolution <Boolean>]
- [-SkipQueueRibbonJob <Boolean>] [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing <Boolean>]
+Invoke-DataverseImportSolutionAsync [-OverwriteUnmanagedCustomizations <Boolean>] [-PublishWorkflows <Boolean>]
+ [-CustomizationFile <Byte[]>] [-ImportJobId <Guid>] [-ConvertToManaged <Boolean>]
+ [-SkipProductUpdateDependencies <Boolean>] [-HoldingSolution <Boolean>] [-SkipQueueRibbonJob <Boolean>]
+ [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing <Boolean>]
  [-ComponentParameters <EntityCollection>] [-SolutionParameters <SolutionParameters>]
  [-IsTemplateMode <Boolean>] [-TemplateSuffix <String>] [-TemplateDisplayNamePrefix <String>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -89,7 +89,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

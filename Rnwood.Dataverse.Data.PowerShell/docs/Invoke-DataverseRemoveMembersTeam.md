@@ -15,7 +15,7 @@ Contains the data that is needed to remove members from a team.
 ## SYNTAX
 
 ```
-Invoke-DataverseRemoveMembersTeam -Connection <ServiceClient> [-TeamId <Guid>] [-MemberIds <Guid[]>]
+Invoke-DataverseRemoveMembersTeam [-TeamId <Guid>] [-MemberIds <Guid[]>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

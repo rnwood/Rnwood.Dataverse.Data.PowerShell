@@ -15,9 +15,9 @@ Contains the data needed to commit the uploaded data blocks to the annotation st
 ## SYNTAX
 
 ```
-Invoke-DataverseCommitAnnotationBlocksUpload -Connection <ServiceClient> -Target <PSObject>
- -TargetTableName <String> [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>]
- [-BlockList <String[]>] [-FileContinuationToken <String>] [-ProgressAction <ActionPreference>] [-WhatIf]
+Invoke-DataverseCommitAnnotationBlocksUpload -Target <PSObject> -TargetTableName <String>
+ [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>] [-BlockList <String[]>]
+ [-FileContinuationToken <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
 
@@ -71,7 +71,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

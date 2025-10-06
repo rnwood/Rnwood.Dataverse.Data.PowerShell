@@ -15,9 +15,9 @@ For internal use only.
 ## SYNTAX
 
 ```
-Invoke-DataverseAddChannelAccessProfilePrivileges -Connection <ServiceClient> [-ChannelAccessProfileId <Guid>]
- [-Privileges <ChannelAccessProfilePrivilege[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseAddChannelAccessProfilePrivileges [-ChannelAccessProfileId <Guid>]
+ [-Privileges <ChannelAccessProfilePrivilege[]>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

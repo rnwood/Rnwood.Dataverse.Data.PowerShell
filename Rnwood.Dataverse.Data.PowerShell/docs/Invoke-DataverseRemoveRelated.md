@@ -15,7 +15,7 @@ Use the class. Contains the data that is needed to remove the relationship betwe
 ## SYNTAX
 
 ```
-Invoke-DataverseRemoveRelated -Connection <ServiceClient> -Target <EntityReference[]>
+Invoke-DataverseRemoveRelated -Target <EntityReference[]> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

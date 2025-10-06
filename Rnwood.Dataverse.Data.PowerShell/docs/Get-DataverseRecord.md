@@ -14,19 +14,19 @@ Retrieves records from Dataverse tables using a variety of strategies to specify
 
 ### Simple
 ```
-Get-DataverseRecord -Connection <ServiceClient> [-TableName] <String> [-VerboseRecordCount] [-RecordCount]
- [-FilterValues <Hashtable[]>] [-Criteria <FilterExpression>] [-Links <DataverseLinkEntity[]>]
- [-ExcludeFilterValues <Hashtable[]>] [-ExcludeFilterOr] [-ActiveOnly] [-Id <Guid[]>] [-Name <String[]>]
- [-ExcludeId <Guid[]>] [-Columns <String[]>] [-ExcludeColumns <String[]>] [-OrderBy <String[]>] [-Top <Int32>]
- [-PageSize <Int32>] [-LookupValuesReturnName] [-IncludeSystemColumns] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseRecord [-TableName] <String> [-VerboseRecordCount] [-RecordCount] [-FilterValues <Hashtable[]>]
+ [-Criteria <FilterExpression>] [-Links <DataverseLinkEntity[]>] [-ExcludeFilterValues <Hashtable[]>]
+ [-ExcludeFilterOr] [-ActiveOnly] [-Id <Guid[]>] [-Name <String[]>] [-ExcludeId <Guid[]>] [-Columns <String[]>]
+ [-ExcludeColumns <String[]>] [-OrderBy <String[]>] [-Top <Int32>] [-PageSize <Int32>]
+ [-LookupValuesReturnName] [-IncludeSystemColumns] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### FetchXml
 ```
-Get-DataverseRecord -Connection <ServiceClient> [-VerboseRecordCount] [-RecordCount] [-FetchXml <String>]
- [-Top <Int32>] [-PageSize <Int32>] [-LookupValuesReturnName] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseRecord [-VerboseRecordCount] [-RecordCount] [-FetchXml <String>] [-Top <Int32>]
+ [-PageSize <Int32>] [-LookupValuesReturnName] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -114,7 +114,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -599,7 +599,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### None
 ## OUTPUTS
 
-### System.Collections.Generic.IEnumerable`1[[System.Management.Automation.PSObject, System.Management.Automation, Version=7.4.6.500, Culture=neutral, PublicKeyToken=31bf3856ad364e35]]
+### System.Collections.Generic.IEnumerable`1[[System.Management.Automation.PSObject, System.Management.Automation, Version=7.5.0.500, Culture=neutral, PublicKeyToken=31bf3856ad364e35]]
 ## NOTES
 
 ## RELATED LINKS

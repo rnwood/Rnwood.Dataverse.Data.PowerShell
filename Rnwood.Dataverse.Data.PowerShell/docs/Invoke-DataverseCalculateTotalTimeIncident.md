@@ -15,7 +15,7 @@ Contains the data that is needed to calculate the total time, in minutes, that y
 ## SYNTAX
 
 ```
-Invoke-DataverseCalculateTotalTimeIncident -Connection <ServiceClient> [-IncidentId <Guid>]
+Invoke-DataverseCalculateTotalTimeIncident [-IncidentId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

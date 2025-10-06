@@ -15,8 +15,8 @@ Contains the data that is needed to get the quantity decimal value of a product 
 ## SYNTAX
 
 ```
-Invoke-DataverseGetQuantityDecimal -Connection <ServiceClient> -Target <PSObject> [-ProductId <Guid>]
- [-UoMId <Guid>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseGetQuantityDecimal -Target <PSObject> [-ProductId <Guid>] [-UoMId <Guid>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

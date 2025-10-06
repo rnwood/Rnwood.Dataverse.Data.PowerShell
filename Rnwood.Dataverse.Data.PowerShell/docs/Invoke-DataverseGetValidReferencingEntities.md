@@ -15,7 +15,7 @@ Contains the data that is needed to retrieve the set of entities that are valid 
 ## SYNTAX
 
 ```
-Invoke-DataverseGetValidReferencingEntities -Connection <ServiceClient> [-ReferencedEntityName <String>]
+Invoke-DataverseGetValidReferencingEntities [-ReferencedEntityName <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,9 +15,8 @@ Contains the data that is needed to renew a contract and create the contract det
 ## SYNTAX
 
 ```
-Invoke-DataverseRenewContract -Connection <ServiceClient> [-ContractId <Guid>] [-Status <Int32>]
- [-IncludeCanceledLines <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseRenewContract [-ContractId <Guid>] [-Status <Int32>] [-IncludeCanceledLines <Boolean>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

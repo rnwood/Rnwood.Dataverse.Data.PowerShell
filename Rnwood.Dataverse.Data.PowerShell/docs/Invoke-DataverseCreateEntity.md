@@ -15,9 +15,9 @@ Contains the data that is needed to create a table, and optionally, to add it to
 ## SYNTAX
 
 ```
-Invoke-DataverseCreateEntity -Connection <ServiceClient> [-Entity <EntityMetadata>] [-HasActivities <Boolean>]
- [-HasNotes <Boolean>] [-HasFeedback <Boolean>] [-PrimaryAttribute <StringAttributeMetadata>]
- [-SolutionUniqueName <String>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseCreateEntity [-Entity <EntityMetadata>] [-HasActivities <Boolean>] [-HasNotes <Boolean>]
+ [-HasFeedback <Boolean>] [-PrimaryAttribute <StringAttributeMetadata>] [-SolutionUniqueName <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,8 +15,8 @@ Contains the data that is needed to update the definition of a column.
 ## SYNTAX
 
 ```
-Invoke-DataverseUpdateAttribute -Connection <ServiceClient> [-Attribute <AttributeMetadata>]
- [-EntityName <String>] [-MergeLabels <Boolean>] [-SolutionUniqueName <String>]
+Invoke-DataverseUpdateAttribute [-Attribute <AttributeMetadata>] [-EntityName <String>]
+ [-MergeLabels <Boolean>] [-SolutionUniqueName <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,7 +15,7 @@ Contains the data that is needed to validate a saved query (view).
 ## SYNTAX
 
 ```
-Invoke-DataverseValidateSavedQuery -Connection <ServiceClient> [-FetchXml <String>] [-QueryType <Int32>]
+Invoke-DataverseValidateSavedQuery [-FetchXml <String>] [-QueryType <Int32>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

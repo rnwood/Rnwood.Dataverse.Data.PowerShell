@@ -15,8 +15,8 @@ Contains the data that is needed to generate a quote from an opportunity.
 ## SYNTAX
 
 ```
-Invoke-DataverseGenerateQuoteFromOpportunity -Connection <ServiceClient> [-OpportunityId <Guid>]
- [-ColumnSet <ColumnSet>] [-ProcessInstanceId <PSObject>] [-ProgressAction <ActionPreference>] [-WhatIf]
+Invoke-DataverseGenerateQuoteFromOpportunity [-OpportunityId <Guid>] [-ColumnSet <ColumnSet>]
+ [-ProcessInstanceId <PSObject>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
 
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

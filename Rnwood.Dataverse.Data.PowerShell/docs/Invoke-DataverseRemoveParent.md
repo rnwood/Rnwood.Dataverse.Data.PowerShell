@@ -15,7 +15,7 @@ Contains the data that is needed to remove the parent for a system user (user) r
 ## SYNTAX
 
 ```
-Invoke-DataverseRemoveParent -Connection <ServiceClient> -Target <PSObject>
+Invoke-DataverseRemoveParent -Target <PSObject> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

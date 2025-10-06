@@ -15,9 +15,8 @@ Contains the data that is needed to set another business process flow instance a
 ## SYNTAX
 
 ```
-Invoke-DataverseSetProcess -Connection <ServiceClient> -Target <PSObject> [-NewProcess <PSObject>]
- [-NewProcessInstance <PSObject>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseSetProcess -Target <PSObject> [-NewProcess <PSObject>] [-NewProcessInstance <PSObject>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

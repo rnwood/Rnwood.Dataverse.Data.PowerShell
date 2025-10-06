@@ -15,7 +15,7 @@ Contain the data that is needed to publish a product family record and all its c
 ## SYNTAX
 
 ```
-Invoke-DataversePublishProductHierarchy -Connection <ServiceClient> -Target <PSObject>
+Invoke-DataversePublishProductHierarchy -Target <PSObject> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

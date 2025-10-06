@@ -15,10 +15,10 @@ Contains the data that is needed to update an option value in a global or local 
 ## SYNTAX
 
 ```
-Invoke-DataverseUpdateOptionValue -Connection <ServiceClient> [-OptionSetName <String>]
- [-AttributeLogicalName <String>] [-EntityLogicalName <String>] [-Value <Int32>] [-Label <Label>]
- [-Description <Label>] [-MergeLabels <Boolean>] [-ParentValues <Int32[]>] [-SolutionUniqueName <String>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseUpdateOptionValue [-OptionSetName <String>] [-AttributeLogicalName <String>]
+ [-EntityLogicalName <String>] [-Value <Int32>] [-Label <Label>] [-Description <Label>]
+ [-MergeLabels <Boolean>] [-ParentValues <Int32[]>] [-SolutionUniqueName <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -71,7 +71,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve the resources that are used by an o
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveOrganizationResources -Connection <ServiceClient> [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveOrganizationResources [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

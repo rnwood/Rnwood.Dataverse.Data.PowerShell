@@ -15,8 +15,8 @@ Contains the data that is needed to reassign all records that are owned by the s
 ## SYNTAX
 
 ```
-Invoke-DataverseReassignObjectsOwner -Connection <ServiceClient> [-FromPrincipal <PSObject>]
- [-ToPrincipal <PSObject>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseReassignObjectsOwner [-FromPrincipal <PSObject>] [-ToPrincipal <PSObject>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

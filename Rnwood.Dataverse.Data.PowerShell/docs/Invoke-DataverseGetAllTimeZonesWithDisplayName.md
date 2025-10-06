@@ -15,7 +15,7 @@ Contains the data that is needed to retrieve all the time zone definitions for t
 ## SYNTAX
 
 ```
-Invoke-DataverseGetAllTimeZonesWithDisplayName -Connection <ServiceClient> [-LocaleId <Int32>]
+Invoke-DataverseGetAllTimeZonesWithDisplayName [-LocaleId <Int32>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

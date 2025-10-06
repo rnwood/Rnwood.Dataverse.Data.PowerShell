@@ -15,10 +15,10 @@ Contains the data that is needed to submit an asynchronous system job that detec
 ## SYNTAX
 
 ```
-Invoke-DataverseBulkDetectDuplicates -Connection <ServiceClient> [-Query <QueryBase>] [-JobName <String>]
+Invoke-DataverseBulkDetectDuplicates [-Query <QueryBase>] [-JobName <String>]
  [-SendEmailNotification <Boolean>] [-TemplateId <Guid>] [-ToRecipients <Guid[]>] [-CCRecipients <Guid[]>]
- [-RecurrencePattern <String>] [-RecurrenceStartTime <DateTime>] [-ProgressAction <ActionPreference>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
+ [-RecurrencePattern <String>] [-RecurrenceStartTime <DateTime>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -71,7 +71,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

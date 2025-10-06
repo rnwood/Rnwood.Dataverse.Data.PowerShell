@@ -15,7 +15,7 @@ Contains the data that is needed to remove a member from a list (marketing list)
 ## SYNTAX
 
 ```
-Invoke-DataverseRemoveMemberList -Connection <ServiceClient> [-ListId <Guid>] [-EntityId <Guid>]
+Invoke-DataverseRemoveMemberList [-ListId <Guid>] [-EntityId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

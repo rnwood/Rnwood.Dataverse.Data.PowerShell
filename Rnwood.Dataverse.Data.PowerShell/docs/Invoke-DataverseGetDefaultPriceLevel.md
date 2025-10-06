@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve the default price level (price list
 ## SYNTAX
 
 ```
-Invoke-DataverseGetDefaultPriceLevel -Connection <ServiceClient> [-EntityName <String>]
- [-ColumnSet <ColumnSet>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseGetDefaultPriceLevel [-EntityName <String>] [-ColumnSet <ColumnSet>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -69,7 +69,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

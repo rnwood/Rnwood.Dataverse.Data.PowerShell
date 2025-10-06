@@ -15,9 +15,10 @@ Contains the data that is needed to create an exception for the recurring appoin
 ## SYNTAX
 
 ```
-Invoke-DataverseCreateException -Connection <ServiceClient> -Target <PSObject> -TargetTableName <String>
+Invoke-DataverseCreateException -Target <PSObject> -TargetTableName <String>
  [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>] [-OriginalStartDate <DateTime>]
- [-IsDeleted <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-IsDeleted <Boolean>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +56,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

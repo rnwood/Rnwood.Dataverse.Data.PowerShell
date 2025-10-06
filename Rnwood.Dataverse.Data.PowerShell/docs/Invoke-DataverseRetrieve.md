@@ -15,9 +15,9 @@ Contains the data that is needed to retrieve a record.
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieve -Connection <ServiceClient> -Target <PSObject> [-ColumnSet <ColumnSet>]
+Invoke-DataverseRetrieve -Target <PSObject> [-ColumnSet <ColumnSet>]
  [-RelatedEntitiesQuery <RelationshipQueryCollection>] [-ReturnNotifications <Boolean>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -70,7 +70,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

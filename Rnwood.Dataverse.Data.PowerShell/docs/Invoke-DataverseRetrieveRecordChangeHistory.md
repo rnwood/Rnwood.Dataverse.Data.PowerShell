@@ -15,8 +15,8 @@ Contains the data that is needed to retrieve all attribute data changes for a sp
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveRecordChangeHistory -Connection <ServiceClient> -Target <PSObject>
- [-PagingInfo <PagingInfo>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveRecordChangeHistory -Target <PSObject> [-PagingInfo <PagingInfo>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

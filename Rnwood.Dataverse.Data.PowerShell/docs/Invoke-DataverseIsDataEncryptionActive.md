@@ -15,7 +15,7 @@ Contains the data that is needed to check if data encryption is currently runnin
 ## SYNTAX
 
 ```
-Invoke-DataverseIsDataEncryptionActive -Connection <ServiceClient> [-ProgressAction <ActionPreference>]
+Invoke-DataverseIsDataEncryptionActive [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

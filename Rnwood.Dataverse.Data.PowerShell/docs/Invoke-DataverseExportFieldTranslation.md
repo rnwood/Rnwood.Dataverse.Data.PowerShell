@@ -15,7 +15,7 @@ Contains the data that is needed to export localizable fields values to a compre
 ## SYNTAX
 
 ```
-Invoke-DataverseExportFieldTranslation -Connection <ServiceClient> [-ProgressAction <ActionPreference>]
+Invoke-DataverseExportFieldTranslation [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

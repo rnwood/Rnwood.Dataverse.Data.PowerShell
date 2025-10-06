@@ -15,11 +15,11 @@ Contains the data that is needed to create a bulk operation that distributes a c
 ## SYNTAX
 
 ```
-Invoke-DataverseDistributeCampaignActivity -Connection <ServiceClient> [-CampaignActivityId <Guid>]
- [-Propagate <Boolean>] [-Activity <PSObject>] [-ActivityTableName <String>]
- [-ActivityIgnoreProperties <String[]>] [-ActivityLookupColumns <Hashtable>] [-TemplateId <Guid>]
- [-OwnershipOptions <PropagationOwnershipOptions>] [-Owner <PSObject>] [-SendEmail <Boolean>] [-QueueId <Guid>]
- [-PostWorkflowEvent <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseDistributeCampaignActivity [-CampaignActivityId <Guid>] [-Propagate <Boolean>]
+ [-Activity <PSObject>] [-ActivityTableName <String>] [-ActivityIgnoreProperties <String[]>]
+ [-ActivityLookupColumns <Hashtable>] [-TemplateId <Guid>] [-OwnershipOptions <PropagationOwnershipOptions>]
+ [-Owner <PSObject>] [-SendEmail <Boolean>] [-QueueId <Guid>] [-PostWorkflowEvent <Boolean>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -132,7 +132,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

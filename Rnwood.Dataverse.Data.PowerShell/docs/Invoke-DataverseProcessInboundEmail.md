@@ -15,7 +15,7 @@ Contains the data that is needed to process the email responses from a marketing
 ## SYNTAX
 
 ```
-Invoke-DataverseProcessInboundEmail -Connection <ServiceClient> [-InboundEmailActivity <Guid>]
+Invoke-DataverseProcessInboundEmail [-InboundEmailActivity <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

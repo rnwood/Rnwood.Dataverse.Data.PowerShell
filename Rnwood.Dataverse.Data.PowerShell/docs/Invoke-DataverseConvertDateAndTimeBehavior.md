@@ -15,9 +15,9 @@ Contains the data to convert existing UTC date and time values in the database t
 ## SYNTAX
 
 ```
-Invoke-DataverseConvertDateAndTimeBehavior -Connection <ServiceClient>
- [-Attributes <EntityAttributeCollection>] [-ConversionRule <String>] [-TimeZoneCode <Int32>]
- [-AutoConvert <Boolean>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseConvertDateAndTimeBehavior [-Attributes <EntityAttributeCollection>] [-ConversionRule <String>]
+ [-TimeZoneCode <Int32>] [-AutoConvert <Boolean>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -85,7 +85,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

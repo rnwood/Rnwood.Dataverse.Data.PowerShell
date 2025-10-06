@@ -15,9 +15,9 @@ Contains the data that is needed to search the specified resource for an availab
 ## SYNTAX
 
 ```
-Invoke-DataverseQuerySchedule -Connection <ServiceClient> [-ResourceId <Guid>] [-Start <DateTime>]
- [-End <DateTime>] [-TimeCodes <TimeCode[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Invoke-DataverseQuerySchedule [-ResourceId <Guid>] [-Start <DateTime>] [-End <DateTime>]
+ [-TimeCodes <TimeCode[]>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

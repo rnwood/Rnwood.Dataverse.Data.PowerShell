@@ -15,7 +15,7 @@ Contains the data that is needed to convert a query, which is represented as a c
 ## SYNTAX
 
 ```
-Invoke-DataverseQueryExpressionToFetchXml -Connection <ServiceClient> [-Query <QueryBase>]
+Invoke-DataverseQueryExpressionToFetchXml [-Query <QueryBase>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -54,7 +54,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
