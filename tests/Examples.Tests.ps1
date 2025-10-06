@@ -399,6 +399,59 @@ Describe "Examples-Comparison Documentation Tests" {
         }
     }
 
+    Context "Link Entity Examples from Documentation" {
+        It "Can create simple inner join using simplified syntax" {
+            $connection = getMockConnection
+            
+            @{"firstname" = "John"; "lastname" = "Doe" } | Set-DataverseRecord -Connection $connection -TableName contact
+            
+            # Example from README: Simple inner join
+            { Get-DataverseRecord -Connection $connection -TableName contact -Links @{
+                'contact.accountid' = 'account.accountid'
+            } } | Should -Not -Throw
+        }
+
+        It "Can create left outer join with alias using simplified syntax" {
+            $connection = getMockConnection
+            
+            @{"firstname" = "John"; "lastname" = "Doe" } | Set-DataverseRecord -Connection $connection -TableName contact
+            
+            # Example from README: Left outer join with alias
+            { Get-DataverseRecord -Connection $connection -TableName contact -Links @{
+                'contact.accountid' = 'account.accountid'
+                type = 'LeftOuter'
+                alias = 'parentAccount'
+            } } | Should -Not -Throw
+        }
+
+        It "Can create join with filter on linked entity using simplified syntax" {
+            $connection = getMockConnection
+            
+            @{"firstname" = "John"; "lastname" = "Doe" } | Set-DataverseRecord -Connection $connection -TableName contact
+            
+            # Example from README: Join with filter on linked entity
+            { Get-DataverseRecord -Connection $connection -TableName contact -Links @{
+                'contact.accountid' = 'account.accountid'
+                filter = @{
+                    name = @{ operator = 'Like'; value = 'Contoso%' }
+                    statecode = @{ operator = 'Equal'; value = 0 }
+                }
+            } } | Should -Not -Throw
+        }
+
+        It "Can create multiple joins using simplified syntax" {
+            $connection = getMockConnection
+            
+            @{"firstname" = "John"; "lastname" = "Doe" } | Set-DataverseRecord -Connection $connection -TableName contact
+            
+            # Example from README: Multiple joins
+            { Get-DataverseRecord -Connection $connection -TableName contact -Links @(
+                @{ 'contact.accountid' = 'account.accountid'; type = 'LeftOuter' },
+                @{ 'contact.ownerid' = 'systemuser.systemuserid' }
+            ) } | Should -Not -Throw
+        }
+    }
+
     Context "Views and Saved Queries Examples" {
         It "Can query saved queries (system views)" -Skip:$true {
             # SKIPPED: Requires full entity metadata - use tests/updatemetadata.ps1 to generate savedquery.xml

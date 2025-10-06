@@ -437,7 +437,60 @@ Accept wildcard characters: False
 ```
 
 ### -Links
-Link entities to apply to query. Accepts `DataverseLinkEntity` objects (a lightweight wrapper around the SDK `LinkEntity` that allows easier pipeline usage and serialization). `DataverseLinkEntity` supports implicit conversion from `LinkEntity`.
+Link entities to apply to query. Accepts `DataverseLinkEntity` objects (a lightweight wrapper around the SDK `LinkEntity` that allows easier pipeline usage and serialization). `DataverseLinkEntity` supports implicit conversion from `LinkEntity` and from simplified hashtable syntax.
+
+**Simplified Syntax:**
+Provide a hashtable with a single key-value pair encoding the join relationship, plus optional keys for join type, alias, and filter:
+
+```powershell
+@{
+    'contact.accountid' = 'account.accountid'  # from.fromId = to.toId
+    type  = 'Inner'                            # optional: 'Inner' (default) or 'LeftOuter'
+    alias = 'linkedAccount'                    # optional: alias for the linked entity
+    filter = @{                                # optional: filter conditions on the linked entity
+        name      = @{ operator = 'Like'; value = 'Contoso%' }
+        statecode = @{ operator = 'Equal'; value = 0 }
+    }
+}
+```
+
+**Examples:**
+
+```powershell
+# Simple inner join from contact to account
+Get-DataverseRecord -Connection $conn -TableName contact -Links @{
+    'contact.accountid' = 'account.accountid'
+}
+
+# Left outer join with alias
+Get-DataverseRecord -Connection $conn -TableName contact -Links @{
+    'contact.accountid' = 'account.accountid'
+    type = 'LeftOuter'
+    alias = 'parentAccount'
+}
+
+# Join with filter on linked entity
+Get-DataverseRecord -Connection $conn -TableName contact -Links @{
+    'contact.accountid' = 'account.accountid'
+    filter = @{
+        name = @{ operator = 'Like'; value = 'Contoso%' }
+    }
+}
+
+# Multiple joins
+Get-DataverseRecord -Connection $conn -TableName contact -Links @(
+    @{ 'contact.accountid' = 'account.accountid'; type = 'LeftOuter' },
+    @{ 'contact.ownerid' = 'systemuser.systemuserid' }
+)
+
+# Using SDK LinkEntity (advanced)
+$link = New-Object Microsoft.Xrm.Sdk.Query.LinkEntity
+$link.LinkFromEntityName = 'contact'
+$link.LinkFromAttributeName = 'accountid'
+$link.LinkToEntityName = 'account'
+$link.LinkToAttributeName = 'accountid'
+Get-DataverseRecord -Connection $conn -TableName contact -Links $link
+```
 
 ```yaml
 Type: DataverseLinkEntity[]

@@ -173,6 +173,51 @@ Get-DataverseRecord -connection $c -tablename contact |
    ConvertTo-JSON
 ```
 
+### Linking Related Tables
+
+The `-Links` parameter supports joining related tables in queries using a simplified hashtable syntax. This is useful for filtering or selecting data from related entities.
+
+*Example: Get contacts and join to their parent account:*
+```powershell
+Get-DataverseRecord -Connection $c -TableName contact -Links @{
+    'contact.accountid' = 'account.accountid'
+}
+```
+
+*Example: Left outer join with an alias:*
+```powershell
+Get-DataverseRecord -Connection $c -TableName contact -Links @{
+    'contact.accountid' = 'account.accountid'
+    type = 'LeftOuter'
+    alias = 'parentAccount'
+}
+```
+
+*Example: Join with filter on linked entity (only include contacts from accounts starting with 'Contoso'):*
+```powershell
+Get-DataverseRecord -Connection $c -TableName contact -Links @{
+    'contact.accountid' = 'account.accountid'
+    filter = @{
+        name = @{ operator = 'Like'; value = 'Contoso%' }
+        statecode = @{ operator = 'Equal'; value = 0 }
+    }
+}
+```
+
+*Example: Multiple joins:*
+```powershell
+Get-DataverseRecord -Connection $c -TableName contact -Links @(
+    @{ 'contact.accountid' = 'account.accountid'; type = 'LeftOuter' },
+    @{ 'contact.ownerid' = 'systemuser.systemuserid' }
+)
+```
+
+The simplified syntax supports:
+- **Link specification**: `'fromTable.fromAttribute' = 'toTable.toAttribute'`
+- **type** (optional): `'Inner'` (default) or `'LeftOuter'`
+- **alias** (optional): String alias for the linked entity
+- **filter** (optional): Hashtable with filter conditions (same format as `-FilterValues`)
+
 ## Main Cmdlets
 
 [Get-DataverseConnection](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseConnection.md) - Creates a connection to a Dataverse environment.
