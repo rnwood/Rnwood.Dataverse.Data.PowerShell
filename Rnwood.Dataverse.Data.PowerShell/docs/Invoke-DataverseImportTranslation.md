@@ -15,8 +15,7 @@ Contains the data that is needed to import translations from a compressed file.
 ## SYNTAX
 
 ```
-Invoke-DataverseImportTranslation [-TranslationFile <Byte[]>] [-ImportJobId <Guid>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseImportTranslation -Connection <ServiceClient> -TranslationFile <Byte[]> -InFile <String> -ImportJobId <Guid>
 ```
 
 ## DESCRIPTION
@@ -26,25 +25,10 @@ Contains the data that is needed to import translations from a compressed file.
 
 ### Example 1
 ```powershell
-PS C:\> Invoke-DataverseImportTranslation -Connection <ServiceClient> -TranslationFile <Byte[]> -ImportJobId <Guid>
+PS C:\> Invoke-DataverseImportTranslation -Connection <ServiceClient> -TranslationFile <Byte[]> -InFile <String> -ImportJobId <Guid>
 ```
 
 ## PARAMETERS
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
@@ -54,22 +38,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ImportJobId
-The ID of the Import Job.
-
-```yaml
-Type: Guid
-Parameter Sets: (All)
-Aliases:
-
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -91,28 +60,28 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -InFile
+Gets or sets the path to a file containing the data to upload.
 
 ```yaml
-Type: SwitchParameter
+Type: String
 Parameter Sets: (All)
-Aliases: wi
+Aliases:
 
-Required: False
+Required: True
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -ImportJobId
+The ID of the Import Job.
 
 ```yaml
-Type: ActionPreference
+Type: Guid
 Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named
@@ -124,12 +93,15 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
+
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.ImportTranslationResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ImportTranslationResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ImportTranslationResponse)
 ## NOTES
 
 ## RELATED LINKS

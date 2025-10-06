@@ -15,12 +15,7 @@ Contains the data to import a solution, stage it for upgrade, and apply the upgr
 ## SYNTAX
 
 ```
-Invoke-DataverseStageAndUpgrade [-OverwriteUnmanagedCustomizations <Boolean>] [-PublishWorkflows <Boolean>]
- [-CustomizationFile <Byte[]>] [-ImportJobId <Guid>] [-ConvertToManaged <Boolean>]
- [-SkipProductUpdateDependencies <Boolean>] [-SkipQueueRibbonJob <Boolean>] [-AsyncRibbonProcessing <Boolean>]
- [-ComponentParameters <EntityCollection>] [-SolutionParameters <SolutionParameters>]
- [-LayerDesiredOrder <LayerDesiredOrder>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseStageAndUpgrade -Connection <ServiceClient> -OverwriteUnmanagedCustomizations <Boolean> -PublishWorkflows <Boolean> -CustomizationFile <Byte[]> -InFile <String> -ImportJobId <Guid> -ConvertToManaged <Boolean> -SkipProductUpdateDependencies <Boolean> -SkipQueueRibbonJob <Boolean> -AsyncRibbonProcessing <Boolean> -ComponentParameters <EntityCollection> -SolutionParameters <SolutionParameters> -LayerDesiredOrder <LayerDesiredOrder>
 ```
 
 ## DESCRIPTION
@@ -30,13 +25,28 @@ Contains the data to import a solution, stage it for upgrade, and apply the upgr
 
 ### Example 1
 ```powershell
-PS C:\> Invoke-DataverseStageAndUpgrade -Connection <ServiceClient> -OverwriteUnmanagedCustomizations <Boolean> -PublishWorkflows <Boolean> -CustomizationFile <Byte[]> -ImportJobId <Guid> -ConvertToManaged <Boolean> -SkipProductUpdateDependencies <Boolean> -SkipQueueRibbonJob <Boolean> -AsyncRibbonProcessing <Boolean> -ComponentParameters <EntityCollection> -SolutionParameters <SolutionParameters> -LayerDesiredOrder <LayerDesiredOrder>
+PS C:\> Invoke-DataverseStageAndUpgrade -Connection <ServiceClient> -OverwriteUnmanagedCustomizations <Boolean> -PublishWorkflows <Boolean> -CustomizationFile <Byte[]> -InFile <String> -ImportJobId <Guid> -ConvertToManaged <Boolean> -SkipProductUpdateDependencies <Boolean> -SkipQueueRibbonJob <Boolean> -AsyncRibbonProcessing <Boolean> -ComponentParameters <EntityCollection> -SolutionParameters <SolutionParameters> -LayerDesiredOrder <LayerDesiredOrder>
 ```
 
 ## PARAMETERS
 
-### -AsyncRibbonProcessing
-For internal use only.
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+
+```yaml
+Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OverwriteUnmanagedCustomizations
+Gets or sets whether any unmanaged customizations that have been applied over existing managed solution components should be overwritten. Required.
 
 ```yaml
 Type: Boolean
@@ -50,53 +60,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ComponentParameters
-Gets or sets the list of entities to overwrite values from the solution.
-
-```yaml
-Type: EntityCollection
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
-
-```yaml
-Type: ServiceClient
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ConvertToManaged
-Obsolete. The system will convert unmanaged solution components to managed when you import a managed solution.
+### -PublishWorkflows
+Gets or sets whether any processes (workflows) included in the solution should be activated after they are imported. Required.
 
 ```yaml
 Type: Boolean
@@ -125,6 +90,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -InFile
+Gets or sets the path to a file containing the data to upload.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ImportJobId
 The ID of the Import Job.
 
@@ -140,38 +120,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -LayerDesiredOrder
-For internal use only.
-
-```yaml
-Type: LayerDesiredOrder
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -OverwriteUnmanagedCustomizations
-Gets or sets whether any unmanaged customizations that have been applied over existing managed solution components should be overwritten. Required.
-
-```yaml
-Type: Boolean
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -PublishWorkflows
-Gets or sets whether any processes (workflows) included in the solution should be activated after they are imported. Required.
+### -ConvertToManaged
+Obsolete. The system will convert unmanaged solution components to managed when you import a managed solution.
 
 ```yaml
 Type: Boolean
@@ -215,6 +165,36 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -AsyncRibbonProcessing
+For internal use only.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ComponentParameters
+Gets or sets the list of entities to overwrite values from the solution.
+
+```yaml
+Type: EntityCollection
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -SolutionParameters
 Gets or sets additional parameters for the solution.
 
@@ -230,28 +210,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -LayerDesiredOrder
+For internal use only.
 
 ```yaml
-Type: SwitchParameter
+Type: LayerDesiredOrder
 Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named
@@ -263,12 +228,15 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
+
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.StageAndUpgradeResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.StageAndUpgradeResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.StageAndUpgradeResponse)
 ## NOTES
 
 ## RELATED LINKS

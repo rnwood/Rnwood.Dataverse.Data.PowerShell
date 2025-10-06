@@ -15,10 +15,7 @@ Contains the data that is needed to add a solution component to an unmanaged sol
 ## SYNTAX
 
 ```
-Invoke-DataverseAddSolutionComponent [-ComponentId <Guid>] [-ComponentType <Int32>]
- [-SolutionUniqueName <String>] [-AddRequiredComponents <Boolean>] [-DoNotIncludeSubcomponents <Boolean>]
- [-IncludedComponentSettingsValues <String[]>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseAddSolutionComponent -Connection <ServiceClient> -ComponentId <Guid> -ComponentType <Int32> -SolutionUniqueName <String> -AddRequiredComponents <Boolean> -DoNotIncludeSubcomponents <Boolean> -IncludedComponentSettingsValues <String[]>
 ```
 
 ## DESCRIPTION
@@ -33,15 +30,15 @@ PS C:\> Invoke-DataverseAddSolutionComponent -Connection <ServiceClient> -Compon
 
 ## PARAMETERS
 
-### -AddRequiredComponents
-Gets or sets a value that indicates whether other solution components that are required by the solution component that you are adding should also be added to the unmanaged solution. Required.
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
-Type: Boolean
+Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -78,26 +75,26 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -SolutionUniqueName
+Gets or sets the name of the unmanaged solution to which you want to add this column. Optional.
 
 ```yaml
-Type: SwitchParameter
+Type: String
 Parameter Sets: (All)
-Aliases: cf
+Aliases:
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+### -AddRequiredComponents
+Gets or sets a value that indicates whether other solution components that are required by the solution component that you are adding should also be added to the unmanaged solution. Required.
 
 ```yaml
-Type: ServiceClient
+Type: Boolean
 Parameter Sets: (All)
 Aliases:
 
@@ -138,60 +135,18 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SolutionUniqueName
-Gets or sets the name of the unmanaged solution to which you want to add this column. Optional.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
 
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.AddSolutionComponentResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.AddSolutionComponentResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.AddSolutionComponentResponse)
 ## NOTES
 
 ## RELATED LINKS

@@ -15,14 +15,7 @@ Contains the data needed to export a solution.
 ## SYNTAX
 
 ```
-Invoke-DataverseExportSolution [-SolutionName <String>] [-Managed <Boolean>] [-TargetVersion <String>]
- [-ExportAutoNumberingSettings <Boolean>] [-ExportCalendarSettings <Boolean>]
- [-ExportCustomizationSettings <Boolean>] [-ExportEmailTrackingSettings <Boolean>]
- [-ExportGeneralSettings <Boolean>] [-ExportMarketingSettings <Boolean>]
- [-ExportOutlookSynchronizationSettings <Boolean>] [-ExportRelationshipRoles <Boolean>]
- [-ExportIsvConfig <Boolean>] [-ExportSales <Boolean>] [-ExportExternalApplications <Boolean>]
- [-ExportComponentsParams <ExportComponentsParams>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseExportSolution -Connection <ServiceClient> -SolutionName <String> -Managed <Boolean> -TargetVersion <String> -ExportAutoNumberingSettings <Boolean> -ExportCalendarSettings <Boolean> -ExportCustomizationSettings <Boolean> -ExportEmailTrackingSettings <Boolean> -ExportGeneralSettings <Boolean> -ExportMarketingSettings <Boolean> -ExportOutlookSynchronizationSettings <Boolean> -ExportRelationshipRoles <Boolean> -ExportIsvConfig <Boolean> -ExportSales <Boolean> -ExportExternalApplications <Boolean> -ExportComponentsParams <ExportComponentsParams>
 ```
 
 ## DESCRIPTION
@@ -37,26 +30,56 @@ PS C:\> Invoke-DataverseExportSolution -Connection <ServiceClient> -SolutionName
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
 Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SolutionName
+Gets or sets the unique name of the solution to be exported. Required.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Managed
+Gets or sets whether the solution should be exported as a managed solution. Required.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TargetVersion
+Get or set a value indicating the version that the exported solution will support.
+
+```yaml
+Type: String
 Parameter Sets: (All)
 Aliases:
 
@@ -97,21 +120,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ExportComponentsParams
-Gets or sets whether solution component parameters should be included in the solution being exported. Optional.
-
-```yaml
-Type: ExportComponentsParams
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -ExportCustomizationSettings
 Gets or sets whether customization settings should be included in the solution being exported. Optional.
 
@@ -142,38 +150,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ExportExternalApplications
-For internal use only.
-
-```yaml
-Type: Boolean
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -ExportGeneralSettings
 Gets or sets whether general settings should be included in the solution being exported. Optional.
-
-```yaml
-Type: Boolean
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ExportIsvConfig
-Gets or sets whether ISV.Config settings should be included in the solution being exported. Optional.
 
 ```yaml
 Type: Boolean
@@ -232,6 +210,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ExportIsvConfig
+Gets or sets whether ISV.Config settings should be included in the solution being exported. Optional.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ExportSales
 Gets or sets whether sales settings should be included in the solution being exported. Optional.
 
@@ -247,8 +240,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Managed
-Gets or sets whether the solution should be exported as a managed solution. Required.
+### -ExportExternalApplications
+For internal use only.
 
 ```yaml
 Type: Boolean
@@ -262,58 +255,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SolutionName
-Gets or sets the unique name of the solution to be exported. Required.
+### -ExportComponentsParams
+Gets or sets whether solution component parameters should be included in the solution being exported. Optional.
 
 ```yaml
-Type: String
+Type: ExportComponentsParams
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TargetVersion
-Get or set a value indicating the version that the exported solution will support.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
 
 Required: False
 Position: Named
@@ -325,12 +273,15 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
+
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.ExportSolutionResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ExportSolutionResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ExportSolutionResponse)
 ## NOTES
 
 ## RELATED LINKS

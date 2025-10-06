@@ -15,8 +15,7 @@ Contains the data that is needed to convert the calendar rules to an array of av
 ## SYNTAX
 
 ```
-Invoke-DataverseExpandCalendar [-CalendarId <Guid>] [-Start <DateTime>] [-End <DateTime>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseExpandCalendar -Connection <ServiceClient> -CalendarId <Guid> -Start <DateTime> -End <DateTime>
 ```
 
 ## DESCRIPTION
@@ -31,36 +30,6 @@ PS C:\> Invoke-DataverseExpandCalendar -Connection <ServiceClient> -CalendarId <
 
 ## PARAMETERS
 
-### -CalendarId
-Gets or sets the ID of the calendar.
-
-```yaml
-Type: Guid
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -69,18 +38,18 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -End
-Gets or sets the end of the time period to expand.
+### -CalendarId
+Gets or sets the ID of the calendar.
 
 ```yaml
-Type: DateTime
+Type: Guid
 Parameter Sets: (All)
 Aliases:
 
@@ -106,28 +75,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -End
+Gets or sets the end of the time period to expand.
 
 ```yaml
-Type: SwitchParameter
+Type: DateTime
 Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named
@@ -139,12 +93,15 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
+
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.ExpandCalendarResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ExpandCalendarResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ExpandCalendarResponse)
 ## NOTES
 
 ## RELATED LINKS

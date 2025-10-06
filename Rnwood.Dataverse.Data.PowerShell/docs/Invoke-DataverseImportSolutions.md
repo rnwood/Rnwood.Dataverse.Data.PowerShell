@@ -15,10 +15,7 @@ For internal use only.
 ## SYNTAX
 
 ```
-Invoke-DataverseImportSolutions [-OverwriteUnmanagedCustomizations <Boolean>] [-PublishWorkflows <Boolean>]
- [-CustomizationFiles <Byte[]>] [-ImportJobId <Guid>] [-ConvertToManaged <Boolean>]
- [-SkipProductUpdateDependencies <Boolean>] [-HoldingSolution <Boolean>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseImportSolutions -Connection <ServiceClient> -OverwriteUnmanagedCustomizations <Boolean> -PublishWorkflows <Boolean> -CustomizationFiles <Byte[]> -InFile <String> -ImportJobId <Guid> -ConvertToManaged <Boolean> -SkipProductUpdateDependencies <Boolean> -HoldingSolution <Boolean>
 ```
 
 ## DESCRIPTION
@@ -28,25 +25,10 @@ For internal use only.
 
 ### Example 1
 ```powershell
-PS C:\> Invoke-DataverseImportSolutions -Connection <ServiceClient> -OverwriteUnmanagedCustomizations <Boolean> -PublishWorkflows <Boolean> -CustomizationFiles <Byte[]> -ImportJobId <Guid> -ConvertToManaged <Boolean> -SkipProductUpdateDependencies <Boolean> -HoldingSolution <Boolean>
+PS C:\> Invoke-DataverseImportSolutions -Connection <ServiceClient> -OverwriteUnmanagedCustomizations <Boolean> -PublishWorkflows <Boolean> -CustomizationFiles <Byte[]> -InFile <String> -ImportJobId <Guid> -ConvertToManaged <Boolean> -SkipProductUpdateDependencies <Boolean> -HoldingSolution <Boolean>
 ```
 
 ## PARAMETERS
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
@@ -56,67 +38,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ConvertToManaged
-Obsolete. The system will convert unmanaged solution components to managed when you import a managed solution.
-
-```yaml
-Type: Boolean
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CustomizationFiles
-Gets or sets the CustomizationFiles for the request.
-
-```yaml
-Type: Byte[]
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -HoldingSolution
-Gets or sets whether to import the solution as a holding solution staged for upgrade.
-
-```yaml
-Type: Boolean
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ImportJobId
-The ID of the Import Job.
-
-```yaml
-Type: Guid
-Parameter Sets: (All)
-Aliases:
-
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -124,7 +46,7 @@ Accept wildcard characters: False
 ```
 
 ### -OverwriteUnmanagedCustomizations
-Gets or sets whether any unmanaged customizations that have been applied over existing managed solution components should be overwritten. Required.
+Gets or sets the OverwriteUnmanagedCustomizations for the request.
 
 ```yaml
 Type: Boolean
@@ -153,6 +75,66 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -CustomizationFiles
+Gets or sets the CustomizationFiles for the request.
+
+```yaml
+Type: Byte[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InFile
+Gets or sets the path to a file containing the data to upload.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ImportJobId
+The ID of the Import Job.
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ConvertToManaged
+Obsolete. The system will convert unmanaged solution components to managed when you import a managed solution.
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -SkipProductUpdateDependencies
 Gets or sets whether enforcement of dependencies related to product updates should be skipped.
 
@@ -168,28 +150,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -HoldingSolution
+Gets or sets whether to import the solution as a holding solution staged for upgrade.
 
 ```yaml
-Type: SwitchParameter
+Type: Boolean
 Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named
@@ -201,12 +168,15 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
+
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.ImportSolutionsResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ImportSolutionsResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ImportSolutionsResponse)
 ## NOTES
 
 ## RELATED LINKS

@@ -15,10 +15,7 @@ Contains the data that is needed to retrieve pages of posts, including comments 
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrievePersonalWall [-PageNumber <Int32>] [-PageSize <Int32>] [-CommentsPerPost <Int32>]
- [-StartDate <DateTime>] [-EndDate <DateTime>] [-Type <OptionSetValue>] [-Source <OptionSetValue>]
- [-SortDirection <Boolean>] [-Keyword <String>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrievePersonalWall -Connection <ServiceClient> -PageNumber <Int32> -PageSize <Int32> -CommentsPerPost <Int32> -StartDate <DateTime> -EndDate <DateTime> -Type <OptionSetValue> -Source <OptionSetValue> -SortDirection <Boolean> -Keyword <String>
 ```
 
 ## DESCRIPTION
@@ -33,36 +30,6 @@ PS C:\> Invoke-DataverseRetrievePersonalWall -Connection <ServiceClient> -PageNu
 
 ## PARAMETERS
 
-### -CommentsPerPost
-Gets or sets, for retrieval, the number of comments per post. Required.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -71,37 +38,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -EndDate
-Gets or sets the end date and time. Required.
-
-```yaml
-Type: DateTime
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Keyword
-Gets or sets the Keyword for the request.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -124,7 +61,7 @@ Accept wildcard characters: False
 ```
 
 ### -PageSize
-Gets or sets, for retrieval, the number of posts per page. Required.
+Number of records to request per page. Default is 1000.
 
 ```yaml
 Type: Int32
@@ -138,26 +75,11 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SortDirection
-Gets or sets the SortDirection for the request.
+### -CommentsPerPost
+Gets or sets, for retrieval, the number of comments per post. Required.
 
 ```yaml
-Type: Boolean
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Source
-For internal use only. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
-
-```yaml
-Type: OptionSetValue
+Type: Int32
 Parameter Sets: (All)
 Aliases:
 
@@ -170,6 +92,21 @@ Accept wildcard characters: False
 
 ### -StartDate
 Gets or sets the start date of the range in UTC.
+
+```yaml
+Type: DateTime
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EndDate
+Gets or sets the end date and time. Required.
 
 ```yaml
 Type: DateTime
@@ -198,28 +135,43 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -Source
+For internal use only. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
-Type: SwitchParameter
+Type: OptionSetValue
 Parameter Sets: (All)
-Aliases: wi
+Aliases:
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -SortDirection
+Gets or sets the SortDirection for the request.
 
 ```yaml
-Type: ActionPreference
+Type: Boolean
 Parameter Sets: (All)
-Aliases: proga
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Keyword
+Gets or sets the Keyword for the request.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named
@@ -231,12 +183,15 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
+
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.RetrievePersonalWallResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrievePersonalWallResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrievePersonalWallResponse)
 ## NOTES
 
 ## RELATED LINKS

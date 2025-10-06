@@ -8,19 +8,18 @@ schema: 2.0.0
 # Invoke-DataverseRetrieveCurrentOrganization
 
 ## SYNOPSIS
-Contains the data that's needed to retrieve information about the current organization.
+Contains the data that’s needed to retrieve information about the current organization.
 
 [Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveCurrentOrganizationRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveCurrentOrganizationRequest)
 
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveCurrentOrganization [-AccessType <EndpointAccessType>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveCurrentOrganization -Connection <ServiceClient> -AccessType <EndpointAccessType>
 ```
 
 ## DESCRIPTION
-Contains the data that's needed to retrieve information about the current organization.
+Contains the data that’s needed to retrieve information about the current organization.
 
 ## EXAMPLES
 
@@ -31,37 +30,6 @@ PS C:\> Invoke-DataverseRetrieveCurrentOrganization -Connection <ServiceClient> 
 
 ## PARAMETERS
 
-### -AccessType
-Gets or sets the access type of the organization's service endpoint.
-
-```yaml
-Type: EndpointAccessType
-Parameter Sets: (All)
-Aliases:
-Accepted values: Default, Internet, Intranet
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -70,35 +38,20 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -AccessType
+Gets or sets the access type of the organization’s service endpoint.
 
 ```yaml
-Type: SwitchParameter
+Type: EndpointAccessType
 Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named
@@ -110,12 +63,15 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
+
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.RetrieveCurrentOrganizationResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveCurrentOrganizationResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveCurrentOrganizationResponse)
 ## NOTES
 
 ## RELATED LINKS

@@ -15,8 +15,7 @@ Contains the data that is needed to retrieve all the process instances for an en
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveProcessInstances [-EntityId <Guid>] [-EntityLogicalName <String>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveProcessInstances -Connection <ServiceClient> -EntityId <Guid> -EntityLogicalName <String>
 ```
 
 ## DESCRIPTION
@@ -31,21 +30,6 @@ PS C:\> Invoke-DataverseRetrieveProcessInstances -Connection <ServiceClient> -En
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -54,7 +38,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -77,7 +61,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name of the table that contains the column. Required.
+Gets the name of the entity the attribute belongs to.
 
 ```yaml
 Type: String
@@ -91,45 +75,18 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
 
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.RetrieveProcessInstancesResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveProcessInstancesResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveProcessInstancesResponse)
 ## NOTES
 
 ## RELATED LINKS

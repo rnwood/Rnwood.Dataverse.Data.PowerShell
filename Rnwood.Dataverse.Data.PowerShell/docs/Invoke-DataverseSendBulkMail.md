@@ -15,9 +15,7 @@ Contains the data that is needed to send bulk email messages.
 ## SYNTAX
 
 ```
-Invoke-DataverseSendBulkMail [-Sender <PSObject>] [-TemplateId <Guid>] [-RegardingType <String>]
- [-RegardingId <Guid>] [-Query <QueryBase>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseSendBulkMail -Connection <ServiceClient> -Sender <PSObject> -TemplateId <Guid> -RegardingType <String> -RegardingId <Guid> -Query <QueryBase>
 ```
 
 ## DESCRIPTION
@@ -32,21 +30,6 @@ PS C:\> Invoke-DataverseSendBulkMail -Connection <ServiceClient> -Sender <PSObje
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -55,52 +38,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Query
-Gets or sets the query representing the metadata to return.
-
-```yaml
-Type: QueryBase
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -RegardingId
-Gets or sets the ID of the record with which the email messages are associated.
-
-```yaml
-Type: Guid
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -RegardingType
-Gets or sets the type of the record with which the email messages are associated.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -108,7 +46,7 @@ Accept wildcard characters: False
 ```
 
 ### -Sender
-Gets or sets the sender of the email messages. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the sender of the email messages. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject
@@ -137,28 +75,43 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -RegardingType
+Gets or sets the type of the record with which the email messages are associated.
 
 ```yaml
-Type: SwitchParameter
+Type: String
 Parameter Sets: (All)
-Aliases: wi
+Aliases:
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -RegardingId
+Gets or sets the ID of the record with which the email messages are associated.
 
 ```yaml
-Type: ActionPreference
+Type: Guid
 Parameter Sets: (All)
-Aliases: proga
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Query
+Gets or sets the query representing the metadata to return.
+
+```yaml
+Type: QueryBase
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named
@@ -170,12 +123,15 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
+
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.SendBulkMailResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SendBulkMailResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.SendBulkMailResponse)
 ## NOTES
 
 ## RELATED LINKS

@@ -15,9 +15,7 @@ Contains the data needed to link an instance of a report entity to related entit
 ## SYNTAX
 
 ```
-Invoke-DataverseSetReportRelated [-ReportId <Guid>] [-Entities <Int32[]>] [-Categories <Int32[]>]
- [-Visibility <Int32[]>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
+Invoke-DataverseSetReportRelated -Connection <ServiceClient> -ReportId <Guid> -Entities <Int32> -Categories <Int32> -Visibility <Int32>
 ```
 
 ## DESCRIPTION
@@ -32,41 +30,26 @@ PS C:\> Invoke-DataverseSetReportRelated -Connection <ServiceClient> -ReportId <
 
 ## PARAMETERS
 
-### -Categories
-Gets or sets an array of report category codes. Required.
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
-Type: Int32[]
+Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -ReportId
+Gets or sets the ID of the report. Required.
 
 ```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
-
-```yaml
-Type: ServiceClient
+Type: Guid
 Parameter Sets: (All)
 Aliases:
 
@@ -78,10 +61,10 @@ Accept wildcard characters: False
 ```
 
 ### -Entities
-Gets or sets an array of entity type codes for the related entities. Required.
+Gets the collection of entities.
 
 ```yaml
-Type: Int32[]
+Type: Int32
 Parameter Sets: (All)
 Aliases:
 
@@ -92,11 +75,11 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ReportId
-Gets or sets the ID of the report to download.
+### -Categories
+Gets or sets an array of report category codes. Required.
 
 ```yaml
-Type: Guid
+Type: Int32
 Parameter Sets: (All)
 Aliases:
 
@@ -111,39 +94,9 @@ Accept wildcard characters: False
 Gets or sets an array of report visibility codes. Required.
 
 ```yaml
-Type: Int32[]
+Type: Int32
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
 
 Required: False
 Position: Named
@@ -155,12 +108,15 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
+
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.SetReportRelatedResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SetReportRelatedResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.SetReportRelatedResponse)
 ## NOTES
 
 ## RELATED LINKS

@@ -15,9 +15,7 @@ Contains the data that is needed to perform a full-text search on knowledge arti
 ## SYNTAX
 
 ```
-Invoke-DataverseFullTextSearchKnowledgeArticle [-SearchText <String>] [-UseInflection <Boolean>]
- [-RemoveDuplicates <Boolean>] [-StateCode <Int32>] [-QueryExpression <QueryBase>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseFullTextSearchKnowledgeArticle -Connection <ServiceClient> -SearchText <String> -UseInflection <Boolean> -RemoveDuplicates <Boolean> -StateCode <Int32> -QueryExpression <QueryBase>
 ```
 
 ## DESCRIPTION
@@ -32,21 +30,6 @@ PS C:\> Invoke-DataverseFullTextSearchKnowledgeArticle -Connection <ServiceClien
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -55,37 +38,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -QueryExpression
-Gets or sets the query criteria to find knowledge articles with specified text. Required.
-
-```yaml
-Type: QueryBase
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -RemoveDuplicates
-Gets or sets a value that indicates whether to remove multiple versions of the same knowledge article in search results. Required.
-
-```yaml
-Type: Boolean
-Parameter Sets: (All)
-Aliases:
-
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -97,21 +50,6 @@ Gets or sets the text to search for in knowledge articles. Required.
 
 ```yaml
 Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -StateCode
-Gets or sets the state of the knowledge articles to filter the search results. Required.
-
-```yaml
-Type: Int32
 Parameter Sets: (All)
 Aliases:
 
@@ -137,28 +75,43 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -RemoveDuplicates
+Gets or sets a value that indicates whether to remove multiple versions of the same knowledge article in search results. Required.
 
 ```yaml
-Type: SwitchParameter
+Type: Boolean
 Parameter Sets: (All)
-Aliases: wi
+Aliases:
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -StateCode
+Gets or sets the state of the knowledge articles to filter the search results. Required.
 
 ```yaml
-Type: ActionPreference
+Type: Int32
 Parameter Sets: (All)
-Aliases: proga
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -QueryExpression
+Gets or sets the query criteria to find knowledge articles with specified text. Required.
+
+```yaml
+Type: QueryBase
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named
@@ -170,12 +123,15 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
+
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.FullTextSearchKnowledgeArticleResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.FullTextSearchKnowledgeArticleResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.FullTextSearchKnowledgeArticleResponse)
 ## NOTES
 
 ## RELATED LINKS
