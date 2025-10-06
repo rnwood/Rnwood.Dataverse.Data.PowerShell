@@ -33,7 +33,7 @@ PS C:\> Invoke-DataverseUpdateAttribute -Connection <ServiceClient> -Attribute <
 ## PARAMETERS
 
 ### -Attribute
-Gets or sets the definition of the column type that you want to create. Required.
+Gets or sets the attribute metadata to be updated. Required.
 
 ```yaml
 Type: AttributeMetadata
@@ -57,7 +57,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -132,7 +132,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

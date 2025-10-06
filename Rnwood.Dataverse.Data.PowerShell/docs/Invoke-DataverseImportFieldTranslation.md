@@ -14,8 +14,15 @@ Contains the data that is needed to import translations from a compressed file.
 
 ## SYNTAX
 
+### Default (Default)
 ```
 Invoke-DataverseImportFieldTranslation [-TranslationFile <Byte[]>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### FromFile
+```
+Invoke-DataverseImportFieldTranslation -InFile <String> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -26,7 +33,7 @@ Contains the data that is needed to import translations from a compressed file.
 
 ### Example 1
 ```powershell
-PS C:\> Invoke-DataverseImportFieldTranslation -Connection <ServiceClient> -TranslationFile <Byte[]>
+PS C:\> Invoke-DataverseImportFieldTranslation -Connection <ServiceClient> -TranslationFile <Byte[]> -InFile <String>
 ```
 
 ## PARAMETERS
@@ -41,7 +48,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -61,12 +68,27 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -InFile
+Gets or sets the path to a file containing the data to upload.
+
+```yaml
+Type: String
+Parameter Sets: FromFile
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -TranslationFile
 Gets or sets the compressed translations file. Required.
 
 ```yaml
 Type: Byte[]
-Parameter Sets: (All)
+Parameter Sets: Default
 Aliases:
 
 Required: False
@@ -86,7 +108,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

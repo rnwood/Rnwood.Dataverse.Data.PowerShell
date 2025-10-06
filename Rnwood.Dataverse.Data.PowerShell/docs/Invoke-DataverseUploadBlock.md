@@ -14,8 +14,15 @@ Contains the data needed to upload a block of data to storage.
 
 ## SYNTAX
 
+### Default (Default)
 ```
 Invoke-DataverseUploadBlock [-BlockId <String>] [-BlockData <Byte[]>] [-FileContinuationToken <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### FromFile
+```
+Invoke-DataverseUploadBlock [-BlockId <String>] -InFile <String> [-FileContinuationToken <String>]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -26,7 +33,7 @@ Contains the data needed to upload a block of data to storage.
 
 ### Example 1
 ```powershell
-PS C:\> Invoke-DataverseUploadBlock -Connection <ServiceClient> -BlockId <String> -BlockData <Byte[]> -FileContinuationToken <String>
+PS C:\> Invoke-DataverseUploadBlock -Connection <ServiceClient> -BlockId <String> -BlockData <Byte[]> -InFile <String> -FileContinuationToken <String>
 ```
 
 ## PARAMETERS
@@ -36,7 +43,7 @@ The data block to upload.
 
 ```yaml
 Type: Byte[]
-Parameter Sets: (All)
+Parameter Sets: Default
 Aliases:
 
 Required: False
@@ -71,7 +78,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -106,6 +113,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -InFile
+Gets or sets the path to a file containing the data to upload.
+
+```yaml
+Type: String
+Parameter Sets: FromFile
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -WhatIf
 Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
@@ -116,7 +138,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

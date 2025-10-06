@@ -57,7 +57,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -Targets
-Gets or sets the collection of entities representing records to create.
+Gets or sets the collection of entities representing records to update.
 
 ```yaml
 Type: EntityCollection
@@ -102,7 +102,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

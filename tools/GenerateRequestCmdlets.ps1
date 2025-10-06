@@ -57,42 +57,64 @@ try {
     $Script:AssemblyDir = $assemblyDir
 
     try {
-        Write-Host "Importing module manifest to initialize assembly resolution and load contexts"
-        # Prefer the built module in bin/Release/netstandard2.0 where nested loader DLLs are present
-        $builtManifestPath = Join-Path $PSScriptRoot "..\Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0\Rnwood.Dataverse.Data.PowerShell.psd1"
-        $moduleManifest = Resolve-Path $builtManifestPath -ErrorAction SilentlyContinue
-        if (-not $moduleManifest) {
-            # Fallback to project manifest location
-            $moduleManifest = Resolve-Path (Join-Path $PSScriptRoot "..\Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.psd1") -ErrorAction SilentlyContinue
-        }
-        if ($moduleManifest) {
-            Write-Host "Importing module: $($moduleManifest.Path)"
-            Import-Module -Name $moduleManifest.Path -Force -ErrorAction Stop
-            Write-Host "Module imported successfully"
-        } else {
-            Write-Warning "Module manifest not found; attempting to load specified assembly directly: $AssemblyPath"
-            if (Test-Path $AssemblyPath) {
-                try {
-                    [System.Reflection.Assembly]::LoadFrom($AssemblyPath) | Out-Null
-                    Write-Host "Loaded assembly: $AssemblyPath"
-                } catch {
-                    Write-Error ([string]::Format('Failed to load assembly {0}: {1}', $AssemblyPath, $_))
-                    exit 1
-                }
-            } else {
-                Write-Error "Neither module manifest nor assembly were available to load. Module manifest expected at: $PSScriptRoot\..\Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.psd1"
-                exit 1
-            }
-        }
-
-        # After import, examine currently loaded assemblies to find OrganizationRequest
+        # First check if OrganizationRequest type is already loaded
         $organizationRequestType = $null
         foreach ($assembly in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
             try {
                 $type = $assembly.GetType('Microsoft.Xrm.Sdk.OrganizationRequest', $false, $false)
-                if ($type) { $organizationRequestType = $type; Write-Host "Found OrganizationRequest type in: $($assembly.GetName().Name)"; break }
+                if ($type) { 
+                    $organizationRequestType = $type
+                    Write-Host "Found OrganizationRequest type already loaded in: $($assembly.GetName().Name)"
+                    break 
+                }
             } catch {
                 # continue
+            }
+        }
+
+        # If not already loaded, try loading the module or assembly
+        if (-not $organizationRequestType) {
+            Write-Host "Importing module manifest to initialize assembly resolution and load contexts"
+            # Prefer the built module in bin/Release/netstandard2.0 where nested loader DLLs are present
+            $builtManifestPath = Join-Path $PSScriptRoot "..\Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0\Rnwood.Dataverse.Data.PowerShell.psd1"
+            $moduleManifest = Resolve-Path $builtManifestPath -ErrorAction SilentlyContinue
+            if (-not $moduleManifest) {
+                # Fallback to project manifest location - but only if loader DLLs exist
+                $projectManifestPath = Join-Path $PSScriptRoot "..\Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.psd1"
+                $loaderPath = Join-Path $PSScriptRoot "..\Rnwood.Dataverse.Data.PowerShell\loader\net6.0\Rnwood.Dataverse.Data.PowerShell.Loader.dll"
+                if ((Test-Path $projectManifestPath) -and (Test-Path $loaderPath)) {
+                    $moduleManifest = Resolve-Path $projectManifestPath -ErrorAction SilentlyContinue
+                }
+            }
+            if ($moduleManifest) {
+                Write-Host "Importing module: $($moduleManifest.Path)"
+                Import-Module -Name $moduleManifest.Path -Force -ErrorAction Stop
+                Write-Host "Module imported successfully"
+            } else {
+                Write-Warning "Module manifest not found or incomplete; attempting to load specified assembly directly: $AssemblyPath"
+                if (Test-Path $AssemblyPath) {
+                    try {
+                        [System.Reflection.Assembly]::LoadFrom($AssemblyPath) | Out-Null
+                        Write-Host "Loaded assembly: $AssemblyPath"
+                    } catch {
+                        Write-Error ([string]::Format('Failed to load assembly {0}: {1}', $AssemblyPath, $_))
+                        exit 1
+                    }
+                } else {
+                    Write-Error "Neither module manifest nor assembly were available to load. Module manifest expected at: $PSScriptRoot\..\Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.psd1"
+                    exit 1
+                }
+            }
+
+            # After import, examine currently loaded assemblies to find OrganizationRequest
+            $organizationRequestType = $null
+            foreach ($assembly in [System.AppDomain]::CurrentDomain.GetAssemblies()) {
+                try {
+                    $type = $assembly.GetType('Microsoft.Xrm.Sdk.OrganizationRequest', $false, $false)
+                    if ($type) { $organizationRequestType = $type; Write-Host "Found OrganizationRequest type in: $($assembly.GetName().Name)"; break }
+                } catch {
+                    # continue
+                }
             }
         }
 
@@ -507,6 +529,12 @@ foreach ($requestType in $requestTypes) {
         $paramAttribute = "Parameter"
         $paramAttributeContent = @()
         
+        # For byte[] parameters, use a parameter set to separate from InFile
+        $isByteArray = ($paramType -eq "System.Byte[]")
+        if ($isByteArray) {
+            $paramAttributeContent += "ParameterSetName = `"Default`""
+        }
+        
         if ($mandatory -eq "true") {
             $paramAttributeContent += "Mandatory = true"
         }
@@ -619,6 +647,21 @@ foreach ($requestType in $requestTypes) {
                 $displayType = ($displayType.Split('.') | Select-Object -Last 1)
             }
             $parameterInfos += @{ Name = $paramName; Type = $displayType; Help = $helpMessage; Mandatory = ($mandatory -eq "true"); ValueFromPipeline = ($valueFromPipeline -eq "true") }
+            
+            # If this is a byte array parameter, add an InFile parameter as an alternative
+            if ($isByteArray) {
+                $inFileHelp = "Gets or sets the path to a file containing the data to upload."
+                $inFileHelpEscaped = $inFileHelp.Replace('"','""')
+                $inFileXml = $inFileHelp -replace '&','&amp;' -replace '<','&lt;' -replace '>','&gt;'
+                $parameterDeclarations += ""
+                $parameterDeclarations += "        /// <summary>"
+                $parameterDeclarations += "        /// $inFileXml"
+                $parameterDeclarations += "        /// </summary>"
+                $parameterDeclarations += "        [Parameter(ParameterSetName = `"FromFile`", Mandatory = true, HelpMessage = `"$inFileHelpEscaped`")]"
+                $parameterDeclarations += "        [ValidateNotNullOrEmpty]"
+                $parameterDeclarations += "        public System.String InFile { get; set; }"
+                $parameterInfos += @{ Name = "InFile"; Type = "String"; Help = $inFileHelp; Mandatory = $true; ValueFromPipeline = $false; ParameterSet = "FromFile" }
+            }
         }
     }
 
@@ -631,6 +674,20 @@ foreach ($requestType in $requestTypes) {
             } else {
                 $assignments += "            request.$($prop.Name) = DataverseEntityConverter.ConvertPSObjectToEntityReference($($prop.Name));"
             }
+        } elseif ($prop.PropertyType.FullName -eq "System.Byte[]") {
+            # For byte array properties, support loading from file if InFile parameter is provided
+            $varName = $prop.Name.Substring(0,1).ToLower() + $prop.Name.Substring(1) + "Data"
+            $assignments += "            // Load file if InFile parameter is specified"
+            $assignments += "            byte[] $varName = $($prop.Name);"
+            $assignments += "            if (!string.IsNullOrEmpty(InFile))"
+            $assignments += "            {"
+            $assignments += "                if (!File.Exists(InFile))"
+            $assignments += "                {"
+            $assignments += "                    throw new FileNotFoundException(`$`"The specified file does not exist: {InFile}`");"
+            $assignments += "                }"
+            $assignments += "                $varName = File.ReadAllBytes(InFile);"
+            $assignments += "            }"
+            $assignments += "            request.$($prop.Name) = $varName;"
         } else {
             # Direct assignment without null checks
             $assignments += "            request.$($prop.Name) = $($prop.Name);"
@@ -655,6 +712,14 @@ foreach ($requestType in $requestTypes) {
         }
     }
 
+    # Check if any properties are byte arrays (for file I/O support)
+    $byteArrayProperties = @()
+    foreach ($prop in $properties) {
+        if ($prop.PropertyType.FullName -eq "System.Byte[]") {
+            $byteArrayProperties += $prop
+        }
+    }
+    
     # Generate using statements
     $usingStatements = @(
         "using System;",
@@ -670,6 +735,11 @@ foreach ($requestType in $requestTypes) {
     if ($needsEntityConverter -or $needsEntityReference) {
         $usingStatements += "using Microsoft.Xrm.Sdk.Metadata;"
         $usingStatements += "using System.Collections;"
+    }
+    
+    # Add System.IO for file operations if we have byte array properties
+    if ($byteArrayProperties.Count -gt 0) {
+        $usingStatements += "using System.IO;"
     }
 
     # Generate field declarations
@@ -724,6 +794,14 @@ foreach ($requestType in $requestTypes) {
     # ProcessRecord XML comment - create with actual newlines
     $processRecordSummary = "        /// <summary>`n        /// Processes the cmdlet request and writes the response to the pipeline.`n        /// </summary>"
 
+    # Determine if we need parameter sets (for byte array properties with InFile)
+    $needsParameterSets = $byteArrayProperties.Count -gt 0
+    $cmdletAttribute = if ($needsParameterSets) {
+        "[Cmdlet(`"Invoke`", `"Dataverse$cmdletName`", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium, DefaultParameterSetName = `"Default`")]"
+    } else {
+        "[Cmdlet(`"Invoke`", `"Dataverse$cmdletName`", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]"
+    }
+
     $code = @"
 // <auto-generated>
 //     This code was generated by $generatorName (version $generatorVersion) on $(Get-Date -Format o).
@@ -740,7 +818,7 @@ $classSummary
     [System.CodeDom.Compiler.GeneratedCode("$generatorName", "$generatorVersion")]
     [System.Diagnostics.DebuggerNonUserCode]
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-    [Cmdlet("Invoke", "Dataverse$cmdletName", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
+    $cmdletAttribute
     public class $cmdletClassName : OrganizationServiceCmdlet
     {
 

@@ -41,7 +41,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -FetchXml
-Gets or sets the query to convert.
+FetchXml to use
 
 ```yaml
 Type: String
@@ -101,7 +101,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

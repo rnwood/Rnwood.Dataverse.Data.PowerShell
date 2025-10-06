@@ -14,9 +14,18 @@ For internal use only.
 
 ## SYNTAX
 
+### Default (Default)
 ```
 Invoke-DataverseImportSolutions [-OverwriteUnmanagedCustomizations <Boolean>] [-PublishWorkflows <Boolean>]
  [-CustomizationFiles <Byte[]>] [-ImportJobId <Guid>] [-ConvertToManaged <Boolean>]
+ [-SkipProductUpdateDependencies <Boolean>] [-HoldingSolution <Boolean>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### FromFile
+```
+Invoke-DataverseImportSolutions [-OverwriteUnmanagedCustomizations <Boolean>] [-PublishWorkflows <Boolean>]
+ -InFile <String> [-ImportJobId <Guid>] [-ConvertToManaged <Boolean>]
  [-SkipProductUpdateDependencies <Boolean>] [-HoldingSolution <Boolean>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
@@ -28,7 +37,7 @@ For internal use only.
 
 ### Example 1
 ```powershell
-PS C:\> Invoke-DataverseImportSolutions -Connection <ServiceClient> -OverwriteUnmanagedCustomizations <Boolean> -PublishWorkflows <Boolean> -CustomizationFiles <Byte[]> -ImportJobId <Guid> -ConvertToManaged <Boolean> -SkipProductUpdateDependencies <Boolean> -HoldingSolution <Boolean>
+PS C:\> Invoke-DataverseImportSolutions -Connection <ServiceClient> -OverwriteUnmanagedCustomizations <Boolean> -PublishWorkflows <Boolean> -CustomizationFiles <Byte[]> -InFile <String> -ImportJobId <Guid> -ConvertToManaged <Boolean> -SkipProductUpdateDependencies <Boolean> -HoldingSolution <Boolean>
 ```
 
 ## PARAMETERS
@@ -43,7 +52,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -83,7 +92,7 @@ Gets or sets the CustomizationFiles for the request.
 
 ```yaml
 Type: Byte[]
-Parameter Sets: (All)
+Parameter Sets: Default
 Aliases:
 
 Required: False
@@ -117,6 +126,21 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InFile
+Gets or sets the path to a file containing the data to upload.
+
+```yaml
+Type: String
+Parameter Sets: FromFile
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -178,7 +202,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

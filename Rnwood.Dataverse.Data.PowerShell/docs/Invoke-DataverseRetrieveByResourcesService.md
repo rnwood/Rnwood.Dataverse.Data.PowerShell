@@ -41,7 +41,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -ResourceIds
-Gets or sets the IDs of the resources. Required.
+Gets or sets an array of IDs for the specified set of services.
 
 ```yaml
 Type: Guid[]
@@ -101,7 +101,7 @@ Aliases: wi
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
