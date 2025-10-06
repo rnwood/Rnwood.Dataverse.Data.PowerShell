@@ -24,57 +24,49 @@ Get-DataverseConnection [-GetDefault] [-SetAsDefault] [-Timeout <UInt32>] [-Prog
 
 ### Return a mock connection
 ```
-Get-DataverseConnection -Mock <EntityMetadata[]> [ -Url <Uri>] [-Timeout <UInt32>]
-Get-DataverseConnection [-SetAsDefault] -Mock <EntityMetadata[]> [ -Url <Uri>] [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] -Mock <EntityMetadata[]> -Url <Uri> [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with client secret
 ```
-Get-DataverseConnection -ClientId <Guid> [ -Url <Uri>] -ClientSecret <String> [-Timeout <UInt32>]
-Get-DataverseConnection [-SetAsDefault] -ClientId <Guid> [ -Url <Uri>] -ClientSecret <String> [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] -ClientId <Guid> -Url <Uri> -ClientSecret <String> [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate interactively
 ```
-Get-DataverseConnection [-ClientId <Guid>] [ -Url <Uri>] [-Username <String>] [-Interactive] [-Timeout <UInt32>]
-Get-DataverseConnection [-SetAsDefault] [-ClientId <Guid>] [ -Url <Uri>] [-Username <String>] [-Interactive]
+Get-DataverseConnection [-SetAsDefault] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>] [-Interactive]
  [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate using the device code flow
 ```
-Get-DataverseConnection [-ClientId <Guid>] [ -Url <Uri>] [-Username <String>] [-DeviceCode] [-Timeout <UInt32>]
-Get-DataverseConnection [-SetAsDefault] [-ClientId <Guid>] [ -Url <Uri>] [-Username <String>] [-DeviceCode]
+Get-DataverseConnection [-SetAsDefault] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>] [-DeviceCode]
  [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with username and password
 ```
-Get-DataverseConnection [-ClientId <Guid>] [ -Url <Uri>] -Username <String> -Password <String> [-Timeout <UInt32>]
-Get-DataverseConnection [-SetAsDefault] [-ClientId <Guid>] [ -Url <Uri>] -Username <String> -Password <String>
+Get-DataverseConnection [-SetAsDefault] [-ClientId <Guid>] [-Url <Uri>] -Username <String> -Password <String>
  [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with Dataverse SDK connection string.
 ```
-Get-DataverseConnection [ -Url <Uri>] -ConnectionString <String> [-Timeout <UInt32>]
-Get-DataverseConnection [-SetAsDefault] [ -Url <Uri>] -ConnectionString <String> [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] -Url <Uri> -ConnectionString <String> [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with DefaultAzureCredential
 ```
-Get-DataverseConnection [ -Url <Uri>] [-DefaultAzureCredential] [-Timeout <UInt32>]
-Get-DataverseConnection [-SetAsDefault] [ -Url <Uri>] [-DefaultAzureCredential] [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] [-Url <Uri>] [-DefaultAzureCredential] [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with ManagedIdentityCredential
 ```
-Get-DataverseConnection [ -Url <Uri>] [-ManagedIdentity] [-ManagedIdentityClientId <String>] [-Timeout <UInt32>]
-Get-DataverseConnection [-SetAsDefault] [ -Url <Uri>] [-ManagedIdentity] [-ManagedIdentityClientId <String>]
+Get-DataverseConnection [-SetAsDefault] [-Url <Uri>] [-ManagedIdentity] [-ManagedIdentityClientId <String>]
  [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -229,6 +221,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -GetDefault
+Gets the current default connection. Returns an error if no default connection is set.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Get default connection
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Interactive
 Triggers interactive authentication, where browser will be opened for user to interactively log in.
 
@@ -304,6 +311,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -SetAsDefault
+When set, this connection will be used as the default for cmdlets that don't have a connection parameter specified.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Timeout
 Timeout for authentication operations. Defaults to 5 minutes.
 
@@ -324,10 +346,22 @@ URL of the Dataverse environment to connect to. For example https://myorg.crm11.
 
 ```yaml
 Type: Uri
-Parameter Sets: Return a mock connection, Authenticate with client secret, Authenticate interactively, Authenticate using the device code flow, Authenticate with username and password, Authenticate with Dataverse SDK connection string., Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
+Parameter Sets: Return a mock connection, Authenticate with client secret, Authenticate with Dataverse SDK connection string.
 Aliases:
 
 Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: Uri
+Parameter Sets: Authenticate interactively, Authenticate using the device code flow, Authenticate with username and password, Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
+Aliases:
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -368,36 +402,6 @@ See standard PS documentation.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -GetDefault
-Gets the current default connection. Returns an error if no default connection is set.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Get default connection
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -SetAsDefault
-When set, this connection will be used as the default for cmdlets that don't have a connection parameter specified.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
 
 Required: False
 Position: Named
