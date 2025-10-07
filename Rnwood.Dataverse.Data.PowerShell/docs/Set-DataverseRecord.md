@@ -256,6 +256,43 @@ PS C:\> try {
 
 Disables batching by setting `-BatchSize 1`. With this setting, each record is sent in a separate request, and execution stops immediately on the first error (when using `-ErrorAction Stop`). This is useful when you need to stop processing on the first failure rather than attempting all records.
 
+### Example 14: Get IDs of created records using PassThru
+```powershell
+PS C:\> $contacts = @(
+    @{ firstname = "Alice"; lastname = "Anderson" }
+    @{ firstname = "Bob"; lastname = "Brown" }
+    @{ firstname = "Charlie"; lastname = "Clark" }
+)
+
+PS C:\> $createdRecords = $contacts | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -PassThru
+
+PS C:\> # Access the IDs of created records
+PS C:\> foreach ($record in $createdRecords) {
+    Write-Host "Created contact $($record.firstname) $($record.lastname) with ID: $($record.Id)"
+}
+```
+
+Creates multiple contact records and returns the input objects with their `Id` property set. The `-PassThru` parameter causes the cmdlet to write each input object to the pipeline after the record is created, with the `Id` property populated with the GUID of the newly created record. This allows you to capture and use the IDs in subsequent operations.
+
+### Example 15: Use PassThru to create and link records
+```powershell
+PS C:\> # Create parent account and get its ID
+PS C:\> $account = @{ name = "Contoso Ltd" } | 
+    Set-DataverseRecord -Connection $c -TableName account -CreateOnly -PassThru
+
+PS C:\> # Create child contact linked to the account
+PS C:\> $contact = @{ 
+    firstname = "John"
+    lastname = "Doe"
+    parentcustomerid = $account.Id
+    "parentcustomerid@logicalname" = "account"
+} | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -PassThru
+
+PS C:\> Write-Host "Created contact $($contact.Id) linked to account $($account.Id)"
+```
+
+Demonstrates using `-PassThru` to chain record creation operations. First creates an account and captures its ID using `-PassThru`, then uses that ID to create a related contact record. This pattern is useful when you need to establish relationships between newly created records.
+
 ## PARAMETERS
 
 ### -BatchSize
