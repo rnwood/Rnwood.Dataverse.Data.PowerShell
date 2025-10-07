@@ -218,6 +218,44 @@ PS C:\> @{
 
 Creates a contact with a lookup to an account by name. The module will automatically resolve "Contoso Ltd" to the account's GUID if the name is unique.
 
+### Example 12: Handle errors in batch operations
+```powershell
+PS C:\> $records = @(
+    @{ firstname = "Alice"; lastname = "Valid"; emailaddress1 = "alice@example.com" }
+    @{ firstname = "Bob"; lastname = ""; emailaddress1 = "bob@example.com" }  # Invalid - required field missing
+    @{ firstname = "Charlie"; lastname = "Valid"; emailaddress1 = "charlie@example.com" }
+)
+
+PS C:\> $errors = @()
+PS C:\> $records | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -ErrorVariable +errors -ErrorAction SilentlyContinue
+
+PS C:\> # Process errors - each error's TargetObject contains the input record that failed
+PS C:\> foreach ($err in $errors) {
+    Write-Host "Failed to create contact: $($err.TargetObject.firstname) $($err.TargetObject.lastname)"
+    Write-Host "Error: $($err.Exception.Message)"
+}
+```
+
+Demonstrates batch error handling. When using batching (default BatchSize of 100), the cmdlet continues processing all records even if some fail. Each error written to the error stream includes the original input object as the `TargetObject`, allowing you to correlate which input caused the error. Use `-ErrorVariable` to collect errors and `-ErrorAction SilentlyContinue` to prevent them from stopping execution.
+
+### Example 13: Stop on first error with BatchSize 1
+```powershell
+PS C:\> $records = @(
+    @{ firstname = "Alice"; lastname = "Valid" }
+    @{ firstname = "Bob"; lastname = "" }  # Invalid - will cause error
+    @{ firstname = "Charlie"; lastname = "Valid" }  # Won't be processed
+)
+
+PS C:\> try {
+    $records | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -BatchSize 1 -ErrorAction Stop
+} catch {
+    Write-Host "Error creating record: $($_.TargetObject.firstname)"
+    Write-Host "Remaining records were not processed"
+}
+```
+
+Disables batching by setting `-BatchSize 1`. With this setting, each record is sent in a separate request, and execution stops immediately on the first error (when using `-ErrorAction Stop`). This is useful when you need to stop processing on the first failure rather than attempting all records.
+
 ## PARAMETERS
 
 ### -BatchSize
