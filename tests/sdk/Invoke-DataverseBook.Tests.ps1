@@ -24,8 +24,11 @@ Describe "Invoke-DataverseBook Tests" {
                 return $response
             })
             
+            # Create a test target (appointment, etc.)
+            $target = New-Object Microsoft.Xrm.Sdk.EntityReference("appointment", [Guid]::NewGuid())
+            
             # Call cmdlet with -Confirm:$false to avoid prompts
-            $response = Invoke-DataverseBook -Connection $script:conn -Confirm:$false
+            $response = Invoke-DataverseBook -Connection $script:conn -Target $target -Confirm:$false
             
             # Verify response
             $response | Should -Not -BeNull

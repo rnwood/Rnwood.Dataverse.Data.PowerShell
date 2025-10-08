@@ -24,8 +24,8 @@ Describe "Invoke-DataverseCheckIncomingEmail Tests" {
                 return $response
             })
             
-            # Call cmdlet with -Confirm:$false to avoid prompts
-            $response = Invoke-DataverseCheckIncomingEmail -Connection $script:conn -Confirm:$false
+            # Call cmdlet with minimal required parameters
+            $response = Invoke-DataverseCheckIncomingEmail -Connection $script:conn -MessageId "test-message-id@example.com" -From "sender@example.com" -Confirm:$false
             
             # Verify response
             $response | Should -Not -BeNull

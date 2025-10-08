@@ -24,8 +24,16 @@ Describe "Invoke-DataverseCancelSalesOrder Tests" {
                 return $response
             })
             
+            # Create test OrderClose entity
+            $orderClose = [PSCustomObject]@{
+                salesorderid = [Guid]::NewGuid()
+                actualend = (Get-Date)
+                description = "Test cancellation"
+            }
+            $status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(4) # Cancelled status
+            
             # Call cmdlet with -Confirm:$false to avoid prompts
-            $response = Invoke-DataverseCancelSalesOrder -Connection $script:conn -Confirm:$false
+            $response = Invoke-DataverseCancelSalesOrder -Connection $script:conn -OrderClose $orderClose -OrderCloseTableName "orderclose" -Status $status -Confirm:$false
             
             # Verify response
             $response | Should -Not -BeNull

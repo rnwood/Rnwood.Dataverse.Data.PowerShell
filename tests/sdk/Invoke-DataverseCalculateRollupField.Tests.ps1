@@ -24,8 +24,11 @@ Describe "Invoke-DataverseCalculateRollupField Tests" {
                 return $response
             })
             
+            # Create a test target with TableName and FieldName
+            $target = New-Object Microsoft.Xrm.Sdk.EntityReference("contact", [Guid]::NewGuid())
+            
             # Call cmdlet with -Confirm:$false to avoid prompts
-            $response = Invoke-DataverseCalculateRollupField -Connection $script:conn -Confirm:$false
+            $response = Invoke-DataverseCalculateRollupField -Connection $script:conn -Target $target -FieldName "test_field" -Confirm:$false
             
             # Verify response
             $response | Should -Not -BeNull
