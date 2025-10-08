@@ -26,6 +26,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AuthenticationResult = Microsoft.Identity.Client.AuthenticationResult;
 using System.Security;
+using System.Collections.Concurrent;
 
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -38,6 +39,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	[OutputType(typeof(ServiceClient))]
 	public class GetDataverseConnectionCmdlet : PSCmdlet
 	{
+		/// <summary>
+		/// Static dictionary to store proxy services for testing purposes.
+		/// </summary>
+		internal static ConcurrentDictionary<ServiceClient, ProxyOrganizationService> ProxyServices = new ConcurrentDictionary<ServiceClient, ProxyOrganizationService>();
 		/// <summary>
 		/// Initializes a new instance of the <see cref="GetDataverseConnectionCmdlet"/> class.
 		/// </summary>
@@ -245,8 +250,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         .Build();
 						xrmFakeContext.InitializeMetadata(Mock);
 
-						ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
-						result = (ServiceClient)contructor.Invoke(new object[] { xrmFakeContext.GetOrganizationService(), new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9, 2), A.Fake<ILogger>() });
+						// Wrap the service in a proxy to enable testing and inspection
+					var proxyService = new ProxyOrganizationService(xrmFakeContext.GetOrganizationService());
+
+					ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
+					result = (ServiceClient)contructor.Invoke(new object[] { proxyService, new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9, 2), A.Fake<ILogger>() });
+					
+					// Store the proxy service for test access
+					ProxyServices[result] = proxyService;
 						break;
 
 					case PARAMSET_CONNECTIONSTRING:

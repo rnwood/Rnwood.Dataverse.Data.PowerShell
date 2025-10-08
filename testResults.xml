@@ -1,0 +1,1917 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="106" errors="0" failures="106" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2025-10-08" time="16:40:19">
+  <environment user-domain="" cwd="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell" platform="Linux" machine-name="runnervmwhb2z" os-version="6.11.0-1018-azure" nunit-version="2.5.8.0" user="runner" clr-version="8.0.19" />
+  <culture-info current-culture="" current-uiculture="" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="4.5328" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddListMembersList.Tests.ps1" executed="True" result="Failure" success="False" time="0.6507" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddListMembersList.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseAddListMembersList Tests" executed="True" result="Failure" success="False" time="0.2325" asserts="0" description="Invoke-DataverseAddListMembersList Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseAddListMembersList Tests.AddListMembersList SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseAddListMembersList Tests.AddListMembersList SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseAddListMembersList adds multiple members to a marketing list" name="Invoke-DataverseAddListMembersList Tests.AddListMembersList SDK Cmdlet.Invoke-DataverseAddListMembersList adds multiple members to a marketing list" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddMemberList.Tests.ps1" executed="True" result="Failure" success="False" time="0.0577" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddMemberList.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseAddMemberList Tests" executed="True" result="Failure" success="False" time="0.0176" asserts="0" description="Invoke-DataverseAddMemberList Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseAddMemberList Tests.AddMemberList SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseAddMemberList Tests.AddMemberList SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseAddMemberList adds members to a marketing list" name="Invoke-DataverseAddMemberList Tests.AddMemberList SDK Cmdlet.Invoke-DataverseAddMemberList adds members to a marketing list" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddMembersTeam.Tests.ps1" executed="True" result="Failure" success="False" time="0.0394" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddMembersTeam.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseAddMembersTeam Tests" executed="True" result="Failure" success="False" time="0.0167" asserts="0" description="Invoke-DataverseAddMembersTeam Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseAddMembersTeam Tests.AddMembersTeam SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseAddMembersTeam Tests.AddMembersTeam SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseAddMembersTeam adds users to a team" name="Invoke-DataverseAddMembersTeam Tests.AddMembersTeam SDK Cmdlet.Invoke-DataverseAddMembersTeam adds users to a team" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddPrincipalToQueue.Tests.ps1" executed="True" result="Failure" success="False" time="0.0489" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddPrincipalToQueue.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseAddPrincipalToQueue Tests" executed="True" result="Failure" success="False" time="0.0236" asserts="0" description="Invoke-DataverseAddPrincipalToQueue Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseAddPrincipalToQueue Tests.AddPrincipalToQueue SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseAddPrincipalToQueue Tests.AddPrincipalToQueue SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseAddPrincipalToQueue adds a principal to a queue" name="Invoke-DataverseAddPrincipalToQueue Tests.AddPrincipalToQueue SDK Cmdlet.Invoke-DataverseAddPrincipalToQueue adds a principal to a queue" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddPrivilegesRole.Tests.ps1" executed="True" result="Failure" success="False" time="0.0558" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddPrivilegesRole.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseAddPrivilegesRole Tests" executed="True" result="Failure" success="False" time="0.0239" asserts="0" description="Invoke-DataverseAddPrivilegesRole Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseAddPrivilegesRole Tests.AddPrivilegesRole SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseAddPrivilegesRole Tests.AddPrivilegesRole SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseAddPrivilegesRole adds privileges to a role" name="Invoke-DataverseAddPrivilegesRole Tests.AddPrivilegesRole SDK Cmdlet.Invoke-DataverseAddPrivilegesRole adds privileges to a role" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddSolutionComponent.Tests.ps1" executed="True" result="Failure" success="False" time="0.0479" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddSolutionComponent.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseAddSolutionComponent Tests" executed="True" result="Failure" success="False" time="0.0223" asserts="0" description="Invoke-DataverseAddSolutionComponent Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseAddSolutionComponent Tests.AddSolutionComponent SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseAddSolutionComponent Tests.AddSolutionComponent SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseAddSolutionComponent adds a component to a solution" name="Invoke-DataverseAddSolutionComponent Tests.AddSolutionComponent SDK Cmdlet.Invoke-DataverseAddSolutionComponent adds a component to a solution" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddToQueue.Tests.ps1" executed="True" result="Failure" success="False" time="0.0692" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddToQueue.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseAddToQueue Tests" executed="True" result="Failure" success="False" time="0.0431" asserts="0" description="Invoke-DataverseAddToQueue Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseAddToQueue Tests.AddToQueue SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseAddToQueue Tests.AddToQueue SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseAddToQueue adds item to queue" name="Invoke-DataverseAddToQueue Tests.AddToQueue SDK Cmdlet.Invoke-DataverseAddToQueue adds item to queue" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddUserToRecordTeam.Tests.ps1" executed="True" result="Failure" success="False" time="0.0477" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAddUserToRecordTeam.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseAddUserToRecordTeam Tests" executed="True" result="Failure" success="False" time="0.0221" asserts="0" description="Invoke-DataverseAddUserToRecordTeam Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseAddUserToRecordTeam Tests.AddUserToRecordTeam SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseAddUserToRecordTeam Tests.AddUserToRecordTeam SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseAddUserToRecordTeam adds user to record team" name="Invoke-DataverseAddUserToRecordTeam Tests.AddUserToRecordTeam SDK Cmdlet.Invoke-DataverseAddUserToRecordTeam adds user to record team" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAssign.Tests.ps1" executed="True" result="Failure" success="False" time="0.0494" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAssign.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseAssign Tests" executed="True" result="Failure" success="False" time="0.0222" asserts="0" description="Invoke-DataverseAssign Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseAssign Tests.Assign SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseAssign Tests.Assign SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseAssign assigns a record to a user" name="Invoke-DataverseAssign Tests.Assign SDK Cmdlet.Invoke-DataverseAssign assigns a record to a user" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAssociate.Tests.ps1" executed="True" result="Failure" success="False" time="0.0568" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseAssociate.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseAssociate Tests" executed="True" result="Failure" success="False" time="0.0284" asserts="0" description="Invoke-DataverseAssociate Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseAssociate Tests.Associate SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseAssociate Tests.Associate SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseAssociate creates a many-to-many relationship" name="Invoke-DataverseAssociate Tests.Associate SDK Cmdlet.Invoke-DataverseAssociate creates a many-to-many relationship" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseBackgroundSendEmail.Tests.ps1" executed="True" result="Failure" success="False" time="0.0475" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseBackgroundSendEmail.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseBackgroundSendEmail Tests" executed="True" result="Failure" success="False" time="0.021" asserts="0" description="Invoke-DataverseBackgroundSendEmail Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseBackgroundSendEmail Tests.BackgroundSendEmail SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseBackgroundSendEmail Tests.BackgroundSendEmail SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseBackgroundSendEmail queues email for background sending" name="Invoke-DataverseBackgroundSendEmail Tests.BackgroundSendEmail SDK Cmdlet.Invoke-DataverseBackgroundSendEmail queues email for background sending" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseBook.Tests.ps1" executed="True" result="Failure" success="False" time="0.0475" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseBook.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseBook Tests" executed="True" result="Failure" success="False" time="0.0208" asserts="0" description="Invoke-DataverseBook Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseBook Tests.Book SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseBook Tests.Book SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseBook executes successfully" name="Invoke-DataverseBook Tests.Book SDK Cmdlet.Invoke-DataverseBook executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseBulkDelete.Tests.ps1" executed="True" result="Failure" success="False" time="0.051" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseBulkDelete.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseBulkDelete Tests" executed="True" result="Failure" success="False" time="0.0249" asserts="0" description="Invoke-DataverseBulkDelete Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseBulkDelete Tests.BulkDelete SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseBulkDelete Tests.BulkDelete SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseBulkDelete accepts query and parameters" name="Invoke-DataverseBulkDelete Tests.BulkDelete SDK Cmdlet.Invoke-DataverseBulkDelete accepts query and parameters" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCalculateActualValueOpportunity.Tests.ps1" executed="True" result="Failure" success="False" time="0.0471" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCalculateActualValueOpportunity.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCalculateActualValueOpportunity Tests" executed="True" result="Failure" success="False" time="0.0208" asserts="0" description="Invoke-DataverseCalculateActualValueOpportunity Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCalculateActualValueOpportunity Tests.CalculateActualValueOpportunity SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCalculateActualValueOpportunity Tests.CalculateActualValueOpportunity SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCalculateActualValueOpportunity executes successfully" name="Invoke-DataverseCalculateActualValueOpportunity Tests.CalculateActualValueOpportunity SDK Cmdlet.Invoke-DataverseCalculateActualValueOpportunity executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCalculatePrice.Tests.ps1" executed="True" result="Failure" success="False" time="0.0441" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCalculatePrice.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCalculatePrice Tests" executed="True" result="Failure" success="False" time="0.0148" asserts="0" description="Invoke-DataverseCalculatePrice Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCalculatePrice Tests.CalculatePrice SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCalculatePrice Tests.CalculatePrice SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCalculatePrice executes successfully" name="Invoke-DataverseCalculatePrice Tests.CalculatePrice SDK Cmdlet.Invoke-DataverseCalculatePrice executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCalculateRollupField.Tests.ps1" executed="True" result="Failure" success="False" time="0.0402" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCalculateRollupField.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCalculateRollupField Tests" executed="True" result="Failure" success="False" time="0.0149" asserts="0" description="Invoke-DataverseCalculateRollupField Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCalculateRollupField Tests.CalculateRollupField SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCalculateRollupField Tests.CalculateRollupField SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCalculateRollupField executes successfully" name="Invoke-DataverseCalculateRollupField Tests.CalculateRollupField SDK Cmdlet.Invoke-DataverseCalculateRollupField executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCalculateTotalTimeIncident.Tests.ps1" executed="True" result="Failure" success="False" time="0.0505" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCalculateTotalTimeIncident.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCalculateTotalTimeIncident Tests" executed="True" result="Failure" success="False" time="0.0212" asserts="0" description="Invoke-DataverseCalculateTotalTimeIncident Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCalculateTotalTimeIncident Tests.CalculateTotalTimeIncident SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCalculateTotalTimeIncident Tests.CalculateTotalTimeIncident SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCalculateTotalTimeIncident executes successfully" name="Invoke-DataverseCalculateTotalTimeIncident Tests.CalculateTotalTimeIncident SDK Cmdlet.Invoke-DataverseCalculateTotalTimeIncident executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCancel.Tests.ps1" executed="True" result="Failure" success="False" time="0.0687" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCancel.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCancel Tests" executed="True" result="Failure" success="False" time="0.034" asserts="0" description="Invoke-DataverseCancel Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCancel Tests.Cancel SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCancel Tests.Cancel SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCancel executes successfully" name="Invoke-DataverseCancel Tests.Cancel SDK Cmdlet.Invoke-DataverseCancel executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCancelContract.Tests.ps1" executed="True" result="Failure" success="False" time="0.0882" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCancelContract.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCancelContract Tests" executed="True" result="Failure" success="False" time="0.0455" asserts="0" description="Invoke-DataverseCancelContract Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCancelContract Tests.CancelContract SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCancelContract Tests.CancelContract SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCancelContract executes successfully" name="Invoke-DataverseCancelContract Tests.CancelContract SDK Cmdlet.Invoke-DataverseCancelContract executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCancelSalesOrder.Tests.ps1" executed="True" result="Failure" success="False" time="0.0483" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCancelSalesOrder.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCancelSalesOrder Tests" executed="True" result="Failure" success="False" time="0.0217" asserts="0" description="Invoke-DataverseCancelSalesOrder Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCancelSalesOrder Tests.CancelSalesOrder SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCancelSalesOrder Tests.CancelSalesOrder SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCancelSalesOrder executes successfully" name="Invoke-DataverseCancelSalesOrder Tests.CancelSalesOrder SDK Cmdlet.Invoke-DataverseCancelSalesOrder executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCheckIncomingEmail.Tests.ps1" executed="True" result="Failure" success="False" time="0.0468" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCheckIncomingEmail.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCheckIncomingEmail Tests" executed="True" result="Failure" success="False" time="0.0208" asserts="0" description="Invoke-DataverseCheckIncomingEmail Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCheckIncomingEmail Tests.CheckIncomingEmail SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCheckIncomingEmail Tests.CheckIncomingEmail SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCheckIncomingEmail executes successfully" name="Invoke-DataverseCheckIncomingEmail Tests.CheckIncomingEmail SDK Cmdlet.Invoke-DataverseCheckIncomingEmail executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCheckPromoteEmail.Tests.ps1" executed="True" result="Failure" success="False" time="0.051" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCheckPromoteEmail.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCheckPromoteEmail Tests" executed="True" result="Failure" success="False" time="0.0253" asserts="0" description="Invoke-DataverseCheckPromoteEmail Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCheckPromoteEmail Tests.CheckPromoteEmail SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCheckPromoteEmail Tests.CheckPromoteEmail SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCheckPromoteEmail executes successfully" name="Invoke-DataverseCheckPromoteEmail Tests.CheckPromoteEmail SDK Cmdlet.Invoke-DataverseCheckPromoteEmail executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCloneAsPatch.Tests.ps1" executed="True" result="Failure" success="False" time="0.0384" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCloneAsPatch.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCloneAsPatch Tests" executed="True" result="Failure" success="False" time="0.015" asserts="0" description="Invoke-DataverseCloneAsPatch Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCloneAsPatch Tests.CloneAsPatch SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCloneAsPatch Tests.CloneAsPatch SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCloneAsPatch executes successfully" name="Invoke-DataverseCloneAsPatch Tests.CloneAsPatch SDK Cmdlet.Invoke-DataverseCloneAsPatch executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCloneAsSolution.Tests.ps1" executed="True" result="Failure" success="False" time="0.0348" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCloneAsSolution.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCloneAsSolution Tests" executed="True" result="Failure" success="False" time="0.0142" asserts="0" description="Invoke-DataverseCloneAsSolution Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCloneAsSolution Tests.CloneAsSolution SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCloneAsSolution Tests.CloneAsSolution SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCloneAsSolution executes successfully" name="Invoke-DataverseCloneAsSolution Tests.CloneAsSolution SDK Cmdlet.Invoke-DataverseCloneAsSolution executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCloneContract.Tests.ps1" executed="True" result="Failure" success="False" time="0.0374" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCloneContract.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCloneContract Tests" executed="True" result="Failure" success="False" time="0.017" asserts="0" description="Invoke-DataverseCloneContract Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCloneContract Tests.CloneContract SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCloneContract Tests.CloneContract SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCloneContract executes successfully" name="Invoke-DataverseCloneContract Tests.CloneContract SDK Cmdlet.Invoke-DataverseCloneContract executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCloneProduct.Tests.ps1" executed="True" result="Failure" success="False" time="0.0347" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCloneProduct.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCloneProduct Tests" executed="True" result="Failure" success="False" time="0.0143" asserts="0" description="Invoke-DataverseCloneProduct Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCloneProduct Tests.CloneProduct SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCloneProduct Tests.CloneProduct SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCloneProduct executes successfully" name="Invoke-DataverseCloneProduct Tests.CloneProduct SDK Cmdlet.Invoke-DataverseCloneProduct executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCloseIncident.Tests.ps1" executed="True" result="Failure" success="False" time="0.0343" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCloseIncident.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCloseIncident Tests" executed="True" result="Failure" success="False" time="0.0139" asserts="0" description="Invoke-DataverseCloseIncident Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCloseIncident Tests.CloseIncident SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCloseIncident Tests.CloseIncident SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCloseIncident closes an incident (case)" name="Invoke-DataverseCloseIncident Tests.CloseIncident SDK Cmdlet.Invoke-DataverseCloseIncident closes an incident (case)" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCloseQuote.Tests.ps1" executed="True" result="Failure" success="False" time="0.0376" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCloseQuote.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCloseQuote Tests" executed="True" result="Failure" success="False" time="0.014" asserts="0" description="Invoke-DataverseCloseQuote Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCloseQuote Tests.CloseQuote SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCloseQuote Tests.CloseQuote SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCloseQuote closes a quote" name="Invoke-DataverseCloseQuote Tests.CloseQuote SDK Cmdlet.Invoke-DataverseCloseQuote closes a quote" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseConvertDateAndTimeBehavior.Tests.ps1" executed="True" result="Failure" success="False" time="0.0357" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseConvertDateAndTimeBehavior.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseConvertDateAndTimeBehavior Tests" executed="True" result="Failure" success="False" time="0.0142" asserts="0" description="Invoke-DataverseConvertDateAndTimeBehavior Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseConvertDateAndTimeBehavior Tests.ConvertDateAndTimeBehavior SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseConvertDateAndTimeBehavior Tests.ConvertDateAndTimeBehavior SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseConvertDateAndTimeBehavior executes successfully" name="Invoke-DataverseConvertDateAndTimeBehavior Tests.ConvertDateAndTimeBehavior SDK Cmdlet.Invoke-DataverseConvertDateAndTimeBehavior executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseConvertKitToProduct.Tests.ps1" executed="True" result="Failure" success="False" time="0.0353" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseConvertKitToProduct.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseConvertKitToProduct Tests" executed="True" result="Failure" success="False" time="0.0139" asserts="0" description="Invoke-DataverseConvertKitToProduct Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseConvertKitToProduct Tests.ConvertKitToProduct SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseConvertKitToProduct Tests.ConvertKitToProduct SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseConvertKitToProduct executes successfully" name="Invoke-DataverseConvertKitToProduct Tests.ConvertKitToProduct SDK Cmdlet.Invoke-DataverseConvertKitToProduct executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseConvertOwnerTeamToAccessTeam.Tests.ps1" executed="True" result="Failure" success="False" time="0.035" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseConvertOwnerTeamToAccessTeam.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseConvertOwnerTeamToAccessTeam Tests" executed="True" result="Failure" success="False" time="0.0147" asserts="0" description="Invoke-DataverseConvertOwnerTeamToAccessTeam Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseConvertOwnerTeamToAccessTeam Tests.ConvertOwnerTeamToAccessTeam SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseConvertOwnerTeamToAccessTeam Tests.ConvertOwnerTeamToAccessTeam SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseConvertOwnerTeamToAccessTeam executes successfully" name="Invoke-DataverseConvertOwnerTeamToAccessTeam Tests.ConvertOwnerTeamToAccessTeam SDK Cmdlet.Invoke-DataverseConvertOwnerTeamToAccessTeam executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseConvertProductToKit.Tests.ps1" executed="True" result="Failure" success="False" time="0.0453" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseConvertProductToKit.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseConvertProductToKit Tests" executed="True" result="Failure" success="False" time="0.0154" asserts="0" description="Invoke-DataverseConvertProductToKit Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseConvertProductToKit Tests.ConvertProductToKit SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseConvertProductToKit Tests.ConvertProductToKit SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseConvertProductToKit executes successfully" name="Invoke-DataverseConvertProductToKit Tests.ConvertProductToKit SDK Cmdlet.Invoke-DataverseConvertProductToKit executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseConvertQuoteToSalesOrder.Tests.ps1" executed="True" result="Failure" success="False" time="0.0511" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseConvertQuoteToSalesOrder.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseConvertQuoteToSalesOrder Tests" executed="True" result="Failure" success="False" time="0.0219" asserts="0" description="Invoke-DataverseConvertQuoteToSalesOrder Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseConvertQuoteToSalesOrder Tests.ConvertQuoteToSalesOrder SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseConvertQuoteToSalesOrder Tests.ConvertQuoteToSalesOrder SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseConvertQuoteToSalesOrder converts a quote to sales order" name="Invoke-DataverseConvertQuoteToSalesOrder Tests.ConvertQuoteToSalesOrder SDK Cmdlet.Invoke-DataverseConvertQuoteToSalesOrder converts a quote to sales order" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseConvertSalesOrderToInvoice.Tests.ps1" executed="True" result="Failure" success="False" time="0.0586" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseConvertSalesOrderToInvoice.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseConvertSalesOrderToInvoice Tests" executed="True" result="Failure" success="False" time="0.0238" asserts="0" description="Invoke-DataverseConvertSalesOrderToInvoice Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseConvertSalesOrderToInvoice Tests.ConvertSalesOrderToInvoice SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseConvertSalesOrderToInvoice Tests.ConvertSalesOrderToInvoice SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseConvertSalesOrderToInvoice executes successfully" name="Invoke-DataverseConvertSalesOrderToInvoice Tests.ConvertSalesOrderToInvoice SDK Cmdlet.Invoke-DataverseConvertSalesOrderToInvoice executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCopyCampaign.Tests.ps1" executed="True" result="Failure" success="False" time="0.0541" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCopyCampaign.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCopyCampaign Tests" executed="True" result="Failure" success="False" time="0.0183" asserts="0" description="Invoke-DataverseCopyCampaign Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCopyCampaign Tests.CopyCampaign SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCopyCampaign Tests.CopyCampaign SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCopyCampaign executes successfully" name="Invoke-DataverseCopyCampaign Tests.CopyCampaign SDK Cmdlet.Invoke-DataverseCopyCampaign executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCopyCampaignResponse.Tests.ps1" executed="True" result="Failure" success="False" time="0.0345" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCopyCampaignResponse.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCopyCampaignResponse Tests" executed="True" result="Failure" success="False" time="0.0139" asserts="0" description="Invoke-DataverseCopyCampaignResponse Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCopyCampaignResponse Tests.CopyCampaignResponse SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCopyCampaignResponse Tests.CopyCampaignResponse SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCopyCampaignResponse executes successfully" name="Invoke-DataverseCopyCampaignResponse Tests.CopyCampaignResponse SDK Cmdlet.Invoke-DataverseCopyCampaignResponse executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCopyDynamicListToStatic.Tests.ps1" executed="True" result="Failure" success="False" time="0.0338" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCopyDynamicListToStatic.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCopyDynamicListToStatic Tests" executed="True" result="Failure" success="False" time="0.0134" asserts="0" description="Invoke-DataverseCopyDynamicListToStatic Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCopyDynamicListToStatic Tests.CopyDynamicListToStatic SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCopyDynamicListToStatic Tests.CopyDynamicListToStatic SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCopyDynamicListToStatic executes successfully" name="Invoke-DataverseCopyDynamicListToStatic Tests.CopyDynamicListToStatic SDK Cmdlet.Invoke-DataverseCopyDynamicListToStatic executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCopyMembersList.Tests.ps1" executed="True" result="Failure" success="False" time="0.0501" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCopyMembersList.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCopyMembersList Tests" executed="True" result="Failure" success="False" time="0.0137" asserts="0" description="Invoke-DataverseCopyMembersList Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCopyMembersList Tests.CopyMembersList SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCopyMembersList Tests.CopyMembersList SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCopyMembersList executes successfully" name="Invoke-DataverseCopyMembersList Tests.CopyMembersList SDK Cmdlet.Invoke-DataverseCopyMembersList executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCopySystemForm.Tests.ps1" executed="True" result="Failure" success="False" time="0.0416" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCopySystemForm.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCopySystemForm Tests" executed="True" result="Failure" success="False" time="0.0131" asserts="0" description="Invoke-DataverseCopySystemForm Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCopySystemForm Tests.CopySystemForm SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCopySystemForm Tests.CopySystemForm SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCopySystemForm executes successfully" name="Invoke-DataverseCopySystemForm Tests.CopySystemForm SDK Cmdlet.Invoke-DataverseCopySystemForm executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreate.Tests.ps1" executed="True" result="Failure" success="False" time="0.0344" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreate.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreate Tests" executed="True" result="Failure" success="False" time="0.0132" asserts="0" description="Invoke-DataverseCreate Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreate Tests.Create SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreate Tests.Create SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreate with Entity parameter" name="Invoke-DataverseCreate Tests.Create SDK Cmdlet.Invoke-DataverseCreate with Entity parameter" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateActivitiesList.Tests.ps1" executed="True" result="Failure" success="False" time="0.0347" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateActivitiesList.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreateActivitiesList Tests" executed="True" result="Failure" success="False" time="0.0154" asserts="0" description="Invoke-DataverseCreateActivitiesList Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreateActivitiesList Tests.CreateActivitiesList SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreateActivitiesList Tests.CreateActivitiesList SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreateActivitiesList executes successfully" name="Invoke-DataverseCreateActivitiesList Tests.CreateActivitiesList SDK Cmdlet.Invoke-DataverseCreateActivitiesList executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateAttribute.Tests.ps1" executed="True" result="Failure" success="False" time="0.0327" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateAttribute.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreateAttribute Tests" executed="True" result="Failure" success="False" time="0.0136" asserts="0" description="Invoke-DataverseCreateAttribute Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreateAttribute Tests.CreateAttribute SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreateAttribute Tests.CreateAttribute SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreateAttribute executes successfully" name="Invoke-DataverseCreateAttribute Tests.CreateAttribute SDK Cmdlet.Invoke-DataverseCreateAttribute executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateCustomerRelationships.Tests.ps1" executed="True" result="Failure" success="False" time="0.0319" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateCustomerRelationships.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreateCustomerRelationships Tests" executed="True" result="Failure" success="False" time="0.0133" asserts="0" description="Invoke-DataverseCreateCustomerRelationships Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreateCustomerRelationships Tests.CreateCustomerRelationships SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreateCustomerRelationships Tests.CreateCustomerRelationships SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreateCustomerRelationships executes successfully" name="Invoke-DataverseCreateCustomerRelationships Tests.CreateCustomerRelationships SDK Cmdlet.Invoke-DataverseCreateCustomerRelationships executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateEntity.Tests.ps1" executed="True" result="Failure" success="False" time="0.0361" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateEntity.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreateEntity Tests" executed="True" result="Failure" success="False" time="0.0178" asserts="0" description="Invoke-DataverseCreateEntity Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreateEntity Tests.CreateEntity SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreateEntity Tests.CreateEntity SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreateEntity executes successfully" name="Invoke-DataverseCreateEntity Tests.CreateEntity SDK Cmdlet.Invoke-DataverseCreateEntity executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateEntityKey.Tests.ps1" executed="True" result="Failure" success="False" time="0.0316" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateEntityKey.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreateEntityKey Tests" executed="True" result="Failure" success="False" time="0.0134" asserts="0" description="Invoke-DataverseCreateEntityKey Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreateEntityKey Tests.CreateEntityKey SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreateEntityKey Tests.CreateEntityKey SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreateEntityKey executes successfully" name="Invoke-DataverseCreateEntityKey Tests.CreateEntityKey SDK Cmdlet.Invoke-DataverseCreateEntityKey executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateException.Tests.ps1" executed="True" result="Failure" success="False" time="0.0312" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateException.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreateException Tests" executed="True" result="Failure" success="False" time="0.0131" asserts="0" description="Invoke-DataverseCreateException Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreateException Tests.CreateException SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreateException Tests.CreateException SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreateException executes successfully" name="Invoke-DataverseCreateException Tests.CreateException SDK Cmdlet.Invoke-DataverseCreateException executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateInstance.Tests.ps1" executed="True" result="Failure" success="False" time="0.031" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateInstance.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreateInstance Tests" executed="True" result="Failure" success="False" time="0.0131" asserts="0" description="Invoke-DataverseCreateInstance Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreateInstance Tests.CreateInstance SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreateInstance Tests.CreateInstance SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreateInstance executes successfully" name="Invoke-DataverseCreateInstance Tests.CreateInstance SDK Cmdlet.Invoke-DataverseCreateInstance executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateKnowledgeArticleTranslation.Tests.ps1" executed="True" result="Failure" success="False" time="0.0327" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateKnowledgeArticleTranslation.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreateKnowledgeArticleTranslation Tests" executed="True" result="Failure" success="False" time="0.0131" asserts="0" description="Invoke-DataverseCreateKnowledgeArticleTranslation Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreateKnowledgeArticleTranslation Tests.CreateKnowledgeArticleTranslation SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreateKnowledgeArticleTranslation Tests.CreateKnowledgeArticleTranslation SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreateKnowledgeArticleTranslation executes successfully" name="Invoke-DataverseCreateKnowledgeArticleTranslation Tests.CreateKnowledgeArticleTranslation SDK Cmdlet.Invoke-DataverseCreateKnowledgeArticleTranslation executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateKnowledgeArticleVersion.Tests.ps1" executed="True" result="Failure" success="False" time="0.049" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateKnowledgeArticleVersion.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreateKnowledgeArticleVersion Tests" executed="True" result="Failure" success="False" time="0.0129" asserts="0" description="Invoke-DataverseCreateKnowledgeArticleVersion Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreateKnowledgeArticleVersion Tests.CreateKnowledgeArticleVersion SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreateKnowledgeArticleVersion Tests.CreateKnowledgeArticleVersion SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreateKnowledgeArticleVersion executes successfully" name="Invoke-DataverseCreateKnowledgeArticleVersion Tests.CreateKnowledgeArticleVersion SDK Cmdlet.Invoke-DataverseCreateKnowledgeArticleVersion executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateManyToMany.Tests.ps1" executed="True" result="Failure" success="False" time="0.0316" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateManyToMany.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreateManyToMany Tests" executed="True" result="Failure" success="False" time="0.0133" asserts="0" description="Invoke-DataverseCreateManyToMany Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreateManyToMany Tests.CreateManyToMany SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreateManyToMany Tests.CreateManyToMany SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreateManyToMany executes successfully" name="Invoke-DataverseCreateManyToMany Tests.CreateManyToMany SDK Cmdlet.Invoke-DataverseCreateManyToMany executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateMultiple.Tests.ps1" executed="True" result="Failure" success="False" time="0.0334" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateMultiple.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreateMultiple Tests" executed="True" result="Failure" success="False" time="0.0151" asserts="0" description="Invoke-DataverseCreateMultiple Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreateMultiple Tests.CreateMultiple SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreateMultiple Tests.CreateMultiple SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreateMultiple executes successfully" name="Invoke-DataverseCreateMultiple Tests.CreateMultiple SDK Cmdlet.Invoke-DataverseCreateMultiple executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateOneToMany.Tests.ps1" executed="True" result="Failure" success="False" time="0.0322" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateOneToMany.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreateOneToMany Tests" executed="True" result="Failure" success="False" time="0.0135" asserts="0" description="Invoke-DataverseCreateOneToMany Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreateOneToMany Tests.CreateOneToMany SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreateOneToMany Tests.CreateOneToMany SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreateOneToMany executes successfully" name="Invoke-DataverseCreateOneToMany Tests.CreateOneToMany SDK Cmdlet.Invoke-DataverseCreateOneToMany executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateOptionSet.Tests.ps1" executed="True" result="Failure" success="False" time="0.0406" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateOptionSet.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreateOptionSet Tests" executed="True" result="Failure" success="False" time="0.0132" asserts="0" description="Invoke-DataverseCreateOptionSet Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreateOptionSet Tests.CreateOptionSet SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreateOptionSet Tests.CreateOptionSet SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreateOptionSet executes successfully" name="Invoke-DataverseCreateOptionSet Tests.CreateOptionSet SDK Cmdlet.Invoke-DataverseCreateOptionSet executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreatePolymorphicLookupAttribute.Tests.ps1" executed="True" result="Failure" success="False" time="0.033" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreatePolymorphicLookupAttribute.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreatePolymorphicLookupAttribute Tests" executed="True" result="Failure" success="False" time="0.0152" asserts="0" description="Invoke-DataverseCreatePolymorphicLookupAttribute Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreatePolymorphicLookupAttribute Tests.CreatePolymorphicLookupAttribute SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreatePolymorphicLookupAttribute Tests.CreatePolymorphicLookupAttribute SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreatePolymorphicLookupAttribute executes successfully" name="Invoke-DataverseCreatePolymorphicLookupAttribute Tests.CreatePolymorphicLookupAttribute SDK Cmdlet.Invoke-DataverseCreatePolymorphicLookupAttribute executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateWorkflowFromTemplate.Tests.ps1" executed="True" result="Failure" success="False" time="0.0317" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseCreateWorkflowFromTemplate.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseCreateWorkflowFromTemplate Tests" executed="True" result="Failure" success="False" time="0.0136" asserts="0" description="Invoke-DataverseCreateWorkflowFromTemplate Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseCreateWorkflowFromTemplate Tests.CreateWorkflowFromTemplate SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseCreateWorkflowFromTemplate Tests.CreateWorkflowFromTemplate SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseCreateWorkflowFromTemplate executes successfully" name="Invoke-DataverseCreateWorkflowFromTemplate Tests.CreateWorkflowFromTemplate SDK Cmdlet.Invoke-DataverseCreateWorkflowFromTemplate executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDelete.Tests.ps1" executed="True" result="Failure" success="False" time="0.031" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDelete.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseDelete Tests" executed="True" result="Failure" success="False" time="0.0133" asserts="0" description="Invoke-DataverseDelete Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseDelete Tests.Delete SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseDelete Tests.Delete SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseDelete with Entity parameter" name="Invoke-DataverseDelete Tests.Delete SDK Cmdlet.Invoke-DataverseDelete with Entity parameter" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeleteAndPromote.Tests.ps1" executed="True" result="Failure" success="False" time="0.0329" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeleteAndPromote.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseDeleteAndPromote Tests" executed="True" result="Failure" success="False" time="0.0132" asserts="0" description="Invoke-DataverseDeleteAndPromote Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseDeleteAndPromote Tests.DeleteAndPromote SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseDeleteAndPromote Tests.DeleteAndPromote SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseDeleteAndPromote executes successfully" name="Invoke-DataverseDeleteAndPromote Tests.DeleteAndPromote SDK Cmdlet.Invoke-DataverseDeleteAndPromote executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeleteAttribute.Tests.ps1" executed="True" result="Failure" success="False" time="0.0315" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeleteAttribute.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseDeleteAttribute Tests" executed="True" result="Failure" success="False" time="0.0135" asserts="0" description="Invoke-DataverseDeleteAttribute Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseDeleteAttribute Tests.DeleteAttribute SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseDeleteAttribute Tests.DeleteAttribute SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseDeleteAttribute executes successfully" name="Invoke-DataverseDeleteAttribute Tests.DeleteAttribute SDK Cmdlet.Invoke-DataverseDeleteAttribute executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeleteEntity.Tests.ps1" executed="True" result="Failure" success="False" time="0.0306" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeleteEntity.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseDeleteEntity Tests" executed="True" result="Failure" success="False" time="0.013" asserts="0" description="Invoke-DataverseDeleteEntity Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseDeleteEntity Tests.DeleteEntity SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseDeleteEntity Tests.DeleteEntity SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseDeleteEntity executes successfully" name="Invoke-DataverseDeleteEntity Tests.DeleteEntity SDK Cmdlet.Invoke-DataverseDeleteEntity executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeleteEntityKey.Tests.ps1" executed="True" result="Failure" success="False" time="0.0314" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeleteEntityKey.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseDeleteEntityKey Tests" executed="True" result="Failure" success="False" time="0.0134" asserts="0" description="Invoke-DataverseDeleteEntityKey Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseDeleteEntityKey Tests.DeleteEntityKey SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseDeleteEntityKey Tests.DeleteEntityKey SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseDeleteEntityKey executes successfully" name="Invoke-DataverseDeleteEntityKey Tests.DeleteEntityKey SDK Cmdlet.Invoke-DataverseDeleteEntityKey executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeleteMultiple.Tests.ps1" executed="True" result="Failure" success="False" time="0.0337" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeleteMultiple.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseDeleteMultiple Tests" executed="True" result="Failure" success="False" time="0.0136" asserts="0" description="Invoke-DataverseDeleteMultiple Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseDeleteMultiple Tests.DeleteMultiple SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseDeleteMultiple Tests.DeleteMultiple SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseDeleteMultiple executes successfully" name="Invoke-DataverseDeleteMultiple Tests.DeleteMultiple SDK Cmdlet.Invoke-DataverseDeleteMultiple executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeleteOptionValue.Tests.ps1" executed="True" result="Failure" success="False" time="0.0297" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeleteOptionValue.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseDeleteOptionValue Tests" executed="True" result="Failure" success="False" time="0.0124" asserts="0" description="Invoke-DataverseDeleteOptionValue Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseDeleteOptionValue Tests.DeleteOptionValue SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseDeleteOptionValue Tests.DeleteOptionValue SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseDeleteOptionValue executes successfully" name="Invoke-DataverseDeleteOptionValue Tests.DeleteOptionValue SDK Cmdlet.Invoke-DataverseDeleteOptionValue executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeleteRelationship.Tests.ps1" executed="True" result="Failure" success="False" time="0.0295" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeleteRelationship.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseDeleteRelationship Tests" executed="True" result="Failure" success="False" time="0.0125" asserts="0" description="Invoke-DataverseDeleteRelationship Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseDeleteRelationship Tests.DeleteRelationship SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseDeleteRelationship Tests.DeleteRelationship SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseDeleteRelationship executes successfully" name="Invoke-DataverseDeleteRelationship Tests.DeleteRelationship SDK Cmdlet.Invoke-DataverseDeleteRelationship executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeprovisionLanguage.Tests.ps1" executed="True" result="Failure" success="False" time="0.0314" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDeprovisionLanguage.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseDeprovisionLanguage Tests" executed="True" result="Failure" success="False" time="0.0146" asserts="0" description="Invoke-DataverseDeprovisionLanguage Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseDeprovisionLanguage Tests.DeprovisionLanguage SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseDeprovisionLanguage Tests.DeprovisionLanguage SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseDeprovisionLanguage executes successfully" name="Invoke-DataverseDeprovisionLanguage Tests.DeprovisionLanguage SDK Cmdlet.Invoke-DataverseDeprovisionLanguage executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDetachFromQueue.Tests.ps1" executed="True" result="Failure" success="False" time="0.0288" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDetachFromQueue.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseDetachFromQueue Tests" executed="True" result="Failure" success="False" time="0.0121" asserts="0" description="Invoke-DataverseDetachFromQueue Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseDetachFromQueue Tests.DetachFromQueue SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseDetachFromQueue Tests.DetachFromQueue SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseDetachFromQueue executes successfully" name="Invoke-DataverseDetachFromQueue Tests.DetachFromQueue SDK Cmdlet.Invoke-DataverseDetachFromQueue executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDisassociate.Tests.ps1" executed="True" result="Failure" success="False" time="0.0284" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDisassociate.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseDisassociate Tests" executed="True" result="Failure" success="False" time="0.0119" asserts="0" description="Invoke-DataverseDisassociate Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseDisassociate Tests.Disassociate SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseDisassociate Tests.Disassociate SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseDisassociate removes a many-to-many relationship" name="Invoke-DataverseDisassociate Tests.Disassociate SDK Cmdlet.Invoke-DataverseDisassociate removes a many-to-many relationship" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDistributeCampaignActivity.Tests.ps1" executed="True" result="Failure" success="False" time="0.0311" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDistributeCampaignActivity.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseDistributeCampaignActivity Tests" executed="True" result="Failure" success="False" time="0.012" asserts="0" description="Invoke-DataverseDistributeCampaignActivity Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseDistributeCampaignActivity Tests.DistributeCampaignActivity SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseDistributeCampaignActivity Tests.DistributeCampaignActivity SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseDistributeCampaignActivity executes successfully" name="Invoke-DataverseDistributeCampaignActivity Tests.DistributeCampaignActivity SDK Cmdlet.Invoke-DataverseDistributeCampaignActivity executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDownload.Tests.ps1" executed="True" result="Failure" success="False" time="0.0347" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDownload.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseDownload Tests" executed="True" result="Failure" success="False" time="0.0122" asserts="0" description="Invoke-DataverseDownload Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseDownload Tests.Download SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseDownload Tests.Download SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseDownload executes successfully" name="Invoke-DataverseDownload Tests.Download SDK Cmdlet.Invoke-DataverseDownload executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDownloadReportDefinition.Tests.ps1" executed="True" result="Failure" success="False" time="0.0286" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseDownloadReportDefinition.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseDownloadReportDefinition Tests" executed="True" result="Failure" success="False" time="0.012" asserts="0" description="Invoke-DataverseDownloadReportDefinition Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseDownloadReportDefinition Tests.DownloadReportDefinition SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseDownloadReportDefinition Tests.DownloadReportDefinition SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseDownloadReportDefinition executes successfully" name="Invoke-DataverseDownloadReportDefinition Tests.DownloadReportDefinition SDK Cmdlet.Invoke-DataverseDownloadReportDefinition executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseExecuteAsync.Tests.ps1" executed="True" result="Failure" success="False" time="0.0284" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseExecuteAsync.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseExecuteAsync Tests" executed="True" result="Failure" success="False" time="0.0121" asserts="0" description="Invoke-DataverseExecuteAsync Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseExecuteAsync Tests.ExecuteAsync SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseExecuteAsync Tests.ExecuteAsync SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseExecuteAsync executes request asynchronously" name="Invoke-DataverseExecuteAsync Tests.ExecuteAsync SDK Cmdlet.Invoke-DataverseExecuteAsync executes request asynchronously" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseExecuteWorkflow.Tests.ps1" executed="True" result="Failure" success="False" time="0.0312" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseExecuteWorkflow.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseExecuteWorkflow Tests" executed="True" result="Failure" success="False" time="0.012" asserts="0" description="Invoke-DataverseExecuteWorkflow Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseExecuteWorkflow Tests.ExecuteWorkflow SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseExecuteWorkflow Tests.ExecuteWorkflow SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseExecuteWorkflow triggers workflow execution" name="Invoke-DataverseExecuteWorkflow Tests.ExecuteWorkflow SDK Cmdlet.Invoke-DataverseExecuteWorkflow triggers workflow execution" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseExportSolution.Tests.ps1" executed="True" result="Failure" success="False" time="0.0288" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseExportSolution.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseExportSolution Tests" executed="True" result="Failure" success="False" time="0.0119" asserts="0" description="Invoke-DataverseExportSolution Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseExportSolution Tests.ExportSolution SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseExportSolution Tests.ExportSolution SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseExportSolution exports a solution" name="Invoke-DataverseExportSolution Tests.ExportSolution SDK Cmdlet.Invoke-DataverseExportSolution exports a solution" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseGrantAccess.Tests.ps1" executed="True" result="Failure" success="False" time="0.0287" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseGrantAccess.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseGrantAccess Tests" executed="True" result="Failure" success="False" time="0.0121" asserts="0" description="Invoke-DataverseGrantAccess Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseGrantAccess Tests.GrantAccess SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseGrantAccess Tests.GrantAccess SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseGrantAccess grants access to a record" name="Invoke-DataverseGrantAccess Tests.GrantAccess SDK Cmdlet.Invoke-DataverseGrantAccess grants access to a record" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseImportSolution.Tests.ps1" executed="True" result="Failure" success="False" time="0.0305" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseImportSolution.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseImportSolution Tests" executed="True" result="Failure" success="False" time="0.0143" asserts="0" description="Invoke-DataverseImportSolution Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseImportSolution Tests.ImportSolution SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseImportSolution Tests.ImportSolution SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseImportSolution imports a solution" name="Invoke-DataverseImportSolution Tests.ImportSolution SDK Cmdlet.Invoke-DataverseImportSolution imports a solution" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseInitializeFrom.Tests.ps1" executed="True" result="Failure" success="False" time="0.0301" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseInitializeFrom.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseInitializeFrom Tests" executed="True" result="Failure" success="False" time="0.0126" asserts="0" description="Invoke-DataverseInitializeFrom Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseInitializeFrom Tests.InitializeFrom SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseInitializeFrom Tests.InitializeFrom SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseInitializeFrom initializes a new record from an existing one" name="Invoke-DataverseInitializeFrom Tests.InitializeFrom SDK Cmdlet.Invoke-DataverseInitializeFrom initializes a new record from an existing one" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseLoseOpportunity.Tests.ps1" executed="True" result="Failure" success="False" time="0.0291" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseLoseOpportunity.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseLoseOpportunity Tests" executed="True" result="Failure" success="False" time="0.0125" asserts="0" description="Invoke-DataverseLoseOpportunity Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseLoseOpportunity Tests.LoseOpportunity SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseLoseOpportunity Tests.LoseOpportunity SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseLoseOpportunity marks opportunity as lost" name="Invoke-DataverseLoseOpportunity Tests.LoseOpportunity SDK Cmdlet.Invoke-DataverseLoseOpportunity marks opportunity as lost" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseMerge.Tests.ps1" executed="True" result="Failure" success="False" time="0.0342" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseMerge.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseMerge Tests" executed="True" result="Failure" success="False" time="0.0177" asserts="0" description="Invoke-DataverseMerge Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseMerge Tests.Merge SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseMerge Tests.Merge SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseMerge merges two records" name="Invoke-DataverseMerge Tests.Merge SDK Cmdlet.Invoke-DataverseMerge merges two records" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataversePickFromQueue.Tests.ps1" executed="True" result="Failure" success="False" time="0.0293" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataversePickFromQueue.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataversePickFromQueue Tests" executed="True" result="Failure" success="False" time="0.0128" asserts="0" description="Invoke-DataversePickFromQueue Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataversePickFromQueue Tests.PickFromQueue SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataversePickFromQueue Tests.PickFromQueue SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataversePickFromQueue picks item from queue" name="Invoke-DataversePickFromQueue Tests.PickFromQueue SDK Cmdlet.Invoke-DataversePickFromQueue picks item from queue" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataversePublishAllXml.Tests.ps1" executed="True" result="Failure" success="False" time="0.0275" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataversePublishAllXml.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataversePublishAllXml Tests" executed="True" result="Failure" success="False" time="0.0117" asserts="0" description="Invoke-DataversePublishAllXml Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataversePublishAllXml Tests.PublishAllXml SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataversePublishAllXml Tests.PublishAllXml SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataversePublishAllXml publishes all customizations" name="Invoke-DataversePublishAllXml Tests.PublishAllXml SDK Cmdlet.Invoke-DataversePublishAllXml publishes all customizations" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataversePublishDuplicateRule.Tests.ps1" executed="True" result="Failure" success="False" time="0.0314" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataversePublishDuplicateRule.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataversePublishDuplicateRule Tests" executed="True" result="Failure" success="False" time="0.0136" asserts="0" description="Invoke-DataversePublishDuplicateRule Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataversePublishDuplicateRule Tests.PublishDuplicateRule SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataversePublishDuplicateRule Tests.PublishDuplicateRule SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataversePublishDuplicateRule publishes a rule" name="Invoke-DataversePublishDuplicateRule Tests.PublishDuplicateRule SDK Cmdlet.Invoke-DataversePublishDuplicateRule publishes a rule" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseQualifyLead.Tests.ps1" executed="True" result="Failure" success="False" time="0.0283" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseQualifyLead.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseQualifyLead Tests" executed="True" result="Failure" success="False" time="0.0119" asserts="0" description="Invoke-DataverseQualifyLead Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseQualifyLead Tests.QualifyLead SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseQualifyLead Tests.QualifyLead SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseQualifyLead qualifies a lead" name="Invoke-DataverseQualifyLead Tests.QualifyLead SDK Cmdlet.Invoke-DataverseQualifyLead qualifies a lead" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRemoveFromQueue.Tests.ps1" executed="True" result="Failure" success="False" time="0.0276" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRemoveFromQueue.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRemoveFromQueue Tests" executed="True" result="Failure" success="False" time="0.0117" asserts="0" description="Invoke-DataverseRemoveFromQueue Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRemoveFromQueue Tests.RemoveFromQueue SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRemoveFromQueue Tests.RemoveFromQueue SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRemoveFromQueue removes item from queue" name="Invoke-DataverseRemoveFromQueue Tests.RemoveFromQueue SDK Cmdlet.Invoke-DataverseRemoveFromQueue removes item from queue" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRemoveMemberList.Tests.ps1" executed="True" result="Failure" success="False" time="0.0275" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRemoveMemberList.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRemoveMemberList Tests" executed="True" result="Failure" success="False" time="0.0117" asserts="0" description="Invoke-DataverseRemoveMemberList Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRemoveMemberList Tests.RemoveMemberList SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRemoveMemberList Tests.RemoveMemberList SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRemoveMemberList removes a member from a list" name="Invoke-DataverseRemoveMemberList Tests.RemoveMemberList SDK Cmdlet.Invoke-DataverseRemoveMemberList removes a member from a list" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRemoveSolutionComponent.Tests.ps1" executed="True" result="Failure" success="False" time="0.0294" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRemoveSolutionComponent.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRemoveSolutionComponent Tests" executed="True" result="Failure" success="False" time="0.0118" asserts="0" description="Invoke-DataverseRemoveSolutionComponent Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRemoveSolutionComponent Tests.RemoveSolutionComponent SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRemoveSolutionComponent Tests.RemoveSolutionComponent SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRemoveSolutionComponent removes a component from a solution" name="Invoke-DataverseRemoveSolutionComponent Tests.RemoveSolutionComponent SDK Cmdlet.Invoke-DataverseRemoveSolutionComponent removes a component from a solution" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseReschedule.Tests.ps1" executed="True" result="Failure" success="False" time="0.0301" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseReschedule.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseReschedule Tests" executed="True" result="Failure" success="False" time="0.0116" asserts="0" description="Invoke-DataverseReschedule Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseReschedule Tests.Reschedule SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseReschedule Tests.Reschedule SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseReschedule executes successfully" name="Invoke-DataverseReschedule Tests.Reschedule SDK Cmdlet.Invoke-DataverseReschedule executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieve.Tests.ps1" executed="True" result="Failure" success="False" time="0.0275" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieve.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRetrieve Tests" executed="True" result="Failure" success="False" time="0.0117" asserts="0" description="Invoke-DataverseRetrieve Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRetrieve Tests.Retrieve SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRetrieve Tests.Retrieve SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRetrieve with Entity parameter" name="Invoke-DataverseRetrieve Tests.Retrieve SDK Cmdlet.Invoke-DataverseRetrieve with Entity parameter" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveAllEntities.Tests.ps1" executed="True" result="Failure" success="False" time="0.0396" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveAllEntities.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRetrieveAllEntities Tests" executed="True" result="Failure" success="False" time="0.014" asserts="0" description="Invoke-DataverseRetrieveAllEntities Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRetrieveAllEntities Tests.RetrieveAllEntities SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRetrieveAllEntities Tests.RetrieveAllEntities SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRetrieveAllEntities returns entity metadata" name="Invoke-DataverseRetrieveAllEntities Tests.RetrieveAllEntities SDK Cmdlet.Invoke-DataverseRetrieveAllEntities returns entity metadata" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveEntity.Tests.ps1" executed="True" result="Failure" success="False" time="0.028" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveEntity.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRetrieveEntity Tests" executed="True" result="Failure" success="False" time="0.0118" asserts="0" description="Invoke-DataverseRetrieveEntity Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRetrieveEntity Tests.RetrieveEntity SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRetrieveEntity Tests.RetrieveEntity SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRetrieveEntity retrieves contact entity metadata" name="Invoke-DataverseRetrieveEntity Tests.RetrieveEntity SDK Cmdlet.Invoke-DataverseRetrieveEntity retrieves contact entity metadata" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveLicenseInfo.Tests.ps1" executed="True" result="Failure" success="False" time="0.0281" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveLicenseInfo.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRetrieveLicenseInfo Tests" executed="True" result="Failure" success="False" time="0.0119" asserts="0" description="Invoke-DataverseRetrieveLicenseInfo Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRetrieveLicenseInfo Tests.RetrieveLicenseInfo SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRetrieveLicenseInfo Tests.RetrieveLicenseInfo SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRetrieveLicenseInfo retrieves license information" name="Invoke-DataverseRetrieveLicenseInfo Tests.RetrieveLicenseInfo SDK Cmdlet.Invoke-DataverseRetrieveLicenseInfo retrieves license information" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveMultiple.Tests.ps1" executed="True" result="Failure" success="False" time="0.0326" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveMultiple.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRetrieveMultiple Tests" executed="True" result="Failure" success="False" time="0.0116" asserts="0" description="Invoke-DataverseRetrieveMultiple Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRetrieveMultiple Tests.RetrieveMultiple SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRetrieveMultiple Tests.RetrieveMultiple SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRetrieveMultiple with Entity parameter" name="Invoke-DataverseRetrieveMultiple Tests.RetrieveMultiple SDK Cmdlet.Invoke-DataverseRetrieveMultiple with Entity parameter" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveOptionSet.Tests.ps1" executed="True" result="Failure" success="False" time="0.0283" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveOptionSet.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRetrieveOptionSet Tests" executed="True" result="Failure" success="False" time="0.0118" asserts="0" description="Invoke-DataverseRetrieveOptionSet Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRetrieveOptionSet Tests.RetrieveOptionSet SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRetrieveOptionSet Tests.RetrieveOptionSet SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRetrieveOptionSet retrieves option set metadata" name="Invoke-DataverseRetrieveOptionSet Tests.RetrieveOptionSet SDK Cmdlet.Invoke-DataverseRetrieveOptionSet retrieves option set metadata" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveOrganizationResources.Tests.ps1" executed="True" result="Failure" success="False" time="0.0315" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveOrganizationResources.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRetrieveOrganizationResources Tests" executed="True" result="Failure" success="False" time="0.012" asserts="0" description="Invoke-DataverseRetrieveOrganizationResources Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRetrieveOrganizationResources Tests.RetrieveOrganizationResources SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRetrieveOrganizationResources Tests.RetrieveOrganizationResources SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRetrieveOrganizationResources retrieves organization resource limits" name="Invoke-DataverseRetrieveOrganizationResources Tests.RetrieveOrganizationResources SDK Cmdlet.Invoke-DataverseRetrieveOrganizationResources retrieves organization resource limits" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrievePrincipalAccess.Tests.ps1" executed="True" result="Failure" success="False" time="0.0299" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrievePrincipalAccess.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRetrievePrincipalAccess Tests" executed="True" result="Failure" success="False" time="0.0123" asserts="0" description="Invoke-DataverseRetrievePrincipalAccess Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRetrievePrincipalAccess Tests.RetrievePrincipalAccess SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRetrievePrincipalAccess Tests.RetrievePrincipalAccess SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRetrievePrincipalAccess retrieves access rights" name="Invoke-DataverseRetrievePrincipalAccess Tests.RetrievePrincipalAccess SDK Cmdlet.Invoke-DataverseRetrievePrincipalAccess retrieves access rights" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveProvisionedLanguages.Tests.ps1" executed="True" result="Failure" success="False" time="0.0304" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveProvisionedLanguages.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRetrieveProvisionedLanguages Tests" executed="True" result="Failure" success="False" time="0.012" asserts="0" description="Invoke-DataverseRetrieveProvisionedLanguages Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRetrieveProvisionedLanguages Tests.RetrieveProvisionedLanguages SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRetrieveProvisionedLanguages Tests.RetrieveProvisionedLanguages SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRetrieveProvisionedLanguages retrieves provisioned languages" name="Invoke-DataverseRetrieveProvisionedLanguages Tests.RetrieveProvisionedLanguages SDK Cmdlet.Invoke-DataverseRetrieveProvisionedLanguages retrieves provisioned languages" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveRelationship.Tests.ps1" executed="True" result="Failure" success="False" time="0.0311" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveRelationship.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRetrieveRelationship Tests" executed="True" result="Failure" success="False" time="0.0117" asserts="0" description="Invoke-DataverseRetrieveRelationship Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRetrieveRelationship Tests.RetrieveRelationship SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRetrieveRelationship Tests.RetrieveRelationship SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRetrieveRelationship retrieves relationship metadata" name="Invoke-DataverseRetrieveRelationship Tests.RetrieveRelationship SDK Cmdlet.Invoke-DataverseRetrieveRelationship retrieves relationship metadata" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveTimestamp.Tests.ps1" executed="True" result="Failure" success="False" time="0.0281" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveTimestamp.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRetrieveTimestamp Tests" executed="True" result="Failure" success="False" time="0.0119" asserts="0" description="Invoke-DataverseRetrieveTimestamp Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRetrieveTimestamp Tests.RetrieveTimestamp SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRetrieveTimestamp Tests.RetrieveTimestamp SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRetrieveTimestamp retrieves server timestamp" name="Invoke-DataverseRetrieveTimestamp Tests.RetrieveTimestamp SDK Cmdlet.Invoke-DataverseRetrieveTimestamp retrieves server timestamp" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveVersion.Tests.ps1" executed="True" result="Failure" success="False" time="0.034" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRetrieveVersion.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRetrieveVersion Tests" executed="True" result="Failure" success="False" time="0.015" asserts="0" description="Invoke-DataverseRetrieveVersion Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRetrieveVersion Tests.RetrieveVersion SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRetrieveVersion Tests.RetrieveVersion SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRetrieveVersion returns version information" name="Invoke-DataverseRetrieveVersion Tests.RetrieveVersion SDK Cmdlet.Invoke-DataverseRetrieveVersion returns version information" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRevokeAccess.Tests.ps1" executed="True" result="Failure" success="False" time="0.0279" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseRevokeAccess.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseRevokeAccess Tests" executed="True" result="Failure" success="False" time="0.0117" asserts="0" description="Invoke-DataverseRevokeAccess Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseRevokeAccess Tests.RevokeAccess SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseRevokeAccess Tests.RevokeAccess SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseRevokeAccess revokes access to a record" name="Invoke-DataverseRevokeAccess Tests.RevokeAccess SDK Cmdlet.Invoke-DataverseRevokeAccess revokes access to a record" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseSendEmail.Tests.ps1" executed="True" result="Failure" success="False" time="0.0283" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseSendEmail.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseSendEmail Tests" executed="True" result="Failure" success="False" time="0.012" asserts="0" description="Invoke-DataverseSendEmail Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseSendEmail Tests.SendEmail SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseSendEmail Tests.SendEmail SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseSendEmail sends an email" name="Invoke-DataverseSendEmail Tests.SendEmail SDK Cmdlet.Invoke-DataverseSendEmail sends an email" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseSetParentSystemUser.Tests.ps1" executed="True" result="Failure" success="False" time="0.0346" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseSetParentSystemUser.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseSetParentSystemUser Tests" executed="True" result="Failure" success="False" time="0.0151" asserts="0" description="Invoke-DataverseSetParentSystemUser Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseSetParentSystemUser Tests.SetParentSystemUser SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseSetParentSystemUser Tests.SetParentSystemUser SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseSetParentSystemUser sets parent system user" name="Invoke-DataverseSetParentSystemUser Tests.SetParentSystemUser SDK Cmdlet.Invoke-DataverseSetParentSystemUser sets parent system user" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseSetState.Tests.ps1" executed="True" result="Failure" success="False" time="0.0284" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseSetState.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseSetState Tests" executed="True" result="Failure" success="False" time="0.012" asserts="0" description="Invoke-DataverseSetState Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseSetState Tests.SetState SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseSetState Tests.SetState SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseSetState changes record state" name="Invoke-DataverseSetState Tests.SetState SDK Cmdlet.Invoke-DataverseSetState changes record state" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseSetStateDynamicEntity.Tests.ps1" executed="True" result="Failure" success="False" time="0.0292" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseSetStateDynamicEntity.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseSetStateDynamicEntity Tests" executed="True" result="Failure" success="False" time="0.0124" asserts="0" description="Invoke-DataverseSetStateDynamicEntity Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseSetStateDynamicEntity Tests.SetStateDynamicEntity SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseSetStateDynamicEntity Tests.SetStateDynamicEntity SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseSetStateDynamicEntity executes successfully" name="Invoke-DataverseSetStateDynamicEntity Tests.SetStateDynamicEntity SDK Cmdlet.Invoke-DataverseSetStateDynamicEntity executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseUpdate.Tests.ps1" executed="True" result="Failure" success="False" time="0.0283" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseUpdate.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseUpdate Tests" executed="True" result="Failure" success="False" time="0.0121" asserts="0" description="Invoke-DataverseUpdate Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseUpdate Tests.Update SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseUpdate Tests.Update SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseUpdate with Entity parameter" name="Invoke-DataverseUpdate Tests.Update SDK Cmdlet.Invoke-DataverseUpdate with Entity parameter" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseUpdateMultiple.Tests.ps1" executed="True" result="Failure" success="False" time="0.0312" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseUpdateMultiple.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseUpdateMultiple Tests" executed="True" result="Failure" success="False" time="0.0123" asserts="0" description="Invoke-DataverseUpdateMultiple Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseUpdateMultiple Tests.UpdateMultiple SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseUpdateMultiple Tests.UpdateMultiple SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseUpdateMultiple executes successfully" name="Invoke-DataverseUpdateMultiple Tests.UpdateMultiple SDK Cmdlet.Invoke-DataverseUpdateMultiple executes successfully" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseWhoAmI.Tests.ps1" executed="True" result="Failure" success="False" time="0.0281" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseWhoAmI.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseWhoAmI Tests" executed="True" result="Failure" success="False" time="0.0121" asserts="0" description="Invoke-DataverseWhoAmI Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseWhoAmI Tests.WhoAmI SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseWhoAmI Tests.WhoAmI SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseWhoAmI returns valid response" name="Invoke-DataverseWhoAmI Tests.WhoAmI SDK Cmdlet.Invoke-DataverseWhoAmI returns valid response" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseWinOpportunity.Tests.ps1" executed="True" result="Failure" success="False" time="0.028" asserts="0" description="/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/sdk/Invoke-DataverseWinOpportunity.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Invoke-DataverseWinOpportunity Tests" executed="True" result="Failure" success="False" time="0.0118" asserts="0" description="Invoke-DataverseWinOpportunity Tests">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-DataverseWinOpportunity Tests.WinOpportunity SDK Cmdlet" executed="True" result="Failure" success="False" time="0" asserts="0" description="Invoke-DataverseWinOpportunity Tests.WinOpportunity SDK Cmdlet">
+                <results>
+                  <test-case description="Invoke-DataverseWinOpportunity marks opportunity as won" name="Invoke-DataverseWinOpportunity Tests.WinOpportunity SDK Cmdlet.Invoke-DataverseWinOpportunity marks opportunity as won" time="0" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>This test should run but it did not. Most likely a setup in some parent block failed.</message>
+                      <stack-trace />
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>
