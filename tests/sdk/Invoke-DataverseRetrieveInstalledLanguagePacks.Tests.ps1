@@ -1,23 +1,23 @@
 . $PSScriptRoot/../Common.ps1
 
-Describe "Invoke-DataverseRetrieveVersion Tests" {
+Describe "Invoke-DataverseRetrieveInstalledLanguagePacks Tests" {
 
     BeforeAll {
         $script:conn = getMockConnection
     }
 
-    Context "RetrieveVersionRequest SDK Cmdlet" {
+    Context "RetrieveInstalledLanguagePacks SDK Cmdlet" {
 
-        It "Invoke-DataverseRetrieveVersion executes successfully" {
+        It "Invoke-DataverseRetrieveInstalledLanguagePacks executes successfully" {
             $proxy = Get-ProxyService -Connection $script:conn
-            $proxy.StubResponse("Microsoft.Xrm.Sdk.Messages.RetrieveVersionRequest", {
+            $proxy.StubResponse("Microsoft.Crm.Sdk.Messages.RetrieveInstalledLanguagePacksRequest", {
                 param($request)
                 
                 # Validate request type
-                $request.GetType().FullName | Should -Match "RetrieveVersionRequest"
+                $request.GetType().FullName | Should -Match "RetrieveInstalledLanguagePacks"
                 
                 # Create response
-                $responseType = "Microsoft.Xrm.Sdk.Messages.RetrieveVersionResponse" -as [Type]
+                $responseType = "Microsoft.Crm.Sdk.Messages.RetrieveInstalledLanguagePacksResponse" -as [Type]
                 if ($responseType) {
                     $response = New-Object $responseType
                 } else {
@@ -27,14 +27,14 @@ Describe "Invoke-DataverseRetrieveVersion Tests" {
             })
             
             # Call cmdlet with -Confirm:$false to avoid prompts
-            $response = Invoke-DataverseRetrieveVersion -Connection $script:conn -Confirm:$false
+            $response = Invoke-DataverseRetrieveInstalledLanguagePacks -Connection $script:conn -Confirm:$false
             
             # Verify response
             $response | Should -Not -BeNull
             
             # Verify request via proxy
             $proxy.LastRequest | Should -Not -BeNull
-            $proxy.LastRequest.GetType().FullName | Should -Match "RetrieveVersionRequest"
+            $proxy.LastRequest.GetType().FullName | Should -Match "RetrieveInstalledLanguagePacks"
         }
 
     }

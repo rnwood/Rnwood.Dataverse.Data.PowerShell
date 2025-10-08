@@ -1,23 +1,23 @@
 . $PSScriptRoot/../Common.ps1
 
-Describe "Invoke-DataverseRetrieveVersion Tests" {
+Describe "Invoke-DataverseRetrieveMembersBulkOperation Tests" {
 
     BeforeAll {
         $script:conn = getMockConnection
     }
 
-    Context "RetrieveVersionRequest SDK Cmdlet" {
+    Context "RetrieveMembersBulkOperation SDK Cmdlet" {
 
-        It "Invoke-DataverseRetrieveVersion executes successfully" {
+        It "Invoke-DataverseRetrieveMembersBulkOperation executes successfully" {
             $proxy = Get-ProxyService -Connection $script:conn
-            $proxy.StubResponse("Microsoft.Xrm.Sdk.Messages.RetrieveVersionRequest", {
+            $proxy.StubResponse("Microsoft.Crm.Sdk.Messages.RetrieveMembersBulkOperationRequest", {
                 param($request)
                 
                 # Validate request type
-                $request.GetType().FullName | Should -Match "RetrieveVersionRequest"
+                $request.GetType().FullName | Should -Match "RetrieveMembersBulkOperation"
                 
                 # Create response
-                $responseType = "Microsoft.Xrm.Sdk.Messages.RetrieveVersionResponse" -as [Type]
+                $responseType = "Microsoft.Crm.Sdk.Messages.RetrieveMembersBulkOperationResponse" -as [Type]
                 if ($responseType) {
                     $response = New-Object $responseType
                 } else {
@@ -27,14 +27,14 @@ Describe "Invoke-DataverseRetrieveVersion Tests" {
             })
             
             # Call cmdlet with -Confirm:$false to avoid prompts
-            $response = Invoke-DataverseRetrieveVersion -Connection $script:conn -Confirm:$false
+            $response = Invoke-DataverseRetrieveMembersBulkOperation -Connection $script:conn -Confirm:$false
             
             # Verify response
             $response | Should -Not -BeNull
             
             # Verify request via proxy
             $proxy.LastRequest | Should -Not -BeNull
-            $proxy.LastRequest.GetType().FullName | Should -Match "RetrieveVersionRequest"
+            $proxy.LastRequest.GetType().FullName | Should -Match "RetrieveMembersBulkOperation"
         }
 
     }

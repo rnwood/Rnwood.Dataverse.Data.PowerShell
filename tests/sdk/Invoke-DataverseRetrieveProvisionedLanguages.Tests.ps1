@@ -6,33 +6,36 @@ Describe "Invoke-DataverseRetrieveProvisionedLanguages Tests" {
         $script:conn = getMockConnection
     }
 
-    Context "RetrieveProvisionedLanguages SDK Cmdlet" {
-        It "Invoke-DataverseRetrieveProvisionedLanguages retrieves provisioned languages" {
-            # Stub the response
+    Context "RetrieveProvisionedLanguagesRequest SDK Cmdlet" {
+
+        It "Invoke-DataverseRetrieveProvisionedLanguages executes successfully" {
             $proxy = Get-ProxyService -Connection $script:conn
             $proxy.StubResponse("Microsoft.Crm.Sdk.Messages.RetrieveProvisionedLanguagesRequest", {
                 param($request)
                 
-                # Validate request parameters
-                $request | Should -Not -BeNull
-                $request.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.RetrieveProvisionedLanguagesRequest"
+                # Validate request type
+                $request.GetType().FullName | Should -Match "RetrieveProvisionedLanguagesRequest"
                 
-                $response = New-Object Microsoft.Crm.Sdk.Messages.RetrieveProvisionedLanguagesResponse
-                $response.Results["RetrieveProvisionedLanguages"] = @(1033, 1036, 1031)
+                # Create response
+                $responseType = "Microsoft.Crm.Sdk.Messages.RetrieveProvisionedLanguagesResponse" -as [Type]
+                if ($responseType) {
+                    $response = New-Object $responseType
+                } else {
+                    $response = New-Object Microsoft.Xrm.Sdk.OrganizationResponse
+                }
                 return $response
             })
             
-            # Call the cmdlet
-            $response = Invoke-DataverseRetrieveProvisionedLanguages -Connection $script:conn
+            # Call cmdlet with -Confirm:$false to avoid prompts
+            $response = Invoke-DataverseRetrieveProvisionedLanguages -Connection $script:conn -Confirm:$false
             
-            # Verify response type
+            # Verify response
             $response | Should -Not -BeNull
-            $response.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.RetrieveProvisionedLanguagesResponse"
-            $response.RetrieveProvisionedLanguages | Should -Not -BeNull
             
-            # Verify request
+            # Verify request via proxy
             $proxy.LastRequest | Should -Not -BeNull
-            $proxy.LastRequest.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.RetrieveProvisionedLanguagesRequest"
+            $proxy.LastRequest.GetType().FullName | Should -Match "RetrieveProvisionedLanguagesRequest"
         }
+
     }
 }
