@@ -15,7 +15,8 @@ Contains the data that is needed to remove members from a team.
 ## SYNTAX
 
 ```
-Invoke-DataverseRemoveMembersTeam -Connection <ServiceClient> -TeamId <Guid> -MemberIds <Guid>
+Invoke-DataverseRemoveMembersTeam [-TeamId <Guid>] [-MemberIds <Guid[]>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,6 +31,21 @@ PS C:\> Invoke-DataverseRemoveMembersTeam -Connection <ServiceClient> -TeamId <G
 
 ## PARAMETERS
 
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -38,7 +54,22 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MemberIds
+Gets or sets an array of IDs of the users to be removed from the team.
+
+```yaml
+Type: Guid[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -60,13 +91,28 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -MemberIds
-Gets or sets an array of IDs of the users to be removed from the team.
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
-Type: Guid
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
 
 Required: False
 Position: Named
@@ -78,15 +124,12 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
-Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
-
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.RemoveMembersTeamResponse
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RemoveMembersTeamResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RemoveMembersTeamResponse)
+### System.Object
 ## NOTES
 
 ## RELATED LINKS

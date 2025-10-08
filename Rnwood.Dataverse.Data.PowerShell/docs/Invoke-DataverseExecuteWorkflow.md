@@ -8,18 +8,20 @@ schema: 2.0.0
 # Invoke-DataverseExecuteWorkflow
 
 ## SYNOPSIS
-Contains the data that’s needed to execute a workflow.
+Contains the data that's needed to execute a workflow.
 
 [Microsoft Learn: Microsoft.Crm.Sdk.Messages.ExecuteWorkflowRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ExecuteWorkflowRequest)
 
 ## SYNTAX
 
 ```
-Invoke-DataverseExecuteWorkflow -Connection <ServiceClient> -EntityId <Guid> -WorkflowId <Guid> -InputArguments <InputArgumentCollection>
+Invoke-DataverseExecuteWorkflow [-EntityId <Guid>] [-WorkflowId <Guid>]
+ [-InputArguments <InputArgumentCollection>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Contains the data that’s needed to execute a workflow.
+Contains the data that's needed to execute a workflow.
 
 ## EXAMPLES
 
@@ -30,26 +32,26 @@ PS C:\> Invoke-DataverseExecuteWorkflow -Connection <ServiceClient> -EntityId <G
 
 ## PARAMETERS
 
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
-Type: ServiceClient
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
+Aliases: cf
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -EntityId
-Gets the of the newly created table.
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
-Type: Guid
+Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
@@ -60,8 +62,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WorkflowId
-Gets or sets the ID of the workflow to execute. Required.
+### -EntityId
+Gets the of the newly created table.
 
 ```yaml
 Type: Guid
@@ -90,18 +92,60 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WorkflowId
+Gets or sets the ID of the workflow to execute. Required.
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
-
-Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
 
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.ExecuteWorkflowResponse
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ExecuteWorkflowResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ExecuteWorkflowResponse)
+### System.Object
 ## NOTES
 
 ## RELATED LINKS

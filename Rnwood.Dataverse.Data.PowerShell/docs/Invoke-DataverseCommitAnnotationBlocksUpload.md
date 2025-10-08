@@ -15,7 +15,10 @@ Contains the data needed to commit the uploaded data blocks to the annotation st
 ## SYNTAX
 
 ```
-Invoke-DataverseCommitAnnotationBlocksUpload -Connection <ServiceClient> -Target <PSObject> -TargetTableName <String> -TargetIgnoreProperties <String[]> -TargetLookupColumns <Hashtable> -BlockList <String[]> -FileContinuationToken <String>
+Invoke-DataverseCommitAnnotationBlocksUpload -Target <PSObject> -TargetTableName <String>
+ [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>] [-BlockList <String[]>]
+ [-FileContinuationToken <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,6 +33,36 @@ PS C:\> Invoke-DataverseCommitAnnotationBlocksUpload -Connection <ServiceClient>
 
 ## PARAMETERS
 
+### -BlockList
+Gets or sets the IDs of the uploaded data blocks, in the correct sequence, that will result in the final annotation when the data blocks are combined.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -38,7 +71,22 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FileContinuationToken
+Gets or sets a token that uniquely identifies a sequence of related data uploads.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -56,22 +104,7 @@ Aliases:
 Required: True
 Position: Named
 Default value: None
-Accept pipeline input: True
-Accept wildcard characters: False
-```
-
-### -TargetTableName
-Gets or sets the target entity. The logical name of the table/entity type for the Target parameter.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 
@@ -105,13 +138,28 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -BlockList
-Gets or sets the IDs of the uploaded data blocks, in the correct sequence, that will result in the final annotation when the data blocks are combined.
+### -TargetTableName
+Gets or sets the target entity. The logical name of the table/entity type for the Target parameter.
 
 ```yaml
-Type: String[]
+Type: String
 Parameter Sets: (All)
 Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
 
 Required: False
 Position: Named
@@ -120,13 +168,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -FileContinuationToken
-Gets or sets a token that uniquely identifies a sequence of related data uploads.
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: String
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases:
+Aliases: proga
 
 Required: False
 Position: Named
@@ -138,15 +186,12 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
-Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
-
 ## INPUTS
 
-### None
+### System.Management.Automation.PSObject
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.CommitAnnotationBlocksUploadResponse
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CommitAnnotationBlocksUploadResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.CommitAnnotationBlocksUploadResponse)
+### System.Object
 ## NOTES
 
 ## RELATED LINKS

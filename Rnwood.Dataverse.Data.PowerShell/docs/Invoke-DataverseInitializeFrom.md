@@ -15,7 +15,9 @@ Contains the data that is needed to initialize a new record from an existing rec
 ## SYNTAX
 
 ```
-Invoke-DataverseInitializeFrom -Connection <ServiceClient> -EntityMoniker <PSObject> -TargetEntityName <String> -TargetFieldType <TargetFieldType> -SkipParentalRelationshipMapping <Boolean>
+Invoke-DataverseInitializeFrom [-EntityMoniker <PSObject>] [-TargetEntityName <String>]
+ [-TargetFieldType <TargetFieldType>] [-SkipParentalRelationshipMapping <Boolean>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,6 +32,21 @@ PS C:\> Invoke-DataverseInitializeFrom -Connection <ServiceClient> -EntityMonike
 
 ## PARAMETERS
 
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -38,7 +55,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -50,6 +67,21 @@ Gets or sets the record that is the source for initializing. Accepts PSObject wi
 
 ```yaml
 Type: PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SkipParentalRelationshipMapping
+Gets or sets the SkipParentalRelationshipMapping for the request.
+
+```yaml
+Type: Boolean
 Parameter Sets: (All)
 Aliases:
 
@@ -82,6 +114,7 @@ Gets or sets which attributes are to be initialized in the initialized instance.
 Type: TargetFieldType
 Parameter Sets: (All)
 Aliases:
+Accepted values: All, ValidForCreate, ValidForUpdate, ValidForRead
 
 Required: False
 Position: Named
@@ -90,13 +123,28 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SkipParentalRelationshipMapping
-Gets or sets the SkipParentalRelationshipMapping for the request.
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
-Type: Boolean
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
 
 Required: False
 Position: Named
@@ -108,15 +156,12 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
-Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
-
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.InitializeFromResponse
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.InitializeFromResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.InitializeFromResponse)
+### System.Object
 ## NOTES
 
 ## RELATED LINKS

@@ -8,18 +8,21 @@ schema: 2.0.0
 # Invoke-DataverseMerge
 
 ## SYNOPSIS
-Contains the data that’s needed to merge the information from two entity records of the same type.
+Contains the data that's needed to merge the information from two entity records of the same type.
 
 [Microsoft Learn: Microsoft.Crm.Sdk.Messages.MergeRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.MergeRequest)
 
 ## SYNTAX
 
 ```
-Invoke-DataverseMerge -Connection <ServiceClient> -Target <PSObject> -SubordinateId <Guid> -UpdateContent <PSObject> -UpdateContentTableName <String> -UpdateContentIgnoreProperties <String[]> -UpdateContentLookupColumns <Hashtable> -PerformParentingChecks <Boolean>
+Invoke-DataverseMerge -Target <PSObject> [-SubordinateId <Guid>] [-UpdateContent <PSObject>]
+ [-UpdateContentTableName <String>] [-UpdateContentIgnoreProperties <String[]>]
+ [-UpdateContentLookupColumns <Hashtable>] [-PerformParentingChecks <Boolean>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Contains the data that’s needed to merge the information from two entity records of the same type.
+Contains the data that's needed to merge the information from two entity records of the same type.
 
 ## EXAMPLES
 
@@ -30,6 +33,21 @@ PS C:\> Invoke-DataverseMerge -Connection <ServiceClient> -Target <PSObject> -Su
 
 ## PARAMETERS
 
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -38,25 +56,25 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Target
-Gets or sets the target of the merge operation. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+### -PerformParentingChecks
+Gets or sets a value that indicates whether to check if the parent information is different for the two entity records. Required.
 
 ```yaml
-Type: PSObject
+Type: Boolean
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
-Accept pipeline input: True
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
@@ -75,26 +93,26 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -UpdateContent
-Gets or sets additional entity attributes to be set during the merge operation for accounts, contacts, or leads. This property is not applied when merging incidents. Optional. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
+### -Target
+Gets or sets the target of the merge operation. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject
 Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 
-### -UpdateContentTableName
-Gets or sets additional entity attributes to be set during the merge operation for accounts, contacts, or leads. This property is not applied when merging incidents. Optional. The logical name of the table/entity type for the UpdateContent parameter.
+### -UpdateContent
+Gets or sets additional entity attributes to be set during the merge operation for accounts, contacts, or leads. This property is not applied when merging incidents. Optional. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
 
 ```yaml
-Type: String
+Type: PSObject
 Parameter Sets: (All)
 Aliases:
 
@@ -135,13 +153,43 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -PerformParentingChecks
-Gets or sets a value that indicates whether to check if the parent information is different for the two entity records. Required.
+### -UpdateContentTableName
+Gets or sets additional entity attributes to be set during the merge operation for accounts, contacts, or leads. This property is not applied when merging incidents. Optional. The logical name of the table/entity type for the UpdateContent parameter.
 
 ```yaml
-Type: Boolean
+Type: String
 Parameter Sets: (All)
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
 
 Required: False
 Position: Named
@@ -153,15 +201,12 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
-Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
-
 ## INPUTS
 
-### None
+### System.Management.Automation.PSObject
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.MergeResponse
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.MergeResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.MergeResponse)
+### System.Object
 ## NOTES
 
 ## RELATED LINKS

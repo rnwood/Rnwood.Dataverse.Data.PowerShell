@@ -15,7 +15,10 @@ Contains the data that is needed to set the state of an opportunity to Won.
 ## SYNTAX
 
 ```
-Invoke-DataverseWinOpportunity -Connection <ServiceClient> -OpportunityClose <PSObject> -OpportunityCloseTableName <String> -OpportunityCloseIgnoreProperties <String[]> -OpportunityCloseLookupColumns <Hashtable> -Status <OptionSetValue>
+Invoke-DataverseWinOpportunity [-OpportunityClose <PSObject>] [-OpportunityCloseTableName <String>]
+ [-OpportunityCloseIgnoreProperties <String[]>] [-OpportunityCloseLookupColumns <Hashtable>]
+ [-Status <OptionSetValue>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,6 +33,21 @@ PS C:\> Invoke-DataverseWinOpportunity -Connection <ServiceClient> -OpportunityC
 
 ## PARAMETERS
 
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -38,7 +56,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -50,21 +68,6 @@ Gets or sets the opportunity close activity associated with this state change. R
 
 ```yaml
 Type: PSObject
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -OpportunityCloseTableName
-Gets or sets the opportunity close activity associated with this state change. Required. The logical name of the table/entity type for the OpportunityClose parameter.
-
-```yaml
-Type: String
 Parameter Sets: (All)
 Aliases:
 
@@ -105,6 +108,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -OpportunityCloseTableName
+Gets or sets the opportunity close activity associated with this state change. Required. The logical name of the table/entity type for the OpportunityClose parameter.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Status
 Gets or sets a new status of the opportunity. Required.
 
@@ -120,18 +138,45 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
-
-Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
 
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.WinOpportunityResponse
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.WinOpportunityResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.WinOpportunityResponse)
+### System.Object
 ## NOTES
 
 ## RELATED LINKS

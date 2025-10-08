@@ -15,7 +15,10 @@ Contains the data that is needed to detect and retrieve duplicates for a specifi
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveDuplicates -Connection <ServiceClient> -BusinessEntity <PSObject> -BusinessEntityTableName <String> -BusinessEntityIgnoreProperties <String[]> -BusinessEntityLookupColumns <Hashtable> -MatchingEntityName <String> -PagingInfo <PagingInfo>
+Invoke-DataverseRetrieveDuplicates [-BusinessEntity <PSObject>] [-BusinessEntityTableName <String>]
+ [-BusinessEntityIgnoreProperties <String[]>] [-BusinessEntityLookupColumns <Hashtable>]
+ [-MatchingEntityName <String>] [-PagingInfo <PagingInfo>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,41 +33,11 @@ PS C:\> Invoke-DataverseRetrieveDuplicates -Connection <ServiceClient> -Business
 
 ## PARAMETERS
 
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
-
-```yaml
-Type: ServiceClient
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -BusinessEntity
 Gets or sets a record for which the duplicates are retrieved. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
 
 ```yaml
 Type: PSObject
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -BusinessEntityTableName
-Gets or sets a record for which the duplicates are retrieved. Required. The logical name of the table/entity type for the BusinessEntity parameter.
-
-```yaml
-Type: String
 Parameter Sets: (All)
 Aliases:
 
@@ -105,6 +78,51 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -BusinessEntityTableName
+Gets or sets a record for which the duplicates are retrieved. Required. The logical name of the table/entity type for the BusinessEntity parameter.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+
+```yaml
+Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -MatchingEntityName
 Gets or sets a name of the matching entity type. Required.
 
@@ -135,18 +153,45 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
-
-Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
 
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.RetrieveDuplicatesResponse
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveDuplicatesResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveDuplicatesResponse)
+### System.Object
 ## NOTES
 
 ## RELATED LINKS

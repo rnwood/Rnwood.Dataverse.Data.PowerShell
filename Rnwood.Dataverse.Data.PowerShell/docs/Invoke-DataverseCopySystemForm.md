@@ -15,7 +15,9 @@ Contains the data that is needed to create a new form for a table that is based 
 ## SYNTAX
 
 ```
-Invoke-DataverseCopySystemForm -Connection <ServiceClient> -Target <PSObject> -TargetTableName <String> -TargetIgnoreProperties <String[]> -TargetLookupColumns <Hashtable> -SourceId <Guid>
+Invoke-DataverseCopySystemForm -Target <PSObject> -TargetTableName <String>
+ [-TargetIgnoreProperties <String[]>] [-TargetLookupColumns <Hashtable>] [-SourceId <Guid>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,6 +32,21 @@ PS C:\> Invoke-DataverseCopySystemForm -Connection <ServiceClient> -Target <PSOb
 
 ## PARAMETERS
 
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -38,7 +55,22 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SourceId
+Gets or sets the ID value of the form to copy. Required.
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -56,22 +88,7 @@ Aliases:
 Required: True
 Position: Named
 Default value: None
-Accept pipeline input: True
-Accept wildcard characters: False
-```
-
-### -TargetTableName
-Gets or sets the that the original system form should be copied to. Optional. The logical name of the table/entity type for the Target parameter.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 
@@ -105,13 +122,43 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SourceId
-Gets or sets the ID value of the form to copy. Required.
+### -TargetTableName
+Gets or sets the that the original system form should be copied to. Optional. The logical name of the table/entity type for the Target parameter.
 
 ```yaml
-Type: Guid
+Type: String
 Parameter Sets: (All)
 Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
 
 Required: False
 Position: Named
@@ -123,15 +170,12 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
-Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
-
 ## INPUTS
 
-### None
+### System.Management.Automation.PSObject
 ## OUTPUTS
 
-### Microsoft.Crm.Sdk.Messages.CopySystemFormResponse
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CopySystemFormResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.CopySystemFormResponse)
+### System.Object
 ## NOTES
 
 ## RELATED LINKS
