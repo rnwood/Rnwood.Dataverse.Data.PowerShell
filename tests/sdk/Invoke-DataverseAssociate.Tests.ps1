@@ -7,7 +7,6 @@ Describe "Invoke-DataverseAssociate Tests" {
     }
 
     Context "Associate SDK Cmdlet" {
-
         It "Invoke-DataverseAssociate creates a many-to-many relationship" {
             $contact1Id = [Guid]::NewGuid()
             $contact2Id = [Guid]::NewGuid()
@@ -47,7 +46,5 @@ Describe "Invoke-DataverseAssociate Tests" {
             $proxy.LastRequest.Target.Id | Should -Be $contact1Id
             $proxy.LastRequest.Relationship.SchemaName | Should -Be "contact_contact"
         }
-    }
-
     }
 }

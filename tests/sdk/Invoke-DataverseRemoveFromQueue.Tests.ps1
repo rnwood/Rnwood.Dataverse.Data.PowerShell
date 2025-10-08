@@ -7,7 +7,6 @@ Describe "Invoke-DataverseRemoveFromQueue Tests" {
     }
 
     Context "RemoveFromQueue SDK Cmdlet" {
-
         It "Invoke-DataverseRemoveFromQueue removes item from queue" {
             $queueItemId = [Guid]::NewGuid()
             
@@ -37,7 +36,5 @@ Describe "Invoke-DataverseRemoveFromQueue Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.QueueItemId | Should -Be $queueItemId
         }
-    }
-
     }
 }

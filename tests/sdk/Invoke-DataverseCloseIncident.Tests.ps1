@@ -7,7 +7,6 @@ Describe "Invoke-DataverseCloseIncident Tests" {
     }
 
     Context "CloseIncident SDK Cmdlet" {
-
         It "Invoke-DataverseCloseIncident closes an incident (case)" {
             $incidentId = [Guid]::NewGuid()
             
@@ -32,7 +31,5 @@ Describe "Invoke-DataverseCloseIncident Tests" {
             $proxy.LastRequest.GetType().Name | Should -Be "CloseIncidentRequest"
             $proxy.LastRequest.Status | Should -Be -1
         }
-    }
-
     }
 }

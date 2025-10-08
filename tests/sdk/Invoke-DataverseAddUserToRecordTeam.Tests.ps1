@@ -7,7 +7,6 @@ Describe "Invoke-DataverseAddUserToRecordTeam Tests" {
     }
 
     Context "AddUserToRecordTeam SDK Cmdlet" {
-
         It "Invoke-DataverseAddUserToRecordTeam adds user to record team" {
             $recordId = [Guid]::NewGuid()
             $userId = [Guid]::NewGuid()
@@ -48,7 +47,5 @@ Describe "Invoke-DataverseAddUserToRecordTeam Tests" {
             $proxy.LastRequest.SystemUserId | Should -Be $userId
             $proxy.LastRequest.TeamTemplateId | Should -Be $teamTemplateId
         }
-    }
-
     }
 }

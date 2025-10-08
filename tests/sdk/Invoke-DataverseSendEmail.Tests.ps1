@@ -7,7 +7,6 @@ Describe "Invoke-DataverseSendEmail Tests" {
     }
 
     Context "SendEmail SDK Cmdlet" {
-
         It "Invoke-DataverseSendEmail sends an email" {
             $emailId = [Guid]::NewGuid()
             
@@ -38,7 +37,5 @@ Describe "Invoke-DataverseSendEmail Tests" {
             $proxy.LastRequest.EmailId | Should -Be $emailId
             $proxy.LastRequest.IssueSend | Should -Be $true
         }
-    }
-
     }
 }

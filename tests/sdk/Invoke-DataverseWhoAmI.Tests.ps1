@@ -7,7 +7,6 @@ Describe "Invoke-DataverseWhoAmI Tests" {
     }
 
     Context "WhoAmI SDK Cmdlet" {
-
         It "Invoke-DataverseWhoAmI returns valid response" {
             # Call the SDK cmdlet
             $response = Invoke-DataverseWhoAmI -Connection $script:conn
@@ -26,7 +25,5 @@ Describe "Invoke-DataverseWhoAmI Tests" {
             $proxy.LastRequest.GetType().Name | Should -Be "WhoAmIRequest"
             $proxy.LastResponse | Should -Be $response
         }
-    }
-
     }
 }

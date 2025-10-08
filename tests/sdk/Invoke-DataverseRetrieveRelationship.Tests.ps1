@@ -7,7 +7,6 @@ Describe "Invoke-DataverseRetrieveRelationship Tests" {
     }
 
     Context "RetrieveRelationship SDK Cmdlet" {
-
         It "Invoke-DataverseRetrieveRelationship retrieves relationship metadata" {
             $relationshipId = [Guid]::NewGuid()
             
@@ -41,7 +40,5 @@ Describe "Invoke-DataverseRetrieveRelationship Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.MetadataId | Should -Be $relationshipId
         }
-    }
-
     }
 }

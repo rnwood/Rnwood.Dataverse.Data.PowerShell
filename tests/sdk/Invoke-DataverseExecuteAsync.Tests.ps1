@@ -7,7 +7,6 @@ Describe "Invoke-DataverseExecuteAsync Tests" {
     }
 
     Context "ExecuteAsync SDK Cmdlet" {
-
         It "Invoke-DataverseExecuteAsync executes request asynchronously" {
             # Stub the response
             $proxy = Get-ProxyService -Connection $script:conn
@@ -43,7 +42,5 @@ Describe "Invoke-DataverseExecuteAsync Tests" {
             $proxy.LastRequest.Request | Should -Not -BeNull
             $proxy.LastRequest.Request.GetType().Name | Should -Be "WhoAmIRequest"
         }
-    }
-
     }
 }

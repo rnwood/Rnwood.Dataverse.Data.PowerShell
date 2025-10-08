@@ -7,7 +7,6 @@ Describe "Invoke-DataverseRetrieveOptionSet Tests" {
     }
 
     Context "RetrieveOptionSet SDK Cmdlet" {
-
         It "Invoke-DataverseRetrieveOptionSet retrieves option set metadata" {
             # Stub the response
             $proxy = Get-ProxyService -Connection $script:conn
@@ -40,7 +39,5 @@ Describe "Invoke-DataverseRetrieveOptionSet Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.Name | Should -Be "testoptionset"
         }
-    }
-
     }
 }

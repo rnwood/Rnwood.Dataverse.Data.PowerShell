@@ -7,7 +7,6 @@ Describe "Invoke-DataversePublishDuplicateRule Tests" {
     }
 
     Context "PublishDuplicateRule SDK Cmdlet" {
-
         It "Invoke-DataversePublishDuplicateRule publishes a rule" {
             $ruleId = [Guid]::NewGuid()
             
@@ -33,7 +32,5 @@ Describe "Invoke-DataversePublishDuplicateRule Tests" {
             $proxy.LastRequest.GetType().Name | Should -Be "PublishDuplicateRuleRequest"
             $proxy.LastRequest.DuplicateRuleId | Should -Be $ruleId
         }
-    }
-
     }
 }

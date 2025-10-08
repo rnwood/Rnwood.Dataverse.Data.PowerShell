@@ -7,7 +7,6 @@ Describe "Invoke-DataverseSetParentSystemUser Tests" {
     }
 
     Context "SetParentSystemUser SDK Cmdlet" {
-
         It "Invoke-DataverseSetParentSystemUser sets parent system user" {
             $userId = [Guid]::NewGuid()
             $parentId = [Guid]::NewGuid()
@@ -41,7 +40,5 @@ Describe "Invoke-DataverseSetParentSystemUser Tests" {
             $proxy.LastRequest.ParentId | Should -Be $parentId
             $proxy.LastRequest.KeepChildUsers | Should -Be $true
         }
-    }
-
     }
 }

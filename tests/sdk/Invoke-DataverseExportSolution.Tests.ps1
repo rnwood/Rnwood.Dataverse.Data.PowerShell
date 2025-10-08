@@ -7,7 +7,6 @@ Describe "Invoke-DataverseExportSolution Tests" {
     }
 
     Context "ExportSolution SDK Cmdlet" {
-
         It "Invoke-DataverseExportSolution exports a solution" {
             $solutionName = "TestSolution"
             
@@ -49,7 +48,5 @@ Describe "Invoke-DataverseExportSolution Tests" {
             $proxy.LastRequest.SolutionName | Should -Be $solutionName
             $proxy.LastRequest.Managed | Should -Be $false
         }
-    }
-
     }
 }

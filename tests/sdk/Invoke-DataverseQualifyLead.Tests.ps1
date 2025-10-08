@@ -7,7 +7,6 @@ Describe "Invoke-DataverseQualifyLead Tests" {
     }
 
     Context "QualifyLead SDK Cmdlet" {
-
         It "Invoke-DataverseQualifyLead qualifies a lead" {
             $leadId = [Guid]::NewGuid()
             
@@ -49,7 +48,5 @@ Describe "Invoke-DataverseQualifyLead Tests" {
             $proxy.LastRequest.LeadId.Id | Should -Be $leadId
             $proxy.LastRequest.CreateOpportunity | Should -Be $true
         }
-    }
-
     }
 }

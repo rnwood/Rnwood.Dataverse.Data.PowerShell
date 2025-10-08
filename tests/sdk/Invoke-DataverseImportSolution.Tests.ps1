@@ -7,7 +7,6 @@ Describe "Invoke-DataverseImportSolution Tests" {
     }
 
     Context "ImportSolution SDK Cmdlet" {
-
         It "Invoke-DataverseImportSolution imports a solution" {
             $solutionBytes = [System.Text.Encoding]::UTF8.GetBytes("fake solution content")
             
@@ -27,7 +26,5 @@ Describe "Invoke-DataverseImportSolution Tests" {
             $proxy.LastRequest.GetType().Name | Should -Be "ImportSolutionRequest"
             $proxy.LastRequest.CustomizationFile | Should -Be $solutionBytes
         }
-    }
-
     }
 }

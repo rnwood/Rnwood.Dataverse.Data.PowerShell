@@ -7,7 +7,6 @@ Describe "Invoke-DataverseRemoveMemberList Tests" {
     }
 
     Context "RemoveMemberList SDK Cmdlet" {
-
         It "Invoke-DataverseRemoveMemberList removes a member from a list" {
             $listId = [Guid]::NewGuid()
             $entityId = [Guid]::NewGuid()
@@ -29,7 +28,5 @@ Describe "Invoke-DataverseRemoveMemberList Tests" {
             $proxy.LastRequest.ListId | Should -Be $listId
             $proxy.LastRequest.EntityId | Should -Be $entityId
         }
-    }
-
     }
 }

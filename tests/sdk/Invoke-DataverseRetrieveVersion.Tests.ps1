@@ -7,7 +7,6 @@ Describe "Invoke-DataverseRetrieveVersion Tests" {
     }
 
     Context "RetrieveVersion SDK Cmdlet" {
-
         It "Invoke-DataverseRetrieveVersion returns version information" {
             # Call the SDK cmdlet
             $response = Invoke-DataverseRetrieveVersion -Connection $script:conn
@@ -23,7 +22,5 @@ Describe "Invoke-DataverseRetrieveVersion Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.GetType().Name | Should -Be "RetrieveVersionRequest"
         }
-    }
-
     }
 }

@@ -7,7 +7,6 @@ Describe "Invoke-DataverseRetrieveTimestamp Tests" {
     }
 
     Context "RetrieveTimestamp SDK Cmdlet" {
-
         It "Invoke-DataverseRetrieveTimestamp retrieves server timestamp" {
             # Stub the response
             $proxy = Get-ProxyService -Connection $script:conn
@@ -35,7 +34,5 @@ Describe "Invoke-DataverseRetrieveTimestamp Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.RetrieveTimestampRequest"
         }
-    }
-
     }
 }

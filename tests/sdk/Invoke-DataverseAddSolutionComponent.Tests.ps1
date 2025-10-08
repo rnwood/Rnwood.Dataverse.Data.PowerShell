@@ -7,7 +7,6 @@ Describe "Invoke-DataverseAddSolutionComponent Tests" {
     }
 
     Context "AddSolutionComponent SDK Cmdlet" {
-
         It "Invoke-DataverseAddSolutionComponent adds a component to a solution" {
             $solutionId = [Guid]::NewGuid()
             $componentId = [Guid]::NewGuid()
@@ -41,7 +40,5 @@ Describe "Invoke-DataverseAddSolutionComponent Tests" {
             $proxy.LastRequest.ComponentId | Should -Be $componentId
             $proxy.LastRequest.SolutionUniqueName | Should -Be "TestSolution"
         }
-    }
-
     }
 }

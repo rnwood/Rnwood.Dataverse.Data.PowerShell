@@ -7,7 +7,6 @@ Describe "Invoke-DataverseAddPrincipalToQueue Tests" {
     }
 
     Context "AddPrincipalToQueue SDK Cmdlet" {
-
         It "Invoke-DataverseAddPrincipalToQueue adds a principal to a queue" {
             $queueId = [Guid]::NewGuid()
             $principalId = [Guid]::NewGuid()
@@ -41,7 +40,5 @@ Describe "Invoke-DataverseAddPrincipalToQueue Tests" {
             $proxy.LastRequest.QueueId | Should -Be $queueId
             $proxy.LastRequest.Principal.Id | Should -Be $principalId
         }
-    }
-
     }
 }

@@ -7,7 +7,6 @@ Describe "Invoke-DataverseLoseOpportunity Tests" {
     }
 
     Context "LoseOpportunity SDK Cmdlet" {
-
         It "Invoke-DataverseLoseOpportunity marks opportunity as lost" {
             $opportunityId = [Guid]::NewGuid()
             
@@ -42,7 +41,5 @@ Describe "Invoke-DataverseLoseOpportunity Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.Status.Value | Should -Be 4
         }
-    }
-
     }
 }

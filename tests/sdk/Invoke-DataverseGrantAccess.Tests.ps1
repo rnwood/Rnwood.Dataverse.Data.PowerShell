@@ -7,7 +7,6 @@ Describe "Invoke-DataverseGrantAccess Tests" {
     }
 
     Context "GrantAccess SDK Cmdlet" {
-
         It "Invoke-DataverseGrantAccess grants access to a record" {
             $contactId = [Guid]::NewGuid()
             $userId = [Guid]::NewGuid()
@@ -33,7 +32,5 @@ Describe "Invoke-DataverseGrantAccess Tests" {
             $proxy.LastRequest.GetType().Name | Should -Be "GrantAccessRequest"
             $proxy.LastRequest.Target.Id | Should -Be $contactId
         }
-    }
-
     }
 }

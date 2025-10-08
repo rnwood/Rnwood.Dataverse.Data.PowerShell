@@ -7,7 +7,6 @@ Describe "Invoke-DataverseSetState Tests" {
     }
 
     Context "SetState SDK Cmdlet" {
-
         It "Invoke-DataverseSetState changes record state" {
             # Create a workflow record
             $connection = getMockConnection -AdditionalEntities @("workflow")
@@ -42,7 +41,5 @@ Describe "Invoke-DataverseSetState Tests" {
             $proxy.LastRequest.State.Value | Should -Be 1
             $proxy.LastRequest.Status.Value | Should -Be 2
         }
-    }
-
     }
 }

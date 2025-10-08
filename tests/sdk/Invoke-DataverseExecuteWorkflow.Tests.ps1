@@ -7,7 +7,6 @@ Describe "Invoke-DataverseExecuteWorkflow Tests" {
     }
 
     Context "ExecuteWorkflow SDK Cmdlet" {
-
         It "Invoke-DataverseExecuteWorkflow triggers workflow execution" {
             $workflowId = [Guid]::NewGuid()
             $entityId = [Guid]::NewGuid()
@@ -35,7 +34,5 @@ Describe "Invoke-DataverseExecuteWorkflow Tests" {
             $proxy.LastRequest.WorkflowId | Should -Be $workflowId
             $proxy.LastRequest.EntityId | Should -Be $entityId
         }
-    }
-
     }
 }

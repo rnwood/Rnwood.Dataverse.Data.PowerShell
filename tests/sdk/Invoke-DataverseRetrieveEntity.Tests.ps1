@@ -7,7 +7,6 @@ Describe "Invoke-DataverseRetrieveEntity Tests" {
     }
 
     Context "RetrieveEntity SDK Cmdlet" {
-
         It "Invoke-DataverseRetrieveEntity retrieves contact entity metadata" {
             # Call the SDK cmdlet with contact entity
             $response = Invoke-DataverseRetrieveEntity -Connection $script:conn -LogicalName "contact" -EntityFilters Entity
@@ -25,7 +24,5 @@ Describe "Invoke-DataverseRetrieveEntity Tests" {
             $proxy.LastRequest.GetType().Name | Should -Be "RetrieveEntityRequest"
             $proxy.LastRequest.LogicalName | Should -Be "contact"
         }
-    }
-
     }
 }

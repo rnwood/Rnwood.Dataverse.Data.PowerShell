@@ -7,7 +7,6 @@ Describe "Invoke-DataverseRetrievePrincipalAccess Tests" {
     }
 
     Context "RetrievePrincipalAccess SDK Cmdlet" {
-
         It "Invoke-DataverseRetrievePrincipalAccess retrieves access rights" {
             $contactId = [Guid]::NewGuid()
             $userId = [Guid]::NewGuid()
@@ -35,7 +34,5 @@ Describe "Invoke-DataverseRetrievePrincipalAccess Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.GetType().Name | Should -Be "RetrievePrincipalAccessRequest"
         }
-    }
-
     }
 }

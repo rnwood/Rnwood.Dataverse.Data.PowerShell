@@ -7,7 +7,6 @@ Describe "Invoke-DataverseWinOpportunity Tests" {
     }
 
     Context "WinOpportunity SDK Cmdlet" {
-
         It "Invoke-DataverseWinOpportunity marks opportunity as won" {
             $opportunityId = [Guid]::NewGuid()
             
@@ -42,7 +41,5 @@ Describe "Invoke-DataverseWinOpportunity Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.Status.Value | Should -Be 3
         }
-    }
-
     }
 }

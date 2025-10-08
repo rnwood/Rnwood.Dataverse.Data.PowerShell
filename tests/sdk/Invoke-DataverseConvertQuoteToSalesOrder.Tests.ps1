@@ -7,7 +7,6 @@ Describe "Invoke-DataverseConvertQuoteToSalesOrder Tests" {
     }
 
     Context "ConvertQuoteToSalesOrder SDK Cmdlet" {
-
         It "Invoke-DataverseConvertQuoteToSalesOrder converts a quote to sales order" {
             $quoteId = [Guid]::NewGuid()
             
@@ -43,7 +42,5 @@ Describe "Invoke-DataverseConvertQuoteToSalesOrder Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.QuoteId | Should -Be $quoteId
         }
-    }
-
     }
 }

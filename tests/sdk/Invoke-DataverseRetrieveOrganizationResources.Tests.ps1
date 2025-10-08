@@ -7,7 +7,6 @@ Describe "Invoke-DataverseRetrieveOrganizationResources Tests" {
     }
 
     Context "RetrieveOrganizationResources SDK Cmdlet" {
-
         It "Invoke-DataverseRetrieveOrganizationResources retrieves organization resource limits" {
             # Stub the response
             $proxy = Get-ProxyService -Connection $script:conn
@@ -35,7 +34,5 @@ Describe "Invoke-DataverseRetrieveOrganizationResources Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.RetrieveOrganizationResourcesRequest"
         }
-    }
-
     }
 }

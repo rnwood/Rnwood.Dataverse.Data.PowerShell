@@ -7,7 +7,6 @@ Describe "Invoke-DataverseRevokeAccess Tests" {
     }
 
     Context "RevokeAccess SDK Cmdlet" {
-
         It "Invoke-DataverseRevokeAccess revokes access to a record" {
             $contactId = [Guid]::NewGuid()
             $userId = [Guid]::NewGuid()
@@ -32,7 +31,5 @@ Describe "Invoke-DataverseRevokeAccess Tests" {
             $proxy.LastRequest.Target.Id | Should -Be $contactId
             $proxy.LastRequest.Revokee.Id | Should -Be $userId
         }
-    }
-
     }
 }

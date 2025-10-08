@@ -7,7 +7,6 @@ Describe "Invoke-DataverseRetrieveLicenseInfo Tests" {
     }
 
     Context "RetrieveLicenseInfo SDK Cmdlet" {
-
         It "Invoke-DataverseRetrieveLicenseInfo retrieves license information" {
             # Stub the response
             $proxy = Get-ProxyService -Connection $script:conn
@@ -37,7 +36,5 @@ Describe "Invoke-DataverseRetrieveLicenseInfo Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.RetrieveLicenseInfoRequest"
         }
-    }
-
     }
 }

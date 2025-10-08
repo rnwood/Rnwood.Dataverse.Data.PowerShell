@@ -7,7 +7,6 @@ Describe "Invoke-DataverseRemoveSolutionComponent Tests" {
     }
 
     Context "RemoveSolutionComponent SDK Cmdlet" {
-
         It "Invoke-DataverseRemoveSolutionComponent removes a component from a solution" {
             $componentId = [Guid]::NewGuid()
             
@@ -39,7 +38,5 @@ Describe "Invoke-DataverseRemoveSolutionComponent Tests" {
             $proxy.LastRequest.ComponentId | Should -Be $componentId
             $proxy.LastRequest.SolutionUniqueName | Should -Be "TestSolution"
         }
-    }
-}
     }
 }

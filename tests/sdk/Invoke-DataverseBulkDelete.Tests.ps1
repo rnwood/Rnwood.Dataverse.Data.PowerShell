@@ -7,7 +7,6 @@ Describe "Invoke-DataverseBulkDelete Tests" {
     }
 
     Context "BulkDelete SDK Cmdlet" {
-
         It "Invoke-DataverseBulkDelete accepts query and parameters" {
             # Create a query expression
             $query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression("contact")
@@ -32,7 +31,5 @@ Describe "Invoke-DataverseBulkDelete Tests" {
             $proxy.LastRequest.QuerySet.Count | Should -Be 1
             $proxy.LastRequest.QuerySet[0].EntityName | Should -Be "contact"
         }
-    }
-
     }
 }

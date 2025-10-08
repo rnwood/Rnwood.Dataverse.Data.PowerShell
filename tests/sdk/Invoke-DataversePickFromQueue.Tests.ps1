@@ -7,7 +7,6 @@ Describe "Invoke-DataversePickFromQueue Tests" {
     }
 
     Context "PickFromQueue SDK Cmdlet" {
-
         It "Invoke-DataversePickFromQueue picks item from queue" {
             $queueItemId = [Guid]::NewGuid()
             $workerId = [Guid]::NewGuid()
@@ -41,7 +40,5 @@ Describe "Invoke-DataversePickFromQueue Tests" {
             $proxy.LastRequest.WorkerId | Should -Be $workerId
             $proxy.LastRequest.RemoveQueueItem | Should -Be $false
         }
-    }
-
     }
 }

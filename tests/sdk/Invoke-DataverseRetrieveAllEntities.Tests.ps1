@@ -7,7 +7,6 @@ Describe "Invoke-DataverseRetrieveAllEntities Tests" {
     }
 
     Context "RetrieveAllEntities SDK Cmdlet" {
-
         It "Invoke-DataverseRetrieveAllEntities returns entity metadata" {
             # Stub the response since FakeXrmEasy OSS doesn't support this
             $proxy = Get-ProxyService -Connection $script:conn
@@ -62,7 +61,5 @@ Describe "Invoke-DataverseRetrieveAllEntities Tests" {
             $proxy.LastRequest.EntityFilters.ToString() | Should -Be "Entity"
             $proxy.LastRequest.RetrieveAsIfPublished | Should -Be $true
         }
-    }
-
     }
 }

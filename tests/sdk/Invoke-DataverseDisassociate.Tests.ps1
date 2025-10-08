@@ -7,7 +7,6 @@ Describe "Invoke-DataverseDisassociate Tests" {
     }
 
     Context "Disassociate SDK Cmdlet" {
-
         It "Invoke-DataverseDisassociate removes a many-to-many relationship" {
             $contact1Id = [Guid]::NewGuid()
             $contact2Id = [Guid]::NewGuid()
@@ -44,7 +43,5 @@ Describe "Invoke-DataverseDisassociate Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.Target.Id | Should -Be $contact1Id
         }
-    }
-
     }
 }

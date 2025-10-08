@@ -7,7 +7,6 @@ Describe "Invoke-DataverseRetrieveProvisionedLanguages Tests" {
     }
 
     Context "RetrieveProvisionedLanguages SDK Cmdlet" {
-
         It "Invoke-DataverseRetrieveProvisionedLanguages retrieves provisioned languages" {
             # Stub the response
             $proxy = Get-ProxyService -Connection $script:conn
@@ -35,7 +34,5 @@ Describe "Invoke-DataverseRetrieveProvisionedLanguages Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.RetrieveProvisionedLanguagesRequest"
         }
-    }
-
     }
 }

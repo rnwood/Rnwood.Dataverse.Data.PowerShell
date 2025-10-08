@@ -7,7 +7,6 @@ Describe "Invoke-DataversePublishAllXml Tests" {
     }
 
     Context "PublishAllXml SDK Cmdlet" {
-
         It "Invoke-DataversePublishAllXml publishes all customizations" {
             # Stub the response
             $proxy = Get-ProxyService -Connection $script:conn
@@ -24,7 +23,5 @@ Describe "Invoke-DataversePublishAllXml Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.GetType().Name | Should -Be "PublishAllXmlRequest"
         }
-    }
-
     }
 }

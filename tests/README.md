@@ -17,13 +17,45 @@ The test suite uses **FakeXrmEasy** (open-source version) with a **ProxyOrganiza
 
 - **Common.ps1**: Shared test infrastructure and helper functions
 - **Examples.Tests.ps1**: Comprehensive test coverage for documentation examples
-- **SdkCmdlets.Tests.ps1**: End-to-end tests for SDK cmdlets with proxy verification
+- **sdk/**: Directory containing individual test files for each SDK cmdlet (106+ files)
+  - **Format**: `Invoke-Dataverse{CmdletName}.Tests.ps1`
+  - **Total SDK cmdlets**: 371 in Dataverse
+  - **Tested**: 106+ cmdlets (~29% coverage and growing)
+  - Each cmdlet has its own file for easy navigation and parallel development
 - **Get-DataverseRecord.Tests.ps1**: Specific tests for query functionality
 - **Module.Tests.ps1**: Module loading and assembly resolution tests
 - **DefaultConnection.Tests.ps1**: Default connection functionality tests
 - **contact.xml**: Full entity metadata for the contact entity (2.2MB)
 - **generate-all-metadata.ps1**: Script to generate metadata files from real Dataverse
 - **updatemetadata.ps1**: Legacy script for metadata generation
+
+### SDK Test Organization
+
+SDK cmdlet tests are organized in individual files in the `tests/sdk/` directory:
+
+**Benefits of Individual Files:**
+- Easy to find tests for specific cmdlets
+- Parallel development by multiple developers
+- Better CI/CD - run tests for specific cmdlets in isolation
+- Multiple tests per cmdlet for different parameter sets
+- Clear one-to-one mapping with cmdlets in `Commands/sdk/`
+
+**Structure of Each File:**
+```powershell
+. $PSScriptRoot/../Common.ps1
+
+Describe "Invoke-Dataverse{CmdletName} Tests" {
+    BeforeAll {
+        $script:conn = getMockConnection
+    }
+    
+    Context "{CmdletName} SDK Cmdlet" {
+        It "Test with primary parameter set" { }
+        It "Test with alternative parameter set" { }
+        It "Test with different input types" { }
+    }
+}
+```
 
 ## ProxyOrganizationService
 
@@ -221,6 +253,106 @@ It "Invoke-DataverseRetrieveEntity retrieves entity metadata" {
     $proxy.LastRequest | Should -Not -BeNull
     $proxy.LastRequest.GetType().FullName | Should -Be "Microsoft.Xrm.Sdk.Messages.RetrieveEntityRequest"
     $proxy.LastRequest.LogicalName | Should -Be "contact"
+}
+```
+
+### SDK Cmdlet Testing with Response Stubbing
+
+For operations not supported by FakeXrmEasy OSS, stub the response and validate parameter conversions:
+
+```powershell
+It "Invoke-DataverseExportSolution exports a solution" {
+    $solutionName = "TestSolution"
+    
+    # Stub the response for FakeXrmEasy OSS limitation
+    $proxy = Get-ProxyService -Connection $script:conn
+    $proxy.StubResponse("Microsoft.Crm.Sdk.Messages.ExportSolutionRequest", {
+        param($request)
+        
+        # Validate request parameters were properly converted
+        $request | Should -Not -BeNull
+        $request.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.ExportSolutionRequest"
+        $request.SolutionName | Should -BeOfType [System.String]
+        $request.SolutionName | Should -Be "TestSolution"
+        $request.Managed | Should -BeOfType [System.Boolean]
+        
+        # Create and return mock response
+        $response = New-Object Microsoft.Crm.Sdk.Messages.ExportSolutionResponse
+        $response.Results["ExportSolutionFile"] = [System.Text.Encoding]::UTF8.GetBytes("fake solution content")
+        return $response
+
+### Testing Parameter Variations
+
+Cmdlets with multiple parameter sets or input types should have a test for each variation:
+
+```powershell
+Context "Assign SDK Cmdlet" {
+    It "Invoke-DataverseAssign with EntityReference objects" {
+        # Test using EntityReference parameter type
+        $assignee = New-Object Microsoft.Xrm.Sdk.EntityReference("systemuser", [Guid]::NewGuid())
+        $target = New-Object Microsoft.Xrm.Sdk.EntityReference("contact", [Guid]::NewGuid())
+        
+        $response = Invoke-DataverseAssign -Connection $script:conn -Assignee $assignee -Target $target
+        
+        # Verify parameter conversion
+        $proxy = Get-ProxyService -Connection $script:conn
+        $proxy.LastRequest.Assignee.GetType() | Should -Be ([Microsoft.Xrm.Sdk.EntityReference])
+        $proxy.LastRequest.Target.GetType() | Should -Be ([Microsoft.Xrm.Sdk.EntityReference])
+    }
+    
+    It "Invoke-DataverseAssign with PSObject wrappers" {
+        # Test using PSObject that gets converted to EntityReference
+        $assignee = [PSCustomObject]@{
+            LogicalName = "systemuser"
+            Id = [Guid]::NewGuid()
+        }
+        $target = [PSCustomObject]@{
+            LogicalName = "contact"
+            Id = [Guid]::NewGuid()
+        }
+        
+        $response = Invoke-DataverseAssign -Connection $script:conn -Assignee $assignee -Target $target
+        
+        # Verify conversion happened correctly
+        $proxy = Get-ProxyService -Connection $script:conn
+        $proxy.LastRequest.Assignee.LogicalName | Should -Be "systemuser"
+        $proxy.LastRequest.Target.LogicalName | Should -Be "contact"
+    }
+}
+```
+
+### Testing Different Entity Types
+
+For cmdlets that work with multiple entity types, add tests for key entity variations:
+
+```powershell
+Context "Create SDK Cmdlet" {
+    It "Invoke-DataverseCreate with contact entity" {
+        $entity = New-Object Microsoft.Xrm.Sdk.Entity("contact")
+        $entity["firstname"] = "John"
+        $entity["lastname"] = "Doe"
+        
+        $response = Invoke-DataverseCreate -Connection $script:conn -Target $entity
+        $response.Id | Should -Not -BeNullOrEmpty
+    }
+    
+    It "Invoke-DataverseCreate with account entity" {
+        $conn = getMockConnection -AdditionalEntities @("account")
+        $entity = New-Object Microsoft.Xrm.Sdk.Entity("account")
+        $entity["name"] = "Test Company"
+        
+        $response = Invoke-DataverseCreate -Connection $conn -Target $entity
+        $response.Id | Should -Not -BeNullOrEmpty
+    }
+    
+    It "Invoke-DataverseCreate with custom entity" {
+        $conn = getMockConnection -AdditionalEntities @("new_custom")
+        $entity = New-Object Microsoft.Xrm.Sdk.Entity("new_custom")
+        $entity["new_name"] = "Test"
+        
+        $response = Invoke-DataverseCreate -Connection $conn -Target $entity
+        $response.Id | Should -Not -BeNullOrEmpty
+    }
 }
 ```
 

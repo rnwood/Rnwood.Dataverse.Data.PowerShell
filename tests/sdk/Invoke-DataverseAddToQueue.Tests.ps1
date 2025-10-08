@@ -7,7 +7,6 @@ Describe "Invoke-DataverseAddToQueue Tests" {
     }
 
     Context "AddToQueue SDK Cmdlet" {
-
         It "Invoke-DataverseAddToQueue adds item to queue" {
             $queueId = [Guid]::NewGuid()
             $targetId = [Guid]::NewGuid()
@@ -45,7 +44,5 @@ Describe "Invoke-DataverseAddToQueue Tests" {
             $proxy.LastRequest.DestinationQueueId | Should -Be $queueId
             $proxy.LastRequest.Target.Id | Should -Be $targetId
         }
-    }
-
     }
 }

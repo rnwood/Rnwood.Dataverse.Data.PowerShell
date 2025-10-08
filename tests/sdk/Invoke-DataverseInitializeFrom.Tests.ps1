@@ -7,7 +7,6 @@ Describe "Invoke-DataverseInitializeFrom Tests" {
     }
 
     Context "InitializeFrom SDK Cmdlet" {
-
         It "Invoke-DataverseInitializeFrom initializes a new record from an existing one" {
             $entityId = [Guid]::NewGuid()
             
@@ -48,7 +47,5 @@ Describe "Invoke-DataverseInitializeFrom Tests" {
             $proxy.LastRequest.EntityMoniker.Id | Should -Be $entityId
             $proxy.LastRequest.TargetEntityName | Should -Be "opportunity"
         }
-    }
-
     }
 }

@@ -7,7 +7,6 @@ Describe "Invoke-DataverseAddMembersTeam Tests" {
     }
 
     Context "AddMembersTeam SDK Cmdlet" {
-
         It "Invoke-DataverseAddMembersTeam adds users to a team" {
             $teamId = [Guid]::NewGuid()
             $userId1 = [Guid]::NewGuid()
@@ -33,7 +32,5 @@ Describe "Invoke-DataverseAddMembersTeam Tests" {
             $proxy.LastRequest.MemberIds[0] | Should -Be $userId1
             $proxy.LastRequest.MemberIds[1] | Should -Be $userId2
         }
-    }
-
     }
 }

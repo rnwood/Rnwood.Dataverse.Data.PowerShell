@@ -7,7 +7,6 @@ Describe "Invoke-DataverseCloseQuote Tests" {
     }
 
     Context "CloseQuote SDK Cmdlet" {
-
         It "Invoke-DataverseCloseQuote closes a quote" {
             $quoteId = [Guid]::NewGuid()
             
@@ -42,7 +41,5 @@ Describe "Invoke-DataverseCloseQuote Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.Status.Value | Should -Be 3
         }
-    }
-
     }
 }

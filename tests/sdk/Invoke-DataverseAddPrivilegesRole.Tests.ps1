@@ -7,7 +7,6 @@ Describe "Invoke-DataverseAddPrivilegesRole Tests" {
     }
 
     Context "AddPrivilegesRole SDK Cmdlet" {
-
         It "Invoke-DataverseAddPrivilegesRole adds privileges to a role" {
             $roleId = [Guid]::NewGuid()
             
@@ -31,7 +30,5 @@ Describe "Invoke-DataverseAddPrivilegesRole Tests" {
             $proxy.LastRequest.GetType().Name | Should -Be "AddPrivilegesRoleRequest"
             $proxy.LastRequest.RoleId | Should -Be $roleId
         }
-    }
-
     }
 }

@@ -7,7 +7,6 @@ Describe "Invoke-DataverseAddListMembersList Tests" {
     }
 
     Context "AddListMembersList SDK Cmdlet" {
-
         It "Invoke-DataverseAddListMembersList adds multiple members to a marketing list" {
             $listId = [Guid]::NewGuid()
             $memberId1 = [Guid]::NewGuid()
@@ -40,7 +39,5 @@ Describe "Invoke-DataverseAddListMembersList Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.ListId | Should -Be $listId
         }
-    }
-
     }
 }

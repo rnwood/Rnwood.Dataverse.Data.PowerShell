@@ -7,7 +7,6 @@ Describe "Invoke-DataverseMerge Tests" {
     }
 
     Context "Merge SDK Cmdlet" {
-
         It "Invoke-DataverseMerge merges two records" {
             $targetId = [Guid]::NewGuid()
             $subordinateId = [Guid]::NewGuid()
@@ -46,7 +45,5 @@ Describe "Invoke-DataverseMerge Tests" {
             $proxy.LastRequest.Target.Id | Should -Be $targetId
             $proxy.LastRequest.SubordinateId | Should -Be $subordinateId
         }
-    }
-
     }
 }

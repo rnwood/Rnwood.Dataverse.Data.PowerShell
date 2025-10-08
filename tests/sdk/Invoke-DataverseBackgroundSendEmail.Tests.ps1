@@ -7,7 +7,6 @@ Describe "Invoke-DataverseBackgroundSendEmail Tests" {
     }
 
     Context "BackgroundSendEmail SDK Cmdlet" {
-
         It "Invoke-DataverseBackgroundSendEmail queues email for background sending" {
             $emailId = [Guid]::NewGuid()
             
@@ -37,7 +36,5 @@ Describe "Invoke-DataverseBackgroundSendEmail Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.EntityId | Should -Be $emailId
         }
-    }
-
     }
 }

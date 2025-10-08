@@ -7,7 +7,6 @@ Describe "Invoke-DataverseAssign Tests" {
     }
 
     Context "Assign SDK Cmdlet" {
-
         It "Invoke-DataverseAssign assigns a record to a user" {
             # Create a contact record first
             $contact = New-Object Microsoft.Xrm.Sdk.Entity("contact")
@@ -35,7 +34,5 @@ Describe "Invoke-DataverseAssign Tests" {
             $proxy.LastRequest.Assignee.LogicalName | Should -Be "systemuser"
             $proxy.LastRequest.Assignee.Id | Should -Be $userId
         }
-    }
-
     }
 }
