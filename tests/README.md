@@ -27,7 +27,7 @@ The test suite uses **FakeXrmEasy** (open-source version) with a **ProxyOrganiza
 
 ## ProxyOrganizationService
 
-The `ProxyOrganizationService` class wraps FakeXrmEasy's `IOrganizationService` to enable test inspection:
+The `ProxyOrganizationService` class wraps FakeXrmEasy's `IOrganizationService` to enable test inspection and response stubbing:
 
 ```csharp
 public class ProxyOrganizationService : IOrganizationService
@@ -36,7 +36,12 @@ public class ProxyOrganizationService : IOrganizationService
     public IReadOnlyList<OrganizationResponse> Responses { get; }
     public OrganizationRequest LastRequest { get; }
     public OrganizationResponse LastResponse { get; }
-    public void ClearHistory();
+    
+    // Stub responses for FakeXrmEasy OSS limitations
+    public void StubResponse(string requestTypeName, Func<OrganizationRequest, OrganizationResponse> responseFactory)
+    public void ClearStub(string requestTypeName)
+    public void ClearAllStubs()
+    public void ClearHistory()
 }
 ```
 
@@ -45,20 +50,40 @@ public class ProxyOrganizationService : IOrganizationService
 - Enables verification of request parameters and structure
 - Validates response handling
 - Supports end-to-end testing of SDK cmdlets
+- **Stubs responses for operations not supported by FakeXrmEasy OSS**
+- Validates parameter type conversions
 
 **Usage in Tests:**
 ```powershell
 # Get the proxy from a mock connection
 $proxy = Get-ProxyService -Connection $connection
 
+# Stub a response for unsupported operations
+$proxy.StubResponse("Microsoft.Crm.Sdk.Messages.ExportSolutionRequest", {
+    param($request)
+    
+    # Validate request parameters in the stub
+    $request.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.ExportSolutionRequest"
+    $request.SolutionName | Should -BeOfType [System.String]
+    $request.Managed | Should -BeOfType [System.Boolean]
+    
+    # Create and return mock response
+    $response = New-Object Microsoft.Crm.Sdk.Messages.ExportSolutionResponse
+    $response.Results["ExportSolutionFile"] = [System.Text.Encoding]::UTF8.GetBytes("mock data")
+    return $response
+})
+
+# Call the cmdlet - it will execute end-to-end
+$response = Invoke-DataverseExportSolution -Connection $connection -SolutionName "Test" -Managed $false
+
+# Verify response type as documented
+$response.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.ExportSolutionResponse"
+$response.ExportSolutionFile | Should -BeOfType [System.Byte[]]
+
 # Verify the last request
-$proxy.LastRequest.GetType().Name | Should -Be "WhoAmIRequest"
-
-# Verify request parameters
-$proxy.LastRequest.LogicalName | Should -Be "contact"
-
-# Verify response
-$proxy.LastResponse | Should -Not -BeNull
+$proxy.LastRequest.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.ExportSolutionRequest"
+$proxy.LastRequest.SolutionName | Should -Be "Test"
+$proxy.LastRequest.Managed | Should -Be $false
 ```
 
 ## Mock Connection Configuration
@@ -149,7 +174,13 @@ The open-source version of FakeXrmEasy has some limitations:
 
 ### Known Limitations ⚠️
 
-1. **RequestName Parameter Not Supported**
+1. **Some Operations Not Supported by FakeXrmEasy OSS**
+   - Operations like ExportSolution, ImportSolution, ExecuteWorkflow, etc.
+   - **Solution**: Use response stubbing via ProxyOrganizationService
+   - Tests execute end-to-end with stubbed responses
+   - Stubs validate parameter conversions and return proper response types
+
+2. **RequestName Parameter Not Supported**
    - The OSS version doesn't support `Invoke-DataverseRequest -RequestName "WhoAmI"`
    - **Workaround**: Use specific request objects instead:
      ```powershell
@@ -161,48 +192,96 @@ The open-source version of FakeXrmEasy has some limitations:
      Invoke-DataverseRequest -Connection $conn -Request $request
      ```
 
-2. **Minimal Metadata May Not Support All Operations**
+3. **Minimal Metadata May Not Support All Operations**
    - Creating records with minimal metadata may fail for entities with required attributes
    - **Workaround**: Use full metadata files generated from real Dataverse
 
-3. **Some Advanced Messages Not Fully Implemented**
-   - Complex workflow operations
-   - Some specialized message executors
-   - **Workaround**: Test patterns and cmdlet existence rather than execution
-
 ## Test Strategy
 
-### SDK Cmdlet Testing (Valuable Tests)
-For SDK cmdlets, tests should validate end-to-end behavior:
+### SDK Cmdlet Testing with Full Type Validation
+
+All SDK cmdlets should be tested end-to-end with comprehensive type validation:
 
 ```powershell
-It "Invoke-DataverseWhoAmI returns valid response" {
+It "Invoke-DataverseRetrieveEntity retrieves entity metadata" {
     # Call the SDK cmdlet
-    $response = Invoke-DataverseWhoAmI -Connection $script:conn
+    $response = Invoke-DataverseRetrieveEntity -Connection $script:conn -LogicalName "contact" -EntityFilters All
     
-    # Verify response structure and values
+    # Verify response type as documented (use FullName for precision)
     $response | Should -Not -BeNull
-    $response.GetType().Name | Should -Be "WhoAmIResponse"
-    $response.UserId | Should -Not -BeNullOrEmpty
+    $response.GetType().FullName | Should -Be "Microsoft.Xrm.Sdk.Messages.RetrieveEntityResponse"
     
-    # Use proxy to verify the request was sent correctly
+    # Verify response properties match documented types
+    $response.EntityMetadata | Should -Not -BeNull
+    $response.EntityMetadata | Should -BeOfType [Microsoft.Xrm.Sdk.Metadata.EntityMetadata]
+    $response.EntityMetadata.LogicalName | Should -Be "contact"
+    
+    # Verify the proxy captured the request
     $proxy = Get-ProxyService -Connection $script:conn
-    $proxy.LastRequest.GetType().Name | Should -Be "WhoAmIRequest"
-    $proxy.LastResponse | Should -Be $response
+    $proxy.LastRequest | Should -Not -BeNull
+    $proxy.LastRequest.GetType().FullName | Should -Be "Microsoft.Xrm.Sdk.Messages.RetrieveEntityRequest"
+    $proxy.LastRequest.LogicalName | Should -Be "contact"
 }
 ```
 
-**What Makes a Valuable Test:**
-- ✅ Calls the cmdlet with actual parameters
-- ✅ Verifies the response structure and values
-- ✅ Inspects the request sent via proxy
-- ✅ Validates parameter conversions
-- ✅ Tests with real data when possible
+### SDK Cmdlet Testing with Response Stubbing
+
+For operations not supported by FakeXrmEasy OSS, stub the response and validate parameter conversions:
+
+```powershell
+It "Invoke-DataverseExportSolution exports a solution" {
+    $solutionName = "TestSolution"
+    
+    # Stub the response for FakeXrmEasy OSS limitation
+    $proxy = Get-ProxyService -Connection $script:conn
+    $proxy.StubResponse("Microsoft.Crm.Sdk.Messages.ExportSolutionRequest", {
+        param($request)
+        
+        # Validate request parameters were properly converted
+        $request | Should -Not -BeNull
+        $request.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.ExportSolutionRequest"
+        $request.SolutionName | Should -BeOfType [System.String]
+        $request.SolutionName | Should -Be "TestSolution"
+        $request.Managed | Should -BeOfType [System.Boolean]
+        
+        # Create and return mock response
+        $response = New-Object Microsoft.Crm.Sdk.Messages.ExportSolutionResponse
+        $response.Results["ExportSolutionFile"] = [System.Text.Encoding]::UTF8.GetBytes("fake solution content")
+        return $response
+    })
+    
+    # Call the cmdlet - executes end-to-end
+    $response = Invoke-DataverseExportSolution -Connection $script:conn -SolutionName $solutionName -Managed $false
+    
+    # Verify response type as documented
+    $response | Should -Not -BeNull
+    $response.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.ExportSolutionResponse"
+    
+    # Verify response properties match documented types
+    $response.ExportSolutionFile | Should -Not -BeNull
+    $response.ExportSolutionFile | Should -BeOfType [System.Byte[]]
+    
+    # Verify the proxy captured the request
+    $proxy.LastRequest | Should -Not -BeNull
+    $proxy.LastRequest.SolutionName | Should -Be $solutionName
+}
+```
+
+**Key Principles:**
+- ✅ Call cmdlets end-to-end with real parameters
+- ✅ Stub responses only for FakeXrmEasy OSS limitations
+- ✅ Validate parameter conversions in stubs using `GetType().FullName` and `Should -BeOfType`
+- ✅ Verify response types using `GetType().FullName` (not just `.Name`)
+- ✅ Check all response properties match documented types
+- ✅ Use proxy to inspect request parameters
+- ✅ Test with actual data when possible
+- ✅ No shortcuts - every cmdlet executes completely
 
 **What to Avoid:**
 - ❌ Existence-checking tests (Get-Command | Should -Not -BeNull)
 - ❌ Parameter checking without execution
 - ❌ Tests that only verify cmdlets exist
+- ❌ Skipping execution due to FakeXrmEasy limitations (use stubbing instead)
 
 ### Pattern Testing
 For entities without full metadata, tests validate patterns rather than full execution:
@@ -250,9 +329,9 @@ Invoke-Pester -Path tests/Examples.Tests.ps1 -Output Detailed
 ```
 
 ### Expected Results
-- **Total tests**: 59 (48 in Examples.Tests.ps1 + 11 in SdkCmdlets.Tests.ps1)
-- **Passed**: 59
-- **Skipped**: 6 (FakeXrmEasy OSS limitations)
+- **Total tests**: 82+ (48 in Examples.Tests.ps1 + 34+ in SdkCmdlets.Tests.ps1)
+- **Passed**: All tests pass
+- **Skipped**: 2 (RequestName parameter syntax limitations)
 - **Failed**: 0
 
 ## Test Coverage Summary
@@ -267,18 +346,48 @@ Invoke-Pester -Path tests/Examples.Tests.ps1 -Output Detailed
 - ✅ Column selection
 - ✅ Record counting
 
-### SDK Cmdlets Tested (end-to-end)
+### SDK Cmdlets Tested (end-to-end with full type validation)
 - ✅ Invoke-DataverseWhoAmI
 - ✅ Invoke-DataverseRetrieveVersion
+- ✅ Invoke-DataverseRetrieveAllEntities (with stubbed response)
 - ✅ Invoke-DataverseRetrieveEntity
 - ✅ Invoke-DataverseAssign
 - ✅ Invoke-DataverseAddMembersTeam
+- ✅ SetState request (with stubbed response)
+- ✅ Invoke-DataversePublishDuplicateRule (with stubbed response)
 - ✅ Invoke-DataverseBulkDelete
+- ✅ Invoke-DataverseExecuteWorkflow (with stubbed response)
 - ✅ Invoke-DataverseRetrieveAttribute
 - ✅ Invoke-DataverseRetrieveMultiple
 - ✅ Invoke-DataverseCreate
 - ✅ Invoke-DataverseUpdate
 - ✅ Invoke-DataverseDelete
+- ✅ Invoke-DataverseExportSolution (with stubbed response)
+- ✅ Invoke-DataverseImportSolution (with stubbed response)
+- ✅ Invoke-DataversePublishAllXml (with stubbed response)
+- ✅ Invoke-DataverseGrantAccess (with stubbed response)
+- ✅ Invoke-DataverseRevokeAccess (with stubbed response)
+- ✅ Invoke-DataverseRetrievePrincipalAccess (with stubbed response)
+- ✅ Invoke-DataverseAddPrivilegesRole (with stubbed response)
+- ✅ Invoke-DataverseRemoveMemberList (with stubbed response)
+- ✅ Invoke-DataverseCloseIncident (with stubbed response)
+- ✅ Invoke-DataverseSendEmail (with stubbed response)
+- ✅ Invoke-DataverseRetrieveOptionSet (with stubbed response)
+- ✅ Invoke-DataverseRetrieveRelationship (with stubbed response)
+- ✅ Invoke-DataverseSetParentSystemUser (with stubbed response)
+- ✅ Invoke-DataverseAddToQueue (with stubbed response)
+- ✅ Invoke-DataverseRemoveFromQueue (with stubbed response)
+- ✅ Invoke-DataversePickFromQueue (with stubbed response)
+- ✅ Invoke-DataverseExecuteAsync (with stubbed response)
+- ✅ Invoke-DataverseAddUserToRecordTeam (with stubbed response)
+- ✅ Invoke-DataverseBackgroundSendEmail (with stubbed response)
+- ✅ And more...
+
+All SDK cmdlet tests include:
+- Full type validation with `GetType().FullName`
+- Parameter conversion validation in stubs
+- Response property type checking
+- Request inspection via proxy
 
 ### Pattern Tested (with minimal metadata)
 - ✅ Solution management queries
@@ -290,12 +399,11 @@ Invoke-Pester -Path tests/Examples.Tests.ps1 -Output Detailed
 - ✅ Saved query (view) queries
 - ✅ User query (personal view) queries
 
-### Skipped (FakeXrmEasy OSS limitations)
-- ⏭️ RequestName parameter syntax (requires commercial license)
+### Skipped (FakeXrmEasy OSS limitations without workaround)
+- ⏭️ RequestName parameter syntax (requires commercial license) - 2 tests
 - ⏭️ Simplified vs. verbose syntax comparison (requires commercial license)
-- ⏭️ RetrieveAllEntities (not yet supported in OSS)
-- ⏭️ PublishDuplicateRule (not yet supported in OSS)
-- ⏭️ ExecuteWorkflow (not yet supported in OSS)
+
+Note: All other FakeXrmEasy OSS limitations are now worked around using response stubbing.
 
 ## Extending Tests
 
