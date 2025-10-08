@@ -19,6 +19,35 @@ Features:
 Non features:
 - Support for connecting to on-premise environments.
 
+# Table of Contents
+
+- [How to install](#how-to-install)
+- [PowerShell Best Practices](#powershell-best-practices)
+- [Quick Start and Examples](#quick-start-and-examples)
+  - [Default Connection](#default-connection)
+  - [Authentication Methods](#authentication-methods)
+  - [Linking Related Tables](#linking-related-tables)
+- [Error Handling](#error-handling)
+- [Getting IDs of Created Records](#getting-ids-of-created-records)
+- [Batch Operations](#batch-operations)
+- [Pipeline vs ForEach-Object](#pipeline-vs-foreach-object)
+- [Using in CI/CD Pipelines](#using-in-cicd-pipelines)
+  - [Azure DevOps Pipelines](#azure-devops-pipelines)
+  - [GitHub Actions](#github-actions)
+- [Main Cmdlets](#main-cmdlets)
+- [Migration from Microsoft.Xrm.Data.PowerShell](#migration-from-microsoftxrmdatapowershell)
+- [Full Documentation](#full-documentation)
+- [Using PowerShell Standard Features](#using-powershell-standard-features)
+  - [WhatIf and Confirm](#whatif-and-confirm---preview-changes-before-execution)
+  - [Verbose Output](#verbose-output---see-detailed-operation-information)
+  - [Error Handling](#error-handling---control-how-errors-are-handled)
+  - [Warning Messages](#warning-messages---control-warning-output)
+  - [Tab Completion](#tab-completion---speed-up-command-entry)
+  - [Contextual Help](#contextual-help---get-help-without-leaving-the-console)
+  - [Command History](#command-history---reuse-and-search-previous-commands)
+  - [Additional Resources](#additional-resources)
+- [FAQ](#faq)
+
 # How to install
 
 This module is not signed (donation of funds for code signing certificate are welcome). So PowerShell must be configured to allow loading unsigned scripts.
@@ -348,6 +377,302 @@ $records | Set-DataverseRecord -Connection $c -TableName account -BatchSize 50 -
 ```
 
 See full documentation: [Set-DataverseRecord Batching](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md#example-7-control-batch-size) | [Remove-DataverseRecord Batching](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md)
+
+## Pipeline vs ForEach-Object
+
+PowerShell cmdlets in this module support the **pipeline**, which is the idiomatic and recommended way to process multiple records. Understanding how to use the pipeline effectively is key to writing efficient PowerShell scripts.
+
+### Understanding the Pipeline
+
+When you pipe objects from one cmdlet to another, PowerShell **streams** the objects one at a time. This is memory-efficient and allows processing to begin immediately without waiting for all records to be retrieved.
+
+*Example: Using the pipeline to process records as they're retrieved:*
+```powershell
+# Good: Pipeline streams records one at a time
+Get-DataverseRecord -Connection $c -TableName contact |
+    Where-Object { $_.emailaddress1 -like "*@contoso.com" } |
+    Set-DataverseRecord -Connection $c -InputObject { $_ | Select-Object -Property * -ExcludeProperty emailaddress1 }
+```
+
+### Pipeline vs ForEach-Object vs foreach Loop
+
+**Pipeline (Recommended for most use cases):**
+- ✅ **Streams** data - processes records as they arrive
+- ✅ Memory efficient - doesn't load all records into memory at once
+- ✅ Starts processing immediately
+- ✅ Works with large datasets
+- ✅ Can be interrupted with Ctrl+C
+
+*Example: Pipeline processing:*
+```powershell
+# Pipeline: Streams each record through the pipeline
+Get-DataverseRecord -Connection $c -TableName contact -Top 1000 |
+    ForEach-Object { 
+        Write-Host "Processing: $($_.fullname)"
+        $_ 
+    } |
+    Set-DataverseRecord -Connection $c
+```
+
+**foreach statement (Use when you need all data in memory):**
+- ❌ **Fetches all** items before processing starts
+- ❌ Loads entire collection into memory
+- ❌ Must wait for all records to be retrieved
+- ✅ Allows random access to collection
+- ✅ Supports break/continue
+
+*Example: foreach statement:*
+```powershell
+# foreach: Loads ALL 1000 records into memory first
+$contacts = Get-DataverseRecord -Connection $c -TableName contact -Top 1000
+foreach ($contact in $contacts) {
+    Write-Host "Processing: $($contact.fullname)"
+    Set-DataverseRecord -Connection $c -InputObject $contact
+}
+```
+
+**ForEach-Object cmdlet (Hybrid approach):**
+- ✅ Works in the pipeline (streams data)
+- ✅ Memory efficient
+- ✅ Access to `-Begin`, `-Process`, `-End` blocks
+- ✅ Can use `$_` automatic variable
+
+### Seeing Which Parameters Accept Pipeline Input
+
+To see which parameters accept pipeline input, use `Get-Help`:
+
+```powershell
+# See full help including parameter details
+Get-Help Set-DataverseRecord -Full
+
+# Look for "Accept pipeline input: True" in parameter descriptions
+Get-Help Set-DataverseRecord -Parameter InputObject
+```
+
+You can also check the parameter attributes in the help:
+```powershell
+(Get-Command Set-DataverseRecord).Parameters['InputObject'].Attributes
+```
+
+### Best Practices
+
+**✅ DO:**
+- Use the pipeline for processing multiple records - it's memory efficient and idiomatic PowerShell
+- Use `ForEach-Object` when you need setup/cleanup (`-Begin`/`-End` blocks)
+- Check which parameters accept pipeline input with `Get-Help -Full`
+
+**❌ DON'T:**
+- Use foreach statement unless you need all data in memory or random access
+- Collect all records into a variable before processing unless necessary
+- Use `.ForEach()` method when pipeline would work (it also loads all into memory)
+
+**Learn more:**
+- [Microsoft Docs: about_Pipelines](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_pipelines)
+- [Microsoft Docs: about_Foreach](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_foreach)
+- [Microsoft Docs: ForEach-Object](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/foreach-object)
+- [PowerShell Team Blog: ForEach and Where Magic Methods](https://devblogs.microsoft.com/powershell/foreach-and-where-magic-methods/)
+
+## Using in CI/CD Pipelines
+
+This module can be used in CI/CD pipelines for automated deployments and data operations. Here's how to use it in Azure DevOps and GitHub Actions.
+
+### Azure DevOps Pipelines
+
+**Prerequisites:**
+- Install the module in your pipeline
+- Use service principal (client secret) authentication
+- Store credentials in Azure DevOps Variable Groups or Key Vault
+
+*Example: Azure Pipeline YAML with secure variables:*
+```yaml
+# azure-pipelines.yml
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'  # or 'windows-latest' for PowerShell Desktop
+
+variables:
+  - group: 'dataverse-dev'  # Variable group containing DATAVERSE_URL, CLIENT_ID, CLIENT_SECRET, TENANT_ID
+
+steps:
+  - task: PowerShell@2
+    displayName: 'Install Dataverse Module'
+    inputs:
+      targetType: 'inline'
+      script: |
+        Install-Module -Name Rnwood.Dataverse.Data.PowerShell -Force -Scope CurrentUser
+        
+  - task: PowerShell@2
+    displayName: 'Run Dataverse Operations'
+    inputs:
+      targetType: 'inline'
+      script: |
+        $ErrorActionPreference = "Stop"
+        
+        # Connect using service principal from pipeline variables
+        $c = Get-DataverseConnection `
+          -url "$(DATAVERSE_URL)" `
+          -ClientId "$(CLIENT_ID)" `
+          -ClientSecret "$(CLIENT_SECRET)" `
+          -TenantId "$(TENANT_ID)"
+        
+        # Your operations here
+        $contacts = Get-DataverseRecord -Connection $c -TableName contact -Top 10
+        Write-Host "Retrieved $($contacts.Count) contacts"
+        
+        # Example: Update records
+        $contacts | ForEach-Object {
+          $_.description = "Updated by pipeline on $(Get-Date)"
+          $_
+        } | Set-DataverseRecord -Connection $c
+    env:
+      DATAVERSE_URL: $(DATAVERSE_URL)
+      CLIENT_ID: $(CLIENT_ID)
+      CLIENT_SECRET: $(CLIENT_SECRET)
+      TENANT_ID: $(TENANT_ID)
+```
+
+**Setting up Variable Groups:**
+
+1. In Azure DevOps, go to **Pipelines** > **Library**
+2. Create a new **Variable Group** (e.g., `dataverse-dev`, `dataverse-prod`)
+3. Add variables:
+   - `DATAVERSE_URL`: Your Dataverse URL (e.g., `https://myorg.crm.dynamics.com`)
+   - `CLIENT_ID`: Application (client) ID from Azure App Registration
+   - `CLIENT_SECRET`: Client secret from Azure App Registration (**mark as secret** 🔒)
+   - `TENANT_ID`: Azure AD tenant ID
+4. Link the variable group to your pipeline
+
+**For production environments:** Consider using [Azure Key Vault integration](https://learn.microsoft.com/azure/devops/pipelines/release/azure-key-vault) to store secrets securely.
+
+**Learn more:**
+- [Azure DevOps: Define variables](https://learn.microsoft.com/azure/devops/pipelines/process/variables)
+- [Azure DevOps: Variable groups](https://learn.microsoft.com/azure/devops/pipelines/library/variable-groups)
+- [Azure DevOps: Use Azure Key Vault secrets](https://learn.microsoft.com/azure/devops/pipelines/release/azure-key-vault)
+
+### GitHub Actions
+
+**Prerequisites:**
+- Install the module in your workflow
+- Use service principal (client secret) authentication
+- Store credentials in GitHub Secrets or Environment Secrets
+
+*Example: GitHub Actions workflow with secure secrets:*
+```yaml
+# .github/workflows/dataverse-deploy.yml
+name: Dataverse Operations
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # or windows-latest for PowerShell Desktop
+    
+    # Use environment for environment-specific secrets
+    environment: development
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Install Dataverse Module
+        shell: pwsh
+        run: |
+          Install-Module -Name Rnwood.Dataverse.Data.PowerShell -Force -Scope CurrentUser
+          
+      - name: Run Dataverse Operations
+        shell: pwsh
+        env:
+          DATAVERSE_URL: ${{ secrets.DATAVERSE_URL }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          TENANT_ID: ${{ secrets.TENANT_ID }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          
+          # Connect using service principal from secrets
+          $c = Get-DataverseConnection `
+            -url $env:DATAVERSE_URL `
+            -ClientId $env:CLIENT_ID `
+            -ClientSecret $env:CLIENT_SECRET `
+            -TenantId $env:TENANT_ID
+          
+          # Your operations here
+          $contacts = Get-DataverseRecord -Connection $c -TableName contact -Top 10
+          Write-Host "Retrieved $($contacts.Count) contacts"
+          
+          # Example: Create/update records
+          $contacts | ForEach-Object {
+            $_.description = "Updated by GitHub Actions on $(Get-Date)"
+            $_
+          } | Set-DataverseRecord -Connection $c -WhatIf  # Remove -WhatIf when ready
+```
+
+**Setting up GitHub Secrets:**
+
+1. Go to your repository **Settings** > **Secrets and variables** > **Actions**
+2. Add **Repository secrets** or **Environment secrets**:
+   - `DATAVERSE_URL`: Your Dataverse URL (e.g., `https://myorg.crm.dynamics.com`)
+   - `CLIENT_ID`: Application (client) ID from Azure App Registration
+   - `CLIENT_SECRET`: Client secret from Azure App Registration
+   - `TENANT_ID`: Azure AD tenant ID
+
+**Using Environments for multiple stages:**
+
+```yaml
+# Deploy to different environments
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      # ... uses secrets.DATAVERSE_URL from development environment
+      
+  deploy-prod:
+    runs-on: ubuntu-latest
+    environment: production
+    needs: deploy-dev  # Runs after dev deployment
+    steps:
+      # ... uses secrets.DATAVERSE_URL from production environment
+```
+
+**Learn more:**
+- [GitHub Actions: Using secrets](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions)
+- [GitHub Actions: Using environments](https://docs.github.com/actions/deployment/targeting-different-environments/using-environments-for-deployment)
+- [GitHub Actions: Workflow syntax](https://docs.github.com/actions/using-workflows/workflow-syntax-for-github-actions)
+
+### Azure App Registration Setup
+
+Both Azure DevOps and GitHub Actions require an Azure App Registration for service principal authentication:
+
+1. **Create App Registration:**
+   - Go to [Azure Portal](https://portal.azure.com) > **Azure Active Directory** > **App registrations**
+   - Click **New registration**, give it a name (e.g., `Dataverse-CI-CD`)
+   - Click **Register**
+
+2. **Create Client Secret:**
+   - In your app registration, go to **Certificates & secrets**
+   - Click **New client secret**, add a description, set expiration
+   - **Copy the secret value immediately** (you can't see it again)
+
+3. **Grant Permissions in Dataverse:**
+   - Go to [Power Platform Admin Center](https://admin.powerplatform.microsoft.com/)
+   - Select your environment > **Settings** > **Users + permissions** > **Application users**
+   - Click **New app user**, select your app registration
+   - Assign appropriate security role (e.g., System Administrator for full access)
+
+4. **Note down:**
+   - Application (client) ID
+   - Directory (tenant) ID  
+   - Client secret value
+
+**Learn more:**
+- [Microsoft Docs: Register an application](https://learn.microsoft.com/power-apps/developer/data-platform/walkthrough-register-app-azure-active-directory)
+- [Microsoft Docs: Application user authentication](https://learn.microsoft.com/power-apps/developer/data-platform/use-single-tenant-server-server-authentication)
 
 ## Main Cmdlets
 
