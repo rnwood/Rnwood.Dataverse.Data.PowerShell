@@ -24,7 +24,7 @@ Describe "Invoke-DataverseCalculateRollupField Tests" {
                 return $response
             })
             
-            # Create a test target with TableName and FieldName
+            # Create a test target with contact entity (which exists in mock metadata)
             $target = New-Object Microsoft.Xrm.Sdk.EntityReference("contact", [Guid]::NewGuid())
             
             # Call cmdlet with -Confirm:$false to avoid prompts

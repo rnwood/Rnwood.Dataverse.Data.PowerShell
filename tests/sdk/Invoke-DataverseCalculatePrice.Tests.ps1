@@ -24,8 +24,8 @@ Describe "Invoke-DataverseCalculatePrice Tests" {
                 return $response
             })
             
-            # Create a test target (opportunity, quote, order, or invoice)
-            $target = New-Object Microsoft.Xrm.Sdk.EntityReference("opportunity", [Guid]::NewGuid())
+            # Create a test target using contact (CalculatePrice normally uses opportunity/quote/order/invoice)
+            $target = New-Object Microsoft.Xrm.Sdk.EntityReference("contact", [Guid]::NewGuid())
             
             # Call cmdlet with -Confirm:$false to avoid prompts
             $response = Invoke-DataverseCalculatePrice -Connection $script:conn -Target $target -Confirm:$false
