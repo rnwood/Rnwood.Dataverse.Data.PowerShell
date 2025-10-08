@@ -218,6 +218,110 @@ PS C:\> @{
 
 Creates a contact with a lookup to an account by name. The module will automatically resolve "Contoso Ltd" to the account's GUID if the name is unique.
 
+### Example 12: Handle errors in batch operations
+```powershell
+PS C:\> $records = @(
+    @{ firstname = "Alice"; lastname = "Valid"; emailaddress1 = "alice@example.com" }
+    @{ firstname = "Bob"; lastname = ""; emailaddress1 = "bob@example.com" }  # Invalid - required field missing
+    @{ firstname = "Charlie"; lastname = "Valid"; emailaddress1 = "charlie@example.com" }
+)
+
+PS C:\> $errors = @()
+PS C:\> $records | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -ErrorVariable +errors -ErrorAction SilentlyContinue
+
+PS C:\> # Process errors - each error's TargetObject contains the input record that failed
+PS C:\> foreach ($err in $errors) {
+    Write-Host "Failed to create contact: $($err.TargetObject.firstname) $($err.TargetObject.lastname)"
+    Write-Host "Error: $($err.Exception.Message)"
+}
+```
+
+Demonstrates batch error handling. When using batching (default BatchSize of 100), the cmdlet continues processing all records even if some fail. Each error written to the error stream includes the original input object as the `TargetObject`, allowing you to correlate which input caused the error. Use `-ErrorVariable` to collect errors and `-ErrorAction SilentlyContinue` to prevent them from stopping execution.
+
+### Example 13: Access full error details from server
+```powershell
+PS C:\> $records = @(
+    @{ firstname = "Test"; lastname = "User" }
+)
+
+PS C:\> $errors = @()
+PS C:\> $records | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -ErrorVariable +errors -ErrorAction SilentlyContinue
+
+PS C:\> # Access detailed error information from the server
+PS C:\> foreach ($err in $errors) {
+    # TargetObject contains the input record that failed
+    Write-Host "Failed record: $($err.TargetObject.firstname) $($err.TargetObject.lastname)"
+    
+    # Exception.Message contains full server response including:
+    # - OrganizationServiceFault ErrorCode and Message
+    # - TraceText with server-side trace details
+    # - InnerFault details (if any)
+    Write-Host "Full error details from server:"
+    Write-Host $err.Exception.Message
+    
+    # You can also access individual components:
+    Write-Host "Error category: $($err.CategoryInfo.Category)"
+    Write-Host "Exception type: $($err.Exception.GetType().Name)"
+}
+```
+
+Demonstrates how to access comprehensive error details from the Dataverse server. The `Exception.Message` property contains the full server response formatted by the cmdlet, including the OrganizationServiceFault error code, message, server-side trace text, and any nested inner fault details. The `TargetObject` identifies which input record caused the error, while the full error message provides all diagnostic information needed for troubleshooting server-side issues.
+
+### Example 14: Stop on first error with BatchSize 1
+```powershell
+PS C:\> $records = @(
+    @{ firstname = "Alice"; lastname = "Valid" }
+    @{ firstname = "Bob"; lastname = "" }  # Invalid - will cause error
+    @{ firstname = "Charlie"; lastname = "Valid" }  # Won't be processed
+)
+
+PS C:\> try {
+    $records | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -BatchSize 1 -ErrorAction Stop
+} catch {
+    Write-Host "Error creating record: $($_.TargetObject.firstname)"
+    Write-Host "Remaining records were not processed"
+}
+```
+
+Disables batching by setting `-BatchSize 1`. With this setting, each record is sent in a separate request, and execution stops immediately on the first error (when using `-ErrorAction Stop`). This is useful when you need to stop processing on the first failure rather than attempting all records.
+
+### Example 15: Get IDs of created records using PassThru
+```powershell
+PS C:\> $contacts = @(
+    @{ firstname = "Alice"; lastname = "Anderson" }
+    @{ firstname = "Bob"; lastname = "Brown" }
+    @{ firstname = "Charlie"; lastname = "Clark" }
+)
+
+PS C:\> $createdRecords = $contacts | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -PassThru
+
+PS C:\> # Access the IDs of created records
+PS C:\> foreach ($record in $createdRecords) {
+    Write-Host "Created contact $($record.firstname) $($record.lastname) with ID: $($record.Id)"
+}
+```
+
+Creates multiple contact records and returns the input objects with their `Id` property set. The `-PassThru` parameter causes the cmdlet to write each input object to the pipeline after the record is created, with the `Id` property populated with the GUID of the newly created record. This allows you to capture and use the IDs in subsequent operations.
+
+### Example 16: Use PassThru to create and link records
+```powershell
+PS C:\> # Create parent account and get its ID
+PS C:\> $account = @{ name = "Contoso Ltd" } | 
+    Set-DataverseRecord -Connection $c -TableName account -CreateOnly -PassThru
+
+PS C:\> # Create child contact linked to the account
+PS C:\> $contact = @{ 
+    firstname = "John"
+    lastname = "Doe"
+    parentcustomerid = $account.Id
+    "parentcustomerid@logicalname" = "account"
+} | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -PassThru
+
+PS C:\> Write-Host "Created contact $($contact.Id) linked to account $($account.Id)"
+```
+
+Demonstrates using `-PassThru` to chain record creation operations. First creates an account and captures its ID using `-PassThru`, then uses that ID to create a related contact record. This pattern is useful when you need to establish relationships between newly created records.
+
 ## PARAMETERS
 
 ### -BatchSize

@@ -38,6 +38,63 @@ PS C:\> remove-dataverserecord -connection $c -tablename contact -id 4CE66D51-C6
 
 Deletes the single contact with the specified ID.
 
+### Example 3: Handle errors in batch delete operations
+```powershell
+PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -Filter @{ lastname = "TestUser" }
+
+PS C:\> $errors = @()
+PS C:\> $recordsToDelete | Remove-DataverseRecord -Connection $c -ErrorVariable +errors -ErrorAction SilentlyContinue
+
+PS C:\> # Process any errors that occurred
+PS C:\> foreach ($err in $errors) {
+    Write-Host "Failed to delete record: $($err.TargetObject.Id)"
+    Write-Host "Error: $($err.Exception.Message)"
+}
+```
+
+Demonstrates batch error handling for delete operations. When using batching (default BatchSize of 100), the cmdlet continues processing all records even if some deletions fail. Each error written to the error stream includes the original input object as the `TargetObject`, allowing you to correlate which record caused the error. Use `-ErrorVariable` to collect errors and `-ErrorAction SilentlyContinue` to prevent them from stopping execution.
+
+### Example 4: Access full error details from server
+```powershell
+PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -Top 10
+
+PS C:\> $errors = @()
+PS C:\> $recordsToDelete | Remove-DataverseRecord -Connection $c -ErrorVariable +errors -ErrorAction SilentlyContinue
+
+PS C:\> # Access detailed error information from the server
+PS C:\> foreach ($err in $errors) {
+    # TargetObject contains the input record that failed to delete
+    Write-Host "Failed to delete record: $($err.TargetObject.Id)"
+    
+    # Exception.Message contains full server response including:
+    # - OrganizationServiceFault ErrorCode and Message
+    # - TraceText with server-side trace details
+    # - InnerFault details (if any)
+    Write-Host "Full error details from server:"
+    Write-Host $err.Exception.Message
+    
+    # You can also access individual components:
+    Write-Host "Error category: $($err.CategoryInfo.Category)"
+    Write-Host "Exception type: $($err.Exception.GetType().Name)"
+}
+```
+
+Demonstrates how to access comprehensive error details from the Dataverse server when deleting records. The `Exception.Message` property contains the full server response formatted by the cmdlet, including the OrganizationServiceFault error code, message, server-side trace text, and any nested inner fault details. The `TargetObject` identifies which input record caused the deletion error, while the full error message provides all diagnostic information needed for troubleshooting server-side issues.
+
+### Example 5: Stop on first delete error with BatchSize 1
+```powershell
+PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -Top 100
+
+PS C:\> try {
+    $recordsToDelete | Remove-DataverseRecord -Connection $c -BatchSize 1 -ErrorAction Stop
+} catch {
+    Write-Host "Error deleting record: $($_.TargetObject.Id)"
+    Write-Host "Remaining records were not deleted"
+}
+```
+
+Disables batching by setting `-BatchSize 1`. With this setting, each record is deleted in a separate request, and execution stops immediately on the first error (when using `-ErrorAction Stop`). This is useful when you need to stop processing on the first failure rather than attempting to delete all records.
+
 ## PARAMETERS
 
 ### -BatchSize
