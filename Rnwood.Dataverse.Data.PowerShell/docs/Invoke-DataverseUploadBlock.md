@@ -14,16 +14,8 @@ Contains the data needed to upload a block of data to storage.
 
 ## SYNTAX
 
-### Default (Default)
 ```
-Invoke-DataverseUploadBlock [-BlockId <String>] [-BlockData <Byte[]>] [-FileContinuationToken <String>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
-```
-
-### FromFile
-```
-Invoke-DataverseUploadBlock [-BlockId <String>] -InFile <String> [-FileContinuationToken <String>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseUploadBlock -Connection <ServiceClient> -BlockId <String> -BlockData <Byte[]> -InFile <String> -FileContinuationToken <String>
 ```
 
 ## DESCRIPTION
@@ -38,15 +30,15 @@ PS C:\> Invoke-DataverseUploadBlock -Connection <ServiceClient> -BlockId <String
 
 ## PARAMETERS
 
-### -BlockData
-The data block to upload.
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
-Type: Byte[]
-Parameter Sets: Default
+Type: ServiceClient
+Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -68,41 +60,11 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -BlockData
+The data block to upload.
 
 ```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
-
-```yaml
-Type: ServiceClient
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -FileContinuationToken
-Gets or sets a token that uniquely identifies a sequence of related data uploads.
-
-```yaml
-Type: String
+Type: Byte[]
 Parameter Sets: (All)
 Aliases:
 
@@ -118,7 +80,7 @@ Gets or sets the path to a file containing the data to upload.
 
 ```yaml
 Type: String
-Parameter Sets: FromFile
+Parameter Sets: (All)
 Aliases:
 
 Required: True
@@ -128,28 +90,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -FileContinuationToken
+A token that uniquely identifies a sequence of related data uploads.
 
 ```yaml
-Type: SwitchParameter
+Type: String
 Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named
@@ -161,12 +108,15 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
+
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.UploadBlockResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.UploadBlockResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.UploadBlockResponse)
 ## NOTES
 
 ## RELATED LINKS

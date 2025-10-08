@@ -15,10 +15,7 @@ Contains the data that is needed to send an email message using a template.
 ## SYNTAX
 
 ```
-Invoke-DataverseSendEmailFromTemplate [-TemplateId <Guid>] [-RegardingType <String>] [-RegardingId <Guid>]
- -Target <PSObject> -TargetTableName <String> [-TargetIgnoreProperties <String[]>]
- [-TargetLookupColumns <Hashtable>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseSendEmailFromTemplate -Connection <ServiceClient> -TemplateId <Guid> -RegardingType <String> -RegardingId <Guid> -Target <PSObject> -TargetTableName <String> -TargetIgnoreProperties <String[]> -TargetLookupColumns <Hashtable>
 ```
 
 ## DESCRIPTION
@@ -33,21 +30,6 @@ PS C:\> Invoke-DataverseSendEmailFromTemplate -Connection <ServiceClient> -Templ
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -56,15 +38,15 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -RegardingId
-Gets or sets the ID of the record with which the email messages are associated.
+### -TemplateId
+Gets or sets the ID of the email template to use for the email.
 
 ```yaml
 Type: Guid
@@ -79,7 +61,7 @@ Accept wildcard characters: False
 ```
 
 ### -RegardingType
-Gets or sets the type of the record with which the email messages are associated.
+Gets or sets the type of the record with which the email message is associated.
 
 ```yaml
 Type: String
@@ -93,8 +75,23 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -RegardingId
+Gets or sets the ID of the record with which the email message is associated.
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Target
-Gets or sets the target, which is a recurring appointment master record to which the appointment is converted. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
+Gets or sets the email record to send. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
 
 ```yaml
 Type: PSObject
@@ -104,12 +101,27 @@ Aliases:
 Required: True
 Position: Named
 Default value: None
-Accept pipeline input: True (ByPropertyName, ByValue)
+Accept pipeline input: True
+Accept wildcard characters: False
+```
+
+### -TargetTableName
+Gets or sets the email record to send. The logical name of the table/entity type for the Target parameter.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
 ### -TargetIgnoreProperties
-Gets or sets the target, which is a recurring appointment master record to which the appointment is converted. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Properties to ignore when converting Target PSObject to Entity.
+Gets or sets the email record to send. Properties to ignore when converting Target PSObject to Entity.
 
 ```yaml
 Type: String[]
@@ -124,7 +136,7 @@ Accept wildcard characters: False
 ```
 
 ### -TargetLookupColumns
-Gets or sets the target, which is a recurring appointment master record to which the appointment is converted. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Hashtable specifying lookup columns for entity reference conversions in Target.
+Gets or sets the email record to send. Hashtable specifying lookup columns for entity reference conversions in Target.
 
 ```yaml
 Type: Hashtable
@@ -138,75 +150,18 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -TargetTableName
-Gets or sets the target, which is a recurring appointment master record to which the appointment is converted. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. The logical name of the table/entity type for the Target parameter.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TemplateId
-Sets the ID of the template (email template) that is used for the email notification.
-
-```yaml
-Type: Guid
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
+
 ## INPUTS
 
-### System.Management.Automation.PSObject
+### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.SendEmailFromTemplateResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SendEmailFromTemplateResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.SendEmailFromTemplateResponse)
 ## NOTES
 
 ## RELATED LINKS

@@ -15,10 +15,7 @@ Contains the data that is needed to qualify a lead and create account, contact, 
 ## SYNTAX
 
 ```
-Invoke-DataverseQualifyLead [-LeadId <PSObject>] [-CreateAccount <Boolean>] [-CreateContact <Boolean>]
- [-CreateOpportunity <Boolean>] [-OpportunityCurrencyId <PSObject>] [-OpportunityCustomerId <PSObject>]
- [-SourceCampaignId <PSObject>] [-Status <OptionSetValue>] [-ProcessInstanceId <PSObject>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseQualifyLead -Connection <ServiceClient> -LeadId <PSObject> -CreateAccount <Boolean> -CreateContact <Boolean> -CreateOpportunity <Boolean> -OpportunityCurrencyId <PSObject> -OpportunityCustomerId <PSObject> -SourceCampaignId <PSObject> -Status <OptionSetValue> -ProcessInstanceId <PSObject>
 ```
 
 ## DESCRIPTION
@@ -33,26 +30,26 @@ PS C:\> Invoke-DataverseQualifyLead -Connection <ServiceClient> -LeadId <PSObjec
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
-Type: SwitchParameter
+Type: ServiceClient
 Parameter Sets: (All)
-Aliases: cf
+Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+### -LeadId
+Gets or sets the ID of the lead that is qualified. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
-Type: ServiceClient
+Type: PSObject
 Parameter Sets: (All)
 Aliases:
 
@@ -108,21 +105,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -LeadId
-Gets or sets the ID of the lead that is qualified. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
-
-```yaml
-Type: PSObject
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -OpportunityCurrencyId
 Gets or sets the currency to use for this opportunity. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
@@ -153,21 +135,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProcessInstanceId
-Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
-
-```yaml
-Type: PSObject
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -SourceCampaignId
 Gets or sets the source campaign that is associated with the opportunity. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
@@ -184,7 +151,7 @@ Accept wildcard characters: False
 ```
 
 ### -Status
-Gets or sets the status of the contract. Required.
+Gets or sets the status of the lead. Required.
 
 ```yaml
 Type: OptionSetValue
@@ -198,28 +165,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -ProcessInstanceId
+Gets or sets the ID of a business process flow instance running for the Lead record that should be set for the Opportunity record (created on qualifying the Lead record). Optional. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
-Type: SwitchParameter
+Type: PSObject
 Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named
@@ -231,12 +183,15 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
+
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.QualifyLeadResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.QualifyLeadResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.QualifyLeadResponse)
 ## NOTES
 
 ## RELATED LINKS

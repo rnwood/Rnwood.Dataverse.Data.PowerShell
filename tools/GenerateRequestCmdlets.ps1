@@ -1,5 +1,6 @@
 param(
     [string]$OutputDirectory = "$PSScriptRoot\..\Rnwood.Dataverse.Data.PowerShell.Cmdlets\Commands",
+    [string]$TestOutputDirectory = "$PSScriptRoot\..\tests\sdk",
     [string]$AssemblyPath = "$PSScriptRoot\..\Rnwood.Dataverse.Data.PowerShell.Cmdlets\bin\Release\net462\Microsoft.PowerPlatform.Dataverse.Client.dll",
     [string[]]$OnlyRequests
 )
@@ -8,14 +9,20 @@ param(
 $generatorName = 'GenerateRequestCmdlets.ps1'
 $generatorVersion = '1.0.0'
 
-# Ensure output directory exists
+# Ensure output directories exist
 $sdkDirectory = Join-Path $OutputDirectory "sdk"
 if (!(Test-Path $sdkDirectory)) {
     New-Item -ItemType Directory -Path $sdkDirectory -Force
 }
 
+$testSdkDirectory = $TestOutputDirectory
+if (!(Test-Path $testSdkDirectory)) {
+    New-Item -ItemType Directory -Path $testSdkDirectory -Force
+}
+
 # Clear existing generated files in the sdk directory before generating new ones
 $deletedCount = 0
+$testDeletedCount = 0
 try {
     if ($OnlyRequests -and $OnlyRequests.Count -gt 0) {
         # Remove only the generated files that correspond to the specified request names
@@ -26,8 +33,14 @@ try {
             if (Test-Path $targetFile) {
                 try { Remove-Item -Path $targetFile -Force -ErrorAction Stop; $removed++ } catch { Write-Warning ([string]::Format('Failed to remove {0}: {1}', $targetFile, $_.Exception.Message)) }
             }
+            # Also remove corresponding test file
+            $testFile = Join-Path $testSdkDirectory "InvokeDataverse${shortName}.Tests.ps1"
+            if (Test-Path $testFile) {
+                try { Remove-Item -Path $testFile -Force -ErrorAction Stop; $testDeletedCount++ } catch { Write-Warning ([string]::Format('Failed to remove {0}: {1}', $testFile, $_.Exception.Message)) }
+            }
         }
         if ($removed -gt 0) { Write-Host "Removed $removed existing generated files from $sdkDirectory"; $deletedCount = $removed }
+        if ($testDeletedCount -gt 0) { Write-Host "Removed $testDeletedCount existing test files from $testSdkDirectory" }
     } else {
         $existingFiles = Get-ChildItem -Path $sdkDirectory -File -Include '*.cs' -Recurse -ErrorAction SilentlyContinue
         if ($existingFiles -and $existingFiles.Count -gt 0) {
@@ -36,6 +49,19 @@ try {
                 try {
                     Remove-Item -Path $file.FullName -Force -ErrorAction Stop
                     $deletedCount++
+                } catch {
+                    Write-Warning "Failed to remove $($file.FullName): $($_.Exception.Message)"
+                }
+            }
+        }
+        # Remove all existing test files
+        $existingTestFiles = Get-ChildItem -Path $testSdkDirectory -File -Include '*.Tests.ps1' -Recurse -ErrorAction SilentlyContinue
+        if ($existingTestFiles -and $existingTestFiles.Count -gt 0) {
+            Write-Host "Removing $($existingTestFiles.Count) existing test files from $testSdkDirectory"
+            foreach ($file in $existingTestFiles) {
+                try {
+                    Remove-Item -Path $file.FullName -Force -ErrorAction Stop
+                    $testDeletedCount++
                 } catch {
                     Write-Warning "Failed to remove $($file.FullName): $($_.Exception.Message)"
                 }
@@ -378,6 +404,13 @@ foreach ($assembly in $relevantAssemblies) {
 }
 
 Write-Host "Found $($requestTypes.Count) request types"
+
+# Filter request types if OnlyRequests is specified
+if ($OnlyRequests -and $OnlyRequests.Count -gt 0) {
+    Write-Host "Filtering to only generate: $($OnlyRequests -join ', ')"
+    $requestTypes = $requestTypes | Where-Object { $OnlyRequests -contains $_.Name }
+    Write-Host "Filtered to $($requestTypes.Count) request types"
+}
 
 $generatedCount = 0
 $skippedDeprecated = 0
@@ -1025,8 +1058,127 @@ $classSummary
     } catch {
         Write-Warning ([string]::Format('Failed to generate docs for {0}: {1}', $cmdletClassName, $_))
     }
+    
+    # --- Generate test file for this cmdlet ---
+    try {
+        $testFileName = "Invoke-Dataverse$cmdletName.Tests.ps1"
+        $testPath = Join-Path $testSdkDirectory $testFileName
+        
+        # Build parameter invocation examples for test
+        $testParamExamples = @()
+        $hasParameters = $false
+        
+        # For simple cmdlets without parameters, just test basic invocation
+        if ($properties.Count -eq 0) {
+            $testParamExamples += "            # No parameters required for this cmdlet"
+            $testParamExamples += "            `$result = Invoke-Dataverse$cmdletName -Connection `$script:conn"
+        } else {
+            $hasParameters = $true
+            # Generate parameter examples based on types
+            $testParamExamples += "            # Create test parameters"
+            foreach ($prop in $properties) {
+                $paramTypeName = $prop.PropertyType.FullName
+                $testValue = ""
+                
+                # Generate appropriate test values based on type
+                if ($paramTypeName -eq "System.Guid" -or $paramTypeName -eq "System.Guid?") {
+                    $testValue = "[Guid]::NewGuid()"
+                } elseif ($paramTypeName -eq "System.String") {
+                    $testValue = "`"Test$($prop.Name)`""
+                } elseif ($paramTypeName -eq "System.Boolean" -or $paramTypeName -eq "System.Boolean?") {
+                    $testValue = "`$true"
+                } elseif ($paramTypeName -eq "System.Int32" -or $paramTypeName -eq "System.Int32?") {
+                    $testValue = "1"
+                } elseif ($paramTypeName -eq "Microsoft.Xrm.Sdk.Entity") {
+                    # For Entity parameters, create a test entity and specify table name
+                    if (-not ($testParamExamples -match "testEntity")) {
+                        $testParamExamples = @("            # Create test entity") + $testParamExamples
+                        $testParamExamples = @("            `$testEntity = @{ firstname = 'Test'; lastname = 'User' }") + $testParamExamples
+                    }
+                    $testValue = "`$testEntity"
+                } elseif ($paramTypeName -eq "Microsoft.Xrm.Sdk.EntityReference") {
+                    $testValue = "@{ Id = [Guid]::NewGuid(); LogicalName = 'contact' }"
+                } elseif ($paramTypeName -match "QueryBase|QueryExpression") {
+                    $testValue = "New-Object Microsoft.Xrm.Sdk.Query.QueryExpression('contact')"
+                } elseif ($paramTypeName -match "ColumnSet") {
+                    $testValue = "New-Object Microsoft.Xrm.Sdk.Query.ColumnSet(`$true)"
+                } else {
+                    # Default to null for complex types we can't easily mock
+                    continue
+                }
+                
+                $testParamExamples += "            `$$($prop.Name) = $testValue"
+            }
+            
+            # Build the cmdlet invocation with all parameters
+            $invokeParams = @()
+            foreach ($prop in $properties) {
+                $paramTypeName = $prop.PropertyType.FullName
+                # Skip complex types we didn't create test values for
+                if ($paramTypeName -notmatch "Guid|String|Boolean|Int32|Entity|EntityReference|Query|ColumnSet") {
+                    continue
+                }
+                $invokeParams += "-$($prop.Name) `$$($prop.Name)"
+                
+                # If this is an Entity parameter, also add the TableName parameter
+                if ($paramTypeName -eq "Microsoft.Xrm.Sdk.Entity") {
+                    $invokeParams += "-$($prop.Name)TableName 'contact'"
+                }
+            }
+            
+            if ($invokeParams.Count -gt 0) {
+                $testParamExamples += ""
+                $testParamExamples += "            `$result = Invoke-Dataverse$cmdletName -Connection `$script:conn $($invokeParams -join ' ')"
+            } else {
+                # If no parameters could be generated, just test basic invocation
+                $testParamExamples += ""
+                $testParamExamples += "            # Test basic invocation - specific parameters may need manual adjustment"
+                $testParamExamples += "            `$result = Invoke-Dataverse$cmdletName -Connection `$script:conn"
+            }
+        }
+        
+        # Build the test file content
+        $testLines = @()
+        $testLines += "# <auto-generated>"
+        $testLines += "#     This code was generated by $generatorName (version $generatorVersion) on $(Get-Date -Format o)."
+        $testLines += "#     Changes to this file may cause incorrect behavior and will be lost if the code is regenerated."
+        $testLines += "# </auto-generated>"
+        $testLines += ""
+        $testLines += ". `$PSScriptRoot/../Common.ps1"
+        $testLines += ""
+        $testLines += "Describe 'Invoke-Dataverse$cmdletName' {"
+        $testLines += ""
+        $testLines += "    BeforeAll {"
+        $testLines += "        `$script:conn = getMockConnection"
+        $testLines += "    }"
+        $testLines += ""
+        $testLines += "    It 'Can invoke the cmdlet with a mock connection' {"
+        $testLines += "        {"
+        $testParamExamples | ForEach-Object { $testLines += $_ }
+        $testLines += "            `$result | Should -Not -BeNull"
+        $testLines += "        } | Should -Not -Throw"
+        $testLines += "    }"
+        $testLines += ""
+        
+        # Add WhatIf test since all cmdlets support ShouldProcess
+        # For cmdlets with parameters, skip the WhatIf test as it may require mandatory parameters
+        if ($properties.Count -eq 0) {
+            $testLines += "    It 'Supports -WhatIf parameter' {"
+            $testLines += "        {"
+            $testLines += "            `$result = Invoke-Dataverse$cmdletName -Connection `$script:conn -WhatIf"
+            $testLines += "        } | Should -Not -Throw"
+            $testLines += "    }"
+        }
+        $testLines += "}"
+        
+        # Write the test file
+        $testLines -join "`n" | Out-File -FilePath $testPath -Encoding UTF8
+        Write-Verbose "  Generated test: $testPath"
+    } catch {
+        Write-Warning ([string]::Format('Failed to generate test for {0}: {1}', $cmdletClassName, $_))
+    }
 }
 
-Write-Host "Generation complete. Generated $generatedCount of $($requestTypes.Count) request types. Skipped $skippedDeprecated deprecated/obsolete types. Removed $deletedCount existing generated files."
+Write-Host "Generation complete. Generated $generatedCount of $($requestTypes.Count) request types. Skipped $skippedDeprecated deprecated/obsolete types. Removed $deletedCount existing generated files and $testDeletedCount existing test files."
 
 # No explicit assembly resolver cleanup required when using module import

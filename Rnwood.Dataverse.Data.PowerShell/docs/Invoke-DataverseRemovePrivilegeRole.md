@@ -15,8 +15,7 @@ Contains the data that is needed to remove a privilege from an existing role.
 ## SYNTAX
 
 ```
-Invoke-DataverseRemovePrivilegeRole [-RoleId <Guid>] [-PrivilegeId <Guid>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRemovePrivilegeRole -Connection <ServiceClient> -RoleId <Guid> -PrivilegeId <Guid>
 ```
 
 ## DESCRIPTION
@@ -31,26 +30,26 @@ PS C:\> Invoke-DataverseRemovePrivilegeRole -Connection <ServiceClient> -RoleId 
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
-Type: SwitchParameter
+Type: ServiceClient
 Parameter Sets: (All)
-Aliases: cf
+Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+### -RoleId
+Gets or sets the ID of the role from which the privilege is to be removed.
 
 ```yaml
-Type: ServiceClient
+Type: Guid
 Parameter Sets: (All)
 Aliases:
 
@@ -76,60 +75,18 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -RoleId
-Gets or sets the ID of the role for which you want to add the privileges. Required.
-
-```yaml
-Type: Guid
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
 
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.RemovePrivilegeRoleResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RemovePrivilegeRoleResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RemovePrivilegeRoleResponse)
 ## NOTES
 
 ## RELATED LINKS

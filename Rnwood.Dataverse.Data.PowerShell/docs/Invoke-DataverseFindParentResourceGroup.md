@@ -15,8 +15,7 @@ Contains the data that is needed to find a parent resource group (scheduling gro
 ## SYNTAX
 
 ```
-Invoke-DataverseFindParentResourceGroup [-ParentId <Guid>] [-ChildrenIds <Guid[]>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseFindParentResourceGroup -Connection <ServiceClient> -ParentId <Guid> -ChildrenIds <Guid>
 ```
 
 ## DESCRIPTION
@@ -31,36 +30,6 @@ PS C:\> Invoke-DataverseFindParentResourceGroup -Connection <ServiceClient> -Par
 
 ## PARAMETERS
 
-### -ChildrenIds
-Gets or sets an array of IDs of the children resource groups.
-
-```yaml
-Type: Guid[]
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -69,7 +38,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -77,7 +46,7 @@ Accept wildcard characters: False
 ```
 
 ### -ParentId
-For internal use only.
+Gets or sets the ID of the parent resource group.
 
 ```yaml
 Type: Guid
@@ -91,28 +60,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -ChildrenIds
+Gets or sets an array of IDs of the children resource groups.
 
 ```yaml
-Type: SwitchParameter
+Type: Guid
 Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named
@@ -124,12 +78,15 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
+
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.FindParentResourceGroupResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.FindParentResourceGroupResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.FindParentResourceGroupResponse)
 ## NOTES
 
 ## RELATED LINKS

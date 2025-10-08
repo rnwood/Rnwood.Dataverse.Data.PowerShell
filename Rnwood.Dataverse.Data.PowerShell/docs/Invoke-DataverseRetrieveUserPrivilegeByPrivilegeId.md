@@ -15,8 +15,7 @@ Contains the data to retrieve a list of privileges a system user (user) has thro
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveUserPrivilegeByPrivilegeId [-UserId <Guid>] [-PrivilegeId <Guid>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveUserPrivilegeByPrivilegeId -Connection <ServiceClient> -UserId <Guid> -PrivilegeId <Guid>
 ```
 
 ## DESCRIPTION
@@ -31,21 +30,6 @@ PS C:\> Invoke-DataverseRetrieveUserPrivilegeByPrivilegeId -Connection <ServiceC
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
@@ -54,22 +38,7 @@ Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -PrivilegeId
-Gets or sets the ID of the privilege that is to be removed from the existing role.
-
-```yaml
-Type: Guid
-Parameter Sets: (All)
-Aliases:
-
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -91,28 +60,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -PrivilegeId
+Gets or sets the ID of the privilege.
 
 ```yaml
-Type: SwitchParameter
+Type: Guid
 Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named
@@ -124,12 +78,15 @@ Accept wildcard characters: False
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
+Supports -WhatIf and -Confirm: This cmdlet supports PowerShell -WhatIf and -Confirm via SupportsShouldProcess. Use -WhatIf to preview actions without making changes.
+
 ## INPUTS
 
 ### None
 ## OUTPUTS
 
-### System.Object
+### Microsoft.Crm.Sdk.Messages.RetrieveUserPrivilegeByPrivilegeIdResponse
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveUserPrivilegeByPrivilegeIdResponse](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveUserPrivilegeByPrivilegeIdResponse)
 ## NOTES
 
 ## RELATED LINKS
