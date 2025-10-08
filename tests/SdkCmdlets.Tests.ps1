@@ -51,6 +51,13 @@ Describe "SDK Cmdlet Tests" {
             $proxy = Get-ProxyService -Connection $script:conn
             $proxy.StubResponse("Microsoft.Xrm.Sdk.Messages.RetrieveAllEntitiesRequest", {
                 param($request)
+                
+                # Validate request parameters were properly converted
+                $request | Should -Not -BeNull
+                $request.GetType().FullName | Should -Be "Microsoft.Xrm.Sdk.Messages.RetrieveAllEntitiesRequest"
+                $request.EntityFilters | Should -Not -BeNull
+                $request.RetrieveAsIfPublished | Should -BeOfType [System.Boolean]
+                
                 $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveAllEntitiesResponse
                 
                 # Create minimal entity metadata array
@@ -75,15 +82,21 @@ Describe "SDK Cmdlet Tests" {
             # Call the SDK cmdlet
             $response = Invoke-DataverseRetrieveAllEntities -Connection $script:conn -EntityFilters Entity -RetrieveAsIfPublished $true
             
-            # Verify response structure
+            # Verify response type as documented
             $response | Should -Not -BeNull
+            $response.GetType().FullName | Should -Be "Microsoft.Xrm.Sdk.Messages.RetrieveAllEntitiesResponse"
             $response.GetType().Name | Should -Be "RetrieveAllEntitiesResponse"
-            $response.EntityMetadata | Should -Not -BeNull
-            $response.EntityMetadata.Count | Should -BeGreaterThan 0
             
-            # Verify the proxy captured the request
+            # Verify response contains expected data
+            $response.EntityMetadata | Should -Not -BeNull
+            $response.EntityMetadata | Should -BeOfType [Microsoft.Xrm.Sdk.Metadata.EntityMetadata[]]
+            $response.EntityMetadata.Count | Should -Be 2
+            $response.EntityMetadata[0].LogicalName | Should -Be "contact"
+            $response.EntityMetadata[1].LogicalName | Should -Be "account"
+            
+            # Verify the proxy captured the request with correct parameters
             $proxy.LastRequest | Should -Not -BeNull
-            $proxy.LastRequest.GetType().Name | Should -Be "RetrieveAllEntitiesRequest"
+            $proxy.LastRequest.GetType().FullName | Should -Be "Microsoft.Xrm.Sdk.Messages.RetrieveAllEntitiesRequest"
             $proxy.LastRequest.EntityFilters.ToString() | Should -Be "Entity"
             $proxy.LastRequest.RetrieveAsIfPublished | Should -Be $true
         }
@@ -417,6 +430,15 @@ Describe "SDK Cmdlet Tests" {
             $proxy = Get-ProxyService -Connection $script:conn
             $proxy.StubResponse("Microsoft.Crm.Sdk.Messages.ExportSolutionRequest", {
                 param($request)
+                
+                # Validate request parameters were properly converted
+                $request | Should -Not -BeNull
+                $request.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.ExportSolutionRequest"
+                $request.SolutionName | Should -BeOfType [System.String]
+                $request.SolutionName | Should -Be "TestSolution"
+                $request.Managed | Should -BeOfType [System.Boolean]
+                $request.Managed | Should -Be $false
+                
                 $response = New-Object Microsoft.Crm.Sdk.Messages.ExportSolutionResponse
                 # Create a fake solution file (just some bytes)
                 $response.Results["ExportSolutionFile"] = [System.Text.Encoding]::UTF8.GetBytes("fake solution content")
@@ -426,14 +448,19 @@ Describe "SDK Cmdlet Tests" {
             # Call the cmdlet
             $response = Invoke-DataverseExportSolution -Connection $script:conn -SolutionName $solutionName -Managed $false
             
-            # Verify response
+            # Verify response type as documented
             $response | Should -Not -BeNull
+            $response.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.ExportSolutionResponse"
             $response.GetType().Name | Should -Be "ExportSolutionResponse"
+            
+            # Verify response contains expected data
             $response.ExportSolutionFile | Should -Not -BeNull
+            $response.ExportSolutionFile | Should -BeOfType [System.Byte[]]
+            $response.ExportSolutionFile.Length | Should -BeGreaterThan 0
             
             # Verify the proxy captured the request
             $proxy.LastRequest | Should -Not -BeNull
-            $proxy.LastRequest.GetType().Name | Should -Be "ExportSolutionRequest"
+            $proxy.LastRequest.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.ExportSolutionRequest"
             $proxy.LastRequest.SolutionName | Should -Be $solutionName
             $proxy.LastRequest.Managed | Should -Be $false
         }
@@ -639,6 +666,367 @@ Describe "SDK Cmdlet Tests" {
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.GetType().Name | Should -Be "CloseIncidentRequest"
             $proxy.LastRequest.Status | Should -Be -1
+        }
+    }
+
+    Context "SendEmail SDK Cmdlet" {
+        It "Invoke-DataverseSendEmail sends an email" {
+            $emailId = [Guid]::NewGuid()
+            
+            # Stub the response
+            $proxy = Get-ProxyService -Connection $script:conn
+            $proxy.StubResponse("Microsoft.Crm.Sdk.Messages.SendEmailRequest", {
+                param($request)
+                
+                # Validate request parameters
+                $request | Should -Not -BeNull
+                $request.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.SendEmailRequest"
+                $request.EmailId | Should -BeOfType [System.Guid]
+                $request.IssueSend | Should -BeOfType [System.Boolean]
+                
+                $response = New-Object Microsoft.Crm.Sdk.Messages.SendEmailResponse
+                return $response
+            })
+            
+            # Call the cmdlet
+            $response = Invoke-DataverseSendEmail -Connection $script:conn -EmailId $emailId -IssueSend $true -TrackingToken ""
+            
+            # Verify response type
+            $response | Should -Not -BeNull
+            $response.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.SendEmailResponse"
+            
+            # Verify request
+            $proxy.LastRequest | Should -Not -BeNull
+            $proxy.LastRequest.EmailId | Should -Be $emailId
+            $proxy.LastRequest.IssueSend | Should -Be $true
+        }
+    }
+
+    Context "RetrieveOptionSet SDK Cmdlet" {
+        It "Invoke-DataverseRetrieveOptionSet retrieves option set metadata" {
+            # Stub the response
+            $proxy = Get-ProxyService -Connection $script:conn
+            $proxy.StubResponse("Microsoft.Xrm.Sdk.Messages.RetrieveOptionSetRequest", {
+                param($request)
+                
+                # Validate request parameters
+                $request | Should -Not -BeNull
+                $request.GetType().FullName | Should -Be "Microsoft.Xrm.Sdk.Messages.RetrieveOptionSetRequest"
+                $request.Name | Should -BeOfType [System.String]
+                $request.Name | Should -Be "testoptionset"
+                
+                $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveOptionSetResponse
+                $optionSetMetadata = New-Object Microsoft.Xrm.Sdk.Metadata.OptionSetMetadata
+                $optionSetMetadata.GetType().GetProperty("Name").SetValue($optionSetMetadata, "testoptionset")
+                $response.Results["OptionSetMetadata"] = $optionSetMetadata
+                return $response
+            })
+            
+            # Call the cmdlet
+            $response = Invoke-DataverseRetrieveOptionSet -Connection $script:conn -Name "testoptionset"
+            
+            # Verify response type
+            $response | Should -Not -BeNull
+            $response.GetType().FullName | Should -Be "Microsoft.Xrm.Sdk.Messages.RetrieveOptionSetResponse"
+            $response.OptionSetMetadata | Should -Not -BeNull
+            $response.OptionSetMetadata.Name | Should -Be "testoptionset"
+            
+            # Verify request
+            $proxy.LastRequest | Should -Not -BeNull
+            $proxy.LastRequest.Name | Should -Be "testoptionset"
+        }
+    }
+
+    Context "RetrieveRelationship SDK Cmdlet" {
+        It "Invoke-DataverseRetrieveRelationship retrieves relationship metadata" {
+            $relationshipId = [Guid]::NewGuid()
+            
+            # Stub the response
+            $proxy = Get-ProxyService -Connection $script:conn
+            $proxy.StubResponse("Microsoft.Xrm.Sdk.Messages.RetrieveRelationshipRequest", {
+                param($request)
+                
+                # Validate request parameters
+                $request | Should -Not -BeNull
+                $request.GetType().FullName | Should -Be "Microsoft.Xrm.Sdk.Messages.RetrieveRelationshipRequest"
+                $request.MetadataId | Should -BeOfType [System.Guid]
+                
+                $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveRelationshipResponse
+                $relationshipMetadata = New-Object Microsoft.Xrm.Sdk.Metadata.OneToManyRelationshipMetadata
+                $relationshipMetadata.GetType().GetProperty("MetadataId").SetValue($relationshipMetadata, $relationshipId)
+                $response.Results["RelationshipMetadata"] = $relationshipMetadata
+                return $response
+            })
+            
+            # Call the cmdlet
+            $response = Invoke-DataverseRetrieveRelationship -Connection $script:conn -MetadataId $relationshipId
+            
+            # Verify response type
+            $response | Should -Not -BeNull
+            $response.GetType().FullName | Should -Be "Microsoft.Xrm.Sdk.Messages.RetrieveRelationshipResponse"
+            $response.RelationshipMetadata | Should -Not -BeNull
+            $response.RelationshipMetadata.MetadataId | Should -Be $relationshipId
+            
+            # Verify request
+            $proxy.LastRequest | Should -Not -BeNull
+            $proxy.LastRequest.MetadataId | Should -Be $relationshipId
+        }
+    }
+
+    Context "SetParentSystemUser SDK Cmdlet" {
+        It "Invoke-DataverseSetParentSystemUser sets parent system user" {
+            $userId = [Guid]::NewGuid()
+            $parentId = [Guid]::NewGuid()
+            
+            # Stub the response
+            $proxy = Get-ProxyService -Connection $script:conn
+            $proxy.StubResponse("Microsoft.Crm.Sdk.Messages.SetParentSystemUserRequest", {
+                param($request)
+                
+                # Validate request parameters
+                $request | Should -Not -BeNull
+                $request.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.SetParentSystemUserRequest"
+                $request.UserId | Should -BeOfType [System.Guid]
+                $request.ParentId | Should -BeOfType [System.Guid]
+                $request.KeepChildUsers | Should -BeOfType [System.Boolean]
+                
+                $response = New-Object Microsoft.Crm.Sdk.Messages.SetParentSystemUserResponse
+                return $response
+            })
+            
+            # Call the cmdlet
+            $response = Invoke-DataverseSetParentSystemUser -Connection $script:conn -UserId $userId -ParentId $parentId -KeepChildUsers $true
+            
+            # Verify response type
+            $response | Should -Not -BeNull
+            $response.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.SetParentSystemUserResponse"
+            
+            # Verify request
+            $proxy.LastRequest | Should -Not -BeNull
+            $proxy.LastRequest.UserId | Should -Be $userId
+            $proxy.LastRequest.ParentId | Should -Be $parentId
+            $proxy.LastRequest.KeepChildUsers | Should -Be $true
+        }
+    }
+
+    Context "AddToQueue SDK Cmdlet" {
+        It "Invoke-DataverseAddToQueue adds item to queue" {
+            $queueId = [Guid]::NewGuid()
+            $targetId = [Guid]::NewGuid()
+            
+            # Stub the response
+            $proxy = Get-ProxyService -Connection $script:conn
+            $proxy.StubResponse("Microsoft.Crm.Sdk.Messages.AddToQueueRequest", {
+                param($request)
+                
+                # Validate request parameters
+                $request | Should -Not -BeNull
+                $request.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.AddToQueueRequest"
+                $request.DestinationQueueId | Should -BeOfType [System.Guid]
+                $request.Target | Should -Not -BeNull
+                $request.Target | Should -BeOfType [Microsoft.Xrm.Sdk.EntityReference]
+                
+                $response = New-Object Microsoft.Crm.Sdk.Messages.AddToQueueResponse
+                $queueItemId = [Guid]::NewGuid()
+                $response.Results["QueueItemId"] = $queueItemId
+                return $response
+            })
+            
+            # Call the cmdlet
+            $target = New-Object Microsoft.Xrm.Sdk.EntityReference("email", $targetId)
+            $response = Invoke-DataverseAddToQueue -Connection $script:conn -DestinationQueueId $queueId -Target $target
+            
+            # Verify response type
+            $response | Should -Not -BeNull
+            $response.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.AddToQueueResponse"
+            $response.QueueItemId | Should -Not -BeNullOrEmpty
+            $response.QueueItemId | Should -BeOfType [System.Guid]
+            
+            # Verify request
+            $proxy.LastRequest | Should -Not -BeNull
+            $proxy.LastRequest.DestinationQueueId | Should -Be $queueId
+            $proxy.LastRequest.Target.Id | Should -Be $targetId
+        }
+    }
+
+    Context "RemoveFromQueue SDK Cmdlet" {
+        It "Invoke-DataverseRemoveFromQueue removes item from queue" {
+            $queueItemId = [Guid]::NewGuid()
+            
+            # Stub the response
+            $proxy = Get-ProxyService -Connection $script:conn
+            $proxy.StubResponse("Microsoft.Crm.Sdk.Messages.RemoveFromQueueRequest", {
+                param($request)
+                
+                # Validate request parameters
+                $request | Should -Not -BeNull
+                $request.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.RemoveFromQueueRequest"
+                $request.QueueItemId | Should -BeOfType [System.Guid]
+                $request.QueueItemId | Should -Be $queueItemId
+                
+                $response = New-Object Microsoft.Crm.Sdk.Messages.RemoveFromQueueResponse
+                return $response
+            })
+            
+            # Call the cmdlet
+            $response = Invoke-DataverseRemoveFromQueue -Connection $script:conn -QueueItemId $queueItemId
+            
+            # Verify response type
+            $response | Should -Not -BeNull
+            $response.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.RemoveFromQueueResponse"
+            
+            # Verify request
+            $proxy.LastRequest | Should -Not -BeNull
+            $proxy.LastRequest.QueueItemId | Should -Be $queueItemId
+        }
+    }
+
+    Context "PickFromQueue SDK Cmdlet" {
+        It "Invoke-DataversePickFromQueue picks item from queue" {
+            $queueItemId = [Guid]::NewGuid()
+            $workerId = [Guid]::NewGuid()
+            
+            # Stub the response
+            $proxy = Get-ProxyService -Connection $script:conn
+            $proxy.StubResponse("Microsoft.Crm.Sdk.Messages.PickFromQueueRequest", {
+                param($request)
+                
+                # Validate request parameters
+                $request | Should -Not -BeNull
+                $request.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.PickFromQueueRequest"
+                $request.QueueItemId | Should -BeOfType [System.Guid]
+                $request.WorkerId | Should -BeOfType [System.Guid]
+                $request.RemoveQueueItem | Should -BeOfType [System.Boolean]
+                
+                $response = New-Object Microsoft.Crm.Sdk.Messages.PickFromQueueResponse
+                return $response
+            })
+            
+            # Call the cmdlet
+            $response = Invoke-DataversePickFromQueue -Connection $script:conn -QueueItemId $queueItemId -WorkerId $workerId -RemoveQueueItem $false
+            
+            # Verify response type
+            $response | Should -Not -BeNull
+            $response.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.PickFromQueueResponse"
+            
+            # Verify request
+            $proxy.LastRequest | Should -Not -BeNull
+            $proxy.LastRequest.QueueItemId | Should -Be $queueItemId
+            $proxy.LastRequest.WorkerId | Should -Be $workerId
+            $proxy.LastRequest.RemoveQueueItem | Should -Be $false
+        }
+    }
+
+    Context "ExecuteAsync SDK Cmdlet" {
+        It "Invoke-DataverseExecuteAsync executes request asynchronously" {
+            # Stub the response
+            $proxy = Get-ProxyService -Connection $script:conn
+            $proxy.StubResponse("Microsoft.Xrm.Sdk.Messages.ExecuteAsyncRequest", {
+                param($request)
+                
+                # Validate request parameters
+                $request | Should -Not -BeNull
+                $request.GetType().FullName | Should -Be "Microsoft.Xrm.Sdk.Messages.ExecuteAsyncRequest"
+                $request.Request | Should -Not -BeNull
+                $request.Request | Should -BeOfType [Microsoft.Xrm.Sdk.OrganizationRequest]
+                
+                $response = New-Object Microsoft.Xrm.Sdk.Messages.ExecuteAsyncResponse
+                $asyncJobId = [Guid]::NewGuid()
+                $response.Results["AsyncJobId"] = $asyncJobId
+                return $response
+            })
+            
+            # Create an inner request
+            $innerRequest = New-Object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
+            
+            # Call the cmdlet
+            $response = Invoke-DataverseExecuteAsync -Connection $script:conn -Request $innerRequest
+            
+            # Verify response type
+            $response | Should -Not -BeNull
+            $response.GetType().FullName | Should -Be "Microsoft.Xrm.Sdk.Messages.ExecuteAsyncResponse"
+            $response.AsyncJobId | Should -Not -BeNullOrEmpty
+            $response.AsyncJobId | Should -BeOfType [System.Guid]
+            
+            # Verify request
+            $proxy.LastRequest | Should -Not -BeNull
+            $proxy.LastRequest.Request | Should -Not -BeNull
+            $proxy.LastRequest.Request.GetType().Name | Should -Be "WhoAmIRequest"
+        }
+    }
+
+    Context "AddUserToRecordTeam SDK Cmdlet" {
+        It "Invoke-DataverseAddUserToRecordTeam adds user to record team" {
+            $recordId = [Guid]::NewGuid()
+            $userId = [Guid]::NewGuid()
+            $teamTemplateId = [Guid]::NewGuid()
+            
+            # Stub the response
+            $proxy = Get-ProxyService -Connection $script:conn
+            $proxy.StubResponse("Microsoft.Crm.Sdk.Messages.AddUserToRecordTeamRequest", {
+                param($request)
+                
+                # Validate request parameters
+                $request | Should -Not -BeNull
+                $request.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.AddUserToRecordTeamRequest"
+                $request.Record | Should -Not -BeNull
+                $request.Record | Should -BeOfType [Microsoft.Xrm.Sdk.EntityReference]
+                $request.SystemUserId | Should -BeOfType [System.Guid]
+                $request.TeamTemplateId | Should -BeOfType [System.Guid]
+                
+                $response = New-Object Microsoft.Crm.Sdk.Messages.AddUserToRecordTeamResponse
+                $accessTeamId = [Guid]::NewGuid()
+                $response.Results["AccessTeamId"] = $accessTeamId
+                return $response
+            })
+            
+            # Call the cmdlet
+            $record = New-Object Microsoft.Xrm.Sdk.EntityReference("account", $recordId)
+            $response = Invoke-DataverseAddUserToRecordTeam -Connection $script:conn -Record $record -SystemUserId $userId -TeamTemplateId $teamTemplateId
+            
+            # Verify response type
+            $response | Should -Not -BeNull
+            $response.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.AddUserToRecordTeamResponse"
+            $response.AccessTeamId | Should -Not -BeNullOrEmpty
+            $response.AccessTeamId | Should -BeOfType [System.Guid]
+            
+            # Verify request
+            $proxy.LastRequest | Should -Not -BeNull
+            $proxy.LastRequest.Record.Id | Should -Be $recordId
+            $proxy.LastRequest.SystemUserId | Should -Be $userId
+            $proxy.LastRequest.TeamTemplateId | Should -Be $teamTemplateId
+        }
+    }
+
+    Context "BackgroundSendEmail SDK Cmdlet" {
+        It "Invoke-DataverseBackgroundSendEmail queues email for background sending" {
+            $emailId = [Guid]::NewGuid()
+            
+            # Stub the response
+            $proxy = Get-ProxyService -Connection $script:conn
+            $proxy.StubResponse("Microsoft.Crm.Sdk.Messages.BackgroundSendEmailRequest", {
+                param($request)
+                
+                # Validate request parameters
+                $request | Should -Not -BeNull
+                $request.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.BackgroundSendEmailRequest"
+                $request.EntityId | Should -BeOfType [System.Guid]
+                $request.EntityId | Should -Be $emailId
+                
+                $response = New-Object Microsoft.Crm.Sdk.Messages.BackgroundSendEmailResponse
+                return $response
+            })
+            
+            # Call the cmdlet
+            $response = Invoke-DataverseBackgroundSendEmail -Connection $script:conn -EntityId $emailId
+            
+            # Verify response type
+            $response | Should -Not -BeNull
+            $response.GetType().FullName | Should -Be "Microsoft.Crm.Sdk.Messages.BackgroundSendEmailResponse"
+            
+            # Verify request
+            $proxy.LastRequest | Should -Not -BeNull
+            $proxy.LastRequest.EntityId | Should -Be $emailId
         }
     }
 }
