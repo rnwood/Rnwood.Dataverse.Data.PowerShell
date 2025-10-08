@@ -62,6 +62,21 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "Tests failed"
           }
+      - if: ${{ matrix.powershell_version != '5' && github.event_name == 'pull_request' && matrix.os == 'ubuntu-latest' && matrix.powershell_version == 'latest' }}
+        name: Generate Coverage Report
+        shell: pwsh
+        run: |
+          Write-Host "Generating code coverage report..."
+          $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
+          ./scripts/Generate-CoverageReport.ps1
+      - if: ${{ matrix.powershell_version != '5' && github.event_name == 'pull_request' && matrix.os == 'ubuntu-latest' && matrix.powershell_version == 'latest' }}
+        name: Post Coverage Comment
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Write-Host "Posting coverage report to PR..."
+          ./scripts/Post-CoverageComment.ps1 -GitHubToken $env:GITHUB_TOKEN
       - if:  ${{ matrix.powershell_version == '5' }}
         name: Test - powershell
         shell: powershell
