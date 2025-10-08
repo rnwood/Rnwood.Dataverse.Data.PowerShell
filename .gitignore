@@ -258,3 +258,10 @@ help.stamp
 updatehelp.stamp
 # Fallback: ignore any other generated .stamp files
 *.stamp
+
+# Code coverage artifacts
+coverage/
+*.coverage
+*.coveragexml
+*.cobertura.xml
+TestResults/
