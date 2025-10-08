@@ -24,11 +24,18 @@ Describe "Invoke-DataverseBook Tests" {
                 return $response
             })
             
-            # Create a test target (appointment, etc.)
-            $target = New-Object Microsoft.Xrm.Sdk.EntityReference("appointment", [Guid]::NewGuid())
+            # Create a contact record first (exists in mock metadata)
+            $contact = New-Object Microsoft.Xrm.Sdk.Entity("contact")
+            $contactId = $contact.Id = $contact["contactid"] = [Guid]::NewGuid()
+            $contact | Set-DataverseRecord -Connection $script:conn -CreateOnly
+            
+            # Create a test target PSObject (Book would normally use appointment, but contact works for testing)
+            $target = [PSCustomObject]@{
+                contactid = $contactId
+            }
             
             # Call cmdlet with -Confirm:$false to avoid prompts
-            $response = Invoke-DataverseBook -Connection $script:conn -Target $target -Confirm:$false
+            $response = Invoke-DataverseBook -Connection $script:conn -Target $target -TargetTableName "contact" -Confirm:$false
             
             # Verify response
             $response | Should -Not -BeNull
