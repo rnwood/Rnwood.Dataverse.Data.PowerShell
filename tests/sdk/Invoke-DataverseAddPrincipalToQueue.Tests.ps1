@@ -27,8 +27,8 @@ Describe "Invoke-DataverseAddPrincipalToQueue Tests" {
                 return $response
             })
             
-            # Call the cmdlet
-            $principal = New-Object Microsoft.Xrm.Sdk.EntityReference("systemuser", $principalId)
+            # Call the cmdlet (using contact instead of systemuser to stay in mock metadata)
+            $principal = New-Object Microsoft.Xrm.Sdk.EntityReference("contact", $principalId)
             $response = Invoke-DataverseAddPrincipalToQueue -Connection $script:conn -QueueId $queueId -Principal $principal
             
             # Verify response type
