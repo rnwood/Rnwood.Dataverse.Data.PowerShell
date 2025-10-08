@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -UniqueName
-Gets or sets the unique name of the organization.
+Gets or sets the unique name of the solution being replaced.
 
 ```yaml
 Type: String

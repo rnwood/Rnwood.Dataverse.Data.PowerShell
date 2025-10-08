@@ -199,7 +199,7 @@ Accept wildcard characters: False
 ```
 
 ### -Type
-Gets or sets a value that specifies the change type.
+Reserved for future use.
 
 ```yaml
 Type: OptionSetValue

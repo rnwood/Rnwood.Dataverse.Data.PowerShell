@@ -33,7 +33,7 @@ PS C:\> Invoke-DataverseRetrieveAttributeChangeHistory -Connection <ServiceClien
 ## PARAMETERS
 
 ### -AttributeLogicalName
-Gets the name of the attribute on which the aggregate, group by, or select operation was performed.
+Gets or sets the attribute's logical (schema) name. Required.
 
 ```yaml
 Type: String

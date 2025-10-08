@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseGenerateInvoiceFromOpportunity -Connection <ServiceClien
 ## PARAMETERS
 
 ### -ColumnSet
-Gets or sets the collection of columns for which non-null values are returned from a query. Required.
+Gets or sets the collection of attributes to retrieve from the resulting invoice. Required.
 
 ```yaml
 Type: ColumnSet

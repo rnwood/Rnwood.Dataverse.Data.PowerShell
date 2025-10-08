@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityId
-Gets the of the newly created table.
+Gets or sets the ID of the record on which the workflow executes. Required.
 
 ```yaml
 Type: Guid

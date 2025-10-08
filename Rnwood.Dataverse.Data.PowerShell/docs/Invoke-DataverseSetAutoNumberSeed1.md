@@ -92,7 +92,7 @@ Accept wildcard characters: False
 ```
 
 ### -Value
-Gets the value returned by the query.
+Gets or sets the value of the option to delete. Required.
 
 ```yaml
 Type: Int64

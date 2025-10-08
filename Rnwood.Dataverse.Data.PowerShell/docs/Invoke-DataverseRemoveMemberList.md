@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityId
-Gets the of the newly created table.
+Gets or sets the ID of the member to be removed from the list. Required.
 
 ```yaml
 Type: Guid

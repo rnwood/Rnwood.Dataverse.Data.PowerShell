@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Privileges
-Use this to retrieve entity information plus privileges for the entity. Value = 4.
+Gets or sets an array that contains the IDs and depths of the privileges that replace the existing privileges.
 
 ```yaml
 Type: RolePrivilege[]

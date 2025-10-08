@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityName
-Gets or sets the logical name of the entity.
+Gets or sets the logical name of an entity in order to retrieve a ribbon definition. Required.
 
 ```yaml
 Type: String

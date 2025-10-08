@@ -125,7 +125,7 @@ Accept wildcard characters: False
 ```
 
 ### -FriendlyName
-Gets or sets the friendly name of the organization.
+Gets or sets a display name for the campaign. Required.
 
 ```yaml
 Type: String

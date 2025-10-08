@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -Lookup
-Gets or sets the metadata for the lookup column used to store the ID of the related record. Required.
+Gets or sets the lookup column definition that stores a reference to the related row.
 
 ```yaml
 Type: LookupAttributeMetadata
@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -OneToManyRelationships
-Gets or sets the metadata array for the one-to-many relationships to the Account and Contact tables. Required.
+Gets or sets the one-to-many relationship definitions for each table that the multi-table lookup column supports.
 
 ```yaml
 Type: OneToManyRelationshipMetadata[]
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the name of the unmanaged solution to which you want to add this column. Optional.
+Gets or sets the name of the unmanaged solution to add the multi-table lookup column to.
 
 ```yaml
 Type: String

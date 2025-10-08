@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseRetrieveUnpublished -Connection <ServiceClient> -Target 
 ## PARAMETERS
 
 ### -ColumnSet
-Gets or sets the collection of columns for which non-null values are returned from a query. Required.
+Gets or sets the collection of attributes for which non-null values are returned from a query. Required.
 
 ```yaml
 Type: ColumnSet

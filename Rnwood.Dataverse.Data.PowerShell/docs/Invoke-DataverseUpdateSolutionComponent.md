@@ -108,7 +108,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the name of the unmanaged solution to which you want to add this column. Optional.
+Gets or sets the unique name of the solution where the component should exist.
 
 ```yaml
 Type: String

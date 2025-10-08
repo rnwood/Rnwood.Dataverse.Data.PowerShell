@@ -1064,78 +1064,9 @@ $classSummary
         $testFileName = "Invoke-Dataverse$cmdletName.Tests.ps1"
         $testPath = Join-Path $testSdkDirectory $testFileName
         
-        # Build parameter invocation examples for test
-        $testParamExamples = @()
-        $hasParameters = $false
-        
-        # For simple cmdlets without parameters, just test basic invocation
-        if ($properties.Count -eq 0) {
-            $testParamExamples += "            # No parameters required for this cmdlet"
-            $testParamExamples += "            `$result = Invoke-Dataverse$cmdletName -Connection `$script:conn"
-        } else {
-            $hasParameters = $true
-            # Generate parameter examples based on types
-            $testParamExamples += "            # Create test parameters"
-            foreach ($prop in $properties) {
-                $paramTypeName = $prop.PropertyType.FullName
-                $testValue = ""
-                
-                # Generate appropriate test values based on type
-                if ($paramTypeName -eq "System.Guid" -or $paramTypeName -eq "System.Guid?") {
-                    $testValue = "[Guid]::NewGuid()"
-                } elseif ($paramTypeName -eq "System.String") {
-                    $testValue = "`"Test$($prop.Name)`""
-                } elseif ($paramTypeName -eq "System.Boolean" -or $paramTypeName -eq "System.Boolean?") {
-                    $testValue = "`$true"
-                } elseif ($paramTypeName -eq "System.Int32" -or $paramTypeName -eq "System.Int32?") {
-                    $testValue = "1"
-                } elseif ($paramTypeName -eq "Microsoft.Xrm.Sdk.Entity") {
-                    # For Entity parameters, create a test entity and specify table name
-                    if (-not ($testParamExamples -match "testEntity")) {
-                        $testParamExamples = @("            # Create test entity") + $testParamExamples
-                        $testParamExamples = @("            `$testEntity = @{ firstname = 'Test'; lastname = 'User' }") + $testParamExamples
-                    }
-                    $testValue = "`$testEntity"
-                } elseif ($paramTypeName -eq "Microsoft.Xrm.Sdk.EntityReference") {
-                    $testValue = "@{ Id = [Guid]::NewGuid(); LogicalName = 'contact' }"
-                } elseif ($paramTypeName -match "QueryBase|QueryExpression") {
-                    $testValue = "New-Object Microsoft.Xrm.Sdk.Query.QueryExpression('contact')"
-                } elseif ($paramTypeName -match "ColumnSet") {
-                    $testValue = "New-Object Microsoft.Xrm.Sdk.Query.ColumnSet(`$true)"
-                } else {
-                    # Default to null for complex types we can't easily mock
-                    continue
-                }
-                
-                $testParamExamples += "            `$$($prop.Name) = $testValue"
-            }
-            
-            # Build the cmdlet invocation with all parameters
-            $invokeParams = @()
-            foreach ($prop in $properties) {
-                $paramTypeName = $prop.PropertyType.FullName
-                # Skip complex types we didn't create test values for
-                if ($paramTypeName -notmatch "Guid|String|Boolean|Int32|Entity|EntityReference|Query|ColumnSet") {
-                    continue
-                }
-                $invokeParams += "-$($prop.Name) `$$($prop.Name)"
-                
-                # If this is an Entity parameter, also add the TableName parameter
-                if ($paramTypeName -eq "Microsoft.Xrm.Sdk.Entity") {
-                    $invokeParams += "-$($prop.Name)TableName 'contact'"
-                }
-            }
-            
-            if ($invokeParams.Count -gt 0) {
-                $testParamExamples += ""
-                $testParamExamples += "            `$result = Invoke-Dataverse$cmdletName -Connection `$script:conn $($invokeParams -join ' ')"
-            } else {
-                # If no parameters could be generated, just test basic invocation
-                $testParamExamples += ""
-                $testParamExamples += "            # Test basic invocation - specific parameters may need manual adjustment"
-                $testParamExamples += "            `$result = Invoke-Dataverse$cmdletName -Connection `$script:conn"
-            }
-        }
+        # Determine if this cmdlet has parameter sets (specifically FromFile)
+        $hasByteArrayParameter = $byteArrayProperties.Count -gt 0
+        $hasParameterSets = $hasByteArrayParameter
         
         # Build the test file content
         $testLines = @()
@@ -1146,29 +1077,143 @@ $classSummary
         $testLines += ""
         $testLines += ". `$PSScriptRoot/../Common.ps1"
         $testLines += ""
-        $testLines += "Describe 'Invoke-Dataverse$cmdletName' {"
+        $testLines += "Describe 'Invoke-Dataverse$cmdletName' -Tag 'SDK' {"
         $testLines += ""
         $testLines += "    BeforeAll {"
         $testLines += "        `$script:conn = getMockConnection"
         $testLines += "    }"
         $testLines += ""
-        $testLines += "    It 'Can invoke the cmdlet with a mock connection' {"
-        $testLines += "        {"
-        $testParamExamples | ForEach-Object { $testLines += $_ }
-        $testLines += "            `$result | Should -Not -BeNull"
-        $testLines += "        } | Should -Not -Throw"
-        $testLines += "    }"
-        $testLines += ""
         
-        # Add WhatIf test since all cmdlets support ShouldProcess
-        # For cmdlets with parameters, skip the WhatIf test as it may require mandatory parameters
-        if ($properties.Count -eq 0) {
-            $testLines += "    It 'Supports -WhatIf parameter' {"
-            $testLines += "        {"
-            $testLines += "            `$result = Invoke-Dataverse$cmdletName -Connection `$script:conn -WhatIf"
-            $testLines += "        } | Should -Not -Throw"
-            $testLines += "    }"
+        # Determine response type
+        $responseTypeName = $requestName -replace 'Request$','Response'
+        $expectedResponseType = "Microsoft.Xrm.Sdk.OrganizationResponse"
+        try {
+            $possibleFullName = "$($requestType.Namespace).$responseTypeName"
+            $responseTypeCheck = $requestType.Assembly.GetType($possibleFullName, $false, $false)
+            if ($responseTypeCheck) {
+                $expectedResponseType = $responseTypeCheck.FullName
+            }
+        } catch {
+            # Use default OrganizationResponse
         }
+        
+        # Generate test for Default parameter set (or no parameters)
+        if ($properties.Count -eq 0) {
+            # No parameters
+            $testLines += "    It 'Executes successfully with no parameters and returns correct response type' {"
+            $testLines += "        `$result = Invoke-Dataverse$cmdletName -Connection `$script:conn"
+            $testLines += ""
+            $testLines += "        # Assert response is returned and is correct type"
+            $testLines += "        `$result | Should -Not -BeNull"
+            $testLines += "        `$result.GetType().FullName | Should -Match 'OrganizationResponse|$($responseTypeName -replace 'Response$','')'"
+            $testLines += "    }"
+            $testLines += ""
+            $testLines += "    It 'Supports -WhatIf parameter' {"
+            $testLines += "        `$result = Invoke-Dataverse$cmdletName -Connection `$script:conn -WhatIf"
+            $testLines += "        # WhatIf should not return a result"
+            $testLines += "        `$result | Should -BeNullOrEmpty"
+            $testLines += "    }"
+        } else {
+            # Generate test parameters with known values
+            $testParamSetup = @()
+            $testParamSetup += "        # Setup test parameters with known values"
+            
+            $testParamsDefault = @()
+            $testParamsFromFile = @()
+            $entityParamFound = $false
+            
+            foreach ($prop in $properties) {
+                $paramTypeName = $prop.PropertyType.FullName
+                $paramName = $prop.Name
+                $testValue = ""
+                
+                # Generate appropriate test values based on type
+                if ($paramTypeName -eq "System.Guid" -or $paramTypeName -eq "System.Guid?") {
+                    $testParamSetup += "        `$test$paramName = [Guid]::Parse('12345678-1234-1234-1234-123456789012')"
+                    $testParamsDefault += "-$paramName `$test$paramName"
+                } elseif ($paramTypeName -eq "System.String") {
+                    $testParamSetup += "        `$test$paramName = `"Test${paramName}Value`""
+                    $testParamsDefault += "-$paramName `$test$paramName"
+                } elseif ($paramTypeName -eq "System.Boolean" -or $paramTypeName -eq "System.Boolean?") {
+                    $testParamSetup += "        `$test$paramName = `$true"
+                    $testParamsDefault += "-$paramName `$test$paramName"
+                } elseif ($paramTypeName -eq "System.Int32" -or $paramTypeName -eq "System.Int32?") {
+                    $testParamSetup += "        `$test$paramName = 42"
+                    $testParamsDefault += "-$paramName `$test$paramName"
+                } elseif ($paramTypeName -eq "Microsoft.Xrm.Sdk.Entity") {
+                    # For Entity parameters - test PSObject to Entity conversion
+                    if (-not $entityParamFound) {
+                        $testParamSetup += "        `$test$paramName = @{ firstname = 'TestFirst'; lastname = 'TestLast'; contactid = [Guid]::NewGuid() }"
+                        $entityParamFound = $true
+                    }
+                    $testParamsDefault += "-$paramName `$test$paramName"
+                    $testParamsDefault += "-${paramName}TableName 'contact'"
+                } elseif ($paramTypeName -eq "Microsoft.Xrm.Sdk.EntityReference") {
+                    # Test PSObject to EntityReference conversion
+                    $testParamSetup += "        `$test${paramName}Id = [Guid]::Parse('87654321-4321-4321-4321-210987654321')"
+                    $testParamSetup += "        `$test$paramName = @{ Id = `$test${paramName}Id; LogicalName = 'contact' }"
+                    $testParamsDefault += "-$paramName `$test$paramName"
+                } elseif ($paramTypeName -eq "System.Byte[]") {
+                    # Byte array - only in Default set, test data
+                    $testParamSetup += "        `$test$paramName = [System.Text.Encoding]::UTF8.GetBytes('TestData$paramName')"
+                    $testParamsDefault += "-$paramName `$test$paramName"
+                } elseif ($paramTypeName -match "QueryBase|QueryExpression") {
+                    $testParamSetup += "        `$test$paramName = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression('contact')"
+                    $testParamsDefault += "-$paramName `$test$paramName"
+                } elseif ($paramTypeName -match "ColumnSet") {
+                    $testParamSetup += "        `$test$paramName = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet('firstname', 'lastname')"
+                    $testParamsDefault += "-$paramName `$test$paramName"
+                } else {
+                    # Skip complex types we can't easily mock
+                    continue
+                }
+            }
+            
+            # Default parameter set test
+            if ($testParamsDefault.Count -gt 0) {
+                $testLines += "    It 'Executes successfully with Default parameter set' {"
+                $testParamSetup | ForEach-Object { $testLines += $_ }
+                $testLines += ""
+                $testLines += "        `$result = Invoke-Dataverse$cmdletName -Connection `$script:conn $($testParamsDefault -join ' ')"
+                $testLines += ""
+                $testLines += "        # Assert response is returned and is correct type"
+                $testLines += "        `$result | Should -Not -BeNull"
+                $testLines += "        `$result.GetType().FullName | Should -Match 'OrganizationResponse|$($responseTypeName -replace 'Response$','')'"
+                $testLines += "    }"
+                $testLines += ""
+            }
+            
+            # FromFile parameter set if byte array properties exist
+            if ($hasByteArrayParameter -and $byteArrayProperties.Count -gt 0) {
+                # Create test file for byte array parameter
+                $byteArrayProp = $byteArrayProperties[0]
+                $testLines += "    It 'Executes successfully with FromFile parameter set' {"
+                $testLines += "        # Create a temporary test file"
+                $testLines += "        `$testFilePath = [System.IO.Path]::GetTempFileName()"
+                $testLines += "        `$testData = 'TestFileDataForByteArray'"
+                $testLines += "        [System.IO.File]::WriteAllText(`$testFilePath, `$testData)"
+                $testLines += ""
+                $testLines += "        try {"
+                $testParamSetup | Where-Object { $_ -notmatch "\`$test$($byteArrayProp.Name) = " } | ForEach-Object { $testLines += "    $_" }
+                $testLines += ""
+                # Build FromFile parameters (all except byte array, plus InFile)
+                $testParamsFromFile = $testParamsDefault | Where-Object { $_ -notmatch "^-$($byteArrayProp.Name)\s" }
+                $testParamsFromFile += "-InFile `$testFilePath"
+                $testLines += "            `$result = Invoke-Dataverse$cmdletName -Connection `$script:conn $($testParamsFromFile -join ' ')"
+                $testLines += ""
+                $testLines += "            # Assert response is returned and is correct type"
+                $testLines += "            `$result | Should -Not -BeNull"
+                $testLines += "            `$result.GetType().FullName | Should -Match 'OrganizationResponse|$($responseTypeName -replace 'Response$','')'"
+                $testLines += "        } finally {"
+                $testLines += "            if (Test-Path `$testFilePath) {"
+                $testLines += "                Remove-Item `$testFilePath -Force"
+                $testLines += "            }"
+                $testLines += "        }"
+                $testLines += "    }"
+                $testLines += ""
+            }
+        }
+        
         $testLines += "}"
         
         # Write the test file

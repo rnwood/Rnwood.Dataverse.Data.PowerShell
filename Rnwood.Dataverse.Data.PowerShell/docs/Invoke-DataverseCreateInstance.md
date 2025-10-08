@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -Count
-Gets the number of elements in the collection.
+Gets or sets the number of instances to be created. Required.
 
 ```yaml
 Type: Int32

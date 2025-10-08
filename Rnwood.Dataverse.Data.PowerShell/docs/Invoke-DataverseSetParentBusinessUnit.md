@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseSetParentBusinessUnit -Connection <ServiceClient> -Busin
 ## PARAMETERS
 
 ### -BusinessUnitId
-Gets the GUIDGUID of the business unit that the user making the request, also known as the calling user, belongs to.
+Gets or sets the ID of the business unit.
 
 ```yaml
 Type: Guid
