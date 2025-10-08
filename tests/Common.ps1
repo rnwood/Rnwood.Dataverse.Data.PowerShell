@@ -112,6 +112,31 @@ BeforeAll {
         get-dataverseconnection -url https://fake.crm.dynamics.com/ -mock $connectionMetadata
     }
 
+    function Get-ProxyService {
+        param(
+            [Parameter(Mandatory=$true)]
+            $Connection
+        )
+        
+        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+        }
+        
+        # Access the static ProxyServices dictionary from GetDataverseConnectionCmdlet
+        $cmdletType = [Rnwood.Dataverse.Data.PowerShell.Commands.GetDataverseConnectionCmdlet]
+        $proxyServicesField = $cmdletType.GetField('ProxyServices', [System.Reflection.BindingFlags]::NonPublic -bor [System.Reflection.BindingFlags]::Static)
+        
+        if ($proxyServicesField) {
+            $proxyServices = $proxyServicesField.GetValue($null)
+            $proxy = $null
+            if ($proxyServices.TryGetValue($Connection, [ref]$proxy)) {
+                return $proxy
+            }
+        }
+        
+        return $null
+    }
+
     function newPwsh([scriptblock] $scriptblock) {
         if ([System.Environment]::OSVersion.Platform -eq "Unix") {
             pwsh -noninteractive -noprofile -command $scriptblock
