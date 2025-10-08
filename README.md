@@ -248,6 +248,90 @@ The simplified syntax supports:
 - **alias** (optional): String alias for the linked entity
 - **filter** (optional): Hashtable with filter conditions (same format as `-FilterValues`)
 
+## Error Handling
+
+When working with batch operations, errors don't stop processing - all records are attempted and errors are collected. You can correlate errors back to the specific input records that failed.
+
+*Example: Handle errors in batch operations:*
+```powershell
+$records = @(
+    @{ firstname = "John"; lastname = "Doe" }
+    @{ firstname = "Jane"; lastname = "Smith" }
+)
+
+$errors = @()
+$records | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly `
+    -ErrorVariable +errors -ErrorAction SilentlyContinue
+
+# Process errors - each error's TargetObject contains the input that failed
+foreach ($err in $errors) {
+    Write-Host "Failed: $($err.TargetObject.firstname) $($err.TargetObject.lastname)"
+    Write-Host "Error: $($err.Exception.Message)"
+}
+```
+
+The `Exception.Message` contains full server response including ErrorCode, Message, TraceText, and InnerFault details for troubleshooting.
+
+To stop on first error instead, use `-BatchSize 1` with `-ErrorAction Stop`.
+
+See full documentation: [Set-DataverseRecord Error Handling](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md#example-12-handle-errors-in-batch-operations) | [Remove-DataverseRecord Error Handling](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md#example-3-handle-errors-in-batch-delete-operations)
+
+## Getting IDs of Created Records
+
+Use the `-PassThru` parameter to get the IDs of newly created records, which is useful for linking records or tracking what was created.
+
+*Example: Capture IDs of created records:*
+```powershell
+$contacts = @(
+    @{ firstname = "John"; lastname = "Doe" }
+    @{ firstname = "Jane"; lastname = "Smith" }
+)
+
+$created = $contacts | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -PassThru
+
+foreach ($record in $created) {
+    Write-Host "Created: $($record.firstname) $($record.lastname) with ID: $($record.Id)"
+}
+```
+
+*Example: Link records using PassThru:*
+```powershell
+# Create parent and capture its ID
+$account = @{ name = "Contoso Ltd" } | 
+    Set-DataverseRecord -Connection $c -TableName account -CreateOnly -PassThru
+
+# Create child linked to parent
+$contact = @{ 
+    firstname = "John"
+    lastname = "Doe"
+    parentcustomerid = $account.Id
+} | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -PassThru
+```
+
+See full documentation: [Set-DataverseRecord PassThru Examples](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md#example-15-get-ids-of-created-records-using-passthru)
+
+## Batch Operations
+
+By default, `Set-DataverseRecord` and `Remove-DataverseRecord` automatically batch operations when processing multiple records (default batch size is 100). This improves performance by reducing round trips to the server.
+
+Key behaviors:
+- Batching uses `ExecuteMultipleRequest` with `ContinueOnError = true` - all records are attempted even if some fail
+- Errors include the original input object as `TargetObject` for correlation
+- Use `-BatchSize 1` to disable batching and stop on first error
+- Use `-BatchSize <number>` to control batch size for performance tuning
+
+*Example: Control batch size:*
+```powershell
+# Create 500 records in batches of 50
+$records = 1..500 | ForEach-Object {
+    @{ name = "Account $_" }
+}
+
+$records | Set-DataverseRecord -Connection $c -TableName account -BatchSize 50 -CreateOnly
+```
+
+See full documentation: [Set-DataverseRecord Batching](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md#example-7-control-batch-size) | [Remove-DataverseRecord Batching](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md)
+
 ## Main Cmdlets
 
 [Get-DataverseConnection](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseConnection.md) - Creates a connection to a Dataverse environment.
