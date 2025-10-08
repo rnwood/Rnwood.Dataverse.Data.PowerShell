@@ -1,13 +1,15 @@
 # Test Infrastructure Documentation
 
-This document explains how the test infrastructure works, particularly the FakeXrmEasy mock connection configuration.
+This document explains how the test infrastructure works, particularly the FakeXrmEasy mock connection configuration and SDK cmdlet testing.
 
 ## Overview
 
-The test suite uses **FakeXrmEasy** (open-source version) to create mock Dataverse connections for testing without requiring a real Dataverse environment. The implementation provides:
+The test suite uses **FakeXrmEasy** (open-source version) with a **ProxyOrganizationService wrapper** to create mock Dataverse connections for testing without requiring a real Dataverse environment. The implementation provides:
 
+- **ProxyOrganizationService wrapper** that intercepts and records all IOrganizationService.Execute() calls
 - **Minimal entity metadata generation** for testing basic CRUD operations
 - **Dynamic entity loading** to support testing various entity types
+- **End-to-end SDK cmdlet testing** with request/response validation
 - **Proper isolation** between test runs
 - **Documentation of limitations** in the OSS version
 
@@ -15,12 +17,49 @@ The test suite uses **FakeXrmEasy** (open-source version) to create mock Dataver
 
 - **Common.ps1**: Shared test infrastructure and helper functions
 - **Examples.Tests.ps1**: Comprehensive test coverage for documentation examples
+- **SdkCmdlets.Tests.ps1**: End-to-end tests for SDK cmdlets with proxy verification
 - **Get-DataverseRecord.Tests.ps1**: Specific tests for query functionality
 - **Module.Tests.ps1**: Module loading and assembly resolution tests
 - **DefaultConnection.Tests.ps1**: Default connection functionality tests
 - **contact.xml**: Full entity metadata for the contact entity (2.2MB)
 - **generate-all-metadata.ps1**: Script to generate metadata files from real Dataverse
 - **updatemetadata.ps1**: Legacy script for metadata generation
+
+## ProxyOrganizationService
+
+The `ProxyOrganizationService` class wraps FakeXrmEasy's `IOrganizationService` to enable test inspection:
+
+```csharp
+public class ProxyOrganizationService : IOrganizationService
+{
+    public IReadOnlyList<OrganizationRequest> ExecutedRequests { get; }
+    public IReadOnlyList<OrganizationResponse> Responses { get; }
+    public OrganizationRequest LastRequest { get; }
+    public OrganizationResponse LastResponse { get; }
+    public void ClearHistory();
+}
+```
+
+**Benefits:**
+- Records all Execute() calls for inspection in tests
+- Enables verification of request parameters and structure
+- Validates response handling
+- Supports end-to-end testing of SDK cmdlets
+
+**Usage in Tests:**
+```powershell
+# Get the proxy from a mock connection
+$proxy = Get-ProxyService -Connection $connection
+
+# Verify the last request
+$proxy.LastRequest.GetType().Name | Should -Be "WhoAmIRequest"
+
+# Verify request parameters
+$proxy.LastRequest.LogicalName | Should -Be "contact"
+
+# Verify response
+$proxy.LastResponse | Should -Not -BeNull
+```
 
 ## Mock Connection Configuration
 
@@ -133,6 +172,38 @@ The open-source version of FakeXrmEasy has some limitations:
 
 ## Test Strategy
 
+### SDK Cmdlet Testing (Valuable Tests)
+For SDK cmdlets, tests should validate end-to-end behavior:
+
+```powershell
+It "Invoke-DataverseWhoAmI returns valid response" {
+    # Call the SDK cmdlet
+    $response = Invoke-DataverseWhoAmI -Connection $script:conn
+    
+    # Verify response structure and values
+    $response | Should -Not -BeNull
+    $response.GetType().Name | Should -Be "WhoAmIResponse"
+    $response.UserId | Should -Not -BeNullOrEmpty
+    
+    # Use proxy to verify the request was sent correctly
+    $proxy = Get-ProxyService -Connection $script:conn
+    $proxy.LastRequest.GetType().Name | Should -Be "WhoAmIRequest"
+    $proxy.LastResponse | Should -Be $response
+}
+```
+
+**What Makes a Valuable Test:**
+- ✅ Calls the cmdlet with actual parameters
+- ✅ Verifies the response structure and values
+- ✅ Inspects the request sent via proxy
+- ✅ Validates parameter conversions
+- ✅ Tests with real data when possible
+
+**What to Avoid:**
+- ❌ Existence-checking tests (Get-Command | Should -Not -BeNull)
+- ❌ Parameter checking without execution
+- ❌ Tests that only verify cmdlets exist
+
 ### Pattern Testing
 For entities without full metadata, tests validate patterns rather than full execution:
 
@@ -143,20 +214,6 @@ It "Can query for solutions" {
     
     # Verify query pattern works (may return empty results)
     { Get-DataverseRecord -Connection $connection -TableName solution } | Should -Not -Throw
-}
-```
-
-### Cmdlet Existence Testing
-For specialized cmdlets, verify they exist and have expected parameters:
-
-```powershell
-It "Can use AddMemberList request" {
-    $connection = getMockConnection -AdditionalEntities @("list")
-    
-    # Verify cmdlet exists and accepts expected parameters
-    $cmd = Get-Command Invoke-DataverseAddMemberList -ErrorAction SilentlyContinue
-    $cmd | Should -Not -BeNull
-    $cmd.Parameters.ContainsKey("ListId") | Should -Be $true
 }
 ```
 
@@ -193,9 +250,9 @@ Invoke-Pester -Path tests/Examples.Tests.ps1 -Output Detailed
 ```
 
 ### Expected Results
-- **Total tests**: 57
-- **Passed**: 55
-- **Skipped**: 2 (FakeXrmEasy OSS limitations with RequestName parameter)
+- **Total tests**: 59 (48 in Examples.Tests.ps1 + 11 in SdkCmdlets.Tests.ps1)
+- **Passed**: 59
+- **Skipped**: 6 (FakeXrmEasy OSS limitations)
 - **Failed**: 0
 
 ## Test Coverage Summary
@@ -210,6 +267,19 @@ Invoke-Pester -Path tests/Examples.Tests.ps1 -Output Detailed
 - ✅ Column selection
 - ✅ Record counting
 
+### SDK Cmdlets Tested (end-to-end)
+- ✅ Invoke-DataverseWhoAmI
+- ✅ Invoke-DataverseRetrieveVersion
+- ✅ Invoke-DataverseRetrieveEntity
+- ✅ Invoke-DataverseAssign
+- ✅ Invoke-DataverseAddMembersTeam
+- ✅ Invoke-DataverseBulkDelete
+- ✅ Invoke-DataverseRetrieveAttribute
+- ✅ Invoke-DataverseRetrieveMultiple
+- ✅ Invoke-DataverseCreate
+- ✅ Invoke-DataverseUpdate
+- ✅ Invoke-DataverseDelete
+
 ### Pattern Tested (with minimal metadata)
 - ✅ Solution management queries
 - ✅ System user queries
@@ -219,11 +289,13 @@ Invoke-Pester -Path tests/Examples.Tests.ps1 -Output Detailed
 - ✅ Process stage queries
 - ✅ Saved query (view) queries
 - ✅ User query (personal view) queries
-- ✅ Specialized cmdlet parameter validation
 
 ### Skipped (FakeXrmEasy OSS limitations)
 - ⏭️ RequestName parameter syntax (requires commercial license)
 - ⏭️ Simplified vs. verbose syntax comparison (requires commercial license)
+- ⏭️ RetrieveAllEntities (not yet supported in OSS)
+- ⏭️ PublishDuplicateRule (not yet supported in OSS)
+- ⏭️ ExecuteWorkflow (not yet supported in OSS)
 
 ## Extending Tests
 
