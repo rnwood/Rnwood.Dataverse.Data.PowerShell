@@ -1,0 +1,1910 @@
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+pwsh: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Module.Tests.ps1:9
+Line |
+   9 |          pwsh -noninteractive -noprofile -command {
+     |          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+pwsh: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Module.Tests.ps1:9
+Line |
+   9 |          pwsh -noninteractive -noprofile -command {
+     |          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Expected module to be loaded
+
+pwsh: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:142
+Line |
+ 142 |              pwsh -noninteractive -noprofile -command $scriptblock
+     |              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Could not load file or assembly '/cmdlets/net6.0/Microsoft.Xrm.Sdk.dll'. The system cannot find the file
+     | specified.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Module.Tests.ps1:76
+Line |
+  76 |              Import-Module Rnwood.Dataverse.Data.PowerShell
+     |              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Get-Command: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Module.Tests.ps1:79
+Line |
+  79 |          $cmd = Get-Command Get-DataverseConnection
+     |                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The term 'Get-DataverseConnection' is not recognized as a name of a cmdlet, function, script file, or executable
+     | program. Check the spelling of the name, or if a path was included, verify that the path is correct and try
+     | again.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+Copy-Item: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:12
+Line |
+  12 |      copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Dat …
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Cannot find path
+     | '/home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0' because it does not exist.
+
+Import-Module: /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Common.ps1:81
+Line |
+  81 |                  Import-Module Rnwood.Dataverse.Data.PowerShell
+     |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The specified module 'Rnwood.Dataverse.Data.PowerShell' was not loaded because no valid module file was found in
+     | any module directory.
+
+
+Containers            : {[-] /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/DefaultConnection.Tests.ps1, [-] /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Examples.Tests.ps1, [-] /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Get-DataverseRecord.Tests.ps1, [-] /home/runner/work/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell/tests/Module.Tests.ps1…}
+Result                : Failed
+FailedCount           : 211
+FailedBlocksCount     : 107
+FailedContainersCount : 0
+PassedCount           : 0
+SkippedCount          : 0
+InconclusiveCount     : 0
+NotRunCount           : 0
+TotalCount            : 211
+Duration              : 00:00:09.0209396
+Executed              : True
+ExecutedAt            : 10/08/2025 17:51:07
+Version               : 5.7.1
+PSVersion             : 7.4.12
+PSBoundParameters     : {[Path, System.String[]], [Output, Detailed], [PassThru, True]}
+Plugins               : 
+PluginConfiguration   : 
+PluginData            : 
+Configuration         : PesterConfiguration
+DiscoveryDuration     : 00:00:01.1312898
+UserDuration          : 00:00:05.9511525
+FrameworkDuration     : 00:00:01.9384973
+Failed                : {[-] SetAsDefault switch stores connection as default, [-] GetDefault returns error when no default is set, [-] Cmdlets use default connection when -Connection not provided, [-] Cmdlets error when no connection provided and no default set…}
+FailedBlocks          : {[-] Examples-Comparison Documentation Tests, [-] Invoke-DataverseAddListMembersList Tests, [-] Invoke-DataverseAddMemberList Tests, [-] Invoke-DataverseAddMembersTeam Tests…}
+FailedContainers      : {}
+Passed                : {}
+Skipped               : {}
+Inconclusive          : {}
+NotRun                : {}
+Tests                 : {[-] SetAsDefault switch stores connection as default, [-] GetDefault returns error when no default is set, [-] Cmdlets use default connection when -Connection not provided, [-] Cmdlets error when no connection provided and no default set…}
+CodeCoverage          : 
+
