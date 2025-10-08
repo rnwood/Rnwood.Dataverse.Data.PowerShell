@@ -21,8 +21,8 @@ Non features:
 
 # Table of Contents
 
-- [How to install](#how-to-install)
 - [PowerShell Best Practices](#powershell-best-practices)
+- [How to install](#how-to-install)
 - [Quick Start and Examples](#quick-start-and-examples)
   - [Default Connection](#default-connection)
   - [Authentication Methods](#authentication-methods)
@@ -48,6 +48,155 @@ Non features:
   - [Additional Resources](#additional-resources)
 - [FAQ](#faq)
 
+# PowerShell Best Practices
+
+## ⚠️ Always Use ErrorActionPreference Stop
+
+**It is strongly recommended to set `$ErrorActionPreference = "Stop"` at the beginning of your scripts.** This ensures that errors are treated as terminating errors and will stop script execution, preventing cascading failures and data corruption.
+
+```powershell
+# Add this at the start of your scripts
+$ErrorActionPreference = "Stop"
+```
+
+Without this setting, PowerShell's default behavior is to continue execution after non-terminating errors, which can lead to unexpected results when working with Dataverse data.
+
+## Other Important Preference Variables
+
+PowerShell provides several preference variables that control the behavior of cmdlets. Here are the most important ones for working with this module:
+
+### $VerbosePreference
+
+Controls when verbose messages are displayed. Set to `"Continue"` to see verbose output without using `-Verbose` on each cmdlet.
+
+```powershell
+# Show verbose output for all cmdlets in the session
+$VerbosePreference = "Continue"
+
+# Now all cmdlets show verbose output automatically
+Get-DataverseRecord -Connection $c -TableName contact
+
+# Reset to default (only show when -Verbose is used)
+$VerbosePreference = "SilentlyContinue"
+```
+
+**Useful for:** Debugging, understanding what operations are being performed, monitoring batch operations.
+
+### $ConfirmPreference
+
+Controls when confirmation prompts appear. Can be set to `None`, `Low`, `Medium`, `High`. Cmdlets with `SupportsShouldProcess` will prompt based on their `ConfirmImpact` level.
+
+```powershell
+# Always prompt for confirmation (even for Low impact operations)
+$ConfirmPreference = "Low"
+
+# Now this will prompt even though -Confirm wasn't specified
+Set-DataverseRecord -Connection $c -TableName contact -InputObject @{firstname="John"}
+
+# Never prompt (same as using -Confirm:$false)
+$ConfirmPreference = "None"
+
+# Reset to default (prompts for High impact operations)
+$ConfirmPreference = "High"
+```
+
+**Useful for:** Testing scripts safely, preventing accidental destructive operations, automating scripts without prompts.
+
+### $WhatIfPreference
+
+When set to `$true`, cmdlets with `SupportsShouldProcess` will automatically run in WhatIf mode without needing `-WhatIf` parameter.
+
+```powershell
+# Enable WhatIf mode for all cmdlets
+$WhatIfPreference = $true
+
+# This will show what would happen without actually making changes
+Set-DataverseRecord -Connection $c -TableName contact -InputObject @{firstname="John"}
+Remove-DataverseRecord -Connection $c -TableName contact -Id $id
+
+# Disable WhatIf mode
+$WhatIfPreference = $false
+```
+
+**Useful for:** Testing scripts before running them for real, validating operations in production, documenting what a script does.
+
+### $WarningPreference
+
+Controls when warning messages are displayed and what action to take.
+
+```powershell
+# Stop execution when a warning occurs
+$WarningPreference = "Stop"
+
+# Silently continue (don't show warnings)
+$WarningPreference = "SilentlyContinue"
+
+# Show warnings and continue (default)
+$WarningPreference = "Continue"
+```
+
+**Useful for:** Treating warnings as errors in CI/CD, suppressing expected warnings, debugging.
+
+### $InformationPreference
+
+Controls when informational messages are displayed (messages from `Write-Information`).
+
+```powershell
+# Show informational messages
+$InformationPreference = "Continue"
+
+# Hide informational messages (default)
+$InformationPreference = "SilentlyContinue"
+```
+
+### $ProgressPreference
+
+Controls whether progress bars are displayed.
+
+```powershell
+# Hide progress bars (improves performance in scripts)
+$ProgressPreference = "SilentlyContinue"
+
+# Show progress bars (default)
+$ProgressPreference = "Continue"
+```
+
+**Useful for:** Speeding up scripts by eliminating progress bar rendering overhead.
+
+### Recommended Script Template
+
+Here's a recommended template for scripts using this module:
+
+```powershell
+# Set error handling to stop on errors
+$ErrorActionPreference = "Stop"
+
+# Optionally hide progress bars for better performance
+$ProgressPreference = "SilentlyContinue"
+
+# Optionally enable verbose output for debugging
+# $VerbosePreference = "Continue"
+
+# Your script here
+try {
+    $c = Get-DataverseConnection -url $env:DATAVERSE_URL -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET
+    
+    $records = Get-DataverseRecord -Connection $c -TableName contact -Top 100
+    Write-Host "Retrieved $($records.Count) records"
+    
+    # Process records...
+    
+} catch {
+    Write-Error "Script failed: $_"
+    exit 1
+}
+```
+
+**Learn more:**
+- [Microsoft Docs: about_Preference_Variables](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_preference_variables)
+- [Microsoft Docs: about_CommonParameters](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_commonparameters)
+- [Microsoft Docs: about_Functions_CmdletBindingAttribute](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_functions_cmdletbindingattribute)
+
 # How to install
 
 This module is not signed (donation of funds for code signing certificate are welcome). So PowerShell must be configured to allow loading unsigned scripts.
@@ -64,22 +213,6 @@ To update:
 ```
 Update-Module Rnwood.Dataverse.Data.PowerShell -Force
 ```
-# PowerShell Best Practices
-
-## ⚠️ Always Use ErrorActionPreference Stop
-
-**It is strongly recommended to set `$ErrorActionPreference = "Stop"` at the beginning of your scripts.** This ensures that errors are treated as terminating errors and will stop script execution, preventing cascading failures and data corruption.
-
-```powershell
-# Add this at the start of your scripts
-$ErrorActionPreference = "Stop"
-```
-
-Without this setting, PowerShell's default behavior is to continue execution after non-terminating errors, which can lead to unexpected results when working with Dataverse data.
-
-**Learn more:**
-- [Microsoft Docs: about_Preference_Variables](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_preference_variables)
-- [Microsoft Docs: about_CommonParameters](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_commonparameters)
 
 # Quick Start and Examples
 Get a connection to a target Dataverse environment using the `Get-DataverseConnection` cmdlet (also available as `Connect-DataverseConnection` alias).
