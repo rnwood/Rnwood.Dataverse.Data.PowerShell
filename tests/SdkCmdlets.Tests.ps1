@@ -84,7 +84,7 @@ Describe "SDK Cmdlet Tests" {
             # Verify the proxy captured the request
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.GetType().Name | Should -Be "RetrieveAllEntitiesRequest"
-            $proxy.LastRequest.EntityFilters | Should -Be "Entity"
+            $proxy.LastRequest.EntityFilters.ToString() | Should -Be "Entity"
             $proxy.LastRequest.RetrieveAsIfPublished | Should -Be $true
         }
     }
@@ -141,23 +141,23 @@ Describe "SDK Cmdlet Tests" {
 
     Context "AddMembersTeam SDK Cmdlet" {
         It "Invoke-DataverseAddMembersTeam adds users to a team" {
-            # Create a team entity first
-            $connection = getMockConnection -AdditionalEntities @("team")
-            $team = New-Object Microsoft.Xrm.Sdk.Entity("team")
-            $teamId = $team.Id = $team["teamid"] = [Guid]::NewGuid()
-            $team["name"] = "Test Team"
-            $team | Set-DataverseRecord -Connection $connection
-            
+            $teamId = [Guid]::NewGuid()
             $userId1 = [Guid]::NewGuid()
             $userId2 = [Guid]::NewGuid()
             
+            # Stub the response since we just want to test the request format
+            $proxy = Get-ProxyService -Connection $script:conn
+            $proxy.StubResponse("Microsoft.Crm.Sdk.Messages.AddMembersTeamRequest", {
+                param($request)
+                $response = New-Object Microsoft.Crm.Sdk.Messages.AddMembersTeamResponse
+                return $response
+            })
+            
             # Call the cmdlet
             $memberIds = @($userId1, $userId2)
-            { Invoke-DataverseAddMembersTeam -Connection $connection -TeamId $teamId -MemberIds $memberIds } | Should -Not -Throw
+            { Invoke-DataverseAddMembersTeam -Connection $script:conn -TeamId $teamId -MemberIds $memberIds } | Should -Not -Throw
             
             # Verify the proxy captured the request
-            $proxy = Get-ProxyService -Connection $connection
-            $proxy | Should -Not -BeNull
             $proxy.LastRequest | Should -Not -BeNull
             $proxy.LastRequest.GetType().Name | Should -Be "AddMembersTeamRequest"
             $proxy.LastRequest.TeamId | Should -Be $teamId
@@ -347,13 +347,14 @@ Describe "SDK Cmdlet Tests" {
             $contact["firstname"] = "CreateTest"
             $contact["lastname"] = "User"
             
-            # Call the cmdlet
-            $response = Invoke-DataverseCreate -Connection $script:conn -Target $contact
+            # Call the cmdlet (wrapped to capture output)
+            $response = $null
+            { $script:response = Invoke-DataverseCreate -Connection $script:conn -Target $contact -Confirm:$false } | Should -Not -Throw
             
             # Verify response
-            $response | Should -Not -BeNull
-            $response.GetType().Name | Should -Be "CreateResponse"
-            $response.Id | Should -Not -BeNullOrEmpty
+            $script:response | Should -Not -BeNull
+            $script:response.GetType().Name | Should -Be "CreateResponse"
+            $script:response.Id | Should -Not -BeNullOrEmpty
             
             # Verify the proxy captured the request
             $proxy = Get-ProxyService -Connection $script:conn
