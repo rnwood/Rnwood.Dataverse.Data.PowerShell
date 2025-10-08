@@ -35,6 +35,23 @@ To update:
 ```
 Update-Module Rnwood.Dataverse.Data.PowerShell -Force
 ```
+# PowerShell Best Practices
+
+## ⚠️ Always Use ErrorActionPreference Stop
+
+**It is strongly recommended to set `$ErrorActionPreference = "Stop"` at the beginning of your scripts.** This ensures that errors are treated as terminating errors and will stop script execution, preventing cascading failures and data corruption.
+
+```powershell
+# Add this at the start of your scripts
+$ErrorActionPreference = "Stop"
+```
+
+Without this setting, PowerShell's default behavior is to continue execution after non-terminating errors, which can lead to unexpected results when working with Dataverse data.
+
+**Learn more:**
+- [Microsoft Docs: about_Preference_Variables](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_preference_variables)
+- [Microsoft Docs: about_CommonParameters](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_commonparameters)
+
 # Quick Start and Examples
 Get a connection to a target Dataverse environment using the `Get-DataverseConnection` cmdlet (also available as `Connect-DataverseConnection` alias).
 
@@ -373,6 +390,255 @@ You can also simply enter the name of the cmdlet at the PS prompt and then press
 Pressing `tab` completes parameter names (press again to see more suggestions), and you can press `F1` to jump to the help for those one you have the complete name.
 
 [You can also view the documentation for the latest development version here](Rnwood.Dataverse.Data.PowerShell/docs). Note that this may not match the version you are running. Use the above preferably to get the correct and matching help for the version you are running.
+
+## Using PowerShell Standard Features
+
+This module follows PowerShell conventions and supports all standard PowerShell features. Here's how to use them effectively with Dataverse operations.
+
+### WhatIf and Confirm - Preview Changes Before Execution
+
+The `-WhatIf` parameter lets you preview what would happen without actually making changes. The `-Confirm` parameter prompts for confirmation before each operation.
+
+**Supported cmdlets:** `Set-DataverseRecord`, `Remove-DataverseRecord`, and all `Invoke-Dataverse*` cmdlets that modify data.
+
+*Example: Preview record creation with -WhatIf:*
+```powershell
+# See what would be created without actually creating it
+Set-DataverseRecord -Connection $c -TableName contact -InputObject @{
+    firstname = "John"
+    lastname = "Doe"
+} -CreateOnly -WhatIf
+```
+
+*Example: Get confirmation prompt before deleting:*
+```powershell
+# Prompt for confirmation before each delete
+Get-DataverseRecord -Connection $c -TableName contact -FilterValues @{ lastname = "TestUser" } |
+    Remove-DataverseRecord -Connection $c -Confirm
+```
+
+*Example: Batch operations with WhatIf:*
+```powershell
+# Preview all updates that would be made
+$records = Get-DataverseRecord -Connection $c -TableName account -Top 10
+$records | ForEach-Object { $_.name = "$($_.name) - Updated" }
+$records | Set-DataverseRecord -Connection $c -WhatIf
+```
+
+**Learn more:**
+- [Microsoft Docs: about_CommonParameters](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_commonparameters)
+- [Microsoft Docs: Supporting -WhatIf and -Confirm](https://learn.microsoft.com/powershell/scripting/developer/cmdlet/how-to-request-confirmations)
+
+### Verbose Output - See Detailed Operation Information
+
+Use the `-Verbose` parameter to see detailed information about what the cmdlet is doing. This is especially useful for troubleshooting and understanding complex operations.
+
+*Example: See detailed information during record creation:*
+```powershell
+Set-DataverseRecord -Connection $c -TableName contact -InputObject @{
+    firstname = "Jane"
+    lastname = "Smith"
+} -CreateOnly -Verbose
+```
+
+*Example: Monitor batch operations with verbose output:*
+```powershell
+# See progress as records are processed in batches
+$records = 1..50 | ForEach-Object { @{ name = "Account $_" } }
+$records | Set-DataverseRecord -Connection $c -TableName account -BatchSize 10 -Verbose
+```
+
+**Learn more:**
+- [Microsoft Docs: Write-Verbose](https://learn.microsoft.com/powershell/module/microsoft.powershell.utility/write-verbose)
+- [Microsoft Docs: about_CommonParameters](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_commonparameters)
+
+### Error Handling - Control How Errors Are Handled
+
+PowerShell provides powerful error handling through `-ErrorAction`, `-ErrorVariable`, and the `$ErrorActionPreference` preference variable.
+
+*Example: Stop on first error:*
+```powershell
+# Stop immediately if any error occurs
+Set-DataverseRecord -Connection $c -TableName contact -InputObject @{
+    firstname = "Test"
+} -ErrorAction Stop
+```
+
+*Example: Continue on errors and collect them:*
+```powershell
+# Continue processing and collect errors for review
+$errors = @()
+$records = Get-DataverseRecord -Connection $c -TableName contact -Top 10
+$records | Set-DataverseRecord -Connection $c -ErrorVariable +errors -ErrorAction SilentlyContinue
+
+# Review what failed
+foreach ($err in $errors) {
+    Write-Host "Failed: $($err.TargetObject.Id) - $($err.Exception.Message)"
+}
+```
+
+*Example: Use Try-Catch with Stop:*
+```powershell
+try {
+    Set-DataverseRecord -Connection $c -TableName contact -InputObject @{
+        firstname = "John"
+        lastname = "Doe"
+    } -CreateOnly -ErrorAction Stop
+    Write-Host "Record created successfully"
+} catch {
+    Write-Host "Failed to create record: $_"
+}
+```
+
+**Learn more:**
+- [Microsoft Docs: about_CommonParameters](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_commonparameters)
+- [Microsoft Docs: about_Preference_Variables](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_preference_variables)
+- [Microsoft Docs: about_Try_Catch_Finally](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_try_catch_finally)
+
+### Warning Messages - Control Warning Output
+
+Use `-WarningAction` to control how warning messages are handled.
+
+*Example: Suppress warnings:*
+```powershell
+# Run without showing warnings
+Get-DataverseRecord -Connection $c -TableName contact -WarningAction SilentlyContinue
+```
+
+*Example: Treat warnings as errors:*
+```powershell
+# Stop execution if a warning occurs
+Get-DataverseRecord -Connection $c -TableName contact -WarningAction Stop
+```
+
+**Learn more:**
+- [Microsoft Docs: about_CommonParameters](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_commonparameters)
+- [Microsoft Docs: Write-Warning](https://learn.microsoft.com/powershell/module/microsoft.powershell.utility/write-warning)
+
+### Tab Completion - Speed Up Command Entry
+
+PowerShell provides intelligent tab completion for cmdlet names, parameter names, and even parameter values in many cases.
+
+**How to use:**
+- Type a few letters of a cmdlet name and press `Tab` to cycle through matching cmdlets
+- Type a parameter name (with `-`) and press `Tab` to complete it
+- Press `Tab` after `-TableName` to see available table names (when connected)
+- Press `Ctrl+Space` to see all available completions
+
+*Example workflow:*
+```powershell
+# Type "Get-Dat" and press Tab -> completes to "Get-DataverseRecord"
+# Add "-Tab" and press Tab -> completes to "-TableName"
+# Add "-Col" and press Tab -> completes to "-Columns"
+
+Get-DataverseRecord -Connection $c -TableName contact -Columns firstname, lastname
+```
+
+**Learn more:**
+- [Microsoft Docs: about_Tab_Expansion](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_tab_expansion)
+- [Microsoft Docs: TabCompletion](https://learn.microsoft.com/powershell/scripting/learn/shell/tab-completion)
+
+### Contextual Help - Get Help Without Leaving the Console
+
+PowerShell provides built-in help that you can access without leaving the command line.
+
+**Get help for a cmdlet:**
+```powershell
+# Basic help
+Get-Help Get-DataverseRecord
+
+# Detailed help with examples
+Get-Help Get-DataverseRecord -Detailed
+
+# Full help including technical details
+Get-Help Get-DataverseRecord -Full
+
+# Just show examples
+Get-Help Get-DataverseRecord -Examples
+
+# Online version (opens in browser)
+Get-Help Get-DataverseRecord -Online
+```
+
+**Use F1 for instant help:**
+- Type a cmdlet name and press `F1` to open help
+- Complete a parameter name and press `F1` to jump to that parameter's documentation
+
+**Search for help topics:**
+```powershell
+# Find all cmdlets in this module
+Get-Command -Module Rnwood.Dataverse.Data.PowerShell
+
+# Search help for keywords
+Get-Help *Dataverse* 
+
+# Find cmdlets that work with records
+Get-Command *Record* -Module Rnwood.Dataverse.Data.PowerShell
+```
+
+**Learn more:**
+- [Microsoft Docs: Get-Help](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/get-help)
+- [Microsoft Docs: about_Comment_Based_Help](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_comment_based_help)
+- [Microsoft Docs: Updatable Help System](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_updatable_help)
+
+### Command History - Reuse and Search Previous Commands
+
+PowerShell keeps a history of commands you've run, making it easy to recall and modify them.
+
+**Basic history navigation:**
+- Press `↑` (up arrow) to recall previous commands
+- Press `↓` (down arrow) to move forward through history
+- Press `F8` after typing a few letters to search history for matching commands
+
+**View and search history:**
+```powershell
+# View recent command history
+Get-History
+
+# Get a specific command by ID
+Get-History -Id 10
+
+# Search for commands containing "Dataverse"
+Get-History | Where-Object { $_.CommandLine -like "*Dataverse*" }
+
+# Re-run a command by ID
+Invoke-History -Id 10
+```
+
+**Advanced history with PSReadLine (PowerShell 5.1+ / Core):**
+- Press `Ctrl+R` for interactive reverse search
+- Type to search, press `Ctrl+R` again to see older matches
+- Press `Enter` to execute or `Esc` to edit
+
+**Save and load history:**
+```powershell
+# Save history to a file
+Get-History | Export-Clixml -Path ./dataverse-history.xml
+
+# Load history from a file
+Import-Clixml -Path ./dataverse-history.xml | Add-History
+```
+
+**Learn more:**
+- [Microsoft Docs: about_History](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_history)
+- [Microsoft Docs: PSReadLine Module](https://learn.microsoft.com/powershell/module/psreadline/)
+- [GitHub: PSReadLine Key Bindings](https://github.com/PowerShell/PSReadLine#usage)
+
+### Additional Resources
+
+**General PowerShell Learning:**
+- [Microsoft Learn: PowerShell Scripting](https://learn.microsoft.com/powershell/scripting/overview)
+- [PowerShell Documentation](https://learn.microsoft.com/powershell/)
+- [PowerShell Gallery: Find More Modules](https://www.powershellgallery.com/)
+
+**Video Tutorials:**
+- [Microsoft Learn: PowerShell for Beginners](https://learn.microsoft.com/shows/powershell-for-beginners/)
+- [PowerShell.org: YouTube Channel](https://www.youtube.com/powershellorg)
+
+**Community and Blogs:**
+- [PowerShell.org Community](https://powershell.org/)
+- [PowerShell Team Blog](https://devblogs.microsoft.com/powershell/)
+- [Reddit: r/PowerShell](https://www.reddit.com/r/PowerShell/)
 
 ## FAQ
 ### Why another module? What's wrong with `Microsoft.Xrm.Data.PowerShell`?
