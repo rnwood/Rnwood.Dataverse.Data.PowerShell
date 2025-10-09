@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityId
-Gets or sets the Id of the entity record for which you want to retrieve all the business process flow instances across all business process flow definitions.
+Gets the of the newly created table.
 
 ```yaml
 Type: Guid
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name of the entity for which you want to retrieve all the business process flow instances across all business process flow definitions.
+Gets the name of the entity the attribute belongs to.
 
 ```yaml
 Type: String

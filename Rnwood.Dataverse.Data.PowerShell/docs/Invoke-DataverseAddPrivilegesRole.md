@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Privileges
-Gets or sets the IDs and depths of the privileges you want to add. Required.
+Use this to retrieve entity information plus privileges for the entity. Value = 4.
 
 ```yaml
 Type: RolePrivilege[]

@@ -34,7 +34,7 @@ PS C:\> Invoke-DataverseInsertOptionValue -Connection <ServiceClient> -OptionSet
 ## PARAMETERS
 
 ### -AttributeLogicalName
-Gets or sets the logical name of the choice column from which to delete the option value. Optional.
+Gets or sets the name of the column when updating a local choice column. Optional.
 
 ```yaml
 Type: String
@@ -79,7 +79,7 @@ Accept wildcard characters: False
 ```
 
 ### -Description
-For internal use only.
+Gets or sets a description for the option. Optional.
 
 ```yaml
 Type: Label
@@ -94,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name for the entity. Required.
+Gets or sets the table logical name when updating the local option set in a choice column. Optional.
 
 ```yaml
 Type: String
@@ -124,7 +124,7 @@ Accept wildcard characters: False
 ```
 
 ### -OptionSetName
-Gets or sets the name of the global choice that contains the value. Optional.
+Gets or sets the name of the global option set. Optional.
 
 ```yaml
 Type: String
@@ -154,7 +154,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the unique name of the solution you are adding the solution component to. Required.
+Gets or sets the unique name of the unmanaged solution when updating a choice. Optional.
 
 ```yaml
 Type: String
@@ -169,7 +169,7 @@ Accept wildcard characters: False
 ```
 
 ### -Value
-For internal use only.
+Gets or sets the value for the option. Optional.
 
 ```yaml
 Type: Int32

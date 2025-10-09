@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -LogicalName
-Gets or sets the logical name of the column to delete. Required.
+Gets or sets the logical name of the table. Required.
 
 ```yaml
 Type: String

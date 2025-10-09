@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -MergeLabels
-Gets or sets whether the label metadata will be merged or overwritten. Required.
+Gets or sets whether to merge the new labels with any existing labels. Required.
 
 ```yaml
 Type: Boolean
@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -Relationship
-Get or sets the relationship name to be used for an association. Required.
+Gets or sets the relationship metadata to be updated. Required.
 
 ```yaml
 Type: RelationshipMetadataBase
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the unique name of the solution you are adding the solution component to. Required.
+Gets or sets the unique name of the unmanaged solution that this table relationship should be associated with. Optional.
 
 ```yaml
 Type: String

@@ -94,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -Query
-Gets or sets the query criteria for detecting multiple duplicate records. Required.
+Gets or sets the query representing the metadata to return.
 
 ```yaml
 Type: QueryBase

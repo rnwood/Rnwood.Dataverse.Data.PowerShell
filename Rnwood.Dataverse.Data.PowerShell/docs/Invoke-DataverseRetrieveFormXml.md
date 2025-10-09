@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityName
-For internal use only.
+Gets or sets the logical name of the entity.
 
 ```yaml
 Type: String

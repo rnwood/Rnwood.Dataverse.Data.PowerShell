@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name for the entity. Required.
+Gets the name of the entity the attribute belongs to.
 
 ```yaml
 Type: String

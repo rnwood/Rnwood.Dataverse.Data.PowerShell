@@ -184,7 +184,7 @@ Accept wildcard characters: False
 ```
 
 ### -Type
-Reserved for future use.
+Gets or sets a value that specifies the change type.
 
 ```yaml
 Type: OptionSetValue

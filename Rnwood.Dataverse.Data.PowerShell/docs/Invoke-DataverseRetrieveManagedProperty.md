@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -LogicalName
-Gets or sets the logical name of the column to delete. Required.
+Gets or sets the name of the managed property to retrieve. Optional.
 
 ```yaml
 Type: String
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -MetadataId
-The unique identifier for the attribute. Optional.
+Gets or sets the ID of the managed property to retrieve. Optional.
 
 ```yaml
 Type: Guid

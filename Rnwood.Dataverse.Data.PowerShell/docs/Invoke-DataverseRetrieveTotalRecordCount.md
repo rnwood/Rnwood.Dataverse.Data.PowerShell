@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityNames
-The logical names of the entities to include in the query.
+Gets an array of table logical names that can have many-to-many entity relationships.
 
 ```yaml
 Type: String[]

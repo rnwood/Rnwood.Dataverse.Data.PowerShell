@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -Query
-Gets or sets the query to retrieve the recipients for the email messages.
+Gets or sets the query representing the metadata to return.
 
 ```yaml
 Type: QueryBase

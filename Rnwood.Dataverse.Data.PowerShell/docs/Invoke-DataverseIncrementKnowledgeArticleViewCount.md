@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -Count
-Gets or sets the view count of a knowledge article record. Required.
+Gets the number of elements in the collection.
 
 ```yaml
 Type: Int32

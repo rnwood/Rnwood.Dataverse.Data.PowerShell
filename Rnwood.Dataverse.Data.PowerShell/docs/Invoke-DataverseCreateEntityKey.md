@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityName
-Gets or sets the logical name of the table that is used in the operation. Required.
+Gets or sets the entity name.
 
 ```yaml
 Type: String
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the unique name of the solution you are adding the solution component to. Required.
+Gets or sets the unique name of the solution.
 
 ```yaml
 Type: String
