@@ -271,7 +271,7 @@ The cmdlet converts Dataverse attribute types to PowerShell-friendly values when
 | DateTime | Native `DateTime` object converted to local time | Returned as `DateTime`; include timezone-related columns (e.g., `timezonecode`) when necessary for correct interpretation. |
 | Money | Decimal numeric amount | Returned as CLR `decimal` (not SDK Money). |
 | PartyList / EntityCollection | Array of PSObjects (one per referenced record) | Each referenced entity is converted to a PSObject containing its columns. |
-| Aliased values (from linked entities) | Preserved and appear using alias property names | Aliased properties are included as returned by the query. |
+| Aliased values (from linked entities) | Preserved (raw aliased value) and appear using alias property names | Aliased properties are included as returned by the query so when using outer-join if there's not a match the properties from the joined table will be absent totally. |
 
 If you need SDK types (for example `EntityReference`/`OptionSetValue`) request raw output for those columns using the `:Raw` suffix.
 
