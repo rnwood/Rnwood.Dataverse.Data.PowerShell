@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -OpportunityId
-Gets or sets the ID of the opportunity. Required.
+Gets or sets the ID of the opportunity.
 
 ```yaml
 Type: Guid
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -SalesOrderId
-Gets or sets the ID of the sales order (order) to convert. Required.
+Gets or sets the ID of the sales order (order).
 
 ```yaml
 Type: Guid

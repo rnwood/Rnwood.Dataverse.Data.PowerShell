@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -OpportunityId
-Gets or sets the ID of the opportunity. Required.
+Gets or sets the ID of the opportunity.
 
 ```yaml
 Type: Guid
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -QuoteId
-Gets or sets the ID of the quote to convert. Required.
+Gets or sets the ID of the quote.
 
 ```yaml
 Type: Guid

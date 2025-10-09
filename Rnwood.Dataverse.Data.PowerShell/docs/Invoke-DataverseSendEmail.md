@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -EmailId
-The ID of the Email.
+Gets or sets the ID of the email to send.
 
 ```yaml
 Type: Guid

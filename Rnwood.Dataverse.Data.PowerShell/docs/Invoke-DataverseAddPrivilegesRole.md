@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Privileges
-For internal use only.
+Use this to retrieve entity information plus privileges for the entity. Value = 4.
 
 ```yaml
 Type: RolePrivilege[]

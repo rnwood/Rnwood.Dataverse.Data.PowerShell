@@ -33,7 +33,7 @@ PS C:\> Invoke-DataverseOrderOption -Connection <ServiceClient> -OptionSetName <
 ## PARAMETERS
 
 ### -AttributeLogicalName
-Gets or sets the logical name of the choice column from which to delete the option value. Optional.
+Gets or sets the logical name of the local choice column. Optional.
 
 ```yaml
 Type: String
@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name for the entity. Required.
+Gets or sets the logical name of the table that contains the local choice column. Optional.
 
 ```yaml
 Type: String
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -OptionSetName
-Gets or sets the name of the global choice that contains the value. Optional.
+Gets or sets the name of the global choice you want to edit options for. Optional.
 
 ```yaml
 Type: String
@@ -108,7 +108,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the unique name of the solution you are adding the solution component to. Required.
+Gets or sets the name of the solution you want to add the changes to. Optional.
 
 ```yaml
 Type: String

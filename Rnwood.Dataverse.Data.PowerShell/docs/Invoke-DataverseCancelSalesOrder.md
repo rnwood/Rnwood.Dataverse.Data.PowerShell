@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -OrderClose
-Gets or sets the close activity that is associated with the sales order (order) that you want to cancel. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
+Gets or sets the close activity that is associated with the sales order (order) that you want to cancel. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
 
 ```yaml
 Type: PSObject
@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -OrderCloseIgnoreProperties
-Gets or sets the close activity that is associated with the sales order (order) that you want to cancel. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Properties to ignore when converting OrderClose PSObject to Entity.
+Gets or sets the close activity that is associated with the sales order (order) that you want to cancel. Required. Properties to ignore when converting OrderClose PSObject to Entity.
 
 ```yaml
 Type: String[]
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -OrderCloseLookupColumns
-Gets or sets the close activity that is associated with the sales order (order) that you want to cancel. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Hashtable specifying lookup columns for entity reference conversions in OrderClose.
+Gets or sets the close activity that is associated with the sales order (order) that you want to cancel. Required. Hashtable specifying lookup columns for entity reference conversions in OrderClose.
 
 ```yaml
 Type: Hashtable
@@ -108,7 +108,7 @@ Accept wildcard characters: False
 ```
 
 ### -OrderCloseTableName
-Gets or sets the close activity that is associated with the sales order (order) that you want to cancel. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. The logical name of the table/entity type for the OrderClose parameter.
+Gets or sets the close activity that is associated with the sales order (order) that you want to cancel. Required. The logical name of the table/entity type for the OrderClose parameter.
 
 ```yaml
 Type: String
@@ -123,7 +123,7 @@ Accept wildcard characters: False
 ```
 
 ### -Status
-Gets or sets the status of the contract. Required.
+Gets or sets the status of the sales order (order). Required.
 
 ```yaml
 Type: OptionSetValue

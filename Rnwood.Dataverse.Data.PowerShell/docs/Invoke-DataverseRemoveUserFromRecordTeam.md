@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Record
-Gets or sets the record for which the access team is auto created. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the record for which the access team is auto created. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -SystemUserId
-Gets or sets the ID of system user (user) to add to the auto created access team. Required.
+Gets or sets the ID of system user (user) to remove from the auto created access team. Required.
 
 ```yaml
 Type: Guid

@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -LocaleId
-Gets or sets the locale ID. Required.
+Gets or sets the locale ID.
 
 ```yaml
 Type: Int32

@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -SalesOrderId
-Gets or sets the ID of the sales order (order) to convert. Required.
+Gets or sets the ID of the sales order (order).
 
 ```yaml
 Type: Guid

@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Query
-Gets or sets the query to find the email activities to send.
+Gets or sets the query representing the metadata to return.
 
 ```yaml
 Type: QueryBase

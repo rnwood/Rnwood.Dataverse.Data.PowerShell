@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -PrincipalAccess
-Gets or sets the team or user that is granted access to the specified record. Required.
+Gets or sets the team or user whose access to the specified record is modified. Required.
 
 ```yaml
 Type: PrincipalAccess
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -Target
-Gets or sets the target, which is a recurring appointment master record to which the appointment is converted. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the entity that is the target of the request to modify access. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject

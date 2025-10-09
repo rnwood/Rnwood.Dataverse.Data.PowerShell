@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -PrivilegeIds
-Gets or sets the PrivilegeIds for the request.
+Gets or sets an array of privileges Ids that needs to be retrieved. Required.
 
 ```yaml
 Type: Guid[]
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -UserId
-Gets or sets the ID of the user that will own the user query records created.
+Gets or sets the Microsoft Dynamics 365 system user ID of the client.
 
 ```yaml
 Type: Guid

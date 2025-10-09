@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Subject
-Gets or sets the subject line for the email message. Optional.
+Gets or sets the context of the email. Required.
 
 ```yaml
 Type: String

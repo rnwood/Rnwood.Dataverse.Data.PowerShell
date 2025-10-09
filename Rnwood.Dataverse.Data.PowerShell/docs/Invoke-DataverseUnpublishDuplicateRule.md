@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -DuplicateRuleId
-Gets or sets the ID of the duplicate rule to be published. Required.
+Gets or sets the ID of the duplicate rule to be unpublished. Required.
 
 ```yaml
 Type: Guid

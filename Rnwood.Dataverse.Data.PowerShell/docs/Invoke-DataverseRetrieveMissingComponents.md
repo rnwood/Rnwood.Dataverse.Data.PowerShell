@@ -69,7 +69,7 @@ Accept wildcard characters: False
 ```
 
 ### -CustomizationFile
-Gets or sets the compressed solutions file to import. Required.
+Gets or sets a file for a solution. Required.
 
 ```yaml
 Type: Byte[]

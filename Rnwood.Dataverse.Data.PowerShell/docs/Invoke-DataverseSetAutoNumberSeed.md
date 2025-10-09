@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseSetAutoNumberSeed -Connection <ServiceClient> -EntityNam
 ## PARAMETERS
 
 ### -AttributeName
-Gets or sets the AttributeName for the request.
+Gets or sets the logical name of the column. Required.
 
 ```yaml
 Type: String
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityName
-Gets or sets the logical name of the table that is used in the operation. Required.
+Gets or sets the logical name of the entity.
 
 ```yaml
 Type: String
@@ -92,7 +92,7 @@ Accept wildcard characters: False
 ```
 
 ### -Value
-For internal use only.
+Gets the value returned by the query.
 
 ```yaml
 Type: Int64

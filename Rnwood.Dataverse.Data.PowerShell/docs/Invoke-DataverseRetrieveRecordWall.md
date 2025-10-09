@@ -79,7 +79,7 @@ Accept wildcard characters: False
 ```
 
 ### -EndDate
-Gets or sets the end date and time. Required.
+Gets or sets the end date and time of the posts that you want to retrieve. Optional.
 
 ```yaml
 Type: DateTime
@@ -94,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -Entity
-Gets or sets the duplicate rule that you want updated. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the record for which to retrieve the wall. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject
@@ -124,7 +124,7 @@ Accept wildcard characters: False
 ```
 
 ### -PageNumber
-Gets or sets the page number in the source file. Required.
+Gets or sets, for retrieval, a specific page of posts that is designated by its page number. Required.
 
 ```yaml
 Type: Int32
@@ -139,7 +139,7 @@ Accept wildcard characters: False
 ```
 
 ### -PageSize
-Number of records to request per page. Default is 1000.
+Gets or sets, for retrieval, the number of posts per page. Required.
 
 ```yaml
 Type: Int32
@@ -169,7 +169,7 @@ Accept wildcard characters: False
 ```
 
 ### -Source
-For internal use only. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets a value that specifies the source of the post. Optional.
 
 ```yaml
 Type: OptionSetValue
@@ -184,7 +184,7 @@ Accept wildcard characters: False
 ```
 
 ### -StartDate
-Gets or sets the start date of the range in UTC.
+Gets or sets the start date and time of the posts that you want to retrieve. Optional.
 
 ```yaml
 Type: DateTime
@@ -199,7 +199,7 @@ Accept wildcard characters: False
 ```
 
 ### -Type
-Reserved for future use.
+Gets or sets a value that specifies the change type.
 
 ```yaml
 Type: OptionSetValue

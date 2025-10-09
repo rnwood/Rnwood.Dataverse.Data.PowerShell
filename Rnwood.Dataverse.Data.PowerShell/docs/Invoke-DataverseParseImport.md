@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -ImportId
-Gets or sets the ID of the data import (import) that is associated with the asynchronous import records job. Required.
+Gets or sets the ID of the import (data import) that is associated with the asynchronous job that parses all import files for this import. Required.
 
 ```yaml
 Type: Guid

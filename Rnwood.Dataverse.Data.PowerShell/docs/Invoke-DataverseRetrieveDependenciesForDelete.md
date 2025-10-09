@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseRetrieveDependenciesForDelete -Connection <ServiceClient
 ## PARAMETERS
 
 ### -ComponentType
-Gets or sets the value that represents the solution component that you are adding. Required.
+Gets or sets the value for the component type that you want to delete. Required.
 
 ```yaml
 Type: Int32
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -ObjectId
-Gets or sets the ID of the record that the email is regarding. Required.
+Gets or sets the ID of the solution component that you want to delete. Required.
 
 ```yaml
 Type: Guid

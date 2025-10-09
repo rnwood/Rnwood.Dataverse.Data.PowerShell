@@ -109,7 +109,7 @@ Accept wildcard characters: False
 ```
 
 ### -RegardingId
-Gets or sets the ID of the record with which the email messages are associated.
+Gets or sets the ID of a record that the email is regarding. Required.
 
 ```yaml
 Type: Guid
@@ -124,7 +124,7 @@ Accept wildcard characters: False
 ```
 
 ### -RegardingType
-Gets or sets the type of the record with which the email messages are associated.
+Gets or sets the type of entity that is represented by the regarding ID. Required.
 
 ```yaml
 Type: String
@@ -139,7 +139,7 @@ Accept wildcard characters: False
 ```
 
 ### -Sender
-Gets or sets the sender of the email messages. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the sender of the email. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject
@@ -154,7 +154,7 @@ Accept wildcard characters: False
 ```
 
 ### -TemplateId
-Sets the ID of the template (email template) that is used for the email notification.
+Gets or sets the ID of the template to be used for the email. Required.
 
 ```yaml
 Type: Guid

@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityId
-Gets or sets the ID of the record to be added to the campaign. Required.
+Gets the of the newly created table.
 
 ```yaml
 Type: Guid
@@ -92,7 +92,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityName
-Gets or sets the logical name of the table that is used in the operation. Required.
+Gets or sets the logical name of the entity.
 
 ```yaml
 Type: String

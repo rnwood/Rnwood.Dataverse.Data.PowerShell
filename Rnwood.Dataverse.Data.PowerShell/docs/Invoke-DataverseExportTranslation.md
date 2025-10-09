@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionName
-Gets or sets the unique name of the solution to be exported. Required.
+Gets or sets the unique name for the unmanaged solution to export translations for. Required.
 
 ```yaml
 Type: String

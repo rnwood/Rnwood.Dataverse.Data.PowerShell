@@ -124,7 +124,7 @@ Accept wildcard characters: False
 ```
 
 ### -Status
-Gets or sets the status of the contract. Required.
+Gets or sets a status of the incident. Required.
 
 ```yaml
 Type: OptionSetValue

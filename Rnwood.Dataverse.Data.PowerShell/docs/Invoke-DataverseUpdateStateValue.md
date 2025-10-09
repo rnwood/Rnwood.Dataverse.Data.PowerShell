@@ -34,7 +34,7 @@ PS C:\> Invoke-DataverseUpdateStateValue -Connection <ServiceClient> -OptionSetN
 ## PARAMETERS
 
 ### -AttributeLogicalName
-Gets or sets the logical name of the choice column from which to delete the option value. Optional.
+Gets or sets the logical name of the column. Optional.
 
 ```yaml
 Type: String
@@ -94,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -Description
-For internal use only.
+Gets or sets the description label for the statecode option that is specified in the Value property. Optional.
 
 ```yaml
 Type: Label
@@ -109,7 +109,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name for the entity. Required.
+Gets or sets the name of the table that has this statecode attribute. Optional.
 
 ```yaml
 Type: String
@@ -124,7 +124,7 @@ Accept wildcard characters: False
 ```
 
 ### -Label
-Gets or sets the label for the option. Required.
+Gets or sets the display label for this statecode option that is specified by the Value property. Optional.
 
 ```yaml
 Type: Label
@@ -139,7 +139,7 @@ Accept wildcard characters: False
 ```
 
 ### -MergeLabels
-Gets or sets whether the label metadata will be merged or overwritten. Required.
+Gets or sets whether to merge the current label with any existing labels that are already specified for this attribute. Required.
 
 ```yaml
 Type: Boolean
@@ -154,7 +154,7 @@ Accept wildcard characters: False
 ```
 
 ### -OptionSetName
-Gets or sets the name of the global choice that contains the value. Optional.
+For internal use only.
 
 ```yaml
 Type: String
@@ -169,7 +169,7 @@ Accept wildcard characters: False
 ```
 
 ### -Value
-For internal use only.
+Gets or sets the statecode attribute options to update. Required.
 
 ```yaml
 Type: Int32

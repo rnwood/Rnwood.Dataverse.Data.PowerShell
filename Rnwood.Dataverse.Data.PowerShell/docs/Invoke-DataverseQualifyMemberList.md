@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -ListId
-Gets or sets the ID of the list. Required.
+Gets or sets the ID of the list to qualify. Required.
 
 ```yaml
 Type: Guid

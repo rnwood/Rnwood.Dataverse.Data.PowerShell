@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Privileges
-For internal use only.
+Use this to retrieve entity information plus privileges for the entity. Value = 4.
 
 ```yaml
 Type: RolePrivilege[]
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -RoleId
-Gets or sets the ID of the role for which you want to add the privileges. Required.
+Gets or sets the ID of the role for which the privileges are to be replaced.
 
 ```yaml
 Type: Guid

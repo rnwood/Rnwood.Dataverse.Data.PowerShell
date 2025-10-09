@@ -33,7 +33,7 @@ PS C:\> Invoke-DataverseRetrieveAttribute -Connection <ServiceClient> -EntityLog
 ## PARAMETERS
 
 ### -ColumnNumber
-Gets or sets a column number in the CSV, XML Spreadsheet 2003 (.xml), or text source file for which the distinct values are returned. Required.
+Gets or sets a column number value to identify an attribute from the Audit.AttributeMask column Optional.
 
 ```yaml
 Type: Int32
@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name for the entity. Required.
+Gets or sets the logical name of the table that contains the attribute. Optional.
 
 ```yaml
 Type: String
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -LogicalName
-Gets or sets the logical name of the column to delete. Required.
+Gets or sets the logical name of the column definition to be retrieved. Optional.
 
 ```yaml
 Type: String

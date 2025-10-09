@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -QueueItemId
-Gets or sets the
+Gets or sets the id of the queue item. Required.
 
 ```yaml
 Type: Guid

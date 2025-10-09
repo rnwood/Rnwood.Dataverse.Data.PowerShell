@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -ImportFileId
-Gets or sets in ID of the import file that is associated with the source file. Required.
+Gets or sets the ID of the import file that is associated with the parse table. Required.
 
 ```yaml
 Type: Guid

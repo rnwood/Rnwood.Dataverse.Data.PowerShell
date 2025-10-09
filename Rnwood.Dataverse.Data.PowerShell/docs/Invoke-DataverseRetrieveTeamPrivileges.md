@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -TeamId
-Gets or sets the ID of the team. Required.
+Gets or sets the team for which you want to retrieve privileges.
 
 ```yaml
 Type: Guid

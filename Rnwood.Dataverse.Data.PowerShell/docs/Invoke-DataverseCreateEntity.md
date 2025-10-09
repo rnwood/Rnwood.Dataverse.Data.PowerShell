@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -Entity
-Gets or sets the duplicate rule that you want updated. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
+Gets or sets the metadata for the table that you want to create. Required.
 
 ```yaml
 Type: EntityMetadata
@@ -138,7 +138,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the unique name of the solution you are adding the solution component to. Required.
+Gets or sets the name of the unmanaged solution to which you want to add this table. Optional.
 
 ```yaml
 Type: String
