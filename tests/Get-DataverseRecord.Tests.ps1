@@ -643,5 +643,44 @@ Describe 'Get-DataverseRecord' {
             
             { Get-DataverseRecord -Connection $connection -TableName contact -Links $links } | Should -Not -Throw
         }
+
+        It "Given -Links with nested child links (array), creates nested join conditions" {
+            $connection = getMockConnection
+
+            @{"firstname" = "John"; "lastname" = "Doe" } | Set-DataverseRecord -Connection $connection -TableName contact
+
+            $links = @(
+                @{
+                    'contact.accountid' = 'account.accountid'
+                    'links' = @(
+                        @{
+                            'account.ownerid' = 'systemuser.systemuserid'
+                            'type' = 'LeftOuter'
+                            'alias' = 'owner'
+                        }
+                    )
+                }
+            )
+
+            { Get-DataverseRecord -Connection $connection -TableName contact -Links $links } | Should -Not -Throw
+        }
+
+        It "Given -Links with nested child link (single hashtable), creates nested join condition" {
+            $connection = getMockConnection
+
+            @{"firstname" = "John"; "lastname" = "Doe" } | Set-DataverseRecord -Connection $connection -TableName contact
+
+            $links = @(
+                @{
+                    'contact.accountid' = 'account.accountid'
+                    'links' = @{
+                        'account.ownerid' = 'systemuser.systemuserid'
+                        'type' = 'Inner'
+                    }
+                }
+            )
+
+            { Get-DataverseRecord -Connection $connection -TableName contact -Links $links } | Should -Not -Throw
+        }
     }
 }

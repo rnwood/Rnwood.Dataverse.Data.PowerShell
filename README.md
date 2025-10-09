@@ -823,6 +823,20 @@ Get-DataverseRecord -Connection $c -TableName contact -Links @(
 )
 ```
 
+*Example: Nested/child joins using `links` key (join account then join account.owner to systemuser):*
+```powershell
+Get-DataverseRecord -Connection $c -TableName contact -Links @{
+  'contact.accountid' = 'account.accountid'
+  'links' = @(
+    @{ 'account.ownerid' = 'systemuser.systemuserid'; type = 'LeftOuter'; alias = 'accountOwner' }
+  )
+}
+```
+
+Notes:
+- The `links` key may be a single hashtable or an array of hashtables and will be applied as child joins to the linked entity.
+- Child link hashtables support the same simplified keys as top-level link hashtables: `type`, `alias`, `filter`, and may themselves contain further `links` recursively.
+
 The simplified syntax supports:
 - **Link specification**: `'fromTable.fromAttribute' = 'toTable.toAttribute'`
 - **type** (optional): `'Inner'` (default) or `'LeftOuter'`
