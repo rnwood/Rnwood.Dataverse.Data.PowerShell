@@ -112,6 +112,16 @@ To install:
 Install-Module Rnwood.Dataverse.Data.PowerShell -Scope CurrentUser
 ```
 
+> [!NOTE]
+> Pinning the specific version you have tested is recommended for important script.
+> Then you can test and move forwards in a controlled way.
+
+To install a specific version:
+
+```powershell
+Install-Module Rnwood.Dataverse.Data.PowerShell -RequiredVersion 100.0.0 -Scope CurrentUser
+```
+
 To update:
 ```
 Update-Module Rnwood.Dataverse.Data.PowerShell -Force
