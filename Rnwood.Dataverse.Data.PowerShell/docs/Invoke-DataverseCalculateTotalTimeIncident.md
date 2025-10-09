@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to calculate the total time, in minutes, that you used while you worked on an incident (case).
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CalculateTotalTimeIncidentRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.CalculateTotalTimeIncidentRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CalculateTotalTimeIncidentRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.CalculateTotalTimeIncidentRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

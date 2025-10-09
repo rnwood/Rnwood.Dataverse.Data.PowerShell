@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains data to perform bulk operations to cancel, resume, or pause workflows.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SyncBulkOperationRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.SyncBulkOperationRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SyncBulkOperationRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.SyncBulkOperationRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

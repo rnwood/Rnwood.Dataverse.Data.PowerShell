@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to lock the total price of products and services that are specified in the invoice.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.LockInvoicePricingRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.LockInvoicePricingRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.LockInvoicePricingRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.LockInvoicePricingRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

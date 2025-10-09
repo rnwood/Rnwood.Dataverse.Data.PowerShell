@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve the list of database partitions that are used to store audited history data.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveAuditPartitionListRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveAuditPartitionListRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveAuditPartitionListRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveAuditPartitionListRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -103,3 +103,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

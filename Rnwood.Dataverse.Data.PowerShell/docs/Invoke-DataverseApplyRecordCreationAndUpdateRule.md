@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains data to apply record creation and update rules to activities in Dynamics 365 Customer Service created as a result of the integration with external applications.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ApplyRecordCreationAndUpdateRuleRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ApplyRecordCreationAndUpdateRuleRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ApplyRecordCreationAndUpdateRuleRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.ApplyRecordCreationAndUpdateRuleRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

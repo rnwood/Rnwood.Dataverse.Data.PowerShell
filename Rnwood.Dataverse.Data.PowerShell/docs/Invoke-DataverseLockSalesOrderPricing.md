@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data to lock sales order pricing.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.LockSalesOrderPricingRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.LockSalesOrderPricingRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.LockSalesOrderPricingRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.LockSalesOrderPricingRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

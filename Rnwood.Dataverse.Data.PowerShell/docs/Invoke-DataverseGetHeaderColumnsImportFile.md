@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve the source-file column headings; or retrieve the system-generated column headings if the source file does not contain column headings.For the Web API use GetHeaderColumnsImportFile Function.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GetHeaderColumnsImportFileRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.GetHeaderColumnsImportFileRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GetHeaderColumnsImportFileRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.GetHeaderColumnsImportFileRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

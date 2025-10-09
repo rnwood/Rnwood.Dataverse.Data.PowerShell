@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data to asynchronously import a solution, stage it for upgrade, and apply the upgrade as the default (when applicable).
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.StageAndUpgradeAsyncRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.StageAndUpgradeAsyncRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.StageAndUpgradeAsyncRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.StageAndUpgradeAsyncRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -151,21 +151,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -InFile
-Gets or sets the path to a file containing the data to upload.
-
-```yaml
-Type: String
-Parameter Sets: FromFile
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -LayerDesiredOrder
 For internal use only.
 
@@ -286,6 +271,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -InFile
+Gets or sets the path to a file containing the data to upload.
+
+```yaml
+Type: String
+Parameter Sets: FromFile
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -298,3 +298,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

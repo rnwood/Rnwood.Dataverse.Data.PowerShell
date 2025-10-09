@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve the local time for the specified Coordinated Universal Time (UTC).
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.LocalTimeFromUtcTimeRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.LocalTimeFromUtcTimeRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.LocalTimeFromUtcTimeRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.LocalTimeFromUtcTimeRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

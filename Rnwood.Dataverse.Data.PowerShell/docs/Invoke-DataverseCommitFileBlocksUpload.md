@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data needed to commit the uploaded data blocks to the file store.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CommitFileBlocksUploadRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.CommitFileBlocksUploadRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CommitFileBlocksUploadRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.CommitFileBlocksUploadRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -164,3 +164,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve the system user ID for the currently logged on user or the user under whose context the code is running.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.WhoAmIRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.WhoAmIRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.WhoAmIRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.WhoAmIRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -103,3 +103,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

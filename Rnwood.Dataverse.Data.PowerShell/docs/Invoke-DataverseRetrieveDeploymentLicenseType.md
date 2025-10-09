@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve the type of license for a deployment of Microsoft Dynamics 365.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveDeploymentLicenseTypeRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveDeploymentLicenseTypeRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveDeploymentLicenseTypeRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveDeploymentLicenseTypeRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -103,3 +103,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to remove an item from a campaign activity.This message does not have a corresponding Web API action or function in Microsoft Dynamics 365 (online &amp; on-premises). More information: Missing functions and actions for some organization service messages.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RemoveItemCampaignActivityRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RemoveItemCampaignActivityRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RemoveItemCampaignActivityRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RemoveItemCampaignActivityRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

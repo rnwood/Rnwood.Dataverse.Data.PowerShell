@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve the list of language packs that are installed and enabled on the server.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveAvailableLanguagesRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveAvailableLanguagesRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveAvailableLanguagesRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveAvailableLanguagesRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -103,3 +103,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

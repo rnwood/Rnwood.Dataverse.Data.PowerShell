@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve all business units (including the specified business unit) from the business unit hierarchy.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveBusinessHierarchyBusinessUnitRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveBusinessHierarchyBusinessUnitRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveBusinessHierarchyBusinessUnitRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveBusinessHierarchyBusinessUnitRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

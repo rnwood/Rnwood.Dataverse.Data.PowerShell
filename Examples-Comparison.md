@@ -330,8 +330,7 @@ $note = @{
     documentbody = $base64
     filename = "file.pdf"
     mimetype = "application/pdf"
-    objectid = $accountId  # Can use ID directly, lookup is automatic
-    "objectid@logicalname" = "account"
+  objectid = $accountId  # Can use ID directly, lookup is automatic
 }
 
 $noteId = Set-DataverseRecord -Connection $conn -TableName annotation -Fields $note
@@ -1798,9 +1797,9 @@ $personalViews | Format-Table
 
 ## See Also
 
-- [Get-DataverseConnection](Get-DataverseConnection.md)
-- [Get-DataverseRecord](Get-DataverseRecord.md)
-- [Set-DataverseRecord](Set-DataverseRecord.md)
-- [Remove-DataverseRecord](Remove-DataverseRecord.md)
-- [Invoke-DataverseRequest](Invoke-DataverseRequest.md)
-- [Invoke-DataverseSql](Invoke-DataverseSql.md)
+- [Get-DataverseConnection](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseConnection.md)
+- [Get-DataverseRecord](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md)
+- [Set-DataverseRecord](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md)
+- [Remove-DataverseRecord](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md)
+- [Invoke-DataverseRequest](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md)
+- [Invoke-DataverseSql](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md)

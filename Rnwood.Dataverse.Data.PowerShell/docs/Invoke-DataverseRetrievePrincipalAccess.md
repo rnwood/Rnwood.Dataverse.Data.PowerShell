@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve the access rights of the specified security principal (user, team, or organization) to the specified record.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrievePrincipalAccessRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrievePrincipalAccessRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrievePrincipalAccessRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrievePrincipalAccessRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

@@ -221,21 +221,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -GetDefault
-Gets the current default connection. Returns an error if no default connection is set.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Get default connection
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Interactive
 Triggers interactive authentication, where browser will be opened for user to interactively log in.
 
@@ -305,21 +290,6 @@ Parameter Sets: Authenticate with username and password
 Aliases:
 
 Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -SetAsDefault
-When set, this connection will be used as the default for cmdlets that don't have a connection parameter specified.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -402,6 +372,36 @@ See standard PS documentation.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -GetDefault
+Gets the current default connection. Returns an error if no default connection is set.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Get default connection
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SetAsDefault
+When set, this connection will be used as the default for cmdlets that don't have a connection parameter specified.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named

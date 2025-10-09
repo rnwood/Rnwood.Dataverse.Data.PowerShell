@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Retrieves the appointments for the current user for a specific date range from the exchange web service.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveExchangeAppointmentsRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveExchangeAppointmentsRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveExchangeAppointmentsRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveExchangeAppointmentsRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

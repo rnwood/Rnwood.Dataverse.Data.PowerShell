@@ -98,6 +98,14 @@ After create/update, additional operations are batched if needed:
 - Assignment (`AssignRequest`) if `ownerid` column is set
 - Status change (`SetStateRequest`) if `statecode` or `statuscode` columns are set
 
+**Assigning records**
+
+If the input object contains an `ownerid` property the cmdlet will perform an assignment after the main create/update. `ownerid` accepts the same forms as other lookup columns: a GUID, a PSObject with `Id` and `TableName`/`LogicalName` properties (or an `EntityReference`), or a name string which the cmdlet will try to resolve. Assignments are executed with `AssignRequest` and will be batched when `-BatchSize` &gt; 1.
+
+**Setting state/status**
+
+To change a record's state/status include `statuscode` (and optionally `statecode`) on the input object. `statuscode` and `statecode` accept either the numeric value or the display label. If only `statuscode` is provided the cmdlet will infer the matching `statecode` from the table metadata and then issue a `SetStateRequest` after the main create/update. State/status requests are executed separately and are batched when `-BatchSize` &gt; 1.
+
 ## EXAMPLES
 
 ### Example 1: Create a single record
@@ -212,7 +220,6 @@ PS C:\> @{
     firstname = "John"
     lastname = "Doe"
     parentcustomerid = "Contoso Ltd"  # Lookup by account name
-    "parentcustomerid@logicalname" = "account"
 } | Set-DataverseRecord -Connection $c -TableName contact
 ```
 
@@ -314,13 +321,59 @@ PS C:\> $contact = @{
     firstname = "John"
     lastname = "Doe"
     parentcustomerid = $account.Id
-    "parentcustomerid@logicalname" = "account"
 } | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -PassThru
 
 PS C:\> Write-Host "Created contact $($contact.Id) linked to account $($account.Id)"
 ```
 
 Demonstrates using `-PassThru` to chain record creation operations. First creates an account and captures its ID using `-PassThru`, then uses that ID to create a related contact record. This pattern is useful when you need to establish relationships between newly created records.
+
+### Example 17: Associate records in many-to-many relationships
+```powershell
+PS C:\> # Create two accounts to associate
+PS C:\> $account1 = @{ name = "Contoso Ltd" } | Set-DataverseRecord -Connection $c -TableName account -CreateOnly -PassThru
+PS C:\> $account2 = @{ name = "Fabrikam Inc" } | Set-DataverseRecord -Connection $c -TableName account -CreateOnly -PassThru
+
+PS C:\> # Associate the accounts using the intersect table
+PS C:\> # The intersect table name is typically in the format: <entity1>_<entity2> or similar
+PS C:\> # For account-to-account relationships, it might be "account_accounts" or similar
+PS C:\> # Check your Dataverse metadata for the exact intersect table name and column names
+PS C:\> @{
+    # Entity 1 in the relationship - use the exact column name from the intersect table
+    accountid = $account1.Id
+    
+    # Entity 2 in the relationship - use the exact column name from the intersect table
+    accountid2 = $account2.Id
+} | Set-DataverseRecord -Connection $c -TableName "account_accounts" -CreateOnly
+```
+
+Creates a many-to-many association between two account records. Many-to-many relationships in Dataverse are implemented using intersect tables that contain references to both related entities. The property names must match the exact column names in the intersect table (typically the primary key column names of the related entities). Use metadata queries or the Dataverse UI to find the correct table name and column names for your M:M relationship.
+
+### Example 18: Batch associate multiple M:M relationships
+```powershell
+PS C:\> # Create multiple contacts and marketing lists
+PS C:\> $contacts = @(
+    @{ firstname = "Alice"; lastname = "Smith" }
+    @{ firstname = "Bob"; lastname = "Jones" }
+    @{ firstname = "Carol"; lastname = "Williams" }
+) | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -PassThru
+
+PS C:\> $marketingList = @{ listname = "Q1 Newsletter Subscribers"; type = $false } | 
+    Set-DataverseRecord -Connection $c -TableName list -CreateOnly -PassThru
+
+PS C:\> # Associate all contacts with the marketing list using the intersect table
+PS C:\> # Property names must match the exact column names in the intersect table
+PS C:\> $associations = $contacts | ForEach-Object {
+    @{
+        contactid = $_.Id
+        listid = $marketingList.Id
+    }
+}
+
+PS C:\> $associations | Set-DataverseRecord -Connection $c -TableName "listcontact" -CreateOnly
+```
+
+Creates multiple many-to-many associations in a batch operation. This example associates multiple contacts with a marketing list using the `listcontact` intersect table. The property names (`contactid`, `listid`) must match the exact column names in the intersect table. The cmdlet automatically batches these operations for improved performance.
 
 ## PARAMETERS
 
@@ -580,7 +633,7 @@ Accept wildcard characters: False
 ```
 
 ### -TableName
-Logical name of entity
+Logical name of entity. For many-to-many relationships, specify the intersect table name (e.g., "listcontact", "account_accounts").
 
 ```yaml
 Type: String
@@ -665,7 +718,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.String
 ### System.String[]
 ### System.Guid
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Object

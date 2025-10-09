@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve a collection of solution components that are required for a solution component.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveRequiredComponentsRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveRequiredComponentsRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveRequiredComponentsRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveRequiredComponentsRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

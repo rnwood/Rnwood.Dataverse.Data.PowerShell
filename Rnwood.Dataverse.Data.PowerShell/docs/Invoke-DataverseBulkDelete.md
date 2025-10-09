@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that's needed to submit a bulk delete job that deletes selected records in bulk. This job runs asynchronously in the background without blocking other activities.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.BulkDeleteRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.BulkDeleteRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.BulkDeleteRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.BulkDeleteRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -240,3 +240,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

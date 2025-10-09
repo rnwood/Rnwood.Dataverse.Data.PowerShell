@@ -926,8 +926,9 @@ $classSummary
         # Add link to Microsoft Learn for the request type
         try {
             $requestFullName = $requestType.FullName -replace '\+','.'
+            $requestFullNameLower = $requestFullName.ToLower()
             $docLines += ''
-            $docLines += "[Microsoft Learn: $requestFullName](https://learn.microsoft.com/dotnet/api/$requestFullName)"
+            $docLines += "[Microsoft Learn: $requestFullName](https://learn.microsoft.com/en-us/dotnet/api/$requestFullNameLower?view=dataverse-sdk-latest)"
         } catch {
             # ignore if request type cannot be determined
         }
@@ -1010,8 +1011,9 @@ $classSummary
 
         if ($responseType) {
             $responseFullName = $responseType.FullName -replace '\+','.'
+            $responseFullNameLower = $responseFullName.ToLower()
             $docLines += "### $responseFullName"
-            $docLines += "[Microsoft Learn: $responseFullName](https://learn.microsoft.com/dotnet/api/$responseFullName)"
+            $docLines += "[Microsoft Learn: $responseFullName](https://learn.microsoft.com/en-us/dotnet/api/$responseFullNameLower?view=dataverse-sdk-latest)"
         } else {
             $docLines += '### System.Object'
         }

@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data needed to initialize the download of one or more attachment data blocks.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.InitializeAttachmentBlocksDownloadRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.InitializeAttachmentBlocksDownloadRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.InitializeAttachmentBlocksDownloadRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.InitializeAttachmentBlocksDownloadRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

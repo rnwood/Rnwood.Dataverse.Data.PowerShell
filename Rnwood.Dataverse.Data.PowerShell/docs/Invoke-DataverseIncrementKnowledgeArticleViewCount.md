@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is required to increment the per day view count of a knowledge article record.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.IncrementKnowledgeArticleViewCountRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.IncrementKnowledgeArticleViewCountRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.IncrementKnowledgeArticleViewCountRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.IncrementKnowledgeArticleViewCountRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -164,3 +164,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

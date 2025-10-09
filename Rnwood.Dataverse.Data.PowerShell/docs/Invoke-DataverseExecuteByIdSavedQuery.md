@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to execute a saved query (view) that has the specified ID.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ExecuteByIdSavedQueryRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ExecuteByIdSavedQueryRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ExecuteByIdSavedQueryRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.ExecuteByIdSavedQueryRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

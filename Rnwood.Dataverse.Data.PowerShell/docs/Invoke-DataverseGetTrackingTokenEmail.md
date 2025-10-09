@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to return a tracking token that can then be passed as a parameter to the message.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GetTrackingTokenEmailRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.GetTrackingTokenEmailRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GetTrackingTokenEmailRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.GetTrackingTokenEmailRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

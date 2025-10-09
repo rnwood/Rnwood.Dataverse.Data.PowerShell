@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to validate a rule for a recurring appointment.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ValidateRecurrenceRuleRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ValidateRecurrenceRuleRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ValidateRecurrenceRuleRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.ValidateRecurrenceRuleRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -164,3 +164,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

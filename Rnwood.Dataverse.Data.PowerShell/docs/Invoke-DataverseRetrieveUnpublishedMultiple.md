@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve a collection of unpublished organization-owned records that satisfy the specified query criteria.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveUnpublishedMultipleRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

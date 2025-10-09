@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to cancel a contract.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CancelContractRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.CancelContractRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CancelContractRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.CancelContractRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -148,3 +148,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

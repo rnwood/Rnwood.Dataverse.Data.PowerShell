@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to submit an asynchronous job that parses all import files that are associated with the specified import (data import).
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ParseImportRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ParseImportRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ParseImportRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.ParseImportRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

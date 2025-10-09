@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data needed to upload a block of data to storage.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.UploadBlockRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.UploadBlockRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.UploadBlockRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.UploadBlockRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -113,21 +113,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -InFile
-Gets or sets the path to a file containing the data to upload.
-
-```yaml
-Type: String
-Parameter Sets: FromFile
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -WhatIf
 Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
@@ -158,6 +143,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -InFile
+Gets or sets the path to a file containing the data to upload.
+
+```yaml
+Type: String
+Parameter Sets: FromFile
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -170,3 +170,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

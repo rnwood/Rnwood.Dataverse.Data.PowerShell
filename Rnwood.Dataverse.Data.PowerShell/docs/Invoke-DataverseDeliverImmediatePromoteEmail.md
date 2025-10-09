@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to deliver an email from an email client.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DeliverImmediatePromoteEmailRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.DeliverImmediatePromoteEmailRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DeliverImmediatePromoteEmailRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.DeliverImmediatePromoteEmailRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -377,3 +377,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

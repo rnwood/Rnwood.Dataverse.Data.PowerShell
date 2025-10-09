@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to delete instances of a recurring appointment master that have an 'Open' state.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DeleteOpenInstancesRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.DeleteOpenInstancesRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DeleteOpenInstancesRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.DeleteOpenInstancesRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -195,3 +195,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

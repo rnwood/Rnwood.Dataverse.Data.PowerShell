@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to update a component in an unmanaged solution.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.UpdateSolutionComponentRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.UpdateSolutionComponentRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.UpdateSolutionComponentRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.UpdateSolutionComponentRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -164,3 +164,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

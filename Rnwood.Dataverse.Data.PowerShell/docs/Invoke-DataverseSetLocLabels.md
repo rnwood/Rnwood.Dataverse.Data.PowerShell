@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to set localized labels for a limited set of entity attributes.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SetLocLabelsRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.SetLocLabelsRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SetLocLabelsRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.SetLocLabelsRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -148,3 +148,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

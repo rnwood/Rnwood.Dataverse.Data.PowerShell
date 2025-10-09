@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to create a quick campaign to distribute an activity to accounts, contacts, or leads that are selected by a query.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.PropagateByExpressionRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.PropagateByExpressionRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.PropagateByExpressionRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.PropagateByExpressionRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -303,3 +303,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

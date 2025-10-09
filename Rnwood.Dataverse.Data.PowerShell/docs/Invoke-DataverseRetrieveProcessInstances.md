@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve all the process instances for an entity record across all business process definitions.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveProcessInstancesRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveProcessInstancesRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveProcessInstancesRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveProcessInstancesRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

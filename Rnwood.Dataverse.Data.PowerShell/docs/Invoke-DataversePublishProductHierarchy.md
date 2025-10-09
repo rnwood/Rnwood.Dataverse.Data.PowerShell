@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contain the data that is needed to publish a product family record and all its child records.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.PublishProductHierarchyRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.PublishProductHierarchyRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.PublishProductHierarchyRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.PublishProductHierarchyRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to copy the members from the source list to the target list without creating duplicates.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CopyMembersListRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.CopyMembersListRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CopyMembersListRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.CopyMembersListRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

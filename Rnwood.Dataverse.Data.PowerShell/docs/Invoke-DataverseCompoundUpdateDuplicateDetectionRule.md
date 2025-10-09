@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to update a duplicate rule (duplicate detection rule) and its related duplicate rule conditions.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CompoundUpdateDuplicateDetectionRuleRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.CompoundUpdateDuplicateDetectionRuleRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CompoundUpdateDuplicateDetectionRuleRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.CompoundUpdateDuplicateDetectionRuleRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -179,3 +179,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

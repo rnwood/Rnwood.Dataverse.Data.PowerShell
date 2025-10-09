@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to submit an asynchronous system job that detects and logs multiple duplicate records.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.BulkDetectDuplicatesRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.BulkDetectDuplicatesRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.BulkDetectDuplicatesRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.BulkDetectDuplicatesRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -225,3 +225,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Revokes user access rights from a shared link.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RevokeSharedLinkRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RevokeSharedLinkRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RevokeSharedLinkRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RevokeSharedLinkRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -134,3 +134,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

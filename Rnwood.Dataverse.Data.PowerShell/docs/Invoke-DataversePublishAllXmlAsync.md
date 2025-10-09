@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Executes a PublishAllXmlAsyncRequest against the Dataverse organization service.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.PublishAllXmlAsyncRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.PublishAllXmlAsyncRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.PublishAllXmlAsyncRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.PublishAllXmlAsyncRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -103,3 +103,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

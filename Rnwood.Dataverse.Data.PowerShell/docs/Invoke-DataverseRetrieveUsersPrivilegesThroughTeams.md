@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data to retrieve privileges which the user gets through team memberships.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveUsersPrivilegesThroughTeamsRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveUsersPrivilegesThroughTeamsRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveUsersPrivilegesThroughTeamsRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveUsersPrivilegesThroughTeamsRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -149,3 +149,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

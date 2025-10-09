@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve the privileges that are assigned to the specified role.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveRolePrivilegesRoleRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveRolePrivilegesRoleRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveRolePrivilegesRoleRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveRolePrivilegesRoleRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

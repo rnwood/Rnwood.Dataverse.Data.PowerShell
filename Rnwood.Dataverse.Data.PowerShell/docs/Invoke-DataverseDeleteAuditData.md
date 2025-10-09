@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed for customers using customer-managed encryption keys to delete all audit data records up until a specified end date.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DeleteAuditDataRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.DeleteAuditDataRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DeleteAuditDataRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.DeleteAuditDataRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

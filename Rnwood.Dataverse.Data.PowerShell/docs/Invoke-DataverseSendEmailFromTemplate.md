@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to send an email message using a template.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SendEmailFromTemplateRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.SendEmailFromTemplateRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SendEmailFromTemplateRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.SendEmailFromTemplateRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -210,3 +210,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

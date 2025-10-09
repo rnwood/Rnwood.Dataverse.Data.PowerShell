@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to verify that an appointment or service appointment (service activity) has valid available resources for the activity, duration, and site, as appropriate.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ValidateRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ValidateRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ValidateRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.ValidateRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

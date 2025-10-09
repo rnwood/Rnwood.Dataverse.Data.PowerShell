@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data needed to download a data block.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DownloadBlockRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.DownloadBlockRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DownloadBlockRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.DownloadBlockRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -148,3 +148,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

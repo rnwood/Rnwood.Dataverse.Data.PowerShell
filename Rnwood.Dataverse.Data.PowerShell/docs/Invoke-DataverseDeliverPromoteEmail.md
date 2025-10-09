@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to create an email activity record from the specified email message (Track in CRM).
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DeliverPromoteEmailRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.DeliverPromoteEmailRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DeliverPromoteEmailRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.DeliverPromoteEmailRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -347,3 +347,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

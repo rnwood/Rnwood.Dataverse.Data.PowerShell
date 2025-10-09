@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve any required solution components that are not included in the solution.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveMissingDependenciesRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveMissingDependenciesRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveMissingDependenciesRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveMissingDependenciesRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+
