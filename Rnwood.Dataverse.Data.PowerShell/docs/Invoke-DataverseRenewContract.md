@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -ContractId
-Gets or sets the ID of the contract to be renewed. Required.
+Gets or sets the ID of the contract. Required.
 
 ```yaml
 Type: Guid
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -IncludeCanceledLines
-Gets or sets a value that indicates whether the canceled line items of the original contract should be included in the renewed contract. Required.
+Gets or sets a value that indicates whether the canceled line items of the originating contract are to be included in the copy (clone). Required.
 
 ```yaml
 Type: Boolean
@@ -92,7 +92,7 @@ Accept wildcard characters: False
 ```
 
 ### -Status
-Gets or sets the status of the contract.
+Gets or sets the status of the contract. Required.
 
 ```yaml
 Type: Int32

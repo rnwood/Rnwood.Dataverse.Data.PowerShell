@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Query
-Gets or sets the query for the operation.
+Gets or sets the query to find the email activities to send.
 
 ```yaml
 Type: QueryBase
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -ResourceIds
-Gets or sets an array of IDs for the specified set of services.
+Gets or sets the IDs of the resources. Required.
 
 ```yaml
 Type: Guid[]

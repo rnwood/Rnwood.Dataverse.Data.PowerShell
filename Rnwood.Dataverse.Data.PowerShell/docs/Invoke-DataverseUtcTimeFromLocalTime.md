@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -TimeZoneCode
-Gets or sets the time zone code. Required.
+Gets the time zone code that has the requested localized name.
 
 ```yaml
 Type: Int32

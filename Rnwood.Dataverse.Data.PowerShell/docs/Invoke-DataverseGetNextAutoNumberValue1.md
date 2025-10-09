@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityName
-Gets or sets the logical name of the entity.
+Gets or sets the logical name of the table that is used in the operation. Required.
 
 ```yaml
 Type: String

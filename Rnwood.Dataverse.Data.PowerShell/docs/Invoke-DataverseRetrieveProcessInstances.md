@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityId
-Gets or sets the Id of the entity record for which you want to retrieve all the business process flow instances across all business process flow definitions.
+Gets or sets the ID of the record to be added to the campaign. Required.
 
 ```yaml
 Type: Guid
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name of the entity for which you want to retrieve all the business process flow instances across all business process flow definitions.
+Gets or sets the logical name for the entity. Required.
 
 ```yaml
 Type: String

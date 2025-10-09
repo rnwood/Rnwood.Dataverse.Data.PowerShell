@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseRetrieveAadUserRoles -Connection <ServiceClient> -Direct
 ## PARAMETERS
 
 ### -ColumnSet
-Gets or sets the collection of columns for which non-null values are returned from a query. Required.
+Gets or sets the collection of attributes to retrieve in the resulting sales order (order). Required.
 
 ```yaml
 Type: ColumnSet

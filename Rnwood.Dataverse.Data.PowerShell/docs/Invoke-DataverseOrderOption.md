@@ -123,7 +123,7 @@ Accept wildcard characters: False
 ```
 
 ### -Values
-Gets the distinct values for a column in the source file.
+Gets or sets the array of option values in the wanted order. Required.
 
 ```yaml
 Type: Int32[]

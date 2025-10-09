@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -FetchXml
-Gets or sets the FetchXML query string to be validated.
+FetchXml to use
 
 ```yaml
 Type: String
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -QueryType
-Gets or sets the type of the query.
+Gets or sets the type of filters to set. Required.
 
 ```yaml
 Type: Int32

@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseGetDefaultPriceLevel -Connection <ServiceClient> -Entity
 ## PARAMETERS
 
 ### -ColumnSet
-For internal use only.
+Gets or sets the collection of attributes to retrieve in the resulting sales order (order). Required.
 
 ```yaml
 Type: ColumnSet
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityName
-For internal use only.
+Gets or sets the logical name of the table that is used in the operation. Required.
 
 ```yaml
 Type: String

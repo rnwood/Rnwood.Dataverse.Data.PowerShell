@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -UserId
-Gets or sets the user to get the privileges for.
+Gets or sets the ID of the user that will own the user query records created.
 
 ```yaml
 Type: Guid

@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseRemoveAppComponents -Connection <ServiceClient> -AppId <
 ## PARAMETERS
 
 ### -AppId
-ID of the app from where you want to remove components.
+Gets or sets the ID of the business app to add the components to.
 
 ```yaml
 Type: Guid
@@ -47,7 +47,7 @@ Accept wildcard characters: False
 ```
 
 ### -Components
-A collection of components to be removed.
+Gets or sets a collection of components, such as sitemap, entity, dashboard, business process flows, views, and forms, to be added to the business app.
 
 ```yaml
 Type: EntityReferenceCollection

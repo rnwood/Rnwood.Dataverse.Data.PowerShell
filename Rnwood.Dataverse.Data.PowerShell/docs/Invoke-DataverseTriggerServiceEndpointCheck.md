@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Entity
-Gets or sets the ServiceEndpoint record that contains the configuration. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the duplicate rule that you want updated. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject

@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseRetrieveDependentComponents -Connection <ServiceClient> 
 ## PARAMETERS
 
 ### -ComponentType
-Gets or sets the value that represents the solution component. Required.
+Gets or sets the value that represents the solution component that you are adding. Required.
 
 ```yaml
 Type: Int32
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -ObjectId
-Gets or sets the ID of the solution component that you want to check. Required.
+Gets or sets the ID of the record that the email is regarding. Required.
 
 ```yaml
 Type: Guid

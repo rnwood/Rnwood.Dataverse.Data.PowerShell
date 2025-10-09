@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Privileges
-Gets or sets an array that contains the IDs and depths of the privileges that replace the existing privileges.
+For internal use only.
 
 ```yaml
 Type: RolePrivilege[]
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -RoleId
-Gets or sets the ID of the role for which the privileges are to be replaced.
+Gets or sets the ID of the role for which you want to add the privileges. Required.
 
 ```yaml
 Type: Guid

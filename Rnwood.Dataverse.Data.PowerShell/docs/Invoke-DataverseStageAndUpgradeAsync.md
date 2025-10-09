@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -ComponentParameters
-List of entities to overwrite values from the solution.
+Gets or sets the list of entities to overwrite values from the solution.
 
 ```yaml
 Type: EntityCollection
@@ -122,7 +122,7 @@ Accept wildcard characters: False
 ```
 
 ### -CustomizationFile
-The compressed solutions file to import. Required.
+Gets or sets the compressed solutions file to import. Required.
 
 ```yaml
 Type: Byte[]
@@ -182,7 +182,7 @@ Accept wildcard characters: False
 ```
 
 ### -OverwriteUnmanagedCustomizations
-Whether any unmanaged customizations that have been applied over existing managed solution components should be overwritten. Required.
+Gets or sets whether any unmanaged customizations that have been applied over existing managed solution components should be overwritten. Required.
 
 ```yaml
 Type: Boolean
@@ -197,7 +197,7 @@ Accept wildcard characters: False
 ```
 
 ### -PublishWorkflows
-Whether any processes (workflows) included in the solution should be activated after they are imported. Required.
+Gets or sets whether any processes (workflows) included in the solution should be activated after they are imported. Required.
 
 ```yaml
 Type: Boolean
@@ -212,7 +212,7 @@ Accept wildcard characters: False
 ```
 
 ### -SkipProductUpdateDependencies
-Whether enforcement of dependencies related to product updates should be skipped.
+Gets or sets whether enforcement of dependencies related to product updates should be skipped.
 
 ```yaml
 Type: Boolean
@@ -242,7 +242,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionParameters
-Additional solution parameters.
+Gets or sets additional parameters for the solution.
 
 ```yaml
 Type: SolutionParameters

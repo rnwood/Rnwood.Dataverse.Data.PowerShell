@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseReviseQuote -Connection <ServiceClient> -QuoteId <Guid> 
 ## PARAMETERS
 
 ### -ColumnSet
-Gets or sets the collection of attributes to retrieve in the revised quote. Required.
+Gets or sets the collection of attributes to retrieve in the resulting sales order (order). Required.
 
 ```yaml
 Type: ColumnSet
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -QuoteId
-Gets or sets the ID of the original quote. Required.
+Gets or sets the ID of the quote to convert. Required.
 
 ```yaml
 Type: Guid

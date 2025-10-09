@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -PrivilegeId
-Gets or sets the ID of the privilege.
+Gets or sets the ID of the privilege that is to be removed from the existing role.
 
 ```yaml
 Type: Guid
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -UserId
-Gets or sets the user to retrieve privileges for.
+Gets or sets the ID of the user that will own the user query records created.
 
 ```yaml
 Type: Guid

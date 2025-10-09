@@ -33,7 +33,7 @@ PS C:\> Invoke-DataverseRetrieveAttribute -Connection <ServiceClient> -EntityLog
 ## PARAMETERS
 
 ### -ColumnNumber
-Gets or sets a column number value to identify an attribute from the Audit.AttributeMask column Optional.
+Gets or sets a column number in the CSV, XML Spreadsheet 2003 (.xml), or text source file for which the distinct values are returned. Required.
 
 ```yaml
 Type: Int32

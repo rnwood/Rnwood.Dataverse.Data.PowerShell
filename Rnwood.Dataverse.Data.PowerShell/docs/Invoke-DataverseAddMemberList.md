@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityId
-Gets or sets the ID of the member you want to add to the list. Required.
+Gets or sets the ID of the record to be added to the campaign. Required.
 
 ```yaml
 Type: Guid

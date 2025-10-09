@@ -33,7 +33,7 @@ PS C:\> Invoke-DataverseRetrieveAttributeChangeHistory -Connection <ServiceClien
 ## PARAMETERS
 
 ### -AttributeLogicalName
-Gets or sets the attribute's logical (schema) name. Required.
+Gets or sets the logical name of the choice column from which to delete the option value. Optional.
 
 ```yaml
 Type: String
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -Target
-Gets or sets the target audit record for which to retrieve attribute change history. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the target, which is a recurring appointment master record to which the appointment is converted. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject

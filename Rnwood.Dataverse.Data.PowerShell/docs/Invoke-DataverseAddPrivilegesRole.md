@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Privileges
-Gets or sets the IDs and depths of the privileges you want to add. Required.
+For internal use only.
 
 ```yaml
 Type: RolePrivilege[]

@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Query
-Gets or sets the query criteria for the rollup operation. Required.
+Gets or sets the query to find the email activities to send.
 
 ```yaml
 Type: QueryBase
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -RollupType
-Gets or sets the rollup type. Required.
+Gets or sets the type of rollup (0=None, 1=Related, and 2=Extended).
 
 ```yaml
 Type: RollupType
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -Target
-Gets or sets the target record for the rollup operation. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the target, which is a recurring appointment master record to which the appointment is converted. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject

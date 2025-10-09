@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityId
-Gets or sets the ID of the item to be removed from the campaign. Required.
+Gets or sets the ID of the record to be added to the campaign. Required.
 
 ```yaml
 Type: Guid

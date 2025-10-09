@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -Entity
-Gets an entity that contains the attributes relevant to the calculated rollup column.
+Gets or sets the duplicate rule that you want updated. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
 
 ```yaml
 Type: EntityMetadata

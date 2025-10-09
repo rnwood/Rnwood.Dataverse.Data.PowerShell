@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -TeamId
-Gets or sets the ID of the owner team to be converted. Required.
+Gets or sets the ID of the team. Required.
 
 ```yaml
 Type: Guid

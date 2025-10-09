@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -Count
-Gets or sets the view count of a knowledge article record. Required.
+Gets or sets the number of instances to be created. Required.
 
 ```yaml
 Type: Int32
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -Source
-Gets or sets the knowledge article record for incrementing the view count. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+For internal use only. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject

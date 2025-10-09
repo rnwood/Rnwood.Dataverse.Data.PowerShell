@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityName
-Gets or sets the logical name of the entity.
+Gets or sets the logical name of the table that is used in the operation. Required.
 
 ```yaml
 Type: String
@@ -92,7 +92,7 @@ Accept wildcard characters: False
 ```
 
 ### -Value
-Gets or sets the value of the option to delete. Required.
+For internal use only.
 
 ```yaml
 Type: Int64

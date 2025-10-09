@@ -48,7 +48,7 @@ Accept wildcard characters: False
 ```
 
 ### -ComponentType
-Gets or sets the value that represents the solution component that you want to add. Required.
+Gets or sets the value that represents the solution component that you are adding. Required.
 
 ```yaml
 Type: Int32
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the value of the attribute of the solution for which you want to add the solution component. Required.
+Gets or sets the unique name of the solution you are adding the solution component to. Required.
 
 ```yaml
 Type: String

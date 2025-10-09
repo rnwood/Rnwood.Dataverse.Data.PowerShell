@@ -1118,6 +1118,15 @@ $classSummary
             $testParamSetup = @()
             $testParamSetup += "        # Setup test parameters with known values"
             
+            # Special setup for Update, Delete, and Retrieve operations - need to create entity first
+            $needsEntitySetup = ($requestName -eq "UpdateRequest" -or $requestName -eq "DeleteRequest" -or $requestName -eq "RetrieveRequest")
+            if ($needsEntitySetup) {
+                $testParamSetup += "        # Create a test entity first"
+                $testParamSetup += "        `$testContactId = [Guid]::NewGuid()"
+                $testParamSetup += "        `$testContact = @{ firstname = 'TestFirst'; lastname = 'TestLast'; contactid = `$testContactId }"
+                $testParamSetup += "        `$createResult = Invoke-DataverseCreate -Connection `$script:conn -Target `$testContact -TargetTableName 'contact'"
+            }
+            
             $testParamsDefault = @()
             $testParamsFromFile = @()
             $entityParamFound = $false
@@ -1129,7 +1138,12 @@ $classSummary
                 
                 # Generate appropriate test values based on type
                 if ($paramTypeName -eq "System.Guid" -or $paramTypeName -eq "System.Guid?") {
-                    $testParamSetup += "        `$test$paramName = [Guid]::Parse('12345678-1234-1234-1234-123456789012')"
+                    if ($needsEntitySetup -and $paramName -match "^(Id|Target)") {
+                        # Use the created entity's ID for Update/Delete operations
+                        $testParamSetup += "        `$test$paramName = `$testContactId"
+                    } else {
+                        $testParamSetup += "        `$test$paramName = [Guid]::Parse('12345678-1234-1234-1234-123456789012')"
+                    }
                     $testParamsDefault += "-$paramName `$test$paramName"
                 } elseif ($paramTypeName -eq "System.String") {
                     $testParamSetup += "        `$test$paramName = `"Test${paramName}Value`""
@@ -1142,7 +1156,10 @@ $classSummary
                     $testParamsDefault += "-$paramName `$test$paramName"
                 } elseif ($paramTypeName -eq "Microsoft.Xrm.Sdk.Entity") {
                     # For Entity parameters - test PSObject to Entity conversion
-                    if (-not $entityParamFound) {
+                    if ($needsEntitySetup -and $paramName -eq "Target") {
+                        # For Update, use the created entity with modifications
+                        $testParamSetup += "        `$test$paramName = @{ firstname = 'UpdatedFirst'; lastname = 'UpdatedLast'; contactid = `$testContactId }"
+                    } elseif (-not $entityParamFound) {
                         $testParamSetup += "        `$test$paramName = @{ firstname = 'TestFirst'; lastname = 'TestLast'; contactid = [Guid]::NewGuid() }"
                         $entityParamFound = $true
                     }
@@ -1150,8 +1167,13 @@ $classSummary
                     $testParamsDefault += "-${paramName}TableName 'contact'"
                 } elseif ($paramTypeName -eq "Microsoft.Xrm.Sdk.EntityReference") {
                     # Test PSObject to EntityReference conversion
-                    $testParamSetup += "        `$test${paramName}Id = [Guid]::Parse('87654321-4321-4321-4321-210987654321')"
-                    $testParamSetup += "        `$test$paramName = @{ Id = `$test${paramName}Id; LogicalName = 'contact' }"
+                    if ($needsEntitySetup -and $paramName -eq "Target") {
+                        # For Delete, use the created entity's reference as PSObject
+                        $testParamSetup += "        `$test$paramName = [PSCustomObject]@{ Id = `$testContactId; TableName = 'contact' }"
+                    } else {
+                        $testParamSetup += "        `$test${paramName}Id = [Guid]::Parse('87654321-4321-4321-4321-210987654321')"
+                        $testParamSetup += "        `$test$paramName = [PSCustomObject]@{ Id = `$test${paramName}Id; TableName = 'contact' }"
+                    }
                     $testParamsDefault += "-$paramName `$test$paramName"
                 } elseif ($paramTypeName -eq "System.Byte[]") {
                     # Byte array - only in Default set, test data

@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseRetrieveUnpublished -Connection <ServiceClient> -Target 
 ## PARAMETERS
 
 ### -ColumnSet
-Gets or sets the collection of attributes for which non-null values are returned from a query. Required.
+Gets or sets the collection of attributes to retrieve in the resulting sales order (order). Required.
 
 ```yaml
 Type: ColumnSet
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -Target
-Gets or sets the target record for the operation. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the target, which is a recurring appointment master record to which the appointment is converted. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject

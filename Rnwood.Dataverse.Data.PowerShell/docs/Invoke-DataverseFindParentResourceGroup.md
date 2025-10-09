@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -ParentId
-Gets or sets the ID of the parent resource group.
+For internal use only.
 
 ```yaml
 Type: Guid

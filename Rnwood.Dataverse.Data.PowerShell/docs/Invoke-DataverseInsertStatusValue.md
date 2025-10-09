@@ -154,7 +154,7 @@ Accept wildcard characters: False
 ```
 
 ### -StateCode
-For internal use only.
+Gets or sets the state of the knowledge articles to filter the search results. Required.
 
 ```yaml
 Type: Int32

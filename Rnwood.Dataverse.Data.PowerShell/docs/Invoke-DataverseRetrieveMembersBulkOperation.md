@@ -108,7 +108,7 @@ Accept wildcard characters: False
 ```
 
 ### -Query
-Gets or sets the query for the retrieve operation that can be used to break up large data sets into pages. Optional.
+Gets or sets the query to find the email activities to send.
 
 ```yaml
 Type: QueryBase

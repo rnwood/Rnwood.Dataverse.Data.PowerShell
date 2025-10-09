@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseRetrieveAllChildUsersSystemUser -Connection <ServiceClie
 ## PARAMETERS
 
 ### -ColumnSet
-Gets or sets the set of attributes to retrieve. Required.
+Gets or sets the collection of attributes to retrieve in the resulting sales order (order). Required.
 
 ```yaml
 Type: ColumnSet
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityId
-Gets or sets the ID of the system user (user).
+Gets or sets the ID of the record to be added to the campaign. Required.
 
 ```yaml
 Type: Guid

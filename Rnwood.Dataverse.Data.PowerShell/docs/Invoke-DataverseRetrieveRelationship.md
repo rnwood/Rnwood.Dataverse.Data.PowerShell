@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -Name
-For internal use only.
+List of names (primary attribute value) of records to retrieve.
 
 ```yaml
 Type: String

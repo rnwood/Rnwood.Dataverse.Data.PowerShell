@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityId
-Gets or sets the ID of the member to be removed from the list. Required.
+Gets or sets the ID of the record to be added to the campaign. Required.
 
 ```yaml
 Type: Guid
