@@ -16,6 +16,10 @@ BeforeAll {
     $metadata = $null;
 
     function getMockConnection() {
+        param(
+            [scriptblock]$ExecuteStub = $null
+        )
+        
         if (-not $metadata) {
             if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
                 Import-Module Rnwood.Dataverse.Data.PowerShell
@@ -33,7 +37,14 @@ BeforeAll {
             }
         }
 
-        get-dataverseconnection -url https://fake.crm.dynamics.com/ -mock $metadata
+        $conn = get-dataverseconnection -url https://fake.crm.dynamics.com/ -mock $metadata
+        
+        # If an ExecuteStub is provided, store it in a script variable for use in tests
+        if ($null -ne $ExecuteStub) {
+            $script:ExecuteStubHandler = $ExecuteStub
+        }
+        
+        return $conn
     }
 
     function newPwsh([scriptblock] $scriptblock) {
