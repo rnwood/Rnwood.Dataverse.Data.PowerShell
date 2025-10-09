@@ -264,6 +264,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 case PARAMSET_FETCHXML:
                     query = GetFetchXmlQuery();
+                    Columns = query.ColumnSet.AllColumns ? null : query.ColumnSet.Columns.ToArray();   // Capture columns requested in FetchXML for use when converting to PSObject
                     entityMetadata = entiyMetadataFactory.GetMetadata(query.EntityName);
                     break;
                 case PARAMSET_SIMPLE:

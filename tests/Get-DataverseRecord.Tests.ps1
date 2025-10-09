@@ -420,7 +420,7 @@ Describe 'Get-DataverseRecord' {
         $result.firstname | Should -be "Joe"
     }
 
-    It "Given fetchxml, it works" {
+    It "Given fetchxml, it return the results matching that fetchxml" {
         $connection = getMockConnection
         @{"firstname" = "Rob"; "lastname" = "One" },  
         @{"firstname" = "Joe"; "lastname" = "One" },
@@ -430,6 +430,28 @@ Describe 'Get-DataverseRecord' {
         $result = Get-DataverseRecord -Connection $connection -fetchxml "<fetch> <entity name='contact'> <attribute name='firstname' /> <filter type='and'> <condition attribute='firstname' operator='eq' value='Rob' /> </filter> </entity></fetch>"
         $result | Should -HaveCount 2
 
+        #Only the columns in the fetchxml should be returned.
+        $result.firstname | Should -be "Rob", "Rob"
+        $result[0].PSObject.Properties.Name | Sort-Object | Should -Be (@("firstname", "Id", "TableName")|Sort-Object)
+    }
+
+     It "Given fetchxml with a join selecting columns from the joined table, those columns are included in the results" {
+        $connection = getMockConnection
+
+        $parentid = [Guid]::NewGuid()
+
+        @{"firstname" = "Rob"; "lastname" = "One" },  
+        @{"firstname" = "Joe"; "lastname" = "One"; Id = $parentid },
+        @{"firstname" = "Rob"; "lastname" = "Two"; "parentcontactid" = $parentid } | 
+        Set-DataverseRecord -connection $connection -TableName contact
+
+        $result = Get-DataverseRecord -Connection $connection -fetchxml "<fetch> <entity name='contact'> <attribute name='firstname' /> <link-entity name='contact' from='contactid' to='parentcontactid' link-type='outer' alias='parentcontact'> <attribute name='firstname' /> </link-entity> </entity></fetch>"
+        $result | Should -HaveCount 3
+
+        $result.firstname | Should -be "Rob", "Joe", "Rob"
+        # The joined column should be included, with the alias as a prefix
+        $result."parentcontact.firstname" | Should -be  $null, $null, "Joe"
+        $result[-1].PSObject.Properties.Name | Sort-Object | Should -Be (@("firstname", "Id", "TableName", "parentcontact.firstname")|Sort-Object)
 
     }
 
