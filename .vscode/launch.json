@@ -21,6 +21,26 @@
       },
       "justMyCode": false
     },
+     {
+      "name": "Debug Cmdlets: Launch pwsh (Framework)",
+      "type": "clr",
+      "request": "launch",
+      "preLaunchTask": "Build (dotnet build)",
+      "program": "powershell.exe",
+      "args": [
+        "-NoExit",
+        "-NoProfile",
+        "-File",
+        "${workspaceFolder}/test.ps1"
+      ],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "TESTMODULEPATH": "${workspaceFolder}/Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0"
+      },
+      "justMyCode": false
+    },
     {
       "name": "Attach to pwsh (pick process)",
       "type": "coreclr",
