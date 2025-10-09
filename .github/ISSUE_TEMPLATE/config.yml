@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: README
+    url: https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell/blob/main/README.md
+    about: Find installation instructions and usage examples
+  - name: Documentation
+    url: https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell/tree/main/Rnwood.Dataverse.Data.PowerShell/docs
+    about: Browse detailed cmdlet documentation

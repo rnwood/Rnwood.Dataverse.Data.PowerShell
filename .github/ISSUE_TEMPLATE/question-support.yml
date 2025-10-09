@@ -1,0 +1,45 @@
+name: Question / Support
+description: Ask a question or request help
+title: "[QUESTION] "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Need help or have a question? Please fill out the form below. For general questions, consider checking our documentation first or asking in community forums.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What is your question?
+      placeholder: Ask your question here...
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide context about what you're trying to do.
+      placeholder: What are you trying to accomplish? What have you tried so far?
+  - type: input
+    id: environment
+    attributes:
+      label: PowerShell version
+      description: Which PowerShell version are you running in? Please run `$PSVersionTable` in PowerShell and paste the output below.
+  - type: input
+    id: module-version
+    attributes:
+      label: Module Version
+      description: Which version of the module are you using? You can find this by running `Get-Module Rnwood.Dataverse.Data.PowerShell -ListAvailable`.
+      placeholder: e.g., 1.2.3
+  - type: textarea
+    id: code-example
+    attributes:
+      label: Code Example
+      description: If applicable, provide a code example that demonstrates your question.
+      render: powershell
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Information
+      description: Any additional information that might help answer your question.

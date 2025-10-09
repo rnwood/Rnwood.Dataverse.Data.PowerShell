@@ -1,0 +1,57 @@
+name: Documentation Issue
+description: Report issues with documentation, examples, or help content
+title: "[DOCS] "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve our documentation! Please fill out the form below.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What documentation issue did you find?
+      placeholder: Describe the documentation issue here...
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: Location
+      description: Where is the issue located? (file path, URL, cmdlet name, etc.)
+      placeholder: e.g., README.md, docs/Get-DataverseRecord.md, cmdlet help
+    validations:
+      required: true
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Type of Issue
+      options:
+        - Incorrect information
+        - Missing information
+        - Unclear explanation
+        - Outdated content
+        - Broken link
+        - Code example doesn't work
+        - Formatting issue
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: current-content
+    attributes:
+      label: Current Content
+      description: What does the current documentation say?
+      placeholder: Copy the relevant text here...
+  - type: textarea
+    id: suggested-fix
+    attributes:
+      label: Suggested Fix
+      description: How should it be fixed?
+      placeholder: Describe the fix or provide corrected content...
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the documentation issue here.

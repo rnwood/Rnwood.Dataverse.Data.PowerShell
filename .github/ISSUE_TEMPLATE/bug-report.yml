@@ -1,0 +1,69 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the form below to help us understand and reproduce the issue.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Describe the bug here...
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        Example script
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: A clear and concise description of what actually happened.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: PowerShell version
+      description: Which PowerShell version are you running in? Please run `$PSVersionTable` in PowerShell and paste the output below.
+    validations:
+      required: true
+  - type: input
+    id: module-version
+    attributes:
+      label: Module Version
+      description: Which version of the module are you using? You can find this by running `Get-Module Rnwood.Dataverse.Data.PowerShell -ListAvailable`.
+      placeholder: e.g., 1.2.3
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here, such as error messages, stack traces, or screenshots.
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have tried the latest version of the module
+          required: true
+        - label: I have searched for similar issues and couldn't find any
+          required: true
+        - label: I have included all the information needed to reproduce the issue
+          required: true
