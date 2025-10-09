@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data needed to retrieve all private queues of a specified user and optionally all public queues.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveUserQueuesRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveUserQueuesRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveUserQueuesRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveUserQueuesRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

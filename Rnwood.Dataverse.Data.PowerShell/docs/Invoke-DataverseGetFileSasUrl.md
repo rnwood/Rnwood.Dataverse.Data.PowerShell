@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve a shared access signature URL to download a file or image from Dataverse.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GetFileSasUrlRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.GetFileSasUrlRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GetFileSasUrlRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.GetFileSasUrlRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -148,3 +148,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

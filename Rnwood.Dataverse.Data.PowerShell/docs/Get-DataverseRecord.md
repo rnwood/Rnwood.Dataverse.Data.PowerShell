@@ -49,6 +49,9 @@ Results are returned as PowerShell objects with properties matching the column n
 PS C:\> Get-DataverseRecord -connection $connection -tablename contact
 ```
 
+> [!TIP]
+> When specifying the `-TableName` or column names in examples above you can use PowerShell completion to speed entry - press `Tab` to cycle suggestions, `Ctrl+Space` to show the completion list, or press `F1` for help on the completed token. See the [Tab Completion](../../README.md#tab-completion) section in the main README for details.
+
 Get all contacts returning all non-system columns.
 
 ### Example 2
@@ -259,6 +262,9 @@ Values may be:
 - A nested hashtable in the form `@{ value = <value>; operator = '<OperatorName>' }` to explicitly specify operator and value (for example `@{ age = @{ value = 25; operator = 'GreaterThan' } }`).
 
 When an operator is omitted a default `Equal` (or `Null`/`NotNull` for `$null`) is used. Valid operators are those exposed by the SDK's `ConditionOperator` enum; for full list see the SDK docs. The provided value types must match the column type expected by Dataverse for the chosen operator.
+
+> [!TIP]
+> While typing filter keys and column names inside `-FilterValues` you can use PowerShell completion - press `Tab` to cycle suggestions, `Ctrl+Space` to view the completion list, or `F1` for contextual help. See the [Tab Completion](../../README.md#tab-completion) section for tips.
 
 Example:
 
@@ -652,7 +658,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### None
 ## OUTPUTS
 
-### System.Collections.Generic.IEnumerable`1[[System.Management.Automation.PSObject, System.Management.Automation, Version=7.4.6.500, Culture=neutral, PublicKeyToken=31bf3856ad364e35]]
+### System.Collections.Generic.IEnumerable`1[[System.Management.Automation.PSObject, System.Management.Automation, Version=7.5.0.500, Culture=neutral, PublicKeyToken=31bf3856ad364e35]]
 ## NOTES
 
 ## RELATED LINKS

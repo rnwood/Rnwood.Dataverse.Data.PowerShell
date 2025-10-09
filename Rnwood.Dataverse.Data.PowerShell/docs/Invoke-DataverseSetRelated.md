@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data needed to create a relationship between a set of records that participate in specific relationships.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SetRelatedRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.SetRelatedRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SetRelatedRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.SetRelatedRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

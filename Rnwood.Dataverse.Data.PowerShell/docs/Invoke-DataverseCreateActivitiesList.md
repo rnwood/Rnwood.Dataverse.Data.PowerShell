@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to create a quick campaign to distribute an activity to members of a list (marketing list).
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CreateActivitiesListRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.CreateActivitiesListRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CreateActivitiesListRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.CreateActivitiesListRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -302,3 +302,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

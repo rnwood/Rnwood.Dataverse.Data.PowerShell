@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to assign the specified record to a new owner (user or team) by changing the OwnerId attribute of the record.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.AssignRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.AssignRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.AssignRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.AssignRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

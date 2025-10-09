@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve the version of an installed language pack.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveInstalledLanguagePackVersionRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveInstalledLanguagePackVersionRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveInstalledLanguagePackVersionRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveInstalledLanguagePackVersionRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

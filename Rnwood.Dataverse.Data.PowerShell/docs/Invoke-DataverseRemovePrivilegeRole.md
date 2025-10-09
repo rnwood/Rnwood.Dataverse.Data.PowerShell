@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to remove a privilege from an existing role.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RemovePrivilegeRoleRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RemovePrivilegeRoleRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RemovePrivilegeRoleRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RemovePrivilegeRoleRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

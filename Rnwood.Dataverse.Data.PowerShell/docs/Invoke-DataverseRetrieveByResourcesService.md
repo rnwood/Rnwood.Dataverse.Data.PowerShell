@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve the collection of services that are related to the specified set of resources.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveByResourcesServiceRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveByResourcesServiceRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveByResourcesServiceRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveByResourcesServiceRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

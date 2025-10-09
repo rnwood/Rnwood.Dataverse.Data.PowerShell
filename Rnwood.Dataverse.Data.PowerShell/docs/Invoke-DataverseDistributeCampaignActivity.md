@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to create a bulk operation that distributes a campaign activity. The appropriate activities, such as a phone call or fax, are created for the members of the list that is associated with the specified campaign activity.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DistributeCampaignActivityRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.DistributeCampaignActivityRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DistributeCampaignActivityRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.DistributeCampaignActivityRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -287,3 +287,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

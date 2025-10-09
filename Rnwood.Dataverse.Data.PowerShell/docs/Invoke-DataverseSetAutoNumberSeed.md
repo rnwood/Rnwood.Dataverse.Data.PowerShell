@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Requests the seed number being used for autonumber generation.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SetAutoNumberSeedRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.SetAutoNumberSeedRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SetAutoNumberSeedRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.SetAutoNumberSeedRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -148,3 +148,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

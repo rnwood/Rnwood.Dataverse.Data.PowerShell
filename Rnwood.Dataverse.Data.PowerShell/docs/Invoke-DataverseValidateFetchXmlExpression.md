@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Executes a ValidateFetchXmlExpressionRequest against the Dataverse organization service.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ValidateFetchXmlExpressionRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ValidateFetchXmlExpressionRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ValidateFetchXmlExpressionRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.ValidateFetchXmlExpressionRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to renew a contract and create the contract details for a new contract.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RenewContractRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RenewContractRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RenewContractRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RenewContractRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -148,3 +148,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

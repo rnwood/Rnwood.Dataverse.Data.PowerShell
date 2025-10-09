@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Adds a system user to the shared link access team of the target table row.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GrantAccessUsingSharedLinkRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.GrantAccessUsingSharedLinkRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GrantAccessUsingSharedLinkRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.GrantAccessUsingSharedLinkRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

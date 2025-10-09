@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to remove a queue item from a queue.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RemoveFromQueueRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RemoveFromQueueRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RemoveFromQueueRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RemoveFromQueueRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

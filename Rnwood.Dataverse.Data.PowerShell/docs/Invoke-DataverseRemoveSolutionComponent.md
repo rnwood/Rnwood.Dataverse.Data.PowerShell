@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to remove a component from an unmanaged solution.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RemoveSolutionComponentRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RemoveSolutionComponentRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RemoveSolutionComponentRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RemoveSolutionComponentRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -149,3 +149,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

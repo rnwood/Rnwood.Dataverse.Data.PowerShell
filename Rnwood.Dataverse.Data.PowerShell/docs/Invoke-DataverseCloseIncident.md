@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to close an incident (case).
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CloseIncidentRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.CloseIncidentRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CloseIncidentRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.CloseIncidentRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -180,3 +180,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

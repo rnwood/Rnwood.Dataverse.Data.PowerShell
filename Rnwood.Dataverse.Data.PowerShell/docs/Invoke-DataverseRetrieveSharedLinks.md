@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Retrieve all shared links on the table row.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveSharedLinksRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveSharedLinksRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveSharedLinksRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveSharedLinksRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

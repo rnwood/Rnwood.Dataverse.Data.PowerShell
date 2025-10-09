@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to create a new form for a table that is based on an existing form.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CopySystemFormRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.CopySystemFormRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CopySystemFormRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.CopySystemFormRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -179,3 +179,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

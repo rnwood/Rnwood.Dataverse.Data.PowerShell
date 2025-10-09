@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the parameters that are needed to create an email message from a template (email template).
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.InstantiateTemplateRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.InstantiateTemplateRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.InstantiateTemplateRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.InstantiateTemplateRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -148,3 +148,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

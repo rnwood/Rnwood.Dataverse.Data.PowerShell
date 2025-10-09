@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to set another business process flow instance as the active process instance for the target entity.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SetProcessRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.SetProcessRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SetProcessRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.SetProcessRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -148,3 +148,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data to create a multi-table lookup column.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CreatePolymorphicLookupAttributeRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.CreatePolymorphicLookupAttributeRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CreatePolymorphicLookupAttributeRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.CreatePolymorphicLookupAttributeRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -149,3 +149,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

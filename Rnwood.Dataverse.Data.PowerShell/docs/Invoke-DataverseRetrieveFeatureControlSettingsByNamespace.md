@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Executes a RetrieveFeatureControlSettingsByNamespaceRequest against the Dataverse organization service.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveFeatureControlSettingsByNamespaceRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveFeatureControlSettingsByNamespaceRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveFeatureControlSettingsByNamespaceRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveFeatureControlSettingsByNamespaceRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

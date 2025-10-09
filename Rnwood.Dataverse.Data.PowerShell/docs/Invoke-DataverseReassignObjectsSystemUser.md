@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to reassign all records that are owned by a specified user to another security principal (user, team, or organization).
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ReassignObjectsSystemUserRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ReassignObjectsSystemUserRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ReassignObjectsSystemUserRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.ReassignObjectsSystemUserRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

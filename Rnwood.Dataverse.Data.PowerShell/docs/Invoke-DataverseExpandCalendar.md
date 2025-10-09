@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to convert the calendar rules to an array of available time blocks for the specified period.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ExpandCalendarRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ExpandCalendarRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ExpandCalendarRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.ExpandCalendarRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -148,3 +148,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

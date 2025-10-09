@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 For internal use only.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.UpdateRibbonClientMetadataRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.UpdateRibbonClientMetadataRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.UpdateRibbonClientMetadataRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.UpdateRibbonClientMetadataRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -103,3 +103,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

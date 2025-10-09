@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve all the time zone definitions for the specified locale and to return only the display name attribute.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GetAllTimeZonesWithDisplayNameRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.GetAllTimeZonesWithDisplayNameRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GetAllTimeZonesWithDisplayNameRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.GetAllTimeZonesWithDisplayNameRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve a list of the solution component dependencies that can prevent you from uninstalling a managed solution.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveDependenciesForUninstallRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveDependenciesForUninstallRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveDependenciesForUninstallRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveDependenciesForUninstallRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

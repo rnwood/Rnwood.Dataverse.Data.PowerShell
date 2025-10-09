@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is required to create a major or minor version of a knowledge article record.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CreateKnowledgeArticleVersionRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.CreateKnowledgeArticleVersionRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CreateKnowledgeArticleVersionRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.CreateKnowledgeArticleVersionRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

@@ -8,7 +8,7 @@ schema: 2.0.0
 # Remove-DataverseRecord
 
 ## SYNOPSIS
-Deletes an existing Dataverse record.
+Deletes an existing Dataverse record, including M:M association records.
 
 ## SYNTAX
 
@@ -94,6 +94,20 @@ PS C:\> try {
 ```
 
 Disables batching by setting `-BatchSize 1`. With this setting, each record is deleted in a separate request, and execution stops immediately on the first error (when using `-ErrorAction Stop`). This is useful when you need to stop processing on the first failure rather than attempting to delete all records.
+
+### Example 6: Remove M:M associations by deleting from intersect table
+```powershell
+PS C:\> # Find the intersect record to delete
+PS C:\> $intersectRecord = Get-DataverseRecord -Connection $c -TableName "account_accounts" -FilterValues @{
+    accountid = $account1Id
+    accountid2 = $account2Id
+}
+
+PS C:\> # Delete the association
+PS C:\> $intersectRecord | Remove-DataverseRecord -Connection $c
+```
+
+Removes a many-to-many association by deleting the corresponding record from the intersect table. This disassociates the two related entities without affecting the entities themselves.
 
 ## PARAMETERS
 
@@ -223,7 +237,7 @@ Accept wildcard characters: False
 ```
 
 ### -TableName
-Name of entity
+Name of entity. For many-to-many relationships, specify the intersect table name (e.g., "listcontact", "account_accounts").
 
 ```yaml
 Type: String

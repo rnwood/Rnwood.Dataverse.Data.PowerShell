@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve all security principals (users, teams, and organizations) that have access to, and access rights for, the specified record because it was shared with them.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveSharedPrincipalsAndAccessRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveSharedPrincipalsAndAccessRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveSharedPrincipalsAndAccessRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveSharedPrincipalsAndAccessRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

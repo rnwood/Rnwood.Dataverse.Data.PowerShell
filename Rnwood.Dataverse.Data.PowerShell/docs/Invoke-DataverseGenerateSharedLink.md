@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Creates a link to a table row that can be shared with other system users.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GenerateSharedLinkRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.GenerateSharedLinkRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GenerateSharedLinkRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.GenerateSharedLinkRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -134,3 +134,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

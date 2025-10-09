@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data needed to link an instance of a report entity to related entities.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SetReportRelatedRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.SetReportRelatedRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.SetReportRelatedRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.SetReportRelatedRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -164,3 +164,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

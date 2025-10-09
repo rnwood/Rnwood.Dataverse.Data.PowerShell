@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to reset the offline data filters for the calling user to the default filters for the organization.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ResetUserFiltersRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ResetUserFiltersRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ResetUserFiltersRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.ResetUserFiltersRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

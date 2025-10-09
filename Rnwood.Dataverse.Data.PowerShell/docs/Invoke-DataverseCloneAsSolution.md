@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to create a new copy of an unmanaged solution that contains the original solution plus all of its patches.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CloneAsSolutionRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.CloneAsSolutionRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CloneAsSolutionRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.CloneAsSolutionRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -149,3 +149,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

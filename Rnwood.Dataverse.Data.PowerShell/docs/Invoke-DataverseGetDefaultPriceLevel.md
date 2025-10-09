@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve the default price level (price list) for the current user based on the user's territory relationship with the price level.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GetDefaultPriceLevelRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.GetDefaultPriceLevelRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GetDefaultPriceLevelRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.GetDefaultPriceLevelRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

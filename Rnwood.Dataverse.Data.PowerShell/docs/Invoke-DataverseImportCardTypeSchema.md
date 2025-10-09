@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data to import and create a new cardtype required by the installed solution.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ImportCardTypeSchemaRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ImportCardTypeSchemaRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ImportCardTypeSchemaRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.ImportCardTypeSchemaRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

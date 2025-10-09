@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to check whether the incoming email message is relevant to Dataverse.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CheckIncomingEmailRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.CheckIncomingEmailRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CheckIncomingEmailRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.CheckIncomingEmailRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -255,3 +255,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

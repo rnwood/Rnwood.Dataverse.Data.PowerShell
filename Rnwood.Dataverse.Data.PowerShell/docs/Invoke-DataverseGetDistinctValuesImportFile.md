@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve distinct values from the parse table for a column in the source file that contains list values.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GetDistinctValuesImportFileRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.GetDistinctValuesImportFileRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.GetDistinctValuesImportFileRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.GetDistinctValuesImportFileRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -164,3 +164,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to export localizable fields values to a compressed file.For the Web API use ExportFieldTranslation Function.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ExportFieldTranslationRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ExportFieldTranslationRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ExportFieldTranslationRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.ExportFieldTranslationRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -103,3 +103,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

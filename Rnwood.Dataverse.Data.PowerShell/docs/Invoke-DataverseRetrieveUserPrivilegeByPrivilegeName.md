@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data to retrieve a list of privileges for a system user (user) has through their roles, and inherited privileges from their team membership, based on the specified privilege name.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveUserPrivilegeByPrivilegeNameRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveUserPrivilegeByPrivilegeNameRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveUserPrivilegeByPrivilegeNameRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveUserPrivilegeByPrivilegeNameRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to calculate price in an opportunity, quote, order, and invoice. This is used internally for custom pricing calculation when the default system pricing is overridden.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CalculatePriceRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.CalculatePriceRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CalculatePriceRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.CalculatePriceRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

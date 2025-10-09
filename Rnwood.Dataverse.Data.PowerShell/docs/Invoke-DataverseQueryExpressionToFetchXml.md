@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to convert a query, which is represented as a class, to its equivalent query, which is represented as FetchXML.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.QueryExpressionToFetchXmlRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.QueryExpressionToFetchXmlRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.QueryExpressionToFetchXmlRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.QueryExpressionToFetchXmlRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve a collection of dependency records that describe any solution components that would prevent a solution component from being deleted.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveDependenciesForDeleteRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveDependenciesForDeleteRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveDependenciesForDeleteRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveDependenciesForDeleteRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -133,3 +133,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

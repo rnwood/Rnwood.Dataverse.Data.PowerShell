@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Use the class. Contains the data that is needed to remove the relationship between the specified records for specific relationships.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RemoveRelatedRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RemoveRelatedRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RemoveRelatedRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RemoveRelatedRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

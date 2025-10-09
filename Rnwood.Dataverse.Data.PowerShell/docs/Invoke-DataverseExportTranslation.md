@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to export all translations for a specific solution to a compressed file.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ExportTranslationRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.ExportTranslationRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.ExportTranslationRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.ExportTranslationRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

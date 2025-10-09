@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to revert changes done to properties of a product family, product, or bundle record, and set it back to its last published () state.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RevertProductRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RevertProductRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RevertProductRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RevertProductRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

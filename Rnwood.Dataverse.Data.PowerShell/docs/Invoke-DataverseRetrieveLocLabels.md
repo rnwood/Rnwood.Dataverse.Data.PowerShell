@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve localized labels for a limited set of entity attributes.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveLocLabelsRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveLocLabelsRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveLocLabelsRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveLocLabelsRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -149,3 +149,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

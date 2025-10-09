@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to retrieve the data that defines the content and behavior of the application ribbon.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveApplicationRibbonRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveApplicationRibbonRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveApplicationRibbonRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveApplicationRibbonRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -103,3 +103,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

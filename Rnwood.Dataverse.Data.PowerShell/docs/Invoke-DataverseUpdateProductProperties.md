@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that is needed to update values of the property instances (dynamic property instances) for a product added to an opportunity, quote, order, or invoice.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.UpdateProductPropertiesRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.UpdateProductPropertiesRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.UpdateProductPropertiesRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.UpdateProductPropertiesRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

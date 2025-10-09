@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data to retrieve all the activity pointer entities along with the parties and attachments as dictated by the FetchXML query.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveTimelineWallRecordsRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveTimelineWallRecordsRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveTimelineWallRecordsRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveTimelineWallRecordsRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -148,3 +148,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

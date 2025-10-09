@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Asynchronously replaces managed solution (A) plus all of its patches with managed solution (B) that is the clone of (A) and all of its patches.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DeleteAndPromoteAsyncRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.DeleteAndPromoteAsyncRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DeleteAndPromoteAsyncRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.DeleteAndPromoteAsyncRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -118,3 +118,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data needed to retrieve the set of privileges defined in the system.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrievePrivilegeSetRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrievePrivilegeSetRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrievePrivilegeSetRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrievePrivilegeSetRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -103,3 +103,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+

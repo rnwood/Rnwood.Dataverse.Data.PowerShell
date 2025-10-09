@@ -10,7 +10,7 @@ schema: 2.0.0
 ## SYNOPSIS
 Contains the data that's needed to retrieve information about the current organization.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveCurrentOrganizationRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Crm.Sdk.Messages.RetrieveCurrentOrganizationRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveCurrentOrganizationRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveCurrentOrganizationRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
@@ -119,3 +119,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+
