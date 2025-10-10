@@ -172,49 +172,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 if (hashtable["filter"] is Hashtable filterHash)
                 {
-                    // Apply filter conditions to the link entity
+                    // Use the shared filter parsing logic so link filters stay
+                    // consistent with -FilterValues parsing in Get-DataverseRecord.
+                    // For qualified keys (e.g. 'publisher.uniquename') the
+                    // FilterHelpers will pass the entity name to AddCondition so
+                    // attribute lookups behave correctly for linked conditions.
                     linkEntity.LinkCriteria = new FilterExpression(LogicalOperator.And);
-                    
-                    foreach (DictionaryEntry filterEntry in filterHash)
-                    {
-                        string fieldName = filterEntry.Key.ToString();
-                        object value = filterEntry.Value;
-
-                        ConditionOperator op = ConditionOperator.Equal;
-                        object conditionValue = value;
-
-                        // Support the same nested hashtable format as FilterValues
-                        if (value is Hashtable conditionHash)
-                        {
-                            if (conditionHash.ContainsKey("operator"))
-                            {
-                                string operatorStr = conditionHash["operator"].ToString();
-                                try
-                                {
-                                    op = (ConditionOperator)Enum.Parse(typeof(ConditionOperator), operatorStr);
-                                }
-                                catch (ArgumentException e)
-                                {
-                                    throw new ArgumentException($"Invalid operator '{operatorStr}' for filter field '{fieldName}'. {e.Message}");
-                                }
-                            }
-
-                            if (conditionHash.ContainsKey("value"))
-                            {
-                                conditionValue = conditionHash["value"];
-                            }
-                        }
-
-                        // Add the condition
-                        if (conditionValue is Array array)
-                        {
-                            linkEntity.LinkCriteria.AddCondition(fieldName, op, (object[])array);
-                        }
-                        else
-                        {
-                            linkEntity.LinkCriteria.AddCondition(fieldName, op, conditionValue);
-                        }
-                    }
+                    FilterHelpers.ProcessHashFilterValues(linkEntity.LinkCriteria, new[] { filterHash }, false);
                 }
                 else
                 {
@@ -222,7 +186,126 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
+            // Process optional child links (nested joins)
+            // The 'links' key may contain a single hashtable, an array/list of hashtables,
+            // or DataverseLinkEntity/PSObject representations. Each child link is attached
+            // to this link as a nested LinkEntity.
+            if (hashtable.ContainsKey("links"))
+            {
+                var linksObj = hashtable["links"];
+
+                // Helper to attach a child DataverseLinkEntity to the parent LinkEntity.
+                void AttachChild(object childObj)
+                {
+                    // If a DictionaryEntry was provided (for example by iterating a Hashtable)
+                    // use the Value as the intended child object.
+                    if (childObj is DictionaryEntry de)
+                    {
+                        childObj = de.Value;
+                    }
+                    DataverseLinkEntity childDle = null;
+
+                    if (childObj is DataverseLinkEntity dle)
+                    {
+                        childDle = dle;
+                    }
+                    else if (childObj is Hashtable childHash)
+                    {
+                        // Reuse the hashtable conversion (this will recurse for grandchildren)
+                        childDle = (DataverseLinkEntity)childHash;
+                    }
+                    else if (childObj is PSObject pso)
+                    {
+                        // PSObjects that were deserialized (or created) can be converted too
+                        if (pso.BaseObject is Hashtable bh)
+                        {
+                            childDle = (DataverseLinkEntity)bh;
+                        }
+                        else if (pso.BaseObject is LinkEntity le)
+                        {
+                            childDle = new DataverseLinkEntity(le);
+                        }
+                        else
+                        {
+                            // Try direct implicit conversion where possible
+                            try
+                            {
+                                childDle = (DataverseLinkEntity)pso;
+                            }
+                            catch
+                            {
+                                throw new ArgumentException("Invalid child link type in 'links' array");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Invalid child link type in 'links' array");
+                    }
+
+                    if (childDle == null)
+                    {
+                        throw new ArgumentException("Invalid child link specification");
+                    }
+
+                    // Prefer to add the fully-built child LinkEntity to preserve any
+                    // nested descendants that were built by recursive conversion.
+                    if (linkEntity.LinkEntities != null)
+                    {
+                        linkEntity.LinkEntities.Add(childDle.LinkEntity);
+                    }
+                    else
+                    {
+                        // Fallback: reconstruct the child on the parent using AddLink
+                        var created = linkEntity.AddLink(childDle.LinkEntity.LinkToEntityName,
+                            childDle.LinkEntity.LinkFromAttributeName,
+                            childDle.LinkEntity.LinkToAttributeName,
+                            childDle.LinkEntity.JoinOperator);
+
+                        created.EntityAlias = childDle.LinkEntity.EntityAlias;
+                        created.LinkCriteria = childDle.LinkEntity.LinkCriteria;
+
+                        if (childDle.LinkEntity.LinkEntities != null)
+                        {
+                            foreach (var grandChild in childDle.LinkEntity.LinkEntities)
+                            {
+                                created.LinkEntities.Add(grandChild);
+                            }
+                        }
+                    }
+                }
+
+                // If linksObj is a Hashtable it represents a single child link and should
+                // not be iterated (Hashtable implements IEnumerable and iterating would
+                // enumerate its entries rather than the intended child object).
+                if (linksObj is Hashtable)
+                {
+                    AttachChild(linksObj);
+                }
+                // If linksObj is a DataverseLinkEntity or PSObject treat as single item
+                else if (linksObj is DataverseLinkEntity || linksObj is PSObject || linksObj is LinkEntity)
+                {
+                    AttachChild(linksObj);
+                }
+                // Otherwise if it's an enumerable (e.g. array/list of child specs) iterate
+                else if (linksObj is IEnumerable enumerable && !(linksObj is string))
+                {
+                    foreach (var item in enumerable)
+                    {
+                        AttachChild(item);
+                    }
+                }
+                else
+                {
+                    AttachChild(linksObj);
+                }
+            }
+
             return new DataverseLinkEntity(linkEntity);
         }
+
+        // Normalization of link filters has been removed. Link filter
+        // hashtables are processed directly by FilterHelpers so callers
+        // must provide keys that target the linked/to entity.
     }
 }

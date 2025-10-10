@@ -454,6 +454,41 @@ Format: `@{ 'fromEntity.fromAttribute' = 'toEntity.toAttribute'; type = 'Inner';
 - `alias` (optional): String alias for the linked entity
 - `filter` (optional): Hashtable with filter conditions using the same format as `-FilterValues`
 
+**Nested child links (links key)**
+
+You can attach child joins to any simplified link using the `links` key. The `links` value may be a single hashtable or an array/list of hashtables describing links that should be applied to the linked ("to") entity.
+
+Child link hashtables use the same simplified syntax as top-level links and may include `type`, `alias`, `filter`, and may themselves contain further `links` recursively to form arbitrarily deep join chains.
+
+Important notes:
+- Child filters target the linked/to entity specified by the child link (for example a child link with `'account.ownerid' = 'systemuser.systemuserid'` applies its `filter` to the `account` → `systemuser` join).
+- Child links may be supplied as a single hashtable (for a single child) or an array of hashtables when multiple child joins are required.
+- You can also supply child links as `DataverseLinkEntity` objects or SDK `LinkEntity` instances wrapped in `DataverseLinkEntity`.
+
+Example - Nested child links (array):
+
+
+
+Get-DataverseRecord -Connection $conn -TableName contact -Links @(
+	@{
+		'contact.accountid' = 'account.accountid'
+		'links' = @(
+			@{ 'account.ownerid' = 'systemuser.systemuserid'; type = 'LeftOuter'; alias = 'accountOwner' }
+		)
+	}
+)
+
+Example - Nested child link (single hashtable):
+
+
+
+Get-DataverseRecord -Connection $conn -TableName contact -Links @(
+	@{
+		'contact.accountid' = 'account.accountid'
+		'links' = @{ 'account.ownerid' = 'systemuser.systemuserid'; type = 'Inner' }
+	}
+)
+
 Example - Simple inner join:
 
 
