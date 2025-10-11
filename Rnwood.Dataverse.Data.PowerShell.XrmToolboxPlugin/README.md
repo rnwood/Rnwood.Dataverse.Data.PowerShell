@@ -27,17 +27,60 @@ This XrmToolbox plugin provides a PowerShell console with the Rnwood.Dataverse.D
 
 ### Installing the Plugin
 
+#### Option 1: From XrmToolbox Tool Library (When Available)
+
 1. Open XrmToolbox
 2. Go to **Tool Library** (or press `Ctrl+Alt+L`)
 3. Search for "PowerShell Console" or "Rnwood.Dataverse.Data.PowerShell"
 4. Click **Install**
 5. Restart XrmToolbox
 
-**OR**
+#### Option 2: Manual Installation from GitHub Releases
 
-1. Download the latest release DLL from the [GitHub Releases page](https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell/releases)
-2. Copy the DLL and all its dependencies to your XrmToolbox `Plugins` folder
-3. Restart XrmToolbox
+1. Download the latest release from the [GitHub Releases page](https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell/releases)
+2. Extract the ZIP file
+3. Locate your XrmToolbox `Plugins` folder:
+   - Default location: `%APPDATA%\MscrmTools\XrmToolBox\Plugins`
+   - Or: `C:\Users\<YourUsername>\AppData\Roaming\MscrmTools\XrmToolBox\Plugins`
+4. Copy the entire plugin folder (containing `Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.dll` and all dependencies) to the `Plugins` folder
+5. Restart XrmToolbox
+6. The plugin should now appear in the Tools menu
+
+#### Option 3: Manual Installation from Local Build
+
+If you're building from source:
+
+1. Build the solution in Release mode:
+   ```powershell
+   dotnet build Rnwood.Dataverse.Data.PowerShell.sln -c Release
+   ```
+
+2. Navigate to the output directory:
+   ```
+   Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin\bin\Release\net48\
+   ```
+
+3. Copy the entire contents of the `net48` folder to your XrmToolbox `Plugins` folder:
+   - Default location: `%APPDATA%\MscrmTools\XrmToolBox\Plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin`
+
+4. Important files to copy include:
+   - `Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.dll` (main plugin)
+   - `ConEmu.*.dll` (ConEmu control libraries)
+   - `PSModule` folder (bundled PowerShell module)
+   - All other dependency DLLs
+
+5. Restart XrmToolbox
+
+#### Verifying Installation
+
+After installation, verify the plugin is loaded:
+1. Open XrmToolbox
+2. Click **Tools** menu
+3. Look for **PowerShell Console** in the list
+4. If you don't see it, check:
+   - XrmToolbox logs (Help > Logs)
+   - Ensure all DLL files were copied
+   - Verify .NET Framework 4.8 is installed
 
 ## Usage
 
@@ -232,6 +275,196 @@ If you have trouble connecting:
 ## Contributing
 
 Found a bug or have a feature request? Please open an issue on the [GitHub repository](https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell/issues).
+
+## Development and Debugging
+
+### Prerequisites for Development
+
+- Visual Studio 2022 or VS Code
+- .NET SDK 6.0 or later
+- .NET Framework 4.8 Developer Pack
+- PowerShell 7+ (for scripts)
+
+### Setting Up Development Environment
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell.git
+   cd Rnwood.Dataverse.Data.PowerShell
+   ```
+
+2. Download XrmToolbox for debugging:
+   ```powershell
+   .\scripts\Download-XrmToolbox.ps1
+   ```
+   
+   This downloads XrmToolbox to `.xrmtoolbox` in the repository root.
+
+3. Build the solution:
+   ```powershell
+   dotnet build Rnwood.Dataverse.Data.PowerShell.sln -c Debug
+   ```
+
+### Debugging in Visual Studio
+
+The plugin project includes launch profiles for easy debugging:
+
+1. Open `Rnwood.Dataverse.Data.PowerShell.sln` in Visual Studio
+2. Set `Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin` as the startup project
+3. Select one of the launch profiles:
+   - **XrmToolbox (auto-download)** - Uses Start-XrmToolbox.ps1 script to auto-download and configure
+   - **XrmToolbox (local)** - Uses `.xrmtoolbox\XrmToolBox.exe` from repo root
+   - **XrmToolbox (custom path)** - Uses XrmToolbox from a custom installation path (edit path in Properties/launchSettings.json)
+4. Press F5 to start debugging
+
+The plugin will be automatically copied to XrmToolbox's Plugins folder before starting.
+
+**Manual Steps (if needed)**:
+1. Build the plugin in Debug configuration
+2. Copy `Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin\bin\Debug\net48\*` to `%APPDATA%\MscrmTools\XrmToolBox\Plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin\`
+3. Start XrmToolbox
+4. In Visual Studio, go to Debug > Attach to Process
+5. Select `XrmToolBox.exe`
+6. Set breakpoints in the plugin code
+
+### Debugging in VS Code
+
+The repository includes VS Code tasks and launch configurations:
+
+#### Using Tasks
+
+1. Open the repository in VS Code
+2. Run tasks via Terminal > Run Task:
+   - **Download XrmToolbox** - Downloads XrmToolbox to `.xrmtoolbox`
+   - **Build XrmToolbox Plugin** - Builds the plugin project
+   - **Start XrmToolbox with Plugin** - Builds plugin, copies files, and starts XrmToolbox
+
+#### Using Launch Configuration
+
+1. Open the repository in VS Code
+2. Go to Run and Debug (Ctrl+Shift+D)
+3. Select **Debug XrmToolbox Plugin** from the dropdown
+4. Press F5 to start debugging
+
+This will:
+- Build the plugin
+- Copy it to the local XrmToolbox installation
+- Start XrmToolbox with debugger attached
+
+**Note**: The CLR debugger in VS Code requires the C# extension and may have limitations compared to Visual Studio.
+
+### Helper Scripts
+
+The repository includes PowerShell scripts in the `scripts` folder:
+
+#### Download-XrmToolbox.ps1
+
+Downloads XrmToolbox from GitHub releases:
+
+```powershell
+# Download to default location (.xrmtoolbox)
+.\scripts\Download-XrmToolbox.ps1
+
+# Download to custom location
+.\scripts\Download-XrmToolbox.ps1 -OutputPath "C:\Dev\XrmToolbox"
+
+# Download specific version
+.\scripts\Download-XrmToolbox.ps1 -Version "1.2024.9.23"
+```
+
+#### Start-XrmToolbox.ps1
+
+Starts XrmToolbox with the plugin loaded:
+
+```powershell
+# Use local XrmToolbox with Debug build
+.\scripts\Start-XrmToolbox.ps1
+
+# Use Release build
+.\scripts\Start-XrmToolbox.ps1 -BuildConfiguration Release
+
+# Use custom XrmToolbox path
+.\scripts\Start-XrmToolbox.ps1 -XrmToolboxPath "C:\XrmToolbox\XrmToolBox.exe"
+```
+
+This script:
+1. Downloads XrmToolbox if not present
+2. Builds the plugin if not built
+3. Copies plugin files to XrmToolbox Plugins folder
+4. Starts XrmToolbox
+
+### Testing Changes
+
+After making changes:
+
+1. Build the solution:
+   ```powershell
+   dotnet build Rnwood.Dataverse.Data.PowerShell.sln -c Debug
+   ```
+
+2. Run automated tests:
+   ```powershell
+   $env:TESTMODULEPATH = "$(pwd)/Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0"
+   Invoke-Pester -Path tests -Output Detailed
+   ```
+
+3. Test the plugin:
+   ```powershell
+   .\scripts\Start-XrmToolbox.ps1
+   ```
+
+4. In XrmToolbox:
+   - Connect to a Dataverse environment
+   - Launch PowerShell Console from Tools menu
+   - Test your changes
+
+### Project Structure
+
+```
+Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/
+├── PowerShellConsolePlugin.cs          # Main plugin class
+├── GettingStarted.md                   # Embedded help content
+├── README.md                            # Plugin documentation
+├── IMPLEMENTATION.md                    # Technical details
+├── TESTING.md                           # Test cases
+└── Properties/
+    └── launchSettings.json              # Visual Studio launch profiles
+
+scripts/
+├── Download-XrmToolbox.ps1              # Downloads XrmToolbox
+└── Start-XrmToolbox.ps1                 # Starts XrmToolbox with plugin
+
+.vscode/
+├── launch.json                          # VS Code debugging config
+└── tasks.json                           # VS Code tasks
+```
+
+### Common Development Issues
+
+**Issue**: XrmToolbox doesn't show the plugin
+
+**Solution**:
+- Verify all DLLs were copied to the Plugins folder
+- Check XrmToolbox logs (Help > Logs) for errors
+- Ensure .NET Framework 4.8 is installed
+- Restart XrmToolbox after copying files
+
+**Issue**: Breakpoints not hit in Visual Studio
+
+**Solution**:
+- Ensure you're building in Debug configuration
+- Verify the debugger is attached to XrmToolBox.exe
+- Check that PDB files are present in the Plugins folder
+- Disable "Just My Code" in Debug settings
+
+**Issue**: ConEmu control doesn't load
+
+**Solution**:
+- Verify ConEmu*.dll files are in the Plugins folder
+- Check that ConEmuControl.dll.config is present
+- Ensure Visual C++ Redistributable is installed
+
+
 
 ## License
 
