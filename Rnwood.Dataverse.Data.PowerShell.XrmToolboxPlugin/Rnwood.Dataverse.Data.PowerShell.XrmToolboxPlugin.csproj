@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyTitle>PowerShell Console Plugin for XrmToolbox</AssemblyTitle>
+    <Product>Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin</Product>
+    <Description>XrmToolbox plugin that embeds a PowerShell console with Rnwood.Dataverse.Data.PowerShell module pre-loaded</Description>
+    <Copyright>Copyright © 2024 Robert Wood</Copyright>
+    <Authors>Rob Wood</Authors>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="XrmToolBoxPackage" Version="1.2024.9.23" />
+    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Cmdlets\Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj">
+      <SetTargetFramework>TargetFramework=net462</SetTargetFramework>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+
+</Project>
