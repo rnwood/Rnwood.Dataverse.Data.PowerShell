@@ -481,10 +481,32 @@ Url + "/api/data/v9.2/");
 
 			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
 			{
-				AuthenticationResult authResult = await app.AcquireTokenByUsernamePassword(scopes, Username, new NetworkCredential("", Password).SecurePassword).ExecuteAsync(cts.Token);
+				AuthenticationResult authResult = null;
+				
+				// Try to get token silently from cache first
+				if (!string.IsNullOrEmpty(Username))
+				{
+					try
+					{
+						authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync(cts.Token);
+					}
+					catch (MsalUiRequiredException)
+					{
+						// Token cache miss or expired, need to acquire new token
+					}
+					catch (MsalServiceException)
+					{
+						// Service error during silent acquisition, need to acquire new token
+					}
+				}
+
+				// If silent acquisition failed, acquire new token with username/password
+				if (authResult == null)
+				{
+					authResult = await app.AcquireTokenByUsernamePassword(scopes, Username, new NetworkCredential("", Password).SecurePassword).ExecuteAsync(cts.Token);
+				}
 
 				return authResult.AccessToken;
-
 			}
 		}
 
@@ -504,7 +526,11 @@ Url + "/api/data/v9.2/");
 					}
 					catch (MsalUiRequiredException)
 					{
-
+						// Token cache miss or expired, need to acquire new token
+					}
+					catch (MsalServiceException)
+					{
+						// Service error during silent acquisition, need to acquire new token
 					}
 				}
 
@@ -544,7 +570,11 @@ Url + "/api/data/v9.2/");
 					}
 					catch (MsalUiRequiredException)
 					{
-
+						// Token cache miss or expired, need to acquire new token
+					}
+					catch (MsalServiceException)
+					{
+						// Service error during silent acquisition, need to acquire new token
 					}
 				}
 

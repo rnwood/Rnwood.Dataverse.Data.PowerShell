@@ -1071,5 +1071,30 @@ Describe "Examples-Comparison Documentation Tests" {
             # Test pattern works
             $true | Should -Be $true
         }
+        
+        It "Can process multiple records in batch operations without authentication errors" {
+            # This test validates that batch operations work correctly and don't encounter
+            # authentication issues during processing. This is a regression test for the
+            # issue where username/password authentication failed intermittently in bulk operations.
+            
+            # Create multiple records to force batch processing
+            $records = @()
+            for ($i = 0; $i -lt 10; $i++) {
+                $contact = New-Object Microsoft.Xrm.Sdk.Entity("contact")
+                $contact.Id = $contact["contactid"] = [Guid]::NewGuid()
+                $contact["firstname"] = "BatchTest$i"
+                $contact["lastname"] = "User"
+                $records += $contact
+            }
+            
+            # Process records with batching enabled (default BatchSize is 100)
+            # Should complete without authentication errors
+            { $records | Set-DataverseRecord -Connection $script:conn -BatchSize 5 } | Should -Not -Throw
+            
+            # Verify records were created by retrieving one
+            $retrieved = Get-DataverseRecord -Connection $script:conn -TableName contact -Filter @{"firstname"="BatchTest0"}
+            $retrieved | Should -Not -BeNull
+            $retrieved.firstname | Should -Be "BatchTest0"
+        }
     }
 }
