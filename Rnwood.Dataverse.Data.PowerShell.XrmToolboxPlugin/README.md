@@ -4,12 +4,12 @@ This XrmToolbox plugin provides a PowerShell console with the Rnwood.Dataverse.D
 
 ## Features
 
-- Launches a PowerShell console in a separate window
+- **Embedded PowerShell console** directly within the XrmToolbox tab using ConEmu control
 - Automatically loads the Rnwood.Dataverse.Data.PowerShell module
-- Detects and uses ConEmu if available for enhanced terminal experience
-- Falls back to standard PowerShell console if ConEmu is not installed
+- Full-featured terminal experience with ConEmu integration
 - Custom XrmToolbox prompt to indicate you're working within the XrmToolbox context
 - Helpful quick-start examples displayed on startup
+- No need for external ConEmu installation - control is embedded via NuGet package
 
 ## Installation
 
@@ -20,7 +20,6 @@ This XrmToolbox plugin provides a PowerShell console with the Rnwood.Dataverse.D
    ```powershell
    Install-Module Rnwood.Dataverse.Data.PowerShell -Scope CurrentUser
    ```
-3. **(Optional) ConEmu** - Download from [conemu.github.io](https://conemu.github.io/) for an enhanced terminal experience
 
 ### Installing the Plugin
 
@@ -43,7 +42,7 @@ This XrmToolbox plugin provides a PowerShell console with the Rnwood.Dataverse.D
 1. Connect to your Dataverse environment in XrmToolbox
 2. Click on **Tools** menu
 3. Select **PowerShell Console** (or search for it)
-4. A new tab will open, and a PowerShell window will launch
+4. A new tab will open with an embedded PowerShell console
 
 ### Connecting to Dataverse
 
@@ -110,18 +109,16 @@ Get-Help Get-DataverseRecord -Full
 Get-Help Set-DataverseRecord -Examples
 ```
 
-## ConEmu Integration
+## Embedded Console Technology
 
-If ConEmu is installed, the plugin will automatically detect and use it to provide:
-- Better terminal rendering
-- Tab support
-- Customizable appearance
-- Enhanced copy/paste functionality
+The plugin uses the ConEmu.Control.WinForms package to provide an embedded terminal experience directly within the XrmToolbox tab. This provides:
+- Full-featured terminal rendering
+- Native Windows console support
+- Copy/paste functionality
+- Scrollback buffer
+- No external dependencies or installations required
 
-ConEmu will be detected if installed in one of these locations:
-- `C:\Program Files\ConEmu\ConEmu64.exe`
-- `C:\Program Files (x86)\ConEmu\ConEmu.exe`
-- `%LOCALAPPDATA%\ConEmu\ConEmu64.exe`
+The ConEmu control is bundled with the plugin via NuGet, so there's no need to install ConEmu separately.
 
 ## Troubleshooting
 
@@ -146,11 +143,13 @@ If you see an error that the module cannot be found:
    Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
    ```
 
-### PowerShell Console Doesn't Open
+### Console Doesn't Appear or Shows Errors
 
-- Check that PowerShell is available in your PATH
+- Ensure PowerShell is available in your PATH
 - Try running `powershell.exe` from a command prompt to verify PowerShell works
+- The plugin uses the embedded ConEmu control which requires .NET Framework 4.8
 - Check Windows Event Viewer for any application errors
+- Verify all plugin dependencies were copied to the XrmToolbox Plugins folder
 
 ### Connection Errors
 
@@ -210,4 +209,4 @@ This plugin is part of the Rnwood.Dataverse.Data.PowerShell project and is licen
 - [Main Project Repository](https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell)
 - [PowerShell Module Documentation](https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell/blob/main/README.md)
 - [XrmToolbox Website](https://www.xrmtoolbox.com/)
-- [ConEmu Website](https://conemu.github.io/)
+- [ConEmu.Control.WinForms NuGet Package](https://www.nuget.org/packages/ConEmu.Control.WinForms)

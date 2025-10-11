@@ -1,17 +1,16 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
 using XrmToolBox.Extensibility;
 using XrmToolBox.Extensibility.Interfaces;
 using Microsoft.PowerPlatform.Dataverse.Client;
+using ConEmu.WinForms;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
     public partial class PowerShellConsolePlugin : PluginControlBase, IGitHubPlugin, IPayPalPlugin
     {
-        private Process powershellProcess;
-        private Panel consolePanel;
+        private ConEmuControl conEmuControl;
 
         public PowerShellConsolePlugin()
         {
@@ -20,18 +19,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private void InitializeComponent()
         {
-            this.consolePanel = new Panel();
+            this.conEmuControl = new ConEmuControl();
             this.SuspendLayout();
             
-            this.consolePanel.Dock = DockStyle.Fill;
-            this.consolePanel.Location = new System.Drawing.Point(0, 0);
-            this.consolePanel.Name = "consolePanel";
-            this.consolePanel.Size = new System.Drawing.Size(800, 600);
-            this.consolePanel.TabIndex = 0;
+            // conEmuControl
+            this.conEmuControl.Dock = DockStyle.Fill;
+            this.conEmuControl.Location = new System.Drawing.Point(0, 0);
+            this.conEmuControl.Name = "conEmuControl";
+            this.conEmuControl.Size = new System.Drawing.Size(800, 600);
+            this.conEmuControl.TabIndex = 0;
+            this.conEmuControl.AutoStartInfo = null;
             
+            // PowerShellConsolePlugin
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = AutoScaleMode.Font;
-            this.Controls.Add(this.consolePanel);
+            this.Controls.Add(this.conEmuControl);
             this.Name = "PowerShellConsolePlugin";
             this.Size = new System.Drawing.Size(800, 600);
             this.Load += PowerShellConsolePlugin_Load;
@@ -47,80 +49,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             if (!DesignMode)
             {
-                StartPowerShellConsole();
+                StartEmbeddedPowerShellConsole();
             }
         }
 
-        private void StartPowerShellConsole()
+        private void StartEmbeddedPowerShellConsole()
         {
             try
             {
+                // Create temporary initialization script
                 string tempScriptPath = Path.Combine(Path.GetTempPath(), $"xrmtoolbox-ps-init-{Guid.NewGuid()}.ps1");
-                
                 string connectionScript = GenerateConnectionScript();
                 File.WriteAllText(tempScriptPath, connectionScript);
 
-                ProcessStartInfo psi = new ProcessStartInfo
-                {
-                    FileName = "powershell.exe",
-                    Arguments = $"-NoExit -ExecutionPolicy Bypass -File \"{tempScriptPath}\"",
-                    UseShellExecute = true
-                };
-
-                string conEmuPath = FindConEmu();
-                if (!string.IsNullOrEmpty(conEmuPath))
-                {
-                    psi.FileName = conEmuPath;
-                    psi.Arguments = $"-run powershell.exe -NoExit -ExecutionPolicy Bypass -File \"{tempScriptPath}\"";
-                }
-
-                powershellProcess = new Process { StartInfo = psi };
-                powershellProcess.EnableRaisingEvents = true;
-                powershellProcess.Exited += PowershellProcess_Exited;
+                // Configure ConEmu startup
+                ConEmuStartInfo startInfo = new ConEmuStartInfo();
+                startInfo.ConsoleProcessCommandLine = $"powershell.exe -NoExit -ExecutionPolicy Bypass -File \"{tempScriptPath}\"";
+                startInfo.StartupDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                startInfo.ConEmuConsoleExtenderExecutablePath = null; // Use default
                 
-                powershellProcess.Start();
-
-                Label infoLabel = new Label
-                {
-                    Text = "PowerShell console has been launched in a separate window.\n\n" +
-                           "The Rnwood.Dataverse.Data.PowerShell module is pre-loaded.\n\n" +
-                           "To connect to the same environment as XrmToolbox:\n" +
-                           "  $connection = Get-DataverseConnection -Url \"<your-org-url>\" -Interactive\n\n" +
-                           "Then you can query records:\n" +
-                           "  Get-DataverseRecord -Connection $connection -TableName account\n\n" +
-                           "Close this tab to terminate the PowerShell session.",
-                    Dock = DockStyle.Fill,
-                    TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
-                    Font = new System.Drawing.Font("Segoe UI", 10F)
-                };
-                consolePanel.Controls.Add(infoLabel);
+                // Start the embedded PowerShell console
+                conEmuControl.Start(startInfo);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to start PowerShell console: {ex.Message}", "Error", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Failed to start PowerShell console: {ex.Message}\n\nPlease ensure ConEmu is installed or the ConEmu.Control package is properly configured.", 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
-
-        private string FindConEmu()
-        {
-            string[] possiblePaths = new[]
-            {
-                @"C:\Program Files\ConEmu\ConEmu64.exe",
-                @"C:\Program Files (x86)\ConEmu\ConEmu.exe",
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"ConEmu\ConEmu64.exe"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"ConEmu\ConEmu64.exe")
-            };
-
-            foreach (string path in possiblePaths)
-            {
-                if (File.Exists(path))
-                {
-                    return path;
-                }
-            }
-
-            return null;
         }
 
         private string GenerateConnectionScript()
@@ -174,31 +129,18 @@ function prompt {
             return script;
         }
 
-        private void PowershellProcess_Exited(object sender, EventArgs e)
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => PowershellProcess_Exited(sender, e)));
-                return;
-            }
-
-            if (consolePanel.Controls.Count > 0 && consolePanel.Controls[0] is Label label)
-            {
-                label.Text = "PowerShell console has been closed.\n\nClose this tab or restart the plugin to start a new session.";
-            }
-        }
-
         public override void ClosingPlugin(PluginCloseInfo info)
         {
-            if (powershellProcess != null && !powershellProcess.HasExited)
+            // ConEmu control will handle cleanup automatically
+            if (conEmuControl != null && conEmuControl.IsConsoleEmulatorOpen)
             {
                 try
                 {
-                    powershellProcess.Kill();
+                    conEmuControl.Dispose();
                 }
                 catch
                 {
-                    // Ignore errors when killing process
+                    // Ignore errors when disposing
                 }
             }
 
