@@ -10,13 +10,18 @@ The PowerShell console is embedded directly in this XrmToolbox tab. When you ope
 
 - ✅ Loads the PowerShell module (bundled with the plugin)
 - ✅ Connects to your current Dataverse environment
-- ✅ Creates a `$connection` variable you can use immediately
+- ✅ **Sets the connection as default** - you can omit `-Connection` parameter!
+- ✅ Creates a `$connection` variable for explicit use when needed
 
 ### 2. Your First Command
 
-Try querying some records:
+Try querying some records - **no `-Connection` parameter needed**:
 
 ```powershell
+# Simple syntax - uses default connection
+Get-DataverseRecord -TableName account
+
+# Or use explicit connection variable
 Get-DataverseRecord -Connection $connection -TableName account
 ```
 
@@ -24,14 +29,14 @@ Get-DataverseRecord -Connection $connection -TableName account
 
 #### Query Records
 ```powershell
-# Get all accounts
-Get-DataverseRecord -Connection $connection -TableName account
+# Get all accounts (simplified - no -Connection needed!)
+Get-DataverseRecord -TableName account
 
 # Get specific columns
-Get-DataverseRecord -Connection $connection -TableName contact -Columns name, emailaddress1
+Get-DataverseRecord -TableName contact -Columns name, emailaddress1
 
 # Filter records
-Get-DataverseRecord -Connection $connection -TableName account -Filter "name eq 'Contoso'"
+Get-DataverseRecord -TableName account -Filter "name eq 'Contoso'"
 ```
 
 #### Create Records
@@ -40,7 +45,8 @@ $newAccount = @{
     name = "Contoso Ltd" 
     telephone1 = "555-1234"
 }
-Set-DataverseRecord -Connection $connection -TableName account -Record $newAccount
+# No -Connection parameter needed
+Set-DataverseRecord -TableName account -Record $newAccount
 ```
 
 #### Update Records
@@ -49,17 +55,17 @@ $update = @{
     accountid = "guid-here"
     telephone1 = "555-5678"
 }
-Set-DataverseRecord -Connection $connection -TableName account -Record $update
+Set-DataverseRecord -TableName account -Record $update
 ```
 
 #### Delete Records
 ```powershell
-Remove-DataverseRecord -Connection $connection -TableName account -Id "guid-here"
+Remove-DataverseRecord -TableName account -Id "guid-here"
 ```
 
 #### SQL Queries
 ```powershell
-Invoke-DataverseSql -Connection $connection -Sql @"
+Invoke-DataverseSql -Sql @"
 SELECT TOP 10 
     name, 
     accountnumber, 
@@ -94,26 +100,69 @@ Get-Help Get-DataverseRecord -Examples
 
 ### Automatic Connection
 
-The plugin automatically connects using your XrmToolbox credentials. The connection is available in the `$connection` variable.
+The plugin automatically connects using your XrmToolbox credentials. The connection is:
+
+- ✅ **Set as default** - no need to pass `-Connection` to cmdlets
+- ✅ Available in the `$connection` variable for explicit use
+
+**What does "default connection" mean?**
+
+When a connection is set as default, you can omit the `-Connection` parameter:
+
+```powershell
+# Simplified syntax (recommended)
+Get-DataverseRecord -TableName account
+
+# Explicit syntax (also works)
+Get-DataverseRecord -Connection $connection -TableName account
+```
 
 ### Manual Connection (if needed)
 
 If automatic connection fails or you need to connect to a different environment:
 
 ```powershell
-# Interactive authentication
-$connection = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
+# Interactive authentication (set as default)
+$connection = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive -SetAsDefault
 
 # Client secret authentication
 $connection = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" `
     -ClientId "your-client-id" `
-    -ClientSecret "your-client-secret"
+    -ClientSecret "your-client-secret" `
+    -SetAsDefault
 ```
+
+### Working with Multiple Connections
+
+Need to work with multiple Dataverse environments? Here's how:
+
+```powershell
+# Primary connection (already connected by plugin)
+# This is the default connection
+
+# Connect to a secondary environment (don't set as default)
+$conn2 = Get-DataverseConnection -Url "https://org2.crm.dynamics.com" -Interactive
+
+# Use default connection (primary) - no -Connection parameter
+Get-DataverseRecord -TableName account
+
+# Use secondary connection explicitly
+Get-DataverseRecord -Connection $conn2 -TableName contact
+
+# Copy data between environments
+$accounts = Get-DataverseRecord -TableName account -Filter "name eq 'Contoso'"
+foreach ($account in $accounts) {
+    Set-DataverseRecord -Connection $conn2 -TableName account -Record $account
+}
+```
+
+For more multi-environment scenarios, see the [Common Use-Cases](https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell#common-use-cases) section in the main README.
 
 ### Check Current Connection
 
 ```powershell
-$whoami = Get-DataverseWhoAmI -Connection $connection
+# Uses default connection
+$whoami = Get-DataverseWhoAmI
 $whoami | Format-List
 ```
 
@@ -151,7 +200,8 @@ If you see an error about Restricted Language Mode, contact your IT administrato
 ### Save Results to CSV
 
 ```powershell
-Get-DataverseRecord -Connection $connection -TableName account | 
+# No -Connection parameter needed
+Get-DataverseRecord -TableName account | 
     Export-Csv -Path "accounts.csv" -NoTypeInformation
 ```
 
@@ -164,7 +214,7 @@ $newContact = @{
     lastname = "Doe"
     parentcustomerid = "Contoso"  # Looks up account by name
 }
-Set-DataverseRecord -Connection $connection -TableName contact -Record $newContact
+Set-DataverseRecord -TableName contact -Record $newContact
 ```
 
 ### Batch Operations
@@ -176,14 +226,14 @@ $accounts = @(
     @{ name = "Account 2" },
     @{ name = "Account 3" }
 )
-Set-DataverseRecord -Connection $connection -TableName account -Record $accounts
+Set-DataverseRecord -TableName account -Record $accounts
 ```
 
 ### Use SQL for Complex Queries
 
 ```powershell
 # SQL queries support joins, aggregates, and more
-Invoke-DataverseSql -Connection $connection -Sql @"
+Invoke-DataverseSql -Sql @"
 SELECT 
     c.fullname,
     a.name as accountname,

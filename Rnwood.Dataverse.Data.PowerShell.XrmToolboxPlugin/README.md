@@ -97,30 +97,80 @@ The PowerShell console launches with the module already loaded and **automatical
 
 - The plugin extracts the connection URL and OAuth token from XrmToolbox
 - The connection is established automatically using the same credentials
-- The connection is available in the `$connection` variable
+- **The connection is set as the default** - you can omit the `-Connection` parameter in cmdlets
+- The connection is also available in the `$connection` variable for explicit use
+
+**What does "default connection" mean?**
+
+When a connection is set as default using `-SetAsDefault`, you don't need to pass `-Connection $connection` to every cmdlet:
+
+```powershell
+# Without default connection (verbose)
+Get-DataverseRecord -Connection $connection -TableName account
+
+# With default connection (simplified)
+Get-DataverseRecord -TableName account
+```
+
+The plugin automatically sets the XrmToolbox connection as default, so you can use the simplified syntax immediately.
+
+#### Manual Connection
 
 If automatic connection fails, you can manually connect:
 
 ```powershell
+# Connect and set as default
+$connection = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive -SetAsDefault
+
+# Or connect without setting as default
 $connection = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
 ```
 
 Replace `https://yourorg.crm.dynamics.com` with your actual Dataverse URL.
 
+#### Working with Multiple Connections
+
+If you need to work with multiple Dataverse environments simultaneously:
+
+```powershell
+# Primary connection (set as default for convenience)
+$conn1 = Get-DataverseConnection -Url "https://org1.crm.dynamics.com" -Interactive -SetAsDefault
+
+# Secondary connection (explicit, not default)
+$conn2 = Get-DataverseConnection -Url "https://org2.crm.dynamics.com" -Interactive
+
+# Use default connection (conn1) - no -Connection parameter needed
+Get-DataverseRecord -TableName account | Select-Object -First 5
+
+# Use secondary connection explicitly
+Get-DataverseRecord -Connection $conn2 -TableName contact | Select-Object -First 5
+
+# Copy data between environments
+$accounts = Get-DataverseRecord -Connection $conn1 -TableName account -Filter @{ name = "Contoso" }
+foreach ($account in $accounts) {
+    Set-DataverseRecord -Connection $conn2 -TableName account -Record $account
+}
+```
+
+For more advanced scenarios and examples, see the [Common Use-Cases section](https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell#common-use-cases) in the main README.
+
 ### Example Operations
 
-Once connected, you can use all the Dataverse PowerShell cmdlets:
+Once connected, you can use all the Dataverse PowerShell cmdlets. **Since the connection is set as default**, you can omit the `-Connection` parameter:
 
 #### Query Records
 ```powershell
-# Get all accounts
-Get-DataverseRecord -Connection $connection -TableName account
+# Get all accounts (using default connection)
+Get-DataverseRecord -TableName account
 
 # Get specific columns
-Get-DataverseRecord -Connection $connection -TableName account -Columns name, accountnumber
+Get-DataverseRecord -TableName account -Columns name, accountnumber
 
 # Filter records
-Get-DataverseRecord -Connection $connection -TableName account -Filter @{ name = "Contoso" }
+Get-DataverseRecord -TableName account -Filter @{ name = "Contoso" }
+
+# You can still use -Connection explicitly if needed
+Get-DataverseRecord -Connection $connection -TableName account
 ```
 
 #### Create Records
@@ -130,7 +180,8 @@ $newAccount = @{
     accountnumber = "ACC-001"
     revenue = 1000000
 }
-Set-DataverseRecord -Connection $connection -TableName account -Record $newAccount
+# Uses default connection
+Set-DataverseRecord -TableName account -Record $newAccount
 ```
 
 #### Update Records
@@ -139,12 +190,14 @@ $update = @{
     accountid = "guid-here"
     name = "Contoso Ltd"
 }
-Set-DataverseRecord -Connection $connection -TableName account -Record $update
+# Uses default connection
+Set-DataverseRecord -TableName account -Record $update
 ```
 
 #### SQL Queries
 ```powershell
-Invoke-DataverseSql -Connection $connection -Sql @"
+# Uses default connection
+Invoke-DataverseSql -Sql @"
 SELECT TOP 10 name, accountnumber, revenue
 FROM account
 WHERE statecode = 0
