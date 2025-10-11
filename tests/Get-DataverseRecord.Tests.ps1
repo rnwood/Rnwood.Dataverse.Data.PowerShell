@@ -455,6 +455,58 @@ Describe 'Get-DataverseRecord' {
 
     }
 
+    It "Given fetchxml with top attribute, it returns only the specified number of records" {
+        $connection = getMockConnection
+        
+        # Create 20 test records
+        1..20 | ForEach-Object { 
+            @{"firstname" = "Person$_"; "lastname" = "Smith" } | Set-DataverseRecord -Connection $connection -TableName contact
+        }
+
+        # FetchXML with top='10'
+        $fetchXml = @"
+<fetch top='10'>
+    <entity name='contact'>
+        <attribute name='contactid' />
+        <attribute name='firstname' />
+        <filter type='and'>
+            <condition attribute='lastname' operator='eq' value='Smith' />
+        </filter>
+    </entity>
+</fetch>
+"@
+
+        $result = @(Get-DataverseRecord -FetchXml $fetchXml -Connection $connection)
+        $result | Should -HaveCount 10
+    }
+
+
+    It "Given fetchxml without top attribute, it retrieves all records across pages automatically" {
+        $connection = getMockConnection
+        
+        # Create more records than default page size to force paging
+        1..25 | ForEach-Object { 
+            @{"firstname" = "PageTest$_"; "lastname" = "PagingTest" } | Set-DataverseRecord -Connection $connection -TableName contact
+        }
+
+        # FetchXML without top attribute - should retrieve all records with automatic paging
+        $fetchXml = @"
+<fetch>
+    <entity name='contact'>
+        <attribute name='contactid' />
+        <attribute name='firstname' />
+        <filter type='and'>
+            <condition attribute='lastname' operator='eq' value='PagingTest' />
+        </filter>
+    </entity>
+</fetch>
+"@
+
+        # Should retrieve all records automatically (no -Top or -PageSize allowed with FetchXML)
+        $result = @(Get-DataverseRecord -FetchXml $fetchXml -Connection $connection)
+        $result | Should -HaveCount 25
+    }
+
     It "Given -Id, it retrieves the records with those IDs" {
 
         $ids = 1..3 | ForEach-Object{ [Guid]::NewGuid() }
