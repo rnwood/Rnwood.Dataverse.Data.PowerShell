@@ -29,4 +29,14 @@
     <Reference Include="System.Drawing" />
   </ItemGroup>
 
+  <!-- Copy PowerShell module to output for bundling -->
+  <Target Name="CopyPowerShellModule" AfterTargets="Build">
+    <ItemGroup>
+      <ModuleFiles Include="..\Rnwood.Dataverse.Data.PowerShell\bin\$(Configuration)\netstandard2.0\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ModuleFiles)" 
+          DestinationFolder="$(OutputPath)PSModule\Rnwood.Dataverse.Data.PowerShell\%(RecursiveDir)" 
+          SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>

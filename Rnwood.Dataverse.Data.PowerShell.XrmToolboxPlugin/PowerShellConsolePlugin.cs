@@ -1,11 +1,13 @@
 using System;
 using System.IO;
+using System.IO.Pipes;
 using System.Windows.Forms;
+using System.Threading;
+using System.Threading.Tasks;
 using XrmToolBox.Extensibility;
 using XrmToolBox.Extensibility.Interfaces;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using ConEmu.WinForms;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
@@ -13,7 +15,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     public partial class PowerShellConsolePlugin : PluginControlBase, IGitHubPlugin, IPayPalPlugin
     {
         private ConEmuControl conEmuControl;
-        private string connectionDataFile;
+        private string pipeName;
+        private CancellationTokenSource pipeServerCancellation;
 
         public PowerShellConsolePlugin()
         {
@@ -60,16 +63,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             try
             {
+                // Get the bundled module path
+                string pluginDirectory = Path.GetDirectoryName(GetType().Assembly.Location);
+                string bundledModulePath = Path.Combine(pluginDirectory, "PSModule");
+                
                 // Create temporary initialization script
                 string tempScriptPath = Path.Combine(Path.GetTempPath(), $"xrmtoolbox-ps-init-{Guid.NewGuid()}.ps1");
                 
-                // Extract and save connection information from XrmToolbox
-                string connectionInfo = ExtractConnectionInformation();
+                // Start named pipe server for connection data
+                pipeName = $"XrmToolbox_{Guid.NewGuid()}";
+                pipeServerCancellation = new CancellationTokenSource();
                 
-                string connectionScript = GenerateConnectionScript(connectionInfo);
+                // Extract connection information from XrmToolbox
+                var connectionInfo = ExtractConnectionInformation();
+                
+                // Start pipe server in background
+                if (connectionInfo != null)
+                {
+                    Task.Run(() => StartPipeServer(connectionInfo, pipeServerCancellation.Token));
+                }
+                
+                string connectionScript = GenerateConnectionScript(bundledModulePath, connectionInfo != null ? pipeName : null);
                 File.WriteAllText(tempScriptPath, connectionScript);
 
-                // Configure ConEmu startup
+                // Configure ConEmu startup  
                 ConEmuStartInfo startInfo = new ConEmuStartInfo();
                 startInfo.ConsoleProcessCommandLine = $"powershell.exe -NoExit -ExecutionPolicy Bypass -File \"{tempScriptPath}\"";
                 startInfo.StartupDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -85,7 +102,42 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        private string ExtractConnectionInformation()
+        private void StartPipeServer(ConnectionInfo connectionInfo, CancellationToken cancellationToken)
+        {
+            try
+            {
+                using (var pipeServer = new NamedPipeServerStream(pipeName, PipeDirection.Out, 1, 
+                    PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+                {
+                    // Wait for connection with timeout
+                    var connectTask = pipeServer.WaitForConnectionAsync(cancellationToken);
+                    if (connectTask.Wait(30000, cancellationToken)) // 30 second timeout
+                    {
+                        using (var writer = new StreamWriter(pipeServer))
+                        {
+                            writer.WriteLine($"URL:{connectionInfo.Url}");
+                            if (!string.IsNullOrEmpty(connectionInfo.Token))
+                            {
+                                writer.WriteLine($"TOKEN:{connectionInfo.Token}");
+                            }
+                            writer.Flush();
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // Pipe server failed, PowerShell will fall back to manual connection
+            }
+        }
+
+        private class ConnectionInfo
+        {
+            public string Url { get; set; }
+            public string Token { get; set; }
+        }
+
+        private ConnectionInfo ExtractConnectionInformation()
         {
             try
             {
@@ -136,33 +188,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     // If we can't get the token, that's okay - we'll fall back to interactive auth
                 }
 
-                // Create a temporary secure file to pass connection info
-                connectionDataFile = Path.Combine(Path.GetTempPath(), $"xrmtoolbox-conn-{Guid.NewGuid()}.dat");
-                
-                var connectionData = new StringBuilder();
-                connectionData.AppendLine($"URL:{orgUrl}");
-                if (!string.IsNullOrEmpty(accessToken))
+                return new ConnectionInfo
                 {
-                    connectionData.AppendLine($"TOKEN:{accessToken}");
-                }
-
-                // Write with restricted permissions
-                File.WriteAllText(connectionDataFile, connectionData.ToString());
-                
-                // Set file permissions to current user only (Windows ACL)
-                var fileInfo = new FileInfo(connectionDataFile);
-                var fileSecurity = fileInfo.GetAccessControl();
-                fileSecurity.SetAccessRuleProtection(true, false); // Remove inherited permissions
-                
-                var currentUser = System.Security.Principal.WindowsIdentity.GetCurrent();
-                var fileAccessRule = new System.Security.AccessControl.FileSystemAccessRule(
-                    currentUser.User,
-                    System.Security.AccessControl.FileSystemRights.FullControl,
-                    System.Security.AccessControl.AccessControlType.Allow);
-                fileSecurity.AddAccessRule(fileAccessRule);
-                fileInfo.SetAccessControl(fileSecurity);
-
-                return connectionDataFile;
+                    Url = orgUrl,
+                    Token = accessToken
+                };
             }
             catch (Exception ex)
             {
@@ -171,104 +201,166 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        private string GenerateConnectionScript(string connectionDataFile)
+        private string GenerateConnectionScript(string bundledModulePath, string pipeName)
         {
-            string script = @"
+            string script = $@"
+# Check PowerShell execution environment
 Write-Host '================================================' -ForegroundColor Cyan
 Write-Host 'Rnwood.Dataverse.Data.PowerShell Console' -ForegroundColor Cyan
 Write-Host '================================================' -ForegroundColor Cyan
 Write-Host ''
-Write-Host 'Loading PowerShell module...' -ForegroundColor Yellow
-try {
-    Import-Module Rnwood.Dataverse.Data.PowerShell -ErrorAction Stop
-    Write-Host 'Module loaded successfully!' -ForegroundColor Green
-} catch {
-    Write-Host 'ERROR: Failed to load module. Please ensure it is installed:' -ForegroundColor Red
-    Write-Host '  Install-Module Rnwood.Dataverse.Data.PowerShell -Scope CurrentUser' -ForegroundColor Yellow
+
+# Check for Restricted Language Mode
+if ($ExecutionContext.SessionState.LanguageMode -eq 'RestrictedLanguage') {{
+    Write-Host 'ERROR: PowerShell is running in Restricted Language Mode' -ForegroundColor Red
+    Write-Host 'This security setting prevents the module from loading.' -ForegroundColor Red
     Write-Host ''
-    Write-Host 'Error details:' -ForegroundColor Red
-    Write-Host $_.Exception.Message -ForegroundColor Red
-    exit
-}
+    Write-Host 'To fix this, you may need to:' -ForegroundColor Yellow
+    Write-Host '  1. Check your organization''s PowerShell security policies' -ForegroundColor Yellow
+    Write-Host '  2. Contact your IT administrator' -ForegroundColor Yellow
+    Write-Host '  3. Run PowerShell as Administrator and execute: Set-ExecutionPolicy RemoteSigned' -ForegroundColor Yellow
+    Write-Host ''
+    Write-Host 'Press any key to exit...' -ForegroundColor Yellow
+    $null = $host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+    exit 1
+}}
+
+# Check execution policy
+$executionPolicy = Get-ExecutionPolicy
+Write-Host ""Current Execution Policy: $executionPolicy"" -ForegroundColor Cyan
+
+if ($executionPolicy -eq 'Restricted' -or $executionPolicy -eq 'AllSigned') {{
+    Write-Host ''
+    Write-Host 'WARNING: PowerShell Execution Policy may prevent scripts from running' -ForegroundColor Yellow
+    Write-Host ""Current policy: $executionPolicy"" -ForegroundColor Yellow
+    Write-Host ''
+    Write-Host 'To fix this, run PowerShell as Administrator and execute:' -ForegroundColor Yellow
+    Write-Host '  Set-ExecutionPolicy RemoteSigned -Scope LocalMachine' -ForegroundColor Yellow
+    Write-Host ''
+    Write-Host 'Or for current user only:' -ForegroundColor Yellow
+    Write-Host '  Set-ExecutionPolicy RemoteSigned -Scope CurrentUser' -ForegroundColor Yellow
+    Write-Host ''
+    Write-Host 'Attempting to continue anyway...' -ForegroundColor Yellow
+    Write-Host ''
+}}
+
+Write-Host 'Loading PowerShell module...' -ForegroundColor Yellow
+
+# Try to load bundled module first
+$bundledModulePath = '{bundledModulePath.Replace("\\", "\\\\")}'
+$moduleLoaded = $false
+
+if (Test-Path $bundledModulePath) {{
+    try {{
+        $env:PSModulePath = ""$bundledModulePath;$env:PSModulePath""
+        Import-Module Rnwood.Dataverse.Data.PowerShell -ErrorAction Stop
+        Write-Host 'Module loaded from bundled location!' -ForegroundColor Green
+        $moduleLoaded = $true
+    }} catch {{
+        Write-Host ""Warning: Could not load bundled module: $($_.Exception.Message)"" -ForegroundColor Yellow
+    }}
+}}
+
+# Fall back to installed module
+if (-not $moduleLoaded) {{
+    try {{
+        Import-Module Rnwood.Dataverse.Data.PowerShell -ErrorAction Stop
+        Write-Host 'Module loaded from installed location!' -ForegroundColor Green
+        $moduleLoaded = $true
+    }} catch {{
+        Write-Host 'ERROR: Failed to load module from either bundled or installed location.' -ForegroundColor Red
+        Write-Host ''
+        Write-Host 'The module is not installed. To install it, run:' -ForegroundColor Yellow
+        Write-Host '  Install-Module Rnwood.Dataverse.Data.PowerShell -Scope CurrentUser' -ForegroundColor Yellow
+        Write-Host ''
+        Write-Host 'Error details:' -ForegroundColor Red
+        Write-Host $_.Exception.Message -ForegroundColor Red
+        Write-Host ''
+        Write-Host 'Press any key to exit...' -ForegroundColor Yellow
+        $null = $host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+        exit 1
+    }}
+}}
+
 Write-Host ''
 ";
 
-            // Add connection logic if we have connection data
-            if (!string.IsNullOrEmpty(connectionDataFile))
+            // Add connection logic if we have a pipe name
+            if (!string.IsNullOrEmpty(pipeName))
             {
                 script += $@"
 Write-Host 'Connecting to Dataverse using XrmToolbox connection...' -ForegroundColor Yellow
 
-$connectionDataFile = '{connectionDataFile.Replace("\\", "\\\\")}'
-if (Test-Path $connectionDataFile) {{
-    try {{
-        $connectionData = Get-Content $connectionDataFile -Raw
-        $lines = $connectionData -split ""`n""
-        $url = $null
-        $token = $null
+$pipeName = '{pipeName}'
+try {{
+    $pipeClient = New-Object System.IO.Pipes.NamedPipeClientStream('.', $pipeName, [System.IO.Pipes.PipeDirection]::In)
+    $pipeClient.Connect(5000)  # 5 second timeout
+    
+    $reader = New-Object System.IO.StreamReader($pipeClient)
+    $url = $null
+    $token = $null
+    
+    while ($true) {{
+        $line = $reader.ReadLine()
+        if ($line -eq $null) {{ break }}
         
-        foreach ($line in $lines) {{
-            if ($line -match '^URL:(.+)$') {{
-                $url = $matches[1].Trim()
-            }}
-            elseif ($line -match '^TOKEN:(.+)$') {{
-                $token = $matches[1].Trim()
-            }}
+        if ($line -match '^URL:(.+)$') {{
+            $url = $matches[1].Trim()
+        }}
+        elseif ($line -match '^TOKEN:(.+)$') {{
+            $token = $matches[1].Trim()
+        }}
+    }}
+    
+    $reader.Close()
+    $pipeClient.Close()
+    
+    if ($url) {{
+        Write-Host ""Connecting to: $url"" -ForegroundColor Cyan
+        
+        # Build connection string
+        if ($token) {{
+            # Use OAuth token if available
+            $connectionString = ""AuthType=OAuth;Url=$url;AccessToken=$token""
+            Write-Host 'Using OAuth token from XrmToolbox...' -ForegroundColor Yellow
+        }} else {{
+            # Fall back to interactive authentication
+            $connectionString = ""Url=$url""
+            Write-Host 'OAuth token not available, will use interactive authentication...' -ForegroundColor Yellow
         }}
         
-        # Clean up the connection data file immediately
-        Remove-Item $connectionDataFile -Force -ErrorAction SilentlyContinue
-        
-        if ($url) {{
-            Write-Host ""Connecting to: $url"" -ForegroundColor Cyan
+        try {{
+            $global:connection = Get-DataverseConnection -ConnectionString $connectionString -ErrorAction Stop
             
-            # Build connection string
-            if ($token) {{
-                # Use OAuth token if available
-                $connectionString = ""AuthType=OAuth;Url=$url;AccessToken=$token""
-                Write-Host 'Using OAuth token from XrmToolbox...' -ForegroundColor Yellow
-            }} else {{
-                # Fall back to interactive authentication
-                $connectionString = ""Url=$url""
-                Write-Host 'OAuth token not available, will use interactive authentication...' -ForegroundColor Yellow
-            }}
-            
-            try {{
-                $global:connection = Get-DataverseConnection -ConnectionString $connectionString -ErrorAction Stop
+            if ($global:connection) {{
+                Write-Host 'Connected successfully!' -ForegroundColor Green
+                Write-Host 'Connection available in $connection variable' -ForegroundColor Cyan
+                Write-Host ''
                 
-                if ($global:connection) {{
-                    Write-Host 'Connected successfully!' -ForegroundColor Green
-                    Write-Host 'Connection available in $connection variable' -ForegroundColor Cyan
+                # Display connection info
+                try {{
+                    $whoami = Get-DataverseWhoAmI -Connection $global:connection
+                    Write-Host 'Connected as:' -ForegroundColor Cyan
+                    Write-Host ""  User ID: $($whoami.UserId)"" -ForegroundColor White
+                    Write-Host ""  Organization: $($whoami.OrganizationId)"" -ForegroundColor White
                     Write-Host ''
-                    
-                    # Display connection info
-                    try {{
-                        $whoami = Get-DataverseWhoAmI -Connection $global:connection
-                        Write-Host 'Connected as:' -ForegroundColor Cyan
-                        Write-Host ""  User ID: $($whoami.UserId)"" -ForegroundColor White
-                        Write-Host ""  Organization: $($whoami.OrganizationId)"" -ForegroundColor White
-                        Write-Host ''
-                    }} catch {{
-                        Write-Host 'Warning: Could not retrieve user info' -ForegroundColor Yellow
-                    }}
-                }} else {{
-                    Write-Host 'WARNING: Connection could not be established' -ForegroundColor Yellow
-                    Write-Host 'You can create a new connection with:' -ForegroundColor Yellow
-                    Write-Host '  $connection = Get-DataverseConnection -Url ""' + $url + '"" -Interactive' -ForegroundColor Cyan
+                }} catch {{
+                    Write-Host 'Warning: Could not retrieve user info' -ForegroundColor Yellow
                 }}
-            }} catch {{
-                Write-Host ""ERROR: Failed to connect: $($_.Exception.Message)"" -ForegroundColor Red
-                Write-Host 'You can try connecting manually with:' -ForegroundColor Yellow
+            }} else {{
+                Write-Host 'WARNING: Connection could not be established' -ForegroundColor Yellow
+                Write-Host 'You can create a new connection with:' -ForegroundColor Yellow
                 Write-Host '  $connection = Get-DataverseConnection -Url ""' + $url + '"" -Interactive' -ForegroundColor Cyan
             }}
+        }} catch {{
+            Write-Host ""ERROR: Failed to connect: $($_.Exception.Message)"" -ForegroundColor Red
+            Write-Host 'You can try connecting manually with:' -ForegroundColor Yellow
+            Write-Host '  $connection = Get-DataverseConnection -Url ""' + $url + '"" -Interactive' -ForegroundColor Cyan
         }}
-    }} catch {{
-        Write-Host ""WARNING: Could not read connection information: $($_.Exception.Message)"" -ForegroundColor Yellow
-        Write-Host 'You can connect manually with:' -ForegroundColor Yellow
-        Write-Host '  $connection = Get-DataverseConnection -Url ""https://yourorg.crm.dynamics.com"" -Interactive' -ForegroundColor Cyan
     }}
-}} else {{
-    Write-Host 'Connection data not available. Connect manually with:' -ForegroundColor Yellow
+}} catch {{
+    Write-Host ""WARNING: Could not read connection information from pipe: $($_.Exception.Message)"" -ForegroundColor Yellow
+    Write-Host 'You can connect manually with:' -ForegroundColor Yellow
     Write-Host '  $connection = Get-DataverseConnection -Url ""https://yourorg.crm.dynamics.com"" -Interactive' -ForegroundColor Cyan
 }}
 ";
@@ -313,16 +405,17 @@ function prompt {
 
         public override void ClosingPlugin(PluginCloseInfo info)
         {
-            // Clean up connection data file if it exists
-            if (!string.IsNullOrEmpty(connectionDataFile) && File.Exists(connectionDataFile))
+            // Cancel pipe server if running
+            if (pipeServerCancellation != null)
             {
                 try
                 {
-                    File.Delete(connectionDataFile);
+                    pipeServerCancellation.Cancel();
+                    pipeServerCancellation.Dispose();
                 }
                 catch
                 {
-                    // Ignore errors when deleting
+                    // Ignore errors when cancelling
                 }
             }
 
