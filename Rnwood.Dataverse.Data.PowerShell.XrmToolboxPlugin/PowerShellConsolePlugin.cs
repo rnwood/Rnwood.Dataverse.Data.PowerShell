@@ -388,11 +388,12 @@ try {{
         }}
         
         try {{
-            $global:connection = Get-DataverseConnection -ConnectionString $connectionString -ErrorAction Stop
+            $global:connection = Get-DataverseConnection -ConnectionString $connectionString -SetAsDefault -ErrorAction Stop
             
             if ($global:connection) {{
                 Write-Host 'Connected successfully!' -ForegroundColor Green
-                Write-Host 'Connection available in $connection variable' -ForegroundColor Cyan
+                Write-Host 'Connection available in $connection variable and set as default' -ForegroundColor Cyan
+                Write-Host 'You can now omit -Connection parameter in cmdlets!' -ForegroundColor Cyan
                 Write-Host ''
                 
                 # Display connection info
@@ -408,12 +409,12 @@ try {{
             }} else {{
                 Write-Host 'WARNING: Connection could not be established' -ForegroundColor Yellow
                 Write-Host 'You can create a new connection with:' -ForegroundColor Yellow
-                Write-Host '  $connection = Get-DataverseConnection -Url ""' + $url + '"" -Interactive' -ForegroundColor Cyan
+                Write-Host '  $connection = Get-DataverseConnection -Url ""' + $url + '"" -Interactive -SetAsDefault' -ForegroundColor Cyan
             }}
         }} catch {{
             Write-Host ""ERROR: Failed to connect: $($_.Exception.Message)"" -ForegroundColor Red
             Write-Host 'You can try connecting manually with:' -ForegroundColor Yellow
-            Write-Host '  $connection = Get-DataverseConnection -Url ""' + $url + '"" -Interactive' -ForegroundColor Cyan
+            Write-Host '  $connection = Get-DataverseConnection -Url ""' + $url + '"" -Interactive -SetAsDefault' -ForegroundColor Cyan
         }}
     }}
 }} catch {{
