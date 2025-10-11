@@ -68,9 +68,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Values may be a literal, an array (treated as IN), $null (treated as ISNULL),
         /// or a nested hashtable with keys "value" and "operator" to specify operator and value
         /// (e.g. @{age=@{value=25; operator='GreaterThan'}}).
+        /// Supports grouped filters using 'and', 'or', 'not', or 'xor' keys with nested hashtables for complex logical expressions.
         /// </summary>
         [ArgumentCompleter(typeof(FilterValuesArgumentCompleter))]
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "One or more hashtables to filter records. Each hashtable's entries are combined with AND; multiple hashtables are combined with OR. Keys may be 'column' or 'column:Operator' (Operator is a ConditionOperator name). Values may be a literal, an array (treated as IN), $null (treated as ISNULL), or a nested hashtable with keys 'value' and 'operator' (e.g. @{age=@{value=25; operator='GreaterThan'}}). Examples: @{firstname='bob'; age=25}, @{firstname='sue'} => (firstname=bob AND age=25) OR (firstname=sue).")]
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "One or more hashtables to filter records. Each hashtable's entries are combined with AND; multiple hashtables are combined with OR. Keys may be 'column' or 'column:Operator' (Operator is a ConditionOperator name). Values may be a literal, an array (treated as IN), $null (treated as ISNULL), or a nested hashtable with keys 'value' and 'operator' (e.g. @{age=@{value=25; operator='GreaterThan'}}). Supports grouped filters using 'and', 'or', 'not', or 'xor' keys with nested hashtables for complex logical expressions. Examples: @{firstname='bob'; age=25}, @{firstname='sue'} => (firstname=bob AND age=25) OR (firstname=sue).")]
         [Alias("IncludeFilter")]
         public Hashtable[] FilterValues
         {
@@ -87,23 +88,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             set;
         }
         /// <summary>
-        /// Link entities to apply to query
+        /// Link entities to apply to query. Accepts DataverseLinkEntity objects or simplified hashtable syntax.
+        /// Hashtable format: @{ 'fromEntity.fromAttribute' = 'toEntity.toAttribute'; type = 'Inner'; alias = 'aliasName'; filter = @{...}; links = @(...) }.
+        /// The 'filter' key uses the same format as FilterValues and supports 'and', 'or', 'not', 'xor' operators.
+        /// The 'links' key allows nested child joins.
         /// </summary>
         [ArgumentCompleter(typeof(LinksArgumentCompleter))]
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Link entities to apply to query")]
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Link entities to apply to query. Accepts DataverseLinkEntity objects or simplified hashtable syntax: @{ 'fromEntity.fromAttribute' = 'toEntity.toAttribute'; type = 'Inner'; alias = 'aliasName'; filter = @{...}; links = @(...) }. The 'filter' key uses the same format as FilterValues and supports 'and', 'or', 'not', 'xor' operators. The 'links' key allows nested child joins.")]
         public DataverseLinkEntity[] Links
         {
             get;
             set;
         }
         /// <summary>
-    /// List of hashtables of field names/values to exclude. Defaults to a NOT EQUAL condition for values (or IS NOT NULL when $null is supplied).
-    /// Multiple hashtables are combined using AND by default; use -ExcludeFilterOr to combine them using OR instead.
-    /// For example: @{firstname="bob", age=25}, @{lastname="smith"}:
-    /// - Default (AND): excludes records matching both hashtables (firstname='bob' AND age=25) AND (lastname='smith').
-    /// - With -ExcludeFilterOr (OR): excludes records matching either hashtable (firstname='bob' AND age=25) OR (lastname='smith').
+        /// List of hashtables of field names/values to exclude. Defaults to a NOT EQUAL condition for values (or IS NOT NULL when $null is supplied).
+        /// Multiple hashtables are combined using AND by default; use -ExcludeFilterOr to combine them using OR instead.
+        /// For example: @{firstname="bob", age=25}, @{lastname="smith"}:
+        /// - Default (AND): excludes records matching both hashtables (firstname='bob' AND age=25) AND (lastname='smith').
+        /// - With -ExcludeFilterOr (OR): excludes records matching either hashtable (firstname='bob' AND age=25) OR (lastname='smith').
+        /// Supports grouped filters using 'and', 'or', 'not', or 'xor' keys with nested hashtables for complex logical expressions.
         /// </summary>
-    [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of hashtables of field names/values to exclude. Defaults to a NOT EQUAL condition for values (or IS NOT NULL when $null is supplied). Multiple hashtables are combined using AND by default; use -ExcludeFilterOr to combine them using OR instead. e.g. @{firstname=\"bob\", age=25}, @{lastname=\"smith\"}")]
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of hashtables of field names/values to exclude. Defaults to a NOT EQUAL condition for values (or IS NOT NULL when $null is supplied). Multiple hashtables are combined using AND by default; use -ExcludeFilterOr to combine them using OR instead. Supports grouped filters using 'and', 'or', 'not', or 'xor' keys with nested hashtables for complex logical expressions. e.g. @{firstname=\"bob\", age=25}, @{lastname=\"smith\"}")]
         [Alias("ExcludeFilter")]
         [ArgumentCompleter(typeof(FilterValuesArgumentCompleter))]
         public Hashtable[] ExcludeFilterValues
