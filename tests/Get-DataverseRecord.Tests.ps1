@@ -455,6 +455,31 @@ Describe 'Get-DataverseRecord' {
 
     }
 
+    It "Given fetchxml with top attribute, it returns only the specified number of records" {
+        $connection = getMockConnection
+        
+        # Create 20 test records
+        1..20 | ForEach-Object { 
+            @{"firstname" = "Person$_"; "lastname" = "Smith" } | Set-DataverseRecord -Connection $connection -TableName contact
+        }
+
+        # FetchXML with top='10'
+        $fetchXml = @"
+<fetch top='10'>
+    <entity name='contact'>
+        <attribute name='contactid' />
+        <attribute name='firstname' />
+        <filter type='and'>
+            <condition attribute='lastname' operator='eq' value='Smith' />
+        </filter>
+    </entity>
+</fetch>
+"@
+
+        $result = @(Get-DataverseRecord -FetchXml $fetchXml -Connection $connection)
+        $result | Should -HaveCount 10
+    }
+
     It "Given -Id, it retrieves the records with those IDs" {
 
         $ids = 1..3 | ForEach-Object{ [Guid]::NewGuid() }

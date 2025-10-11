@@ -397,37 +397,54 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private IEnumerable<Entity> GetRecords(QueryExpression query)
         {
-
-            PagingInfo pageInfo = new PagingInfo()
+            // Only set PageInfo if TopCount is not already set (e.g., from FetchXML top attribute)
+            // because Dataverse doesn't allow both TopCount and PageInfo to be set simultaneously
+            if (!query.TopCount.HasValue)
             {
-                PageNumber = 1,
-                Count = Top.GetValueOrDefault(PageSize.GetValueOrDefault(1000))
-            };
+                PagingInfo pageInfo = new PagingInfo()
+                {
+                    PageNumber = 1,
+                    Count = Top.GetValueOrDefault(PageSize.GetValueOrDefault(1000))
+                };
 
+                query.PageInfo = pageInfo;
 
-            query.PageInfo = pageInfo;
+                RetrieveMultipleRequest request = new RetrieveMultipleRequest()
+                {
+                    Query = query
+                };
 
-            RetrieveMultipleRequest request = new RetrieveMultipleRequest()
+                RetrieveMultipleResponse response;
+
+                do
+                {
+                    response = (RetrieveMultipleResponse)Connection.Execute(request);
+
+                    pageInfo.PageNumber++;
+                    pageInfo.PagingCookie = response.EntityCollection.PagingCookie;
+
+                    foreach (Entity entity in response.EntityCollection.Entities)
+                    {
+                        yield return entity;
+                    }
+
+                } while (response.EntityCollection.MoreRecords);
+            }
+            else
             {
-                Query = query
-            };
+                // When TopCount is set (e.g., from FetchXML), execute without PageInfo
+                RetrieveMultipleRequest request = new RetrieveMultipleRequest()
+                {
+                    Query = query
+                };
 
-            RetrieveMultipleResponse response;
-
-            do
-            {
-                response = (RetrieveMultipleResponse)Connection.Execute(request);
-
-                pageInfo.PageNumber++;
-                pageInfo.PagingCookie = response.EntityCollection.PagingCookie;
-
+                RetrieveMultipleResponse response = (RetrieveMultipleResponse)Connection.Execute(request);
 
                 foreach (Entity entity in response.EntityCollection.Entities)
                 {
                     yield return entity;
                 }
-
-            } while (response.EntityCollection.MoreRecords);
+            }
         }
 
 
