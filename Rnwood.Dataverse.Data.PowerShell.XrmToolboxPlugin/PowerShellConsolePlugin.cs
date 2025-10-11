@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipes;
 using System.Windows.Forms;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Reflection;
 using System.Management.Automation;
+using System.Text.Json;
 using XrmToolBox.Extensibility;
 using XrmToolBox.Extensibility.Interfaces;
 using Microsoft.PowerPlatform.Dataverse.Client;
@@ -38,6 +40,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private Button saveScriptButton;
         private bool isEditorView = false;
         private string currentScriptPath = null;
+        
+        // PowerShell completion service
+        private PowerShellCompletionService _completionService;
 
         public PowerShellConsolePlugin()
         {
@@ -714,6 +719,27 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
             {
                 await editorWebView.EnsureCoreWebView2Async(null);
                 
+                // Initialize PowerShell completion service
+                string modulePath = Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                    "PSModule",
+                    "Rnwood.Dataverse.Data.PowerShell",
+                    "Rnwood.Dataverse.Data.PowerShell.psd1"
+                );
+                
+                _completionService = new PowerShellCompletionService(modulePath);
+                _ = Task.Run(async () => 
+                {
+                    try
+                    {
+                        await _completionService.InitializeAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to initialize completion service: {ex.Message}");
+                    }
+                });
+                
                 // Load Monaco editor HTML
                 string monacoHtml = GenerateMonacoEditorHtml();
                 editorWebView.NavigateToString(monacoHtml);
@@ -766,9 +792,73 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                 renderWhitespace: 'selection'
             }});
             
-            // Register PowerShell cmdlet completions
-            var cmdlets = {cmdletCompletions};
+            // Store for pending completion requests
+            var pendingCompletionRequests = {{}};
             
+            // Handler for completion responses from C#
+            window.handleCompletionResponse = function(response) {{
+                if (response.requestId && pendingCompletionRequests[response.requestId]) {{
+                    var resolve = pendingCompletionRequests[response.requestId];
+                    delete pendingCompletionRequests[response.requestId];
+                    resolve(response.completions || []);
+                }}
+            }};
+            
+            // Register dynamic PowerShell completion provider using LSP
+            monaco.languages.registerCompletionItemProvider('powershell', {{
+                provideCompletionItems: async function(model, position) {{
+                    var word = model.getWordUntilPosition(position);
+                    var range = {{
+                        startLineNumber: position.lineNumber,
+                        endLineNumber: position.lineNumber,
+                        startColumn: word.startColumn,
+                        endColumn: word.endColumn
+                    }};
+                    
+                    // Get the full script text and cursor position
+                    var script = model.getValue();
+                    var cursorOffset = model.getOffsetAt(position);
+                    
+                    // Create a unique request ID
+                    var requestId = 'completion_' + Date.now() + '_' + Math.random();
+                    
+                    // Send completion request to C#
+                    var completionPromise = new Promise(function(resolve) {{
+                        pendingCompletionRequests[requestId] = resolve;
+                        window.chrome.webview.postMessage({{
+                            action: 'completion',
+                            requestId: requestId,
+                            script: script,
+                            cursorPosition: cursorOffset
+                        }});
+                    }});
+                    
+                    // Wait for response with timeout
+                    var timeoutPromise = new Promise(function(resolve) {{
+                        setTimeout(function() {{ resolve([]); }}, 5000);
+                    }});
+                    
+                    var completions = await Promise.race([completionPromise, timeoutPromise]);
+                    
+                    // Map completions to Monaco format
+                    return {{
+                        suggestions: completions.map(function(c) {{
+                            return {{
+                                label: c.label,
+                                kind: c.kind,
+                                documentation: c.documentation,
+                                detail: c.detail,
+                                insertText: c.insertText,
+                                range: range
+                            }};
+                        }})
+                    }};
+                }},
+                triggerCharacters: ['-', '$', '.', '::']
+            }});
+            
+            // Fallback static completions for common cmdlets (for immediate feedback)
+            var staticCmdlets = {cmdletCompletions};
             monaco.languages.registerCompletionItemProvider('powershell', {{
                 provideCompletionItems: function(model, position) {{
                     var word = model.getWordUntilPosition(position);
@@ -780,12 +870,13 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                     }};
                     
                     return {{
-                        suggestions: cmdlets.map(c => ({{
+                        suggestions: staticCmdlets.map(c => ({{
                             label: c.label,
                             kind: monaco.languages.CompletionItemKind.Function,
                             documentation: c.documentation,
                             insertText: c.insertText,
-                            range: range
+                            range: range,
+                            sortText: '1_' + c.label  // Lower priority than LSP completions
                         }}))
                     }};
                 }}
@@ -889,13 +980,19 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
             }
         }
 
-        private void EditorWebView_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+        private async void EditorWebView_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
         {
             try
             {
                 string message = e.TryGetWebMessageAsString();
+                
+                // Parse JSON message for completion requests
+                if (message.Contains("\"action\":\"completion\""))
+                {
+                    await HandleCompletionRequestAsync(message);
+                }
                 // Parse JSON message (simple parsing for action)
-                if (message.Contains("\"action\":\"run\""))
+                else if (message.Contains("\"action\":\"run\""))
                 {
                     RunScriptButton_Click(null, null);
                 }
@@ -911,6 +1008,116 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error handling web message: {ex.Message}");
+            }
+        }
+        
+        private async Task HandleCompletionRequestAsync(string message)
+        {
+            try
+            {
+                // Parse the JSON message to extract script and cursor position
+                var jsonDoc = JsonDocument.Parse(message);
+                var root = jsonDoc.RootElement;
+                
+                string requestId = root.GetProperty("requestId").GetString();
+                string script = root.GetProperty("script").GetString();
+                int cursorPosition = root.GetProperty("cursorPosition").GetInt32();
+                
+                // Get completions from the service
+                List<CompletionItem> completions = new List<CompletionItem>();
+                if (_completionService != null)
+                {
+                    completions = await _completionService.GetCompletionsAsync(script, cursorPosition);
+                }
+                
+                // Convert to Monaco format
+                var monacoCompletions = completions.Select(c => new
+                {
+                    label = c.ListItemText ?? c.CompletionText,
+                    insertText = c.CompletionText,
+                    kind = MapCompletionTypeToMonacoKind(c.ResultType),
+                    documentation = c.ToolTip,
+                    detail = GetCompletionDetail(c.ResultType)
+                }).ToList();
+                
+                // Send response back to Monaco
+                var response = new
+                {
+                    action = "completionResponse",
+                    requestId = requestId,
+                    completions = monacoCompletions
+                };
+                
+                string responseJson = JsonSerializer.Serialize(response);
+                await editorWebView.CoreWebView2.ExecuteScriptAsync(
+                    $"window.handleCompletionResponse({responseJson})");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error handling completion request: {ex.Message}");
+            }
+        }
+        
+        private int MapCompletionTypeToMonacoKind(CompletionResultType resultType)
+        {
+            // Map PowerShell CompletionResultType to Monaco CompletionItemKind
+            // Monaco kinds: Method=0, Function=1, Constructor=2, Field=3, Variable=4, 
+            //               Class=5, Struct=6, Interface=7, Module=8, Property=9, 
+            //               Event=10, Operator=11, Unit=12, Value=13, Constant=14, 
+            //               Enum=15, EnumMember=16, Keyword=17, Text=18, Color=19, 
+            //               File=20, Reference=21, Customcolor=22, Folder=23, 
+            //               TypeParameter=24, User=25, Issue=26, Snippet=27
+            
+            switch (resultType)
+            {
+                case CompletionResultType.Command:
+                    return 1; // Function
+                case CompletionResultType.Method:
+                    return 0; // Method
+                case CompletionResultType.Property:
+                    return 9; // Property
+                case CompletionResultType.Variable:
+                    return 4; // Variable
+                case CompletionResultType.ParameterName:
+                    return 9; // Property
+                case CompletionResultType.ParameterValue:
+                    return 13; // Value
+                case CompletionResultType.Type:
+                    return 5; // Class
+                case CompletionResultType.Namespace:
+                    return 8; // Module
+                case CompletionResultType.Keyword:
+                    return 17; // Keyword
+                case CompletionResultType.Text:
+                default:
+                    return 18; // Text
+            }
+        }
+        
+        private string GetCompletionDetail(CompletionResultType resultType)
+        {
+            switch (resultType)
+            {
+                case CompletionResultType.Command:
+                    return "Command";
+                case CompletionResultType.Method:
+                    return "Method";
+                case CompletionResultType.Property:
+                    return "Property";
+                case CompletionResultType.Variable:
+                    return "Variable";
+                case CompletionResultType.ParameterName:
+                    return "Parameter";
+                case CompletionResultType.ParameterValue:
+                    return "Value";
+                case CompletionResultType.Type:
+                    return "Type";
+                case CompletionResultType.Namespace:
+                    return "Namespace";
+                case CompletionResultType.Keyword:
+                    return "Keyword";
+                default:
+                    return "";
             }
         }
 
@@ -1090,6 +1297,19 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
 
         public override void ClosingPlugin(PluginCloseInfo info)
         {
+            // Dispose completion service
+            if (_completionService != null)
+            {
+                try
+                {
+                    _completionService.Dispose();
+                }
+                catch
+                {
+                    // Ignore errors when disposing
+                }
+            }
+            
             // Cancel pipe server if running
             if (pipeServerCancellation != null)
             {
