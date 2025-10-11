@@ -526,7 +526,11 @@ Url + "/api/data/v9.2/");
 					}
 					catch (MsalUiRequiredException)
 					{
-
+						// Token cache miss or expired, need to acquire new token
+					}
+					catch (MsalServiceException)
+					{
+						// Service error during silent acquisition, need to acquire new token
 					}
 				}
 
@@ -566,7 +570,11 @@ Url + "/api/data/v9.2/");
 					}
 					catch (MsalUiRequiredException)
 					{
-
+						// Token cache miss or expired, need to acquire new token
+					}
+					catch (MsalServiceException)
+					{
+						// Service error during silent acquisition, need to acquire new token
 					}
 				}
 
