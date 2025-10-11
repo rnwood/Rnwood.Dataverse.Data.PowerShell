@@ -16,6 +16,7 @@ Features:
 - Supports concise hashtable-based filters including grouped logical expressions (and/or), negation (`not`) and exclusive-or (`xor`) with arbitrary nesting depth.
 - Batching support to create/update/upsert many records in a single request to service.
 - Wide variety of auth options for both interactive and unattended use.
+- **XrmToolbox Plugin**: PowerShell console with module pre-loaded, available as an XrmToolbox plugin. See [XrmToolbox Plugin README](Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/README.md) for details.
 
 Non features:
 - Support for connecting to on-premise environments.
