@@ -5,6 +5,12 @@ This XrmToolbox plugin provides a PowerShell console with the Rnwood.Dataverse.D
 ## Features
 
 - **Embedded PowerShell console** directly within the XrmToolbox tab using ConEmu control
+- **Script editor with Monaco** - Modern code editor with syntax highlighting and IntelliSense
+- **Intelligent code completion (LSP-based)** - Dynamic PowerShell IntelliSense using TabExpansion2 API
+  - Context-aware cmdlet, parameter, and variable completion
+  - Works with PowerShell 5.1+ (no PowerShell 7 requirement)
+  - Automatic completion of module cmdlets and all installed modules
+  - Parameter completion with inline help
 - **Automatic connection bridging** - Automatically connects to the same Dataverse environment as XrmToolbox using named pipes
 - **Bundled PowerShell module** - Module is included with the plugin, no separate installation required
 - **Execution policy detection** - Detects and warns about restrictive PowerShell policies with clear instructions
@@ -215,6 +221,54 @@ Get-Help Get-DataverseRecord -Full
 Get-Help Set-DataverseRecord -Examples
 ```
 
+### Using the Script Editor
+
+The plugin includes a Monaco-based script editor with intelligent code completion powered by PowerShell's TabExpansion2 API.
+
+#### Switching to Script Editor
+
+Click the **📝 Script Editor** button in the toolbar to switch from the console view to the script editor.
+
+#### Code Completion Features
+
+The script editor provides dynamic, context-aware IntelliSense:
+
+1. **Command Completion**: Type `Get-D` and press `Ctrl+Space` to see all available cmdlets starting with "Get-D"
+   - Includes cmdlets from the Dataverse module
+   - Includes all built-in PowerShell cmdlets
+   - Shows cmdlets from all loaded modules
+
+2. **Parameter Completion**: Type `Get-DataverseRecord -` and press `Ctrl+Space` to see all available parameters
+   - Shows parameter names with inline documentation
+   - Automatically triggered after typing `-`
+
+3. **Variable Completion**: Type `$` to see available variables
+   - Shows variables defined in your script
+   - Shows PowerShell automatic variables
+
+4. **Property/Method Completion**: Type a variable followed by `.` to see properties and methods
+   - Example: `$connection.` shows properties like `ConnectedOrgUniqueName`, `ConnectedOrgVersion`, etc.
+
+5. **Trigger Characters**: Completion is automatically triggered when typing:
+   - `-` (for parameters)
+   - `$` (for variables)
+   - `.` (for properties/methods)
+   - `::` (for static members)
+
+#### Running Scripts
+
+- Press **F5** or click the **▶ Run** button to execute your script
+- Press **Ctrl+S** to save your script
+- Press **Ctrl+N** for a new script
+
+#### Technical Details
+
+The code completion uses PowerShell's native `TabExpansion2` API running in a background PowerShell process:
+- Compatible with PowerShell 5.1+ (no PowerShell 7 required)
+- Works with all installed modules and their cmdlets
+- Provides real-time completion based on current script context
+- Minimal performance impact with intelligent caching
+
 ## Embedded Console Technology
 
 The plugin uses the ConEmu.Control.WinForms package to provide an embedded terminal experience directly within the XrmToolbox tab. This provides:
@@ -225,6 +279,8 @@ The plugin uses the ConEmu.Control.WinForms package to provide an embedded termi
 - No external dependencies or installations required
 
 The ConEmu control is bundled with the plugin via NuGet, so there's no need to install ConEmu separately.
+
+The script editor uses Monaco Editor (the same editor used in VS Code) with WebView2 integration for modern editing features.
 
 ## Troubleshooting
 
