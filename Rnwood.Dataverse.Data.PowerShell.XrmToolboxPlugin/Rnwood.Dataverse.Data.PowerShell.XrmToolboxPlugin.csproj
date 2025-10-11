@@ -22,11 +22,18 @@
     <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Cmdlets\Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj">
       <SetTargetFramework>TargetFramework=net462</SetTargetFramework>
     </ProjectReference>
+    <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="GettingStarted.md" />
   </ItemGroup>
 
   <!-- Copy PowerShell module to output for bundling -->

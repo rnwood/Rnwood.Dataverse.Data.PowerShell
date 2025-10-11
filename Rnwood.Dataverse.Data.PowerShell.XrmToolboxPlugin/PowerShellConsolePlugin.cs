@@ -17,6 +17,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private ConEmuControl conEmuControl;
         private string pipeName;
         private CancellationTokenSource pipeServerCancellation;
+        private Button helpButton;
+        private Panel helpPanel;
+        private RichTextBox helpTextBox;
+        private Button closeHelpButton;
 
         public PowerShellConsolePlugin()
         {
@@ -26,6 +30,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private void InitializeComponent()
         {
             this.conEmuControl = new ConEmuControl();
+            this.helpButton = new Button();
+            this.helpPanel = new Panel();
+            this.helpTextBox = new RichTextBox();
+            this.closeHelpButton = new Button();
+            
             this.SuspendLayout();
             
             // conEmuControl
@@ -36,10 +45,59 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.conEmuControl.TabIndex = 0;
             this.conEmuControl.AutoStartInfo = null;
             
+            // helpButton
+            this.helpButton.Text = "? Help";
+            this.helpButton.Size = new System.Drawing.Size(80, 30);
+            this.helpButton.Location = new System.Drawing.Point(10, 10);
+            this.helpButton.BackColor = System.Drawing.Color.FromArgb(0, 120, 215);
+            this.helpButton.ForeColor = System.Drawing.Color.White;
+            this.helpButton.FlatStyle = FlatStyle.Flat;
+            this.helpButton.FlatAppearance.BorderSize = 0;
+            this.helpButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.helpButton.Cursor = Cursors.Hand;
+            this.helpButton.TabIndex = 1;
+            this.helpButton.Click += HelpButton_Click;
+            
+            // helpPanel
+            this.helpPanel.Visible = false;
+            this.helpPanel.Dock = DockStyle.Fill;
+            this.helpPanel.BackColor = System.Drawing.Color.White;
+            this.helpPanel.BorderStyle = BorderStyle.FixedSingle;
+            this.helpPanel.Padding = new Padding(10);
+            
+            // closeHelpButton
+            this.closeHelpButton.Text = "Close";
+            this.closeHelpButton.Size = new System.Drawing.Size(100, 35);
+            this.closeHelpButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            this.closeHelpButton.Location = new System.Drawing.Point(this.helpPanel.Width - 120, this.helpPanel.Height - 50);
+            this.closeHelpButton.BackColor = System.Drawing.Color.FromArgb(0, 120, 215);
+            this.closeHelpButton.ForeColor = System.Drawing.Color.White;
+            this.closeHelpButton.FlatStyle = FlatStyle.Flat;
+            this.closeHelpButton.FlatAppearance.BorderSize = 0;
+            this.closeHelpButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.closeHelpButton.Cursor = Cursors.Hand;
+            this.closeHelpButton.Click += CloseHelpButton_Click;
+            
+            // helpTextBox
+            this.helpTextBox.ReadOnly = true;
+            this.helpTextBox.Dock = DockStyle.Fill;
+            this.helpTextBox.BorderStyle = BorderStyle.None;
+            this.helpTextBox.BackColor = System.Drawing.Color.White;
+            this.helpTextBox.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.helpTextBox.Padding = new Padding(10);
+            
+            this.helpPanel.Controls.Add(this.helpTextBox);
+            this.helpPanel.Controls.Add(this.closeHelpButton);
+            this.closeHelpButton.BringToFront();
+            
             // PowerShellConsolePlugin
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = AutoScaleMode.Font;
             this.Controls.Add(this.conEmuControl);
+            this.Controls.Add(this.helpButton);
+            this.Controls.Add(this.helpPanel);
+            this.helpButton.BringToFront();
+            this.helpPanel.BringToFront();
             this.Name = "PowerShellConsolePlugin";
             this.Size = new System.Drawing.Size(800, 600);
             this.Load += PowerShellConsolePlugin_Load;
@@ -401,6 +459,137 @@ function prompt {
 ";
 
             return script;
+        }
+
+        private void HelpButton_Click(object sender, EventArgs e)
+        {
+            LoadAndShowHelp();
+        }
+
+        private void CloseHelpButton_Click(object sender, EventArgs e)
+        {
+            helpPanel.Visible = false;
+        }
+
+        private void LoadAndShowHelp()
+        {
+            try
+            {
+                // Load the embedded markdown file
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                var resourceName = "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.GettingStarted.md";
+                
+                using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+                {
+                    if (stream != null)
+                    {
+                        using (StreamReader reader = new StreamReader(stream))
+                        {
+                            string markdownContent = reader.ReadToEnd();
+                            
+                            // Convert markdown to formatted text (basic conversion)
+                            string formattedText = ConvertMarkdownToRichText(markdownContent);
+                            
+                            helpTextBox.Rtf = formattedText;
+                            helpPanel.Visible = true;
+                        }
+                    }
+                    else
+                    {
+                        // Fallback content if resource not found
+                        helpTextBox.Text = @"Getting Started
+
+The PowerShell console is now loaded with the Rnwood.Dataverse.Data.PowerShell module.
+
+Quick Commands:
+- Get-DataverseRecord -Connection $connection -TableName account
+- Get-Help Get-DataverseRecord -Full
+- Get-Command -Module Rnwood.Dataverse.Data.PowerShell
+
+For full documentation, visit:
+https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
+                        helpPanel.Visible = true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to load help: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private string ConvertMarkdownToRichText(string markdown)
+        {
+            // Basic markdown to RTF conversion
+            var rtf = new StringBuilder();
+            rtf.AppendLine(@"{\rtf1\ansi\deff0");
+            rtf.AppendLine(@"{\fonttbl{\f0 Segoe UI;}{\f1 Consolas;}}");
+            rtf.AppendLine(@"{\colortbl;\red0\green0\blue0;\red0\green120\blue215;\red50\green50\blue50;\red200\green200\blue200;}");
+            
+            var lines = markdown.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            bool inCodeBlock = false;
+            
+            foreach (var line in lines)
+            {
+                if (line.StartsWith("```"))
+                {
+                    inCodeBlock = !inCodeBlock;
+                    continue;
+                }
+                
+                if (inCodeBlock)
+                {
+                    // Code block - use monospace font and gray background
+                    rtf.AppendLine(@"\f1\fs18\cf3 " + EscapeRtf(line) + @"\par");
+                }
+                else if (line.StartsWith("# "))
+                {
+                    // H1 - Large bold
+                    rtf.AppendLine(@"\f0\fs28\b " + EscapeRtf(line.Substring(2)) + @"\b0\fs20\par");
+                }
+                else if (line.StartsWith("## "))
+                {
+                    // H2 - Medium bold
+                    rtf.AppendLine(@"\par\f0\fs24\b " + EscapeRtf(line.Substring(3)) + @"\b0\fs20\par");
+                }
+                else if (line.StartsWith("### "))
+                {
+                    // H3 - Small bold
+                    rtf.AppendLine(@"\par\f0\fs22\b " + EscapeRtf(line.Substring(4)) + @"\b0\fs20\par");
+                }
+                else if (line.StartsWith("- ") || line.StartsWith("* "))
+                {
+                    // Bullet point
+                    rtf.AppendLine(@"\f0\fs20 \bullet  " + EscapeRtf(line.Substring(2)) + @"\par");
+                }
+                else if (line.Contains("]("))
+                {
+                    // Link - extract text and make it blue
+                    var linkText = System.Text.RegularExpressions.Regex.Replace(line, @"\[([^\]]+)\]\([^\)]+\)", @"\cf2\ul $1\cf1\ulnone");
+                    rtf.AppendLine(@"\f0\fs20 " + EscapeRtf(linkText) + @"\par");
+                }
+                else if (!string.IsNullOrWhiteSpace(line))
+                {
+                    // Regular text
+                    rtf.AppendLine(@"\f0\fs20 " + EscapeRtf(line) + @"\par");
+                }
+                else
+                {
+                    // Empty line
+                    rtf.AppendLine(@"\par");
+                }
+            }
+            
+            rtf.AppendLine("}");
+            return rtf.ToString();
+        }
+
+        private string EscapeRtf(string text)
+        {
+            return text.Replace("\\", "\\\\")
+                      .Replace("{", "\\{")
+                      .Replace("}", "\\}")
+                      .Replace("\n", "\\par\n");
         }
 
         public override void ClosingPlugin(PluginCloseInfo info)
