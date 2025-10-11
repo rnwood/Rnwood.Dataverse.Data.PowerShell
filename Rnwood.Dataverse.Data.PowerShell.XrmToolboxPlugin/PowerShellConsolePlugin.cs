@@ -4,10 +4,15 @@ using System.IO.Pipes;
 using System.Windows.Forms;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Reflection;
+using System.Management.Automation;
 using XrmToolBox.Extensibility;
 using XrmToolBox.Extensibility.Interfaces;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using ConEmu.WinForms;
+using Microsoft.Web.WebView2.WinForms;
+using Microsoft.Web.WebView2.Core;
 using System.Text;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
@@ -21,6 +26,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private Panel helpPanel;
         private RichTextBox helpTextBox;
         private Button closeHelpButton;
+        
+        // Script editor components
+        private Panel editorPanel;
+        private WebView2 editorWebView;
+        private Button toggleViewButton;
+        private Panel editorToolbar;
+        private Button runScriptButton;
+        private Button newScriptButton;
+        private Button openScriptButton;
+        private Button saveScriptButton;
+        private bool isEditorView = false;
+        private string currentScriptPath = null;
 
         public PowerShellConsolePlugin()
         {
@@ -90,13 +107,108 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.helpPanel.Controls.Add(this.closeHelpButton);
             this.closeHelpButton.BringToFront();
             
+            // toggleViewButton
+            this.toggleViewButton = new Button();
+            this.toggleViewButton.Text = "📝 Script Editor";
+            this.toggleViewButton.Size = new System.Drawing.Size(140, 30);
+            this.toggleViewButton.Location = new System.Drawing.Point(this.Width - 150, 10);
+            this.toggleViewButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            this.toggleViewButton.BackColor = System.Drawing.Color.FromArgb(0, 120, 215);
+            this.toggleViewButton.ForeColor = System.Drawing.Color.White;
+            this.toggleViewButton.FlatStyle = FlatStyle.Flat;
+            this.toggleViewButton.FlatAppearance.BorderSize = 0;
+            this.toggleViewButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.toggleViewButton.Cursor = Cursors.Hand;
+            this.toggleViewButton.TabIndex = 2;
+            this.toggleViewButton.Click += ToggleViewButton_Click;
+            
+            // editorPanel
+            this.editorPanel = new Panel();
+            this.editorPanel.Dock = DockStyle.Fill;
+            this.editorPanel.Visible = false;
+            this.editorPanel.BackColor = System.Drawing.Color.FromArgb(30, 30, 30);
+            
+            // editorToolbar
+            this.editorToolbar = new Panel();
+            this.editorToolbar.Dock = DockStyle.Top;
+            this.editorToolbar.Height = 45;
+            this.editorToolbar.BackColor = System.Drawing.Color.FromArgb(45, 45, 45);
+            this.editorToolbar.Padding = new Padding(5);
+            
+            // runScriptButton
+            this.runScriptButton = new Button();
+            this.runScriptButton.Text = "▶ Run (F5)";
+            this.runScriptButton.Size = new System.Drawing.Size(100, 35);
+            this.runScriptButton.Location = new System.Drawing.Point(5, 5);
+            this.runScriptButton.BackColor = System.Drawing.Color.FromArgb(0, 120, 215);
+            this.runScriptButton.ForeColor = System.Drawing.Color.White;
+            this.runScriptButton.FlatStyle = FlatStyle.Flat;
+            this.runScriptButton.FlatAppearance.BorderSize = 0;
+            this.runScriptButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.runScriptButton.Cursor = Cursors.Hand;
+            this.runScriptButton.Click += RunScriptButton_Click;
+            
+            // newScriptButton
+            this.newScriptButton = new Button();
+            this.newScriptButton.Text = "📄 New";
+            this.newScriptButton.Size = new System.Drawing.Size(80, 35);
+            this.newScriptButton.Location = new System.Drawing.Point(110, 5);
+            this.newScriptButton.BackColor = System.Drawing.Color.FromArgb(60, 60, 60);
+            this.newScriptButton.ForeColor = System.Drawing.Color.White;
+            this.newScriptButton.FlatStyle = FlatStyle.Flat;
+            this.newScriptButton.FlatAppearance.BorderSize = 0;
+            this.newScriptButton.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.newScriptButton.Cursor = Cursors.Hand;
+            this.newScriptButton.Click += NewScriptButton_Click;
+            
+            // openScriptButton
+            this.openScriptButton = new Button();
+            this.openScriptButton.Text = "📁 Open";
+            this.openScriptButton.Size = new System.Drawing.Size(80, 35);
+            this.openScriptButton.Location = new System.Drawing.Point(195, 5);
+            this.openScriptButton.BackColor = System.Drawing.Color.FromArgb(60, 60, 60);
+            this.openScriptButton.ForeColor = System.Drawing.Color.White;
+            this.openScriptButton.FlatStyle = FlatStyle.Flat;
+            this.openScriptButton.FlatAppearance.BorderSize = 0;
+            this.openScriptButton.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.openScriptButton.Cursor = Cursors.Hand;
+            this.openScriptButton.Click += OpenScriptButton_Click;
+            
+            // saveScriptButton
+            this.saveScriptButton = new Button();
+            this.saveScriptButton.Text = "💾 Save";
+            this.saveScriptButton.Size = new System.Drawing.Size(80, 35);
+            this.saveScriptButton.Location = new System.Drawing.Point(280, 5);
+            this.saveScriptButton.BackColor = System.Drawing.Color.FromArgb(60, 60, 60);
+            this.saveScriptButton.ForeColor = System.Drawing.Color.White;
+            this.saveScriptButton.FlatStyle = FlatStyle.Flat;
+            this.saveScriptButton.FlatAppearance.BorderSize = 0;
+            this.saveScriptButton.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.saveScriptButton.Cursor = Cursors.Hand;
+            this.saveScriptButton.Click += SaveScriptButton_Click;
+            
+            this.editorToolbar.Controls.Add(this.runScriptButton);
+            this.editorToolbar.Controls.Add(this.newScriptButton);
+            this.editorToolbar.Controls.Add(this.openScriptButton);
+            this.editorToolbar.Controls.Add(this.saveScriptButton);
+            
+            // editorWebView
+            this.editorWebView = new WebView2();
+            this.editorWebView.Dock = DockStyle.Fill;
+            
+            this.editorPanel.Controls.Add(this.editorWebView);
+            this.editorPanel.Controls.Add(this.editorToolbar);
+            
             // PowerShellConsolePlugin
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = AutoScaleMode.Font;
             this.Controls.Add(this.conEmuControl);
+            this.Controls.Add(this.editorPanel);
             this.Controls.Add(this.helpButton);
+            this.Controls.Add(this.toggleViewButton);
             this.Controls.Add(this.helpPanel);
             this.helpButton.BringToFront();
+            this.toggleViewButton.BringToFront();
             this.helpPanel.BringToFront();
             this.Name = "PowerShellConsolePlugin";
             this.Size = new System.Drawing.Size(800, 600);
@@ -114,6 +226,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             if (!DesignMode)
             {
                 StartEmbeddedPowerShellConsole();
+                InitializeMonacoEditor();
             }
         }
 
@@ -591,6 +704,388 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                       .Replace("{", "\\{")
                       .Replace("}", "\\}")
                       .Replace("\n", "\\par\n");
+        }
+
+        // ========== Script Editor Methods ==========
+        
+        private async void InitializeMonacoEditor()
+        {
+            try
+            {
+                await editorWebView.EnsureCoreWebView2Async(null);
+                
+                // Load Monaco editor HTML
+                string monacoHtml = GenerateMonacoEditorHtml();
+                editorWebView.NavigateToString(monacoHtml);
+                
+                // Setup message handler for script operations
+                editorWebView.WebMessageReceived += EditorWebView_WebMessageReceived;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to initialize script editor: {ex.Message}\n\nWebView2 Runtime may not be installed.", 
+                    "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private string GenerateMonacoEditorHtml()
+        {
+            // Get PowerShell cmdlets for IntelliSense
+            string cmdletCompletions = GetPowerShellCmdletCompletions();
+            
+            return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""utf-8"" />
+    <style>
+        body {{ margin: 0; padding: 0; overflow: hidden; }}
+        #container {{ width: 100%; height: 100vh; }}
+    </style>
+</head>
+<body>
+    <div id=""container""></div>
+    
+    <script src=""https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js""></script>
+    <script>
+        require.config({{ paths: {{ vs: 'https://unpkg.com/monaco-editor@0.45.0/min/vs' }} }});
+        
+        require(['vs/editor/editor.main'], function() {{
+            // Create Monaco editor
+            window.editor = monaco.editor.create(document.getElementById('container'), {{
+                value: '# PowerShell Script\\n# Type your PowerShell commands here\\n# Press F5 or click Run to execute\\n\\n',
+                language: 'powershell',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                fontSize: 14,
+                minimap: {{ enabled: true }},
+                scrollBeyondLastLine: false,
+                wordWrap: 'on',
+                lineNumbers: 'on',
+                folding: true,
+                renderWhitespace: 'selection'
+            }});
+            
+            // Register PowerShell cmdlet completions
+            var cmdlets = {cmdletCompletions};
+            
+            monaco.languages.registerCompletionItemProvider('powershell', {{
+                provideCompletionItems: function(model, position) {{
+                    var word = model.getWordUntilPosition(position);
+                    var range = {{
+                        startLineNumber: position.lineNumber,
+                        endLineNumber: position.lineNumber,
+                        startColumn: word.startColumn,
+                        endColumn: word.endColumn
+                    }};
+                    
+                    return {{
+                        suggestions: cmdlets.map(c => ({{
+                            label: c.label,
+                            kind: monaco.languages.CompletionItemKind.Function,
+                            documentation: c.documentation,
+                            insertText: c.insertText,
+                            range: range
+                        }}))
+                    }};
+                }}
+            }});
+            
+            // Add keyboard shortcuts
+            editor.addCommand(monaco.KeyCode.F5, function() {{
+                window.chrome.webview.postMessage({{ action: 'run' }});
+            }});
+            
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {{
+                window.chrome.webview.postMessage({{ action: 'save' }});
+            }});
+            
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyN, function() {{
+                window.chrome.webview.postMessage({{ action: 'new' }});
+            }});
+            
+            // Notify ready
+            window.chrome.webview.postMessage({{ action: 'ready' }});
+        }});
+        
+        // Handle get content requests
+        function getContent() {{
+            return editor.getValue();
+        }}
+        
+        function setContent(content) {{
+            editor.setValue(content);
+        }}
+    </script>
+</body>
+</html>";
+        }
+
+        private string GetPowerShellCmdletCompletions()
+        {
+            try
+            {
+                StringBuilder completions = new StringBuilder("[");
+                
+                // Get cmdlets from the Cmdlets assembly
+                var cmdletsAssembly = AppDomain.CurrentDomain.GetAssemblies()
+                    .FirstOrDefault(a => a.GetName().Name == "Rnwood.Dataverse.Data.PowerShell.Cmdlets");
+                
+                if (cmdletsAssembly != null)
+                {
+                    var cmdletTypes = cmdletsAssembly.GetTypes()
+                        .Where(t => t.Name.EndsWith("Cmdlet") && !t.IsAbstract && t.IsPublic);
+                    
+                    bool first = true;
+                    foreach (var type in cmdletTypes)
+                    {
+                        try
+                        {
+                            var cmdletAttr = type.GetCustomAttributes(typeof(CmdletAttribute), false)
+                                .FirstOrDefault() as CmdletAttribute;
+                            
+                            if (cmdletAttr != null)
+                            {
+                                if (!first) completions.Append(",");
+                                first = false;
+                                
+                                string cmdletName = $"{cmdletAttr.VerbName}-{cmdletAttr.NounName}";
+                                var parameters = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                                    .Where(p => p.GetCustomAttributes(typeof(ParameterAttribute), false).Any())
+                                    .Select(p => $"-{p.Name}")
+                                    .Take(5); // Limit to first 5 parameters
+                                
+                                string paramList = string.Join(", ", parameters);
+                                completions.Append($"{{label:'{cmdletName}',insertText:'{cmdletName} ',documentation:'Parameters: {paramList}'}}");
+                            }
+                        }
+                        catch
+                        {
+                            // Skip cmdlets that cause issues
+                        }
+                    }
+                }
+                
+                // Add common PowerShell cmdlets
+                string[] commonCmdlets = new string[] {
+                    "Write-Host", "Write-Output", "Write-Verbose", "Write-Warning", "Write-Error",
+                    "Get-Variable", "Set-Variable", "ForEach-Object", "Where-Object",
+                    "Select-Object", "Sort-Object", "Group-Object", "Measure-Object",
+                    "Import-Module", "Get-Module", "Get-Command", "Get-Help"
+                };
+                
+                foreach (var cmdlet in commonCmdlets)
+                {
+                    completions.Append($",{{label:'{cmdlet}',insertText:'{cmdlet} ',documentation:'PowerShell built-in cmdlet'}}");
+                }
+                
+                completions.Append("]");
+                return completions.ToString();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting cmdlet completions: {ex.Message}");
+                return "[]";
+            }
+        }
+
+        private void EditorWebView_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            try
+            {
+                string message = e.TryGetWebMessageAsString();
+                // Parse JSON message (simple parsing for action)
+                if (message.Contains("\"action\":\"run\""))
+                {
+                    RunScriptButton_Click(null, null);
+                }
+                else if (message.Contains("\"action\":\"save\""))
+                {
+                    SaveScriptButton_Click(null, null);
+                }
+                else if (message.Contains("\"action\":\"new\""))
+                {
+                    NewScriptButton_Click(null, null);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error handling web message: {ex.Message}");
+            }
+        }
+
+        private void ToggleViewButton_Click(object sender, EventArgs e)
+        {
+            isEditorView = !isEditorView;
+            
+            if (isEditorView)
+            {
+                // Switch to editor view
+                conEmuControl.Visible = false;
+                editorPanel.Visible = true;
+                toggleViewButton.Text = "💻 Console";
+            }
+            else
+            {
+                // Switch to console view
+                editorPanel.Visible = false;
+                conEmuControl.Visible = true;
+                toggleViewButton.Text = "📝 Script Editor";
+            }
+        }
+
+        private async void RunScriptButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Get script content from Monaco editor
+                string script = await editorWebView.ExecuteScriptAsync("getContent()");
+                
+                // Remove JSON string quotes
+                script = script.Trim('"').Replace("\\n", "\n").Replace("\\r", "\r")
+                    .Replace("\\\"", "\"").Replace("\\\\", "\\");
+                
+                if (string.IsNullOrWhiteSpace(script))
+                {
+                    MessageBox.Show("Script is empty. Please enter some PowerShell commands.", 
+                        "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                
+                // Switch to console view
+                ToggleViewButton_Click(null, null);
+                
+                // Give console time to become visible
+                await Task.Delay(100);
+                
+                // Create temporary script file
+                string tempScriptPath = Path.Combine(Path.GetTempPath(), $"xrmtoolbox-script-{Guid.NewGuid()}.ps1");
+                File.WriteAllText(tempScriptPath, script);
+                
+                // The ConEmu control doesn't expose direct input methods
+                // Instead, we'll write the script to a file and have the user run it manually
+                // Or we can use a more sophisticated approach with named pipes
+                
+                // For now, display message to user
+                MessageBox.Show($"Script ready to execute.\n\nRun this command in the console:\n& '{tempScriptPath}'",
+                    "Script Ready", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                
+                // Schedule cleanup after some time
+                Task.Delay(30000).ContinueWith(t =>
+                {
+                    try
+                    {
+                        if (File.Exists(tempScriptPath))
+                        {
+                            File.Delete(tempScriptPath);
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore cleanup errors
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to run script: {ex.Message}", 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void NewScriptButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (MessageBox.Show("Create a new script? Any unsaved changes will be lost.", 
+                    "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    editorWebView.ExecuteScriptAsync("setContent('# PowerShell Script\\n# Type your PowerShell commands here\\n# Press F5 or click Run to execute\\n\\n')");
+                    currentScriptPath = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to create new script: {ex.Message}", 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void OpenScriptButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (OpenFileDialog dialog = new OpenFileDialog())
+                {
+                    dialog.Filter = "PowerShell Scripts (*.ps1)|*.ps1|All Files (*.*)|*.*";
+                    dialog.Title = "Open PowerShell Script";
+                    
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                    {
+                        string content = File.ReadAllText(dialog.FileName);
+                        
+                        // Escape for JavaScript
+                        content = content.Replace("\\", "\\\\")
+                                       .Replace("'", "\\'")
+                                       .Replace("\n", "\\n")
+                                       .Replace("\r", "\\r")
+                                       .Replace("\"", "\\\"");
+                        
+                        await editorWebView.ExecuteScriptAsync($"setContent('{content}')");
+                        currentScriptPath = dialog.FileName;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to open script: {ex.Message}", 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void SaveScriptButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string scriptPath = currentScriptPath;
+                
+                if (string.IsNullOrEmpty(scriptPath))
+                {
+                    using (SaveFileDialog dialog = new SaveFileDialog())
+                    {
+                        dialog.Filter = "PowerShell Scripts (*.ps1)|*.ps1|All Files (*.*)|*.*";
+                        dialog.Title = "Save PowerShell Script";
+                        dialog.DefaultExt = "ps1";
+                        
+                        if (dialog.ShowDialog() == DialogResult.OK)
+                        {
+                            scriptPath = dialog.FileName;
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
+                }
+                
+                // Get script content
+                string script = await editorWebView.ExecuteScriptAsync("getContent()");
+                
+                // Remove JSON string quotes and unescape
+                script = script.Trim('"').Replace("\\n", "\n").Replace("\\r", "\r")
+                    .Replace("\\\"", "\"").Replace("\\\\", "\\");
+                
+                File.WriteAllText(scriptPath, script);
+                currentScriptPath = scriptPath;
+                
+                MessageBox.Show($"Script saved to: {scriptPath}", 
+                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to save script: {ex.Message}", 
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         public override void ClosingPlugin(PluginCloseInfo info)
