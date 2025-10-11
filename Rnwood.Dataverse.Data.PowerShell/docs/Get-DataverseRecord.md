@@ -173,6 +173,7 @@ Accept wildcard characters: False
 List of hashtables of field names/values to exclude. Values default to `Equal` (or `Null` when `$null` is supplied).
 Each hashtable's entries are combined with AND to form a sub-filter.
 Multiple hashtables are combined using `AND` by default (a record is excluded only if it matches all sub-filters); use `-ExcludeFilterOr` to combine them using `OR` instead (a record is excluded if it matches any sub-filter).
+Supports grouped filters using `and`, `or`, `not`, or `xor` keys with nested hashtables for complex logical expressions.
 
 Examples:
 
@@ -251,7 +252,7 @@ Accept wildcard characters: False
 ```
 
 ### -FilterValues
-One or more hashtables that define filters to apply to the query. Each hashtable's entries are combined with AND; multiple hashtables are combined with OR.
+One or more hashtables that define filters to apply to the query. Each hashtable's entries are combined with AND; multiple hashtables are combined with OR. Supports grouped filters using `and`, `or`, `not`, or `xor` keys with nested hashtables for complex logical expressions.
 
 Filter keys may be `column` or `column:Operator` where `Operator` is a name from the `ConditionOperator` enum (for example `GreaterThan`, `NotEqual`).
 
@@ -447,12 +448,13 @@ Link entities to apply to query. Accepts `DataverseLinkEntity` objects (a lightw
 
 Simplified Syntax:
 Provide a hashtable with a single key-value pair encoding the join relationship, plus optional keys for join type, alias, and filter.
-Format: `@{ 'fromEntity.fromAttribute' = 'toEntity.toAttribute'; type = 'Inner'; alias = 'aliasName'; filter = @{...} }`
+Format: `@{ 'fromEntity.fromAttribute' = 'toEntity.toAttribute'; type = 'Inner'; alias = 'aliasName'; filter = @{...}; links = @(...) }`
 
 - The key-value pair specifies the join: `'contact.accountid' = 'account.accountid'` joins from contact.accountid to account.accountid
 - `type` (optional): `'Inner'` (default) or `'LeftOuter'`
 - `alias` (optional): String alias for the linked entity
-- `filter` (optional): Hashtable with filter conditions using the same format as `-FilterValues`
+- `filter` (optional): Hashtable with filter conditions using the same format as `-FilterValues` and supports `and`, `or`, `not`, `xor` operators
+- `links` (optional): Nested child links (see below)
 
 **Nested child links (links key)**
 
