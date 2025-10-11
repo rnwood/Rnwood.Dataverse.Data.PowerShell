@@ -5,20 +5,22 @@ This XrmToolbox plugin provides a PowerShell console with the Rnwood.Dataverse.D
 ## Features
 
 - **Embedded PowerShell console** directly within the XrmToolbox tab using ConEmu control
-- **Automatic connection bridging** - Automatically connects to the same Dataverse environment as XrmToolbox
-- Automatically loads the Rnwood.Dataverse.Data.PowerShell module
+- **Automatic connection bridging** - Automatically connects to the same Dataverse environment as XrmToolbox using named pipes
+- **Bundled PowerShell module** - Module is included with the plugin, no separate installation required
+- **Execution policy detection** - Detects and warns about restrictive PowerShell policies with clear instructions
+- **Restricted Language Mode detection** - Identifies security restrictions and provides guidance
 - Full-featured terminal experience with ConEmu integration
 - Custom XrmToolbox prompt to indicate you're working within the XrmToolbox context
 - Helpful quick-start examples displayed on startup
 - No need for external ConEmu installation - control is embedded via NuGet package
-- Secure token passing via temporary file with restricted permissions
+- Secure connection passing via named pipes (no disk persistence)
 
 ## Installation
 
 ### Prerequisites
 
 1. **XrmToolbox** - Download and install from [xrmtoolbox.com](https://www.xrmtoolbox.com/)
-2. **Rnwood.Dataverse.Data.PowerShell PowerShell Module** - Install from PowerShell Gallery:
+2. **Rnwood.Dataverse.Data.PowerShell PowerShell Module** - *(Optional)* The module is bundled with the plugin, but you can also install it from PowerShell Gallery for system-wide availability:
    ```powershell
    Install-Module Rnwood.Dataverse.Data.PowerShell -Scope CurrentUser
    ```
@@ -130,26 +132,49 @@ The ConEmu control is bundled with the plugin via NuGet, so there's no need to i
 
 ## Troubleshooting
 
+### Execution Policy Errors
+
+If you see warnings about execution policy:
+
+```
+WARNING: PowerShell Execution Policy may prevent scripts from running
+Current policy: Restricted
+```
+
+**Fix**: Run PowerShell as Administrator and execute:
+```powershell
+Set-ExecutionPolicy RemoteSigned -Scope LocalMachine
+```
+
+Or for current user only:
+```powershell
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+### Restricted Language Mode Error
+
+If you see an error about Restricted Language Mode:
+
+```
+ERROR: PowerShell is running in Restricted Language Mode
+```
+
+This security setting prevents the module from loading. To fix:
+1. Check your organization's PowerShell security policies
+2. Contact your IT administrator
+3. May require disabling Application Control policies
+
 ### Module Not Found
 
-If you see an error that the module cannot be found:
+The module is bundled with the plugin, so installation is optional. If you still see module errors:
 
-1. Ensure the module is installed:
+1. Verify the bundled module is present in the plugin's `PSModule` folder
+2. Optionally install the module system-wide:
    ```powershell
    Install-Module Rnwood.Dataverse.Data.PowerShell -Scope CurrentUser
    ```
 
-2. Verify the module is available:
-   ```powershell
-   Get-Module -ListAvailable Rnwood.Dataverse.Data.PowerShell
-   ```
-
-3. Check your execution policy:
-   ```powershell
-   Get-ExecutionPolicy
-   # If it's Restricted, set it to RemoteSigned
-   Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
-   ```
+3. Check your execution policy (see above)
 
 ### Console Doesn't Appear or Shows Errors
 

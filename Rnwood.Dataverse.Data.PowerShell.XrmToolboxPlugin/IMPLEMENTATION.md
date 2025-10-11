@@ -22,20 +22,42 @@ The plugin implements the following features:
 
 #### Core Functionality
 - **Embedded PowerShell console** directly within the XrmToolbox tab using ConEmu control
-- **Automatic connection bridging** - Extracts connection URL and OAuth token from XrmToolbox and passes to PowerShell
-- Automatically loads the Rnwood.Dataverse.Data.PowerShell module
+- **Automatic connection bridging** - Extracts connection URL and OAuth token from XrmToolbox and passes to PowerShell via named pipes
+- **Bundled PowerShell module** - Module copied to output during build, loaded automatically
+- **Execution policy detection** - Checks and warns about restrictive PowerShell execution policies
+- **Restricted Language Mode detection** - Identifies and reports security restrictions
 - Displays a welcome banner with quick-start examples
 - Custom prompt showing "XrmToolbox PS" to indicate XrmToolbox context
 - Self-cleaning initialization script (removes itself after execution)
 
-#### Connection Bridging
+#### Connection Bridging (Named Pipes)
 - Extracts connection information from XrmToolbox `ServiceClient`:
   - Organization URL from `ConnectedOrgUriActual` or `ConnectedOrgPublishedEndpoints`
   - OAuth access token via reflection from `CurrentAccessToken` property
-- Passes connection data securely via temporary file with restricted ACL permissions
-- PowerShell script reads connection data and establishes connection automatically
+- **Passes connection data securely via named pipes** (replaced file-based approach)
+  - Pipe server created with unique name per session
+  - Runs asynchronously with cancellation token support
+  - 5-second timeout for PowerShell to connect
+  - No disk persistence - more secure than files
+- PowerShell script connects to pipe and reads connection data
 - Falls back to interactive authentication if token is not available
-- Temporary connection data file is cleaned up after use
+- Pipe automatically destroyed after use
+
+#### Module Bundling
+- Build target `CopyPowerShellModule` copies module from main project to `PSModule` directory
+- PowerShell initialization script tries bundled module first:
+  - Adds bundled path to `$env:PSModulePath`
+  - Falls back to installed module if bundled version fails
+- Users no longer required to install module separately (optional)
+
+#### PowerShell Environment Validation
+- **Restricted Language Mode Check**: Detects if PowerShell is running in restricted mode
+  - Shows clear error message and instructions
+  - Prevents module loading failures with cryptic errors
+- **Execution Policy Check**: Detects restrictive policies (Restricted, AllSigned)
+  - Shows warnings with fix instructions
+  - Provides both LocalMachine and CurrentUser scope options
+- Graceful error handling with "press any key to exit" for better UX
 
 #### ConEmu Control Integration
 - Uses ConEmu.Control.WinForms NuGet package (v1.3.8) for embedded terminal
@@ -126,20 +148,30 @@ XrmToolboxPackage requires .NET Framework 4.8 minimum. XrmToolbox plugins must t
 ### How Does Connection Bridging Work?
 **Challenge**: PowerShell runs in a child process, separate from the XrmToolbox plugin process.
 
-**Solution**: Secure file-based inter-process communication
+**Solution**: Named pipe-based inter-process communication (v2 - replaced file-based approach)
 1. Extract connection URL from `ServiceClient.ConnectedOrgUriActual`
 2. Extract OAuth token via reflection from `ServiceClient.CurrentAccessToken` (internal property)
-3. Write URL and token to temporary file with restricted Windows ACL permissions (current user only)
-4. Pass file path to PowerShell initialization script
-5. PowerShell reads the file, creates connection using `Get-DataverseConnection -ConnectionString`
-6. Both script and connection data file are deleted after use
-7. Falls back to interactive auth if token is unavailable
+3. Create named pipe server with unique GUID-based name
+4. Start async pipe server with cancellation token
+5. Pass pipe name to PowerShell initialization script
+6. PowerShell creates pipe client and connects (5-second timeout)
+7. Pipe server writes connection data, PowerShell reads it
+8. Both pipe and script are destroyed after use
+9. Falls back to interactive auth if token is unavailable
 
 **Security Considerations**:
-- Temporary file has restricted permissions (current user only via Windows ACL)
-- File is deleted immediately after being read by PowerShell
-- Connection data file is also cleaned up when plugin closes (fail-safe)
-- OAuth tokens are short-lived and already present in memory in the parent process
+- Named pipes don't persist on disk (more secure than files)
+- Pipe has unique name per session (GUID-based)
+- Timeout prevents hanging connections
+- Connection data never written to disk
+- Pipe destroyed automatically after single use
+
+**Why Named Pipes Over Files**:
+- No disk persistence (connection data never touches filesystem)
+- No file permissions to configure
+- Automatic cleanup when process ends
+- More efficient IPC mechanism
+- Better security posture
 
 ### Why Store Script in Temp Instead of Embedded Resource?
 - Easier to debug and modify
@@ -193,27 +225,22 @@ Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/
 1. Download plugin DLL from GitHub Releases
 2. Copy to XrmToolbox Plugins folder
 3. Restart XrmToolbox
-4. Install PowerShell module: `Install-Module Rnwood.Dataverse.Data.PowerShell`
+4. **No module installation required** - Module is bundled with plugin
 5. Open plugin from Tools menu
 
 ## Future Enhancements
 
 Potential improvements for future versions:
 
-1. **Named Pipes for IPC**: Replace file-based approach with named pipes for more secure token passing
-   - More secure than temporary files
-   - Better performance
-   - Would require additional implementation complexity
-
-2. **Connection Profile**: Save connection details for quick reconnection
+1. **Connection Profile**: Save connection details for quick reconnection
    - Store org URL, auth method
    - Don't store credentials
 
-3. **Custom Scripts**: Allow users to run custom initialization scripts
+2. **Custom Scripts**: Allow users to run custom initialization scripts
    - Load from plugin settings
    - Could include org-specific helpers
 
-4. **Plugin Icon**: Add a custom icon for better visual identification
+3. **Plugin Icon**: Add a custom icon for better visual identification
    - 32x32 PNG or ICO
    - Embedded as resource
 
@@ -226,14 +253,17 @@ Potential improvements for future versions:
 
 1. **Windows Only**: Plugin requires Windows/.NET Framework 4.8
 2. **Token Expiration**: OAuth tokens have limited lifetime - if token expires, user must reconnect manually
-3. **Module Must Be Installed**: Requires separate module installation via PowerShell Gallery
-4. **Reflection-Based Token Extraction**: Uses reflection to access internal `CurrentAccessToken` property - may break with SDK updates
+3. **Reflection-Based Token Extraction**: Uses reflection to access internal `CurrentAccessToken` property - may break with SDK updates
+4. **Execution Policy**: Users with restrictive execution policies must adjust settings (guidance provided)
 
 ## Success Criteria
 
 ✅ Plugin compiles successfully  
 ✅ Plugin added to solution  
-✅ **Connection bridging implemented** - Automatic connection using XrmToolbox credentials
+✅ **Connection bridging implemented** - Named pipes for secure IPC
+✅ **Module bundling implemented** - No separate installation required
+✅ **Execution policy detection** - Clear error messages and guidance
+✅ **Restricted Language Mode detection** - Identifies security restrictions
 ✅ Documentation complete (README, TESTING, IMPLEMENTATION)  
 ✅ Build tests pass  
 ✅ Main README updated  
@@ -241,10 +271,13 @@ Potential improvements for future versions:
 
 ## Conclusion
 
-The XrmToolbox plugin successfully integrates the Rnwood.Dataverse.Data.PowerShell module into XrmToolbox, providing users with a convenient way to access PowerShell cmdlets while working in XrmToolbox. The implementation is clean, well-documented, and follows XrmToolbox plugin conventions.
+The XrmToolbox plugin successfully integrates the Rnwood.Dataverse.Data.PowerShell module into XrmToolbox using an embedded ConEmu control, providing users with a full-featured PowerShell console directly within XrmToolbox tabs. The implementation includes:
 
-## Conclusion
+- **Automatic connection bridging** via named pipes for secure credential passing
+- **Bundled PowerShell module** eliminating separate installation requirements
+- **Comprehensive environment validation** detecting execution policies and language mode restrictions
+- **Clear error messages** with actionable guidance for users
 
-The XrmToolbox plugin successfully integrates the Rnwood.Dataverse.Data.PowerShell module into XrmToolbox using an embedded ConEmu control, providing users with a full-featured PowerShell console directly within XrmToolbox tabs. The implementation is clean, well-documented, and follows XrmToolbox plugin conventions.
+The plugin enhances the Rnwood.Dataverse.Data.PowerShell ecosystem by making it accessible directly from a popular Dataverse tool with minimal friction, providing a seamless user experience.
 
 The plugin enhances the Rnwood.Dataverse.Data.PowerShell ecosystem by making it accessible directly from a popular Dataverse tool, lowering the barrier to entry for users who are already familiar with XrmToolbox. The embedded console approach provides a seamless user experience without requiring external terminal installations.
