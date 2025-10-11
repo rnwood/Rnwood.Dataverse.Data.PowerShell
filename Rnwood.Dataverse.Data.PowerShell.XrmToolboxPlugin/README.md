@@ -5,11 +5,13 @@ This XrmToolbox plugin provides a PowerShell console with the Rnwood.Dataverse.D
 ## Features
 
 - **Embedded PowerShell console** directly within the XrmToolbox tab using ConEmu control
+- **Automatic connection bridging** - Automatically connects to the same Dataverse environment as XrmToolbox
 - Automatically loads the Rnwood.Dataverse.Data.PowerShell module
 - Full-featured terminal experience with ConEmu integration
 - Custom XrmToolbox prompt to indicate you're working within the XrmToolbox context
 - Helpful quick-start examples displayed on startup
 - No need for external ConEmu installation - control is embedded via NuGet package
+- Secure token passing via temporary file with restricted permissions
 
 ## Installation
 
@@ -46,7 +48,13 @@ This XrmToolbox plugin provides a PowerShell console with the Rnwood.Dataverse.D
 
 ### Connecting to Dataverse
 
-The PowerShell console launches with the module already loaded. To connect to your Dataverse environment:
+The PowerShell console launches with the module already loaded and **automatically connects to the same Dataverse environment as XrmToolbox**:
+
+- The plugin extracts the connection URL and OAuth token from XrmToolbox
+- The connection is established automatically using the same credentials
+- The connection is available in the `$connection` variable
+
+If automatic connection fails, you can manually connect:
 
 ```powershell
 $connection = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive

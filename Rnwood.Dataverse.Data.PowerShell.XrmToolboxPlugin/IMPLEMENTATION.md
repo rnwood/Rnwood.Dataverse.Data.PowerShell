@@ -22,10 +22,20 @@ The plugin implements the following features:
 
 #### Core Functionality
 - **Embedded PowerShell console** directly within the XrmToolbox tab using ConEmu control
+- **Automatic connection bridging** - Extracts connection URL and OAuth token from XrmToolbox and passes to PowerShell
 - Automatically loads the Rnwood.Dataverse.Data.PowerShell module
 - Displays a welcome banner with quick-start examples
 - Custom prompt showing "XrmToolbox PS" to indicate XrmToolbox context
 - Self-cleaning initialization script (removes itself after execution)
+
+#### Connection Bridging
+- Extracts connection information from XrmToolbox `ServiceClient`:
+  - Organization URL from `ConnectedOrgUriActual` or `ConnectedOrgPublishedEndpoints`
+  - OAuth access token via reflection from `CurrentAccessToken` property
+- Passes connection data securely via temporary file with restricted ACL permissions
+- PowerShell script reads connection data and establishes connection automatically
+- Falls back to interactive authentication if token is not available
+- Temporary connection data file is cleaned up after use
 
 #### ConEmu Control Integration
 - Uses ConEmu.Control.WinForms NuGet package (v1.3.8) for embedded terminal
@@ -61,10 +71,12 @@ private ConEmuControl conEmuControl;  // Embedded ConEmu terminal control
 #### Script Generation
 The `GenerateConnectionScript()` method creates a PowerShell initialization script that:
 1. Loads the Rnwood.Dataverse.Data.PowerShell module
-2. Displays welcome banner and instructions
-3. Shows quick-start examples
-4. Sets custom prompt
-5. Removes itself after execution
+2. Reads connection data from secure temporary file
+3. Establishes connection using extracted URL and OAuth token
+4. Displays connection status and user information via `Get-DataverseWhoAmI`
+5. Shows quick-start examples and help
+6. Sets custom prompt
+7. Removes itself and connection data file after execution
 
 ### 4. Documentation
 
@@ -111,12 +123,23 @@ XrmToolboxPackage requires .NET Framework 4.8 minimum. XrmToolbox plugins must t
 - Well-maintained NuGet package with good Windows Forms integration
 - Users get the console directly in XrmToolbox without managing separate windows
 
-### Why Not Auto-Connect Using XrmToolbox Connection?
-- ServiceClient from XrmToolbox runs in the plugin's process but PowerShell runs in a child process
-- Passing authentication tokens/connection to the child PowerShell process is complex
-- Connection string approach would require extracting credentials (security risk)
-- Users can easily connect manually with `Get-DataverseConnection`
-- Future enhancement: Could serialize connection parameters securely or use named pipes for IPC
+### How Does Connection Bridging Work?
+**Challenge**: PowerShell runs in a child process, separate from the XrmToolbox plugin process.
+
+**Solution**: Secure file-based inter-process communication
+1. Extract connection URL from `ServiceClient.ConnectedOrgUriActual`
+2. Extract OAuth token via reflection from `ServiceClient.CurrentAccessToken` (internal property)
+3. Write URL and token to temporary file with restricted Windows ACL permissions (current user only)
+4. Pass file path to PowerShell initialization script
+5. PowerShell reads the file, creates connection using `Get-DataverseConnection -ConnectionString`
+6. Both script and connection data file are deleted after use
+7. Falls back to interactive auth if token is unavailable
+
+**Security Considerations**:
+- Temporary file has restricted permissions (current user only via Windows ACL)
+- File is deleted immediately after being read by PowerShell
+- Connection data file is also cleaned up when plugin closes (fail-safe)
+- OAuth tokens are short-lived and already present in memory in the parent process
 
 ### Why Store Script in Temp Instead of Embedded Resource?
 - Easier to debug and modify
@@ -177,10 +200,10 @@ Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/
 
 Potential improvements for future versions:
 
-1. **Auto-Connection**: Investigate secure ways to pass XrmToolbox connection to PowerShell
-   - Could use named pipes for IPC between plugin and PowerShell process
-   - Could serialize connection parameters securely
-   - Would require careful security considerations
+1. **Named Pipes for IPC**: Replace file-based approach with named pipes for more secure token passing
+   - More secure than temporary files
+   - Better performance
+   - Would require additional implementation complexity
 
 2. **Connection Profile**: Save connection details for quick reconnection
    - Store org URL, auth method
@@ -202,14 +225,16 @@ Potential improvements for future versions:
 ## Known Limitations
 
 1. **Windows Only**: Plugin requires Windows/.NET Framework 4.8
-2. **Manual Connection**: User must manually connect using cmdlet (PowerShell runs in child process)
+2. **Token Expiration**: OAuth tokens have limited lifetime - if token expires, user must reconnect manually
 3. **Module Must Be Installed**: Requires separate module installation via PowerShell Gallery
+4. **Reflection-Based Token Extraction**: Uses reflection to access internal `CurrentAccessToken` property - may break with SDK updates
 
 ## Success Criteria
 
 ✅ Plugin compiles successfully  
 ✅ Plugin added to solution  
-✅ Documentation complete (README, TESTING)  
+✅ **Connection bridging implemented** - Automatic connection using XrmToolbox credentials
+✅ Documentation complete (README, TESTING, IMPLEMENTATION)  
 ✅ Build tests pass  
 ✅ Main README updated  
 ⏳ Manual testing (requires Windows/XrmToolbox environment)
