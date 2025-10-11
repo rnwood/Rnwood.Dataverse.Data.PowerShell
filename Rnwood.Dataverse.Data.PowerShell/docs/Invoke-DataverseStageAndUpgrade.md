@@ -151,6 +151,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -InFile
+Gets or sets the path to a file containing the data to upload.
+
+```yaml
+Type: String
+Parameter Sets: FromFile
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -LayerDesiredOrder
 For internal use only.
 
@@ -265,21 +280,6 @@ Parameter Sets: (All)
 Aliases: proga
 
 Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -InFile
-Gets or sets the path to a file containing the data to upload.
-
-```yaml
-Type: String
-Parameter Sets: FromFile
-Aliases:
-
-Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
