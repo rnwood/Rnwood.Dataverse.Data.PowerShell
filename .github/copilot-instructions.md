@@ -134,6 +134,10 @@ Invoke-Pester -Output Detailed -Path tests
 
 ## Common Development Tasks
 
+Always check help is up to date in cmdlets helpmessages and docs/*.MD files.
+
+Use conventional commit messages and be specific about the error or improvement.
+
 ### Adding a New Cmdlet
 1. Create `Rnwood.Dataverse.Data.PowerShell.Cmdlets/Commands/YourNewCmdlet.cs`
 2. Inherit from PSCmdlet or OrganizationServiceCmdlet
