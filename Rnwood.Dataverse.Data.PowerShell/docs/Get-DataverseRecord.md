@@ -24,9 +24,8 @@ Get-DataverseRecord [-TableName] <String> [-VerboseRecordCount] [-RecordCount] [
 
 ### FetchXml
 ```
-Get-DataverseRecord [-VerboseRecordCount] [-RecordCount] [-FetchXml <String>] [-Top <Int32>]
- [-PageSize <Int32>] [-LookupValuesReturnName] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseRecord [-VerboseRecordCount] [-RecordCount] [-FetchXml <String>] [-LookupValuesReturnName]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -599,7 +598,7 @@ Default is 1000.
 
 ```yaml
 Type: Int32
-Parameter Sets: (All)
+Parameter Sets: Simple
 Aliases:
 
 Required: False
@@ -645,7 +644,7 @@ Default is all results.
 
 ```yaml
 Type: Int32
-Parameter Sets: (All)
+Parameter Sets: Simple
 Aliases:
 
 Required: False

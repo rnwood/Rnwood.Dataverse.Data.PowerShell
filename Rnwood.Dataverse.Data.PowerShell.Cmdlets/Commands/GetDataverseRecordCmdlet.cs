@@ -189,7 +189,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Number of records to limit result to. Default is all results.
         /// </summary>
-        [Parameter(Mandatory = false, HelpMessage = "Number of records to limit result to. Default is all results.")]
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "Number of records to limit result to. Default is all results.")]
         public int? Top
         {
             get;
@@ -198,7 +198,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Number of records to request per page. Default is 1000.
         /// </summary>
-        [Parameter(Mandatory = false, HelpMessage = "Number of records to request per page. Default is 1000.")]
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "Number of records to request per page. Default is 1000.")]
         public int? PageSize
         {
             get;

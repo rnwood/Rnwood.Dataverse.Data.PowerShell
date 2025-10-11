@@ -480,15 +480,16 @@ Describe 'Get-DataverseRecord' {
         $result | Should -HaveCount 10
     }
 
-    It "Given fetchxml without top attribute and small page size, it retrieves all records across pages" {
+
+    It "Given fetchxml without top attribute, it retrieves all records across pages automatically" {
         $connection = getMockConnection
         
-        # Create more records than default page size
+        # Create more records than default page size to force paging
         1..25 | ForEach-Object { 
             @{"firstname" = "PageTest$_"; "lastname" = "PagingTest" } | Set-DataverseRecord -Connection $connection -TableName contact
         }
 
-        # FetchXML without top attribute - should retrieve all records with paging
+        # FetchXML without top attribute - should retrieve all records with automatic paging
         $fetchXml = @"
 <fetch>
     <entity name='contact'>
@@ -501,8 +502,8 @@ Describe 'Get-DataverseRecord' {
 </fetch>
 "@
 
-        # Use small page size to force paging
-        $result = @(Get-DataverseRecord -FetchXml $fetchXml -Connection $connection -PageSize 5)
+        # Should retrieve all records automatically (no -Top or -PageSize allowed with FetchXML)
+        $result = @(Get-DataverseRecord -FetchXml $fetchXml -Connection $connection)
         $result | Should -HaveCount 25
     }
 
