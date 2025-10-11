@@ -480,6 +480,32 @@ Describe 'Get-DataverseRecord' {
         $result | Should -HaveCount 10
     }
 
+    It "Given fetchxml without top attribute and small page size, it retrieves all records across pages" {
+        $connection = getMockConnection
+        
+        # Create more records than default page size
+        1..25 | ForEach-Object { 
+            @{"firstname" = "PageTest$_"; "lastname" = "PagingTest" } | Set-DataverseRecord -Connection $connection -TableName contact
+        }
+
+        # FetchXML without top attribute - should retrieve all records with paging
+        $fetchXml = @"
+<fetch>
+    <entity name='contact'>
+        <attribute name='contactid' />
+        <attribute name='firstname' />
+        <filter type='and'>
+            <condition attribute='lastname' operator='eq' value='PagingTest' />
+        </filter>
+    </entity>
+</fetch>
+"@
+
+        # Use small page size to force paging
+        $result = @(Get-DataverseRecord -FetchXml $fetchXml -Connection $connection -PageSize 5)
+        $result | Should -HaveCount 25
+    }
+
     It "Given -Id, it retrieves the records with those IDs" {
 
         $ids = 1..3 | ForEach-Object{ [Guid]::NewGuid() }
