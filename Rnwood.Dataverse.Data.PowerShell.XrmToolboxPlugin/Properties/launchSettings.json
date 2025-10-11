@@ -1,0 +1,21 @@
+{
+  "profiles": {
+    "XrmToolbox (auto-download)": {
+      "commandName": "Executable",
+      "executablePath": "$(ProjectDir)..\\..\\..\\scripts\\Start-XrmToolbox.ps1",
+      "commandLineArgs": "",
+      "workingDirectory": "$(ProjectDir)"
+    },
+    "XrmToolbox (local)": {
+      "commandName": "Executable",
+      "executablePath": "$(ProjectDir)..\\..\\.xrmtoolbox\\XrmToolBox.exe",
+      "workingDirectory": "$(ProjectDir)..\\..\\.xrmtoolbox"
+    },
+    "XrmToolbox (custom path)": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files (x86)\\XrmToolBox\\XrmToolBox.exe",
+      "workingDirectory": "C:\\Program Files (x86)\\XrmToolBox",
+      "commandLineArgs": ""
+    }
+  }
+}

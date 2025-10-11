@@ -47,6 +47,17 @@
       "request": "attach",
       "processId": "${command:pickProcess}",
       "justMyCode": false
+    },
+    {
+      "name": "Debug XrmToolbox Plugin",
+      "type": "clr",
+      "request": "launch",
+      "preLaunchTask": "Build XrmToolbox Plugin",
+      "program": "${workspaceFolder}/.xrmtoolbox/XrmToolBox.exe",
+      "cwd": "${workspaceFolder}/.xrmtoolbox",
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "justMyCode": false
     }
   ]
   ,
