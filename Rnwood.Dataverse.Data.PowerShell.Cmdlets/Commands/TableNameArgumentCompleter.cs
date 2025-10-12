@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -29,26 +30,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     return Enumerable.Empty<CompletionResult>();
                 }
 
-                ServiceClient connectionObj = null;
-                // Look for Connection parameter in bound parameters (case-insensitive)
-                foreach (DictionaryEntry entry in fakeBoundParameters)
-                {
-                    var key = entry.Key as string;
-                    if (string.Equals(key, "Connection", StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (entry.Value is ServiceClient)
-                        {
-                            connectionObj = (ServiceClient)entry.Value;
-                        }
-                        else if (entry.Value is PSObject pso && pso.BaseObject is ServiceClient)
-                        {
-                            connectionObj = (ServiceClient)pso.BaseObject;
-                        }
-
-                        break;
-                    }
-                }
-
+                ServiceClient connectionObj = ArgumentCompleterUtils.GetConnection(fakeBoundParameters);
 
                 if (connectionObj == null)
                 {

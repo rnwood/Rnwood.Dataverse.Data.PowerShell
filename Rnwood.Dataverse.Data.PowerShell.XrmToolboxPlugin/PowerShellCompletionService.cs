@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
+using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using CliWrap;
+using CliWrap.Buffered;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
@@ -15,16 +16,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     /// </summary>
     public class PowerShellCompletionService : IDisposable
     {
-        private Process _powerShellProcess;
-        private StreamWriter _inputWriter;
-        private StreamReader _outputReader;
         private readonly SemaphoreSlim _requestLock = new SemaphoreSlim(1, 1);
         private bool _isInitialized = false;
         private readonly string _modulePath;
+        private readonly string _accessToken;
+        private readonly string _url;
 
-        public PowerShellCompletionService(string modulePath = null)
+        public PowerShellCompletionService(string modulePath = null, string accessToken = null, string url = null)
         {
             _modulePath = modulePath;
+            _accessToken = accessToken;
+            _url = url;
         }
 
         /// <summary>
@@ -35,46 +37,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             if (_isInitialized)
                 return;
 
-            try
-            {
-                // Start PowerShell process
-                // Use "powershell.exe" for PowerShell 5.1 compatibility on Windows
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "powershell.exe",
-                    Arguments = "-NoProfile -NoLogo -NonInteractive",
-                    UseShellExecute = false,
-                    RedirectStandardInput = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = Encoding.UTF8,
-                    StandardErrorEncoding = Encoding.UTF8
-                };
-
-                _powerShellProcess = Process.Start(startInfo);
-                _inputWriter = _powerShellProcess.StandardInput;
-                _outputReader = _powerShellProcess.StandardOutput;
-
-                // Set output encoding and configure environment
-                await SendCommandAsync("$OutputEncoding = [System.Text.Encoding]::UTF8");
-                await SendCommandAsync("[Console]::OutputEncoding = [System.Text.Encoding]::UTF8");
-                
-                // Load the module if path is provided
-                if (!string.IsNullOrEmpty(_modulePath))
-                {
-                    // Import the module
-                    string importCommand = $"Import-Module '{_modulePath}' -ErrorAction SilentlyContinue";
-                    await SendCommandAsync(importCommand);
-                }
-
-                _isInitialized = true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Failed to initialize PowerShell completion service: {ex.Message}");
-                throw;
-            }
+            _isInitialized = true;
         }
 
         /// <summary>
@@ -90,13 +53,75 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             await _requestLock.WaitAsync();
             try
             {
-                // Use a Base64-encoded script to avoid escaping issues
-                byte[] scriptBytes = Encoding.UTF8.GetBytes(script);
-                string encodedScript = Convert.ToBase64String(scriptBytes);
+                // Add debugging output for the request
+                string debugLine = GetLineWithCursor(script, cursorPosition);
+                Console.WriteLine($"Request: {debugLine}");
+
+                // Build the PowerShell command
+                string command = BuildCommand(script, cursorPosition);
+
+                // Execute the command using CliWrap
+                var result = await Cli.Wrap("powershell.exe")
+                    .WithArguments($"-Command \"{command}\"")
+                    .ExecuteBufferedAsync();
+
+                if (result.ExitCode != 0)
+                {
+                    Console.WriteLine($"PowerShell command failed with exit code {result.ExitCode}: {result.StandardError}");
+                    return new List<CompletionItem>();
+                }
+
+                // Parse the JSON response
+                string jsonResponse = ParseResponseBetweenMarkers(result.StandardOutput);
                 
-                // Create a PowerShell command that returns JSON with a clear marker
-                string marker = Guid.NewGuid().ToString();
-                string command = $@"
+                if (string.IsNullOrWhiteSpace(jsonResponse))
+                {
+                    return new List<CompletionItem>();
+                }
+
+                // Parse the JSON
+                var completions = ParseCompletions(jsonResponse);
+                Console.WriteLine($"Results count: {completions.Count}");
+                return completions;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return new List<CompletionItem>();
+            }
+            finally
+            {
+                _requestLock.Release();
+            }
+        }
+
+        private string BuildCommand(string script, int cursorPosition)
+        {
+            var sb = new StringBuilder();
+
+            // Set output encoding
+            sb.Append("$OutputEncoding = [System.Text.Encoding]::UTF8; ");
+            sb.Append("[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; ");
+
+            // Load the module if path is provided
+            if (!string.IsNullOrEmpty(_modulePath))
+            {
+                sb.Append($"Import-Module '{_modulePath}' -ErrorAction SilentlyContinue; ");
+
+                // Only add connection if we have both token and url
+                if (!string.IsNullOrEmpty(_accessToken) && !string.IsNullOrEmpty(_url))
+                {
+                    sb.Append($"Get-DataverseConnection -AccessToken '{_accessToken}' -Url '{_url}' -SetAsDefault -ErrorAction Stop; ");
+                }
+            }
+
+            // Use a Base64-encoded script to avoid escaping issues
+            byte[] scriptBytes = Encoding.UTF8.GetBytes(script);
+            string encodedScript = Convert.ToBase64String(scriptBytes);
+            
+            // Create a PowerShell command that returns JSON with a clear marker
+            string marker = Guid.NewGuid().ToString();
+            sb.Append($@"
 $encodedScript = '{encodedScript}'
 $scriptBytes = [System.Convert]::FromBase64String($encodedScript)
 $decodedScript = [System.Text.Encoding]::UTF8.GetString($scriptBytes)
@@ -116,84 +141,34 @@ if ($result -and $result.CompletionMatches) {{
     '[]'
 }}
 Write-Output '###END_{marker}###'
-";
+".Trim());
 
-                // Send command
-                await _inputWriter.WriteLineAsync(command);
-                await _inputWriter.FlushAsync();
-                
-                // Read the JSON response between markers
-                string jsonResponse = await ReadResponseBetweenMarkersAsync($"###START_{marker}###", $"###END_{marker}###");
-                
-                if (string.IsNullOrWhiteSpace(jsonResponse))
-                {
-                    return new List<CompletionItem>();
-                }
-
-                // Parse the JSON
-                var completions = ParseCompletions(jsonResponse);
-                return completions;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error getting completions: {ex.Message}");
-                return new List<CompletionItem>();
-            }
-            finally
-            {
-                _requestLock.Release();
-            }
+            return sb.ToString();
         }
 
-        private async Task SendCommandAsync(string command)
+        private string ParseResponseBetweenMarkers(string output)
         {
-            // Write the command with a unique marker
-            string marker = Guid.NewGuid().ToString();
-            await _inputWriter.WriteLineAsync(command);
-            await _inputWriter.WriteLineAsync($"Write-Output '###MARKER_{marker}###'");
-            await _inputWriter.FlushAsync();
+            string startMarker = "###START_";
+            string endMarker = "###END_";
 
-            // Read until we see the marker
-            while (true)
-            {
-                string line = await _outputReader.ReadLineAsync();
-                if (line != null && line.Contains($"###MARKER_{marker}###"))
-                {
-                    break;
-                }
-            }
-        }
+            int startIndex = output.IndexOf(startMarker);
+            if (startIndex == -1) return "";
 
-        private async Task<string> ReadResponseBetweenMarkersAsync(string startMarker, string endMarker)
-        {
-            var sb = new StringBuilder();
-            bool capturing = false;
+            startIndex += startMarker.Length;
+            int markerEnd = output.IndexOf("###", startIndex);
+            if (markerEnd == -1) return "";
+            string marker = output.Substring(startIndex, markerEnd - startIndex);
+            startMarker = $"###START_{marker}###";
+            endMarker = $"###END_{marker}###";
 
-            // Read until we find both markers
-            while (true)
-            {
-                string line = await _outputReader.ReadLineAsync();
-                if (line == null)
-                    break;
+            startIndex = output.IndexOf(startMarker);
+            if (startIndex == -1) return "";
+            startIndex += startMarker.Length;
 
-                if (line.Contains(startMarker))
-                {
-                    capturing = true;
-                    continue;
-                }
+            int endIndex = output.IndexOf(endMarker, startIndex);
+            if (endIndex == -1) return "";
 
-                if (line.Contains(endMarker))
-                {
-                    break;
-                }
-
-                if (capturing)
-                {
-                    sb.AppendLine(line);
-                }
-            }
-
-            return sb.ToString().Trim();
+            return output.Substring(startIndex, endIndex - startIndex).Trim();
         }
 
         private List<CompletionItem> ParseCompletions(string json)
@@ -222,7 +197,7 @@ Write-Output '###END_{marker}###'
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error parsing completions JSON: {ex.Message}");
+                Console.WriteLine($"Error parsing completions JSON: {ex.Message}");
             }
 
             return completions;
@@ -244,36 +219,29 @@ Write-Output '###END_{marker}###'
             };
         }
 
+        private string GetLineWithCursor(string script, int cursorPosition)
+        {
+            int lineStart = script.LastIndexOf('\n', Math.Max(0, cursorPosition - 1)) + 1;
+            int lineEnd = script.IndexOf('\n', cursorPosition);
+            if (lineEnd == -1) lineEnd = script.Length;
+            string line = script.Substring(lineStart, lineEnd - lineStart);
+            int cursorInLine = cursorPosition - lineStart;
+            if (cursorInLine < 0) cursorInLine = 0;
+            if (cursorInLine > line.Length) cursorInLine = line.Length;
+            string withCursor = line.Insert(cursorInLine, "|");
+            return $"\"{withCursor}\"";
+        }
+
         public void Dispose()
         {
             _requestLock?.Dispose();
-            
-            if (_inputWriter != null)
-            {
-                try
-                {
-                    _inputWriter.WriteLine("exit");
-                    _inputWriter.Flush();
-                    _inputWriter.Dispose();
-                }
-                catch { }
-            }
-
-            if (_powerShellProcess != null && !_powerShellProcess.HasExited)
-            {
-                try
-                {
-                    _powerShellProcess.Kill();
-                    _powerShellProcess.Dispose();
-                }
-                catch { }
-            }
         }
     }
 
     /// <summary>
     /// Represents a code completion item.
     /// </summary>
+    [Serializable]
     public class CompletionItem
     {
         public string CompletionText { get; set; }
@@ -285,6 +253,7 @@ Write-Output '###END_{marker}###'
     /// <summary>
     /// PowerShell completion result types (from System.Management.Automation.CompletionResultType).
     /// </summary>
+    [Serializable]
     public enum CompletionResultType
     {
         Text = 0,

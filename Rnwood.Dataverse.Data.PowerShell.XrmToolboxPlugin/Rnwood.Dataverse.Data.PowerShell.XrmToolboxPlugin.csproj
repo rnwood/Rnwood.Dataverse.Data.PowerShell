@@ -13,10 +13,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="XrmToolBoxPackage" Version="1.2025.7.71 "/>
+    <PackageReference Include="Markdig" Version="0.42.0" />
+    <PackageReference Include="System.Text.Json" Version="9.0.9" />
+    <PackageReference Include="XrmToolBoxPackage" Version="1.2025.7.71 " />
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.3" />
     <PackageReference Include="ConEmu.Control.WinForms" Version="1.21.9.5" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3351.48" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3537.50" />
+    <PackageReference Include="CliWrap" Version="3.6.6" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,14 +40,13 @@
     <EmbeddedResource Include="GettingStarted.md" />
   </ItemGroup>
 
-  <!-- Copy PowerShell module to output for bundling --><!--
+   <!--Copy PowerShell module to output for bundling--> 
   <Target Name="CopyPowerShellModule" AfterTargets="Build">
     <ItemGroup>
-      <ModuleFiles Include="..\Rnwood.Dataverse.Data.PowerShell\bin\$(Configuration)\netstandard2.0\**\*.*" />
+      <ModuleFiles Include="$(ProjectDir)..\Rnwood.Dataverse.Data.PowerShell\bin\$(Configuration)\netstandard2.0\**" />
     </ItemGroup>
-    <Copy SourceFiles="@(ModuleFiles)" 
-          DestinationFolder="$(OutputPath)PSModule\%(RecursiveDir)" 
-          SkipUnchangedFiles="true" />
-  </Target>-->
+	  <MakeDir Directories="$(OutDir)PSModule" />
+	  <Copy SourceFiles="@(ModuleFiles)" DestinationFolder="$(OutDir)PSModule\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>
