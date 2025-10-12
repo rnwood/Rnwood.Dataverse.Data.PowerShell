@@ -23,11 +23,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private ToolStripButton forwardButton;
         private ToolStripComboBox searchCombo;
         private WebView2 helpWebView2;
+        private bool comboPopulated = false;
+        private string pendingScrollId = null;
 
         private class ComboItem
         {
             public string Text { get; set; }
-            public string Id { get; set; }
+            public string Url { get; set; }
+            public string ScrollId { get; set; }
             public override string ToString() => Text;
         }
 
@@ -139,7 +142,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private void HomeButton_Click(object sender, EventArgs e)
         {
-            LoadAndShowHelp();
+            LoadAndShowHelp("gettingstarted");
         }
 
         private void BackButton_Click(object sender, EventArgs e)
@@ -162,70 +165,173 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             backButton.Enabled = helpWebView2.CoreWebView2?.CanGoBack == true;
             forwardButton.Enabled = helpWebView2.CoreWebView2?.CanGoForward == true;
+            if (pendingScrollId != null)
+            {
+                helpWebView2.CoreWebView2.ExecuteScriptAsync($"document.getElementById('{pendingScrollId}').scrollIntoView();");
+                pendingScrollId = null;
+            }
         }
 
         private void HelpControl_Load(object sender, EventArgs e)
         {
-            LoadAndShowHelp();
+            LoadAndShowHelp("gettingstarted");
         }
 
         public async void LoadAndShowHelp(string contentUrl = null)
         {
             try
             {
-                string readmeContent = null;
                 string helpContent;
+                if (!comboPopulated)
+                {
+                    using (HttpClient client = new HttpClient())
+                    {
+                        string readmeContent = await client.GetStringAsync("https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/main/README.md");
+                        PopulateSearchCombo(readmeContent);
+                        await AddCmdletsDocumentationItems();
+                        comboPopulated = true;
+                    }
+                }
 
                 using (HttpClient client = new HttpClient())
                 {
-                    if (contentUrl == null)
+                    if (contentUrl == "gettingstarted" || string.IsNullOrEmpty(contentUrl))
                     {
-                        try
+                        var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                        var resourceName = "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.GettingStarted.md";
+                        using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+                        using (StreamReader reader = new StreamReader(stream))
                         {
-                            readmeContent = await client.GetStringAsync("https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/main/README.md");
-                            helpContent = readmeContent;
-                        }
-                        catch
-                        {
-                            // Fallback to embedded GettingStarted.md for help
-                            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                            var resourceName = "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.GettingStarted.md";
-                            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-                            using (StreamReader reader = new StreamReader(stream))
-                            {
-                                helpContent = reader.ReadToEnd();
-                            }
+                            helpContent = reader.ReadToEnd();
                         }
                     }
                     else
                     {
-                        helpContent = await client.GetStringAsync(contentUrl);
+                        string url = contentUrl ?? "https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/main/README.md";
+                        helpContent = await client.GetStringAsync(url);
                     }
                 }
 
-                // Convert markdown to HTML using Markdig with auto identifiers
-                var pipeline = new MarkdownPipelineBuilder().UseAutoIdentifiers().Build();
+                // Convert markdown to HTML using Markdig with auto identifiers and table support
+                var pipeline = new MarkdownPipelineBuilder().UseAutoIdentifiers().UsePipeTables().Build();
                 string htmlContent = Markdown.ToHtml(helpContent, pipeline);
 
                 // Wrap in basic HTML structure
                 string html = $@"<html>
 <head>
 <style>
-body {{ font-family: Segoe UI; font-size: 14px; margin: 10px; }}
-code {{ font-family: Consolas; background-color: #f0f0f0; padding: 2px 4px; }}
-pre {{ background-color: #f0f0f0; padding: 10px; overflow-x: auto; }}
+body {{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 20px;
+    color: #333;
+    background-color: #fff;
+}}
+h1, h2, h3, h4, h5, h6 {{
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+}}
+h1 {{
+    font-size: 2em;
+    border-bottom: 1px solid #eaecef;
+    padding-bottom: 0.3em;
+}}
+h2 {{
+    font-size: 1.5em;
+    border-bottom: 1px solid #eaecef;
+    padding-bottom: 0.3em;
+}}
+h3 {{
+    font-size: 1.25em;
+}}
+h4 {{
+    font-size: 1em;
+}}
+h5 {{
+    font-size: 0.875em;
+}}
+h6 {{
+    font-size: 0.85em;
+    color: #6a737d;
+}}
+p {{
+    margin-bottom: 16px;
+}}
+code {{
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    background-color: #f6f8fa;
+    border-radius: 3px;
+    padding: 0.2em 0.4em;
+    font-size: 85%;
+    color: #d73a49;
+}}
+pre {{
+    background-color: #f6f8fa;
+    border-radius: 3px;
+    padding: 16px;
+    overflow-x: auto;
+    font-size: 85%;
+    line-height: 1.45;
+}}
+pre code {{
+    background: none;
+    padding: 0;
+    color: inherit;
+}}
+blockquote {{
+    border-left: 4px solid #dfe2e5;
+    padding: 0 16px;
+    color: #6a737d;
+    margin: 0 0 16px 0;
+}}
+table {{
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 16px;
+}}
+th, td {{
+    border: 1px solid #dfe2e5;
+    padding: 6px 13px;
+}}
+th {{
+    background-color: #f6f8fa;
+    font-weight: 600;
+}}
+tr:nth-child(even) {{
+    background-color: #f6f8fa;
+}}
+ul, ol {{
+    padding-left: 2em;
+    margin-bottom: 16px;
+}}
+li {{
+    margin-bottom: 4px;
+}}
+a {{
+    color: #0366d6;
+    text-decoration: none;
+}}
+a:hover {{
+    text-decoration: underline;
+}}
+img {{
+    max-width: 100%;
+    height: auto;
+}}
+hr {{
+    border: none;
+    border-top: 1px solid #eaecef;
+    margin: 24px 0;
+}}
 </style>
 </head>
 <body>
 {htmlContent}
 </body>
 </html>";
-
-                // Populate search combo from the loaded content
-                PopulateSearchCombo(helpContent);
-
-                // Add cmdlets documentation items
-                await AddCmdletsDocumentationItems();
 
                 // Ensure WebView2 is initialized
                 if (helpWebView2.CoreWebView2 == null)
@@ -245,19 +351,8 @@ pre {{ background-color: #f0f0f0; padding: 10px; overflow-x: auto; }}
         {
             if (searchCombo.SelectedItem is ComboItem item && helpWebView2.CoreWebView2 != null)
             {
-                if (item.Id == "cmdlets-docs")
-                {
-                    LoadAndShowHelp();
-                }
-                else if (item.Id.EndsWith(".md"))
-                {
-                    var contentUrl = $"https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/main/Rnwood.Dataverse.Data.PowerShell/docs/{item.Id}";
-                    LoadAndShowHelp(contentUrl);
-                }
-                else
-                {
-                    helpWebView2.CoreWebView2.ExecuteScriptAsync($"document.getElementById('{item.Id}').scrollIntoView();");
-                }
+                pendingScrollId = item.ScrollId;
+                LoadAndShowHelp(item.Url);
             }
         }
 
@@ -299,7 +394,7 @@ pre {{ background-color: #f0f0f0; padding: 10px; overflow-x: auto; }}
                 if (!string.IsNullOrEmpty(heading))
                 {
                     string id = GenerateId(heading);
-                    searchCombo.Items.Add(new ComboItem { Text = new string(' ', (headingBlock.Level - 1) * 2) + heading, Id = id });
+                    searchCombo.Items.Add(new ComboItem { Text = new string(' ', (headingBlock.Level - 1) * 2) + heading, Url = "https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/main/README.md", ScrollId = id });
                 }
             }
         }
@@ -319,11 +414,12 @@ pre {{ background-color: #f0f0f0; padding: 10px; overflow-x: auto; }}
                         .Select(e => e.GetProperty("name").GetString())
                         .ToList();
 
-                    searchCombo.Items.Add(new ComboItem { Text = "Cmdlets documentation", Id = "cmdlets-docs" });
+                    searchCombo.Items.Add(new ComboItem { Text = "Cmdlets documentation", Url = "https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/main/README.md", ScrollId = null });
                     foreach (var doc in docs)
                     {
                         var baseName = Path.GetFileNameWithoutExtension(doc);
-                        searchCombo.Items.Add(new ComboItem { Text = baseName, Id = doc });
+                        var contentUrl = $"https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/main/Rnwood.Dataverse.Data.PowerShell/docs/{doc}";
+                        searchCombo.Items.Add(new ComboItem { Text = baseName, Url = contentUrl, ScrollId = null });
                     }
                 }
             }
