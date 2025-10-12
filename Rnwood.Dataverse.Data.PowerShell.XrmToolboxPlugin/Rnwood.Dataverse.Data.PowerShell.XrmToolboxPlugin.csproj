@@ -13,6 +13,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="conemu.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Markdig" Version="0.42.0" />
     <PackageReference Include="System.Text.Json" Version="9.0.9" />
     <PackageReference Include="XrmToolBoxPackage" Version="1.2025.7.71 " />
@@ -37,6 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="conemu.xml" />
     <EmbeddedResource Include="GettingStarted.md" />
   </ItemGroup>
 

@@ -4,7 +4,9 @@ using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 using Microsoft.Xrm.Tooling.Connector;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Drawing;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
@@ -22,9 +24,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
     public partial class ConsoleControl : UserControl
     {
-        private ConEmuControl conEmuControl;
+        private TabControl tabControl;
+        private Dictionary<TabPage, ConEmuControl> conEmuControls = new Dictionary<TabPage, ConEmuControl>();
         private string pipeName;
         private CancellationTokenSource pipeServerCancellation;
+        private ConnectionInfo connectionInfo;
+        private int scriptSessionCounter = 1;
+        private CrmServiceClient service;
+        private ToolStrip toolStrip;
+        private ToolStripButton newInteractiveSessionButton;
 
         public ConsoleControl()
         {
@@ -33,25 +41,74 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private void InitializeComponent()
         {
-            this.conEmuControl = new ConEmuControl();
+            this.tabControl = new TabControl();
+            this.toolStrip = new ToolStrip();
+            this.newInteractiveSessionButton = new ToolStripButton();
             this.SuspendLayout();
-
-            // conEmuControl
-            this.conEmuControl.Dock = DockStyle.Fill;
-            this.conEmuControl.Location = new System.Drawing.Point(0, 0);
-            this.conEmuControl.Name = "conEmuControl";
-            this.conEmuControl.Size = new System.Drawing.Size(800, 600);
-            this.conEmuControl.TabIndex = 0;
-            this.conEmuControl.AutoStartInfo = null;
-
-            this.Controls.Add(this.conEmuControl);
+            // 
+            // toolStrip
+            // 
+            this.toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.newInteractiveSessionButton});
+            this.toolStrip.Location = new System.Drawing.Point(0, 0);
+            this.toolStrip.Name = "toolStrip";
+            this.toolStrip.Size = new System.Drawing.Size(800, 25);
+            this.toolStrip.TabIndex = 1;
+            this.toolStrip.Text = "toolStrip";
+            // 
+            // newInteractiveSessionButton
+            // 
+            this.newInteractiveSessionButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.newInteractiveSessionButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.newInteractiveSessionButton.Name = "newInteractiveSessionButton";
+            this.newInteractiveSessionButton.Size = new System.Drawing.Size(123, 22);
+            this.newInteractiveSessionButton.Text = "New Interactive Session";
+            this.newInteractiveSessionButton.Click += new System.EventHandler(this.NewInteractiveSessionButton_Click);
+            // 
+            // tabControl
+            // 
+            this.tabControl.Dock = DockStyle.Fill;
+            this.tabControl.Location = new System.Drawing.Point(0, 25);
+            this.tabControl.Name = "tabControl";
+            this.tabControl.Size = new System.Drawing.Size(800, 600);
+            this.tabControl.TabIndex = 0;
+            // 
+            // ConsoleControl
+            // 
+            this.Controls.Add(this.tabControl);
+            this.Controls.Add(this.toolStrip);
             this.Name = "ConsoleControl";
             this.Size = new System.Drawing.Size(800, 600);
             this.ResumeLayout(false);
+            this.PerformLayout();
+
+        }
+
+        private TabPage CreateConsoleTab(string title, ConEmuControl emuControl)
+        {
+            TabPage tabPage = new TabPage(title);
+            emuControl.Dock = DockStyle.Fill;
+            tabPage.Controls.Add(emuControl);
+            Button closeButton = new Button();
+            closeButton.Text = "X";
+            closeButton.Size = new Size(20, 20);
+            closeButton.Location = new Point(tabPage.Width - 25, 5);
+            closeButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            closeButton.Click += (s, e) => {
+                tabControl.TabPages.Remove(tabPage);
+                if (conEmuControls.ContainsKey(tabPage)) {
+                    conEmuControls[tabPage].Dispose();
+                    conEmuControls.Remove(tabPage);
+                }
+            };
+            tabPage.Controls.Add(closeButton);
+            closeButton.BringToFront();
+            return tabPage;
         }
 
         public void StartEmbeddedPowerShellConsole(CrmServiceClient service)
         {
+            this.service = service;
             try
             {
                 // Get the bundled module path
@@ -67,6 +124,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
                 // Extract connection information from XrmToolbox
                 var connectionInfo = ExtractConnectionInformation(service);
+                this.connectionInfo = connectionInfo;
 
                 // Start pipe server in background
                 if (connectionInfo != null)
@@ -74,7 +132,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     Task.Run(() => StartPipeServer(connectionInfo, pipeServerCancellation.Token));
                 }
 
-                string connectionScript = GenerateConnectionScript(bundledModulePath, connectionInfo != null ? pipeName : null);
+                string connectionScript = GenerateConnectionScript(bundledModulePath, connectionInfo != null ? pipeName : null, "");
                 File.WriteAllText(tempScriptPath, connectionScript);
 
                 // Configure ConEmu startup  
@@ -82,15 +140,49 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 startInfo.ConsoleProcessCommandLine = $"powershell.exe -NoExit -ExecutionPolicy Bypass -File \"{tempScriptPath}\"";
                 startInfo.StartupDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 startInfo.ConEmuConsoleExtenderExecutablePath = Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "conemu", "conemuc.exe"); // Use default
+                var configXml = new System.Xml.XmlDocument();
+                var assembly = Assembly.GetExecutingAssembly();
+                using (Stream stream = assembly.GetManifestResourceStream("Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.conemu.xml"))
+                {
+                    configXml.Load(stream);
+
+                }
+                startInfo.BaseConfiguration = configXml; // Smaller font
+
+                // Create new ConEmuControl
+                ConEmuControl newConEmuControl = new ConEmuControl();
+                newConEmuControl.AutoStartInfo = null;
+
+                TabPage tabPage = CreateConsoleTab("Main Console", newConEmuControl);
+
+                conEmuControls[tabPage] = newConEmuControl;
+
+                tabControl.TabPages.Add(tabPage);
+                tabControl.SelectedTab = tabPage;
 
                 // Start the embedded PowerShell console
-                conEmuControl.Start(startInfo);
+                newConEmuControl.Start(startInfo).ConsoleProcessExited += (s, e) =>
+                {
+                    this.Invoke((MethodInvoker)delegate {
+                        tabControl.TabPages.Remove(tabPage);
+                        if (conEmuControls.ContainsKey(tabPage))
+                        {
+                            conEmuControls[tabPage].Dispose();
+                            conEmuControls.Remove(tabPage);
+                        }
+                    });
+                };
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to start PowerShell console: {ex.Message}.",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void ConsoleControl_ConsoleProcessExited(object sender, ConsoleProcessExitedEventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         private void StartPipeServer(ConnectionInfo connectionInfo, CancellationToken cancellationToken)
@@ -229,7 +321,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        private string GenerateConnectionScript(string bundledModulePath, string pipeName)
+        private string GenerateConnectionScript(string bundledModulePath, string pipeName, string userScript)
         {
             string script = $@"
 # Check PowerShell execution environment
@@ -362,16 +454,10 @@ try {{
             {
                 script += @"
 Write-Host 'To connect to your Dataverse environment, run:' -ForegroundColor Yellow
-Write-Host '  Get-DataverseConnection -Interactive  -SetAsDefault -ForegroundColor Cyan
+Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundColor Cyan
 ";
             }
 
-            script += @"
-Remove-Item $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
-function prompt {
-    ""XrmToolbox PS $($executionContext.SessionState.Path.CurrentLocation)> ""
-}
-";
 
             return script;
         }
@@ -391,16 +477,120 @@ function prompt {
                 }
             }
 
-            if (conEmuControl != null && conEmuControl.IsConsoleEmulatorOpen)
+            foreach (var emu in conEmuControls.Values)
+            {
+                if (emu.IsConsoleEmulatorOpen)
+                {
+                    try
+                    {
+                        emu.Dispose();
+                    }
+                    catch
+                    {
+                        // Ignore errors when disposing
+                    }
+                }
+            }
+            conEmuControls.Clear();
+        }
+
+        public void StartScriptSession(string script)
+        {
+            StartScriptSession(script, connectionInfo);
+        }
+
+        public void StartScriptSession(string script, ConnectionInfo connectionInfo)
+        {
+            string bundledModulePath = Path.Combine(Path.GetDirectoryName(GetType().Assembly.Location), "PSModule");
+
+            string pipeName = null;
+            CancellationTokenSource scriptPipeCancellation = null;
+
+            if (connectionInfo != null)
+            {
+                pipeName = $"XrmToolbox_Script_{Guid.NewGuid()}";
+                scriptPipeCancellation = new CancellationTokenSource();
+                Task.Run(() => StartPipeServer(connectionInfo, scriptPipeCancellation.Token));
+            }
+
+            string connectionScript = GenerateConnectionScript(bundledModulePath, pipeName, script);
+            string tempScriptPath = Path.Combine(Path.GetTempPath(), $"xrmtoolbox-script-{Guid.NewGuid()}.ps1");
+            File.WriteAllText(tempScriptPath, connectionScript);
+
+            ConEmuStartInfo startInfo = new ConEmuStartInfo();
+            startInfo.ConsoleProcessCommandLine = $"powershell.exe -ExecutionPolicy Bypass -NoExit -File \"{tempScriptPath}\"";
+            startInfo.StartupDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            startInfo.ConEmuConsoleExtenderExecutablePath = Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "conemu", "conemuc.exe");
+
+            var configXml = new System.Xml.XmlDocument();
+            var assembly = Assembly.GetExecutingAssembly();
+            using (Stream stream = assembly.GetManifestResourceStream("Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.conemu.xml"))
+            {
+                if (stream != null)
+                {
+                    configXml.Load(stream);
+                }
+                else
+                {
+                    // Fallback to inline XML if resource not found
+                    configXml.LoadXml(@"<?xml version=""1.0"" encoding=""utf-8""?>
+<key name=""Software"">
+  <key name=""ConEmu"">
+    <key name="".Vanilla"">
+      <value name=""FontSize"" type=""dword"" data=""00000008""/>
+    </key>
+  </key>
+</key>");
+                }
+            }
+            startInfo.BaseConfiguration = configXml;
+
+            // Create new ConEmuControl
+            ConEmuControl newConEmuControl = new ConEmuControl();
+            newConEmuControl.AutoStartInfo = null;
+
+            TabPage tabPage = CreateConsoleTab($"Script Session {scriptSessionCounter++}", newConEmuControl);
+
+            conEmuControls[tabPage] = newConEmuControl;
+
+            tabControl.TabPages.Add(tabPage);
+            tabControl.SelectedTab = tabPage;
+
+            // Start the script session
+            newConEmuControl.Start(startInfo).ConsoleProcessExited += (s, e) =>
+            {
+                this.Invoke((MethodInvoker)delegate
+                {
+                    tabControl.TabPages.Remove(tabPage);
+                    if (conEmuControls.ContainsKey(tabPage))
+                    {
+                        conEmuControls[tabPage].Dispose();
+                        conEmuControls.Remove(tabPage);
+                    }
+                });
+            };
+
+            // Schedule cleanup
+            _ = Task.Delay(30000).ContinueWith(t =>
             {
                 try
                 {
-                    conEmuControl.Dispose();
+                    if (File.Exists(tempScriptPath))
+                    {
+                        File.Delete(tempScriptPath);
+                    }
                 }
                 catch
                 {
-                    // Ignore errors when disposing
                 }
+            });
+        }
+
+        private void NewInteractiveSessionButton_Click(object sender, EventArgs e)
+        {
+            if (service != null)
+            {
+                StartEmbeddedPowerShellConsole(service);
             }
         }
     }

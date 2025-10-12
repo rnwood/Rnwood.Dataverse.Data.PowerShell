@@ -30,6 +30,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private ScriptEditorControl scriptEditorControl;
         private TabControl tabControl;
         private ScriptGalleryControl scriptGalleryControl;
+        private ConsoleControl.ConnectionInfo connectionInfo;
 
         public PowerShellConsolePlugin()
         {
@@ -203,7 +204,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 helpControl.LoadAndShowHelp();
 
                 // Extract connection info for script editor
-                var connectionInfo = ConsoleControl.ExtractConnectionInfo(Service as CrmServiceClient);
+                this.connectionInfo = ConsoleControl.ExtractConnectionInfo(Service as CrmServiceClient);
                 if (connectionInfo != null)
                 {
                     scriptEditorControl.InitializeMonacoEditor(connectionInfo.Token, connectionInfo.Url);
@@ -239,33 +240,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     return;
                 }
 
-                // Create temporary script file
-                string tempScriptPath = Path.Combine(Path.GetTempPath(), $"xrmtoolbox-script-{Guid.NewGuid()}.ps1");
-                File.WriteAllText(tempScriptPath, script);
-
-                // The ConEmu control doesn't expose direct input methods
-                // Instead, we'll write the script to a file and have the user run it manually
-                // Or we can use a more sophisticated approach with named pipes
-
-                // For now, display message to user
-                MessageBox.Show($"Script ready to execute.\n\nRun this command in the console:\n& '{tempScriptPath}'",
-                    "Script Ready", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                // Schedule cleanup after some time
-                _ = Task.Delay(30000).ContinueWith(t =>
-                {
-                    try
-                    {
-                        if (File.Exists(tempScriptPath))
-                        {
-                            File.Delete(tempScriptPath);
-                        }
-                    }
-                    catch
-                    {
-                        // Ignore cleanup errors
-                    }
-                });
+                // Send script to console for execution
+                consoleControl.StartScriptSession(script, connectionInfo);
             }
             catch (Exception ex)
             {
