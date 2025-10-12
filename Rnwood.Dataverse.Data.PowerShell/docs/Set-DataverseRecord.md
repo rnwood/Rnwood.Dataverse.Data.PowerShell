@@ -98,14 +98,6 @@ After create/update, additional operations are batched if needed:
 - Assignment (`AssignRequest`) if `ownerid` column is set
 - Status change (`SetStateRequest`) if `statecode` or `statuscode` columns are set
 
-**Assigning records**
-
-If the input object contains an `ownerid` property the cmdlet will perform an assignment after the main create/update. `ownerid` accepts the same forms as other lookup columns: a GUID, a PSObject with `Id` and `TableName`/`LogicalName` properties (or an `EntityReference`), or a name string which the cmdlet will try to resolve. Assignments are executed with `AssignRequest` and will be batched when `-BatchSize` &gt; 1.
-
-**Setting state/status**
-
-To change a record's state/status include `statuscode` (and optionally `statecode`) on the input object. `statuscode` and `statecode` accept either the numeric value or the display label. If only `statuscode` is provided the cmdlet will infer the matching `statecode` from the table metadata and then issue a `SetStateRequest` after the main create/update. State/status requests are executed separately and are batched when `-BatchSize` &gt; 1.
-
 ## EXAMPLES
 
 ### Example 1: Create a single record
@@ -220,6 +212,7 @@ PS C:\> @{
     firstname = "John"
     lastname = "Doe"
     parentcustomerid = "Contoso Ltd"  # Lookup by account name
+    "parentcustomerid@logicalname" = "account"
 } | Set-DataverseRecord -Connection $c -TableName contact
 ```
 
@@ -321,6 +314,7 @@ PS C:\> $contact = @{
     firstname = "John"
     lastname = "Doe"
     parentcustomerid = $account.Id
+    "parentcustomerid@logicalname" = "account"
 } | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -PassThru
 
 PS C:\> Write-Host "Created contact $($contact.Id) linked to account $($account.Id)"
@@ -718,7 +712,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.String
 ### System.String[]
 ### System.Guid
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Object

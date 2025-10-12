@@ -70,6 +70,12 @@ Get-DataverseConnection [-SetAsDefault] [-Url <Uri>] [-ManagedIdentity] [-Manage
  [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### Authenticate with access token
+```
+Get-DataverseConnection [-SetAsDefault] -Url <Uri> -AccessToken <String> [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ## DESCRIPTION
 
 This cmdlet establishes a connection to a Microsoft Dataverse environment which can then be used with other cmdlets in this module.
@@ -86,6 +92,7 @@ Multiple authentication methods are supported:
 - DefaultAzureCredential (automatic credential discovery for Azure environments)
 - ManagedIdentityCredential (for Azure managed identity authentication)
 - Connection string (for advanced scenarios)
+- Access token (for pre-authenticated scenarios)
 - Mock connection (for testing)
 
 ## EXAMPLES
@@ -131,6 +138,13 @@ PS C:\> $c = Get-DataverseConnection -Interactive
 ```
 
 Authenticates interactively without specifying a URL. The cmdlet will automatically display a list of available Dataverse environments for the user to select from. This is useful when you have access to multiple environments and don't want to manually specify the URL.
+
+### Example 7
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -AccessToken "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6..."
+```
+
+Gets a connection to MYORG using a pre-obtained access token. This is useful when you have already authenticated and obtained a token through other means.
 
 ## PARAMETERS
 
@@ -346,7 +360,7 @@ URL of the Dataverse environment to connect to. For example https://myorg.crm11.
 
 ```yaml
 Type: Uri
-Parameter Sets: Return a mock connection, Authenticate with client secret, Authenticate with Dataverse SDK connection string.
+Parameter Sets: Return a mock connection, Authenticate with client secret, Authenticate with Dataverse SDK connection string., Authenticate with access token
 Aliases:
 
 Required: True
@@ -404,6 +418,21 @@ Parameter Sets: (All)
 Aliases: proga
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AccessToken
+Access token to use for authentication.
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with access token
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False

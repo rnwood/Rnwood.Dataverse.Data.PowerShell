@@ -47,23 +47,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         tableName = tn;
                     }
 
-                    foreach (DictionaryEntry entry in fakeBoundParameters)
-                    {
-                        var key = entry.Key as string;
-                        if (string.Equals(key, "Connection", StringComparison.OrdinalIgnoreCase))
-                        {
-                            if (entry.Value is ServiceClient sc)
-                            {
-                                connectionObj = sc;
-                            }
-                            else if (entry.Value is PSObject pso && pso.BaseObject is ServiceClient sc2)
-                            {
-                                connectionObj = sc2;
-                            }
-
-                            break;
-                        }
-                    }
+                    connectionObj = ArgumentCompleterUtils.GetConnection(fakeBoundParameters);
                 }
 
                 if (string.IsNullOrEmpty(tableName) || connectionObj == null)

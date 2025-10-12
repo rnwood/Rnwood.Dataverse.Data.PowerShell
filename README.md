@@ -238,6 +238,15 @@ Advanced scenarios using connection strings.
 $c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -connectionstring "AuthType=ClientSecret;ClientId=3004eb1e-7a00-45e0-a1dc-6703735eac18;ClientSecret=itsasecret;Url=https://myorg.crm11.dynamics.com"
 ```
 
+##### Access Token
+Pre-authenticated scenarios using an existing access token.
+
+*Example: Using a pre-obtained access token:*
+```powershell
+$c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -AccessToken "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6..."
+```
+
+
 ### Main Cmdlets
 
 The module exposes a small set of main cmdlets for common operations. See the detailed docs linked below for full parameter lists and examples.

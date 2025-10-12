@@ -96,4 +96,30 @@ Describe "Module" {
         $urlParamDeviceCode.IsMandatory | Should -Be $false
     }
 
+    It "Get-DataverseConnection supports access token parameter set" {
+        . $PSScriptRoot/Common.ps1
+        
+        # Import module if not already loaded
+        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+        }
+        
+        $cmd = Get-Command Get-DataverseConnection
+        $cmd | Should -Not -BeNull
+        
+        # Check that access token parameter set exists
+        $accessTokenParamSet = $cmd.ParameterSets | Where-Object { $_.Name -eq "Authenticate with access token" }
+        $accessTokenParamSet | Should -Not -BeNull
+        
+        # Check that URL is mandatory in the access token parameter set
+        $urlParam = $accessTokenParamSet.Parameters | Where-Object { $_.Name -eq "Url" }
+        $urlParam | Should -Not -BeNull
+        $urlParam.IsMandatory | Should -Be $true
+        
+        # Check that AccessToken is mandatory
+        $accessTokenParam = $accessTokenParamSet.Parameters | Where-Object { $_.Name -eq "AccessToken" }
+        $accessTokenParam | Should -Not -BeNull
+        $accessTokenParam.IsMandatory | Should -Be $true
+    }
+
 }

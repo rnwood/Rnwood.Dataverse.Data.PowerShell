@@ -137,7 +137,7 @@
       "command": "dotnet",
       "args": [
         "build",
-        "${workspaceFolder}/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.csproj",
+        "${workspaceFolder}/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.csproj",
         "-c",
         "Debug"
       ],
@@ -146,26 +146,6 @@
         "reveal": "silent"
       },
       "problemMatcher": "$msCompile"
-    },
-    {
-      "label": "Start XrmToolbox with Plugin",
-      "type": "shell",
-      "command": "powershell.exe",
-      "args": [
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        "${workspaceFolder}\\scripts\\Start-XrmToolbox.ps1",
-        "-BuildConfiguration",
-        "Debug"
-      ],
-      "dependsOn": ["Build XrmToolbox Plugin"],
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "panel": "shared"
-      },
-      "problemMatcher": []
     }
   ]
 }
