@@ -112,6 +112,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### Microsoft.Xrm.Sdk.EntityReference[]
+
 ## OUTPUTS
 
 ### System.Object

@@ -16,6 +16,7 @@ using ConEmu.WinForms;
 using Microsoft.Web.WebView2.WinForms;
 using Microsoft.Web.WebView2.Core;
 using System.Text;
+using System.ComponentModel.Composition;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
@@ -24,15 +25,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private ConEmuControl conEmuControl;
         private string pipeName;
         private CancellationTokenSource pipeServerCancellation;
-        private Button helpButton;
-        private Panel helpPanel;
+        private SplitContainer splitContainer;
         private RichTextBox helpTextBox;
-        private Button closeHelpButton;
-        
-        // Script editor components
+        private Button toggleViewButton;
         private Panel editorPanel;
         private WebView2 editorWebView;
-        private Button toggleViewButton;
         private Panel editorToolbar;
         private Button runScriptButton;
         private Button newScriptButton;
@@ -40,7 +37,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private Button saveScriptButton;
         private bool isEditorView = false;
         private string currentScriptPath = null;
-        
+
         // PowerShell completion service
         private PowerShellCompletionService _completionService;
 
@@ -52,13 +49,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private void InitializeComponent()
         {
             this.conEmuControl = new ConEmuControl();
-            this.helpButton = new Button();
-            this.helpPanel = new Panel();
+            this.splitContainer = new SplitContainer();
             this.helpTextBox = new RichTextBox();
-            this.closeHelpButton = new Button();
-            
+            this.toggleViewButton = new Button();
+
             this.SuspendLayout();
-            
+
             // conEmuControl
             this.conEmuControl.Dock = DockStyle.Fill;
             this.conEmuControl.Location = new System.Drawing.Point(0, 0);
@@ -66,58 +62,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.conEmuControl.Size = new System.Drawing.Size(800, 600);
             this.conEmuControl.TabIndex = 0;
             this.conEmuControl.AutoStartInfo = null;
-            
-            // helpButton
-            this.helpButton.Text = "? Help";
-            this.helpButton.Size = new System.Drawing.Size(80, 30);
-            this.helpButton.Location = new System.Drawing.Point(10, 10);
-            this.helpButton.BackColor = System.Drawing.Color.FromArgb(0, 120, 215);
-            this.helpButton.ForeColor = System.Drawing.Color.White;
-            this.helpButton.FlatStyle = FlatStyle.Flat;
-            this.helpButton.FlatAppearance.BorderSize = 0;
-            this.helpButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.helpButton.Cursor = Cursors.Hand;
-            this.helpButton.TabIndex = 1;
-            this.helpButton.Click += HelpButton_Click;
-            
-            // helpPanel
-            this.helpPanel.Visible = false;
-            this.helpPanel.Dock = DockStyle.Fill;
-            this.helpPanel.BackColor = System.Drawing.Color.White;
-            this.helpPanel.BorderStyle = BorderStyle.FixedSingle;
-            this.helpPanel.Padding = new Padding(10);
-            
-            // closeHelpButton
-            this.closeHelpButton.Text = "Close";
-            this.closeHelpButton.Size = new System.Drawing.Size(100, 35);
-            this.closeHelpButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            this.closeHelpButton.Location = new System.Drawing.Point(this.helpPanel.Width - 120, this.helpPanel.Height - 50);
-            this.closeHelpButton.BackColor = System.Drawing.Color.FromArgb(0, 120, 215);
-            this.closeHelpButton.ForeColor = System.Drawing.Color.White;
-            this.closeHelpButton.FlatStyle = FlatStyle.Flat;
-            this.closeHelpButton.FlatAppearance.BorderSize = 0;
-            this.closeHelpButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.closeHelpButton.Cursor = Cursors.Hand;
-            this.closeHelpButton.Click += CloseHelpButton_Click;
-            
+
+            // splitContainer
+            this.splitContainer.Dock = DockStyle.Fill;
+            this.splitContainer.Orientation = Orientation.Vertical;
+
+
+            // Add controls to Panel1 (main content area)
+            this.splitContainer.Panel1.Controls.Add(this.conEmuControl);
+            this.splitContainer.Panel1.Controls.Add(this.editorPanel);
+
             // helpTextBox
             this.helpTextBox.ReadOnly = true;
             this.helpTextBox.Dock = DockStyle.Fill;
             this.helpTextBox.BorderStyle = BorderStyle.None;
             this.helpTextBox.BackColor = System.Drawing.Color.White;
             this.helpTextBox.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.helpTextBox.Padding = new Padding(10);
-            
-            this.helpPanel.Controls.Add(this.helpTextBox);
-            this.helpPanel.Controls.Add(this.closeHelpButton);
-            this.closeHelpButton.BringToFront();
-            
+            this.helpTextBox.TabIndex = 1;
+
+            // Add helpTextBox to Panel2
+            this.splitContainer.Panel2.Controls.Add(this.helpTextBox);
+            this.splitContainer.Panel2.Padding = new Padding(10);
+
             // toggleViewButton
-            this.toggleViewButton = new Button();
             this.toggleViewButton.Text = "📝 Script Editor";
             this.toggleViewButton.Size = new System.Drawing.Size(140, 30);
-            this.toggleViewButton.Location = new System.Drawing.Point(this.Width - 150, 10);
-            this.toggleViewButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            this.toggleViewButton.Location = new System.Drawing.Point(10, 10);
+            this.toggleViewButton.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             this.toggleViewButton.BackColor = System.Drawing.Color.FromArgb(0, 120, 215);
             this.toggleViewButton.ForeColor = System.Drawing.Color.White;
             this.toggleViewButton.FlatStyle = FlatStyle.Flat;
@@ -126,20 +97,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.toggleViewButton.Cursor = Cursors.Hand;
             this.toggleViewButton.TabIndex = 2;
             this.toggleViewButton.Click += ToggleViewButton_Click;
-            
+
             // editorPanel
             this.editorPanel = new Panel();
             this.editorPanel.Dock = DockStyle.Fill;
             this.editorPanel.Visible = false;
             this.editorPanel.BackColor = System.Drawing.Color.FromArgb(30, 30, 30);
-            
+
             // editorToolbar
             this.editorToolbar = new Panel();
             this.editorToolbar.Dock = DockStyle.Top;
             this.editorToolbar.Height = 45;
             this.editorToolbar.BackColor = System.Drawing.Color.FromArgb(45, 45, 45);
             this.editorToolbar.Padding = new Padding(5);
-            
+
             // runScriptButton
             this.runScriptButton = new Button();
             this.runScriptButton.Text = "▶ Run (F5)";
@@ -152,7 +123,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.runScriptButton.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.runScriptButton.Cursor = Cursors.Hand;
             this.runScriptButton.Click += RunScriptButton_Click;
-            
+
             // newScriptButton
             this.newScriptButton = new Button();
             this.newScriptButton.Text = "📄 New";
@@ -165,7 +136,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.newScriptButton.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.newScriptButton.Cursor = Cursors.Hand;
             this.newScriptButton.Click += NewScriptButton_Click;
-            
+
             // openScriptButton
             this.openScriptButton = new Button();
             this.openScriptButton.Text = "📁 Open";
@@ -178,7 +149,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.openScriptButton.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.openScriptButton.Cursor = Cursors.Hand;
             this.openScriptButton.Click += OpenScriptButton_Click;
-            
+
             // saveScriptButton
             this.saveScriptButton = new Button();
             this.saveScriptButton.Text = "💾 Save";
@@ -191,30 +162,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.saveScriptButton.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.saveScriptButton.Cursor = Cursors.Hand;
             this.saveScriptButton.Click += SaveScriptButton_Click;
-            
+
             this.editorToolbar.Controls.Add(this.runScriptButton);
             this.editorToolbar.Controls.Add(this.newScriptButton);
             this.editorToolbar.Controls.Add(this.openScriptButton);
             this.editorToolbar.Controls.Add(this.saveScriptButton);
-            
+
             // editorWebView
             this.editorWebView = new WebView2();
             this.editorWebView.Dock = DockStyle.Fill;
-            
+
             this.editorPanel.Controls.Add(this.editorWebView);
             this.editorPanel.Controls.Add(this.editorToolbar);
-            
+
             // PowerShellConsolePlugin
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = AutoScaleMode.Font;
-            this.Controls.Add(this.conEmuControl);
-            this.Controls.Add(this.editorPanel);
-            this.Controls.Add(this.helpButton);
+            this.Controls.Add(this.splitContainer);
             this.Controls.Add(this.toggleViewButton);
-            this.Controls.Add(this.helpPanel);
-            this.helpButton.BringToFront();
-            this.toggleViewButton.BringToFront();
-            this.helpPanel.BringToFront();
             this.Name = "PowerShellConsolePlugin";
             this.Size = new System.Drawing.Size(800, 600);
             this.Load += PowerShellConsolePlugin_Load;
@@ -232,6 +197,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             {
                 StartEmbeddedPowerShellConsole();
                 InitializeMonacoEditor();
+                LoadAndShowHelp();
             }
         }
 
@@ -242,23 +208,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 // Get the bundled module path
                 string pluginDirectory = Path.GetDirectoryName(GetType().Assembly.Location);
                 string bundledModulePath = Path.Combine(pluginDirectory, "PSModule");
-                
+
                 // Create temporary initialization script
                 string tempScriptPath = Path.Combine(Path.GetTempPath(), $"xrmtoolbox-ps-init-{Guid.NewGuid()}.ps1");
-                
+
                 // Start named pipe server for connection data
                 pipeName = $"XrmToolbox_{Guid.NewGuid()}";
                 pipeServerCancellation = new CancellationTokenSource();
-                
+
                 // Extract connection information from XrmToolbox
                 var connectionInfo = ExtractConnectionInformation();
-                
+
                 // Start pipe server in background
                 if (connectionInfo != null)
                 {
                     Task.Run(() => StartPipeServer(connectionInfo, pipeServerCancellation.Token));
                 }
-                
+
                 string connectionScript = GenerateConnectionScript(bundledModulePath, connectionInfo != null ? pipeName : null);
                 File.WriteAllText(tempScriptPath, connectionScript);
 
@@ -266,14 +232,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 ConEmuStartInfo startInfo = new ConEmuStartInfo();
                 startInfo.ConsoleProcessCommandLine = $"powershell.exe -NoExit -ExecutionPolicy Bypass -File \"{tempScriptPath}\"";
                 startInfo.StartupDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                startInfo.ConEmuConsoleExtenderExecutablePath = null; // Use default
-                
+                startInfo.ConEmuConsoleExtenderExecutablePath = Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "conemu", "conemuc.exe"); // Use default
+
                 // Start the embedded PowerShell console
                 conEmuControl.Start(startInfo);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to start PowerShell console: {ex.Message}\n\nPlease ensure ConEmu is installed or the ConEmu.Control package is properly configured.", 
+                MessageBox.Show($"Failed to start PowerShell console: {ex.Message}\n\nPlease ensure ConEmu is installed or the ConEmu.Control package is properly configured.",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -282,7 +248,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             try
             {
-                using (var pipeServer = new NamedPipeServerStream(pipeName, PipeDirection.Out, 1, 
+                using (var pipeServer = new NamedPipeServerStream(pipeName, PipeDirection.Out, 1,
                     PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
                 {
                     // Wait for connection with timeout
@@ -349,11 +315,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 try
                 {
                     // Use reflection to access the internal access token
-                    var currentAccessTokenField = client.GetType().GetProperty("CurrentAccessToken", 
-                        System.Reflection.BindingFlags.Instance | 
-                        System.Reflection.BindingFlags.Public | 
+                    var currentAccessTokenField = client.GetType().GetProperty("CurrentAccessToken",
+                        System.Reflection.BindingFlags.Instance |
+                        System.Reflection.BindingFlags.Public |
                         System.Reflection.BindingFlags.NonPublic);
-                    
+
                     if (currentAccessTokenField != null)
                     {
                         accessToken = currentAccessTokenField.GetValue(client) as string;
@@ -370,7 +336,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     Token = accessToken
                 };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Could not extract connection information, will fall back to manual connection
                 return null;
@@ -580,14 +546,178 @@ function prompt {
             return script;
         }
 
-        private void HelpButton_Click(object sender, EventArgs e)
+        private void ToggleViewButton_Click(object sender, EventArgs e)
         {
-            LoadAndShowHelp();
+            isEditorView = !isEditorView;
+
+            if (isEditorView)
+            {
+                // Switch to editor view
+                conEmuControl.Visible = false;
+                editorPanel.Visible = true;
+                toggleViewButton.Text = "💻 Console";
+            }
+            else
+            {
+                // Switch to console view
+                editorPanel.Visible = false;
+                conEmuControl.Visible = true;
+                toggleViewButton.Text = "📝 Script Editor";
+            }
         }
 
-        private void CloseHelpButton_Click(object sender, EventArgs e)
+        private async void RunScriptButton_Click(object sender, EventArgs e)
         {
-            helpPanel.Visible = false;
+            try
+            {
+                // Get script content from Monaco editor
+                string script = await editorWebView.ExecuteScriptAsync("getContent()");
+
+                // Remove JSON string quotes
+                script = script.Trim('"').Replace("\\n", "\n").Replace("\\r", "\r")
+                    .Replace("\\\"", "\"").Replace("\\\\", "\\");
+
+                if (string.IsNullOrWhiteSpace(script))
+                {
+                    MessageBox.Show("Script is empty. Please enter some PowerShell commands.",
+                        "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                // Switch to console view
+                ToggleViewButton_Click(null, null);
+
+                // Give console time to become visible
+                await Task.Delay(100);
+
+                // Create temporary script file
+                string tempScriptPath = Path.Combine(Path.GetTempPath(), $"xrmtoolbox-script-{Guid.NewGuid()}.ps1");
+                File.WriteAllText(tempScriptPath, script);
+
+                // The ConEmu control doesn't expose direct input methods
+                // Instead, we'll write the script to a file and have the user run it manually
+                // Or we can use a more sophisticated approach with named pipes
+
+                // For now, display message to user
+                MessageBox.Show($"Script ready to execute.\n\nRun this command in the console:\n& '{tempScriptPath}'",
+                    "Script Ready", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Schedule cleanup after some time
+                _ = Task.Delay(30000).ContinueWith(t =>
+                {
+                    try
+                    {
+                        if (File.Exists(tempScriptPath))
+                        {
+                            File.Delete(tempScriptPath);
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore cleanup errors
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to run script: {ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void NewScriptButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (MessageBox.Show("Create a new script? Any unsaved changes will be lost.",
+                    "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    editorWebView.ExecuteScriptAsync("setContent('# PowerShell Script\\n# Type your PowerShell commands here\\n# Press F5 or click Run to execute\\n\\n')");
+                    currentScriptPath = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to create new script: {ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void OpenScriptButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (OpenFileDialog dialog = new OpenFileDialog())
+                {
+                    dialog.Filter = "PowerShell Scripts (*.ps1)|*.ps1|All Files (*.*)|*.*";
+                    dialog.Title = "Open PowerShell Script";
+
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                    {
+                        string content = File.ReadAllText(dialog.FileName);
+
+                        // Escape for JavaScript
+                        content = content.Replace("\\", "\\\\")
+                                       .Replace("'", "\\'")
+                                       .Replace("\n", "\\n")
+                                       .Replace("\r", "\\r")
+                                       .Replace("\"", "\\\"");
+
+                        await editorWebView.ExecuteScriptAsync($"setContent('{content}')");
+                        currentScriptPath = dialog.FileName;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to open script: {ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void SaveScriptButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string scriptPath = currentScriptPath;
+
+                if (string.IsNullOrEmpty(scriptPath))
+                {
+                    using (SaveFileDialog dialog = new SaveFileDialog())
+                    {
+                        dialog.Filter = "PowerShell Scripts (*.ps1)|*.ps1|All Files (*.*)|*.*";
+                        dialog.Title = "Save PowerShell Script";
+                        dialog.DefaultExt = "ps1";
+
+                        if (dialog.ShowDialog() == DialogResult.OK)
+                        {
+                            scriptPath = dialog.FileName;
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
+                }
+
+                // Get script content
+                string script = await editorWebView.ExecuteScriptAsync("getContent()");
+
+                // Remove JSON string quotes and unescape
+                script = script.Trim('"').Replace("\\n", "\n").Replace("\\r", "\r")
+                    .Replace("\\\"", "\"").Replace("\\\\", "\\");
+
+                File.WriteAllText(scriptPath, script);
+                currentScriptPath = scriptPath;
+
+                MessageBox.Show($"Script saved to: {scriptPath}",
+                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to save script: {ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void LoadAndShowHelp()
@@ -597,7 +727,7 @@ function prompt {
                 // Load the embedded markdown file
                 var assembly = System.Reflection.Assembly.GetExecutingAssembly();
                 var resourceName = "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.GettingStarted.md";
-                
+
                 using (Stream stream = assembly.GetManifestResourceStream(resourceName))
                 {
                     if (stream != null)
@@ -605,12 +735,11 @@ function prompt {
                         using (StreamReader reader = new StreamReader(stream))
                         {
                             string markdownContent = reader.ReadToEnd();
-                            
+
                             // Convert markdown to formatted text (basic conversion)
                             string formattedText = ConvertMarkdownToRichText(markdownContent);
-                            
+
                             helpTextBox.Rtf = formattedText;
-                            helpPanel.Visible = true;
                         }
                     }
                     else
@@ -627,7 +756,6 @@ Quick Commands:
 
 For full documentation, visit:
 https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
-                        helpPanel.Visible = true;
                     }
                 }
             }
@@ -644,10 +772,10 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
             rtf.AppendLine(@"{\rtf1\ansi\deff0");
             rtf.AppendLine(@"{\fonttbl{\f0 Segoe UI;}{\f1 Consolas;}}");
             rtf.AppendLine(@"{\colortbl;\red0\green0\blue0;\red0\green120\blue215;\red50\green50\blue50;\red200\green200\blue200;}");
-            
+
             var lines = markdown.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             bool inCodeBlock = false;
-            
+
             foreach (var line in lines)
             {
                 if (line.StartsWith("```"))
@@ -655,7 +783,7 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                     inCodeBlock = !inCodeBlock;
                     continue;
                 }
-                
+
                 if (inCodeBlock)
                 {
                     // Code block - use monospace font and gray background
@@ -698,7 +826,7 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                     rtf.AppendLine(@"\par");
                 }
             }
-            
+
             rtf.AppendLine("}");
             return rtf.ToString();
         }
@@ -712,13 +840,13 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
         }
 
         // ========== Script Editor Methods ==========
-        
+
         private async void InitializeMonacoEditor()
         {
             try
             {
                 await editorWebView.EnsureCoreWebView2Async(null);
-                
+
                 // Initialize PowerShell completion service
                 string modulePath = Path.Combine(
                     Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
@@ -726,9 +854,9 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                     "Rnwood.Dataverse.Data.PowerShell",
                     "Rnwood.Dataverse.Data.PowerShell.psd1"
                 );
-                
+
                 _completionService = new PowerShellCompletionService(modulePath);
-                _ = Task.Run(async () => 
+                _ = Task.Run(async () =>
                 {
                     try
                     {
@@ -739,26 +867,70 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                         System.Diagnostics.Debug.WriteLine($"Failed to initialize completion service: {ex.Message}");
                     }
                 });
-                
+
                 // Load Monaco editor HTML
                 string monacoHtml = GenerateMonacoEditorHtml();
                 editorWebView.NavigateToString(monacoHtml);
-                
+
                 // Setup message handler for script operations
                 editorWebView.WebMessageReceived += EditorWebView_WebMessageReceived;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to initialize script editor: {ex.Message}\n\nWebView2 Runtime may not be installed.", 
+                MessageBox.Show($"Failed to initialize script editor: {ex.Message}\n\nWebView2 Runtime may not be installed.",
                     "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+        }
+        public override void ClosingPlugin(PluginCloseInfo info)
+        {
+            // Dispose completion service
+            if (_completionService != null)
+            {
+                try
+                {
+                    _completionService.Dispose();
+                }
+                catch
+                {
+                    // Ignore errors when disposing
+                }
+            }
+
+            // Cancel pipe server if running
+            if (pipeServerCancellation != null)
+            {
+                try
+                {
+                    pipeServerCancellation.Cancel();
+                    pipeServerCancellation.Dispose();
+                }
+                catch
+                {
+                    // Ignore errors when cancelling
+                }
+            }
+
+            // ConEmu control will handle cleanup automatically
+            if (conEmuControl != null && conEmuControl.IsConsoleEmulatorOpen)
+            {
+                try
+                {
+                    conEmuControl.Dispose();
+                }
+                catch
+                {
+                    // Ignore errors when disposing
+                }
+            }
+
+            base.ClosingPlugin(info);
         }
 
         private string GenerateMonacoEditorHtml()
         {
             // Get PowerShell cmdlets for IntelliSense
             string cmdletCompletions = GetPowerShellCmdletCompletions();
-            
+
             return $@"
 <!DOCTYPE html>
 <html>
@@ -917,16 +1089,16 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
             try
             {
                 StringBuilder completions = new StringBuilder("[");
-                
+
                 // Get cmdlets from the Cmdlets assembly
                 var cmdletsAssembly = AppDomain.CurrentDomain.GetAssemblies()
                     .FirstOrDefault(a => a.GetName().Name == "Rnwood.Dataverse.Data.PowerShell.Cmdlets");
-                
+
                 if (cmdletsAssembly != null)
                 {
                     var cmdletTypes = cmdletsAssembly.GetTypes()
                         .Where(t => t.Name.EndsWith("Cmdlet") && !t.IsAbstract && t.IsPublic);
-                    
+
                     bool first = true;
                     foreach (var type in cmdletTypes)
                     {
@@ -934,18 +1106,18 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                         {
                             var cmdletAttr = type.GetCustomAttributes(typeof(CmdletAttribute), false)
                                 .FirstOrDefault() as CmdletAttribute;
-                            
+
                             if (cmdletAttr != null)
                             {
                                 if (!first) completions.Append(",");
                                 first = false;
-                                
+
                                 string cmdletName = $"{cmdletAttr.VerbName}-{cmdletAttr.NounName}";
                                 var parameters = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                                     .Where(p => p.GetCustomAttributes(typeof(ParameterAttribute), false).Any())
                                     .Select(p => $"-{p.Name}")
                                     .Take(5); // Limit to first 5 parameters
-                                
+
                                 string paramList = string.Join(", ", parameters);
                                 completions.Append($"{{label:'{cmdletName}',insertText:'{cmdletName} ',documentation:'Parameters: {paramList}'}}");
                             }
@@ -956,7 +1128,7 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                         }
                     }
                 }
-                
+
                 // Add common PowerShell cmdlets
                 string[] commonCmdlets = new string[] {
                     "Write-Host", "Write-Output", "Write-Verbose", "Write-Warning", "Write-Error",
@@ -964,12 +1136,12 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                     "Select-Object", "Sort-Object", "Group-Object", "Measure-Object",
                     "Import-Module", "Get-Module", "Get-Command", "Get-Help"
                 };
-                
+
                 foreach (var cmdlet in commonCmdlets)
                 {
                     completions.Append($",{{label:'{cmdlet}',insertText:'{cmdlet} ',documentation:'PowerShell built-in cmdlet'}}");
                 }
-                
+
                 completions.Append("]");
                 return completions.ToString();
             }
@@ -985,7 +1157,7 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
             try
             {
                 string message = e.TryGetWebMessageAsString();
-                
+
                 // Parse JSON message for completion requests
                 if (message.Contains("\"action\":\"completion\""))
                 {
@@ -1010,7 +1182,7 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                 System.Diagnostics.Debug.WriteLine($"Error handling web message: {ex.Message}");
             }
         }
-        
+
         private async Task HandleCompletionRequestAsync(string message)
         {
             try
@@ -1018,18 +1190,18 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                 // Parse the JSON message to extract script and cursor position
                 var jsonDoc = JsonDocument.Parse(message);
                 var root = jsonDoc.RootElement;
-                
+
                 string requestId = root.GetProperty("requestId").GetString();
                 string script = root.GetProperty("script").GetString();
                 int cursorPosition = root.GetProperty("cursorPosition").GetInt32();
-                
+
                 // Get completions from the service
                 List<CompletionItem> completions = new List<CompletionItem>();
                 if (_completionService != null)
                 {
                     completions = await _completionService.GetCompletionsAsync(script, cursorPosition);
                 }
-                
+
                 // Convert to Monaco format
                 var monacoCompletions = completions.Select(c => new
                 {
@@ -1039,7 +1211,7 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                     documentation = c.ToolTip,
                     detail = GetCompletionDetail(c.ResultType)
                 }).ToList();
-                
+
                 // Send response back to Monaco
                 var response = new
                 {
@@ -1047,7 +1219,7 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                     requestId = requestId,
                     completions = monacoCompletions
                 };
-                
+
                 string responseJson = JsonSerializer.Serialize(response);
                 await editorWebView.CoreWebView2.ExecuteScriptAsync(
                     $"window.handleCompletionResponse({responseJson})");
@@ -1057,7 +1229,7 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                 System.Diagnostics.Debug.WriteLine($"Error handling completion request: {ex.Message}");
             }
         }
-        
+
         private int MapCompletionTypeToMonacoKind(CompletionResultType resultType)
         {
             // Map PowerShell CompletionResultType to Monaco CompletionItemKind
@@ -1067,7 +1239,7 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
             //               Enum=15, EnumMember=16, Keyword=17, Text=18, Color=19, 
             //               File=20, Reference=21, Customcolor=22, Folder=23, 
             //               TypeParameter=24, User=25, Issue=26, Snippet=27
-            
+
             switch (resultType)
             {
                 case CompletionResultType.Command:
@@ -1093,7 +1265,7 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                     return 18; // Text
             }
         }
-        
+
         private string GetCompletionDetail(CompletionResultType resultType)
         {
             switch (resultType)
@@ -1119,225 +1291,6 @@ https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell";
                 default:
                     return "";
             }
-        }
-
-        private void ToggleViewButton_Click(object sender, EventArgs e)
-        {
-            isEditorView = !isEditorView;
-            
-            if (isEditorView)
-            {
-                // Switch to editor view
-                conEmuControl.Visible = false;
-                editorPanel.Visible = true;
-                toggleViewButton.Text = "💻 Console";
-            }
-            else
-            {
-                // Switch to console view
-                editorPanel.Visible = false;
-                conEmuControl.Visible = true;
-                toggleViewButton.Text = "📝 Script Editor";
-            }
-        }
-
-        private async void RunScriptButton_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                // Get script content from Monaco editor
-                string script = await editorWebView.ExecuteScriptAsync("getContent()");
-                
-                // Remove JSON string quotes
-                script = script.Trim('"').Replace("\\n", "\n").Replace("\\r", "\r")
-                    .Replace("\\\"", "\"").Replace("\\\\", "\\");
-                
-                if (string.IsNullOrWhiteSpace(script))
-                {
-                    MessageBox.Show("Script is empty. Please enter some PowerShell commands.", 
-                        "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
-                
-                // Switch to console view
-                ToggleViewButton_Click(null, null);
-                
-                // Give console time to become visible
-                await Task.Delay(100);
-                
-                // Create temporary script file
-                string tempScriptPath = Path.Combine(Path.GetTempPath(), $"xrmtoolbox-script-{Guid.NewGuid()}.ps1");
-                File.WriteAllText(tempScriptPath, script);
-                
-                // The ConEmu control doesn't expose direct input methods
-                // Instead, we'll write the script to a file and have the user run it manually
-                // Or we can use a more sophisticated approach with named pipes
-                
-                // For now, display message to user
-                MessageBox.Show($"Script ready to execute.\n\nRun this command in the console:\n& '{tempScriptPath}'",
-                    "Script Ready", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                
-                // Schedule cleanup after some time
-                Task.Delay(30000).ContinueWith(t =>
-                {
-                    try
-                    {
-                        if (File.Exists(tempScriptPath))
-                        {
-                            File.Delete(tempScriptPath);
-                        }
-                    }
-                    catch
-                    {
-                        // Ignore cleanup errors
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to run script: {ex.Message}", 
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void NewScriptButton_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                if (MessageBox.Show("Create a new script? Any unsaved changes will be lost.", 
-                    "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                {
-                    editorWebView.ExecuteScriptAsync("setContent('# PowerShell Script\\n# Type your PowerShell commands here\\n# Press F5 or click Run to execute\\n\\n')");
-                    currentScriptPath = null;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to create new script: {ex.Message}", 
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private async void OpenScriptButton_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                using (OpenFileDialog dialog = new OpenFileDialog())
-                {
-                    dialog.Filter = "PowerShell Scripts (*.ps1)|*.ps1|All Files (*.*)|*.*";
-                    dialog.Title = "Open PowerShell Script";
-                    
-                    if (dialog.ShowDialog() == DialogResult.OK)
-                    {
-                        string content = File.ReadAllText(dialog.FileName);
-                        
-                        // Escape for JavaScript
-                        content = content.Replace("\\", "\\\\")
-                                       .Replace("'", "\\'")
-                                       .Replace("\n", "\\n")
-                                       .Replace("\r", "\\r")
-                                       .Replace("\"", "\\\"");
-                        
-                        await editorWebView.ExecuteScriptAsync($"setContent('{content}')");
-                        currentScriptPath = dialog.FileName;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to open script: {ex.Message}", 
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private async void SaveScriptButton_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                string scriptPath = currentScriptPath;
-                
-                if (string.IsNullOrEmpty(scriptPath))
-                {
-                    using (SaveFileDialog dialog = new SaveFileDialog())
-                    {
-                        dialog.Filter = "PowerShell Scripts (*.ps1)|*.ps1|All Files (*.*)|*.*";
-                        dialog.Title = "Save PowerShell Script";
-                        dialog.DefaultExt = "ps1";
-                        
-                        if (dialog.ShowDialog() == DialogResult.OK)
-                        {
-                            scriptPath = dialog.FileName;
-                        }
-                        else
-                        {
-                            return;
-                        }
-                    }
-                }
-                
-                // Get script content
-                string script = await editorWebView.ExecuteScriptAsync("getContent()");
-                
-                // Remove JSON string quotes and unescape
-                script = script.Trim('"').Replace("\\n", "\n").Replace("\\r", "\r")
-                    .Replace("\\\"", "\"").Replace("\\\\", "\\");
-                
-                File.WriteAllText(scriptPath, script);
-                currentScriptPath = scriptPath;
-                
-                MessageBox.Show($"Script saved to: {scriptPath}", 
-                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to save script: {ex.Message}", 
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        public override void ClosingPlugin(PluginCloseInfo info)
-        {
-            // Dispose completion service
-            if (_completionService != null)
-            {
-                try
-                {
-                    _completionService.Dispose();
-                }
-                catch
-                {
-                    // Ignore errors when disposing
-                }
-            }
-            
-            // Cancel pipe server if running
-            if (pipeServerCancellation != null)
-            {
-                try
-                {
-                    pipeServerCancellation.Cancel();
-                    pipeServerCancellation.Dispose();
-                }
-                catch
-                {
-                    // Ignore errors when cancelling
-                }
-            }
-
-            // ConEmu control will handle cleanup automatically
-            if (conEmuControl != null && conEmuControl.IsConsoleEmulatorOpen)
-            {
-                try
-                {
-                    conEmuControl.Dispose();
-                }
-                catch
-                {
-                    // Ignore errors when disposing
-                }
-            }
-
-            base.ClosingPlugin(info);
         }
     }
 }

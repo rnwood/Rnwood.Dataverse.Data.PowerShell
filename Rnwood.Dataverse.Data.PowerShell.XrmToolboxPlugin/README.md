@@ -421,7 +421,6 @@ The plugin project includes launch profiles for easy debugging:
 1. Open `Rnwood.Dataverse.Data.PowerShell.sln` in Visual Studio
 2. Set `Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin` as the startup project
 3. Select one of the launch profiles:
-   - **XrmToolbox (auto-download)** - Uses Start-XrmToolbox.ps1 script to auto-download and configure
    - **XrmToolbox (local)** - Uses `.xrmtoolbox\XrmToolBox.exe` from repo root
    - **XrmToolbox (custom path)** - Uses XrmToolbox from a custom installation path (edit path in Properties/launchSettings.json)
 4. Press F5 to start debugging
@@ -446,7 +445,6 @@ The repository includes VS Code tasks and launch configurations:
 2. Run tasks via Terminal > Run Task:
    - **Download XrmToolbox** - Downloads XrmToolbox to `.xrmtoolbox`
    - **Build XrmToolbox Plugin** - Builds the plugin project
-   - **Start XrmToolbox with Plugin** - Builds plugin, copies files, and starts XrmToolbox
 
 #### Using Launch Configuration
 
@@ -481,27 +479,6 @@ Downloads XrmToolbox from GitHub releases:
 .\scripts\Download-XrmToolbox.ps1 -Version "1.2024.9.23"
 ```
 
-#### Start-XrmToolbox.ps1
-
-Starts XrmToolbox with the plugin loaded:
-
-```powershell
-# Use local XrmToolbox with Debug build
-.\scripts\Start-XrmToolbox.ps1
-
-# Use Release build
-.\scripts\Start-XrmToolbox.ps1 -BuildConfiguration Release
-
-# Use custom XrmToolbox path
-.\scripts\Start-XrmToolbox.ps1 -XrmToolboxPath "C:\XrmToolbox\XrmToolBox.exe"
-```
-
-This script:
-1. Downloads XrmToolbox if not present
-2. Builds the plugin if not built
-3. Copies plugin files to XrmToolbox Plugins folder
-4. Starts XrmToolbox
-
 ### Testing Changes
 
 After making changes:
@@ -518,11 +495,7 @@ After making changes:
    ```
 
 3. Test the plugin:
-   ```powershell
-   .\scripts\Start-XrmToolbox.ps1
-   ```
-
-4. In XrmToolbox:
+   - Manually start XrmToolbox from `.xrmtoolbox\XrmToolBox.exe`
    - Connect to a Dataverse environment
    - Launch PowerShell Console from Tools menu
    - Test your changes
@@ -541,7 +514,6 @@ Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/
 
 scripts/
 ├── Download-XrmToolbox.ps1              # Downloads XrmToolbox
-└── Start-XrmToolbox.ps1                 # Starts XrmToolbox with plugin
 
 .vscode/
 ├── launch.json                          # VS Code debugging config

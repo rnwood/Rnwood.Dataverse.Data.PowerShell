@@ -53,8 +53,11 @@
       "type": "clr",
       "request": "launch",
       "preLaunchTask": "Build XrmToolbox Plugin",
-      "program": "${workspaceFolder}/.xrmtoolbox/XrmToolBox.exe",
-      "cwd": "${workspaceFolder}/.xrmtoolbox",
+      "program": "${workspaceFolder}\\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader\\bin\\Debug\\net48\\XrmToolBox.exe",
+      "cwd": "${workspaceFolder}\\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader\\bin\\Debug\\net48",
+      "args": [
+        "/OverridePath:."
+      ],
       "stopAtEntry": false,
       "console": "internalConsole",
       "justMyCode": false

@@ -13,9 +13,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="XrmToolBoxPackage" Version="1.2024.9.23" />
+    <PackageReference Include="XrmToolBoxPackage" Version="1.2025.7.71 "/>
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.3" />
-    <PackageReference Include="ConEmu.Control.WinForms" Version="1.3.8" />
+    <PackageReference Include="ConEmu.Control.WinForms" Version="1.21.9.5" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3351.48" />
   </ItemGroup>
 
@@ -37,14 +37,14 @@
     <EmbeddedResource Include="GettingStarted.md" />
   </ItemGroup>
 
-  <!-- Copy PowerShell module to output for bundling -->
+  <!-- Copy PowerShell module to output for bundling --><!--
   <Target Name="CopyPowerShellModule" AfterTargets="Build">
     <ItemGroup>
       <ModuleFiles Include="..\Rnwood.Dataverse.Data.PowerShell\bin\$(Configuration)\netstandard2.0\**\*.*" />
     </ItemGroup>
     <Copy SourceFiles="@(ModuleFiles)" 
-          DestinationFolder="$(OutputPath)PSModule\Rnwood.Dataverse.Data.PowerShell\%(RecursiveDir)" 
+          DestinationFolder="$(OutputPath)PSModule\%(RecursiveDir)" 
           SkipUnchangedFiles="true" />
-  </Target>
+  </Target>-->
 
 </Project>
