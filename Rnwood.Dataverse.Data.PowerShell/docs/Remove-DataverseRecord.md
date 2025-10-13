@@ -14,7 +14,7 @@ Deletes an existing Dataverse record, including M:M association records.
 
 ```
 Remove-DataverseRecord [-InputObject <PSObject>] -TableName <String> -Id <Guid> [-BatchSize <UInt32>]
- [-IfExists] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
+ [-MaxDegreeOfParallelism <Int32>] [-IfExists] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
  [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
@@ -256,6 +256,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -InputObject
+Record from pipeline. This allows piping in record to delete.
+
+```yaml
+Type: PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
 ### -MaxDegreeOfParallelism
 Maximum degree of parallelism for processing records. When set to a value greater than 1, records are automatically chunked (based on BatchSize) and processed in parallel with cloned connections for thread safety.
 
@@ -281,21 +296,6 @@ Required: False
 Position: Named
 Default value: 1
 Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -InputObject
-Record from pipeline. This allows piping in record to delete.
-
-```yaml
-Type: PSObject
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 

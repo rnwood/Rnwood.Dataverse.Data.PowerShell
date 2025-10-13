@@ -1097,4 +1097,100 @@ Describe "Examples-Comparison Documentation Tests" {
             $retrieved.firstname | Should -Be "BatchTest0"
         }
     }
+
+    Context "MaxDOP (Parallelism) Tests" {
+        It "Can process records with MaxDOP parameter on Set-DataverseRecord" -Skip {
+            # Skipped: FakeXrmEasy mock connection doesn't support .Clone() 
+            # MaxDOP functionality is tested with real connections in E2E tests
+            # This test validates the parameter exists and basic structure
+            
+            # Create test records
+            $records = @()
+            for ($i = 0; $i -lt 20; $i++) {
+                $contact = New-Object Microsoft.Xrm.Sdk.Entity("contact")
+                $contact.Id = $contact["contactid"] = [Guid]::NewGuid()
+                $contact["firstname"] = "MaxDOPTest$i"
+                $contact["lastname"] = "User"
+                $records += $contact
+            }
+            
+            # Process with MaxDOP=2 and BatchSize=5
+            # This tests that parallel processing works without errors
+            { $records | Set-DataverseRecord -Connection $script:conn -MaxDOP 2 -BatchSize 5 } | Should -Not -Throw
+            
+            # Verify at least one record was processed
+            $retrieved = Get-DataverseRecord -Connection $script:conn -TableName contact -Filter @{"firstname"="MaxDOPTest0"}
+            $retrieved | Should -Not -BeNull
+        }
+
+        It "Can process records with MaxDOP parameter on Remove-DataverseRecord" -Skip {
+            # Skipped: FakeXrmEasy mock connection doesn't support .Clone()
+            # MaxDOP functionality is tested with real connections in E2E tests
+            
+            # Create test records to delete
+            $records = @()
+            for ($i = 0; $i -lt 15; $i++) {
+                $contact = New-Object Microsoft.Xrm.Sdk.Entity("contact")
+                $contactId = $contact.Id = $contact["contactid"] = [Guid]::NewGuid()
+                $contact["firstname"] = "DeleteMaxDOP$i"
+                $contact["lastname"] = "User"
+                $contact | Set-DataverseRecord -Connection $script:conn
+                $records += [PSCustomObject]@{ TableName = "contact"; Id = $contactId }
+            }
+            
+            # Delete with MaxDOP=2 and BatchSize=5
+            { $records | Remove-DataverseRecord -Connection $script:conn -MaxDOP 2 -BatchSize 5 } | Should -Not -Throw
+        }
+
+        It "MaxDOP defaults to 1 (no parallelism)" {
+            # Create a record - with MaxDOP=1, connection cloning is not needed
+            $contact = New-Object Microsoft.Xrm.Sdk.Entity("contact")
+            $contact.Id = $contact["contactid"] = [Guid]::NewGuid()
+            $contact["firstname"] = "DefaultMaxDOP"
+            $contact["lastname"] = "Test"
+            
+            # Process without specifying MaxDOP (should use default of 1)
+            { $contact | Set-DataverseRecord -Connection $script:conn } | Should -Not -Throw
+            
+            # Verify it was created
+            $retrieved = Get-DataverseRecord -Connection $script:conn -TableName contact -Filter @{"firstname"="DefaultMaxDOP"}
+            $retrieved | Should -Not -BeNull
+        }
+
+        It "MaxDOP with small batch processes correctly" -Skip {
+            # Skipped: FakeXrmEasy mock connection doesn't support .Clone()
+            # Test with MaxDOP > 1 and only a few records (less than BatchSize * MaxDOP)
+            $records = @()
+            for ($i = 0; $i -lt 3; $i++) {
+                $contact = New-Object Microsoft.Xrm.Sdk.Entity("contact")
+                $contact.Id = $contact["contactid"] = [Guid]::NewGuid()
+                $contact["firstname"] = "SmallBatch$i"
+                $contact["lastname"] = "Test"
+                $records += $contact
+            }
+            
+            { $records | Set-DataverseRecord -Connection $script:conn -MaxDOP 4 -BatchSize 10 } | Should -Not -Throw
+        }
+
+        It "MaxDOP parameter exists and accepts values" {
+            # Verify parameter exists and has expected properties
+            $cmdlet = Get-Command Set-DataverseRecord
+            $maxDOPParam = $cmdlet.Parameters['MaxDegreeOfParallelism']
+            
+            $maxDOPParam | Should -Not -BeNull
+            $maxDOPParam.ParameterType.Name | Should -Be 'Int32'
+            $maxDOPParam.Aliases | Should -Contain 'MaxDOP'
+        }
+
+        It "MaxDOP parameter exists on Remove-DataverseRecord" {
+            # Verify parameter exists on Remove cmdlet too
+            $cmdlet = Get-Command Remove-DataverseRecord
+            $maxDOPParam = $cmdlet.Parameters['MaxDegreeOfParallelism']
+            
+            $maxDOPParam | Should -Not -BeNull
+            $maxDOPParam.ParameterType.Name | Should -Be 'Int32'
+            $maxDOPParam.Aliases | Should -Contain 'MaxDOP'
+        }
+    }
 }
+

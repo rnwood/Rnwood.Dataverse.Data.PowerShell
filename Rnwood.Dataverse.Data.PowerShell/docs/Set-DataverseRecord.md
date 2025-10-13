@@ -14,9 +14,9 @@ Creates or updates Dataverse records including M:M association/disassociation, s
 
 ```
 Set-DataverseRecord -InputObject <PSObject> -TableName <String> [-BatchSize <UInt32>]
- [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>] [-PassThru] [-NoUpdate] [-NoCreate]
- [-NoUpdateColumns <String[]>] [-CallerId <Guid>] [-UpdateAllColumns] [-CreateOnly] [-Upsert]
- [-LookupColumns <Hashtable>] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
+ [-MaxDegreeOfParallelism <Int32>] [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>]
+ [-PassThru] [-NoUpdate] [-NoCreate] [-NoUpdateColumns <String[]>] [-CallerId <Guid>] [-UpdateAllColumns]
+ [-CreateOnly] [-Upsert] [-LookupColumns <Hashtable>] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
  [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
@@ -588,6 +588,26 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -MatchOn
+List of list of field names that identify an existing record to update based on the values of those fields in the InputObject.
+For create/update these are used if a record with and Id matching the value of the Id cannot be found.
+The first list that returns a match is used.
+e.g.
+("firstname", "lastname"), "fullname" will try to find an existing record based on the firstname AND listname from the InputObject and if not found it will try by fullname.
+For upsert only a single list is allowed and it must match the properties of an alternate key defined on the table.
+
+```yaml
+Type: String[][]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -MaxDegreeOfParallelism
 Maximum degree of parallelism for processing records. When set to a value greater than 1, records are automatically chunked (based on BatchSize) and processed in parallel with cloned connections for thread safety.
 
@@ -612,26 +632,6 @@ Aliases: MaxDOP
 Required: False
 Position: Named
 Default value: 1
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -MatchOn
-List of list of field names that identify an existing record to update based on the values of those fields in the InputObject.
-For create/update these are used if a record with and Id matching the value of the Id cannot be found.
-The first list that returns a match is used.
-e.g.
-("firstname", "lastname"), "fullname" will try to find an existing record based on the firstname AND listname from the InputObject and if not found it will try by fullname.
-For upsert only a single list is allowed and it must match the properties of an alternate key defined on the table.
-
-```yaml
-Type: String[][]
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
