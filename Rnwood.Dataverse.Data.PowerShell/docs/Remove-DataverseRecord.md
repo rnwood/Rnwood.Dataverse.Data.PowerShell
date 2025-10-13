@@ -109,6 +109,41 @@ PS C:\> $intersectRecord | Remove-DataverseRecord -Connection $c
 
 Removes a many-to-many association by deleting the corresponding record from the intersect table. This disassociates the two related entities without affecting the entities themselves.
 
+### Example 7: Simple parallel delete with MaxDOP
+```powershell
+PS C:\> Get-DataverseRecord -Connection $c -TableName contact -FilterValues @{ statecode = 1 } |
+    Remove-DataverseRecord -Connection $c -MaxDOP 4 -BatchSize 50
+```
+
+Deletes all inactive contacts in parallel with 4 workers, each processing batches of 50 records. Much simpler than manual chunking and parallel loops.
+
+### Example 8: High-throughput parallel deletion
+```powershell
+PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName systemjob -FilterValues @{
+    statecode = 3  # Completed
+    createdon = @{ operator = "lt"; value = (Get-Date).AddMonths(-6) }
+}
+
+PS C:\> $recordsToDelete | Remove-DataverseRecord -Connection $c -MaxDOP 8 -BatchSize 100 -Verbose
+```
+
+Deletes old system jobs in parallel with 8 workers. The cmdlet automatically:
+- Chunks records into groups of (BatchSize × MaxDOP) = 800
+- Spawns up to 8 parallel workers
+- Clones connections for thread safety
+- Executes batch delete requests per worker
+
+### Example 9: MaxDOP with IfExists for safe cleanup
+```powershell
+PS C:\> $recordIds = @("guid1", "guid2", "guid3")
+
+PS C:\> $recordIds | ForEach-Object { 
+    [PSCustomObject]@{ TableName = "contact"; Id = $_ } 
+} | Remove-DataverseRecord -Connection $c -MaxDOP 4 -IfExists -ErrorAction SilentlyContinue
+```
+
+Deletes records by ID in parallel, silently skipping any that don't exist. Useful for cleanup scripts where some records may already be deleted.
+
 ## PARAMETERS
 
 ### -BatchSize
@@ -217,6 +252,34 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MaxDegreeOfParallelism
+Maximum degree of parallelism for processing records. When set to a value greater than 1, records are automatically chunked (based on BatchSize) and processed in parallel with cloned connections for thread safety.
+
+**Key behaviors:**
+- Default is 1 (no parallelism - traditional sequential processing)
+- When > 1: Records are buffered and processed in chunks of (BatchSize × MaxDegreeOfParallelism)
+- Each parallel worker gets its own cloned connection
+- Combines seamlessly with BatchSize to optimize throughput
+- Much simpler than manual chunking + ForEach-Object -Parallel
+
+**Performance tips:**
+- Start with MaxDOP=4 and BatchSize=50-100 for most scenarios
+- Increase MaxDOP for high-latency connections or high-volume deletions
+- Monitor Dataverse throttling limits when increasing parallelism
+- Use -Verbose to see parallel processing progress
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: MaxDOP
+
+Required: False
+Position: Named
+Default value: 1
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

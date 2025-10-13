@@ -375,6 +375,42 @@ PS C:\> $associations | Set-DataverseRecord -Connection $c -TableName "listconta
 
 Creates multiple many-to-many associations in a batch operation. This example associates multiple contacts with a marketing list using the `listcontact` intersect table. The property names (`contactid`, `listid`) must match the exact column names in the intersect table. The cmdlet automatically batches these operations for improved performance.
 
+### Example 14: Simple parallel processing with MaxDOP
+```powershell
+PS C:\> Get-DataverseRecord -Connection $c -TableName contact -Top 1000 |
+    Set-DataverseRecord -Connection $c -MaxDOP 4 -BatchSize 50
+```
+
+Processes 1000 contact records in parallel with 4 workers. Each worker processes a chunk of 50 records (BatchSize). This is much simpler than manually chunking and using ForEach-Object -Parallel.
+
+### Example 15: High-throughput parallel updates
+```powershell
+PS C:\> $records = Get-DataverseRecord -Connection $c -TableName account -Top 5000
+
+PS C:\> $records | ForEach-Object { 
+    $_.description = "Updated on $(Get-Date)" 
+} | Set-DataverseRecord -Connection $c -MaxDOP 8 -BatchSize 100 -Verbose
+```
+
+Updates 5000 accounts in parallel with 8 workers, each processing batches of 100 records. The -Verbose flag shows progress. The cmdlet automatically:
+- Chunks records into groups of (BatchSize × MaxDOP) = 800
+- Spawns up to 8 parallel workers
+- Clones connections for thread safety
+- Executes batch requests per worker
+
+### Example 16: MaxDOP with error handling
+```powershell
+PS C:\> $errors = @()
+
+PS C:\> Get-DataverseRecord -Connection $c -TableName contact -Top 2000 |
+    Set-DataverseRecord -Connection $c -MaxDOP 4 -ErrorVariable +errors -ErrorAction SilentlyContinue
+
+PS C:\> # Review failures
+PS C:\> Write-Host "Successfully processed $($2000 - $errors.Count) records, $($errors.Count) failures"
+```
+
+Parallel processing with comprehensive error handling. Even with MaxDOP, errors are captured per-record and processing continues. Check $errors to review failures.
+
 ## PARAMETERS
 
 ### -BatchSize
@@ -548,6 +584,34 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MaxDegreeOfParallelism
+Maximum degree of parallelism for processing records. When set to a value greater than 1, records are automatically chunked (based on BatchSize) and processed in parallel with cloned connections for thread safety.
+
+**Key behaviors:**
+- Default is 1 (no parallelism - traditional sequential processing)
+- When > 1: Records are buffered and processed in chunks of (BatchSize × MaxDegreeOfParallelism)
+- Each parallel worker gets its own cloned connection
+- Combines seamlessly with BatchSize to optimize throughput
+- Much simpler than manual chunking + ForEach-Object -Parallel
+
+**Performance tips:**
+- Start with MaxDOP=4 and BatchSize=50-100 for most scenarios
+- Increase MaxDOP for high-latency connections or CPU-bound transformations
+- Monitor Dataverse throttling limits when increasing parallelism
+- Use -Verbose to see parallel processing progress
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases: MaxDOP
+
+Required: False
+Position: Named
+Default value: 1
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

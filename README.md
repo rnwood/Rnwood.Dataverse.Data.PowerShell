@@ -1275,23 +1275,51 @@ You can also check the parameter attributes in the help:
 
 ### Parallelising work for best performance
 
-> [!NOTE] the examples below rely on PowerShell 7+ (`ForEach-Object -Parallel`). If you are running PowerShell Desktop (Windows PowerShell 5.1) these patterns are not applicable, but you can find modules in the gallery that can do the same.
+When processing many records you can use parallelism to reduce elapsed time. Use parallelism when network latency or per-request processing dominates total time, but be careful to avoid overwhelming the Dataverse service (throttling).
 
-When processing many records you can use parallelism to reduce elapsed time. Use parallelism when network latency or per-request processing dominates total time, but be careful to avoid overwhelming the Dataverse service (throttling) or sharing non-thread-safe objects between runspaces.
+#### Simple approach: Use -MaxDOP parameter (recommended)
 
-PowerShell provides multiple built-in ways to run work in parallel. In PowerShell 7+ the most common options are `ForEach-Object -Parallel` (pipeline-oriented, runspace-pool based) and `Start-ThreadJob` (thread-based jobs). `Start-Job` launches separate PowerShell processes and has higher overhead. See the official docs for details and comparisons:
+The simplest way to parallelize record processing is to use the `-MaxDegreeOfParallelism` (alias `-MaxDOP`) parameter on [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) and [`Remove-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md):
+
+```powershell
+# Update 1000 records in parallel with 4 workers, each processing batches of 50
+Get-DataverseRecord -Connection $c -TableName contact -Top 1000 |
+  Set-DataverseRecord -Connection $c -MaxDOP 4 -BatchSize 50 -Verbose
+```
+
+The cmdlet automatically:
+- Chunks records into groups of (BatchSize × MaxDOP)
+- Spawns parallel workers up to MaxDOP
+- Clones connections for thread safety
+- Executes batch requests per worker
+
+**When to use MaxDOP:**
+- ✅ Most common parallelization scenarios
+- ✅ Works on both PowerShell 5.1 and 7+
+- ✅ No manual chunking or connection cloning needed
+- ✅ Simple error handling
+
+**Performance tips:**
+- Start with `-MaxDOP 4 -BatchSize 50` for most scenarios
+- Increase MaxDOP for high-latency connections (up to 8-12)
+- Monitor Dataverse throttling limits when increasing parallelism
+- Use `-Verbose` to see progress
+
+#### Advanced approach: Manual parallelization
+
+> [!NOTE] The examples below rely on PowerShell 7+ (`ForEach-Object -Parallel`). If you are running PowerShell Desktop (Windows PowerShell 5.1), use the `-MaxDOP` parameter instead.
+
+For advanced scenarios where you need more control, you can manually parallelize using PowerShell's built-in parallelism features. PowerShell 7+ provides `ForEach-Object -Parallel` (pipeline-oriented, runspace-pool based) and `Start-ThreadJob` (thread-based jobs). See the official docs for details:
 
 - ForEach-Object (`-Parallel`) — https://learn.microsoft.com/powershell/module/microsoft.powershell.core/foreach-object?view=powershell-7.5
-- Parallel execution guidance and comparisons — https://learn.microsoft.com/powershell/scripting/dev-cross-plat/performance/parallel-execution
+- Parallel execution guidance — https://learn.microsoft.com/powershell/scripting/dev-cross-plat/performance/parallel-execution
 
 Key guidance:
-- Split work into chunks that align with `-BatchSize` — process a chunk per worker rather than single records. Chunking reduces round trips, bounds memory use, and reduces per-item overhead in parallel scenarios.
-- Prefer streaming via the pipeline (e.g. [`Get-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) | Get-Chunks -ChunkSize n | ...) and avoid collecting the entire result set into an intermediate variable before processing.
-- Clone an existing connection inside each runspace using the connection's `.Clone()` method rather than sharing a single connection object between runspaces. Cloning preserves authentication/context while providing an independent connection instance.
-- Use `-ThrottleLimit` (or equivalent) to limit concurrent requests and avoid API throttling.
-- Combine parallel processing with `-BatchSize` on [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) / [`Remove-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) to reduce round-trips.
+- Split work into chunks that align with `-BatchSize` — process a chunk per worker rather than single records
+- Clone connections inside each runspace using `.Clone()` method
+- Use `-ThrottleLimit` to limit concurrent requests and avoid API throttling
 
-Example: chunking helper and `ForEach-Object -Parallel`. Create a parent connection, split records into chunks that match your batch size, then process one chunk per worker.
+Example: chunking helper and `ForEach-Object -Parallel`:
 
 ```powershell
 # Helper: split an array into chunks
@@ -1355,8 +1383,19 @@ $jobs = Get-DataverseRecord -Connection $parent -TableName contact -Top 1000 |
 Receive-Job -Job $jobs -Wait -AutoRemoveJob
 ```
 
+**Comparison: MaxDOP vs Manual Parallelization**
+
+| Aspect | -MaxDOP Parameter | Manual ForEach-Object -Parallel |
+|--------|-------------------|----------------------------------|
+| **Complexity** | Simple one-liner | Requires chunking helper function |
+| **PowerShell Version** | Works on 5.1 and 7+ | Requires PowerShell 7+ |
+| **Connection Management** | Automatic cloning | Manual `.Clone()` required |
+| **Chunking** | Automatic | Manual with Get-Chunks helper |
+| **Error Handling** | Built-in per-record errors | Manual error collection |
+| **Use Case** | ✅ Most scenarios | Advanced scenarios needing custom logic |
+
 When to avoid parallelism:
-- Small numbers of records where the overhead of cloning connections outweighs gains
+- Small numbers of records where the overhead outweighs gains
 - Operations that must be strictly ordered or transactional
 
 
