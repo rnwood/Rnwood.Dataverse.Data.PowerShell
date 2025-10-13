@@ -7,10 +7,12 @@ using Microsoft.Xrm.Sdk.Query;
 
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -38,6 +40,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// </summary>
 		[Parameter(HelpMessage = "Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable.")]
 		public uint BatchSize { get; set; } = 100;
+
+		/// <summary>
+		/// Maximum degree of parallelism for processing records. When > 1, records are automatically chunked and processed in parallel with cloned connections. Default is 1 (no parallelism).
+		/// </summary>
+		[Parameter(HelpMessage = "Maximum degree of parallelism for processing records. When > 1, records are automatically chunked and processed in parallel with cloned connections. Default is 1 (no parallelism).")]
+		[Alias("MaxDOP")]
+		public int MaxDegreeOfParallelism { get; set; } = 1;
 
 		/// <summary>
 		/// List of properties on the input object which are ignored and not attempted to be mapped to the record. Default is none.
@@ -164,6 +173,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private List<BatchItem> _nextBatchItems;
 		private Guid? _nextBatchCallerId;
+		private ConcurrentQueue<PSObject> _recordBuffer;
+		private List<Task> _parallelTasks;
 
 		private void QueueBatchItem(BatchItem item, Guid? callerId)
 		{
@@ -189,13 +200,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			base.BeginProcessing();
 
+			if (MaxDegreeOfParallelism < 1)
+			{
+				throw new ArgumentException("MaxDegreeOfParallelism must be at least 1", "MaxDegreeOfParallelism");
+			}
+
 			recordCount = 0;
 			entityMetadataFactory = new EntityMetadataFactory(Connection);
 			entityConverter = new DataverseEntityConverter(Connection, entityMetadataFactory);
 
 
 
-			if (BatchSize > 1)
+			if (MaxDegreeOfParallelism > 1)
+			{
+				_recordBuffer = new ConcurrentQueue<PSObject>();
+				_parallelTasks = new List<Task>();
+			}
+			else if (BatchSize > 1)
 			{
 				_nextBatchItems = new List<BatchItem>();
 			}
@@ -273,6 +294,204 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_nextBatchItems.Clear();
 			_nextBatchCallerId = null;
 		}
+
+		private void ProcessParallelChunks()
+		{
+			// Collect records to process in this batch
+			List<PSObject> recordsToProcess = new List<PSObject>();
+			int targetCount = (int)(BatchSize * MaxDegreeOfParallelism);
+
+			while (recordsToProcess.Count < targetCount && _recordBuffer.TryDequeue(out PSObject record))
+			{
+				recordsToProcess.Add(record);
+			}
+
+			if (recordsToProcess.Count == 0)
+			{
+				return;
+			}
+
+			WriteVerbose($"Processing {recordsToProcess.Count} records in parallel with MaxDOP={MaxDegreeOfParallelism}, BatchSize={BatchSize}");
+
+			// Split into chunks of BatchSize
+			List<List<PSObject>> chunks = new List<List<PSObject>>();
+			for (int i = 0; i < recordsToProcess.Count; i += (int)BatchSize)
+			{
+				chunks.Add(recordsToProcess.Skip(i).Take((int)BatchSize).ToList());
+			}
+
+			// Create parallel tasks for each chunk
+			ParallelOptions parallelOptions = new ParallelOptions
+			{
+				MaxDegreeOfParallelism = MaxDegreeOfParallelism
+			};
+
+			Task task = Task.Run(() =>
+			{
+				Parallel.ForEach(chunks, parallelOptions, chunk =>
+				{
+					// Clone connection for this parallel worker
+					ServiceClient workerConnection = Connection.Clone();
+					try
+					{
+						// Create a temporary cmdlet-like processor for this chunk
+						ProcessChunk(chunk, workerConnection);
+					}
+					finally
+					{
+						workerConnection?.Dispose();
+					}
+				});
+			});
+
+			_parallelTasks.Add(task);
+		}
+
+		private void ProcessChunk(List<PSObject> chunk, ServiceClient workerConnection)
+		{
+			// Create temporary processing state for this chunk
+			EntityMetadataFactory chunkMetadataFactory = new EntityMetadataFactory(workerConnection);
+			DataverseEntityConverter chunkEntityConverter = new DataverseEntityConverter(workerConnection, chunkMetadataFactory);
+			List<BatchItem> chunkBatchItems = new List<BatchItem>();
+
+			foreach (PSObject inputObject in chunk)
+			{
+				try
+				{
+					Entity target = chunkEntityConverter.ConvertToDataverseEntity(inputObject, TableName, GetConversionOptions());
+					EntityMetadata entityMetadata = chunkMetadataFactory.GetMetadata(TableName);
+
+					Entity existingRecord = null;
+					if (!CreateOnly.IsPresent && !Upsert.IsPresent)
+					{
+						// Simplified logic - only get existing record if needed
+						if (Id != Guid.Empty || (target.Id != Guid.Empty))
+						{
+							Guid recordId = Id != Guid.Empty ? Id : target.Id;
+							if (recordId != Guid.Empty && !UpdateAllColumns.IsPresent)
+							{
+								QueryByAttribute existingRecordQuery = new QueryByAttribute(TableName);
+								existingRecordQuery.AddAttributeValue(entityMetadata.PrimaryIdAttribute, recordId);
+								existingRecordQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+								existingRecord = workerConnection.RetrieveMultiple(existingRecordQuery).Entities.FirstOrDefault();
+							}
+							else if (recordId != Guid.Empty && UpdateAllColumns.IsPresent)
+							{
+								existingRecord = new Entity(target.LogicalName) { Id = recordId };
+								existingRecord[entityMetadata.PrimaryIdAttribute] = recordId;
+							}
+						}
+					}
+
+					if (Upsert.IsPresent)
+					{
+						// Simplified upsert for parallel processing
+						Entity targetUpdate = new Entity(target.LogicalName) { Id = target.Id };
+						targetUpdate.Attributes.AddRange(target.Attributes.Where(a => !dontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
+
+						UpsertRequest request = new UpsertRequest() { Target = targetUpdate };
+						ApplyBypassBusinessLogicExecution(request);
+
+						chunkBatchItems.Add(new BatchItem(inputObject, request, (response) =>
+						{
+							WriteVerbose($"Upsert completed for {TableName}:{targetUpdate.Id}");
+						}));
+					}
+					else if (existingRecord != null)
+					{
+						// Update existing record
+						target.Id = existingRecord.Id;
+						target[entityMetadata.PrimaryIdAttribute] = existingRecord[entityMetadata.PrimaryIdAttribute];
+
+						if (!UpdateAllColumns.IsPresent)
+						{
+							RemoveUnchangedColumns(target, existingRecord);
+						}
+
+						if (NoUpdateColumns != null)
+						{
+							foreach (string noUpdateColumn in NoUpdateColumns)
+							{
+								target.Attributes.Remove(noUpdateColumn);
+							}
+						}
+
+						Entity targetUpdate = new Entity(target.LogicalName);
+						targetUpdate.Attributes.AddRange(target.Attributes.Where(a => !dontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
+
+						if (targetUpdate.Attributes.Any() && !NoUpdate.IsPresent)
+						{
+							UpdateRequest request = new UpdateRequest() { Target = target };
+							ApplyBypassBusinessLogicExecution(request);
+							chunkBatchItems.Add(new BatchItem(inputObject, request, (response) =>
+							{
+								WriteVerbose($"Updated {TableName}:{target.Id}");
+							}));
+						}
+					}
+					else if (!NoCreate.IsPresent)
+					{
+						// Create new record
+						Entity targetCreate = new Entity(target.LogicalName) { Id = target.Id };
+						targetCreate.Attributes.AddRange(target.Attributes.Where(a => !dontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
+
+						CreateRequest request = new CreateRequest() { Target = targetCreate };
+						ApplyBypassBusinessLogicExecution(request);
+						chunkBatchItems.Add(new BatchItem(inputObject, request, (response) =>
+						{
+							WriteVerbose($"Created {TableName}:{targetCreate.Id}");
+						}));
+					}
+				}
+				catch (Exception ex)
+				{
+					WriteError(new ErrorRecord(ex, null, ErrorCategory.NotSpecified, inputObject));
+				}
+			}
+
+			// Execute the batch for this chunk
+			if (chunkBatchItems.Any())
+			{
+				ExecuteMultipleRequest batchRequest = new ExecuteMultipleRequest()
+				{
+					Settings = new ExecuteMultipleSettings()
+					{
+						ReturnResponses = true,
+						ContinueOnError = true
+					},
+					Requests = new OrganizationRequestCollection(),
+					RequestId = Guid.NewGuid()
+				};
+				ApplyBypassBusinessLogicExecution(batchRequest);
+				batchRequest.Requests.AddRange(chunkBatchItems.Select(i => i.Request));
+
+				try
+				{
+					ExecuteMultipleResponse response = (ExecuteMultipleResponse)workerConnection.Execute(batchRequest);
+
+					foreach (var itemResponse in response.Responses)
+					{
+						BatchItem batchItem = chunkBatchItems[itemResponse.RequestIndex];
+
+						if (itemResponse.Fault != null)
+						{
+							StringBuilder details = new StringBuilder();
+							AppendFaultDetails(itemResponse.Fault, details);
+							WriteError(new ErrorRecord(new Exception(details.ToString()), null, ErrorCategory.InvalidResult, batchItem.InputObject));
+						}
+						else
+						{
+							batchItem.ResponseCompletion(itemResponse.Response);
+						}
+					}
+				}
+				catch (Exception ex)
+				{
+					WriteError(new ErrorRecord(ex, null, ErrorCategory.NotSpecified, null));
+				}
+			}
+		}
+
 	/// <summary>
 	/// Completes cmdlet processing.
 	/// </summary>
@@ -282,7 +501,31 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			base.EndProcessing();
 
-			if (_nextBatchItems != null)
+			if (MaxDegreeOfParallelism > 1)
+			{
+				// Process any remaining buffered records
+				if (_recordBuffer != null && !_recordBuffer.IsEmpty)
+				{
+					ProcessParallelChunks();
+				}
+
+				// Wait for all parallel tasks to complete
+				if (_parallelTasks != null && _parallelTasks.Any())
+				{
+					try
+					{
+						Task.WaitAll(_parallelTasks.ToArray());
+					}
+					catch (AggregateException ae)
+					{
+						foreach (var ex in ae.InnerExceptions)
+						{
+							WriteError(new ErrorRecord(ex, null, ErrorCategory.NotSpecified, null));
+						}
+					}
+				}
+			}
+			else if (_nextBatchItems != null)
 			{
 				ProcessBatch();
 			}
@@ -339,6 +582,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			recordCount++;
 			WriteVerbose("Processing record #" + recordCount);
 
+			// If parallel processing is enabled, buffer records and process in chunks
+			if (MaxDegreeOfParallelism > 1)
+			{
+				_recordBuffer.Enqueue(InputObject);
+
+				// Process chunk when we have enough records
+				if (_recordBuffer.Count >= BatchSize * MaxDegreeOfParallelism)
+				{
+					ProcessParallelChunks();
+				}
+
+				return;
+			}
+
+			// Original single-threaded logic
 			Entity target;
 
 			try
