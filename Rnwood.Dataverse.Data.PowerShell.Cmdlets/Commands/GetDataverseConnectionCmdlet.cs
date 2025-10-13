@@ -245,8 +245,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         .Build();
 						xrmFakeContext.InitializeMetadata(Mock);
 
+						// Wrap the fake service with a thread-safe proxy since FakeXrmEasy is not thread-safe
+						var fakeService = xrmFakeContext.GetOrganizationService();
+						var threadSafeService = new ThreadSafeOrganizationServiceProxy(fakeService);
+
 						ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
-						result = (ServiceClient)contructor.Invoke(new object[] { xrmFakeContext.GetOrganizationService(), new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9, 2), A.Fake<ILogger>() });
+						result = (ServiceClient)contructor.Invoke(new object[] { threadSafeService, new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9, 2), A.Fake<ILogger>() });
 						break;
 
 					case PARAMSET_CONNECTIONSTRING:
