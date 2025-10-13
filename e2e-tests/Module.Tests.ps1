@@ -195,4 +195,46 @@ Describe "Module" {
             throw "Failed"
         }
     }
+    
+    It "Can use Invoke-DataverseParallel with WhoAmI" {
+        pwsh -noninteractive -noprofile -command {
+            $env:PSModulePath = $env:ChildProcessPSModulePath
+            
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+            
+            try {
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+                
+                # Test parallel processing with WhoAmI call
+                $results = 1..5 | Invoke-DataverseParallel -Connection $connection -ChunkSize 2 -MaxDegreeOfParallelism 3 -ScriptBlock {
+                    $whoami = Get-DataverseWhoAmI
+                    # Return a simple object with the item and user ID
+                    [PSCustomObject]@{
+                        Item = $_
+                        UserId = $whoami.UserId
+                    }
+                }
+                
+                # Verify we got 5 results
+                if ($results.Count -ne 5) {
+                    throw "Expected 5 results, got $($results.Count)"
+                }
+                
+                # Verify all have a UserId
+                foreach ($result in $results) {
+                    if (-not $result.UserId) {
+                        throw "Result missing UserId: $($result | ConvertTo-Json)"
+                    }
+                }
+                
+                Write-Host "Successfully executed 5 parallel WhoAmI calls"
+            } catch {
+                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+            }
+        }
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed"
+        }
+    }
 }

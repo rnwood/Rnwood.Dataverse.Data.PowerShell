@@ -1275,11 +1275,26 @@ You can also check the parameter attributes in the help:
 
 ### Parallelising work for best performance
 
-> [!NOTE] the examples below rely on PowerShell 7+ (`ForEach-Object -Parallel`). If you are running PowerShell Desktop (Windows PowerShell 5.1) these patterns are not applicable, but you can find modules in the gallery that can do the same.
+When processing many records you can use parallelism to reduce elapsed time. Use parallelism when network latency or per-request processing dominates total time, but be careful to avoid overwhelming the Dataverse service (throttling).
 
-When processing many records you can use parallelism to reduce elapsed time. Use parallelism when network latency or per-request processing dominates total time, but be careful to avoid overwhelming the Dataverse service (throttling) or sharing non-thread-safe objects between runspaces.
+**Recommended: Use [`Invoke-DataverseParallel`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseParallel.md)** — This module provides a built-in cmdlet that handles connection cloning, chunking, and parallel execution for you. It works on both PowerShell 5.1 and PowerShell 7+.
 
-PowerShell provides multiple built-in ways to run work in parallel. In PowerShell 7+ the most common options are `ForEach-Object -Parallel` (pipeline-oriented, runspace-pool based) and `Start-ThreadJob` (thread-based jobs). `Start-Job` launches separate PowerShell processes and has higher overhead. See the official docs for details and comparisons:
+Example with `Invoke-DataverseParallel`:
+
+```powershell
+$connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET
+
+# Get records and update them in parallel
+Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
+  Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
+    # $_ is the current record
+    # Cloned connection is automatically available as default
+    $_.emailaddress1 = "updated-$($_.contactid)@example.com"
+    Set-DataverseRecord -TableName contact -InputObject $_ -UpdateOnly
+  }
+```
+
+**Alternative: PowerShell 7+ built-in parallelism** — For advanced scenarios or if you need more control, you can use `ForEach-Object -Parallel` or `Start-ThreadJob`. See the official docs for details:
 
 - ForEach-Object (`-Parallel`) — https://learn.microsoft.com/powershell/module/microsoft.powershell.core/foreach-object?view=powershell-7.5
 - Parallel execution guidance and comparisons — https://learn.microsoft.com/powershell/scripting/dev-cross-plat/performance/parallel-execution
