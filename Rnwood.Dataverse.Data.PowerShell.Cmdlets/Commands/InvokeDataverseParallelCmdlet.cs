@@ -74,8 +74,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			if (_currentChunk.Count >= ChunkSize)
 			{
 				// Create a copy of the chunk to avoid reference issues
-				var chunkToProcess = new List<PSObject>(_currentChunk);
-				ProcessChunk(chunkToProcess);
+				// Convert to array to ensure a complete snapshot
+				var chunkToProcess = _currentChunk.ToArray();
+				ProcessChunk(new List<PSObject>(chunkToProcess));
 				_currentChunk.Clear();
 			}
 		}
@@ -91,8 +92,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			if (_currentChunk.Count > 0)
 			{
 				// Create a copy of the chunk to avoid reference issues
-				var chunkToProcess = new List<PSObject>(_currentChunk);
-				ProcessChunk(chunkToProcess);
+				// Convert to array to ensure a complete snapshot
+				var chunkToProcess = _currentChunk.ToArray();
+				ProcessChunk(new List<PSObject>(chunkToProcess));
 			}
 
 			// Wait for all active tasks to complete
@@ -140,11 +142,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				}
 				$global:PSDefaultParameterValues['*-Dataverse*:Connection'] = $connection
 				
-				# Process each item in the chunk
-				# Use ForEach-Object to properly set $_ for the script block
-				foreach ($item in $chunk) {
-					$item | ForEach-Object -Process $scriptBlock
-				}
+				# Process each item in the chunk using ForEach-Object
+				$chunk | ForEach-Object -Process $scriptBlock
 			");
 			ps.AddParameter("chunk", chunk);
 			ps.AddParameter("scriptBlock", ScriptBlock);
