@@ -135,18 +135,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			// Create script that sets up the default connection and runs the user script
 			ps.AddScript(@"
-				param($chunk, $scriptBlock, $connection)
+				param($chunk, $scriptBlockString, $connection)
 				# Set default connection for Dataverse cmdlets in this runspace
 				if (-not $global:PSDefaultParameterValues) {
 					$global:PSDefaultParameterValues = @{}
 				}
 				$global:PSDefaultParameterValues['*-Dataverse*:Connection'] = $connection
 				
+				# Create script block from string in this runspace to avoid sharing issues
+				$scriptBlock = [scriptblock]::Create($scriptBlockString)
+				
 				# Process each item in the chunk using ForEach-Object
 				$chunk | ForEach-Object -Process $scriptBlock
 			");
-			ps.AddParameter("chunk", chunk);
-			ps.AddParameter("scriptBlock", ScriptBlock);
+			// Convert chunk to array to ensure it's fully materialized before passing to PowerShell
+			var chunkArray = chunk.ToArray();
+			ps.AddParameter("chunk", chunkArray);
+			ps.AddParameter("scriptBlockString", ScriptBlock.ToString());
 			ps.AddParameter("connection", connectionToUse);
 
 			var asyncResult = ps.BeginInvoke();
