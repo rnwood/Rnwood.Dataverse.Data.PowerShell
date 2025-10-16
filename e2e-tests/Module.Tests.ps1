@@ -245,7 +245,7 @@ Describe "Module" {
             Import-Module Rnwood.Dataverse.Data.PowerShell
             
             try {
-                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET} -TenantId ${env:E2ETESTS_TENANTID}
                 
                 # Generate unique test prefix to avoid conflicts with parallel CI runs
                 $testRunId = [guid]::NewGuid().ToString("N").Substring(0, 8)
