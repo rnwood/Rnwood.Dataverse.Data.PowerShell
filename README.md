@@ -1294,6 +1294,8 @@ Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
   }
 ```
 
+See also [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) which supports a DOP parameter.
+
 **Alternative: PowerShell 7+ built-in parallelism** — For advanced scenarios or if you need more control, you can use `ForEach-Object -Parallel` or `Start-ThreadJob`. See the official docs for details:
 
 - ForEach-Object (`-Parallel`) — https://learn.microsoft.com/powershell/module/microsoft.powershell.core/foreach-object?view=powershell-7.5
