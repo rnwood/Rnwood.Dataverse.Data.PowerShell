@@ -247,9 +247,14 @@ Describe "Module" {
             try {
                 $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
                 
-                Write-Host "Step 1: Clearing existing test accounts..."
-                # Clear test accounts (those with name starting with "ParallelTest-")
-                $existingAccounts = Get-DataverseRecord -Connection $connection -TableName account -Filter "startswith(name, 'ParallelTest-')"
+                # Generate unique test prefix to avoid conflicts with parallel CI runs
+                $testRunId = [guid]::NewGuid().ToString("N").Substring(0, 8)
+                $testPrefix = "ParallelTest-$testRunId-"
+                Write-Host "Using test prefix: $testPrefix"
+                
+                Write-Host "Step 1: Clearing existing test accounts for this run..."
+                # Clear test accounts for this specific test run
+                $existingAccounts = Get-DataverseRecord -Connection $connection -TableName account -Filter "startswith(name, '$testPrefix')"
                 if ($existingAccounts.Count -gt 0) {
                     Write-Host "Deleting $($existingAccounts.Count) existing test accounts..."
                     $existingAccounts | Remove-DataverseRecord -Connection $connection -TableName account -BatchSize 100
@@ -259,12 +264,12 @@ Describe "Module" {
                 Write-Host "Step 2: Creating 10000 test accounts in parallel..."
                 $startTime = Get-Date
                 
-                # Generate 10000 unique account objects
+                # Generate 10000 unique account objects with unique prefix
                 $accountsToCreate = 1..10000 | ForEach-Object {
                     [PSCustomObject]@{
-                        name = "ParallelTest-$_"
-                        accountnumber = "ACCT$_"
-                        description = "Test account created by parallel test - Index $_"
+                        name = "$testPrefix$_"
+                        accountnumber = "ACCT-$testRunId-$_"
+                        description = "Test account created by parallel test - Run $testRunId - Index $_"
                     }
                 }
                 
@@ -277,7 +282,7 @@ Describe "Module" {
                 Write-Host "Created 10000 accounts in $($createDuration.TotalSeconds) seconds"
                 
                 Write-Host "Step 3: Querying back all created accounts..."
-                $createdAccounts = Get-DataverseRecord -Connection $connection -TableName account -Filter "startswith(name, 'ParallelTest-')" -Columns name, accountnumber, description
+                $createdAccounts = Get-DataverseRecord -Connection $connection -TableName account -Filter "startswith(name, '$testPrefix')" -Columns name, accountnumber, description
                 
                 # Verify count
                 if ($createdAccounts.Count -ne 10000) {
@@ -290,10 +295,10 @@ Describe "Module" {
                 $mismatches = @()
                 foreach ($account in $createdAccounts) {
                     # Extract index from name
-                    if ($account.name -match 'ParallelTest-(\d+)') {
+                    if ($account.name -match "$testPrefix(\d+)") {
                         $index = $matches[1]
-                        $expectedAccountNumber = "ACCT$index"
-                        $expectedDescription = "Test account created by parallel test - Index $index"
+                        $expectedAccountNumber = "ACCT-$testRunId-$index"
+                        $expectedDescription = "Test account created by parallel test - Run $testRunId - Index $index"
                         
                         if ($account.accountnumber -ne $expectedAccountNumber) {
                             $mismatches += "Account $($account.name): Expected accountnumber '$expectedAccountNumber', got '$($account.accountnumber)'"
@@ -322,7 +327,7 @@ Describe "Module" {
                 Write-Host "Updated 10000 accounts in $($updateDuration.TotalSeconds) seconds"
                 
                 Write-Host "Step 5: Querying back and verifying updates..."
-                $updatedAccounts = Get-DataverseRecord -Connection $connection -TableName account -Filter "startswith(name, 'ParallelTest-')" -Columns name, description
+                $updatedAccounts = Get-DataverseRecord -Connection $connection -TableName account -Filter "startswith(name, '$testPrefix')" -Columns name, description
                 
                 # Verify all accounts were updated
                 $notUpdated = @()
