@@ -254,7 +254,7 @@ Describe "Module" {
                 
                 Write-Host "Step 1: Clearing existing test accounts for this run..."
                 # Clear test accounts for this specific test run
-                $existingAccounts = Get-DataverseRecord -Connection $connection -TableName account -Filter "startswith(name, '$testPrefix')"
+                $existingAccounts = Get-DataverseRecord -Connection $connection -TableName account -FilterValues @{ name = @{ operator = 'Like'; value = "$testPrefix%" } }
                 if ($existingAccounts.Count -gt 0) {
                     Write-Host "Deleting $($existingAccounts.Count) existing test accounts..."
                     $existingAccounts | Remove-DataverseRecord -Connection $connection -TableName account -BatchSize 100
@@ -282,7 +282,7 @@ Describe "Module" {
                 Write-Host "Created 10000 accounts in $($createDuration.TotalSeconds) seconds"
                 
                 Write-Host "Step 3: Querying back all created accounts..."
-                $createdAccounts = Get-DataverseRecord -Connection $connection -TableName account -Filter "startswith(name, '$testPrefix')" -Columns name, accountnumber, description
+                $createdAccounts = Get-DataverseRecord -Connection $connection -TableName account -FilterValues @{ name = @{ operator = 'Like'; value = "$testPrefix%" } } -Columns name, accountnumber, description
                 
                 # Verify count
                 if ($createdAccounts.Count -ne 10000) {
@@ -327,7 +327,7 @@ Describe "Module" {
                 Write-Host "Updated 10000 accounts in $($updateDuration.TotalSeconds) seconds"
                 
                 Write-Host "Step 5: Querying back and verifying updates..."
-                $updatedAccounts = Get-DataverseRecord -Connection $connection -TableName account -Filter "startswith(name, '$testPrefix')" -Columns name, description
+                $updatedAccounts = Get-DataverseRecord -Connection $connection -TableName account -FilterValues @{ name = @{ operator = 'Like'; value = "$testPrefix%" } } -Columns name, description
                 
                 # Verify all accounts were updated
                 $notUpdated = @()

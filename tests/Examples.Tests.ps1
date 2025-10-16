@@ -1092,7 +1092,7 @@ Describe "Examples-Comparison Documentation Tests" {
             { $records | Set-DataverseRecord -Connection $script:conn -BatchSize 5 } | Should -Not -Throw
             
             # Verify records were created by retrieving one
-            $retrieved = Get-DataverseRecord -Connection $script:conn -TableName contact -Filter @{"firstname"="BatchTest0"}
+            $retrieved = Get-DataverseRecord -Connection $script:conn -TableName contact -FilterValues @{"firstname"="BatchTest0"}
             $retrieved | Should -Not -BeNull
             $retrieved.firstname | Should -Be "BatchTest0"
         }
