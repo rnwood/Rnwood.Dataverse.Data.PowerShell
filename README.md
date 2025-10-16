@@ -1282,7 +1282,7 @@ When processing many records you can use parallelism to reduce elapsed time. Use
 Example with `Invoke-DataverseParallel`:
 
 ```powershell
-$connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET
+$connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET -TenantId $env:TENANT_ID
 
 # Get records and update them in parallel
 Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
