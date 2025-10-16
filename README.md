@@ -1160,8 +1160,8 @@ $records | Set-DataverseRecord -Connection $c -TableName account -BatchSize 50 -
 
 See full documentation: [Set-DataverseRecord Batching](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md#example-7-control-batch-size) | [Remove-DataverseRecord Batching](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md)
 
-When to avoid parallelism:
-- When each operation take a long time. Use small batches or not batches so the request doesn't timeout.
+When to avoid batching:
+- When each operation take a long time. Use small batches or not batches so the request doesn't add up to more than the request timeout (defined at connection level).
 
 ### Parallelising work for best performance
 

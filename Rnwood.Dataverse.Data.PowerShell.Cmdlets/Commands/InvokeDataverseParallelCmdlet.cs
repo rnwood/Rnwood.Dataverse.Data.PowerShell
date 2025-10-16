@@ -45,6 +45,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private List<IAsyncResult> _activeWaitHandles = new List<IAsyncResult>();
 		private RunspacePool _runspacePool;
 		private int _chunkNumber = 0;
+		private volatile bool _stopping = false;
 
 		/// <summary>
 		/// Initializes the runspace pool for parallel processing.
@@ -55,6 +56,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			// Initialize runspace pool for streaming chunk processing
 			var initialSessionState = InitialSessionState.CreateDefault();
+
+			var loadedModules = this.InvokeCommand.InvokeScript("Get-Module | Where-Object { $_.Path } | Select-Object -ExpandProperty Path");
+
+			foreach (var modulePath in loadedModules)
+			{
+				initialSessionState.ImportPSModule(new[] { modulePath.ToString() });
+			}
+
 			_runspacePool = RunspaceFactory.CreateRunspacePool(1, MaxDegreeOfParallelism, initialSessionState, Host);
 			_runspacePool.Open();
 
@@ -67,6 +76,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		protected override void ProcessRecord()
 		{
 			base.ProcessRecord();
+
+			// Check if stopping has been requested
+			if (_stopping)
+			{
+				return;
+			}
 			
 			_currentChunk.Add(InputObject);
 
@@ -88,6 +103,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			base.EndProcessing();
 
+			// Check if stopping has been requested
+			if (_stopping)
+			{
+				// Clean up runspace pool
+				if (_runspacePool != null)
+				{
+					_runspacePool.Close();
+					_runspacePool.Dispose();
+				}
+				return;
+			}
+
 			// Process any remaining partial chunk
 			if (_currentChunk.Count > 0)
 			{
@@ -108,10 +135,55 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 		}
 
+		/// <summary>
+		/// Stops processing and cleans up resources.
+		/// </summary>
+		protected override void StopProcessing()
+		{
+			_stopping = true;
+
+			WriteVerbose("StopProcessing called - stopping parallel operations");
+
+			// Stop the runspace pool to prevent new operations
+			if (_runspacePool != null)
+			{
+				try
+				{
+					_runspacePool.Close();
+				}
+				catch (Exception ex)
+				{
+					WriteVerbose($"Error closing runspace pool: {ex.Message}");
+				}
+			}
+
+			// Stop all active PowerShell tasks
+			foreach (var task in _activeTasks)
+			{
+				try
+				{
+					task.Stop();
+				}
+				catch (Exception ex)
+				{
+					WriteVerbose($"Error stopping PowerShell task: {ex.Message}");
+				}
+			}
+
+			// Clear current chunk to prevent further processing
+			_currentChunk.Clear();
+		}
+
 		private void ProcessChunk(List<PSObject> chunk)
 		{
+			// Check if stopping has been requested
+			if (_stopping)
+			{
+				return;
+			}
+
 			_chunkNumber++;
-			WriteVerbose($"Processing chunk {_chunkNumber} with {chunk.Count} items");
+			WriteVerbose($"Queuing chunk {_chunkNumber} with {chunk.Count} items");
 
 			var ps = System.Management.Automation.PowerShell.Create();
 			ps.RunspacePool = _runspacePool;
@@ -163,11 +235,37 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			WriteVerbose($"Waiting for {_activeTasks.Count} active tasks to complete");
 
-			// Wait for all tasks to complete and collect results
-			for (int i = 0; i < _activeTasks.Count; i++)
+			// If stopping, don't wait for tasks - just dispose them
+			if (_stopping)
 			{
-				var task = _activeTasks[i];
-				var waitHandle = _activeWaitHandles[i];
+				foreach (var task in _activeTasks)
+				{
+					try
+					{
+						task.Dispose();
+					}
+					catch (Exception ex)
+					{
+						WriteVerbose($"Error disposing PowerShell task: {ex.Message}");
+					}
+				}
+				_activeTasks.Clear();
+				_activeWaitHandles.Clear();
+				return;
+			}
+
+			// Collect wait handles for all active tasks
+			var waitHandles = _activeWaitHandles.Select(ar => ar.AsyncWaitHandle).ToArray();
+
+			// Process tasks as they complete
+			while (_activeTasks.Count > 0)
+			{
+				WriteVerbose($"Waiting for any of {_activeTasks.Count} tasks to complete");
+
+				int completedIndex = WaitHandle.WaitAny(waitHandles);
+
+				var task = _activeTasks[completedIndex];
+				var waitHandle = _activeWaitHandles[completedIndex];
 				
 				var results = task.EndInvoke(waitHandle);
 				foreach (var result in results)
@@ -183,11 +281,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					}
 				}
 
-				task.Dispose();
-			}
+				WriteVerbose($"Task {completedIndex + 1} completed");
 
-			_activeTasks.Clear();
-			_activeWaitHandles.Clear();
+				task.Dispose();
+
+				// Remove the completed task and its wait handle
+				_activeTasks.RemoveAt(completedIndex);
+				_activeWaitHandles.RemoveAt(completedIndex);
+
+				// Rebuild wait handles array for remaining tasks
+				waitHandles = _activeWaitHandles.Select(ar => ar.AsyncWaitHandle).ToArray();
+			}
 		}
 	}
 }

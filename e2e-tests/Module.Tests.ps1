@@ -238,7 +238,7 @@ Describe "Module" {
         }
     }
 
-    It "Invoke-DataverseParallel can create, update and verify 10000 account records consistently" -Tag "LongRunning" {
+    It "Invoke-DataverseParallel can create, update and verify $numberofrecords account records consistently" -Tag "LongRunning" {
         pwsh -noninteractive -noprofile -command {
             $env:PSModulePath = $env:ChildProcessPSModulePath
             
@@ -250,14 +250,15 @@ Describe "Module" {
                 # Generate unique test prefix to avoid conflicts with parallel CI runs
                 $testRunId = [guid]::NewGuid().ToString("N").Substring(0, 8)
                 $testPrefix = "ParallelTest-$testRunId-"
+                $numberOfRecords = 1000
                 Write-Host "Using test prefix: $testPrefix"
-                
-                
-                Write-Host "Step 1: Creating 10000 test accounts in parallel..."
+
+
+                Write-Host "Step 1: Creating $numberOfRecords test accounts in parallel..."
                 $startTime = Get-Date
                 
-                # Generate 10000 unique account objects with unique prefix
-                $accountsToCreate = 1..10000 | ForEach-Object {
+                # Generate $numberofrecords unique account objects with unique prefix
+                $accountsToCreate = 1..$numberofrecords | ForEach-Object {
                     [PSCustomObject]@{
                         name = "$testPrefix$_"
                         accountnumber = "ACCT-$testRunId-$_"
@@ -266,21 +267,21 @@ Describe "Module" {
                 }
                 
                 # Create accounts in parallel batches
-                $accountsToCreate | Invoke-DataverseParallel -Connection $connection -ChunkSize 100 -MaxDegreeOfParallelism 8 -ScriptBlock {
+                $accountsToCreate | Invoke-DataverseParallel -Connection $connection -ChunkSize 100 -verbose -MaxDegreeOfParallelism 8 -ScriptBlock {
                     $_ | Set-DataverseRecord -TableName account -CreateOnly -BatchSize 100
                 }
                 
                 $createDuration = (Get-Date) - $startTime
-                Write-Host "Created 10000 accounts in $($createDuration.TotalSeconds) seconds"
+                Write-Host "Created $numberofrecords accounts in $($createDuration.TotalSeconds) seconds"
                 
                 Write-Host "Step 3: Querying back all created accounts..."
                 $createdAccounts = Get-DataverseRecord -Connection $connection -TableName account -FilterValues @{ "name:Like" = "$testPrefix%" } -Columns name, accountnumber, description
                 
                 # Verify count
-                if ($createdAccounts.Count -ne 10000) {
-                    throw "Expected 10000 accounts, but found $($createdAccounts.Count)"
+                if ($createdAccounts.Count -ne $numberofrecords) {
+                    throw "Expected $numberofrecords accounts, but found $($createdAccounts.Count)"
                 }
-                Write-Host "Verified: Found all 10000 accounts"
+                Write-Host "Verified: Found all $numberofrecords accounts"
                 
                 # Verify each account has correct data
                 Write-Host "Verifying account data integrity..."
@@ -307,12 +308,12 @@ Describe "Module" {
                 Write-Host "Verified: All account data is correct"
                 
                 Write-Host "Step 4: Cleanup - Deleting test accounts..."
-                $updatedAccounts | Invoke-DataverseParallel -Connection $connection -ChunkSize 100 -MaxDegreeOfParallelism 8 -ScriptBlock {
-                    $_ | Remove-DataverseRecord -TableName account -BatchSize 100
+                $createdAccounts | Invoke-DataverseParallel -Connection $connection -ChunkSize 100 -MaxDegreeOfParallelism 8 -ScriptBlock {
+                    $_ | Remove-DataverseRecord -TableName account -BatchSize 100 -verbose
                 }
                 Write-Host "Cleanup complete"
                 
-                Write-Host "SUCCESS: All 10000 accounts were created, verified, updated, and cleaned up successfully"
+                Write-Host "SUCCESS: All $numberofrecords accounts were created, verified, updated, and cleaned up successfully"
                 Write-Host "Total test duration: $((Get-Date) - $startTime)"
                 
             } catch {

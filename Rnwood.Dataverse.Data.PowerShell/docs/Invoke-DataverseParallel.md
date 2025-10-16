@@ -22,6 +22,8 @@ Invoke-DataverseParallel [-ScriptBlock] <ScriptBlock> -InputObject <PSObject> [-
 The Invoke-DataverseParallel cmdlet processes input objects in parallel using multiple runspaces.
 It automatically chunks the input data, clones the Dataverse connection for each parallel worker, and makes the cloned connection available as the default connection within each script block.
 
+The chunk for each invocation is available as $_ within the block. This contains multiple records, so pipe it to `Set-DataverseRecord` for example.
+
 This cmdlet is useful for improving performance when processing large numbers of records where the operations are independent and can be executed concurrently.
 
 ## EXAMPLES
@@ -32,7 +34,7 @@ PS C:\> $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.c
 PS C:\> Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
   Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
     $_.emailaddress1 = "updated-$($_.contactid)@example.com"
-    Set-DataverseRecord -TableName contact -InputObject $_ -UpdateOnly
+    $_ | Set-DataverseRecord -TableName contact -UpdateOnly
   }
 ```
 
@@ -141,9 +143,11 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Management.Automation.PSObject
+
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
+
 ## NOTES
 
 ## RELATED LINKS
