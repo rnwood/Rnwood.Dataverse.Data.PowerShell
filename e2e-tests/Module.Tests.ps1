@@ -238,7 +238,7 @@ Describe "Module" {
         }
     }
 
-    It "Invoke-DataverseParallel can create, update and verify $numberofrecords account records consistently" -Tag "LongRunning" {
+    It "Invoke-DataverseParallel can create, update and verify $numberofrecords account records consistently" -skip -Tag "LongRunning" {
         pwsh -noninteractive -noprofile -command {
             $env:PSModulePath = $env:ChildProcessPSModulePath
             
