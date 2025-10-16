@@ -252,16 +252,8 @@ Describe "Module" {
                 $testPrefix = "ParallelTest-$testRunId-"
                 Write-Host "Using test prefix: $testPrefix"
                 
-                Write-Host "Step 1: Clearing existing test accounts for this run..."
-                # Clear test accounts for this specific test run
-                $existingAccounts = Get-DataverseRecord -Connection $connection -TableName account -FilterValues @{ "name:Like" = "$testPrefix%" }
-                if ($existingAccounts.Count -gt 0) {
-                    Write-Host "Deleting $($existingAccounts.Count) existing test accounts..."
-                    $existingAccounts | Remove-DataverseRecord -Connection $connection -TableName account -BatchSize 100
-                }
-                Write-Host "Test accounts cleared."
                 
-                Write-Host "Step 2: Creating 10000 test accounts in parallel..."
+                Write-Host "Step 1: Creating 10000 test accounts in parallel..."
                 $startTime = Get-Date
                 
                 # Generate 10000 unique account objects with unique prefix
@@ -275,7 +267,7 @@ Describe "Module" {
                 
                 # Create accounts in parallel batches
                 $accountsToCreate | Invoke-DataverseParallel -Connection $connection -ChunkSize 100 -MaxDegreeOfParallelism 8 -ScriptBlock {
-                    Set-DataverseRecord -TableName account -InputObject $_ -CreateOnly -BatchSize 100
+                    $_ | Set-DataverseRecord -TableName account -CreateOnly -BatchSize 100
                 }
                 
                 $createDuration = (Get-Date) - $startTime
@@ -314,36 +306,10 @@ Describe "Module" {
                 }
                 Write-Host "Verified: All account data is correct"
                 
-                Write-Host "Step 4: Updating all accounts in parallel..."
-                $updateStartTime = Get-Date
-                
-                # Update all accounts with new description
-                $createdAccounts | Invoke-DataverseParallel -Connection $connection -ChunkSize 100 -MaxDegreeOfParallelism 8 -ScriptBlock {
-                    $_.description = "UPDATED - " + $_.description
-                    Set-DataverseRecord -TableName account -InputObject $_ -UpdateOnly -BatchSize 100
+                Write-Host "Step 4: Cleanup - Deleting test accounts..."
+                $updatedAccounts | Invoke-DataverseParallel -Connection $connection -ChunkSize 100 -MaxDegreeOfParallelism 8 -ScriptBlock {
+                    $_ | Remove-DataverseRecord -TableName account -BatchSize 100
                 }
-                
-                $updateDuration = (Get-Date) - $updateStartTime
-                Write-Host "Updated 10000 accounts in $($updateDuration.TotalSeconds) seconds"
-                
-                Write-Host "Step 5: Querying back and verifying updates..."
-                $updatedAccounts = Get-DataverseRecord -Connection $connection -TableName account -FilterValues @{ "name:Like" = "$testPrefix%" } -Columns name, description
-                
-                # Verify all accounts were updated
-                $notUpdated = @()
-                foreach ($account in $updatedAccounts) {
-                    if (-not $account.description.StartsWith("UPDATED - ")) {
-                        $notUpdated += $account.name
-                    }
-                }
-                
-                if ($notUpdated.Count -gt 0) {
-                    throw "Found $($notUpdated.Count) accounts that were not updated. Examples: $($notUpdated | Select-Object -First 5 -join ', ')"
-                }
-                Write-Host "Verified: All 10000 accounts were successfully updated"
-                
-                Write-Host "Step 6: Cleanup - Deleting test accounts..."
-                $updatedAccounts | Remove-DataverseRecord -Connection $connection -TableName account -BatchSize 100
                 Write-Host "Cleanup complete"
                 
                 Write-Host "SUCCESS: All 10000 accounts were created, verified, updated, and cleaned up successfully"

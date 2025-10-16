@@ -1160,7 +1160,112 @@ $records | Set-DataverseRecord -Connection $c -TableName account -BatchSize 50 -
 
 See full documentation: [Set-DataverseRecord Batching](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md#example-7-control-batch-size) | [Remove-DataverseRecord Batching](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md)
 
- 
+When to avoid parallelism:
+- When each operation take a long time. Use small batches or not batches so the request doesn't timeout.
+
+### Parallelising work for best performance
+
+When processing many records you can use parallelism to reduce elapsed time. Use parallelism when network latency or per-request processing dominates total time, but be careful to avoid overwhelming the Dataverse service (throttling).
+
+**Recommended: Use [`Invoke-DataverseParallel`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseParallel.md)** — This module provides a built-in cmdlet that handles connection cloning, chunking, and parallel execution for you. It works on both PowerShell 5.1 and PowerShell 7+.
+
+Example with `Invoke-DataverseParallel`:
+
+```powershell
+$connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET -TenantId $env:TENANT_ID
+
+# Get records and update them in parallel
+Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
+  Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
+    # $_ is the current record
+    # Cloned connection is automatically available as default
+    $_.emailaddress1 = "updated-$($_.contactid)@example.com"
+    $_ | Set-DataverseRecord -TableName contact -UpdateOnly
+  }
+```
+
+See also [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) which supports a DOP parameter.
+
+**Alternative: PowerShell 7+ built-in parallelism** — For advanced scenarios or if you need more control, you can use `ForEach-Object -Parallel` or `Start-ThreadJob`. See the official docs for details:
+
+- ForEach-Object (`-Parallel`) — https://learn.microsoft.com/powershell/module/microsoft.powershell.core/foreach-object?view=powershell-7.5
+- Parallel execution guidance and comparisons — https://learn.microsoft.com/powershell/scripting/dev-cross-plat/performance/parallel-execution
+
+Key guidance:
+- Split work into chunks that align with `-BatchSize` — process a chunk per worker rather than single records. Chunking reduces round trips, bounds memory use, and reduces per-item overhead in parallel scenarios.
+- Prefer streaming via the pipeline (e.g. [`Get-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) | Get-Chunks -ChunkSize n | ...) and avoid collecting the entire result set into an intermediate variable before processing.
+- Clone an existing connection inside each runspace using the connection's `.Clone()` method rather than sharing a single connection object between runspaces. Cloning preserves authentication/context while providing an independent connection instance.
+- Use `-ThrottleLimit` (or equivalent) to limit concurrent requests and avoid API throttling.
+- Combine parallel processing with `-BatchSize` on [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) / [`Remove-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) to reduce round-trips.
+
+Example: chunking helper and `ForEach-Object -Parallel`. Create a parent connection, split records into chunks that match your batch size, then process one chunk per worker.
+
+```powershell
+# Helper: split an array into chunks
+function Get-Chunks {
+  [CmdletBinding()]
+  param(
+    [Parameter(ValueFromPipeline=$true, Position=0)]
+    $InputObject,
+    [Parameter(Mandatory, Position=1)]
+    [int] $ChunkSize
+  )
+
+  begin { $buffer = @() }
+  process {
+    $buffer += $InputObject
+    if ($buffer.Count -ge $ChunkSize) {
+      # Emit the chunk as a single array object
+      Write-Output (,$buffer)
+      $buffer = @()
+    }
+  }
+  end {
+    if ($buffer.Count -gt 0) { Write-Output (,$buffer) }
+  }
+}
+
+# Create a parent connection and determine chunk size
+$parentConn = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET -TenantId $env:TENANT_ID
+$chunkSize = 50
+
+# Stream records, chunk them and process each chunk in parallel (no intermediate record/chunk variables)
+Get-DataverseRecord -Connection $parentConn -TableName contact -Top 1000 |
+  Get-Chunks -ChunkSize $chunkSize |
+  ForEach-Object -Parallel {
+    $ErrorActionPreference = 'Stop'
+    $conn = $using:parentConn.Clone()
+    $_ | Set-DataverseRecord -Connection $conn -BatchSize $using:chunkSize -Verbose
+  } -ThrottleLimit 8
+```
+
+
+Example: use thread jobs for background tasks — create chunks first and pass chunk size into each job so jobs process chunked batches:
+
+```powershell
+$parent = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET -TenantId $env:TENANT_ID
+$chunkSize = 50
+
+# Stream records, create thread jobs per chunk and collect jobs in $jobs
+$jobs = Get-DataverseRecord -Connection $parent -TableName contact -Top 1000 |
+  Get-Chunks -ChunkSize $chunkSize |
+  ForEach-Object {
+    Start-ThreadJob -ArgumentList $_, $parent, $chunkSize -ScriptBlock {
+      param($items, $parentConn, $size)
+      # Clone the parent connection inside the job
+      $conn = $parentConn.Clone()
+      $items | Set-DataverseRecord -Connection $conn -BatchSize $size
+    }
+  }
+
+# Wait and collect results
+Receive-Job -Job $jobs -Wait -AutoRemoveJob
+```
+
+When to avoid parallelism:
+- Small numbers of records where the overhead of cloning connections outweighs gains
+- Operations that must be strictly ordered or transactional
+
 
 
 
@@ -1272,109 +1377,6 @@ You can also check the parameter attributes in the help:
 - [Microsoft Docs: about_Foreach](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_foreach)
 - [Microsoft Docs: ForEach-Object](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/foreach-object)
 - [PowerShell Team Blog: ForEach and Where Magic Methods](https://devblogs.microsoft.com/powershell/foreach-and-where-magic-methods/)
-
-### Parallelising work for best performance
-
-When processing many records you can use parallelism to reduce elapsed time. Use parallelism when network latency or per-request processing dominates total time, but be careful to avoid overwhelming the Dataverse service (throttling).
-
-**Recommended: Use [`Invoke-DataverseParallel`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseParallel.md)** — This module provides a built-in cmdlet that handles connection cloning, chunking, and parallel execution for you. It works on both PowerShell 5.1 and PowerShell 7+.
-
-Example with `Invoke-DataverseParallel`:
-
-```powershell
-$connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET -TenantId $env:TENANT_ID
-
-# Get records and update them in parallel
-Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
-  Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
-    # $_ is the current record
-    # Cloned connection is automatically available as default
-    $_.emailaddress1 = "updated-$($_.contactid)@example.com"
-    Set-DataverseRecord -TableName contact -InputObject $_ -UpdateOnly
-  }
-```
-
-See also [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) which supports a DOP parameter.
-
-**Alternative: PowerShell 7+ built-in parallelism** — For advanced scenarios or if you need more control, you can use `ForEach-Object -Parallel` or `Start-ThreadJob`. See the official docs for details:
-
-- ForEach-Object (`-Parallel`) — https://learn.microsoft.com/powershell/module/microsoft.powershell.core/foreach-object?view=powershell-7.5
-- Parallel execution guidance and comparisons — https://learn.microsoft.com/powershell/scripting/dev-cross-plat/performance/parallel-execution
-
-Key guidance:
-- Split work into chunks that align with `-BatchSize` — process a chunk per worker rather than single records. Chunking reduces round trips, bounds memory use, and reduces per-item overhead in parallel scenarios.
-- Prefer streaming via the pipeline (e.g. [`Get-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) | Get-Chunks -ChunkSize n | ...) and avoid collecting the entire result set into an intermediate variable before processing.
-- Clone an existing connection inside each runspace using the connection's `.Clone()` method rather than sharing a single connection object between runspaces. Cloning preserves authentication/context while providing an independent connection instance.
-- Use `-ThrottleLimit` (or equivalent) to limit concurrent requests and avoid API throttling.
-- Combine parallel processing with `-BatchSize` on [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) / [`Remove-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) to reduce round-trips.
-
-Example: chunking helper and `ForEach-Object -Parallel`. Create a parent connection, split records into chunks that match your batch size, then process one chunk per worker.
-
-```powershell
-# Helper: split an array into chunks
-function Get-Chunks {
-  [CmdletBinding()]
-  param(
-    [Parameter(ValueFromPipeline=$true, Position=0)]
-    $InputObject,
-    [Parameter(Mandatory, Position=1)]
-    [int] $ChunkSize
-  )
-
-  begin { $buffer = @() }
-  process {
-    $buffer += $InputObject
-    if ($buffer.Count -ge $ChunkSize) {
-      # Emit the chunk as a single array object
-      Write-Output (,$buffer)
-      $buffer = @()
-    }
-  }
-  end {
-    if ($buffer.Count -gt 0) { Write-Output (,$buffer) }
-  }
-}
-
-# Create a parent connection and determine chunk size
-$parentConn = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET -TenantId $env:TENANT_ID
-$chunkSize = 50
-
-# Stream records, chunk them and process each chunk in parallel (no intermediate record/chunk variables)
-Get-DataverseRecord -Connection $parentConn -TableName contact -Top 1000 |
-  Get-Chunks -ChunkSize $chunkSize |
-  ForEach-Object -Parallel {
-    $ErrorActionPreference = 'Stop'
-    $conn = $using:parentConn.Clone()
-    $_ | Set-DataverseRecord -Connection $conn -BatchSize $using:chunkSize -Verbose
-  } -ThrottleLimit 8
-```
-
-
-Example: use thread jobs for background tasks — create chunks first and pass chunk size into each job so jobs process chunked batches:
-
-```powershell
-$parent = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET -TenantId $env:TENANT_ID
-$chunkSize = 50
-
-# Stream records, create thread jobs per chunk and collect jobs in $jobs
-$jobs = Get-DataverseRecord -Connection $parent -TableName contact -Top 1000 |
-  Get-Chunks -ChunkSize $chunkSize |
-  ForEach-Object {
-    Start-ThreadJob -ArgumentList $_, $parent, $chunkSize -ScriptBlock {
-      param($items, $parentConn, $size)
-      # Clone the parent connection inside the job
-      $conn = $parentConn.Clone()
-      $items | Set-DataverseRecord -Connection $conn -BatchSize $size
-    }
-  }
-
-# Wait and collect results
-Receive-Job -Job $jobs -Wait -AutoRemoveJob
-```
-
-When to avoid parallelism:
-- Small numbers of records where the overhead of cloning connections outweighs gains
-- Operations that must be strictly ordered or transactional
 
 
 ### WhatIf and Confirm
