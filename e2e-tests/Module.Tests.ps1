@@ -237,4 +237,120 @@ Describe "Module" {
             throw "Failed"
         }
     }
+
+    It "Invoke-DataverseParallel can create, update and verify 10000 account records consistently" -Tag "LongRunning" {
+        pwsh -noninteractive -noprofile -command {
+            $env:PSModulePath = $env:ChildProcessPSModulePath
+            
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+            
+            try {
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+                
+                Write-Host "Step 1: Clearing existing test accounts..."
+                # Clear test accounts (those with name starting with "ParallelTest-")
+                $existingAccounts = Get-DataverseRecord -Connection $connection -TableName account -Filter "startswith(name, 'ParallelTest-')"
+                if ($existingAccounts.Count -gt 0) {
+                    Write-Host "Deleting $($existingAccounts.Count) existing test accounts..."
+                    $existingAccounts | Remove-DataverseRecord -Connection $connection -TableName account -BatchSize 100
+                }
+                Write-Host "Test accounts cleared."
+                
+                Write-Host "Step 2: Creating 10000 test accounts in parallel..."
+                $startTime = Get-Date
+                
+                # Generate 10000 unique account objects
+                $accountsToCreate = 1..10000 | ForEach-Object {
+                    [PSCustomObject]@{
+                        name = "ParallelTest-$_"
+                        accountnumber = "ACCT$_"
+                        description = "Test account created by parallel test - Index $_"
+                    }
+                }
+                
+                # Create accounts in parallel batches
+                $accountsToCreate | Invoke-DataverseParallel -Connection $connection -ChunkSize 100 -MaxDegreeOfParallelism 8 -ScriptBlock {
+                    Set-DataverseRecord -TableName account -InputObject $_ -CreateOnly -BatchSize 100
+                }
+                
+                $createDuration = (Get-Date) - $startTime
+                Write-Host "Created 10000 accounts in $($createDuration.TotalSeconds) seconds"
+                
+                Write-Host "Step 3: Querying back all created accounts..."
+                $createdAccounts = Get-DataverseRecord -Connection $connection -TableName account -Filter "startswith(name, 'ParallelTest-')" -Columns name, accountnumber, description
+                
+                # Verify count
+                if ($createdAccounts.Count -ne 10000) {
+                    throw "Expected 10000 accounts, but found $($createdAccounts.Count)"
+                }
+                Write-Host "Verified: Found all 10000 accounts"
+                
+                # Verify each account has correct data
+                Write-Host "Verifying account data integrity..."
+                $mismatches = @()
+                foreach ($account in $createdAccounts) {
+                    # Extract index from name
+                    if ($account.name -match 'ParallelTest-(\d+)') {
+                        $index = $matches[1]
+                        $expectedAccountNumber = "ACCT$index"
+                        $expectedDescription = "Test account created by parallel test - Index $index"
+                        
+                        if ($account.accountnumber -ne $expectedAccountNumber) {
+                            $mismatches += "Account $($account.name): Expected accountnumber '$expectedAccountNumber', got '$($account.accountnumber)'"
+                        }
+                        if ($account.description -ne $expectedDescription) {
+                            $mismatches += "Account $($account.name): Expected description '$expectedDescription', got '$($account.description)'"
+                        }
+                    }
+                }
+                
+                if ($mismatches.Count -gt 0) {
+                    throw "Data integrity issues found:`n$($mismatches -join "`n")"
+                }
+                Write-Host "Verified: All account data is correct"
+                
+                Write-Host "Step 4: Updating all accounts in parallel..."
+                $updateStartTime = Get-Date
+                
+                # Update all accounts with new description
+                $createdAccounts | Invoke-DataverseParallel -Connection $connection -ChunkSize 100 -MaxDegreeOfParallelism 8 -ScriptBlock {
+                    $_.description = "UPDATED - " + $_.description
+                    Set-DataverseRecord -TableName account -InputObject $_ -UpdateOnly -BatchSize 100
+                }
+                
+                $updateDuration = (Get-Date) - $updateStartTime
+                Write-Host "Updated 10000 accounts in $($updateDuration.TotalSeconds) seconds"
+                
+                Write-Host "Step 5: Querying back and verifying updates..."
+                $updatedAccounts = Get-DataverseRecord -Connection $connection -TableName account -Filter "startswith(name, 'ParallelTest-')" -Columns name, description
+                
+                # Verify all accounts were updated
+                $notUpdated = @()
+                foreach ($account in $updatedAccounts) {
+                    if (-not $account.description.StartsWith("UPDATED - ")) {
+                        $notUpdated += $account.name
+                    }
+                }
+                
+                if ($notUpdated.Count -gt 0) {
+                    throw "Found $($notUpdated.Count) accounts that were not updated. Examples: $($notUpdated | Select-Object -First 5 -join ', ')"
+                }
+                Write-Host "Verified: All 10000 accounts were successfully updated"
+                
+                Write-Host "Step 6: Cleanup - Deleting test accounts..."
+                $updatedAccounts | Remove-DataverseRecord -Connection $connection -TableName account -BatchSize 100
+                Write-Host "Cleanup complete"
+                
+                Write-Host "SUCCESS: All 10000 accounts were created, verified, updated, and cleaned up successfully"
+                Write-Host "Total test duration: $((Get-Date) - $startTime)"
+                
+            } catch {
+                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+            }
+        }
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed"
+        }
+    }
 }
