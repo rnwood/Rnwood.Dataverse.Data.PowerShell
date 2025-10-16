@@ -43,6 +43,7 @@
   <ItemGroup>
     <EmbeddedResource Include="conemu.xml" />
     <EmbeddedResource Include="GettingStarted.md" />
+    <EmbeddedResource Include="DefaultScript.ps1" />
   </ItemGroup>
 
    <!--Copy PowerShell module to output for bundling--> 

@@ -47,9 +47,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // 
             this.toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newInteractiveSessionButton});
-            this.toolStrip.Location = new System.Drawing.Point(0, 0);
+            this.toolStrip.Dock = DockStyle.Top;
             this.toolStrip.Name = "toolStrip";
-            this.toolStrip.Size = new System.Drawing.Size(800, 25);
             this.toolStrip.TabIndex = 1;
             this.toolStrip.Text = "toolStrip";
             // 
@@ -65,9 +64,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // tabControl
             // 
             this.tabControl.Dock = DockStyle.Fill;
-            this.tabControl.Location = new System.Drawing.Point(0, 25);
             this.tabControl.Name = "tabControl";
-            this.tabControl.Size = new System.Drawing.Size(800, 600);
             this.tabControl.TabIndex = 0;
             // 
             // ConsoleControl

@@ -19,17 +19,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     public partial class ScriptEditorControl : UserControl
     {
         private ToolStrip editorToolbar;
-        private ToolStripButton runScriptButton;
         private ToolStripButton newScriptButton;
         private ToolStripButton openScriptButton;
-        private ToolStripButton saveScriptButton;
-        private WebView2 editorWebView;
-        private bool isEditorView = true;
-        private string currentScriptPath = null;
+        private TabControl tabControl;
         private ImageList toolbarImages;
 
         // PowerShell completion service
         private PowerShellCompletionService _completionService;
+
+        // Tab data
+        private Dictionary<TabPage, (WebView2 webView, string path)> tabData = new Dictionary<TabPage, (WebView2, string)>();
+        private Dictionary<WebView2, TaskCompletionSource<bool>> _webViewReadyTasks = new Dictionary<WebView2, TaskCompletionSource<bool>>();
+        private int untitledCounter = 1;
+        private string _accessToken;
+        private System.ComponentModel.IContainer components;
+        private TabPage tabPage1;
+        private string _url;
 
         public event EventHandler RunScriptRequested;
         public event EventHandler NewScriptRequested;
@@ -39,19 +44,159 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         public ScriptEditorControl()
         {
             InitializeComponent();
+            InitializeToolbarImages();
         }
 
         private void InitializeComponent()
         {
-            this.editorToolbar = new ToolStrip();
-            this.runScriptButton = new ToolStripButton();
-            this.newScriptButton = new ToolStripButton();
-            this.openScriptButton = new ToolStripButton();
-            this.saveScriptButton = new ToolStripButton();
-            this.editorWebView = new WebView2();
-            this.toolbarImages = new ImageList();
+            this.components = new System.ComponentModel.Container();
+            this.editorToolbar = new System.Windows.Forms.ToolStrip();
+            this.toolbarImages = new System.Windows.Forms.ImageList(this.components);
+            this.newScriptButton = new System.Windows.Forms.ToolStripButton();
+            this.openScriptButton = new System.Windows.Forms.ToolStripButton();
+            this.tabControl = new System.Windows.Forms.TabControl();
+            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.editorToolbar.SuspendLayout();
+            this.tabControl.SuspendLayout();
             this.SuspendLayout();
+            // 
+            // editorToolbar
+            // 
+            this.editorToolbar.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
+            this.editorToolbar.ImageList = this.toolbarImages;
+            this.editorToolbar.ImageScalingSize = new System.Drawing.Size(28, 28);
+            this.editorToolbar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.newScriptButton,
+            this.openScriptButton});
+            this.editorToolbar.Location = new System.Drawing.Point(0, 0);
+            this.editorToolbar.Name = "editorToolbar";
+            this.editorToolbar.Size = new System.Drawing.Size(800, 40);
+            this.editorToolbar.TabIndex = 0;
+            // 
+            // toolbarImages
+            // 
+            this.toolbarImages.ColorDepth = System.Windows.Forms.ColorDepth.Depth8Bit;
+            this.toolbarImages.ImageSize = new System.Drawing.Size(16, 16);
+            this.toolbarImages.TransparentColor = System.Drawing.Color.Transparent;
+            // 
+            // newScriptButton
+            // 
+            this.newScriptButton.Name = "newScriptButton";
+            this.newScriptButton.Size = new System.Drawing.Size(59, 34);
+            this.newScriptButton.Text = "New";
+            this.newScriptButton.Click += new System.EventHandler(this.NewScriptButton_Click);
+            // 
+            // openScriptButton
+            // 
+            this.openScriptButton.Name = "openScriptButton";
+            this.openScriptButton.Size = new System.Drawing.Size(68, 34);
+            this.openScriptButton.Text = "Open";
+            this.openScriptButton.Click += new System.EventHandler(this.OpenScriptButton_Click);
+            // 
+            // tabControl
+            // 
+            this.tabControl.Controls.Add(this.tabPage1);
+            this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControl.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.tabControl.Location = new System.Drawing.Point(0, 40);
+            this.tabControl.Name = "tabControl";
+            this.tabControl.SelectedIndex = 0;
+            this.tabControl.Size = new System.Drawing.Size(800, 560);
+            this.tabControl.TabIndex = 1;
+            // 
+            // tabPage1
+            // 
+            this.tabPage1.Location = new System.Drawing.Point(4, 33);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage1.Size = new System.Drawing.Size(792, 523);
+            this.tabPage1.TabIndex = 0;
+            this.tabPage1.Text = "tabPage1";
+            this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // ScriptEditorControl
+            // 
+            this.Controls.Add(this.tabControl);
+            this.Controls.Add(this.editorToolbar);
+            this.Name = "ScriptEditorControl";
+            this.Size = new System.Drawing.Size(800, 600);
+            this.editorToolbar.ResumeLayout(false);
+            this.editorToolbar.PerformLayout();
+            this.tabControl.ResumeLayout(false);
+            this.ResumeLayout(false);
+            this.PerformLayout();
 
+         }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+
+            // Create initial tab
+            CreateNewScriptTab();
+        }
+
+        private TabPage CreateScriptTab(string title, string path)
+        {
+            TabPage tabPage = new TabPage(title);
+
+            Panel panel = new Panel();
+            panel.Dock = DockStyle.Fill;
+            tabPage.Controls.Add(panel);
+
+
+            WebView2 webView = new WebView2();
+            webView.Dock = DockStyle.Fill;
+            panel.Controls.Add(webView);
+
+            // Add tab-specific toolbar
+            ToolStrip tabToolbar = new ToolStrip();
+            tabToolbar.ImageList = this.toolbarImages;
+            tabToolbar.GripStyle = ToolStripGripStyle.Hidden;
+            tabToolbar.Dock = DockStyle.Top;
+
+            ToolStripButton tabRunButton = new ToolStripButton();
+            tabRunButton.Text = "Run (F5)";
+            tabRunButton.ImageIndex = 0;
+            tabRunButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
+            tabRunButton.Click += (s, e) => RunScriptRequested?.Invoke(this, EventArgs.Empty);
+
+            ToolStripButton tabSaveButton = new ToolStripButton();
+            tabSaveButton.Text = "Save";
+            tabSaveButton.ImageIndex = 3;
+            tabSaveButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
+            tabSaveButton.Click += (s, e) => SaveCurrentScript();
+
+            tabToolbar.Items.AddRange(new ToolStripItem[] { tabRunButton, tabSaveButton });
+
+            panel.Controls.Add(tabToolbar);
+
+
+            // Add close button
+            Button closeButton = new Button();
+            closeButton.Text = "X";
+            closeButton.Size = new Size(20, 20);
+            closeButton.Location = new Point(panel.Width - 25, tabToolbar.Height + 5);
+            closeButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            closeButton.Click += (s, e) => {
+                tabControl.TabPages.Remove(tabPage);
+                if (tabData.ContainsKey(tabPage))
+                {
+                    var data = tabData[tabPage];
+                    data.webView?.Dispose();
+                    tabData.Remove(tabPage);
+                }
+            };
+            panel.Controls.Add(closeButton);
+            closeButton.BringToFront();
+
+            tabData[tabPage] = (webView, path);
+
+            return tabPage;
+        }
+
+        private void InitializeToolbarImages()
+        {
             // toolbarImages
             this.toolbarImages.ImageSize = new Size(16, 16);
             this.toolbarImages.ColorDepth = ColorDepth.Depth32Bit;
@@ -95,61 +240,39 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 g.DrawRectangle(Pens.Black, 5, 5, 6, 6);
             }
             this.toolbarImages.Images.Add("Save", saveBmp);
+        }
 
-            // editorToolbar
-            this.editorToolbar.Dock = DockStyle.Top;
-            this.editorToolbar.GripStyle = ToolStripGripStyle.Hidden;
-            this.editorToolbar.ImageList = this.toolbarImages;
+        private async Task InitializeWebView(WebView2 webView)
+        {
+            _webViewReadyTasks[webView] = new TaskCompletionSource<bool>();
 
-            // runScriptButton
-            this.runScriptButton.Text = "Run (F5)";
-            this.runScriptButton.ImageIndex = 0;
-            this.runScriptButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
-            this.runScriptButton.Click += RunScriptButton_Click;
+            try
+            {
+                await webView.EnsureCoreWebView2Async(null);
 
-            // newScriptButton
-            this.newScriptButton.Text = "New";
-            this.newScriptButton.ImageIndex = 1;
-            this.newScriptButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
-            this.newScriptButton.Click += NewScriptButton_Click;
+                // Load Monaco editor HTML
+                string monacoHtml = GenerateMonacoEditorHtml();
+                webView.NavigateToString(monacoHtml);
 
-            // openScriptButton
-            this.openScriptButton.Text = "Open";
-            this.openScriptButton.ImageIndex = 2;
-            this.openScriptButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
-            this.openScriptButton.Click += OpenScriptButton_Click;
+                // Setup message handler for script operations
+                webView.WebMessageReceived += EditorWebView_WebMessageReceived;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to initialize script editor: {ex.Message}\n\nWebView2 Runtime may not be installed.",
+                    "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
 
-            // saveScriptButton
-            this.saveScriptButton.Text = "Save";
-            this.saveScriptButton.ImageIndex = 3;
-            this.saveScriptButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
-            this.saveScriptButton.Click += SaveScriptButton_Click;
-
-            this.editorToolbar.Items.AddRange(new ToolStripItem[] {
-                this.runScriptButton,
-                this.newScriptButton,
-                this.openScriptButton,
-                this.saveScriptButton
-            });
-
-            // editorWebView
-            this.editorWebView.Dock = DockStyle.Fill;
-
-            this.Controls.Add(this.editorWebView);
-            this.Controls.Add(this.editorToolbar);
-
-            this.Name = "ScriptEditorControl";
-            this.Size = new System.Drawing.Size(800, 600);
-
-            this.ResumeLayout(false);
+            await _webViewReadyTasks[webView].Task;
         }
 
         public async void InitializeMonacoEditor(string accessToken = null, string url = null)
         {
+            this._accessToken = accessToken;
+            this._url = url;
+
             try
             {
-                await editorWebView.EnsureCoreWebView2Async(null);
-
                 // Initialize PowerShell completion service
                 string modulePath = Path.Combine(
                     Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
@@ -170,12 +293,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     }
                 });
 
-                // Load Monaco editor HTML
-                string monacoHtml = GenerateMonacoEditorHtml();
-                editorWebView.NavigateToString(monacoHtml);
-
-                // Setup message handler for script operations
-                editorWebView.WebMessageReceived += EditorWebView_WebMessageReceived;
+                // Initialize all existing webViews
+                foreach (var data in tabData.Values)
+                {
+                    await InitializeWebView(data.webView);
+                }
             }
             catch (Exception ex)
             {
@@ -184,32 +306,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        private async void RunScriptButton_Click(object sender, EventArgs e)
-        {
-            RunScriptRequested?.Invoke(this, EventArgs.Empty);
-        }
-
         private void NewScriptButton_Click(object sender, EventArgs e)
         {
-            NewScriptRequested?.Invoke(this, EventArgs.Empty);
+            CreateNewScriptTab();
         }
 
         private void OpenScriptButton_Click(object sender, EventArgs e)
         {
-            OpenScriptRequested?.Invoke(this, EventArgs.Empty);
-        }
-
-        private void SaveScriptButton_Click(object sender, EventArgs e)
-        {
-            SaveScriptRequested?.Invoke(this, EventArgs.Empty);
+            OpenScriptTab();
         }
 
         public async Task<string> GetScriptContentAsync()
         {
+            if (tabControl.SelectedTab == null || !tabData.ContainsKey(tabControl.SelectedTab))
+                return string.Empty;
+
+            var webView = tabData[tabControl.SelectedTab].webView;
             try
             {
                 // Get script content from Monaco editor
-                string script = await editorWebView.ExecuteScriptAsync("getContent()");
+                string script = await webView.ExecuteScriptAsync("getContent()");
 
                 // Remove JSON string quotes
                 script = script.Trim('"').Replace("\\n", "\n").Replace("\\r", "\r")
@@ -227,6 +343,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         public async void SetScriptContentAsync(string content)
         {
+            if (tabControl.SelectedTab == null || !tabData.ContainsKey(tabControl.SelectedTab))
+                return;
+
+            var webView = tabData[tabControl.SelectedTab].webView;
             try
             {
                 // Escape for JavaScript
@@ -236,7 +356,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                                .Replace("\r", "\\r")
                                .Replace("\"", "\\\"");
 
-                await editorWebView.ExecuteScriptAsync($"setContent('{content}')");
+                await webView.ExecuteScriptAsync($"setContent('{content}')");
             }
             catch (Exception ex)
             {
@@ -245,16 +365,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        public void CreateNewScript()
+        public async void CreateNewScriptTab()
         {
             try
             {
-                if (MessageBox.Show("Create a new script? Any unsaved changes will be lost.",
-                    "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                {
-                    SetScriptContentAsync("# PowerShell Script\\n# Type your PowerShell commands here\\n# Press F5 or click Run to execute\\n\\n");
-                    currentScriptPath = null;
-                }
+                string title = $"Untitled-{untitledCounter++}";
+                TabPage tabPage = CreateScriptTab(title, null);
+                tabControl.TabPages.Add(tabPage);
+                tabControl.SelectedTab = tabPage;
+
+                // Initialize the webView
+                await InitializeWebView(tabData[tabPage].webView);
+
+                // Set default content
+                SetScriptContentAsync(GetDefaultScriptContent());
             }
             catch (Exception ex)
             {
@@ -263,7 +387,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        public async void OpenScript()
+        private async Task OpenScriptTab()
         {
             try
             {
@@ -275,8 +399,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     if (dialog.ShowDialog() == DialogResult.OK)
                     {
                         string content = File.ReadAllText(dialog.FileName);
+                        string title = Path.GetFileName(dialog.FileName);
+                        TabPage tabPage = CreateScriptTab(title, dialog.FileName);
+                        tabControl.TabPages.Add(tabPage);
+                        tabControl.SelectedTab = tabPage;
+
+                        // Initialize the webView
+                        await InitializeWebView(tabData[tabPage].webView);
+
                         SetScriptContentAsync(content);
-                        currentScriptPath = dialog.FileName;
                     }
                 }
             }
@@ -287,11 +418,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        public async void SaveScript()
+        private async Task SaveCurrentScript()
         {
             try
             {
-                string scriptPath = currentScriptPath;
+                if (tabControl.SelectedTab == null || !tabData.ContainsKey(tabControl.SelectedTab))
+                    return;
+
+                var (webView, path) = tabData[tabControl.SelectedTab];
+                string scriptPath = path;
 
                 if (string.IsNullOrEmpty(scriptPath))
                 {
@@ -316,7 +451,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 string script = await GetScriptContentAsync();
 
                 File.WriteAllText(scriptPath, script);
-                currentScriptPath = scriptPath;
+                tabData[tabControl.SelectedTab] = (webView, scriptPath);
+                tabControl.SelectedTab.Text = Path.GetFileName(scriptPath);
 
                 MessageBox.Show($"Script saved to: {scriptPath}",
                     "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -330,10 +466,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private string GenerateMonacoEditorHtml()
         {
-            // Get PowerShell cmdlets for IntelliSense
-            string cmdletCompletions = GetPowerShellCmdletCompletions();
+            string defaultContent = GetDefaultScriptContent()
+                .Replace("\\", "\\\\")
+                .Replace("'", "\\'")
+                .Replace("\n", "\\n")
+                .Replace("\r", "\\r")
+                .Replace("\"", "\\\"");
 
-            return $@"
+            string html = @"
 <!DOCTYPE html>
 <html>
 <head>
@@ -353,7 +493,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         require(['vs/editor/editor.main'], function() {{
             // Create Monaco editor
             window.editor = monaco.editor.create(document.getElementById('container'), {{
-                value: '# PowerShell Script\\n# Type your PowerShell commands here\\n# Press F5 or click Run to execute\\n\\n',
+                value: __DEFAULT_SCRIPT_CONTENT__,
                 language: 'powershell',
                 theme: 'vs-dark',
                 automaticLayout: true,
@@ -431,31 +571,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 triggerCharacters: ['-', '$', '.', '::']
             }});
             
-            // Fallback static completions for common cmdlets (for immediate feedback)
-            var staticCmdlets = {cmdletCompletions};
-            monaco.languages.registerCompletionItemProvider('powershell', {{
-                provideCompletionItems: function(model, position) {{
-                    var word = model.getWordUntilPosition(position);
-                    var range = {{
-                        startLineNumber: position.lineNumber,
-                        endLineNumber: position.lineNumber,
-                        startColumn: word.startColumn,
-                        endColumn: word.endColumn
-                    }};
-                    
-                    return {{
-                        suggestions: staticCmdlets.map(c => ({{
-                            label: c.label,
-                            kind: monaco.languages.CompletionItemKind.Function,
-                            documentation: c.documentation,
-                            insertText: c.insertText,
-                            range: range,
-                            sortText: '1_' + c.label  // Lower priority than LSP completions
-                        }}))
-                    }};
-                }}
-            }});
-            
             // Add keyboard shortcuts
             editor.addCommand(monaco.KeyCode.F5, function() {{
                 window.chrome.webview.postMessage({{ action: 'run' }});
@@ -484,74 +599,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     </script>
 </body>
 </html>";
-        }
 
-        private string GetPowerShellCmdletCompletions()
-        {
-            try
-            {
-                StringBuilder completions = new StringBuilder("[");
-
-                // Get cmdlets from the Cmdlets assembly
-                var cmdletsAssembly = AppDomain.CurrentDomain.GetAssemblies()
-                    .FirstOrDefault(a => a.GetName().Name == "Rnwood.Dataverse.Data.PowerShell.Cmdlets");
-
-                if (cmdletsAssembly != null)
-                {
-                    var cmdletTypes = cmdletsAssembly.GetTypes()
-                        .Where(t => t.Name.EndsWith("Cmdlet") && !t.IsAbstract && t.IsPublic);
-
-                    bool first = true;
-                    foreach (var type in cmdletTypes)
-                    {
-                        try
-                        {
-                            var cmdletAttr = type.GetCustomAttributes(typeof(CmdletAttribute), false)
-                                .FirstOrDefault() as CmdletAttribute;
-
-                            if (cmdletAttr != null)
-                            {
-                                if (!first) completions.Append(",");
-                                first = false;
-
-                                string cmdletName = $"{cmdletAttr.VerbName}-{cmdletAttr.NounName}";
-                                var parameters = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                                    .Where(p => p.GetCustomAttributes(typeof(ParameterAttribute), false).Any())
-                                    .Select(p => $"-{p.Name}")
-                                    .Take(5); // Limit to first 5 parameters
-
-                                string paramList = string.Join(", ", parameters);
-                                completions.Append($"{{label:'{cmdletName}',insertText:'{cmdletName} ',documentation:'Parameters: {paramList}'}}");
-                            }
-                        }
-                        catch
-                        {
-                            // Skip cmdlets that cause issues
-                        }
-                    }
-                }
-
-                // Add common PowerShell cmdlets
-                string[] commonCmdlets = new string[] {
-                    "Write-host", "Write-output", "Write-verbose", "Write-warning", "Write-error",
-                    "Get-variable", "Set-variable", "ForEach-object", "Where-object",
-                    "Select-object", "Sort-object", "Group-object", "Measure-object",
-                    "Import-module", "Get-module", "Get-command", "Get-help"
-                };
-
-                foreach (var cmdlet in commonCmdlets)
-                {
-                    completions.Append($",{{label:'{cmdlet}',insertText:'{cmdlet} ',documentation:'PowerShell built-in cmdlet'}}");
-                }
-
-                completions.Append("]");
-                return completions.ToString();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error getting cmdlet completions: {ex.Message}");
-                return "[]";
-            }
+            return html.Replace("__DEFAULT_SCRIPT_CONTENT__", defaultContent);
         }
 
         private async void EditorWebView_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
@@ -563,7 +612,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 // Parse JSON message for completion requests
                 if (message.Contains("\"action\":\"completion\""))
                 {
-                    await HandleCompletionRequestAsync(message);
+                    await HandleCompletionRequestAsync(message, sender as WebView2);
                 }
                 // Parse JSON message (simple parsing for action)
                 else if (message.Contains("\"action\":\"run\""))
@@ -572,15 +621,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 }
                 else if (message.Contains("\"action\":\"save\""))
                 {
-                    SaveScriptRequested?.Invoke(this, EventArgs.Empty);
+                    _ = SaveCurrentScript();
                 }
                 else if (message.Contains("\"action\":\"new\""))
                 {
-                    NewScriptRequested?.Invoke(this, EventArgs.Empty);
+                    CreateNewScriptTab();
                 }
                 else if (message.Contains("\"action\":\"ready\""))
                 {
-                    this.Visible = true;
+                    // Find the webView and set visible if needed
+                    foreach (var kvp in tabData)
+                    {
+                        if (kvp.Value.webView == sender)
+                        {
+                            kvp.Value.webView.Visible = true;
+                            break;
+                        }
+                    }
+
+                    // Signal that the WebView is ready
+                    WebView2 senderWebView = sender as WebView2;
+                    if (_webViewReadyTasks.ContainsKey(senderWebView))
+                    {
+                        _webViewReadyTasks[senderWebView].TrySetResult(true);
+                    }
                 }
             }
             catch (Exception ex)
@@ -589,7 +653,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        private async Task HandleCompletionRequestAsync(string message)
+        private async Task HandleCompletionRequestAsync(string message, WebView2 senderWebView)
         {
             try
             {
@@ -627,7 +691,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 };
 
                 string responseJson = JsonSerializer.Serialize(response);
-                await editorWebView.CoreWebView2.ExecuteScriptAsync(
+                await senderWebView.CoreWebView2.ExecuteScriptAsync(
                     $"window.handleCompletionResponse({responseJson})");
             }
             catch (Exception ex)
@@ -699,6 +763,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
+        public void CreateNewScript()
+        {
+            CreateNewScriptTab();
+        }
+
+        public async void OpenScript()
+        {
+            await OpenScriptTab();
+        }
+
+        public async void SaveScript()
+        {
+            await SaveCurrentScript();
+        }
+
         public void DisposeResources()
         {
             if (_completionService != null)
@@ -711,6 +790,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 {
                     // Ignore errors when disposing
                 }
+            }
+
+            foreach (var data in tabData.Values)
+            {
+                try
+                {
+                    data.webView?.Dispose();
+                }
+                catch
+                {
+                    // Ignore errors when disposing
+                }
+            }
+            tabData.Clear();
+            _webViewReadyTasks.Clear();
+        }
+
+        private string GetDefaultScriptContent()
+        {
+            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.DefaultScript.ps1"))
+            using (var reader = new StreamReader(stream))
+            {
+                return reader.ReadToEnd();
             }
         }
     }
