@@ -172,33 +172,41 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private Guid? _nextBatchCallerId;
 		
 		// Batched retrieval support
-		private class RetrievalBatchItem
+		private class RecordProcessingItem
 		{
-			public Guid Id { get; set; }
+			public PSObject InputObject { get; set; }
+			public Entity Target { get; set; }
+			public EntityMetadata EntityMetadata { get; set; }
+			public Action<Entity> Continuation { get; set; }
+			
+			// For ID-based retrieval
+			public Guid? Id { get; set; }
 			public string TableName { get; set; }
 			public ColumnSet ColumnSet { get; set; }
+			
+			// For MatchOn retrieval
+			public string[] MatchOnColumns { get; set; }
+			public Dictionary<string, object> MatchOnValues { get; set; }
+			
+			// For Intersect retrieval
+			public Guid? Entity1Value { get; set; }
+			public Guid? Entity2Value { get; set; }
+			public ManyToManyRelationshipMetadata IntersectMetadata { get; set; }
+			
+			public string GetMatchOnKey()
+			{
+				if (MatchOnColumns == null || MatchOnValues == null) return null;
+				return string.Join("|", MatchOnColumns.OrderBy(c => c).Select(c => $"{c}={MatchOnValues[c]}"));
+			}
+			
+			public string GetIntersectKey()
+			{
+				if (!Entity1Value.HasValue || !Entity2Value.HasValue) return null;
+				return $"{Entity1Value.Value}|{Entity2Value.Value}";
+			}
 		}
 		
-		private class MatchOnRetrievalBatchItem
-		{
-			public string[] Columns { get; set; }
-			public Dictionary<string, object> Values { get; set; }
-			public Entity Target { get; set; }
-			public ColumnSet ColumnSet { get; set; }
-		}
-		
-		private class IntersectRetrievalBatchItem
-		{
-			public Guid Entity1Value { get; set; }
-			public Guid Entity2Value { get; set; }
-			public Entity Target { get; set; }
-			public ColumnSet ColumnSet { get; set; }
-			public ManyToManyRelationshipMetadata Metadata { get; set; }
-		}
-		
-		private List<RetrievalBatchItem> _retrievalBatch;
-		private List<MatchOnRetrievalBatchItem> _matchOnRetrievalBatch;
-		private List<IntersectRetrievalBatchItem> _intersectRetrievalBatch;
+		private List<RecordProcessingItem> _recordProcessingQueue;
 
 		private void QueueBatchItem(BatchItem item, Guid? callerId)
 		{
@@ -236,9 +244,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 			
 			// Initialize batched retrieval support
-			_retrievalBatch = new List<RetrievalBatchItem>();
-			_matchOnRetrievalBatch = new List<MatchOnRetrievalBatchItem>();
-			_intersectRetrievalBatch = new List<IntersectRetrievalBatchItem>();
+			_recordProcessingQueue = new List<RecordProcessingItem>();
 		}
 
 		private void AppendFaultDetails(OrganizationServiceFault fault, StringBuilder output)
