@@ -26,15 +26,18 @@ The chunk for each invocation is available as $_ within the block. This contains
 
 This cmdlet is useful for improving performance when processing large numbers of records where the operations are independent and can be executed concurrently.
 
+Take care to make the operations within the script block as efficient as possible. With `Set-DataverseRecord` by default it does per-record existence/update checks to avoid sending unneeded record/colum updates, so use one of the switches that force it to assume what it should do. For instance in the example below, the -UpdateAllColumns switch makes it assume the record exists, and sends all columns in the update.
+
 ## EXAMPLES
 
 ### Example 1: Update records in parallel
 ```powershell
 PS C:\> $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET
-PS C:\> Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
+PS C:\> Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 -Columns emailaddress1 |
   Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
-    $_.emailaddress1 = "updated-$($_.contactid)@example.com"
-    $_ | Set-DataverseRecord -TableName contact -UpdateOnly
+    $_ |
+       ForEach-Object{ $_.emailaddress1 = "updated-$($_.contactid)@example.com"; $_ } |
+       Set-DataverseRecord -TableName contact -UpdateAllColumns
   }
 ```
 
@@ -164,3 +167,4 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+
