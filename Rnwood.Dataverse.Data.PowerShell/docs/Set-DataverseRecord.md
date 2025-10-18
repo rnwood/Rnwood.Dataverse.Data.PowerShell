@@ -14,9 +14,9 @@ Creates or updates Dataverse records including M:M association/disassociation, s
 
 ```
 Set-DataverseRecord -InputObject <PSObject> -TableName <String> [-BatchSize <UInt32>]
- [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>] [-PassThru] [-NoUpdate] [-NoCreate]
- [-NoUpdateColumns <String[]>] [-CallerId <Guid>] [-UpdateAllColumns] [-CreateOnly] [-Upsert]
- [-LookupColumns <Hashtable>] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
+ [-RetrievalBatchSize <UInt32>] [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>] [-PassThru]
+ [-NoUpdate] [-NoCreate] [-NoUpdateColumns <String[]>] [-CallerId <Guid>] [-UpdateAllColumns] [-CreateOnly]
+ [-Upsert] [-LookupColumns <Hashtable>] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
  [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
@@ -58,6 +58,15 @@ Key Batch Behavior:
 - Batching continues on error - all operations are attempted and errors are reported at the end
 - Each error includes the input record for correlation
 - For best performance with `-CallerId`, sort records by caller ID since a new batch is needed when the caller changes
+
+**Batched Retrieval:**
+
+When checking for existing records (to determine create vs update), the cmdlet batches retrieval operations for improved performance:
+- Default retrieval batch size is 500 records per request (configurable via `-RetrievalBatchSize` parameter)
+- Set `-RetrievalBatchSize 1` to disable batched retrieval and query one record at a time
+- Batched retrieval only applies to records looked up by ID
+- Records using `-MatchOn` or intersect entities still use individual queries
+- `-CreateOnly` and `-UpdateAllColumns` skip retrieval entirely for best performance
 
 How Create vs Update is Determined:
 
@@ -391,7 +400,7 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
+Default value: 100
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -628,6 +637,25 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RetrievalBatchSize
+Controls the maximum number of records to retrieve in one batch when checking for existing records or resolving lookups. Specify 1 to disable batching. Default is 500.
+
+When checking for existing records (to determine create vs update), the cmdlet batches retrieval operations for improved performance. This applies to records looked up by ID. Records using `-MatchOn` or intersect entities still use individual queries.
+
+Use `-CreateOnly` or `-UpdateAllColumns` to skip retrieval entirely for best performance.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 500
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

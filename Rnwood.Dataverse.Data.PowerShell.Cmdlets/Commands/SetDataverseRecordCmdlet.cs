@@ -40,6 +40,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public uint BatchSize { get; set; } = 100;
 
 		/// <summary>
+		/// Controls the maximum number of records to retrieve in one batch when checking for existing records or resolving lookups. Specify 1 to disable batching. Default is 500.
+		/// </summary>
+		[Parameter(HelpMessage = "Controls the maximum number of records to retrieve in one batch when checking for existing records or resolving lookups. Specify 1 to disable batching. Default is 500.")]
+		public uint RetrievalBatchSize { get; set; } = 500;
+
+		/// <summary>
 		/// List of properties on the input object which are ignored and not attempted to be mapped to the record. Default is none.
 		/// </summary>
 		[Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "List of properties on the input object which are ignored and not attempted to be mapped to the record. Default is none.")]
@@ -164,6 +170,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private List<BatchItem> _nextBatchItems;
 		private Guid? _nextBatchCallerId;
+		
+		// Batched retrieval support
+		private class RetrievalBatchItem
+		{
+			public Guid Id { get; set; }
+			public string TableName { get; set; }
+			public ColumnSet ColumnSet { get; set; }
+		}
+		
+		private List<RetrievalBatchItem> _retrievalBatch;
+		private Dictionary<Guid, Entity> _retrievalCache;
 
 		private void QueueBatchItem(BatchItem item, Guid? callerId)
 		{
@@ -199,6 +216,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			{
 				_nextBatchItems = new List<BatchItem>();
 			}
+			
+			// Initialize batched retrieval support
+			if (RetrievalBatchSize > 1)
+			{
+				_retrievalBatch = new List<RetrievalBatchItem>();
+				_retrievalCache = new Dictionary<Guid, Entity>();
+			}
 		}
 
 		private void AppendFaultDetails(OrganizationServiceFault fault, StringBuilder output)
@@ -211,6 +235,44 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				output.AppendLine("---");
 				AppendFaultDetails(fault.InnerFault, output);
 			}
+		}
+
+		private void ProcessRetrievalBatch()
+		{
+			if (_retrievalBatch == null || _retrievalBatch.Count == 0)
+			{
+				return;
+			}
+
+			WriteVerbose(string.Format("Processing retrieval batch of {0} records", _retrievalBatch.Count));
+
+			// Group by table name for efficient querying
+			var groupedByTable = _retrievalBatch.GroupBy(r => r.TableName);
+
+			foreach (var tableGroup in groupedByTable)
+			{
+				string tableName = tableGroup.Key;
+				var ids = tableGroup.Select(r => r.Id).Distinct().ToArray();
+
+				// Build a query to retrieve all records by ID using In operator
+				QueryExpression query = new QueryExpression(tableName);
+				query.Criteria.AddCondition(entityMetadataFactory.GetMetadata(tableName).PrimaryIdAttribute, ConditionOperator.In, ids.Cast<object>().ToArray());
+				
+				// Use the column set from the first record of this table (they should all be similar for efficiency)
+				var firstRecord = tableGroup.First();
+				query.ColumnSet = firstRecord.ColumnSet;
+
+				WriteVerbose(string.Format("Retrieving {0} {1} records in batch", ids.Length, tableName));
+
+				EntityCollection results = Connection.RetrieveMultiple(query);
+
+				foreach (Entity entity in results.Entities)
+				{
+					_retrievalCache[entity.Id] = entity;
+				}
+			}
+
+			_retrievalBatch.Clear();
 		}
 
 		private void ProcessBatch()
@@ -281,6 +343,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		protected override void EndProcessing()
 		{
 			base.EndProcessing();
+
+			// Flush any remaining retrieval batch
+			if (_retrievalBatch != null)
+			{
+				ProcessRetrievalBatch();
+			}
 
 			if (_nextBatchItems != null)
 			{
@@ -963,6 +1031,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 		}
 
+		private void QueueRetrievalIfNeeded(Guid id, string tableName, ColumnSet columnSet)
+		{
+			if (_retrievalBatch != null && !_retrievalCache.ContainsKey(id))
+			{
+				_retrievalBatch.Add(new RetrievalBatchItem
+				{
+					Id = id,
+					TableName = tableName,
+					ColumnSet = columnSet
+				});
+
+				if (_retrievalBatch.Count >= RetrievalBatchSize)
+				{
+					ProcessRetrievalBatch();
+				}
+			}
+		}
+
 		private Entity GetExistingRecord(EntityMetadata entityMetadata, Entity target)
 		{
 			Entity existingRecord = null;
@@ -983,17 +1069,46 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					}
 					else
 					{
-						QueryByAttribute existingRecordQuery = new QueryByAttribute(TableName);
-						existingRecordQuery.AddAttributeValue(entityMetadata.PrimaryIdAttribute, Id);
-						existingRecordQuery.ColumnSet = target.LogicalName.Equals("calendar", StringComparison.OrdinalIgnoreCase) ? new ColumnSet(true) : new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+						// Check cache first
+						if (_retrievalCache != null && _retrievalCache.TryGetValue(Id, out existingRecord))
+						{
+							WriteVerbose(string.Format("Using cached record for {0}:{1}", TableName, Id));
+							return existingRecord;
+						}
 
-						existingRecord = Connection.RetrieveMultiple(existingRecordQuery
-						).Entities.FirstOrDefault();
+						ColumnSet columnSet = target.LogicalName.Equals("calendar", StringComparison.OrdinalIgnoreCase) ? new ColumnSet(true) : new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+
+						// Use batched retrieval if enabled
+						if (_retrievalBatch != null)
+						{
+							QueueRetrievalIfNeeded(Id, TableName, columnSet);
+							// Process batch immediately if this is the last record or batch is full
+							ProcessRetrievalBatch();
+							
+							// Now check cache again
+							if (_retrievalCache.TryGetValue(Id, out existingRecord))
+							{
+								return existingRecord;
+							}
+							// Record doesn't exist, return null
+							return null;
+						}
+						else
+						{
+							// Fall back to individual query
+							QueryByAttribute existingRecordQuery = new QueryByAttribute(TableName);
+							existingRecordQuery.AddAttributeValue(entityMetadata.PrimaryIdAttribute, Id);
+							existingRecordQuery.ColumnSet = columnSet;
+
+							existingRecord = Connection.RetrieveMultiple(existingRecordQuery).Entities.FirstOrDefault();
+						}
 					}
 				}
 
 				if (existingRecord == null && MatchOn != null)
 				{
+					// MatchOn queries are more complex - for now, continue with individual queries
+					// TODO: Could batch these too, but more complex due to different match criteria
 					foreach (string[] matchOnColumnList in MatchOn)
 					{
 						QueryByAttribute matchOnQuery = new QueryByAttribute(TableName);
