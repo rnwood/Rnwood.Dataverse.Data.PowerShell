@@ -22,7 +22,7 @@ Invoke-DataverseParallel [-ScriptBlock] <ScriptBlock> -InputObject <PSObject> [-
 The Invoke-DataverseParallel cmdlet processes input objects in parallel using multiple runspaces.
 It automatically chunks the input data, clones the Dataverse connection for each parallel worker, and makes the cloned connection available as the default connection within each script block.
 
-The chunk for each invocation is available as $_ within the block. This contains multiple records, so pipe it to `Set-DataverseRecord` for example.
+**Important**: The chunk for each invocation is available as $_ within the block. This is a batch of multiple records (not a single record), so you can pipe it directly to cmdlets that accept pipeline input (like `Set-DataverseRecord`). If you need to transform individual records within each chunk, use `ForEach-Object` on the chunk before piping to other cmdlets.
 
 This cmdlet is useful for improving performance when processing large numbers of records where the operations are independent and can be executed concurrently.
 
@@ -33,12 +33,14 @@ This cmdlet is useful for improving performance when processing large numbers of
 PS C:\> $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET
 PS C:\> Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
   Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
-    $_.emailaddress1 = "updated-$($_.contactid)@example.com"
-    $_ | Set-DataverseRecord -TableName contact -UpdateOnly
+    # $_ is a chunk (batch) of multiple records
+    # Use ForEach-Object to update individual records, then pipe to Set-DataverseRecord
+    $_ | ForEach-Object { $_.emailaddress1 = "updated-$($_.contactid)@example.com"; $_ } | Set-DataverseRecord -TableName contact -UpdateOnly
   }
 ```
 
 Updates 1000 contact records in parallel with 8 concurrent workers, processing 50 records per chunk.
+The script block receives a chunk of records in `$_`, uses `ForEach-Object` to transform each record, and pipes them to `Set-DataverseRecord`.
 
 ## PARAMETERS
 
@@ -123,7 +125,8 @@ Accept wildcard characters: False
 
 ### -ScriptBlock
 Script block to execute for each chunk.
-The chunk is available as $_ and a cloned connection is set as the default connection.
+The chunk (a batch of multiple records) is available as $_ and a cloned connection is set as the default connection.
+To transform individual records within a chunk, use `ForEach-Object` on the chunk: `$_ | ForEach-Object { ... }`.
 
 ```yaml
 Type: ScriptBlock

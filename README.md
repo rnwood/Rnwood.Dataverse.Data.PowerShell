@@ -1177,10 +1177,9 @@ $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -Cli
 # Get records and update them in parallel
 Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
   Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
-    # $_ is the current record
-    # Cloned connection is automatically available as default
-    $_.emailaddress1 = "updated-$($_.contactid)@example.com"
-    $_ | Set-DataverseRecord -TableName contact -UpdateOnly
+    # $_ is a chunk (batch) of records, not a single record
+    # For per-record transformations, use ForEach-Object:
+    $_ | ForEach-Object { $_.emailaddress1 = "updated-$($_.contactid)@example.com"; $_ } | Set-DataverseRecord -TableName contact -UpdateOnly
   }
 ```
 

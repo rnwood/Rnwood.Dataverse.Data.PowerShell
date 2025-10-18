@@ -10,7 +10,22 @@ using System.Threading;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
 /// <summary>
-/// Processes input objects in parallel using chunked batches with cloned Dataverse connections.
+/// <para type="synopsis">Processes input objects in parallel using chunked batches with cloned Dataverse connections.</para>
+/// <para type="description">The Invoke-DataverseParallel cmdlet processes input objects in parallel using multiple runspaces. It automatically chunks the input data, clones the Dataverse connection for each parallel worker, and makes the cloned connection available as the default connection within each script block.</para>
+/// <para type="description">Important: The chunk for each invocation is available as $_ within the block. This is a batch of multiple records (not a single record), so you can pipe it directly to cmdlets that accept pipeline input (like Set-DataverseRecord). If you need to transform individual records within each chunk, use ForEach-Object on the chunk before piping to other cmdlets.</para>
+/// <example>
+///   <title>Update records in parallel</title>
+///   <code>
+/// $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET
+/// Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
+///   Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
+///     # $_ is a chunk (batch) of multiple records
+///     # Use ForEach-Object to update individual records, then pipe to Set-DataverseRecord
+///     $_ | ForEach-Object { $_.emailaddress1 = "updated-$($_.contactid)@example.com"; $_ } | Set-DataverseRecord -TableName contact -UpdateOnly
+///   }
+///   </code>
+///   <para>Updates 1000 contact records in parallel with 8 concurrent workers, processing 50 records per chunk.</para>
+/// </example>
 /// </summary>
 [Cmdlet(VerbsLifecycle.Invoke, "DataverseParallel")]
 [OutputType(typeof(PSObject))]
@@ -19,7 +34,7 @@ public class InvokeDataverseParallelCmdlet : OrganizationServiceCmdlet
 /// <summary>
 /// Gets or sets the script block to execute for each chunk of input objects.
 /// </summary>
-[Parameter(Mandatory = true, Position = 0, HelpMessage = "Script block to execute for each chunk. The chunk is available as $_ and a cloned connection is set as the default connection.")]
+[Parameter(Mandatory = true, Position = 0, HelpMessage = "Script block to execute for each chunk. The chunk (a batch of multiple records) is available as $_ and a cloned connection is set as the default connection. To transform individual records, use ForEach-Object on the chunk.")]
 public ScriptBlock ScriptBlock { get; set; }
 
 /// <summary>

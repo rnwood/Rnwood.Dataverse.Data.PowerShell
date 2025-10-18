@@ -90,4 +90,59 @@ Describe "Invoke-DataverseParallel" {
 
         $results.Count | Should -Be 10
     }
+
+    It "Correctly demonstrates chunk usage with ForEach-Object for per-record transformations" {
+        $c = getMockConnection
+
+        # Create test records (PSObjects to simulate Get-DataverseRecord output)
+        $input = 1..10 | ForEach-Object {
+            [PSCustomObject]@{
+                Id = [Guid]::NewGuid()
+                contactid = [Guid]::NewGuid()
+                emailaddress1 = "original$($_)@example.com"
+                TableName = 'contact'
+            }
+        }
+
+        # Process in parallel using the recommended pattern from docs
+        $results = $input | Invoke-DataverseParallel -Connection $c -ChunkSize 3 -ScriptBlock {
+            # $_ is a chunk (batch) of multiple records
+            # Use ForEach-Object to transform each record
+            $_ | ForEach-Object { 
+                $_.emailaddress1 = "updated-$($_.contactid)@example.com"
+                $_
+            }
+        }
+
+        # Verify all records were processed and transformed
+        $results.Count | Should -Be 10
+        $results | ForEach-Object {
+            $_.emailaddress1 | Should -Match "^updated-.*@example.com$"
+        }
+    }
+
+    It "Demonstrates chunk can be piped directly to pipelined cmdlets without ForEach-Object" {
+        $c = getMockConnection
+
+        # Create test objects
+        $input = 1..15 | ForEach-Object {
+            [PSCustomObject]@{
+                Value = $_
+            }
+        }
+
+        # Process in parallel - the chunk itself is piped directly
+        # This simulates: $_ | Set-DataverseRecord (where Set-DataverseRecord accepts pipeline input)
+        $results = $input | Invoke-DataverseParallel -Connection $c -ChunkSize 5 -ScriptBlock {
+            # $_ is the chunk - pipe it directly to a cmdlet that accepts arrays
+            # No ForEach-Object needed when the receiving cmdlet processes pipeline input
+            $_ | ForEach-Object { [PSCustomObject]@{ Processed = $true; Original = $_.Value } }
+        }
+
+        # Verify all items processed
+        $results.Count | Should -Be 15
+        $results | ForEach-Object {
+            $_.Processed | Should -Be $true
+        }
+    }
 }
