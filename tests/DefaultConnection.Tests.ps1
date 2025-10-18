@@ -66,7 +66,7 @@ Describe 'Default Connection' {
         # Note: This will be a different connection instance, so we need to seed it with data
         @{"firstname"="DefaultTest"} | Set-DataverseRecord -TableName contact
         
-        $result = Get-DataverseRecord -TableName contact -Filter @{"firstname"="DefaultTest"}
+        $result = Get-DataverseRecord -TableName contact -FilterValues @{"firstname"="DefaultTest"}
         $result | Should -Not -BeNullOrEmpty
         $result.firstname | Should -Be "DefaultTest"
     }

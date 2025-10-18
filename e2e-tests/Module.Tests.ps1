@@ -195,4 +195,134 @@ Describe "Module" {
             throw "Failed"
         }
     }
+    
+    It "Can use Invoke-DataverseParallel with WhoAmI" {
+        pwsh -noninteractive -noprofile -command {
+            $env:PSModulePath = $env:ChildProcessPSModulePath
+            
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+            
+            try {
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+                
+                # Test parallel processing with WhoAmI call
+                $results = 1..5 | Invoke-DataverseParallel -Connection $connection -ChunkSize 2 -MaxDegreeOfParallelism 3 -ScriptBlock {
+                    $whoami = Get-DataverseWhoAmI
+                    # Return a simple object with the item and user ID
+                    [PSCustomObject]@{
+                        Item = $_
+                        UserId = $whoami.UserId
+                    }
+                }
+                
+                # Verify we got 5 results
+                if ($results.Count -ne 5) {
+                    throw "Expected 5 results, got $($results.Count)"
+                }
+                
+                # Verify all have a UserId
+                foreach ($result in $results) {
+                    if (-not $result.UserId) {
+                        throw "Result missing UserId: $($result | ConvertTo-Json)"
+                    }
+                }
+                
+                Write-Host "Successfully executed 5 parallel WhoAmI calls"
+            } catch {
+                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+            }
+        }
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed"
+        }
+    }
+
+    It "Invoke-DataverseParallel can create, update and verify $numberofrecords account records consistently" -skip -Tag "LongRunning" {
+        pwsh -noninteractive -noprofile -command {
+            $env:PSModulePath = $env:ChildProcessPSModulePath
+            
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+            
+            try {
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+                
+                # Generate unique test prefix to avoid conflicts with parallel CI runs
+                $testRunId = [guid]::NewGuid().ToString("N").Substring(0, 8)
+                $testPrefix = "ParallelTest-$testRunId-"
+                $numberOfRecords = 1000
+                Write-Host "Using test prefix: $testPrefix"
+
+
+                Write-Host "Step 1: Creating $numberOfRecords test accounts in parallel..."
+                $startTime = Get-Date
+                
+                # Generate $numberofrecords unique account objects with unique prefix
+                $accountsToCreate = 1..$numberofrecords | ForEach-Object {
+                    [PSCustomObject]@{
+                        name = "$testPrefix$_"
+                        accountnumber = "ACCT-$testRunId-$_"
+                        description = "Test account created by parallel test - Run $testRunId - Index $_"
+                    }
+                }
+                
+                # Create accounts in parallel batches
+                $accountsToCreate | Invoke-DataverseParallel -Connection $connection -ChunkSize 100 -verbose -MaxDegreeOfParallelism 8 -ScriptBlock {
+                    $_ | Set-DataverseRecord -TableName account -CreateOnly -BatchSize 100
+                }
+                
+                $createDuration = (Get-Date) - $startTime
+                Write-Host "Created $numberofrecords accounts in $($createDuration.TotalSeconds) seconds"
+                
+                Write-Host "Step 3: Querying back all created accounts..."
+                $createdAccounts = Get-DataverseRecord -Connection $connection -TableName account -FilterValues @{ "name:Like" = "$testPrefix%" } -Columns name, accountnumber, description
+                
+                # Verify count
+                if ($createdAccounts.Count -ne $numberofrecords) {
+                    throw "Expected $numberofrecords accounts, but found $($createdAccounts.Count)"
+                }
+                Write-Host "Verified: Found all $numberofrecords accounts"
+                
+                # Verify each account has correct data
+                Write-Host "Verifying account data integrity..."
+                $mismatches = @()
+                foreach ($account in $createdAccounts) {
+                    # Extract index from name
+                    if ($account.name -match "$testPrefix(\d+)") {
+                        $index = $matches[1]
+                        $expectedAccountNumber = "ACCT-$testRunId-$index"
+                        $expectedDescription = "Test account created by parallel test - Run $testRunId - Index $index"
+                        
+                        if ($account.accountnumber -ne $expectedAccountNumber) {
+                            $mismatches += "Account $($account.name): Expected accountnumber '$expectedAccountNumber', got '$($account.accountnumber)'"
+                        }
+                        if ($account.description -ne $expectedDescription) {
+                            $mismatches += "Account $($account.name): Expected description '$expectedDescription', got '$($account.description)'"
+                        }
+                    }
+                }
+                
+                if ($mismatches.Count -gt 0) {
+                    throw "Data integrity issues found:`n$($mismatches -join "`n")"
+                }
+                Write-Host "Verified: All account data is correct"
+                
+                Write-Host "Step 4: Cleanup - Deleting test accounts..."
+                $createdAccounts | Invoke-DataverseParallel -Connection $connection -ChunkSize 100 -MaxDegreeOfParallelism 8 -ScriptBlock {
+                    $_ | Remove-DataverseRecord -TableName account -BatchSize 100 -verbose
+                }
+                Write-Host "Cleanup complete"
+                
+                Write-Host "SUCCESS: All $numberofrecords accounts were created, verified, updated, and cleaned up successfully"
+                Write-Host "Total test duration: $((Get-Date) - $startTime)"
+                
+            } catch {
+                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+            }
+        }
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed"
+        }
+    }
 }
