@@ -145,4 +145,39 @@ Describe "Invoke-DataverseParallel" {
             $_.Processed | Should -Be $true
         }
     }
+
+    It "Demonstrates using environment variables from outside the script block" {
+        $c = getMockConnection
+
+        # Define an environment variable
+        $env:TEST_EMAIL_DOMAIN = "test-domain.com"
+        
+        # Create test objects
+        $input = 1..10 | ForEach-Object {
+            [PSCustomObject]@{
+                Id = $_
+                Name = "Item $_"
+            }
+        }
+
+        # Process in parallel using environment variable
+        $results = $input | Invoke-DataverseParallel -Connection $c -ChunkSize 3 -ScriptBlock {
+            # Use environment variable to access values from outside the script block
+            $_ | ForEach-Object { 
+                [PSCustomObject]@{ 
+                    Id = $_.Id
+                    Email = "$($_.Id)@$env:TEST_EMAIL_DOMAIN"
+                } 
+            }
+        }
+
+        # Verify all items processed with the environment variable
+        $results.Count | Should -Be 10
+        $results | ForEach-Object {
+            $_.Email | Should -Match "@test-domain.com$"
+        }
+        
+        # Clean up
+        Remove-Item Env:\TEST_EMAIL_DOMAIN
+    }
 }

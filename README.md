@@ -1183,6 +1183,21 @@ Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
   }
 ```
 
+**Using variables from outside the script block**: Each parallel runspace has its own scope. To use variables from the parent scope, you can:
+- Pass values through the pipeline (recommended)
+- Use environment variables (`$env:VariableName`)
+
+```powershell
+# Example: Using environment variables
+$env:EMAIL_DOMAIN = "example.com"
+Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
+  Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -ScriptBlock {
+    $_ | ForEach-Object { $_.emailaddress1 = "$($_.contactid)@$env:EMAIL_DOMAIN"; $_ } | Set-DataverseRecord -TableName contact -UpdateOnly
+  }
+```
+
+For more details on variable scopes in PowerShell, see [about_Scopes](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_scopes).
+
 See also [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) which supports a DOP parameter.
 
 **Alternative: PowerShell 7+ built-in parallelism** — For advanced scenarios or if you need more control, you can use `ForEach-Object -Parallel` or `Start-ThreadJob`. See the official docs for details:

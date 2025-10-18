@@ -24,6 +24,8 @@ It automatically chunks the input data, clones the Dataverse connection for each
 
 **Important**: The chunk for each invocation is available as $_ within the block. This is a batch of multiple records (not a single record), so you can pipe it directly to cmdlets that accept pipeline input (like `Set-DataverseRecord`). If you need to transform individual records within each chunk, use `ForEach-Object` on the chunk before piping to other cmdlets.
 
+**Using variables from outside the script block**: Each parallel runspace has its own scope. To use variables from the parent scope, pass values through the pipeline (recommended) or use environment variables (`$env:VariableName`). For more details, see [about_Scopes](https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_scopes).
+
 This cmdlet is useful for improving performance when processing large numbers of records where the operations are independent and can be executed concurrently.
 
 ## EXAMPLES
@@ -41,6 +43,19 @@ PS C:\> Get-DataverseRecord -Connection $connection -TableName contact -Top 1000
 
 Updates 1000 contact records in parallel with 8 concurrent workers, processing 50 records per chunk.
 The script block receives a chunk of records in `$_`, uses `ForEach-Object` to transform each record, and pipes them to `Set-DataverseRecord`.
+
+### Example 2: Using environment variables from outside the script block
+```powershell
+PS C:\> $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET
+PS C:\> $env:EMAIL_DOMAIN = "example.com"
+PS C:\> Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
+  Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -ScriptBlock {
+    # Use environment variables to access values from outside the script block
+    $_ | ForEach-Object { $_.emailaddress1 = "$($_.contactid)@$env:EMAIL_DOMAIN"; $_ } | Set-DataverseRecord -TableName contact -UpdateOnly
+  }
+```
+
+Each parallel runspace has its own scope. Use environment variables to share data from the parent scope.
 
 ## PARAMETERS
 

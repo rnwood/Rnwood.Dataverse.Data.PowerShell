@@ -13,6 +13,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 /// <para type="synopsis">Processes input objects in parallel using chunked batches with cloned Dataverse connections.</para>
 /// <para type="description">The Invoke-DataverseParallel cmdlet processes input objects in parallel using multiple runspaces. It automatically chunks the input data, clones the Dataverse connection for each parallel worker, and makes the cloned connection available as the default connection within each script block.</para>
 /// <para type="description">Important: The chunk for each invocation is available as $_ within the block. This is a batch of multiple records (not a single record), so you can pipe it directly to cmdlets that accept pipeline input (like Set-DataverseRecord). If you need to transform individual records within each chunk, use ForEach-Object on the chunk before piping to other cmdlets.</para>
+/// <para type="description">Using variables from outside the script block: Each parallel runspace has its own scope. To use variables from the parent scope, pass values through the pipeline (recommended) or use environment variables ($env:VariableName). For more details, see about_Scopes in Microsoft documentation.</para>
 /// <example>
 ///   <title>Update records in parallel</title>
 ///   <code>
@@ -25,6 +26,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 ///   }
 ///   </code>
 ///   <para>Updates 1000 contact records in parallel with 8 concurrent workers, processing 50 records per chunk.</para>
+/// </example>
+/// <example>
+///   <title>Using environment variables from outside the script block</title>
+///   <code>
+/// $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET
+/// $env:EMAIL_DOMAIN = "example.com"
+/// Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
+///   Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -ScriptBlock {
+///     # Use environment variables to access values from outside the script block
+///     $_ | ForEach-Object { $_.emailaddress1 = "$($_.contactid)@$env:EMAIL_DOMAIN"; $_ } | Set-DataverseRecord -TableName contact -UpdateOnly
+///   }
+///   </code>
+///   <para>Each parallel runspace has its own scope. Use environment variables to share data from the parent scope.</para>
 /// </example>
 /// </summary>
 [Cmdlet(VerbsLifecycle.Invoke, "DataverseParallel")]
