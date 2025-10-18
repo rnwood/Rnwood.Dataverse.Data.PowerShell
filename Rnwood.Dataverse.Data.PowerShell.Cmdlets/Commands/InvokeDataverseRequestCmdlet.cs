@@ -33,11 +33,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public Hashtable Parameters { get; set; } = new Hashtable();
 
 		/// <summary>
-
 		/// HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).
-
 		/// </summary>
-
 		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 0, HelpMessage = "HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).")]
 		public System.Net.Http.HttpMethod Method { get; set; }
 		/// <summary>
@@ -56,16 +53,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(ParameterSetName = "REST", Mandatory = false, HelpMessage = "Hashtable of custom HTTP headers to include in the REST API request.")]
 		public Hashtable CustomHeaders { get; set; } = new Hashtable();
 		/// <summary>
-
 		/// Initializes the cmdlet.
-
 		/// </summary>
-
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();
 		}
 
+		/// <summary>
+		/// Processes the cmdlet request and writes the response to the pipeline.
+		/// </summary>
 		protected override void ProcessRecord()
 		{
 			base.ProcessRecord();
