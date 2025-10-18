@@ -248,7 +248,7 @@ $global:PSDefaultParameterValues = @{}
 $global:PSDefaultParameterValues['*-Dataverse*:Connection'] = $connection
 
 # Create script block from string in this runspace to avoid sharing issues
-$scriptBlock = [scriptblock]::Create($scriptBlockString)
+$scriptBlock = [scriptblock]::Create("param($chunk); $_ = $chunk; " + "$scriptBlockString)
 $scriptBlock.Invoke($chunk)
 
 ");
