@@ -14,8 +14,8 @@ Processes input objects in parallel using chunked batches with cloned Dataverse 
 
 ```
 Invoke-DataverseParallel [-ScriptBlock] <ScriptBlock> -InputObject <PSObject> [-ChunkSize <Int32>]
- [-MaxDegreeOfParallelism <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [-MaxDegreeOfParallelism <Int32>] [-ExcludeModule <String[]>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -65,6 +65,21 @@ If not provided, uses the default connection set via Get-DataverseConnection -Se
 
 ```yaml
 Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ExcludeModule
+Array of module name patterns (supports wildcards) to exclude from parallel runspaces. Pester is always excluded. Example: @('PSReadLine', 'Test*')
+
+```yaml
+Type: String[]
 Parameter Sets: (All)
 Aliases:
 
@@ -143,11 +158,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Management.Automation.PSObject
-
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
-
 ## NOTES
 
 ## RELATED LINKS
