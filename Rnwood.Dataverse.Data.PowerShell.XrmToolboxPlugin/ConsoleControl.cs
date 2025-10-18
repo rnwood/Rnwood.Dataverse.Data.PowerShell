@@ -23,80 +23,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
     public partial class ConsoleControl : UserControl
     {
-        private TabControl tabControl;
-        private Dictionary<TabPage, ConEmuControl> conEmuControls = new Dictionary<TabPage, ConEmuControl>();
+        private Dictionary<TabPage, ConsoleTabControl> conEmuControls = new Dictionary<TabPage, ConsoleTabControl>();
         private ConnectionInfo connectionInfo;
         private int scriptSessionCounter = 1;
         private CrmServiceClient service;
-        private ToolStrip toolStrip;
-        private ToolStripButton newInteractiveSessionButton;
 
         public ConsoleControl()
         {
             InitializeComponent();
         }
 
-        private void InitializeComponent()
-        {
-            this.tabControl = new TabControl();
-            this.toolStrip = new ToolStrip();
-            this.newInteractiveSessionButton = new ToolStripButton();
-            this.SuspendLayout();
-            // 
-            // toolStrip
-            // 
-            this.toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.newInteractiveSessionButton});
-            this.toolStrip.Dock = DockStyle.Top;
-            this.toolStrip.Name = "toolStrip";
-            this.toolStrip.TabIndex = 1;
-            this.toolStrip.Text = "toolStrip";
-            // 
-            // newInteractiveSessionButton
-            // 
-            this.newInteractiveSessionButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.newInteractiveSessionButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.newInteractiveSessionButton.Name = "newInteractiveSessionButton";
-            this.newInteractiveSessionButton.Size = new System.Drawing.Size(123, 22);
-            this.newInteractiveSessionButton.Text = "New Interactive Session";
-            this.newInteractiveSessionButton.Click += new System.EventHandler(this.NewInteractiveSessionButton_Click);
-            // 
-            // tabControl
-            // 
-            this.tabControl.Dock = DockStyle.Fill;
-            this.tabControl.Name = "tabControl";
-            this.tabControl.TabIndex = 0;
-            // 
-            // ConsoleControl
-            // 
-            this.Controls.Add(this.tabControl);
-            this.Controls.Add(this.toolStrip);
-            this.Name = "ConsoleControl";
-            this.Size = new System.Drawing.Size(800, 600);
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
-        }
-
-        private TabPage CreateConsoleTab(string title, ConEmuControl emuControl)
+        private TabPage CreateConsoleTab(string title, ConsoleTabControl consoleTabControl)
         {
             TabPage tabPage = new TabPage(title);
-            emuControl.Dock = DockStyle.Fill;
-            tabPage.Controls.Add(emuControl);
-            Button closeButton = new Button();
-            closeButton.Text = "X";
-            closeButton.Size = new Size(20, 20);
-            closeButton.Location = new Point(tabPage.Width - 25, 5);
-            closeButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            closeButton.Click += (s, e) => {
+            consoleTabControl.Dock = DockStyle.Fill;
+            tabPage.Controls.Add(consoleTabControl);
+            consoleTabControl.CloseRequested += (s, e) => {
                 tabControl.TabPages.Remove(tabPage);
                 if (conEmuControls.ContainsKey(tabPage)) {
-                    conEmuControls[tabPage].Dispose();
+                    conEmuControls[tabPage].ConEmuControl.Dispose();
                     conEmuControls.Remove(tabPage);
                 }
             };
-            tabPage.Controls.Add(closeButton);
-            closeButton.BringToFront();
             return tabPage;
         }
 
@@ -107,6 +55,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             {
                 var connectionInfo = ExtractConnectionInformation(service);
                 this.connectionInfo = connectionInfo;
+
+                // Dispose any existing console sessions before starting a new one
+                DisposeResources();
 
                 StartSession("Main Console", "", connectionInfo);
             }
@@ -378,13 +329,13 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
 
         public void DisposeResources()
         {
-            foreach (var emu in conEmuControls.Values.ToArray())
+            foreach (var tab in conEmuControls.Values.ToArray())
             {
-                if (emu.IsConsoleEmulatorOpen)
+                if (tab.ConEmuControl.IsConsoleEmulatorOpen)
                 {
                     try
                     {
-                        emu.Dispose();
+                        tab.ConEmuControl.Dispose();
                     }
                     catch
                     {
@@ -439,23 +390,22 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
 
         private void StartConEmuSession(string title, ConEmuStartInfo startInfo)
         {
-            ConEmuControl newConEmuControl = new ConEmuControl();
-            newConEmuControl.AutoStartInfo = null;
+            ConsoleTabControl consoleTabControl = new ConsoleTabControl();
 
-            TabPage tabPage = CreateConsoleTab(title, newConEmuControl);
+            TabPage tabPage = CreateConsoleTab(title, consoleTabControl);
 
-            conEmuControls[tabPage] = newConEmuControl;
+            conEmuControls[tabPage] = consoleTabControl;
 
             tabControl.TabPages.Add(tabPage);
             tabControl.SelectedTab = tabPage;
 
-            newConEmuControl.Start(startInfo).ConsoleProcessExited += (s, e) =>
+            consoleTabControl.ConEmuControl.Start(startInfo).ConsoleProcessExited += (s, e) =>
             {
                 this.Invoke((MethodInvoker)delegate {
                     tabControl.TabPages.Remove(tabPage);
                     if (conEmuControls.ContainsKey(tabPage))
                     {
-                        conEmuControls[tabPage].Dispose();
+                        conEmuControls[tabPage].ConEmuControl.Dispose();
                         conEmuControls.Remove(tabPage);
                     }
                 });
