@@ -56,6 +56,7 @@ Non features:
   - [Error Handling](#error-handling)
   - [Getting IDs of Created Records](#getting-ids-of-created-records)
   - [Batch Operations](#batch-operations)
+  - [Parallelising work for best performance](#parallelising-work-for-best-performance)
 
 - [Specialized Invoke-Dataverse* Cmdlets](#specialized-invoke-dataverse-cmdlets)
   - [How to Find and Use Specialized Cmdlets](#how-to-find-and-use-specialized-cmdlets)
@@ -64,7 +65,6 @@ Non features:
 
 - [Using PowerShell Standard Features](#using-powershell-standard-features)
   - [Pipeline vs ForEach-Object](#pipeline-vs-foreach-object)
-  - [Parallelising work for best performance](#parallelising-work-for-best-performance)
   - [WhatIf and Confirm](#whatif-and-confirm)
   - [Verbose Output](#verbose-output)
   - [Error Handling](#error-handling-1)
@@ -1167,16 +1167,16 @@ When to avoid batching:
 
 When processing many records you can use parallelism to reduce elapsed time. Use parallelism when network latency or per-request processing dominates total time, but be careful to avoid overwhelming the Dataverse service (throttling).
 
-**Recommended: Use [`Invoke-DataverseParallel`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseParallel.md)** — This module provides a built-in cmdlet that handles connection cloning, chunking, and parallel execution for you. It works on both PowerShell 5.1 and PowerShell 7+.
+**Recommended: Use [`Invoke-DataverseParallelChunks`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseParallelChunks.md)** — This module provides a built-in cmdlet that handles connection cloning, chunking, and parallel execution for you. It works on both PowerShell 5.1 and PowerShell 7+.
 
-Example with `Invoke-DataverseParallel`:
+Example with `Invoke-DataverseParallelChunks`:
 
 ```powershell
 $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET -TenantId $env:TENANT_ID
 
 # Get records and update them in parallel
 Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
-  Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
+  Invoke-DataverseParallelChunks -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
     # $_ is a chunk (batch) of records, not a single record
     # For per-record transformations, use ForEach-Object:
     $_ | ForEach-Object { $_.emailaddress1 = "updated-$($_.contactid)@example.com"; $_ } | Set-DataverseRecord -TableName contact -UpdateOnly
@@ -1191,7 +1191,7 @@ Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
 # Example: Using environment variables
 $env:EMAIL_DOMAIN = "example.com"
 Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
-  Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -ScriptBlock {
+  Invoke-DataverseParallelChunks -Connection $connection -ChunkSize 50 -ScriptBlock {
     $_ | ForEach-Object { $_.emailaddress1 = "$($_.contactid)@$env:EMAIL_DOMAIN"; $_ } | Set-DataverseRecord -TableName contact -UpdateOnly
   }
 ```

@@ -5,7 +5,7 @@ online version:
 schema: 2.0.0
 ---
 
-# Invoke-DataverseParallel
+# Invoke-DataverseParallelChunks
 
 ## SYNOPSIS
 Processes input objects in parallel using chunked batches with cloned Dataverse connections.
@@ -13,13 +13,13 @@ Processes input objects in parallel using chunked batches with cloned Dataverse 
 ## SYNTAX
 
 ```
-Invoke-DataverseParallel [-ScriptBlock] <ScriptBlock> -InputObject <PSObject> [-ChunkSize <Int32>]
+Invoke-DataverseParallelChunks [-ScriptBlock] <ScriptBlock> -InputObject <PSObject> [-ChunkSize <Int32>]
  [-MaxDegreeOfParallelism <Int32>] [-ExcludeModule <String[]>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-The Invoke-DataverseParallel cmdlet processes input objects in parallel using multiple runspaces.
+The Invoke-DataverseParallelChunks cmdlet processes input objects in parallel using multiple runspaces.
 It automatically chunks the input data, clones the Dataverse connection for each parallel worker, and makes the cloned connection available as the default connection within each script block.
 
 **Important**: The chunk for each invocation is available as $_ within the block. This is a batch of multiple records (not a single record), so you can pipe it directly to cmdlets that accept pipeline input (like `Set-DataverseRecord`). If you need to transform individual records within each chunk, use `ForEach-Object` on the chunk before piping to other cmdlets.
@@ -34,7 +34,7 @@ This cmdlet is useful for improving performance when processing large numbers of
 ```powershell
 PS C:\> $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET
 PS C:\> Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
-  Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
+  Invoke-DataverseParallelChunks -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
     # $_ is a chunk (batch) of multiple records
     # Use ForEach-Object to update individual records, then pipe to Set-DataverseRecord
     $_ | ForEach-Object { $_.emailaddress1 = "updated-$($_.contactid)@example.com"; $_ } | Set-DataverseRecord -TableName contact -UpdateOnly
@@ -49,7 +49,7 @@ The script block receives a chunk of records in `$_`, uses `ForEach-Object` to t
 PS C:\> $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET
 PS C:\> $env:EMAIL_DOMAIN = "example.com"
 PS C:\> Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
-  Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -ScriptBlock {
+  Invoke-DataverseParallelChunks -Connection $connection -ChunkSize 50 -ScriptBlock {
     # Use environment variables to access values from outside the script block
     $_ | ForEach-Object { $_.emailaddress1 = "$($_.contactid)@$env:EMAIL_DOMAIN"; $_ } | Set-DataverseRecord -TableName contact -UpdateOnly
   }

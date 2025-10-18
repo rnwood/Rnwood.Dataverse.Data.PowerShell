@@ -11,7 +11,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
 /// <summary>
 /// <para type="synopsis">Processes input objects in parallel using chunked batches with cloned Dataverse connections.</para>
-/// <para type="description">The Invoke-DataverseParallel cmdlet processes input objects in parallel using multiple runspaces. It automatically chunks the input data, clones the Dataverse connection for each parallel worker, and makes the cloned connection available as the default connection within each script block.</para>
+/// <para type="description">The Invoke-DataverseParallelChunks cmdlet processes input objects in parallel using multiple runspaces. It automatically chunks the input data, clones the Dataverse connection for each parallel worker, and makes the cloned connection available as the default connection within each script block.</para>
 /// <para type="description">Important: The chunk for each invocation is available as $_ within the block. This is a batch of multiple records (not a single record), so you can pipe it directly to cmdlets that accept pipeline input (like Set-DataverseRecord). If you need to transform individual records within each chunk, use ForEach-Object on the chunk before piping to other cmdlets.</para>
 /// <para type="description">Using variables from outside the script block: Each parallel runspace has its own scope. To use variables from the parent scope, pass values through the pipeline (recommended) or use environment variables ($env:VariableName). For more details, see about_Scopes in Microsoft documentation.</para>
 /// <example>
@@ -19,7 +19,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 ///   <code>
 /// $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET
 /// Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
-///   Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
+///   Invoke-DataverseParallelChunks -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
 ///     # $_ is a chunk (batch) of multiple records
 ///     # Use ForEach-Object to update individual records, then pipe to Set-DataverseRecord
 ///     $_ | ForEach-Object { $_.emailaddress1 = "updated-$($_.contactid)@example.com"; $_ } | Set-DataverseRecord -TableName contact -UpdateOnly
@@ -33,7 +33,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 /// $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET
 /// $env:EMAIL_DOMAIN = "example.com"
 /// Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
-///   Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -ScriptBlock {
+///   Invoke-DataverseParallelChunks -Connection $connection -ChunkSize 50 -ScriptBlock {
 ///     # Use environment variables to access values from outside the script block
 ///     $_ | ForEach-Object { $_.emailaddress1 = "$($_.contactid)@$env:EMAIL_DOMAIN"; $_ } | Set-DataverseRecord -TableName contact -UpdateOnly
 ///   }
@@ -41,9 +41,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 ///   <para>Each parallel runspace has its own scope. Use environment variables to share data from the parent scope.</para>
 /// </example>
 /// </summary>
-[Cmdlet(VerbsLifecycle.Invoke, "DataverseParallel")]
+[Cmdlet(VerbsLifecycle.Invoke, "DataverseParallelChunks")]
 [OutputType(typeof(PSObject))]
-public class InvokeDataverseParallelCmdlet : OrganizationServiceCmdlet
+public class InvokeDataverseParallelChunksCmdlet : OrganizationServiceCmdlet
 {
 /// <summary>
 /// Gets or sets the script block to execute for each chunk of input objects.

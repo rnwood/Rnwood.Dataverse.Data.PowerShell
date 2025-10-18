@@ -1,4 +1,4 @@
-Describe "Invoke-DataverseParallel" {
+Describe "Invoke-DataverseParallelChunks" {
 
     . $PSScriptRoot/Common.ps1
 
@@ -14,7 +14,7 @@ Describe "Invoke-DataverseParallel" {
         $input = 1..10
 
         # Process in parallel with chunk size 3
-        $results = $input | Invoke-DataverseParallel -Connection $c -ChunkSize 3 -ScriptBlock {
+        $results = $input | Invoke-DataverseParallelChunks -Connection $c -ChunkSize 3 -ScriptBlock {
             # Return the input doubled
             $_ * 2
         }
@@ -32,7 +32,7 @@ Describe "Invoke-DataverseParallel" {
         $input = 1..5
 
         # Process in parallel - connection is available via PSDefaultParameterValues
-        $results = $input | Invoke-DataverseParallel -Connection $c -ChunkSize 2 -ScriptBlock {
+        $results = $input | Invoke-DataverseParallelChunks -Connection $c -ChunkSize 2 -ScriptBlock {
             # Return success message - connection is available but we don't test it here
             # E2E tests validate actual connection usage
             "success-$_"
@@ -50,7 +50,7 @@ Describe "Invoke-DataverseParallel" {
         $input = 1..25
         $chunkSizes = [System.Collections.ArrayList]::new()
 
-        $results = $input | Invoke-DataverseParallel -Connection $c -ChunkSize 10 -ScriptBlock {
+        $results = $input | Invoke-DataverseParallelChunks -Connection $c -ChunkSize 10 -ScriptBlock {
             # The script block receives individual items, not chunks
             # Just pass through
             $_
@@ -62,7 +62,7 @@ Describe "Invoke-DataverseParallel" {
     It "Handles empty input gracefully" {
         $c = getMockConnection
 
-        $results = @() | Invoke-DataverseParallel -Connection $c -ChunkSize 5 -ScriptBlock {
+        $results = @() | Invoke-DataverseParallelChunks -Connection $c -ChunkSize 5 -ScriptBlock {
             $_
         }
 
@@ -72,7 +72,7 @@ Describe "Invoke-DataverseParallel" {
     It "Handles single item input" {
         $c = getMockConnection
 
-        $results = @(42) | Invoke-DataverseParallel -Connection $c -ChunkSize 5 -ScriptBlock {
+        $results = @(42) | Invoke-DataverseParallelChunks -Connection $c -ChunkSize 5 -ScriptBlock {
             $_ * 2
         }
 
@@ -84,7 +84,7 @@ Describe "Invoke-DataverseParallel" {
 
         # This test just verifies the parameter is accepted
         # Testing actual parallel execution is difficult without timing
-        $results = 1..10 | Invoke-DataverseParallel -Connection $c -ChunkSize 2 -MaxDegreeOfParallelism 2 -ScriptBlock {
+        $results = 1..10 | Invoke-DataverseParallelChunks -Connection $c -ChunkSize 2 -MaxDegreeOfParallelism 2 -ScriptBlock {
             $_
         }
 
@@ -105,7 +105,7 @@ Describe "Invoke-DataverseParallel" {
         }
 
         # Process in parallel using the recommended pattern from docs
-        $results = $input | Invoke-DataverseParallel -Connection $c -ChunkSize 3 -ScriptBlock {
+        $results = $input | Invoke-DataverseParallelChunks -Connection $c -ChunkSize 3 -ScriptBlock {
             # $_ is a chunk (batch) of multiple records
             # Use ForEach-Object to transform each record
             $_ | ForEach-Object { 
@@ -133,7 +133,7 @@ Describe "Invoke-DataverseParallel" {
 
         # Process in parallel - the chunk itself is piped directly
         # This simulates: $_ | Set-DataverseRecord (where Set-DataverseRecord accepts pipeline input)
-        $results = $input | Invoke-DataverseParallel -Connection $c -ChunkSize 5 -ScriptBlock {
+        $results = $input | Invoke-DataverseParallelChunks -Connection $c -ChunkSize 5 -ScriptBlock {
             # $_ is the chunk - pipe it directly to a cmdlet that accepts arrays
             # No ForEach-Object needed when the receiving cmdlet processes pipeline input
             $_ | ForEach-Object { [PSCustomObject]@{ Processed = $true; Original = $_.Value } }
@@ -161,7 +161,7 @@ Describe "Invoke-DataverseParallel" {
         }
 
         # Process in parallel using environment variable
-        $results = $input | Invoke-DataverseParallel -Connection $c -ChunkSize 3 -ScriptBlock {
+        $results = $input | Invoke-DataverseParallelChunks -Connection $c -ChunkSize 3 -ScriptBlock {
             # Use environment variable to access values from outside the script block
             $_ | ForEach-Object { 
                 [PSCustomObject]@{ 
