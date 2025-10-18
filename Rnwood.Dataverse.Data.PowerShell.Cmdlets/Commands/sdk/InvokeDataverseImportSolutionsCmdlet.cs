@@ -55,9 +55,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Sdk
 
 
         /// <summary>
-
         /// Gets or sets the path to a file containing the data to upload.
-
         /// </summary>
 
         [Parameter(ParameterSetName = "FromFile", Mandatory = true, HelpMessage = "Gets or sets the path to a file containing the data to upload.")]

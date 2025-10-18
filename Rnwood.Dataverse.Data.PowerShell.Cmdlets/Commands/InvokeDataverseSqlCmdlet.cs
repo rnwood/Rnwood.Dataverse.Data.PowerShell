@@ -79,14 +79,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public SwitchParameter UseLocalTimezone { get; set; }
 
 		/// <summary>
-
-
 		/// Initializes the cmdlet.
-
-
 		/// </summary>
-
-
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();
@@ -156,14 +150,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		}
 
 		/// <summary>
-
-
 		/// Completes cmdlet processing.
-
-
 		/// </summary>
-
-
 		protected override void EndProcessing()
 		{
 			base.EndProcessing();
@@ -178,14 +166,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		}
 
 		/// <summary>
-
-
 		/// Processes each record in the pipeline.
-
-
 		/// </summary>
-
-
 		protected override void ProcessRecord()
 		{
 			WriteProgressAndVerbose(new ProgressRecord(1, $"Running query '{Sql}'", _progressMessage) { PercentComplete = 0, RecordType = ProgressRecordType.Processing });
