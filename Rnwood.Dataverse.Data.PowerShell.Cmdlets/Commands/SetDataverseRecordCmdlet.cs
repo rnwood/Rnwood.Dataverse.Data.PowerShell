@@ -179,8 +179,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			public ColumnSet ColumnSet { get; set; }
 		}
 		
+		private class MatchOnRetrievalBatchItem
+		{
+			public string[] Columns { get; set; }
+			public Dictionary<string, object> Values { get; set; }
+			public Entity Target { get; set; }
+			public ColumnSet ColumnSet { get; set; }
+		}
+		
+		private class IntersectRetrievalBatchItem
+		{
+			public Guid Entity1Value { get; set; }
+			public Guid Entity2Value { get; set; }
+			public Entity Target { get; set; }
+			public ColumnSet ColumnSet { get; set; }
+			public ManyToManyRelationshipMetadata Metadata { get; set; }
+		}
+		
 		private List<RetrievalBatchItem> _retrievalBatch;
 		private Dictionary<Guid, Entity> _retrievalCache;
+		private List<MatchOnRetrievalBatchItem> _matchOnRetrievalBatch;
+		private Dictionary<string, Entity> _matchOnCache;  // Key: hash of match values
+		private List<IntersectRetrievalBatchItem> _intersectRetrievalBatch;
+		private Dictionary<string, Entity> _intersectCache;  // Key: "entity1Id|entity2Id"
 
 		private void QueueBatchItem(BatchItem item, Guid? callerId)
 		{
@@ -222,6 +243,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			{
 				_retrievalBatch = new List<RetrievalBatchItem>();
 				_retrievalCache = new Dictionary<Guid, Entity>();
+				_matchOnRetrievalBatch = new List<MatchOnRetrievalBatchItem>();
+				_matchOnCache = new Dictionary<string, Entity>();
+				_intersectRetrievalBatch = new List<IntersectRetrievalBatchItem>();
+				_intersectCache = new Dictionary<string, Entity>();
 			}
 		}
 
@@ -235,6 +260,163 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				output.AppendLine("---");
 				AppendFaultDetails(fault.InnerFault, output);
 			}
+		}
+
+		private string GetMatchOnCacheKey(string[] columns, Dictionary<string, object> values)
+		{
+			// Create a cache key from the column names and values
+			return string.Join("|", columns.OrderBy(c => c).Select(c => $"{c}={values[c]}"));
+		}
+
+		private void ProcessMatchOnRetrievalBatch()
+		{
+			if (_matchOnRetrievalBatch == null || _matchOnRetrievalBatch.Count == 0)
+			{
+				return;
+			}
+
+			WriteVerbose(string.Format("Processing MatchOn retrieval batch of {0} records", _matchOnRetrievalBatch.Count));
+
+			// Group by column combination to batch similar queries
+			var groupedByColumns = _matchOnRetrievalBatch.GroupBy(r => string.Join(",", r.Columns.OrderBy(c => c)));
+
+			foreach (var columnGroup in groupedByColumns)
+			{
+				var items = columnGroup.ToArray();
+				var columns = items[0].Columns;
+
+				// For single-column MatchOn, we can use In operator for efficient batching
+				if (columns.Length == 1)
+				{
+					string columnName = columns[0];
+					var values = items.Select(i => i.Values[columnName]).Distinct().ToArray();
+
+					QueryExpression query = new QueryExpression(TableName);
+					query.Criteria.AddCondition(columnName, ConditionOperator.In, values);
+					query.ColumnSet = items[0].ColumnSet;
+					query.TopCount = values.Length + 1; // Add 1 to detect duplicates
+
+					WriteVerbose(string.Format("Retrieving {0} {1} records by {2} in batch", values.Length, TableName, columnName));
+
+					EntityCollection results = Connection.RetrieveMultiple(query);
+
+					// Cache results by the match value
+					foreach (Entity entity in results.Entities)
+					{
+						object matchValue = entity.GetAttributeValue<object>(columnName);
+						if (matchValue is EntityReference er)
+						{
+							matchValue = er.Id;
+						}
+						else if (matchValue is OptionSetValue osv)
+						{
+							matchValue = osv.Value;
+						}
+
+						string cacheKey = $"{columnName}={matchValue}";
+						
+						// Only cache if unique
+						if (!_matchOnCache.ContainsKey(cacheKey))
+						{
+							_matchOnCache[cacheKey] = entity;
+						}
+					}
+				}
+				else
+				{
+					// For multi-column MatchOn, use Or conditions to batch multiple queries
+					QueryExpression query = new QueryExpression(TableName);
+					query.ColumnSet = items[0].ColumnSet;
+
+					FilterExpression orFilter = new FilterExpression(LogicalOperator.Or);
+
+					foreach (var item in items)
+					{
+						FilterExpression andFilter = new FilterExpression(LogicalOperator.And);
+						foreach (string column in columns)
+						{
+							object value = item.Values[column];
+							andFilter.AddCondition(column, ConditionOperator.Equal, value);
+						}
+						orFilter.AddFilter(andFilter);
+					}
+
+					query.Criteria = orFilter;
+
+					WriteVerbose(string.Format("Retrieving {0} {1} records by {2} in batch", items.Length, TableName, string.Join(",", columns)));
+
+					EntityCollection results = Connection.RetrieveMultiple(query);
+
+					// Cache results
+					foreach (Entity entity in results.Entities)
+					{
+						var valueDict = new Dictionary<string, object>();
+						foreach (string column in columns)
+						{
+							object value = entity.GetAttributeValue<object>(column);
+							if (value is EntityReference er)
+							{
+								value = er.Id;
+							}
+							else if (value is OptionSetValue osv)
+							{
+								value = osv.Value;
+							}
+							valueDict[column] = value;
+						}
+
+						string cacheKey = GetMatchOnCacheKey(columns, valueDict);
+						_matchOnCache[cacheKey] = entity;
+					}
+				}
+			}
+
+			_matchOnRetrievalBatch.Clear();
+		}
+
+		private void ProcessIntersectRetrievalBatch()
+		{
+			if (_intersectRetrievalBatch == null || _intersectRetrievalBatch.Count == 0)
+			{
+				return;
+			}
+
+			WriteVerbose(string.Format("Processing intersect retrieval batch of {0} records", _intersectRetrievalBatch.Count));
+
+			// All items should have the same metadata
+			var firstItem = _intersectRetrievalBatch[0];
+			var metadata = firstItem.Metadata;
+
+			// Build a query with Or conditions for all entity pairs
+			QueryExpression query = new QueryExpression(TableName);
+			query.ColumnSet = firstItem.ColumnSet;
+
+			FilterExpression orFilter = new FilterExpression(LogicalOperator.Or);
+
+			foreach (var item in _intersectRetrievalBatch)
+			{
+				FilterExpression andFilter = new FilterExpression(LogicalOperator.And);
+				andFilter.AddCondition(metadata.Entity1IntersectAttribute, ConditionOperator.Equal, item.Entity1Value);
+				andFilter.AddCondition(metadata.Entity2IntersectAttribute, ConditionOperator.Equal, item.Entity2Value);
+				orFilter.AddFilter(andFilter);
+			}
+
+			query.Criteria = orFilter;
+
+			WriteVerbose(string.Format("Retrieving {0} {1} intersect records in batch", _intersectRetrievalBatch.Count, TableName));
+
+			EntityCollection results = Connection.RetrieveMultiple(query);
+
+			// Cache results
+			foreach (Entity entity in results.Entities)
+			{
+				Guid entity1Value = entity.GetAttributeValue<Guid>(metadata.Entity1IntersectAttribute);
+				Guid entity2Value = entity.GetAttributeValue<Guid>(metadata.Entity2IntersectAttribute);
+				string cacheKey = $"{entity1Value}|{entity2Value}";
+				_intersectCache[cacheKey] = entity;
+			}
+
+			_intersectRetrievalBatch.Clear();
 		}
 
 		private void ProcessRetrievalBatch()
@@ -344,10 +526,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			base.EndProcessing();
 
-			// Flush any remaining retrieval batch
+			// Flush any remaining retrieval batches
 			if (_retrievalBatch != null)
 			{
 				ProcessRetrievalBatch();
+			}
+
+			if (_matchOnRetrievalBatch != null)
+			{
+				ProcessMatchOnRetrievalBatch();
+			}
+
+			if (_intersectRetrievalBatch != null)
+			{
+				ProcessIntersectRetrievalBatch();
 			}
 
 			if (_nextBatchItems != null)
@@ -1107,13 +1299,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 				if (existingRecord == null && MatchOn != null)
 				{
-					// MatchOn queries are more complex - for now, continue with individual queries
-					// TODO: Could batch these too, but more complex due to different match criteria
 					foreach (string[] matchOnColumnList in MatchOn)
 					{
-						QueryByAttribute matchOnQuery = new QueryByAttribute(TableName);
-						matchOnQuery.TopCount = 2;
-
+						var values = new Dictionary<string, object>();
 						foreach (string matchOnColumn in matchOnColumnList)
 						{
 							object queryValue = target.GetAttributeValue<object>(matchOnColumn);
@@ -1128,25 +1316,71 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								queryValue = ((OptionSetValue)queryValue).Value;
 							}
 
-							matchOnQuery.AddAttributeValue(matchOnColumn, queryValue);
+							values[matchOnColumn] = queryValue;
 						}
 
-						matchOnQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
-
-						var existingRecords = Connection.RetrieveMultiple(matchOnQuery
-							).Entities;
-
-						if (existingRecords.Count == 1)
+						// Check cache first
+						string cacheKey = GetMatchOnCacheKey(matchOnColumnList, values);
+						if (_matchOnCache != null && _matchOnCache.TryGetValue(cacheKey, out existingRecord))
 						{
-							existingRecord = existingRecords[0];
+							WriteVerbose(string.Format("Using cached record for MatchOn {0}", cacheKey));
 							break;
 						}
-						else if (existingRecords.Count > 1)
-						{
-							string matchOnSummary = string.Join("\n", matchOnColumnList.Select(c => c + "='" +
-							matchOnQuery.Values[matchOnQuery.Attributes.IndexOf(c)] + "'" ?? "<null>").ToArray());
 
-							throw new Exception(string.Format("Match on values {0} resulted in more than one record to update. Match on values:\n", matchOnSummary));
+						// Use batched retrieval if enabled
+						if (_matchOnRetrievalBatch != null)
+						{
+							ColumnSet columnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+
+							_matchOnRetrievalBatch.Add(new MatchOnRetrievalBatchItem
+							{
+								Columns = matchOnColumnList,
+								Values = values,
+								Target = target,
+								ColumnSet = columnSet
+							});
+
+							if (_matchOnRetrievalBatch.Count >= RetrievalBatchSize)
+							{
+								ProcessMatchOnRetrievalBatch();
+							}
+
+							// Process immediately to get the result
+							ProcessMatchOnRetrievalBatch();
+
+							// Check cache again
+							if (_matchOnCache.TryGetValue(cacheKey, out existingRecord))
+							{
+								break;
+							}
+						}
+						else
+						{
+							// Fall back to individual query
+							QueryByAttribute matchOnQuery = new QueryByAttribute(TableName);
+							matchOnQuery.TopCount = 2;
+
+							foreach (string matchOnColumn in matchOnColumnList)
+							{
+								matchOnQuery.AddAttributeValue(matchOnColumn, values[matchOnColumn]);
+							}
+
+							matchOnQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+
+							var existingRecords = Connection.RetrieveMultiple(matchOnQuery).Entities;
+
+							if (existingRecords.Count == 1)
+							{
+								existingRecord = existingRecords[0];
+								break;
+							}
+							else if (existingRecords.Count > 1)
+							{
+								string matchOnSummary = string.Join("\n", matchOnColumnList.Select(c => c + "='" +
+								matchOnQuery.Values[matchOnQuery.Attributes.IndexOf(c)] + "'" ?? "<null>").ToArray());
+
+								throw new Exception(string.Format("Match on values {0} resulted in more than one record to update. Match on values:\n", matchOnSummary));
+							}
 						}
 					}
 				}
@@ -1170,13 +1404,55 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					throw new Exception("For intersect entities (many to many relationships), The input object must contain values for both attributes involved in the relationship.");
 				}
 
-				QueryByAttribute existingRecordQuery = new QueryByAttribute(TableName);
-				existingRecordQuery.AddAttributeValue(manyToManyRelationshipMetadata.Entity1IntersectAttribute, entity1Value.Value);
-				existingRecordQuery.AddAttributeValue(manyToManyRelationshipMetadata.Entity2IntersectAttribute, entity2Value.Value);
-				existingRecordQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+				// Check cache first
+				string cacheKey = $"{entity1Value.Value}|{entity2Value.Value}";
+				if (_intersectCache != null && _intersectCache.TryGetValue(cacheKey, out existingRecord))
+				{
+					WriteVerbose(string.Format("Using cached intersect record for {0}|{1}", entity1Value.Value, entity2Value.Value));
+					return existingRecord;
+				}
 
-				existingRecord = Connection.RetrieveMultiple(existingRecordQuery
-					).Entities.FirstOrDefault();
+				// Use batched retrieval if enabled
+				if (_intersectRetrievalBatch != null)
+				{
+					ColumnSet columnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+
+					_intersectRetrievalBatch.Add(new IntersectRetrievalBatchItem
+					{
+						Entity1Value = entity1Value.Value,
+						Entity2Value = entity2Value.Value,
+						Target = target,
+						ColumnSet = columnSet,
+						Metadata = manyToManyRelationshipMetadata
+					});
+
+					if (_intersectRetrievalBatch.Count >= RetrievalBatchSize)
+					{
+						ProcessIntersectRetrievalBatch();
+					}
+
+					// Process immediately to get the result
+					ProcessIntersectRetrievalBatch();
+
+					// Check cache again
+					if (_intersectCache.TryGetValue(cacheKey, out existingRecord))
+					{
+						return existingRecord;
+					}
+
+					// Record doesn't exist, return null
+					return null;
+				}
+				else
+				{
+					// Fall back to individual query
+					QueryByAttribute existingRecordQuery = new QueryByAttribute(TableName);
+					existingRecordQuery.AddAttributeValue(manyToManyRelationshipMetadata.Entity1IntersectAttribute, entity1Value.Value);
+					existingRecordQuery.AddAttributeValue(manyToManyRelationshipMetadata.Entity2IntersectAttribute, entity2Value.Value);
+					existingRecordQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+
+					existingRecord = Connection.RetrieveMultiple(existingRecordQuery).Entities.FirstOrDefault();
+				}
 			}
 			return existingRecord;
 		}

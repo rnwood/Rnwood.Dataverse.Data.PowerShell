@@ -1148,7 +1148,7 @@ Key behaviors:
 - Use `-BatchSize 1` to disable batching and stop on first error
 - Use `-BatchSize <number>` to control batch size for performance tuning
 
-**Batched Retrieval:** When `Set-DataverseRecord` checks for existing records (to determine create vs update), it also batches retrieval operations (default 500 records per query). Use `-RetrievalBatchSize <number>` to control this, or set to 1 to disable. Use `-CreateOnly` or `-UpdateAllColumns` to skip retrieval entirely for best performance.
+**Batched Retrieval:** When `Set-DataverseRecord` checks for existing records (to determine create vs update), it batches retrieval operations (default 500 records per query) for records looked up by ID, MatchOn columns, or M:M relationships. Use `-RetrievalBatchSize <number>` to control this, or set to 1 to disable. Use `-CreateOnly` or `-UpdateAllColumns` to skip retrieval entirely for best performance.
 
 *Example: Control batch size:*
 ```powershell

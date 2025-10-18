@@ -64,8 +64,10 @@ Key Batch Behavior:
 When checking for existing records (to determine create vs update), the cmdlet batches retrieval operations for improved performance:
 - Default retrieval batch size is 500 records per request (configurable via `-RetrievalBatchSize` parameter)
 - Set `-RetrievalBatchSize 1` to disable batched retrieval and query one record at a time
-- Batched retrieval only applies to records looked up by ID
-- Records using `-MatchOn` or intersect entities still use individual queries
+- Batched retrieval applies to:
+  - Records looked up by ID (using `In` operator)
+  - Records using `-MatchOn` with single column (using `In` operator) or multiple columns (using `Or` conditions)
+  - Intersect entities / M:M relationships (using `Or` conditions)
 - `-CreateOnly` and `-UpdateAllColumns` skip retrieval entirely for best performance
 
 How Create vs Update is Determined:
