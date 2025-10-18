@@ -249,8 +249,7 @@ $global:PSDefaultParameterValues['*-Dataverse*:Connection'] = $connection
 
 # Create script block from string in this runspace to avoid sharing issues
 $scriptBlock = [scriptblock]::Create($scriptBlockString)
-
-& $scriptBlock.Invoke($chunk)
+$scriptBlock.Invoke($chunk)
 
 ");
 // Convert chunk to array to ensure it's fully materialized before passing to PowerShell
