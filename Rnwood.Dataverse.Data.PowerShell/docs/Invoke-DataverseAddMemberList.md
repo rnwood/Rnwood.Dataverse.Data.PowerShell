@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityId
-Gets the of the newly created table.
+Gets or sets the ID of the member you want to add to the list. Required.
 
 ```yaml
 Type: Guid

@@ -98,7 +98,7 @@ Accept wildcard characters: False
 ```
 
 ### -ExportComponentsParams
-Gets or sets whether solution component parameters should be included in the solution being exported. Optional.
+Gets or sets the set of solution components to export.
 
 ```yaml
 Type: ExportComponentsParams

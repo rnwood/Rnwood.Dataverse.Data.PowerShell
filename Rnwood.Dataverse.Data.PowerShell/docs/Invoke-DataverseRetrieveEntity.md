@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityFilters
-Gets or sets a filter to control how much data for the entity is retrieved.
+Gets or sets a filter to control how much data for each table is retrieved. Required.
 
 ```yaml
 Type: EntityFilters

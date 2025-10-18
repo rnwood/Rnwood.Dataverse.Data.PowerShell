@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -MemberIds
-Gets or sets an array of IDs of the members that you want to add to the list. Required.
+Gets or sets an array of IDs of the users to be removed from the team.
 
 ```yaml
 Type: Guid[]
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -TeamId
-Gets or sets the ID of the team. Required.
+Gets or sets the ID of the team.
 
 ```yaml
 Type: Guid

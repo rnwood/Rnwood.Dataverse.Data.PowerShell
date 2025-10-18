@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -Privileges
-Use this to retrieve entity information plus privileges for the entity. Value = 4.
+For internal use only.
 
 ```yaml
 Type: ChannelAccessProfilePrivilege[]

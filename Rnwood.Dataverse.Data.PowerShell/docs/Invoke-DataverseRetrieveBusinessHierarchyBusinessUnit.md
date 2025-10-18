@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseRetrieveBusinessHierarchyBusinessUnit -Connection <Servi
 ## PARAMETERS
 
 ### -ColumnSet
-Gets or sets the collection of columns for which non-null values are returned from a query. Required.
+Gets or sets the set of attributes to retrieve. Required.
 
 ```yaml
 Type: ColumnSet
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityId
-Gets the of the newly created table.
+Gets or sets the ID of the business unit. Required.
 
 ```yaml
 Type: Guid

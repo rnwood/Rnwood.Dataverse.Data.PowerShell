@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -FileContinuationToken
-Gets or sets a token that uniquely identifies a sequence of related data uploads.
+A token that uniquely identifies a sequence of related data blocks.
 
 ```yaml
 Type: String

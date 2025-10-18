@@ -108,7 +108,7 @@ Accept wildcard characters: False
 ```
 
 ### -Query
-Gets or sets the query representing the metadata to return.
+Gets or sets the query for the retrieve operation that can be used to break up large data sets into pages. Optional.
 
 ```yaml
 Type: QueryBase

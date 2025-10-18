@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityId
-Gets the of the newly created table.
+Gets or sets the ID of the saved query (view) to execute.
 
 ```yaml
 Type: Guid

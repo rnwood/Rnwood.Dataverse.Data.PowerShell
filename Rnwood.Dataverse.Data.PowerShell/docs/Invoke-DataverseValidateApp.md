@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseValidateApp -Connection <ServiceClient> -AppModuleId <Gu
 ## PARAMETERS
 
 ### -AppModuleId
-The Id of the AppModule.
+Gets or sets the ID of the AppModule.
 
 ```yaml
 Type: Guid

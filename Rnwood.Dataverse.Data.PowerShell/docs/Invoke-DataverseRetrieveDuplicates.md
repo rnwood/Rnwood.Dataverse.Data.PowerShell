@@ -139,7 +139,7 @@ Accept wildcard characters: False
 ```
 
 ### -PagingInfo
-Gets or sets the paging information. Optional.
+Gets or sets a paging information for the retrieved duplicates. Required.
 
 ```yaml
 Type: PagingInfo

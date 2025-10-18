@@ -49,7 +49,7 @@ PS C:\> Invoke-DataverseImportSolution -Connection <ServiceClient> -OverwriteUnm
 ## PARAMETERS
 
 ### -AsyncRibbonProcessing
-For internal use only.
+Gets or sets the list of entities to overwrite values from the solution.
 
 ```yaml
 Type: Boolean
@@ -139,7 +139,7 @@ Accept wildcard characters: False
 ```
 
 ### -HoldingSolution
-Gets or sets whether to import the solution as a holding solution staged for upgrade.
+Gets or sets whether a solution is imported and staged as a holding solution.
 
 ```yaml
 Type: Boolean
@@ -154,7 +154,7 @@ Accept wildcard characters: False
 ```
 
 ### -ImportJobId
-The ID of the Import Job.
+Gets or sets the ID of the import job that will be created to perform this import. Required.
 
 ```yaml
 Type: Guid
@@ -274,7 +274,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionParameters
-Gets or sets additional parameters for the solution.
+Additional solution parameters.
 
 ```yaml
 Type: SolutionParameters

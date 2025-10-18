@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -IssueSend
-Gets or sets whether to send the email, or to just record it as sent.
+Gets or sets whether to send the e-mail, or to just record it as sent.
 
 ```yaml
 Type: Boolean

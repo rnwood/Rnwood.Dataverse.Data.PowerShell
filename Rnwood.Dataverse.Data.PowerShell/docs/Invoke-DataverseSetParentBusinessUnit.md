@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -ParentId
-For internal use only.
+Gets or sets the ID of the new parent business unit.
 
 ```yaml
 Type: Guid

@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -EndDate
-Gets or sets the end date and time. Required.
+Gets or sets the end date of the range in UTC.
 
 ```yaml
 Type: DateTime

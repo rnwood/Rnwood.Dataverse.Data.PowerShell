@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -End
-Gets or sets the end of the time period to expand.
+Gets or sets the end time for the scheduled block of time. Required.
 
 ```yaml
 Type: DateTime
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -Start
-Gets or sets the start of the period to expand.
+Gets or sets the start of the time slot. Required.
 
 ```yaml
 Type: DateTime

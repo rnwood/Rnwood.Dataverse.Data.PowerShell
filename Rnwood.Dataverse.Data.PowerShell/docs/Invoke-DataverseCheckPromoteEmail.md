@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -MessageId
-Gets or sets the ID of the email message stored in the email header. Required.
+Gets or sets the message ID that is contained in the email header. Required.
 
 ```yaml
 Type: String
@@ -92,7 +92,7 @@ Accept wildcard characters: False
 ```
 
 ### -Subject
-Gets or sets the subject line for the email message. Optional.
+Gets or sets the subject of the message. Optional.
 
 ```yaml
 Type: String

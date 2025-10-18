@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -QuerySet
-Gets or sets an array of queries for a bulk delete job. Required.
+Gets or sets a query that identifies the workflow records to perform the operation on.
 
 ```yaml
 Type: QueryExpression[]
