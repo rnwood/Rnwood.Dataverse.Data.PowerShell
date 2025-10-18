@@ -477,6 +477,233 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_recordProcessingQueue.Clear();
 		}
 
+private void ProcessRecordWithExistingRecord(Entity target, EntityMetadata entityMetadata, Entity existingRecord)
+{
+if (Upsert.IsPresent)
+{
+UpsertRecord(entityMetadata, target);
+}
+else
+{
+if (existingRecord != null)
+{
+UpdateExistingRecord(entityMetadata, target, existingRecord);
+}
+else
+{
+CreateNewRecord(entityMetadata, target);
+}
+}
+
+//Skip assignment/status if record creation failed.
+if ((existingRecord != null && !NoUpdate) || (existingRecord == null && !NoCreate))
+{
+if (target.Contains("ownerid"))
+{
+EntityReference ownerid = target.GetAttributeValue<EntityReference>("ownerid");
+AssignRequest request = new AssignRequest()
+{
+Assignee = ownerid,
+Target = target.ToEntityReference()
+};
+ApplyBypassBusinessLogicExecution(request);
+
+if (_nextBatchItems != null)
+{
+WriteVerbose(string.Format("Added assignment of record {0}:{1} to {2} to batch", TableName, target.Id, ownerid.Name));
+QueueBatchItem(new BatchItem(InputObject, request, (response) => { AssignRecordCompletion(target, ownerid); }), CallerId);
+}
+else
+{
+if (ShouldProcess(string.Format("Assign record {0}:{1} to {2}", TableName, target.Id, ownerid.Name)))
+{
+try
+{
+Connection.Execute(request);
+AssignRecordCompletion(target, ownerid);
+}
+catch (Exception e)
+{
+WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, InputObject));
+}
+}
+}
+}
+
+if (target.Contains("statecode") || target.Contains("statuscode"))
+{
+OptionSetValue statuscode = target.GetAttributeValue<OptionSetValue>("statuscode") ?? new OptionSetValue(-1);
+
+OptionSetValue stateCode = target.GetAttributeValue<OptionSetValue>("statecode");
+
+if (stateCode == null)
+{
+StatusAttributeMetadata statusMetadata =
+(StatusAttributeMetadata)entityMetadata.Attributes.First(
+a => a.LogicalName.Equals("statuscode", StringComparison.OrdinalIgnoreCase));
+
+stateCode = new OptionSetValue(statusMetadata.OptionSet.Options.Cast<StatusOptionMetadata>()
+.First(o => o.Value.Value == statuscode.Value)
+.State.Value);
+}
+
+SetStateRequest request = new SetStateRequest
+{
+EntityMoniker = target.ToEntityReference(),
+State = stateCode,
+Status = statuscode
+};
+ApplyBypassBusinessLogicExecution(request);
+
+if (_nextBatchItems != null)
+{
+WriteVerbose(string.Format("Added set record {0}:{1} status to State:{2} Status: {3} to batch", TableName, Id, stateCode.Value, statuscode.Value));
+QueueBatchItem(new BatchItem(InputObject, request, (response) => { SetStateCompletion(target, statuscode, stateCode); }), CallerId);
+}
+else
+{
+if (ShouldProcess(string.Format("Set record {0}:{1} status to State:{2} Status: {3}", TableName, Id, stateCode.Value, statuscode.Value)))
+{
+try
+{
+Connection.Execute(request);
+SetStateCompletion(target, statuscode, stateCode);
+}
+catch (Exception e)
+{
+WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, InputObject));
+}
+}
+}
+}
+}
+}
+
+private void QueueRecordProcessing(Entity target, EntityMetadata entityMetadata)
+{
+var item = new RecordProcessingItem
+{
+InputObject = InputObject,
+Target = target,
+EntityMetadata = entityMetadata,
+Continuation = (existingRecord) => ProcessRecordWithExistingRecord(target, entityMetadata, existingRecord)
+};
+
+// Determine what type of retrieval is needed
+if (CreateOnly.IsPresent || Upsert.IsPresent)
+{
+// No retrieval needed, process immediately with null existing record
+try
+{
+item.Continuation(null);
+}
+catch (Exception e)
+{
+WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, item.InputObject));
+}
+return;
+}
+
+if (!entityMetadata.IsIntersect.GetValueOrDefault())
+{
+if (Id != Guid.Empty)
+{
+if (UpdateAllColumns.IsPresent)
+{
+// No retrieval needed, just create a stub entity
+Entity stubRecord = new Entity(target.LogicalName) { Id = Id };
+stubRecord[entityMetadata.PrimaryIdAttribute] = Id;
+try
+{
+item.Continuation(stubRecord);
+}
+catch (Exception e)
+{
+WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, item.InputObject));
+}
+return;
+}
+else
+{
+// ID-based retrieval
+item.Id = Id;
+item.TableName = TableName;
+item.ColumnSet = target.LogicalName.Equals("calendar", StringComparison.OrdinalIgnoreCase) ? new ColumnSet(true) : new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+}
+}
+else if (MatchOn != null)
+{
+// MatchOn retrieval - queue for first match attempt
+foreach (string[] matchOnColumnList in MatchOn)
+{
+var values = new Dictionary<string, object>();
+foreach (string matchOnColumn in matchOnColumnList)
+{
+object queryValue = target.GetAttributeValue<object>(matchOnColumn);
+
+if (queryValue is EntityReference)
+{
+queryValue = ((EntityReference)queryValue).Id;
+}
+
+if (queryValue is OptionSetValue)
+{
+queryValue = ((OptionSetValue)queryValue).Value;
+}
+
+values[matchOnColumn] = queryValue;
+}
+
+item.MatchOnColumns = matchOnColumnList;
+item.MatchOnValues = values;
+item.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+break; // Only process first MatchOn for now
+}
+}
+else
+{
+// No ID or MatchOn, must be create only
+try
+{
+item.Continuation(null);
+}
+catch (Exception e)
+{
+WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, item.InputObject));
+}
+return;
+}
+}
+else
+{
+// Intersect entity
+if (MatchOn != null)
+{
+WriteError(new ErrorRecord(new ArgumentException("MatchOn not supported for intersect entities", "MatchOn"), null, ErrorCategory.InvalidArgument, InputObject));
+return;
+}
+
+ManyToManyRelationshipMetadata manyToManyRelationshipMetadata = entityMetadata.ManyToManyRelationships[0];
+
+Guid? entity1Value = target.GetAttributeValue<Guid?>(manyToManyRelationshipMetadata.Entity1IntersectAttribute);
+Guid? entity2Value = target.GetAttributeValue<Guid?>(manyToManyRelationshipMetadata.Entity2IntersectAttribute);
+
+if (entity1Value == null || entity2Value == null)
+{
+WriteError(new ErrorRecord(new Exception("For intersect entities (many to many relationships), The input object must contain values for both attributes involved in the relationship."), null, ErrorCategory.InvalidData, InputObject));
+return;
+}
+
+item.Entity1Value = entity1Value.Value;
+item.Entity2Value = entity2Value.Value;
+item.IntersectMetadata = manyToManyRelationshipMetadata;
+item.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+}
+
+_recordProcessingQueue.Add(item);
+}
+
+
 
 		private void ProcessBatch()
 		{
@@ -595,146 +822,44 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	/// </summary>
 
 
-		protected override void ProcessRecord()
-		{
-			base.ProcessRecord();
+protected override void ProcessRecord()
+{
+base.ProcessRecord();
 
-			if (CallerId.HasValue)
-			{
-				if (BatchSize > 1)
-				{
-					throw new ArgumentException("CreatedOnBehalfBy not supported with BatchSize > 1");
-				}
-			}
+if (CallerId.HasValue)
+{
+if (BatchSize > 1)
+{
+throw new ArgumentException("CreatedOnBehalfBy not supported with BatchSize > 1");
+}
+}
 
-			recordCount++;
-			WriteVerbose("Processing record #" + recordCount);
+recordCount++;
+WriteVerbose("Processing record #" + recordCount);
 
-			Entity target;
+Entity target;
 
-			try
-			{
-				target = entityConverter.ConvertToDataverseEntity(InputObject, TableName, GetConversionOptions());
-			}
-			catch (FormatException e)
-			{
-				WriteError(new ErrorRecord(new Exception("Error converting input object: " + e.Message, e), null, ErrorCategory.InvalidData, InputObject));
-				return;
-			}
+try
+{
+target = entityConverter.ConvertToDataverseEntity(InputObject, TableName, GetConversionOptions());
+}
+catch (FormatException e)
+{
+WriteError(new ErrorRecord(new Exception("Error converting input object: " + e.Message, e), null, ErrorCategory.InvalidData, InputObject));
+return;
+}
 
-			EntityMetadata entityMetadata = entityMetadataFactory.GetMetadata(TableName);
+EntityMetadata entityMetadata = entityMetadataFactory.GetMetadata(TableName);
 
-			Entity existingRecord;
+// Queue the record for batched processing
+QueueRecordProcessing(target, entityMetadata);
 
-			try
-			{
-				existingRecord = GetExistingRecord(entityMetadata, target);
-			}
-			catch (Exception e)
-			{
-				WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, InputObject)); ;
-				return;
-			}
-
-			if (Upsert.IsPresent)
-			{
-				UpsertRecord(entityMetadata, target);
-			}
-			else
-			{
-				if (existingRecord != null)
-				{
-					UpdateExistingRecord(entityMetadata, target, existingRecord);
-				}
-				else
-				{
-					CreateNewRecord(entityMetadata, target);
-				}
-			}
-
-			//Skip assignment/status if record creation failed.
-			if ((existingRecord != null && !NoUpdate) || (existingRecord == null && !NoCreate))
-			{
-				if (target.Contains("ownerid"))
-				{
-					EntityReference ownerid = target.GetAttributeValue<EntityReference>("ownerid");
-					AssignRequest request = new AssignRequest()
-					{
-						Assignee = ownerid,
-						Target = target.ToEntityReference()
-					};
-					ApplyBypassBusinessLogicExecution(request);
-
-					if (_nextBatchItems != null)
-					{
-						WriteVerbose(string.Format("Added assignment of record {0}:{1} to {2} to batch", TableName, target.Id, ownerid.Name));
-						QueueBatchItem(new BatchItem(InputObject, request, (response) => { AssignRecordCompletion(target, ownerid); }), CallerId);
-					}
-					else
-					{
-						if (ShouldProcess(string.Format("Assign record {0}:{1} to {2}", TableName, target.Id, ownerid.Name)))
-						{
-							try
-							{
-								Connection.Execute(request);
-								AssignRecordCompletion(target, ownerid);
-							}
-							catch (Exception e)
-							{
-								WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, InputObject));
-							}
-						}
-					}
-				}
-
-				if (target.Contains("statecode") || target.Contains("statuscode"))
-				{
-					OptionSetValue statuscode = target.GetAttributeValue<OptionSetValue>("statuscode") ?? new OptionSetValue(-1);
-
-					OptionSetValue stateCode = target.GetAttributeValue<OptionSetValue>("statecode");
-
-					if (stateCode == null)
-					{
-						StatusAttributeMetadata statusMetadata =
-							(StatusAttributeMetadata)entityMetadata.Attributes.First(
-								a => a.LogicalName.Equals("statuscode", StringComparison.OrdinalIgnoreCase));
-
-						stateCode = new OptionSetValue(statusMetadata.OptionSet.Options.Cast<StatusOptionMetadata>()
-								.First(o => o.Value.Value == statuscode.Value)
-								.State.Value);
-					}
-
-					SetStateRequest request = new SetStateRequest()
-					{
-						EntityMoniker = target.ToEntityReference(),
-						State = stateCode,
-						Status = statuscode
-					};
-					ApplyBypassBusinessLogicExecution(request);
-
-					if (_nextBatchItems != null)
-					{
-						WriteVerbose(string.Format("Added set record {0}:{1} status to State:{2} Status: {3} to batch", TableName, Id, stateCode.Value, statuscode.Value));
-						QueueBatchItem(new BatchItem(InputObject, request, (response) => { SetStateCompletion(target, statuscode, stateCode); }), CallerId);
-					}
-					else
-					{
-						if (ShouldProcess(string.Format("Set record {0}:{1} status to State:{2} Status: {3}", TableName, Id, stateCode.Value, statuscode.Value)))
-						{
-							try
-							{
-								Connection.Execute(request);
-								SetStateCompletion(target, statuscode, stateCode);
-							}
-							catch (Exception e)
-							{
-								WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, InputObject));
-							}
-						}
-					}
-				}
-			}
-		}
+// Process batch if full
+if (_recordProcessingQueue.Count >= RetrievalBatchSize)
+{
+ProcessQueuedRecords();
+}
+}
 
 		private void SetStateCompletion(Entity target, OptionSetValue statuscode, OptionSetValue stateCode)
 		{
@@ -1223,6 +1348,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				}
 			}
 		}
+
+private void RemoveUnchangedColumns(Entity target, Entity existingRecord)
+{
+foreach (KeyValuePair<string, object> column in target.Attributes.ToArray())
+{
+if ((existingRecord.Contains(column.Key) && Equals(column.Value, existingRecord[column.Key]))
+||
+//Dataverse seems to consider that null and "" string are equal and doesn't include the attribute in retrieve records if the value is either
+((column.Value == null || column.Value as string == "") && !existingRecord.Contains(column.Key)))
+{
+target.Attributes.Remove(column.Key);
+} else if (existingRecord.GetAttributeValue<object>(column.Key) is OptionSetValueCollection existingCollection && target.GetAttributeValue<object>(column.Key) is OptionSetValueCollection targetCollection)
+{
+if (existingCollection.Count == targetCollection.Count && targetCollection.All(existingCollection.Contains))
+{
+target.Attributes.Remove(column.Key);
+}
+}
+}
+
+target.Id = existingRecord.Id;
+}
 
 		private void UpdateCompletion(Entity target, PSObject inputObject, Entity existingRecord, string updatedColumnSummary)
 		{
