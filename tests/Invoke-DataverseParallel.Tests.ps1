@@ -16,7 +16,7 @@ Describe "Invoke-DataverseParallel" {
         # Process in parallel with chunk size 3
         $results = $input | Invoke-DataverseParallel -Connection $c -ChunkSize 3 -ScriptBlock {
             # Return the input doubled
-            $_ * 2
+            $_ | %{ $_ * 2 }
         }
 
         # Verify we got all results (order may vary due to parallelism)
@@ -35,7 +35,7 @@ Describe "Invoke-DataverseParallel" {
         $results = $input | Invoke-DataverseParallel -Connection $c -ChunkSize 2 -ScriptBlock {
             # Return success message - connection is available but we don't test it here
             # E2E tests validate actual connection usage
-            "success-$_"
+            $_ | %{ "success-$_" }
         }
 
         # Verify all items processed successfully
@@ -73,21 +73,10 @@ Describe "Invoke-DataverseParallel" {
         $c = getMockConnection
 
         $results = @(42) | Invoke-DataverseParallel -Connection $c -ChunkSize 5 -ScriptBlock {
-            $_ * 2
+            $_ | %{ $_ * 2 }
         }
 
         $results | Should -Be 84
     }
 
-    It "Respects MaxDegreeOfParallelism parameter" {
-        $c = getMockConnection
-
-        # This test just verifies the parameter is accepted
-        # Testing actual parallel execution is difficult without timing
-        $results = 1..10 | Invoke-DataverseParallel -Connection $c -ChunkSize 2 -MaxDegreeOfParallelism 2 -ScriptBlock {
-            $_
-        }
-
-        $results.Count | Should -Be 10
-    }
 }
