@@ -145,6 +145,7 @@ Describe "Set-DataverseRecord Batched Retrieval" {
                 $contact["firstname"] = "Update$_"
                 $contact
             }
+            $contacts | set-DataverseRecord -connection $connection -TableName contact -CreateOnly
 
             { $contacts | Set-DataverseRecord -Connection $connection -UpdateAllColumns -RetrievalBatchSize 500 } | Should -Not -Throw
         }
