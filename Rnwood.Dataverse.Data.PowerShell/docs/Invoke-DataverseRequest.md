@@ -14,21 +14,22 @@ Invokes an arbitrary Dataverse request and returns the response.
 
 ### Request
 ```
-Invoke-DataverseRequest -Request <OrganizationRequest> [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Invoke-DataverseRequest -Request <OrganizationRequest> [-Retries <Int32>] [-InitialRetryDelay <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### NameAndInputs
 ```
-Invoke-DataverseRequest [-RequestName] <String> [[-Parameters] <Hashtable>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Invoke-DataverseRequest [-RequestName] <String> [[-Parameters] <Hashtable>] [-Retries <Int32>]
+ [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ### REST
 ```
 Invoke-DataverseRequest [-Method] <HttpMethod> [-Path] <String> [[-Body] <PSObject>]
- [-CustomHeaders <Hashtable>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [-CustomHeaders <Hashtable>] [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -46,6 +47,17 @@ This is useful for:
 - Making raw REST API calls for advanced scenarios
 
 The response from the request is returned to the pipeline.
+
+**Retry Logic:**
+
+This cmdlet supports automatic retries for transient failures using exponential backoff:
+- Use `-Retries` parameter to specify the number of retry attempts (default is 0 - no retries)
+- Use `-InitialRetryDelay` to set the initial delay in seconds before the first retry (default is 5s)
+- Each subsequent retry doubles the delay time (exponential backoff)
+- After all retries are exhausted, the final exception is thrown
+- Retries are particularly useful for transient errors like throttling or temporary connectivity issues
+
+**Note:** Retry logic only applies to the **Request** and **NameAndInputs** parameter sets. REST API calls do not currently support retries.
 
 ## EXAMPLES
 
@@ -95,6 +107,15 @@ PS C:\> invoke-dataverserequest -connection $c -method POST myapi_Example \
 ```
 
 Invokes the `GET` `myapi_Example` REST API using custom headers and body
+
+### Example 5: Using retry logic for transient failures
+
+```powershell
+PS C:\> $request = New-Object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
+PS C:\> $response = Invoke-DataverseRequest -Connection $c -Request $request -Retries 3 -InitialRetryDelay 500 -Verbose
+```
+
+Invokes a WhoAmI request with automatic retry on transient failures. Failed requests will be retried up to 3 times with delays of 5s, 10s, and 20s respectively. The `-Verbose` flag shows retry attempts and wait times.
 
 ## PARAMETERS
 
@@ -232,6 +253,40 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InitialRetryDelay
+Initial delay in seconds before first retry. Subsequent retries use exponential backoff (delay doubles each time). Default is 5s.
+
+Only applies to Request and NameAndInputs parameter sets. REST API calls do not support retries.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 1000
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Retries
+Number of times to retry the request on failure. Default is 0 (no retries). Each retry uses exponential backoff based on the `-InitialRetryDelay` parameter.
+
+Only applies to Request and NameAndInputs parameter sets. REST API calls do not support retries.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 0
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

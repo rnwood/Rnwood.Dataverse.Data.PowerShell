@@ -1,6 +1,7 @@
 
 
 
+
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
@@ -13,6 +14,7 @@ using System.Linq;
 using System.Management.Automation;
 using System.ServiceModel;
 using System.Text;
+using System.Threading;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -59,6 +61,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(HelpMessage = "Specifies the IDs of plugin steps to bypass")]
 		public override Guid[] BypassBusinessLogicExecutionStepIds { get; set; }
 
+		/// <summary>
+		/// Number of times to retry each batch item on failure. Default is 0 (no retries).
+		/// </summary>
+		[Parameter(HelpMessage = "Number of times to retry each batch item on failure. Default is 0 (no retries).")]
+		public int Retries { get; set; } = 0;
+
+		/// <summary>
+		/// Initial delay in seconds before first retry. Subsequent retries use exponential backoff. Default is 5s.
+		/// </summary>
+		[Parameter(HelpMessage = "Initial delay in seconds before first retry. Subsequent retries use exponential backoff. Default is 5s.")]
+		public int InitialRetryDelay { get; set; } = 5;
+
 		private class BatchItem
 		{
 			public BatchItem(PSObject inputObject, OrganizationRequest request, Action<OrganizationResponse> responseCompletion) : this(inputObject, request, responseCompletion, null)
@@ -71,6 +85,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				Request = request;
 				ResponseCompletion = responseCompletion;
 				ResponseExceptionCompletion = responseExceptionCompletion;
+				RetriesRemaining = 0;
+				NextRetryTime = DateTime.MinValue;
 			}
 
 			public OrganizationRequest Request { get; set; }
@@ -80,6 +96,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			public Func<OrganizationServiceFault, bool> ResponseExceptionCompletion { get; set; }
 
 			public PSObject InputObject { get; set; }
+
+			public int RetriesRemaining { get; set; }
+
+			public DateTime NextRetryTime { get; set; }
 
 			public override string ToString()
 			{
@@ -93,6 +113,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		}
 
 		private List<BatchItem> _nextBatchItems;
+		private List<BatchItem> _pendingRetries;
 
 	/// <summary>Processes each record in the pipeline.</summary>
 
@@ -192,6 +213,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private void QueueBatchItem(BatchItem item)
 		{
+			item.RetriesRemaining = Retries;
 			_nextBatchItems.Add(item);
 
 			if (_nextBatchItems.Count == BatchSize)
@@ -240,12 +262,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 					if (itemResponse.Fault != null)
 					{
-						if (batchItem.ResponseExceptionCompletion != null && batchItem.ResponseExceptionCompletion(itemResponse.Fault))
+						bool handledByCompletion = batchItem.ResponseExceptionCompletion != null && batchItem.ResponseExceptionCompletion(itemResponse.Fault);
+
+						if (!handledByCompletion && batchItem.RetriesRemaining > 0)
 						{
-							//Handled error
+							// Schedule for retry with exponential backoff
+							int attemptNumber = Retries - batchItem.RetriesRemaining + 1;
+							int delayS = InitialRetryDelay * (int)Math.Pow(2, attemptNumber - 1);
+							batchItem.NextRetryTime = DateTime.UtcNow.AddSeconds(delayS);
+							batchItem.RetriesRemaining--;
+
+							WriteVerbose($"Request failed, will retry in {delayMs}ms (attempt {attemptNumber} of {Retries + 1}): {batchItem}");
+							_pendingRetries.Add(batchItem);
 						}
-						else
+						else if (!handledByCompletion)
 						{
+							// Final failure - write error
 							StringBuilder details = new StringBuilder();
 							AppendFaultDetails(itemResponse.Fault, details);
 
@@ -257,8 +289,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						batchItem.ResponseCompletion(itemResponse.Response);
 					}
 				}
-
-
 			}
 
 			_nextBatchItems.Clear();
@@ -272,6 +302,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			base.BeginProcessing();
 
 			metadataFactory = new EntityMetadataFactory(Connection);
+			_pendingRetries = new List<BatchItem>();
 
 			if (BatchSize > 1)
 			{
@@ -291,6 +322,51 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			if (_nextBatchItems != null)
 			{
 				ProcessBatch();
+			}
+
+			// Process any pending retries
+			ProcessRetries();
+		}
+
+		private void ProcessRetries()
+		{
+			while (_pendingRetries.Count > 0)
+			{
+				DateTime now = DateTime.UtcNow;
+				var readyForRetry = _pendingRetries.Where(r => r.NextRetryTime <= now).ToList();
+
+				if (readyForRetry.Count == 0)
+				{
+					// Calculate wait time for next retry
+					var nextRetryTime = _pendingRetries.Min(r => r.NextRetryTime);
+					var waitTime = (nextRetryTime - now).TotalSeconds;
+
+					if (waitTime > 0)
+					{
+						WriteVerbose($"Waiting {waitTime:F0}s for next retry batch...");
+						Thread.Sleep((int)waitTime*1000);
+					}
+
+					continue;
+				}
+
+				// Remove from pending and add to batch for retry
+				foreach (var item in readyForRetry)
+				{
+					_pendingRetries.Remove(item);
+					_nextBatchItems.Add(item);
+
+					if (_nextBatchItems.Count == BatchSize)
+					{
+						ProcessBatch();
+					}
+				}
+
+				// Process any remaining items in batch
+				if (_nextBatchItems.Count > 0)
+				{
+					ProcessBatch();
+				}
 			}
 		}
 	}

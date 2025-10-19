@@ -14,7 +14,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
 	///<summary>Invokes a Dataverse request.</summary>
 	[Cmdlet("Invoke", "DataverseRequest")]
-	public class InvokeDataverseRequestCmdlet : OrganizationServiceCmdlet
+	public class InvokeDataverseRequestCmdlet : RetryableOrganizationServiceCmdlet
 	{
 		/// <summary>
 		/// Request to execute
@@ -95,15 +95,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 			else
 			{
-
-
 				if (ParameterSetName == "NameAndInputs")
 				{
 					Request = new OrganizationRequest(RequestName);
 					Request.Parameters.AddRange(Parameters.Cast<DictionaryEntry>().Select(e => new KeyValuePair<string, object>((string)e.Key, e.Value)));
 				}
 
-				WriteObject(Connection.Execute(Request));
+				WriteObject(ExecuteWithRetry(Request));
 			}
 		}
 	}

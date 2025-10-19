@@ -819,7 +819,7 @@ $classSummary
     [System.Diagnostics.DebuggerNonUserCode]
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     $cmdletAttribute
-    public class $cmdletClassName : OrganizationServiceCmdlet
+    public class $cmdletClassName : RetryableOrganizationServiceCmdlet
     {
 
         $($fieldDeclarations -join "`n")
@@ -863,7 +863,7 @@ $classSummary
                 return;
             }
 
-            var response = Connection.Execute(request);
+            var response = ExecuteWithRetry(request);
             WriteObject(response);
         }
     }

@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 using System.Text;
+using System.Threading;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -124,6 +125,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(HelpMessage = "Specifies the IDs of plugin steps to bypass")]
 		public override Guid[] BypassBusinessLogicExecutionStepIds { get; set; }
 
+		/// <summary>
+		/// Number of times to retry each record on failure. Default is 0 (no retries).
+		/// </summary>
+		[Parameter(HelpMessage = "Number of times to retry each record on failure. Default is 0 (no retries).")]
+		public int Retries { get; set; } = 0;
+
+		/// <summary>
+		/// Initial delay in seconds before first retry. Subsequent retries use exponential backoff. Default is 5s.
+		/// </summary>
+		[Parameter(HelpMessage = "Initial delay in seconds before first retry. Subsequent retries use exponential backoff. Default is 5s.")]
+		public int InitialRetryDelay { get; set; } = 5;
+
+		// Track records that need to be retried with full processing
+		private class RetryRecord
+		{
+			public PSObject InputObject { get; set; }
+			public int RetriesRemaining { get; set; }
+			public DateTime NextRetryTime { get; set; }
+			public Exception LastError { get; set; }
+            public bool RetryInProgress { get; internal set; }
+        }
+
+		private List<RetryRecord> _pendingRetries;
+
 		private class BatchItem
 		{
 			public BatchItem(PSObject inputObject, OrganizationRequest request, Action<OrganizationResponse> responseCompletion) : this(inputObject, request, responseCompletion, null)
@@ -211,6 +236,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			entityConverter = new DataverseEntityConverter(Connection, entityMetadataFactory);
 
 			_retrievalBatchQueue = new List<RecordProcessingItem>();
+			_pendingRetries = new List<RetryRecord>();
 
 			if (BatchSize > 1)
 			{
@@ -262,21 +288,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 						if (itemResponse.Fault != null)
 						{
-							if (batchItem.ResponseExceptionCompletion != null && batchItem.ResponseExceptionCompletion(itemResponse.Fault))
-							{
-								//Handled error
-							}
-							else
-							{
-								StringBuilder details = new StringBuilder();
-								AppendFaultDetails(itemResponse.Fault, details);
+							bool handledByCompletion = batchItem.ResponseExceptionCompletion != null && batchItem.ResponseExceptionCompletion(itemResponse.Fault);
 
-								WriteError(new ErrorRecord(new Exception(details.ToString()), null, ErrorCategory.InvalidResult, batchItem.InputObject));
+							if (!handledByCompletion)
+							{
+								// Schedule the full record for retry (not just the batch item)
+								if (Retries > 0)
+								{
+									ScheduleRecordRetry(batchItem.InputObject, new Exception($"OrganizationServiceFault {itemResponse.Fault.ErrorCode}: {itemResponse.Fault.Message}"));
+								}
+								else
+								{
+                                    RecordRetryDone(batchItem.InputObject);
+                                    // No retries configured - write error immediately
+                                    StringBuilder details = new StringBuilder();
+									AppendFaultDetails(itemResponse.Fault, details);
+									WriteError(new ErrorRecord(new Exception(details.ToString()), null, ErrorCategory.InvalidResult, batchItem.InputObject));
+								}
 							}
 						}
 						else
 						{
-							batchItem.ResponseCompletion(itemResponse.Response);
+							this.RecordRetryDone(batchItem.InputObject);
+                            batchItem.ResponseCompletion(itemResponse.Response);
 						}
 					}
 
@@ -290,6 +324,49 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_nextBatchItems.Clear();
 			_nextBatchCallerId = null;
 		}
+
+		private void ScheduleRecordRetry(PSObject inputObject, Exception error)
+		{
+			// Check if this record is already scheduled for retry
+			var existing = _pendingRetries.FirstOrDefault(r => ReferenceEquals(r.InputObject, inputObject));
+
+			if (existing != null)
+			{
+				// Already retrying - decrement remaining count
+				if (existing.RetriesRemaining > 0)
+				{
+					int attemptNumber = Retries - existing.RetriesRemaining + 1;
+					int delayS = InitialRetryDelay * (int)Math.Pow(2, attemptNumber - 1);
+					existing.NextRetryTime = DateTime.UtcNow.AddSeconds(delayS);
+					existing.RetriesRemaining--;
+					existing.LastError = error;
+					existing.RetryInProgress = false;
+
+					WriteVerbose($"Record processing failed, will retry in {delayS}s (attempt {attemptNumber + 1} of {Retries + 1})");
+				}
+				else
+				{
+					// No more retries - write final error
+					_pendingRetries.Remove(existing);
+					WriteError(new ErrorRecord(existing.LastError, null, ErrorCategory.InvalidResult, inputObject));
+				}
+			}
+			else
+			{
+				// First failure - schedule for retry
+				int delayS = InitialRetryDelay;
+				_pendingRetries.Add(new RetryRecord
+				{
+					InputObject = inputObject,
+					RetriesRemaining = Retries - 1,
+					NextRetryTime = DateTime.UtcNow.AddSeconds(delayS),
+					LastError = error
+				});
+
+				WriteVerbose($"Record processing failed, will retry in {delayS}s (attempt 2 of {Retries + 1})");
+			}
+		}
+
 	/// <summary>
 	/// Completes cmdlet processing.
 	/// </summary>
@@ -308,6 +385,52 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			if (_nextBatchItems != null)
 			{
 				ProcessBatch();
+			}
+
+			// Process any pending retries
+			ProcessRetries();
+		}
+
+		private void ProcessRetries()
+		{
+			while (_pendingRetries.Count > 0)
+			{
+				DateTime now = DateTime.UtcNow;
+				var readyForRetry = _pendingRetries.Where(r => !r.RetryInProgress && r.NextRetryTime <= now).ToList();
+
+				if (readyForRetry.Count == 0)
+				{
+					// Calculate wait time for next retry
+					var nextRetryTime = _pendingRetries.Where(r=> !r.RetryInProgress).Min(r => r.NextRetryTime);
+					var waitTime = (nextRetryTime - now).TotalSeconds;
+
+					if (waitTime > 0)
+					{
+						WriteVerbose($"Waiting {waitTime:F0}s for next retry...");
+						Thread.Sleep((int)waitTime*1000);
+					}
+
+					continue;
+				}
+
+				// Remove from pending and reprocess
+				foreach (var item in readyForRetry)
+				{
+					item.RetryInProgress = true;
+                    WriteVerbose($"Retrying record processing...");
+					ProcessSingleRecord(item.InputObject);
+				}
+
+				// Process any accumulated batches after retries
+				if (_retrievalBatchQueue != null && _retrievalBatchQueue.Count > 0)
+				{
+					ProcessQueuedRecords();
+				}
+
+				if (_nextBatchItems != null && _nextBatchItems.Count > 0)
+				{
+					ProcessBatch();
+				}
 			}
 		}
 
@@ -362,15 +485,35 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			recordCount++;
 			WriteVerbose("Processing record #" + recordCount);
 
+			ProcessSingleRecord(InputObject);
+		}
+
+		private void ProcessSingleRecord(PSObject inputObject)
+		{
 			Entity target;
 
 			try
 			{
-				target = entityConverter.ConvertToDataverseEntity(InputObject, TableName, GetConversionOptions());
-			}
+				target = entityConverter.ConvertToDataverseEntity(inputObject, TableName, GetConversionOptions());
+            }
 			catch (FormatException e)
 			{
-				WriteError(new ErrorRecord(new Exception("Error converting input object: " + e.Message, e), null, ErrorCategory.InvalidData, InputObject));
+				// Conversion errors are not retryable
+				WriteError(new ErrorRecord(new Exception("Error converting input object: " + e.Message, e), null, ErrorCategory.InvalidData, inputObject));
+				return;
+			}
+			catch (Exception e)
+			{
+				// Other errors during conversion may be retryable
+				if (Retries > 0)
+				{
+					ScheduleRecordRetry(inputObject, e);
+				}
+				else
+				{
+                    RecordRetryDone(inputObject);
+                    WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, inputObject));
+				}
 				return;
 			}
 
@@ -382,7 +525,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				// Queue for batched retrieval
 				_retrievalBatchQueue.Add(new RecordProcessingItem
 				{
-					InputObject = InputObject,
+					InputObject = inputObject,
 					Target = target,
 					EntityMetadata = entityMetadata,
 					ExistingRecord = null
@@ -402,14 +545,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				try
 				{
 					existingRecord = GetExistingRecord(entityMetadata, target);
-				}
+                }
 				catch (Exception e)
 				{
-					WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, InputObject));
+					if (Retries > 0)
+					{
+						ScheduleRecordRetry(inputObject, e);
+					}
+					else
+					{
+						RecordRetryDone(inputObject);
+                        WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, inputObject));
+					}
 					return;
 				}
 
-				ProcessRecordWithExistingRecord(InputObject, target, entityMetadata, existingRecord);
+				ProcessRecordWithExistingRecord(inputObject, target, entityMetadata, existingRecord);
 			}
 		}
 
@@ -532,6 +683,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				}
 				else
 				{
+					if (targetUpdate.Id == Guid.Empty && targetUpdate.KeyAttributes.Count == 0)
+					{
+						targetUpdate.Id = Guid.NewGuid();
+					}
+
 					if (ShouldProcess(string.Format("Upsert record {0}:{1} columns:\n{2}", TableName, GetKeySummary(targetUpdate), columnSummary)))
 					{
 						try
@@ -876,7 +1032,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				}
 				else
 				{
-					if (this.ShouldProcess(string.Format("Update existing record {0}:{1} columns:\n{2}", TableName, existingRecord.Id, updatedColumnSummary)))
+					if (ShouldProcess(string.Format("Update existing record {0}:{1} columns:\n{2}", TableName, existingRecord.Id, updatedColumnSummary)))
 					{
 						try
 						{
@@ -954,22 +1110,103 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			// Batch retrieve by ID
 			if (recordsById.Any())
 			{
-				RetrieveRecordsBatchById(recordsById);
+				try
+				{
+					RetrieveRecordsBatchById(recordsById);
+				}
+				catch (Exception e)
+				{
+					// Retrieval failed - schedule all records in this batch for retry
+					if (Retries > 0)
+					{
+						WriteVerbose($"Retrieval batch by ID failed, scheduling {recordsById.Count} record(s) for retry: {e.Message}");
+						foreach (var item in recordsById)
+						{
+							ScheduleRecordRetry(item.InputObject, e);
+						}
+						// Remove from queue so they're not processed below
+						recordsById.Clear();
+					}
+					else
+					{
+						// No retries - write errors and remove from queue
+						foreach (var item in recordsById)
+						{
+							RecordRetryDone(item.InputObject);
+							WriteError(new ErrorRecord(new Exception($"Error retrieving existing record: {e.Message}", e), null, ErrorCategory.InvalidOperation, item.InputObject));
+						}
+						recordsById.Clear();
+					}
+				}
 			}
 
 			// Batch retrieve by MatchOn
 			if (recordsByMatchOn.Any())
 			{
-				RetrieveRecordsBatchByMatchOn(recordsByMatchOn);
+				try
+				{
+					RetrieveRecordsBatchByMatchOn(recordsByMatchOn);
+                }
+				catch (Exception e)
+				{
+					// Retrieval failed - schedule all records in this batch for retry
+					if (Retries > 0)
+					{
+						WriteVerbose($"Retrieval batch by MatchOn failed, scheduling {recordsByMatchOn.Count} record(s) for retry: {e.Message}");
+						foreach (var item in recordsByMatchOn)
+						{
+							ScheduleRecordRetry(item.InputObject, e);
+						}
+						// Remove from queue so they're not processed below
+						recordsByMatchOn.Clear();
+					}
+					else
+					{
+						// No retries - write errors and remove from queue
+						foreach (var item in recordsByMatchOn)
+						{
+                                RecordRetryDone(item.InputObject);
+                                WriteError(new ErrorRecord(new Exception($"Error retrieving existing record: {e.Message}", e), null, ErrorCategory.InvalidOperation, item.InputObject));
+						}
+						recordsByMatchOn.Clear();
+					}
+				}
 			}
 
 			// Batch retrieve intersect entities
 			if (recordsIntersect.Any())
 			{
-				RetrieveRecordsBatchIntersect(recordsIntersect);
+				try
+				{
+					RetrieveRecordsBatchIntersect(recordsIntersect);
+                }
+				catch (Exception e)
+				{
+					// Retrieval failed - schedule all records in this batch for retry
+					if (Retries > 0)
+					{
+						WriteVerbose($"Retrieval batch for intersect entities failed, scheduling {recordsIntersect.Count} record(s) for retry: {e.Message}");
+						foreach (var item in recordsIntersect)
+						{
+							ScheduleRecordRetry(item.InputObject, e);
+						}
+						// Remove from queue so they're not processed below
+						recordsIntersect.Clear();
+					}
+					else
+					{
+						// No retries - write errors and remove from queue
+						foreach (var item in recordsIntersect)
+						{
+                            RecordRetryDone(item.InputObject);
+                            WriteError(new ErrorRecord(new Exception($"Error retrieving existing record: {e.Message}", e), null, ErrorCategory.InvalidOperation, item.InputObject));
+						}
+						recordsIntersect.Clear();
+					}
+				}
 			}
 
-			// Process all queued records with their retrieved existing records
+			// Process all successfully queued records with their retrieved existing records
 			foreach (var item in _retrievalBatchQueue)
 			{
 				ProcessRecordWithExistingRecord(item.InputObject, item.Target, item.EntityMetadata, item.ExistingRecord);
@@ -978,7 +1215,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_retrievalBatchQueue.Clear();
 		}
 
-		private void RetrieveRecordsBatchById(List<RecordProcessingItem> records)
+        private void RecordRetryDone(PSObject inputObject)
+        {
+            _pendingRetries.RemoveAll(r => r.InputObject == inputObject);
+        }
+
+        private void RetrieveRecordsBatchById(List<RecordProcessingItem> records)
 		{
 			if (records.Count == 0) return;
 
@@ -1103,8 +1345,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						foreach (var matchColumn in matchOnColumnList)
 						{
 							var queryValue = item.Target.GetAttributeValue<object>(matchColumn);
-							if (queryValue is EntityReference er) queryValue = er.Id;
-							if (queryValue is OptionSetValue osv) queryValue = osv.Value;
+							if (queryValue is EntityReference er1) queryValue = er1.Id;
+							if (queryValue is OptionSetValue osv1) queryValue = osv1.Value;
 							
 							andFilter.AddCondition(matchColumn, ConditionOperator.Equal, queryValue);
 						}

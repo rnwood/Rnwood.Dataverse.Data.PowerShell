@@ -23,7 +23,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Sdk
     [System.Diagnostics.DebuggerNonUserCode]
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     [Cmdlet("Invoke", "DataverseWhoAmI", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
-    public class InvokeDataverseWhoAmICmdlet : OrganizationServiceCmdlet
+    public class InvokeDataverseWhoAmICmdlet : RetryableOrganizationServiceCmdlet
     {
 
         
@@ -43,22 +43,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Sdk
             
 
             // Build a short serialized summary of the request for ShouldProcess output
-            var requestSummary = new StringBuilder();
-            try
-            {
-                var props = request.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                foreach (var p in props)
-                {
-                    object val = null;
-                    try { val = p.GetValue(request); } catch { val = null; }
-                    var vstr = val == null ? "null" : val.ToString();
-                    requestSummary.Append(p.Name).Append("=").Append(vstr).Append("; ");
-                }
-            }
-            catch
-            {
-                // Ignore any errors while serializing the request for what-if messaging
-            }
+            var requestSummary = "Who am I Request";
 
             // Emit verbose output of the serialized request when -Verbose is used
             try { WriteVerbose(requestSummary.ToString()); } catch { }
@@ -69,7 +54,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Sdk
                 return;
             }
 
-            var response = Connection.Execute(request);
+            var response = base.ExecuteWithRetry(request);
             WriteObject(response);
         }
     }
