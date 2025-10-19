@@ -211,10 +211,7 @@ Describe 'Set-DataverseRecord' {
             $retrieved.emailaddress1 | Should -Be "new@example.com"
         }
 
-        It "Updates existing record when match found with -MatchOn" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with MatchOn update operations
-            # The MatchOn create path works (see "Creates new record when no match found with -MatchOn" test)
-            # The update functionality works correctly in real Dataverse environments
+        It "Updates existing record when match found with -MatchOn" {
             $connection = getMockConnection
             
             # Create initial records
@@ -249,10 +246,7 @@ Describe 'Set-DataverseRecord' {
             $unchanged.firstname | Should -Be "Other"
         }
 
-        It "Uses multiple columns for matching with -MatchOn" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with MatchOn update operations
-            # The MatchOn create path works (see "Creates new record when no match found with -MatchOn" test)
-            # The update functionality works correctly in real Dataverse environments
+        It "Uses multiple columns for matching with -MatchOn" {
             $connection = getMockConnection
             
             # Create initial records
