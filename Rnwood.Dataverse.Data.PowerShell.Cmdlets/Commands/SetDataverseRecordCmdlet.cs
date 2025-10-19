@@ -40,6 +40,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public uint BatchSize { get; set; } = 100;
 
 		/// <summary>
+		/// Controls the maximum number of records to retrieve in a single query when checking for existing records. Default is 500. Specify 1 to retrieve one record at a time.
+		/// </summary>
+		[Parameter(HelpMessage = "Controls the maximum number of records to retrieve in a single query when checking for existing records. Default is 500. Specify 1 to retrieve one record at a time.")]
+		public uint RetrievalBatchSize { get; set; } = 500;
+
+		/// <summary>
 		/// List of properties on the input object which are ignored and not attempted to be mapped to the record. Default is none.
 		/// </summary>
 		[Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "List of properties on the input object which are ignored and not attempted to be mapped to the record. Default is none.")]
@@ -165,6 +171,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private List<BatchItem> _nextBatchItems;
 		private Guid? _nextBatchCallerId;
 
+		// Retrieval batching support
+		private class RecordProcessingItem
+		{
+			public PSObject InputObject { get; set; }
+			public Entity Target { get; set; }
+			public EntityMetadata EntityMetadata { get; set; }
+			public Entity ExistingRecord { get; set; }
+		}
+
+		private List<RecordProcessingItem> _retrievalBatchQueue;
+
 		private void QueueBatchItem(BatchItem item, Guid? callerId)
 		{
 			if (_nextBatchItems.Any() && _nextBatchCallerId != callerId)
@@ -193,7 +210,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			entityMetadataFactory = new EntityMetadataFactory(Connection);
 			entityConverter = new DataverseEntityConverter(Connection, entityMetadataFactory);
 
-
+			_retrievalBatchQueue = new List<RecordProcessingItem>();
 
 			if (BatchSize > 1)
 			{
@@ -282,6 +299,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			base.EndProcessing();
 
+			// Process any remaining queued records
+			if (_retrievalBatchQueue != null && _retrievalBatchQueue.Count > 0)
+			{
+				ProcessQueuedRecords();
+			}
+
 			if (_nextBatchItems != null)
 			{
 				ProcessBatch();
@@ -353,115 +376,40 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			EntityMetadata entityMetadata = entityMetadataFactory.GetMetadata(TableName);
 
-			Entity existingRecord;
+			// Check if this record needs retrieval
+			if (NeedsRetrieval(entityMetadata, target))
+			{
+				// Queue for batched retrieval
+				_retrievalBatchQueue.Add(new RecordProcessingItem
+				{
+					InputObject = InputObject,
+					Target = target,
+					EntityMetadata = entityMetadata,
+					ExistingRecord = null
+				});
 
-			try
-			{
-				existingRecord = GetExistingRecord(entityMetadata, target);
-			}
-			catch (Exception e)
-			{
-				WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, InputObject)); ;
-				return;
-			}
-
-			if (Upsert.IsPresent)
-			{
-				UpsertRecord(entityMetadata, target);
+				// Process the batch if it's full
+				if (_retrievalBatchQueue.Count >= RetrievalBatchSize)
+				{
+					ProcessQueuedRecords();
+				}
 			}
 			else
 			{
-				if (existingRecord != null)
-				{
-					UpdateExistingRecord(entityMetadata, target, existingRecord);
-				}
-				else
-				{
-					CreateNewRecord(entityMetadata, target);
-				}
-			}
+				// Process immediately without retrieval
+				Entity existingRecord;
 
-			//Skip assignment/status if record creation failed.
-			if ((existingRecord != null && !NoUpdate) || (existingRecord == null && !NoCreate))
-			{
-				if (target.Contains("ownerid"))
+				try
 				{
-					EntityReference ownerid = target.GetAttributeValue<EntityReference>("ownerid");
-					AssignRequest request = new AssignRequest()
-					{
-						Assignee = ownerid,
-						Target = target.ToEntityReference()
-					};
-					ApplyBypassBusinessLogicExecution(request);
-
-					if (_nextBatchItems != null)
-					{
-						WriteVerbose(string.Format("Added assignment of record {0}:{1} to {2} to batch", TableName, target.Id, ownerid.Name));
-						QueueBatchItem(new BatchItem(InputObject, request, (response) => { AssignRecordCompletion(target, ownerid); }), CallerId);
-					}
-					else
-					{
-						if (ShouldProcess(string.Format("Assign record {0}:{1} to {2}", TableName, target.Id, ownerid.Name)))
-						{
-							try
-							{
-								Connection.Execute(request);
-								AssignRecordCompletion(target, ownerid);
-							}
-							catch (Exception e)
-							{
-								WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, InputObject));
-							}
-						}
-					}
+					existingRecord = GetExistingRecord(entityMetadata, target);
+				}
+				catch (Exception e)
+				{
+					WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, InputObject));
+					return;
 				}
 
-				if (target.Contains("statecode") || target.Contains("statuscode"))
-				{
-					OptionSetValue statuscode = target.GetAttributeValue<OptionSetValue>("statuscode") ?? new OptionSetValue(-1);
-
-					OptionSetValue stateCode = target.GetAttributeValue<OptionSetValue>("statecode");
-
-					if (stateCode == null)
-					{
-						StatusAttributeMetadata statusMetadata =
-							(StatusAttributeMetadata)entityMetadata.Attributes.First(
-								a => a.LogicalName.Equals("statuscode", StringComparison.OrdinalIgnoreCase));
-
-						stateCode = new OptionSetValue(statusMetadata.OptionSet.Options.Cast<StatusOptionMetadata>()
-								.First(o => o.Value.Value == statuscode.Value)
-								.State.Value);
-					}
-
-					SetStateRequest request = new SetStateRequest()
-					{
-						EntityMoniker = target.ToEntityReference(),
-						State = stateCode,
-						Status = statuscode
-					};
-					ApplyBypassBusinessLogicExecution(request);
-
-					if (_nextBatchItems != null)
-					{
-						WriteVerbose(string.Format("Added set record {0}:{1} status to State:{2} Status: {3} to batch", TableName, Id, stateCode.Value, statuscode.Value));
-						QueueBatchItem(new BatchItem(InputObject, request, (response) => { SetStateCompletion(target, statuscode, stateCode); }), CallerId);
-					}
-					else
-					{
-						if (ShouldProcess(string.Format("Set record {0}:{1} status to State:{2} Status: {3}", TableName, Id, stateCode.Value, statuscode.Value)))
-						{
-							try
-							{
-								Connection.Execute(request);
-								SetStateCompletion(target, statuscode, stateCode);
-							}
-							catch (Exception e)
-							{
-								WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, InputObject));
-							}
-						}
-					}
-				}
+				ProcessRecordWithExistingRecord(InputObject, target, entityMetadata, existingRecord);
 			}
 		}
 
@@ -960,6 +908,401 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			if (PassThru.IsPresent)
 			{
 				WriteObject(inputObject);
+			}
+		}
+
+		private bool NeedsRetrieval(EntityMetadata entityMetadata, Entity target)
+		{
+			if (CreateOnly.IsPresent || Upsert.IsPresent)
+			{
+				return false;
+			}
+
+			if (!entityMetadata.IsIntersect.GetValueOrDefault())
+			{
+				if (Id != Guid.Empty && UpdateAllColumns.IsPresent)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		private void ProcessQueuedRecords()
+		{
+			if (_retrievalBatchQueue.Count == 0)
+			{
+				return;
+			}
+
+			WriteVerbose($"Processing retrieval batch of {_retrievalBatchQueue.Count} record(s)");
+
+			// Group records by retrieval type for efficient batching
+			var recordsById = _retrievalBatchQueue.Where(r => 
+				!r.EntityMetadata.IsIntersect.GetValueOrDefault() && 
+				(Id != Guid.Empty || r.Target.Id != Guid.Empty) && 
+				MatchOn == null).ToList();
+
+			var recordsByMatchOn = _retrievalBatchQueue.Where(r => 
+				!r.EntityMetadata.IsIntersect.GetValueOrDefault() && 
+				MatchOn != null).ToList();
+
+			var recordsIntersect = _retrievalBatchQueue.Where(r => 
+				r.EntityMetadata.IsIntersect.GetValueOrDefault()).ToList();
+
+			// Batch retrieve by ID
+			if (recordsById.Any())
+			{
+				RetrieveRecordsBatchById(recordsById);
+			}
+
+			// Batch retrieve by MatchOn
+			if (recordsByMatchOn.Any())
+			{
+				RetrieveRecordsBatchByMatchOn(recordsByMatchOn);
+			}
+
+			// Batch retrieve intersect entities
+			if (recordsIntersect.Any())
+			{
+				RetrieveRecordsBatchIntersect(recordsIntersect);
+			}
+
+			// Process all queued records with their retrieved existing records
+			foreach (var item in _retrievalBatchQueue)
+			{
+				ProcessRecordWithExistingRecord(item.InputObject, item.Target, item.EntityMetadata, item.ExistingRecord);
+			}
+
+			_retrievalBatchQueue.Clear();
+		}
+
+		private void RetrieveRecordsBatchById(List<RecordProcessingItem> records)
+		{
+			if (records.Count == 0) return;
+
+			var entityName = records[0].Target.LogicalName;
+			var primaryIdAttribute = records[0].EntityMetadata.PrimaryIdAttribute;
+			
+			// Get all IDs to retrieve
+			var ids = records.Select(r => r.Target.Id != Guid.Empty ? r.Target.Id : Id).Distinct().ToList();
+
+			if (ids.Count == 0) return;
+
+			// Build query with In operator for efficient batching
+			var query = new QueryExpression(entityName)
+			{
+				ColumnSet = new ColumnSet(records[0].Target.Attributes.Select(a => a.Key).ToArray())
+			};
+
+			if (ids.Count == 1)
+			{
+				query.Criteria.AddCondition(primaryIdAttribute, ConditionOperator.Equal, ids[0]);
+			}
+			else
+			{
+				query.Criteria.AddCondition(primaryIdAttribute, ConditionOperator.In, ids.Cast<object>().ToArray());
+			}
+
+			WriteVerbose($"Retrieving {ids.Count} record(s) by ID in retrieval batch");
+
+			var retrievedRecords = Connection.RetrieveMultiple(query).Entities;
+			var retrievedDict = retrievedRecords.ToDictionary(e => e.Id);
+
+			// Match retrieved records back to processing items
+			foreach (var item in records)
+			{
+				var recordId = item.Target.Id != Guid.Empty ? item.Target.Id : Id;
+				if (retrievedDict.TryGetValue(recordId, out var existingRecord))
+				{
+					item.ExistingRecord = existingRecord;
+				}
+			}
+		}
+
+		private void RetrieveRecordsBatchByMatchOn(List<RecordProcessingItem> records)
+		{
+			if (records.Count == 0) return;
+
+			var entityName = records[0].Target.LogicalName;
+
+			foreach (string[] matchOnColumnList in MatchOn)
+			{
+				var recordsNeedingMatch = records.Where(r => r.ExistingRecord == null).ToList();
+				if (recordsNeedingMatch.Count == 0) break;
+
+				if (matchOnColumnList.Length == 1)
+				{
+					// Single column - use In operator for efficiency
+					var matchColumn = matchOnColumnList[0];
+					var matchValues = recordsNeedingMatch.Select(r =>
+					{
+						var val = r.Target.GetAttributeValue<object>(matchColumn);
+						if (val is EntityReference er) return (object)er.Id;
+						if (val is OptionSetValue osv) return (object)osv.Value;
+						return val;
+					}).Distinct().ToList();
+
+					var query = new QueryExpression(entityName)
+					{
+						ColumnSet = new ColumnSet(recordsNeedingMatch[0].Target.Attributes.Select(a => a.Key).ToArray())
+					};
+
+					if (matchValues.Count == 1)
+					{
+						query.Criteria.AddCondition(matchColumn, ConditionOperator.Equal, matchValues[0]);
+					}
+					else
+					{
+						query.Criteria.AddCondition(matchColumn, ConditionOperator.In, matchValues.ToArray());
+					}
+
+					WriteVerbose($"Retrieving records by MatchOn ({matchColumn}) in retrieval batch");
+
+					var retrievedRecords = Connection.RetrieveMultiple(query).Entities;
+
+					// Match back to items
+					foreach (var item in recordsNeedingMatch)
+					{
+						var itemValue = item.Target.GetAttributeValue<object>(matchColumn);
+						if (itemValue is EntityReference er) itemValue = er.Id;
+						if (itemValue is OptionSetValue osv) itemValue = osv.Value;
+
+						var matches = retrievedRecords.Where(e =>
+						{
+							var recValue = e.GetAttributeValue<object>(matchColumn);
+							if (recValue is EntityReference er2) recValue = er2.Id;
+							if (recValue is OptionSetValue osv2) recValue = osv2.Value;
+							return Equals(itemValue, recValue);
+						}).ToList();
+
+						if (matches.Count == 1)
+						{
+							item.ExistingRecord = matches[0];
+						}
+						else if (matches.Count > 1)
+						{
+							WriteError(new ErrorRecord(new Exception($"Match on {matchColumn} resulted in more than one record"), null, ErrorCategory.InvalidOperation, item.InputObject));
+						}
+					}
+				}
+				else
+				{
+					// Multi-column - use Or with And conditions
+					var query = new QueryExpression(entityName)
+					{
+						ColumnSet = new ColumnSet(recordsNeedingMatch[0].Target.Attributes.Select(a => a.Key).ToArray())
+					};
+
+					var orFilter = new FilterExpression(LogicalOperator.Or);
+					
+					foreach (var item in recordsNeedingMatch)
+					{
+						var andFilter = new FilterExpression(LogicalOperator.And);
+						foreach (var matchColumn in matchOnColumnList)
+						{
+							var queryValue = item.Target.GetAttributeValue<object>(matchColumn);
+							if (queryValue is EntityReference er) queryValue = er.Id;
+							if (queryValue is OptionSetValue osv) queryValue = osv.Value;
+							
+							andFilter.AddCondition(matchColumn, ConditionOperator.Equal, queryValue);
+						}
+						orFilter.AddFilter(andFilter);
+					}
+
+					query.Criteria.AddFilter(orFilter);
+
+					WriteVerbose($"Retrieving records by MatchOn ({string.Join(",", matchOnColumnList)}) in retrieval batch");
+
+					var retrievedRecords = Connection.RetrieveMultiple(query).Entities;
+
+					// Match back to items
+					foreach (var item in recordsNeedingMatch)
+					{
+						var matches = retrievedRecords.Where(e =>
+						{
+							return matchOnColumnList.All(col =>
+							{
+								var itemValue = item.Target.GetAttributeValue<object>(col);
+								var recValue = e.GetAttributeValue<object>(col);
+								
+								if (itemValue is EntityReference er1) itemValue = er1.Id;
+								if (itemValue is OptionSetValue osv1) itemValue = osv1.Value;
+								if (recValue is EntityReference er2) recValue = er2.Id;
+								if (recValue is OptionSetValue osv2) recValue = osv2.Value;
+								
+								return Equals(itemValue, recValue);
+							});
+						}).ToList();
+
+						if (matches.Count == 1)
+						{
+							item.ExistingRecord = matches[0];
+						}
+						else if (matches.Count > 1)
+						{
+							var matchOnSummary = string.Join(", ", matchOnColumnList.Select(c => $"{c}='{item.Target.GetAttributeValue<object>(c)}'"));
+							WriteError(new ErrorRecord(new Exception($"Match on values {matchOnSummary} resulted in more than one record"), null, ErrorCategory.InvalidOperation, item.InputObject));
+						}
+					}
+				}
+			}
+		}
+
+		private void RetrieveRecordsBatchIntersect(List<RecordProcessingItem> records)
+		{
+			if (records.Count == 0) return;
+
+			var entityName = records[0].Target.LogicalName;
+			var manyToManyRelationshipMetadata = records[0].EntityMetadata.ManyToManyRelationships[0];
+			
+			var query = new QueryExpression(entityName)
+			{
+				ColumnSet = new ColumnSet(records[0].Target.Attributes.Select(a => a.Key).ToArray())
+			};
+
+			var orFilter = new FilterExpression(LogicalOperator.Or);
+			
+			foreach (var item in records)
+			{
+				var entity1Value = item.Target.GetAttributeValue<Guid?>(manyToManyRelationshipMetadata.Entity1IntersectAttribute);
+				var entity2Value = item.Target.GetAttributeValue<Guid?>(manyToManyRelationshipMetadata.Entity2IntersectAttribute);
+
+				if (entity1Value.HasValue && entity2Value.HasValue)
+				{
+					var andFilter = new FilterExpression(LogicalOperator.And);
+					andFilter.AddCondition(manyToManyRelationshipMetadata.Entity1IntersectAttribute, ConditionOperator.Equal, entity1Value.Value);
+					andFilter.AddCondition(manyToManyRelationshipMetadata.Entity2IntersectAttribute, ConditionOperator.Equal, entity2Value.Value);
+					orFilter.AddFilter(andFilter);
+				}
+			}
+
+			if (orFilter.Filters.Count > 0)
+			{
+				query.Criteria.AddFilter(orFilter);
+
+				WriteVerbose($"Retrieving {records.Count} intersect record(s) in retrieval batch");
+
+				var retrievedRecords = Connection.RetrieveMultiple(query).Entities;
+
+				// Match back to items
+				foreach (var item in records)
+				{
+					var entity1Value = item.Target.GetAttributeValue<Guid?>(manyToManyRelationshipMetadata.Entity1IntersectAttribute);
+					var entity2Value = item.Target.GetAttributeValue<Guid?>(manyToManyRelationshipMetadata.Entity2IntersectAttribute);
+
+					var match = retrievedRecords.FirstOrDefault(e =>
+						e.GetAttributeValue<Guid>(manyToManyRelationshipMetadata.Entity1IntersectAttribute) == entity1Value &&
+						e.GetAttributeValue<Guid>(manyToManyRelationshipMetadata.Entity2IntersectAttribute) == entity2Value);
+
+					if (match != null)
+					{
+						item.ExistingRecord = match;
+					}
+				}
+			}
+		}
+
+		private void ProcessRecordWithExistingRecord(PSObject inputObject, Entity target, EntityMetadata entityMetadata, Entity existingRecord)
+		{
+			// This is the original processing logic from ProcessRecord, after GetExistingRecord
+			if (Upsert.IsPresent)
+			{
+				UpsertRecord(entityMetadata, target);
+			}
+			else
+			{
+				if (existingRecord != null)
+				{
+					UpdateExistingRecord(entityMetadata, target, existingRecord);
+				}
+				else
+				{
+					CreateNewRecord(entityMetadata, target);
+				}
+			}
+
+			// Handle assignment and status changes
+			if ((existingRecord != null && !NoUpdate) || (existingRecord == null && !NoCreate))
+			{
+				if (target.Contains("ownerid"))
+				{
+					EntityReference ownerid = target.GetAttributeValue<EntityReference>("ownerid");
+					AssignRequest request = new AssignRequest()
+					{
+						Assignee = ownerid,
+						Target = target.ToEntityReference()
+					};
+					ApplyBypassBusinessLogicExecution(request);
+
+					if (_nextBatchItems != null)
+					{
+						WriteVerbose(string.Format("Added assignment of record {0}:{1} to {2} to batch", TableName, target.Id, ownerid.Name));
+						QueueBatchItem(new BatchItem(inputObject, request, (response) => { AssignRecordCompletion(target, ownerid); }), CallerId);
+					}
+					else
+					{
+						if (ShouldProcess(string.Format("Assign record {0}:{1} to {2}", TableName, target.Id, ownerid.Name)))
+						{
+							try
+							{
+								Connection.Execute(request);
+								AssignRecordCompletion(target, ownerid);
+							}
+							catch (Exception e)
+							{
+								WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, inputObject));
+							}
+						}
+					}
+				}
+
+				if (target.Contains("statecode") || target.Contains("statuscode"))
+				{
+					OptionSetValue statuscode = target.GetAttributeValue<OptionSetValue>("statuscode") ?? new OptionSetValue(-1);
+					OptionSetValue stateCode = target.GetAttributeValue<OptionSetValue>("statecode");
+
+					if (stateCode == null)
+					{
+						StatusAttributeMetadata statusMetadata =
+							(StatusAttributeMetadata)entityMetadata.Attributes.First(
+								a => a.LogicalName.Equals("statuscode", StringComparison.OrdinalIgnoreCase));
+
+						stateCode = new OptionSetValue(statusMetadata.OptionSet.Options.Cast<StatusOptionMetadata>()
+								.First(o => o.Value.Value == statuscode.Value)
+								.State.Value);
+					}
+
+					SetStateRequest request = new SetStateRequest()
+					{
+						EntityMoniker = target.ToEntityReference(),
+						State = stateCode,
+						Status = statuscode
+					};
+					ApplyBypassBusinessLogicExecution(request);
+
+					if (_nextBatchItems != null)
+					{
+						WriteVerbose(string.Format("Added set record {0}:{1} status to State:{2} Status: {3} to batch", TableName, Id, stateCode.Value, statuscode.Value));
+						QueueBatchItem(new BatchItem(inputObject, request, (response) => { SetStateCompletion(target, statuscode, stateCode); }), CallerId);
+					}
+					else
+					{
+						if (ShouldProcess(string.Format("Set record {0}:{1} status to State:{2} Status: {3}", TableName, Id, stateCode.Value, statuscode.Value)))
+						{
+							try
+							{
+								Connection.Execute(request);
+								SetStateCompletion(target, statuscode, stateCode);
+							}
+							catch (Exception e)
+							{
+								WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, inputObject));
+							}
+						}
+					}
+				}
 			}
 		}
 

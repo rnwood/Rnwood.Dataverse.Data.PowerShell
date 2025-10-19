@@ -14,9 +14,9 @@ Creates or updates Dataverse records including M:M association/disassociation, s
 
 ```
 Set-DataverseRecord -InputObject <PSObject> -TableName <String> [-BatchSize <UInt32>]
- [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>] [-PassThru] [-NoUpdate] [-NoCreate]
- [-NoUpdateColumns <String[]>] [-CallerId <Guid>] [-UpdateAllColumns] [-CreateOnly] [-Upsert]
- [-LookupColumns <Hashtable>] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
+ [-RetrievalBatchSize <UInt32>] [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>] [-PassThru]
+ [-NoUpdate] [-NoCreate] [-NoUpdateColumns <String[]>] [-CallerId <Guid>] [-UpdateAllColumns] [-CreateOnly]
+ [-Upsert] [-LookupColumns <Hashtable>] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
  [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
@@ -709,6 +709,33 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -RetrievalBatchSize
+Controls the maximum number of records to retrieve in a single query when checking for existing records. Default is 500. Specify 1 to retrieve one record at a time (original behavior).
+
+When processing multiple records through the pipeline, this parameter batches retrieval queries to significantly improve performance:
+- Records are queued until the batch size is reached or processing completes
+- All queued records are retrieved in a single optimized query using `In` operator (for ID and single-column MatchOn) or `Or` conditions (for multi-column MatchOn and intersect entities)
+- After retrieval, records are processed sequentially for create/update operations
+
+Performance impact:
+- Default (500): Retrieves up to 500 records in one query, reducing N queries to ceil(N/500)
+- Value of 1: Disables batching, retrieves one record at a time (original behavior)
+- Higher values: Better performance for large batches, but may hit Dataverse query limits
+
+This parameter only affects retrieval of existing records for comparison. To skip retrieval entirely and maximize performance, use `-CreateOnly` or `-UpdateAllColumns`.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 500
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -718,7 +745,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.String
 ### System.String[]
 ### System.Guid
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Object
