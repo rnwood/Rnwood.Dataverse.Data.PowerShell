@@ -207,7 +207,7 @@ Describe "Module" {
                 
                 # Test parallel processing with WhoAmI call
                 $results = 1..5 | Invoke-DataverseParallel -Connection $connection -ChunkSize 2 -MaxDegreeOfParallelism 3 -ScriptBlock {
-                    %{
+                    $_ | %{
                         $whoami = Get-DataverseWhoAmI
                         # Return a simple object with the item and user ID
                         [PSCustomObject]@{
