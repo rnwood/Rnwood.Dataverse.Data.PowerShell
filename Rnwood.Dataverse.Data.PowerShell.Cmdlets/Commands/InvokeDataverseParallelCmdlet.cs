@@ -6,6 +6,8 @@ using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -46,12 +48,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = false, HelpMessage = "Array of module name patterns (supports wildcards) to exclude from parallel runspaces. Pester is always excluded. Example: @('PSReadLine', 'Test*')")]
         public string[] ExcludeModule { get; set; } = new string[0];
 
+        /// <summary>
+        /// Helper class to track task information including chunk number.
+        /// </summary>
+        private class TaskInfo
+        {
+            public System.Management.Automation.PowerShell PowerShell { get; set; }
+            public IAsyncResult AsyncResult { get; set; }
+            public PSDataCollection<PSObject> OutputCollection { get; set; }
+            public int ChunkNumber { get; set; }
+            public int RecordCount { get; set; }
+        }
+
         private List<PSObject> _currentChunk = new List<PSObject>();
-        private List<System.Management.Automation.PowerShell> _activeTasks = new List<System.Management.Automation.PowerShell>();
-        private List<IAsyncResult> _activeWaitHandles = new List<IAsyncResult>();
+        private List<TaskInfo> _activeTasks = new List<TaskInfo>();
         private RunspacePool _runspacePool;
         private int _chunkNumber = 0;
         private volatile bool _stopping = false;
+        private CancellationTokenSource _cancellationTokenSource;
+        private Task _outputWriterTask;
+        private object _tasksLock = new object();
+        private ConcurrentQueue<PSObject> _outputObjectQueue = new ConcurrentQueue<PSObject>();
+        private ConcurrentQueue<ErrorRecord> _errorQueue = new ConcurrentQueue<ErrorRecord>();
+        private ConcurrentQueue<string> _verboseQueue = new ConcurrentQueue<string>();
+        private ConcurrentQueue<string> _warningQueue = new ConcurrentQueue<string>();
+        private ConcurrentQueue<string> _debugQueue = new ConcurrentQueue<string>();
+        private ConcurrentQueue<InformationRecord> _informationQueue = new ConcurrentQueue<InformationRecord>();
+        private int _totalCompletedRecords = 0;
+        private volatile int _totalInputRecords = 0;
 
         /// <summary>
         /// Initializes the runspace pool for parallel processing.
@@ -100,6 +124,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _runspacePool = RunspaceFactory.CreateRunspacePool(1, MaxDegreeOfParallelism, initialSessionState, Host);
             _runspacePool.Open();
 
+            _cancellationTokenSource = new CancellationTokenSource();
+            _outputWriterTask = Task.Run(() => WriteCompletedOutputs());
+
             WriteVerbose($"Starting parallel processing with MaxDOP={MaxDegreeOfParallelism}, ChunkSize={ChunkSize}");
         }
 
@@ -117,6 +144,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             _currentChunk.Add(InputObject);
+            _totalInputRecords++;
 
             // When chunk is full, process it immediately
             if (_currentChunk.Count >= ChunkSize)
@@ -127,6 +155,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ProcessChunk(new List<PSObject>(chunkToProcess));
                 _currentChunk.Clear();
             }
+
+            // Drain the output queues to write any pending outputs
+            DrainQueues();
         }
 
         /// <summary>
@@ -157,8 +188,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ProcessChunk(new List<PSObject>(chunkToProcess));
             }
 
+            // Drain any remaining outputs
+            DrainQueues();
+
             // Wait for all active tasks to complete
             WaitForAllTasks();
+
+            // Cancel the output writer task
+            _cancellationTokenSource.Cancel();
+            _outputWriterTask.Wait();
 
             // Clean up runspace pool
             if (_runspacePool != null)
@@ -177,6 +215,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose("StopProcessing called - stopping parallel operations");
 
+            // Cancel the output writer task
+            _cancellationTokenSource.Cancel();
+
             // Stop the runspace pool to prevent new operations
             if (_runspacePool != null)
             {
@@ -191,18 +232,38 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Stop all active PowerShell tasks
-            foreach (var task in _activeTasks)
+            lock (_tasksLock)
             {
-                try
+                foreach (var taskInfo in _activeTasks)
                 {
-                    task.Stop();
+                    try
+                    {
+                        taskInfo.PowerShell.Stop();
+                    }
+                    catch (Exception ex)
+                    {
+                        WriteVerbose($"Error stopping PowerShell task: {ex.Message}");
+                    }
                 }
-                catch (Exception ex)
-                {
-                    WriteVerbose($"Error stopping PowerShell task: {ex.Message}");
-                }
+                _activeTasks.Clear();
             }
 
+            // Dispose output collections
+            lock (_tasksLock)
+            {
+                foreach (var taskInfo in _activeTasks)
+                {
+                    try
+                    {
+                        taskInfo.OutputCollection.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        WriteVerbose($"Error disposing output collection: {ex.Message}");
+                    }
+                }
+                _activeTasks.Clear();
+            }
             // Clear current chunk to prevent further processing
             _currentChunk.Clear();
         }
@@ -216,7 +277,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             _chunkNumber++;
-            WriteVerbose($"Queuing chunk {_chunkNumber} with {chunk.Count} items");
+            var currentChunkNum = _chunkNumber;
+            _verboseQueue.Enqueue($"Queuing chunk {currentChunkNum} with {chunk.Count} items");
 
             var ps = System.Management.Automation.PowerShell.Create();
             ps.RunspacePool = _runspacePool;
@@ -226,7 +288,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             try
             {
                 connectionToUse = Connection.Clone();
-                WriteVerbose($"Cloned connection for chunk {_chunkNumber}");
             }
             catch (Exception ex) when (ex is NotImplementedException ||
                                         ex.Message.Contains("On-Premises Connections are not supported") ||
@@ -235,7 +296,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Mock connections don't support cloning - use the original connection
                 // With thread-safe proxy, this is now safe for mock connections
                 connectionToUse = Connection;
-                WriteVerbose($"Connection cloning not supported - using thread-safe proxy (mock mode)");
+                _verboseQueue.Enqueue($"Connection cloning not supported");
             }
 
             ps.AddScript(@"param($Chunk, $connection ); 
@@ -248,75 +309,150 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Convert chunk to array to ensure it's fully materialized before passing to PowerShell
             var chunkArray = chunk.ToArray();
 
-
             ps.AddParameter("Chunk", chunkArray);
             ps.AddParameter("connection", connectionToUse);
-            var asyncResult = ps.BeginInvoke();
-            _activeTasks.Add(ps);
-            _activeWaitHandles.Add(asyncResult);
+
+            // Create output collection for streaming results
+            var outputCollection = new PSDataCollection<PSObject>();
+            outputCollection.DataAdded += (sender, e) => _outputObjectQueue.Enqueue(outputCollection[e.Index]);
+
+            // Subscribe to stream events to write as they arrive
+            ps.Streams.Error.DataAdded += (sender, e) => _errorQueue.Enqueue(ps.Streams.Error[e.Index]);
+            ps.Streams.Verbose.DataAdded += (sender, e) => _verboseQueue.Enqueue(ps.Streams.Verbose[e.Index].Message);
+            ps.Streams.Warning.DataAdded += (sender, e) => _warningQueue.Enqueue(ps.Streams.Warning[e.Index].Message);
+            ps.Streams.Debug.DataAdded += (sender, e) => _debugQueue.Enqueue(ps.Streams.Debug[e.Index].Message);
+            ps.Streams.Information.DataAdded += (sender, e) => _informationQueue.Enqueue(ps.Streams.Information[e.Index]);
+
+            var asyncResult = ps.BeginInvoke(new PSDataCollection<PSObject>(), outputCollection);
+            
+            var taskInfo = new TaskInfo
+            {
+                PowerShell = ps,
+                AsyncResult = asyncResult,
+                OutputCollection = outputCollection,
+                ChunkNumber = currentChunkNum,
+                RecordCount = chunk.Count
+            };
+
+            lock (_tasksLock)
+            {
+                _activeTasks.Add(taskInfo);
+            }
+        }
+
+        private void WriteCompletedOutputs()
+        {
+            while (!_cancellationTokenSource.Token.IsCancellationRequested)
+            {
+                TaskInfo taskToComplete = null;
+
+                lock (_tasksLock)
+                {
+                    if (_activeTasks.Count == 0)
+                    {
+                        Thread.Sleep(50);
+                        continue;
+                    }
+
+                    // Check each task to see if any are completed
+                    for (int i = 0; i < _activeTasks.Count; i++)
+                    {
+                        if (_activeTasks[i].AsyncResult.IsCompleted)
+                        {
+                            taskToComplete = _activeTasks[i];
+                            _activeTasks.RemoveAt(i);
+                            break;
+                        }
+                    }
+                }
+
+                // If we found a completed task, process it outside the lock
+                if (taskToComplete != null)
+                {
+                    try
+                    {
+                        taskToComplete.PowerShell.EndInvoke(taskToComplete.AsyncResult);
+                        int newTotal = Interlocked.Add(ref _totalCompletedRecords, taskToComplete.RecordCount);
+                        _verboseQueue.Enqueue($"Chunk {taskToComplete.ChunkNumber} completed - {newTotal} of {_totalInputRecords} records completed");
+                    }
+                    catch (Exception ex)
+                    {
+                        _errorQueue.Enqueue(new ErrorRecord(ex, "TaskError", ErrorCategory.OperationStopped, taskToComplete.PowerShell));
+                    }
+                    finally
+                    {
+                        taskToComplete.PowerShell.Dispose();
+                        taskToComplete.OutputCollection.Dispose();
+                    }
+                }
+                else
+                {
+                    // No completed tasks found, wait a bit before checking again
+                    Thread.Sleep(50);
+                }
+            }
         }
 
         private void WaitForAllTasks()
         {
-            WriteVerbose($"Waiting for {_activeTasks.Count} active tasks to complete");
+            lock (_tasksLock)
+            {
+                _verboseQueue.Enqueue($"Waiting for {_activeTasks.Count} active tasks to complete");
+            }
 
             // If stopping, don't wait for tasks - just dispose them
             if (_stopping)
             {
-                foreach (var task in _activeTasks)
+                lock (_tasksLock)
                 {
-                    try
+                    foreach (var taskInfo in _activeTasks)
                     {
-                        task.Dispose();
+                        try
+                        {
+                            taskInfo.PowerShell.Dispose();
+                        }
+                        catch (Exception ex)
+                        {
+                            _verboseQueue.Enqueue($"Error disposing PowerShell task: {ex.Message}");
+                        }
                     }
-                    catch (Exception ex)
+                    foreach (var taskInfo in _activeTasks)
                     {
-                        WriteVerbose($"Error disposing PowerShell task: {ex.Message}");
+                        try
+                        {
+                            taskInfo.OutputCollection.Dispose();
+                        }
+                        catch (Exception ex)
+                        {
+                            _verboseQueue.Enqueue($"Error disposing output collection: {ex.Message}");
+                        }
                     }
+                    _activeTasks.Clear();
                 }
-                _activeTasks.Clear();
-                _activeWaitHandles.Clear();
                 return;
             }
 
-            // Collect wait handles for all active tasks
-            var waitHandles = _activeWaitHandles.Select(ar => ar.AsyncWaitHandle).ToArray();
-
-            // Process tasks as they complete
-            while (_activeTasks.Count > 0)
+            // Wait for all active tasks to complete
+            while (true)
             {
-                WriteVerbose($"Waiting for any of {_activeTasks.Count} tasks to complete");
-
-                int completedIndex = WaitHandle.WaitAny(waitHandles);
-
-                var task = _activeTasks[completedIndex];
-                var waitHandle = _activeWaitHandles[completedIndex];
-
-                var results = task.EndInvoke(waitHandle);
-                foreach (var result in results)
+                lock (_tasksLock)
                 {
-                    WriteObject(result);
+                    if (_activeTasks.Count == 0)
+                        break;
                 }
-
-                if (task.HadErrors)
-                {
-                    foreach (var error in task.Streams.Error)
-                    {
-                        WriteError(error);
-                    }
-                }
-
-                WriteVerbose($"Task {completedIndex + 1} completed");
-
-                task.Dispose();
-
-                // Remove the completed task and its wait handle
-                _activeTasks.RemoveAt(completedIndex);
-                _activeWaitHandles.RemoveAt(completedIndex);
-
-                // Rebuild wait handles array for remaining tasks
-                waitHandles = _activeWaitHandles.Select(ar => ar.AsyncWaitHandle).ToArray();
+                Thread.Sleep(100);
+                DrainQueues();
             }
+        }
+
+        private void DrainQueues()
+        {
+            while (_outputObjectQueue.TryDequeue(out var obj)) WriteObject(obj);
+            while (_errorQueue.TryDequeue(out var err)) WriteError(err);
+            while (_verboseQueue.TryDequeue(out var msg)) WriteVerbose(msg);
+            while (_warningQueue.TryDequeue(out var msg)) WriteWarning(msg);
+            while (_debugQueue.TryDequeue(out var msg)) WriteDebug(msg);
+            while (_informationQueue.TryDequeue(out var info)) WriteInformation(info);
         }
     }
 }
