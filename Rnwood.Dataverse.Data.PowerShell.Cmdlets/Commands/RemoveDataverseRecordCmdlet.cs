@@ -272,7 +272,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							batchItem.NextRetryTime = DateTime.UtcNow.AddSeconds(delayS);
 							batchItem.RetriesRemaining--;
 
-							WriteVerbose($"Request failed, will retry in {delayMs}ms (attempt {attemptNumber} of {Retries + 1}): {batchItem}");
+							WriteVerbose($"Request failed, will retry in {delayS}s (attempt {attemptNumber} of {Retries + 1}): {batchItem}");
 							_pendingRetries.Add(batchItem);
 						}
 						else if (!handledByCompletion)
