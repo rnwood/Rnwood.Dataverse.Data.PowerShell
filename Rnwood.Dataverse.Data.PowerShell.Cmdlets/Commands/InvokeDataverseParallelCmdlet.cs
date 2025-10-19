@@ -58,6 +58,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             public PSDataCollection<PSObject> OutputCollection { get; set; }
             public int ChunkNumber { get; set; }
             public int RecordCount { get; set; }
+            public int LastOutputIndex { get; set; } = -1;
+            public int LastErrorIndex { get; set; } = -1;
+            public int LastVerboseIndex { get; set; } = -1;
+            public int LastWarningIndex { get; set; } = -1;
+            public int LastDebugIndex { get; set; } = -1;
+            public int LastInformationIndex { get; set; } = -1;
+            public EventHandler<DataAddedEventArgs> OutputHandler { get; set; }
+            public EventHandler<DataAddedEventArgs> ErrorHandler { get; set; }
+            public EventHandler<DataAddedEventArgs> VerboseHandler { get; set; }
+            public EventHandler<DataAddedEventArgs> WarningHandler { get; set; }
+            public EventHandler<DataAddedEventArgs> DebugHandler { get; set; }
+            public EventHandler<DataAddedEventArgs> InformationHandler { get; set; }
         }
 
         private List<PSObject> _currentChunk = new List<PSObject>();
@@ -74,6 +86,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private ConcurrentQueue<string> _warningQueue = new ConcurrentQueue<string>();
         private ConcurrentQueue<string> _debugQueue = new ConcurrentQueue<string>();
         private ConcurrentQueue<InformationRecord> _informationQueue = new ConcurrentQueue<InformationRecord>();
+        private ConcurrentQueue<ProgressRecord> _progressQueue = new ConcurrentQueue<ProgressRecord>();
         private int _totalCompletedRecords = 0;
         private volatile int _totalInputRecords = 0;
 
@@ -84,8 +97,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.BeginProcessing();
 
+
             // Initialize runspace pool for streaming chunk processing
             var initialSessionState = InitialSessionState.CreateDefault();
+            initialSessionState.ThreadOptions = PSThreadOptions.UseNewThread;
 
             // Build list of module patterns to exclude (always include Pester)
             var excludePatterns = new List<string> { "Pester" };
@@ -121,13 +136,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            _runspacePool = RunspaceFactory.CreateRunspacePool(1, MaxDegreeOfParallelism, initialSessionState, Host);
+            _runspacePool = RunspaceFactory.CreateRunspacePool(initialSessionState);
+            _runspacePool.SetMinRunspaces(1);
+            _runspacePool.SetMaxRunspaces(MaxDegreeOfParallelism);
             _runspacePool.Open();
 
             _cancellationTokenSource = new CancellationTokenSource();
             _outputWriterTask = Task.Run(() => WriteCompletedOutputs());
 
             WriteVerbose($"Starting parallel processing with MaxDOP={MaxDegreeOfParallelism}, ChunkSize={ChunkSize}");
+            WriteProgress(new ProgressRecord(1, "Processing Records", $"Completed {_totalCompletedRecords} of {_totalInputRecords} records") { PercentComplete = 0, RecordType = ProgressRecordType.Processing });
         }
 
         /// <summary>
@@ -188,11 +206,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ProcessChunk(new List<PSObject>(chunkToProcess));
             }
 
-            // Drain any remaining outputs
-            DrainQueues();
 
             // Wait for all active tasks to complete
             WaitForAllTasks();
+
+            // Drain any remaining outputs
+            DrainQueues();
+
+            WriteProgress(new ProgressRecord(1, "Processing Records", "All records processed") { PercentComplete = 100, RecordType = ProgressRecordType.Completed });
 
             // Cancel the output writer task
             _cancellationTokenSource.Cancel();
@@ -314,26 +335,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Create output collection for streaming results
             var outputCollection = new PSDataCollection<PSObject>();
-            outputCollection.DataAdded += (sender, e) => _outputObjectQueue.Enqueue(outputCollection[e.Index]);
 
-            // Subscribe to stream events to write as they arrive
-            ps.Streams.Error.DataAdded += (sender, e) => _errorQueue.Enqueue(ps.Streams.Error[e.Index]);
-            ps.Streams.Verbose.DataAdded += (sender, e) => _verboseQueue.Enqueue(ps.Streams.Verbose[e.Index].Message);
-            ps.Streams.Warning.DataAdded += (sender, e) => _warningQueue.Enqueue(ps.Streams.Warning[e.Index].Message);
-            ps.Streams.Debug.DataAdded += (sender, e) => _debugQueue.Enqueue(ps.Streams.Debug[e.Index].Message);
-            ps.Streams.Information.DataAdded += (sender, e) => _informationQueue.Enqueue(ps.Streams.Information[e.Index]);
-
-            var asyncResult = ps.BeginInvoke(new PSDataCollection<PSObject>(), outputCollection);
-            
             var taskInfo = new TaskInfo
             {
                 PowerShell = ps,
-                AsyncResult = asyncResult,
                 OutputCollection = outputCollection,
                 ChunkNumber = currentChunkNum,
                 RecordCount = chunk.Count
             };
 
+            taskInfo.OutputHandler = (sender, e) => { _outputObjectQueue.Enqueue(outputCollection[e.Index]); taskInfo.LastOutputIndex = e.Index; };
+            outputCollection.DataAdded += taskInfo.OutputHandler;
+
+            // Subscribe to stream events to write as they arrive
+            taskInfo.ErrorHandler = (sender, e) => { _errorQueue.Enqueue(ps.Streams.Error[e.Index]); taskInfo.LastErrorIndex = e.Index; };
+            ps.Streams.Error.DataAdded += taskInfo.ErrorHandler;
+            taskInfo.VerboseHandler = (sender, e) => { _verboseQueue.Enqueue(ps.Streams.Verbose[e.Index].Message); taskInfo.LastVerboseIndex = e.Index; };
+            ps.Streams.Verbose.DataAdded += taskInfo.VerboseHandler;
+            taskInfo.WarningHandler = (sender, e) => { _warningQueue.Enqueue(ps.Streams.Warning[e.Index].Message); taskInfo.LastWarningIndex = e.Index; };
+            ps.Streams.Warning.DataAdded += taskInfo.WarningHandler;
+            taskInfo.DebugHandler = (sender, e) => { _debugQueue.Enqueue(ps.Streams.Debug[e.Index].Message); taskInfo.LastDebugIndex = e.Index; };
+            ps.Streams.Debug.DataAdded += taskInfo.DebugHandler;
+            taskInfo.InformationHandler = (sender, e) => { _informationQueue.Enqueue(ps.Streams.Information[e.Index]); taskInfo.LastInformationIndex = e.Index; };
+            ps.Streams.Information.DataAdded += taskInfo.InformationHandler;
+
+            var asyncResult = ps.BeginInvoke(new PSDataCollection<PSObject>(), outputCollection);
+            taskInfo.AsyncResult = asyncResult;
+            
             lock (_tasksLock)
             {
                 _activeTasks.Add(taskInfo);
@@ -374,6 +402,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         taskToComplete.PowerShell.EndInvoke(taskToComplete.AsyncResult);
                         int newTotal = Interlocked.Add(ref _totalCompletedRecords, taskToComplete.RecordCount);
                         _verboseQueue.Enqueue($"Chunk {taskToComplete.ChunkNumber} completed - {newTotal} of {_totalInputRecords} records completed");
+
+                        if (_totalInputRecords > 0)
+                        {
+                            int percent = (int)((_totalCompletedRecords * 100L) / _totalInputRecords);
+                            _progressQueue.Enqueue(new ProgressRecord(1, "Processing Records", $"Completed {_totalCompletedRecords} of {_totalInputRecords} records") { PercentComplete = percent, RecordType = ProgressRecordType.Processing });
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -381,6 +415,42 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                     finally
                     {
+                        // Process remaining output items
+                        for (int i = taskToComplete.LastOutputIndex + 1; i < taskToComplete.OutputCollection.Count; i++)
+                        {
+                            _outputObjectQueue.Enqueue(taskToComplete.OutputCollection[i]);
+                        }
+
+                        // Process remaining stream items
+                        for (int i = taskToComplete.LastErrorIndex + 1; i < taskToComplete.PowerShell.Streams.Error.Count; i++)
+                        {
+                            _errorQueue.Enqueue(taskToComplete.PowerShell.Streams.Error[i]);
+                        }
+                        for (int i = taskToComplete.LastVerboseIndex + 1; i < taskToComplete.PowerShell.Streams.Verbose.Count; i++)
+                        {
+                            _verboseQueue.Enqueue(taskToComplete.PowerShell.Streams.Verbose[i].Message);
+                        }
+                        for (int i = taskToComplete.LastWarningIndex + 1; i < taskToComplete.PowerShell.Streams.Warning.Count; i++)
+                        {
+                            _warningQueue.Enqueue(taskToComplete.PowerShell.Streams.Warning[i].Message);
+                        }
+                        for (int i = taskToComplete.LastDebugIndex + 1; i < taskToComplete.PowerShell.Streams.Debug.Count; i++)
+                        {
+                            _debugQueue.Enqueue(taskToComplete.PowerShell.Streams.Debug[i].Message);
+                        }
+                        for (int i = taskToComplete.LastInformationIndex + 1; i < taskToComplete.PowerShell.Streams.Information.Count; i++)
+                        {
+                            _informationQueue.Enqueue(taskToComplete.PowerShell.Streams.Information[i]);
+                        }
+
+                        // Unsubscribe events
+                        taskToComplete.OutputCollection.DataAdded -= taskToComplete.OutputHandler;
+                        taskToComplete.PowerShell.Streams.Error.DataAdded -= taskToComplete.ErrorHandler;
+                        taskToComplete.PowerShell.Streams.Verbose.DataAdded -= taskToComplete.VerboseHandler;
+                        taskToComplete.PowerShell.Streams.Warning.DataAdded -= taskToComplete.WarningHandler;
+                        taskToComplete.PowerShell.Streams.Debug.DataAdded -= taskToComplete.DebugHandler;
+                        taskToComplete.PowerShell.Streams.Information.DataAdded -= taskToComplete.InformationHandler;
+
                         taskToComplete.PowerShell.Dispose();
                         taskToComplete.OutputCollection.Dispose();
                     }
@@ -445,6 +515,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
+
         private void DrainQueues()
         {
             while (_outputObjectQueue.TryDequeue(out var obj)) WriteObject(obj);
@@ -452,7 +523,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             while (_verboseQueue.TryDequeue(out var msg)) WriteVerbose(msg);
             while (_warningQueue.TryDequeue(out var msg)) WriteWarning(msg);
             while (_debugQueue.TryDequeue(out var msg)) WriteDebug(msg);
-            while (_informationQueue.TryDequeue(out var info)) WriteInformation(info);
+            while (_informationQueue.TryDequeue(out var info)) WriteVerbose(info.MessageData.ToString());
+            while (_progressQueue.TryDequeue(out var pr)) WriteProgress(pr);
         }
     }
 }
