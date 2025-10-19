@@ -1158,7 +1158,7 @@ Key Batch Behavior:
 - Each error includes the input record for correlation
 - For best performance with `-CallerId`, sort records by caller ID since a new batch is needed when the caller changes
 
-**Retry Logic:**
+### Retry Logic
 
 The module includes retry logic to handle transient failures such as network issues, throttling, or temporary service unavailability. This is particularly useful for long-running operations or when processing large datasets.
 Note that the Dataverse SDK used internally has automatic request level retries for transient network/server failures already. 
@@ -1166,7 +1166,7 @@ Note that the Dataverse SDK used internally has automatic request level retries 
 Key Retry Features:
 - Configurable number of retry attempts (default is 0 - no retries)
 - Exponential backoff with configurable initial delay (default 5s, doubling each retry)
-- Retries are applied per batch item, allowing partial success
+- In Set-DataverseRecord and Remove-DataverseRecord - retries are applied per batch item, allowing the end to end process to be retried without retrying all the other potentially successful requests in the batch.
 - Works with all cmdlets that support batching (`Set-DataverseRecord`, `Remove-DataverseRecord`, etc.)
 - Verbose output shows retry attempts and delays
 
@@ -1182,8 +1182,6 @@ While retry logic improves resilience, it may not be appropriate for all operati
 - **Operations with side effects**: Some operations cannot be safely retried if they have already partially succeeded. For example, creating records might result in duplicates if the initial request succeeded but the response was lost.
 - **Idempotent operations**: Retries are safest with idempotent operations (those that can be repeated without changing the result). Reading data (`Get-DataverseRecord`) and updating existing records are typically safe to retry.
 - **Default behavior for Set-DataverseRecord**: The default mode performs existence checks before operations, making updates and upserts generally safe to retry. However, create-only operations (`-CreateOnly`) should be used cautiously with retries as they may create duplicate records on failure.
-- **Rate limiting**: Excessive retries can exacerbate rate limiting. Use appropriate delays and consider the service's retry-after headers.
-- **Long-running operations**: Retries extend the total execution time. Monitor for timeouts in your scripts.
 
 For operations that cannot be safely retried, consider using smaller batch sizes (`-BatchSize 1`) or handling errors explicitly rather than relying on automatic retries.
 
