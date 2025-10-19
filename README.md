@@ -1141,6 +1141,8 @@ See full documentation: [Set-DataverseRecord PassThru Examples](Rnwood.Dataverse
 
 By default, [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) and [`Remove-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) automatically batch operations when processing multiple records (default batch size is 100). This improves performance by reducing round trips to the server.
 
+**Batched Retrieval:** [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) also batches retrieval of existing records when checking for changes. By default, it retrieves up to 500 records in a single query instead of querying each record individually. Use `-RetrievalBatchSize` to control this behavior (set to 1 to disable) or use `-CreateOnly`/`-UpdateAllColumns` to skip retrieval entirely.
+
 Key behaviors:
 
 - Batching uses `ExecuteMultipleRequest` with `ContinueOnError = true` - all records are attempted even if some fail
