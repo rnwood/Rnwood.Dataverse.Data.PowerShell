@@ -255,6 +255,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				batchRequest.Requests.AddRange(_nextBatchItems.Select(i => i.Request));
 
 				ExecuteMultipleResponse response = (ExecuteMultipleResponse)Connection.Execute(batchRequest);
+				FIXME
 
 				foreach (var itemResponse in response.Responses)
 				{

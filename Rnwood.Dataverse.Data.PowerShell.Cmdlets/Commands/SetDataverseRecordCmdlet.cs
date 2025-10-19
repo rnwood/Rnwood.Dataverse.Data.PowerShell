@@ -314,6 +314,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						}
 					}
 
+				} catch (Exception e)
+				{
+					foreach (var batchItem in _nextBatchItems) {
+						this.ScheduleRecordRetry(batchItem.InputObject, e);
+					}
 				}
 				finally
 				{
