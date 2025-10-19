@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -177,7 +178,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			public PSObject InputObject { get; set; }
 			public Entity Target { get; set; }
 			public EntityMetadata EntityMetadata { get; set; }
-			public Action<Entity> Continuation { get; set; }
 			
 			// For ID-based retrieval
 			public Guid? Id { get; set; }
@@ -192,6 +192,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			public Guid? Entity1Value { get; set; }
 			public Guid? Entity2Value { get; set; }
 			public ManyToManyRelationshipMetadata IntersectMetadata { get; set; }
+			
+			// Retrieved existing record (set after batched retrieval)
+			public Entity ExistingRecord { get; set; }
 			
 			public string GetMatchOnKey()
 			{
@@ -300,18 +303,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					}
 				}
 
-				// Call continuations for ID-based records
+				// Set ExistingRecord for ID-based items
 				foreach (var item in byId)
 				{
-					Entity result = resultsByGuid.ContainsKey(item.Id.Value) ? resultsByGuid[item.Id.Value] : null;
-					try
-					{
-						item.Continuation(result);
-					}
-					catch (Exception e)
-					{
-						WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, item.InputObject));
-					}
+					item.ExistingRecord = resultsByGuid.ContainsKey(item.Id.Value) ? resultsByGuid[item.Id.Value] : null;
 				}
 			}
 
@@ -409,19 +404,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					}
 				}
 
-				// Call continuations for MatchOn records
+				// Set ExistingRecord for MatchOn items
 				foreach (var item in byMatchOn)
 				{
 					string key = item.GetMatchOnKey();
-					Entity result = resultsByKey.ContainsKey(key) ? resultsByKey[key] : null;
-					try
-					{
-						item.Continuation(result);
-					}
-					catch (Exception e)
-					{
-						WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, item.InputObject));
-					}
+					item.ExistingRecord = resultsByKey.ContainsKey(key) ? resultsByKey[key] : null;
 				}
 			}
 
@@ -458,19 +445,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					resultsByKey[key] = entity;
 				}
 
-				// Call continuations for Intersect records
+				// Set ExistingRecord for Intersect items
 				foreach (var item in byIntersect)
 				{
 					string key = item.GetIntersectKey();
-					Entity result = resultsByKey.ContainsKey(key) ? resultsByKey[key] : null;
-					try
-					{
-						item.Continuation(result);
-					}
-					catch (Exception e)
-					{
-						WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, item.InputObject));
-					}
+					item.ExistingRecord = resultsByKey.ContainsKey(key) ? resultsByKey[key] : null;
+				}
+			}
+
+			// Now process each record with its retrieved existing record
+			foreach (var item in _recordProcessingQueue)
+			{
+				try
+				{
+					ProcessRecordWithExistingRecord(item.Target, item.EntityMetadata, item.ExistingRecord);
+				}
+				catch (Exception e)
+				{
+					WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, item.InputObject));
 				}
 			}
 
@@ -579,129 +571,128 @@ WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, InputObject));
 }
 }
 
-private void QueueRecordProcessing(Entity target, EntityMetadata entityMetadata)
-{
-var item = new RecordProcessingItem
-{
-InputObject = InputObject,
-Target = target,
-EntityMetadata = entityMetadata,
-Continuation = (existingRecord) => ProcessRecordWithExistingRecord(target, entityMetadata, existingRecord)
-};
+	private void QueueRecordProcessing(Entity target, EntityMetadata entityMetadata)
+	{
+		var item = new RecordProcessingItem
+		{
+			InputObject = InputObject,
+			Target = target,
+			EntityMetadata = entityMetadata
+		};
 
-// Determine what type of retrieval is needed
-if (CreateOnly.IsPresent || Upsert.IsPresent)
-{
-// No retrieval needed, process immediately with null existing record
-try
-{
-item.Continuation(null);
-}
-catch (Exception e)
-{
-WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, item.InputObject));
-}
-return;
-}
+		// Determine what type of retrieval is needed
+		if (CreateOnly.IsPresent || Upsert.IsPresent)
+		{
+			// No retrieval needed, process immediately with null existing record
+			try
+			{
+				ProcessRecordWithExistingRecord(target, entityMetadata, null);
+			}
+			catch (Exception e)
+			{
+				WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, InputObject));
+			}
+			return;
+		}
 
-if (!entityMetadata.IsIntersect.GetValueOrDefault())
-{
-if (Id != Guid.Empty)
-{
-if (UpdateAllColumns.IsPresent)
-{
-// No retrieval needed, just create a stub entity
-Entity stubRecord = new Entity(target.LogicalName) { Id = Id };
-stubRecord[entityMetadata.PrimaryIdAttribute] = Id;
-try
-{
-item.Continuation(stubRecord);
-}
-catch (Exception e)
-{
-WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, item.InputObject));
-}
-return;
-}
-else
-{
-// ID-based retrieval
-item.Id = Id;
-item.TableName = TableName;
-item.ColumnSet = target.LogicalName.Equals("calendar", StringComparison.OrdinalIgnoreCase) ? new ColumnSet(true) : new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
-}
-}
-else if (MatchOn != null)
-{
-// MatchOn retrieval - queue for first match attempt
-foreach (string[] matchOnColumnList in MatchOn)
-{
-var values = new Dictionary<string, object>();
-foreach (string matchOnColumn in matchOnColumnList)
-{
-object queryValue = target.GetAttributeValue<object>(matchOnColumn);
+		if (!entityMetadata.IsIntersect.GetValueOrDefault())
+		{
+			if (Id != Guid.Empty)
+			{
+				if (UpdateAllColumns.IsPresent)
+				{
+					// No retrieval needed, just create a stub entity
+					Entity stubRecord = new Entity(target.LogicalName) { Id = Id };
+					stubRecord[entityMetadata.PrimaryIdAttribute] = Id;
+					try
+					{
+						ProcessRecordWithExistingRecord(target, entityMetadata, stubRecord);
+					}
+					catch (Exception e)
+					{
+						WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, InputObject));
+					}
+					return;
+				}
+				else
+				{
+					// ID-based retrieval
+					item.Id = Id;
+					item.TableName = TableName;
+					item.ColumnSet = target.LogicalName.Equals("calendar", StringComparison.OrdinalIgnoreCase) ? new ColumnSet(true) : new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+				}
+			}
+			else if (MatchOn != null)
+			{
+				// MatchOn retrieval - queue for first match attempt
+				foreach (string[] matchOnColumnList in MatchOn)
+				{
+					var values = new Dictionary<string, object>();
+					foreach (string matchOnColumn in matchOnColumnList)
+					{
+						object queryValue = target.GetAttributeValue<object>(matchOnColumn);
 
-if (queryValue is EntityReference)
-{
-queryValue = ((EntityReference)queryValue).Id;
-}
+						if (queryValue is EntityReference)
+						{
+							queryValue = ((EntityReference)queryValue).Id;
+						}
 
-if (queryValue is OptionSetValue)
-{
-queryValue = ((OptionSetValue)queryValue).Value;
-}
+						if (queryValue is OptionSetValue)
+						{
+							queryValue = ((OptionSetValue)queryValue).Value;
+						}
 
-values[matchOnColumn] = queryValue;
-}
+						values[matchOnColumn] = queryValue;
+					}
 
-item.MatchOnColumns = matchOnColumnList;
-item.MatchOnValues = values;
-item.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
-break; // Only process first MatchOn for now
-}
-}
-else
-{
-// No ID or MatchOn, must be create only
-try
-{
-item.Continuation(null);
-}
-catch (Exception e)
-{
-WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, item.InputObject));
-}
-return;
-}
-}
-else
-{
-// Intersect entity
-if (MatchOn != null)
-{
-WriteError(new ErrorRecord(new ArgumentException("MatchOn not supported for intersect entities", "MatchOn"), null, ErrorCategory.InvalidArgument, InputObject));
-return;
-}
+					item.MatchOnColumns = matchOnColumnList;
+					item.MatchOnValues = values;
+					item.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+					break; // Only process first MatchOn for now
+				}
+			}
+			else
+			{
+				// No ID or MatchOn, must be create only
+				try
+				{
+					ProcessRecordWithExistingRecord(target, entityMetadata, null);
+				}
+				catch (Exception e)
+				{
+					WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, InputObject));
+				}
+				return;
+			}
+		}
+		else
+		{
+			// Intersect entity
+			if (MatchOn != null)
+			{
+				WriteError(new ErrorRecord(new ArgumentException("MatchOn not supported for intersect entities", "MatchOn"), null, ErrorCategory.InvalidArgument, InputObject));
+				return;
+			}
 
-ManyToManyRelationshipMetadata manyToManyRelationshipMetadata = entityMetadata.ManyToManyRelationships[0];
+			ManyToManyRelationshipMetadata manyToManyRelationshipMetadata = entityMetadata.ManyToManyRelationships[0];
 
-Guid? entity1Value = target.GetAttributeValue<Guid?>(manyToManyRelationshipMetadata.Entity1IntersectAttribute);
-Guid? entity2Value = target.GetAttributeValue<Guid?>(manyToManyRelationshipMetadata.Entity2IntersectAttribute);
+			Guid? entity1Value = target.GetAttributeValue<Guid?>(manyToManyRelationshipMetadata.Entity1IntersectAttribute);
+			Guid? entity2Value = target.GetAttributeValue<Guid?>(manyToManyRelationshipMetadata.Entity2IntersectAttribute);
 
-if (entity1Value == null || entity2Value == null)
-{
-WriteError(new ErrorRecord(new Exception("For intersect entities (many to many relationships), The input object must contain values for both attributes involved in the relationship."), null, ErrorCategory.InvalidData, InputObject));
-return;
-}
+			if (entity1Value == null || entity2Value == null)
+			{
+				WriteError(new ErrorRecord(new Exception("For intersect entities (many to many relationships), The input object must contain values for both attributes involved in the relationship."), null, ErrorCategory.InvalidData, InputObject));
+				return;
+			}
 
-item.Entity1Value = entity1Value.Value;
-item.Entity2Value = entity2Value.Value;
-item.IntersectMetadata = manyToManyRelationshipMetadata;
-item.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
-}
+			item.Entity1Value = entity1Value.Value;
+			item.Entity2Value = entity2Value.Value;
+			item.IntersectMetadata = manyToManyRelationshipMetadata;
+			item.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+		}
 
-_recordProcessingQueue.Add(item);
-}
+		_recordProcessingQueue.Add(item);
+	}
 
 
 
