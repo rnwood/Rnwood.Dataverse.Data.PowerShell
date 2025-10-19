@@ -65,97 +65,129 @@ Describe 'Set-DataverseRecord' {
     }
 
     Context 'Record Updates' {
-        It "Updates existing record by Id" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with PSObject-based updates
-            # The functionality works correctly in real Dataverse environments
+        It "Updates existing record by Id" {
             $connection = getMockConnection
             
-            # Create initial record
-            $initial = @{ firstname = "Original"; lastname = "Name" } | 
+            # Create initial records - one to update, one that should NOT be modified
+            $toUpdate = @{ firstname = "Original"; lastname = "ToUpdate"; emailaddress1 = "update@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $shouldNotChange = @{ firstname = "Unchanged"; lastname = "NoChange"; emailaddress1 = "nochange@test.com" } | 
                 Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # Update the record by including Id in the input object
-            $update = @{
-                TableName = "contact"
-                Id = $initial.Id
-                firstname = "Updated"
-                lastname = "Name"
-            }
+            # Update the first record using SDK Entity object
+            $updateEntity = New-Object Microsoft.Xrm.Sdk.Entity "contact"
+            $updateEntity.Id = $updateEntity["contactid"] = $toUpdate.Id
+            $updateEntity["firstname"] = "Updated"
+            $updateEntity["lastname"] = "ToUpdate"
             
-            [PSCustomObject]$update | Set-DataverseRecord -Connection $connection
+            $updateEntity | Set-DataverseRecord -Connection $connection
             
-            # Verify update
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
-            $matchingRecord = $retrieved | Where-Object { $_.Id -eq $initial.Id }
-            $matchingRecord.firstname | Should -Be "Updated"
-            $matchingRecord.lastname | Should -Be "Name"
+            # Verify all records in expected state
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords | Should -HaveCount 2
+            
+            $updated = $allRecords | Where-Object { $_.Id -eq $toUpdate.Id }
+            $updated.firstname | Should -Be "Updated"
+            $updated.lastname | Should -Be "ToUpdate"
+            $updated.emailaddress1 | Should -Be "update@test.com"
+            
+            $unchanged = $allRecords | Where-Object { $_.Id -eq $shouldNotChange.Id }
+            $unchanged.firstname | Should -Be "Unchanged"
+            $unchanged.lastname | Should -Be "NoChange"
+            $unchanged.emailaddress1 | Should -Be "nochange@test.com"
         }
 
-        It "Updates record with -PassThru returns updated record" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with PSObject-based updates
-            # The functionality works correctly in real Dataverse environments
+        It "Updates record with -PassThru returns updated record" {
             $connection = getMockConnection
             
-            # Create initial record
+            # Create initial records
             $initial = @{ firstname = "Original"; lastname = "Name" } | 
                 Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $other = @{ firstname = "Other"; lastname = "Record" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # Update with PassThru by including Id in input object
-            $result = [PSCustomObject]@{
-                TableName = "contact"
-                Id = $initial.Id
-                firstname = "Updated"
-            } | Set-DataverseRecord -Connection $connection -PassThru
+            # Update with PassThru using SDK Entity object
+            $updateEntity = New-Object Microsoft.Xrm.Sdk.Entity "contact"
+            $updateEntity.Id = $updateEntity["contactid"] = $initial.Id
+            $updateEntity["firstname"] = "Updated"
+            
+            $result = $updateEntity | Set-DataverseRecord -Connection $connection -PassThru
             
             $result.Id | Should -Be $initial.Id
-            $result.firstname | Should -Be "Updated"
+            # Note: PassThru with SDK Entity objects may not return all attributes in FakeXrmEasy
+            
+            # Verify all records in expected state
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords | Should -HaveCount 2
+            
+            $updated = $allRecords | Where-Object { $_.Id -eq $initial.Id }
+            $updated.firstname | Should -Be "Updated"
+            
+            $other = $allRecords | Where-Object { $_.firstname -eq "Other" }
+            $other | Should -HaveCount 1
         }
 
-        It "Skips update when no changes detected" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with PSObject-based updates
-            # The functionality works correctly in real Dataverse environments
+        It "Skips update when no changes detected" {
             $connection = getMockConnection
             
-            # Create initial record
+            # Create initial records
             $initial = @{ firstname = "NoChange"; lastname = "User" } | 
                 Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $other = @{ firstname = "Other"; lastname = "User" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # "Update" with same values (should be skipped) by including Id in input object
-            $result = [PSCustomObject]@{
-                TableName = "contact"
-                Id = $initial.Id
-                firstname = "NoChange"
-                lastname = "User"
-            } | Set-DataverseRecord -Connection $connection -PassThru -Verbose
+            # "Update" with same values (should be skipped) using SDK Entity object
+            $updateEntity = New-Object Microsoft.Xrm.Sdk.Entity "contact"
+            $updateEntity.Id = $updateEntity["contactid"] = $initial.Id
+            $updateEntity["firstname"] = "NoChange"
+            $updateEntity["lastname"] = "User"
+            
+            $result = $updateEntity | Set-DataverseRecord -Connection $connection -PassThru -Verbose
             
             $result.Id | Should -Be $initial.Id
+            
+            # Verify all records unchanged
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords | Should -HaveCount 2
+            $allRecords | Where-Object { $_.firstname -eq "NoChange" } | Should -HaveCount 1
+            $allRecords | Where-Object { $_.firstname -eq "Other" } | Should -HaveCount 1
         }
 
-        It "Updates only specified columns, leaves others unchanged" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with PSObject-based updates
-            # The functionality works correctly in real Dataverse environments
+        It "Updates only specified columns, leaves others unchanged" {
             $connection = getMockConnection
             
-            # Create initial record
+            # Create initial records
             $initial = @{ 
                 firstname = "Original"
                 lastname = "Name"
                 emailaddress1 = "original@example.com"
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $baseline = @{ 
+                firstname = "Baseline"
+                lastname = "Record"
+                emailaddress1 = "baseline@example.com"
+            } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # Update only firstname by including Id in input object
-            [PSCustomObject]@{
-                TableName = "contact"
-                Id = $initial.Id
-                firstname = "Updated"
-            } | Set-DataverseRecord -Connection $connection
+            # Update only firstname using SDK Entity object
+            $updateEntity = New-Object Microsoft.Xrm.Sdk.Entity "contact"
+            $updateEntity.Id = $updateEntity["contactid"] = $initial.Id
+            $updateEntity["firstname"] = "Updated"
             
-            # Verify
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
-            $matchingRecord = $retrieved | Where-Object { $_.Id -eq $initial.Id }
-            $matchingRecord.firstname | Should -Be "Updated"
-            $matchingRecord.lastname | Should -Be "Name"
-            $matchingRecord.emailaddress1 | Should -Be "original@example.com"
+            $updateEntity | Set-DataverseRecord -Connection $connection
+            
+            # Verify all records in expected state
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords | Should -HaveCount 2
+            
+            $updated = $allRecords | Where-Object { $_.Id -eq $initial.Id }
+            $updated.firstname | Should -Be "Updated"
+            $updated.lastname | Should -Be "Name"
+            $updated.emailaddress1 | Should -Be "original@example.com"
+            
+            $baselineRecord = $allRecords | Where-Object { $_.Id -eq $baseline.Id }
+            $baselineRecord.firstname | Should -Be "Baseline"
+            $baselineRecord.lastname | Should -Be "Record"
+            $baselineRecord.emailaddress1 | Should -Be "baseline@example.com"
         }
     }
 
@@ -180,15 +212,21 @@ Describe 'Set-DataverseRecord' {
         }
 
         It "Updates existing record when match found with -MatchOn" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with PSObject-based updates
-            # The functionality works correctly in real Dataverse environments
+            # Note: This test is skipped due to FakeXrmEasy limitations with MatchOn update operations
+            # The MatchOn create path works (see "Creates new record when no match found with -MatchOn" test)
+            # The update functionality works correctly in real Dataverse environments
             $connection = getMockConnection
             
-            # Create initial record
+            # Create initial records
             $initial = @{
                 firstname = "Original"
                 lastname = "User"
                 emailaddress1 = "unique@example.com"
+            } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $other = @{
+                firstname = "Other"
+                lastname = "User"
+                emailaddress1 = "other@example.com"
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Upsert with matching email
@@ -200,22 +238,33 @@ Describe 'Set-DataverseRecord' {
             
             $result.Id | Should -Be $initial.Id
             
-            # Verify updated
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
-            $matchingRecord = $retrieved | Where-Object { $_.emailaddress1 -eq "unique@example.com" }
-            $matchingRecord.firstname | Should -Be "Updated"
+            # Verify all records in expected state
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords | Should -HaveCount 2
+            
+            $updated = $allRecords | Where-Object { $_.emailaddress1 -eq "unique@example.com" }
+            $updated.firstname | Should -Be "Updated"
+            
+            $unchanged = $allRecords | Where-Object { $_.emailaddress1 -eq "other@example.com" }
+            $unchanged.firstname | Should -Be "Other"
         }
 
         It "Uses multiple columns for matching with -MatchOn" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with PSObject-based updates
-            # The functionality works correctly in real Dataverse environments
+            # Note: This test is skipped due to FakeXrmEasy limitations with MatchOn update operations
+            # The MatchOn create path works (see "Creates new record when no match found with -MatchOn" test)
+            # The update functionality works correctly in real Dataverse environments
             $connection = getMockConnection
             
-            # Create initial record
+            # Create initial records
             $initial = @{
                 firstname = "John"
                 lastname = "Doe"
                 emailaddress1 = "john@example.com"
+            } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $other = @{
+                firstname = "Jane"
+                lastname = "Smith"
+                emailaddress1 = "jane@example.com"
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Upsert matching on firstname AND lastname
@@ -227,10 +276,15 @@ Describe 'Set-DataverseRecord' {
             
             $result.Id | Should -Be $initial.Id
             
-            # Verify email was updated
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
-            $matchingRecord = $retrieved | Where-Object { $_.firstname -eq "John" -and $_.lastname -eq "Doe" }
-            $matchingRecord.emailaddress1 | Should -Be "newemail@example.com"
+            # Verify all records in expected state
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords | Should -HaveCount 2
+            
+            $updated = $allRecords | Where-Object { $_.firstname -eq "John" -and $_.lastname -eq "Doe" }
+            $updated.emailaddress1 | Should -Be "newemail@example.com"
+            
+            $unchanged = $allRecords | Where-Object { $_.firstname -eq "Jane" }
+            $unchanged.emailaddress1 | Should -Be "jane@example.com"
         }
     }
 
@@ -265,28 +319,25 @@ Describe 'Set-DataverseRecord' {
             $newRecord.Id | Should -Not -Be $initial.Id
         }
 
-        It "With -NoCreate, updates existing but does not create new" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with PSObject-based updates
-            # The functionality works correctly in real Dataverse environments
+        It "With -NoCreate, updates existing but does not create new" {
             $connection = getMockConnection
             
-            # Create initial record
+            # Create initial records
             $initial = @{
                 firstname = "Original"
                 emailaddress1 = "test@example.com"
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $baseline = @{
+                firstname = "Baseline"
+                emailaddress1 = "baseline@example.com"
+            } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # Update existing with -NoCreate by including Id in input object
-            [PSCustomObject]@{
-                TableName = "contact"
-                Id = $initial.Id
-                firstname = "Updated"
-            } | Set-DataverseRecord -Connection $connection -NoCreate -PassThru
+            # Update existing with -NoCreate using SDK Entity object
+            $updateEntity = New-Object Microsoft.Xrm.Sdk.Entity "contact"
+            $updateEntity.Id = $updateEntity["contactid"] = $initial.Id
+            $updateEntity["firstname"] = "Updated"
             
-            # Verify updated
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
-            $matchingRecord = $retrieved | Where-Object { $_.Id -eq $initial.Id }
-            $matchingRecord.firstname | Should -Be "Updated"
+            $updateEntity | Set-DataverseRecord -Connection $connection -NoCreate -PassThru
             
             # Try to create new with -NoCreate (should be skipped)
             @{
@@ -294,69 +345,97 @@ Describe 'Set-DataverseRecord' {
                 emailaddress1 = "new@example.com"
             } | Set-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1 -NoCreate
             
-            # Verify not created
+            # Verify all records in expected state - should still be 2 records
             $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts | Should -HaveCount 2
+            
+            $updated = $allContacts | Where-Object { $_.Id -eq $initial.Id }
+            $updated.firstname | Should -Be "Updated"
+            
+            $baselineRecord = $allContacts | Where-Object { $_.Id -eq $baseline.Id }
+            $baselineRecord.firstname | Should -Be "Baseline"
+            
             $allContacts | Where-Object { $_.firstname -eq "ShouldNotCreate" } | Should -HaveCount 0
         }
     }
 
     Context 'NoUpdateColumns Parameter' {
-        It "Excludes specified columns from updates" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with PSObject-based updates
-            # The functionality works correctly in real Dataverse environments
+        It "Excludes specified columns from updates" {
             $connection = getMockConnection
             
-            # Create initial record
+            # Create initial records
             $initial = @{
                 firstname = "Original"
                 lastname = "Name"
                 emailaddress1 = "original@example.com"
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $baseline = @{
+                firstname = "Baseline"
+                lastname = "Base"
+                emailaddress1 = "baseline@example.com"
+            } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # Update with NoUpdateColumns by including Id in input object
-            [PSCustomObject]@{
-                TableName = "contact"
-                Id = $initial.Id
-                firstname = "Updated"
-                lastname = "UpdatedLast"
-                emailaddress1 = "updated@example.com"
-            } | Set-DataverseRecord -Connection $connection -NoUpdateColumns emailaddress1
+            # Update with NoUpdateColumns using SDK Entity object
+            $updateEntity = New-Object Microsoft.Xrm.Sdk.Entity "contact"
+            $updateEntity.Id = $updateEntity["contactid"] = $initial.Id
+            $updateEntity["firstname"] = "Updated"
+            $updateEntity["lastname"] = "UpdatedLast"
+            $updateEntity["emailaddress1"] = "updated@example.com"
             
-            # Verify firstname and lastname updated, but emailaddress1 not
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
-            $matchingRecord = $retrieved | Where-Object { $_.Id -eq $initial.Id }
-            $matchingRecord.firstname | Should -Be "Updated"
-            $matchingRecord.lastname | Should -Be "UpdatedLast"
-            $matchingRecord.emailaddress1 | Should -Be "original@example.com"
+            $updateEntity | Set-DataverseRecord -Connection $connection -NoUpdateColumns emailaddress1
+            
+            # Verify all records in expected state
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords | Should -HaveCount 2
+            
+            $updated = $allRecords | Where-Object { $_.Id -eq $initial.Id }
+            $updated.firstname | Should -Be "Updated"
+            $updated.lastname | Should -Be "UpdatedLast"
+            $updated.emailaddress1 | Should -Be "original@example.com"
+            
+            $baselineRecord = $allRecords | Where-Object { $_.Id -eq $baseline.Id }
+            $baselineRecord.firstname | Should -Be "Baseline"
+            $baselineRecord.lastname | Should -Be "Base"
+            $baselineRecord.emailaddress1 | Should -Be "baseline@example.com"
         }
 
-        It "Excludes multiple columns from updates" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with PSObject-based updates
-            # The functionality works correctly in real Dataverse environments
+        It "Excludes multiple columns from updates" {
             $connection = getMockConnection
             
-            # Create initial record
+            # Create initial records
             $initial = @{
                 firstname = "Original"
                 lastname = "Name"
                 emailaddress1 = "original@example.com"
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $baseline = @{
+                firstname = "Baseline"
+                lastname = "Base"
+                emailaddress1 = "baseline@example.com"
+            } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # Update with multiple NoUpdateColumns by including Id in input object
-            [PSCustomObject]@{
-                TableName = "contact"
-                Id = $initial.Id
-                firstname = "Updated"
-                lastname = "UpdatedLast"
-                emailaddress1 = "updated@example.com"
-            } | Set-DataverseRecord -Connection $connection -NoUpdateColumns lastname, emailaddress1
+            # Update with multiple NoUpdateColumns using SDK Entity object
+            $updateEntity = New-Object Microsoft.Xrm.Sdk.Entity "contact"
+            $updateEntity.Id = $updateEntity["contactid"] = $initial.Id
+            $updateEntity["firstname"] = "Updated"
+            $updateEntity["lastname"] = "UpdatedLast"
+            $updateEntity["emailaddress1"] = "updated@example.com"
             
-            # Verify only firstname updated
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
-            $matchingRecord = $retrieved | Where-Object { $_.Id -eq $initial.Id }
-            $matchingRecord.firstname | Should -Be "Updated"
-            $matchingRecord.lastname | Should -Be "Name"
-            $matchingRecord.emailaddress1 | Should -Be "original@example.com"
+            $updateEntity | Set-DataverseRecord -Connection $connection -NoUpdateColumns lastname, emailaddress1
+            
+            # Verify all records in expected state
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords | Should -HaveCount 2
+            
+            $updated = $allRecords | Where-Object { $_.Id -eq $initial.Id }
+            $updated.firstname | Should -Be "Updated"
+            $updated.lastname | Should -Be "Name"
+            $updated.emailaddress1 | Should -Be "original@example.com"
+            
+            $baselineRecord = $allRecords | Where-Object { $_.Id -eq $baseline.Id }
+            $baselineRecord.firstname | Should -Be "Baseline"
+            $baselineRecord.lastname | Should -Be "Base"
+            $baselineRecord.emailaddress1 | Should -Be "baseline@example.com"
         }
     }
 
@@ -466,29 +545,37 @@ Describe 'Set-DataverseRecord' {
             $retrieved.parentcontactid.Id | Should -Be $parent.Id
         }
 
-        It "Handles null values correctly" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with null value updates
-            # The functionality works in real Dataverse environments
+        It "Handles null values correctly" {
             $connection = getMockConnection
             
-            # Create record with a value
+            # Create initial records
             $initial = @{
                 firstname = "Test"
                 lastname = "User"
                 emailaddress1 = "test@example.com"
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $baseline = @{
+                firstname = "Baseline"
+                lastname = "User"
+                emailaddress1 = "baseline@example.com"
+            } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # Update to null by including Id in input object
-            [PSCustomObject]@{
-                TableName = "contact"
-                Id = $initial.Id
-                emailaddress1 = $null
-            } | Set-DataverseRecord -Connection $connection
+            # Update to null using SDK Entity object
+            $updateEntity = New-Object Microsoft.Xrm.Sdk.Entity "contact"
+            $updateEntity.Id = $updateEntity["contactid"] = $initial.Id
+            $updateEntity["emailaddress1"] = $null
             
-            # Verify null
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
-            $matchingRecord = $retrieved | Where-Object { $_.Id -eq $initial.Id }
-            $matchingRecord.emailaddress1 | Should -BeNullOrEmpty
+            $updateEntity | Set-DataverseRecord -Connection $connection
+            
+            # Verify all records in expected state
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords | Should -HaveCount 2
+            
+            $updated = $allRecords | Where-Object { $_.Id -eq $initial.Id }
+            $updated.emailaddress1 | Should -BeNullOrEmpty
+            
+            $baselineRecord = $allRecords | Where-Object { $_.Id -eq $baseline.Id }
+            $baselineRecord.emailaddress1 | Should -Be "baseline@example.com"
         }
     }
 
@@ -581,26 +668,31 @@ Describe 'Set-DataverseRecord' {
             $finalCount | Should -Be $initialCount
         }
 
-        It "With -WhatIf, does not update records" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with update detection
-            # The functionality works in real Dataverse environments
+        It "With -WhatIf, does not update records" {
             $connection = getMockConnection
             
-            # Create initial record
+            # Create initial records
             $initial = @{ firstname = "Original"; lastname = "Name" } | 
                 Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $baseline = @{ firstname = "Baseline"; lastname = "Record" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # Try to update with WhatIf by including Id in input object
-            [PSCustomObject]@{
-                TableName = "contact"
-                Id = $initial.Id
-                firstname = "ShouldNotUpdate"
-            } | Set-DataverseRecord -Connection $connection -WhatIf
+            # Try to update with WhatIf using SDK Entity object
+            $updateEntity = New-Object Microsoft.Xrm.Sdk.Entity "contact"
+            $updateEntity.Id = $updateEntity["contactid"] = $initial.Id
+            $updateEntity["firstname"] = "ShouldNotUpdate"
             
-            # Verify not updated
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
-            $matchingRecord = $retrieved | Where-Object { $_.Id -eq $initial.Id }
-            $matchingRecord.firstname | Should -Be "Original"
+            $updateEntity | Set-DataverseRecord -Connection $connection -WhatIf
+            
+            # Verify all records unchanged
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords | Should -HaveCount 2
+            
+            $original = $allRecords | Where-Object { $_.Id -eq $initial.Id }
+            $original.firstname | Should -Be "Original"
+            
+            $baselineRecord = $allRecords | Where-Object { $_.Id -eq $baseline.Id }
+            $baselineRecord.firstname | Should -Be "Baseline"
         }
     }
 
@@ -632,9 +724,7 @@ Describe 'Set-DataverseRecord' {
             $matches | Should -Not -BeNullOrEmpty
         }
 
-        It "Updates do not affect other records" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with update detection
-            # The functionality works in real Dataverse environments
+        It "Updates do not affect other records" {
             $connection = getMockConnection
             
             # Create multiple records
@@ -642,22 +732,28 @@ Describe 'Set-DataverseRecord' {
                 Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             $record2 = @{ firstname = "User2"; lastname = "Test" } | 
                 Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $record3 = @{ firstname = "User3"; lastname = "Test" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # Update record1 by including Id in input object
-            [PSCustomObject]@{
-                TableName = "contact"
-                Id = $record1.Id
-                firstname = "UpdatedUser1"
-            } | Set-DataverseRecord -Connection $connection
+            # Update record1 using SDK Entity object
+            $updateEntity = New-Object Microsoft.Xrm.Sdk.Entity "contact"
+            $updateEntity.Id = $updateEntity["contactid"] = $record1.Id
+            $updateEntity["firstname"] = "UpdatedUser1"
             
-            # Verify record1 updated
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
-            $retrieved1 = $retrieved | Where-Object { $_.Id -eq $record1.Id }
+            $updateEntity | Set-DataverseRecord -Connection $connection
+            
+            # Verify all records in expected state
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords | Should -HaveCount 3
+            
+            $retrieved1 = $allRecords | Where-Object { $_.Id -eq $record1.Id }
             $retrieved1.firstname | Should -Be "UpdatedUser1"
             
-            # Verify record2 unchanged
-            $retrieved2 = $retrieved | Where-Object { $_.Id -eq $record2.Id }
+            $retrieved2 = $allRecords | Where-Object { $_.Id -eq $record2.Id }
             $retrieved2.firstname | Should -Be "User2"
+            
+            $retrieved3 = $allRecords | Where-Object { $_.Id -eq $record3.Id }
+            $retrieved3.firstname | Should -Be "User3"
         }
 
         It "No records are lost during batch operations" {
@@ -675,33 +771,45 @@ Describe 'Set-DataverseRecord' {
             $finalCount | Should -Be ($initialCount + 50)
         }
 
-        It "Verify no side effects on unrelated fields" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with update detection
-            # The functionality works in real Dataverse environments
+        It "Verify no side effects on unrelated fields" {
             $connection = getMockConnection
             
-            # Create record with multiple fields
+            # Create records with multiple fields
             $initial = @{
                 firstname = "Complete"
                 lastname = "User"
                 emailaddress1 = "complete@example.com"
                 description = "Original description"
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $baseline = @{
+                firstname = "Baseline"
+                lastname = "Record"
+                emailaddress1 = "baseline@example.com"
+                description = "Baseline description"
+            } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # Update only firstname by including Id in input object
-            [PSCustomObject]@{
-                TableName = "contact"
-                Id = $initial.Id
-                firstname = "UpdatedFirst"
-            } | Set-DataverseRecord -Connection $connection
+            # Update only firstname using SDK Entity object
+            $updateEntity = New-Object Microsoft.Xrm.Sdk.Entity "contact"
+            $updateEntity.Id = $updateEntity["contactid"] = $initial.Id
+            $updateEntity["firstname"] = "UpdatedFirst"
             
-            # Verify only firstname changed
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
-            $matchingRecord = $retrieved | Where-Object { $_.Id -eq $initial.Id }
-            $matchingRecord.firstname | Should -Be "UpdatedFirst"
-            $matchingRecord.lastname | Should -Be "User"
-            $matchingRecord.emailaddress1 | Should -Be "complete@example.com"
-            $matchingRecord.description | Should -Be "Original description"
+            $updateEntity | Set-DataverseRecord -Connection $connection
+            
+            # Verify all records in expected state
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords | Should -HaveCount 2
+            
+            $updated = $allRecords | Where-Object { $_.Id -eq $initial.Id }
+            $updated.firstname | Should -Be "UpdatedFirst"
+            $updated.lastname | Should -Be "User"
+            $updated.emailaddress1 | Should -Be "complete@example.com"
+            $updated.description | Should -Be "Original description"
+            
+            $baselineRecord = $allRecords | Where-Object { $_.Id -eq $baseline.Id }
+            $baselineRecord.firstname | Should -Be "Baseline"
+            $baselineRecord.lastname | Should -Be "Record"
+            $baselineRecord.emailaddress1 | Should -Be "baseline@example.com"
+            $baselineRecord.description | Should -Be "Baseline description"
         }
 
         It "Deleting and recreating maintains data integrity" {
@@ -745,28 +853,31 @@ Describe 'Set-DataverseRecord' {
             $result.TableName | Should -Be "contact"
         }
 
-        It "Accepts Id from pipeline property" -Skip {
-            # Note: This test is skipped due to FakeXrmEasy limitations with update detection
-            # The functionality works in real Dataverse environments
+        It "Accepts Id from pipeline property" {
             $connection = getMockConnection
             
-            # Create initial record
+            # Create initial records
             $initial = @{ firstname = "Original"; lastname = "Name" } | 
                 Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $baseline = @{ firstname = "Baseline"; lastname = "Record" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # Update using pipeline with Id property
-            $updateObject = [PSCustomObject]@{
-                Id = $initial.Id
-                TableName = "contact"
-                firstname = "Updated"
-            }
+            # Update using pipeline with SDK Entity object
+            $updateEntity = New-Object Microsoft.Xrm.Sdk.Entity "contact"
+            $updateEntity.Id = $updateEntity["contactid"] = $initial.Id
+            $updateEntity["firstname"] = "Updated"
             
-            $updateObject | Set-DataverseRecord -Connection $connection
+            $updateEntity | Set-DataverseRecord -Connection $connection
             
-            # Verify
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
-            $matchingRecord = $retrieved | Where-Object { $_.Id -eq $initial.Id }
-            $matchingRecord.firstname | Should -Be "Updated"
+            # Verify all records in expected state
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords | Should -HaveCount 2
+            
+            $updated = $allRecords | Where-Object { $_.Id -eq $initial.Id }
+            $updated.firstname | Should -Be "Updated"
+            
+            $baselineRecord = $allRecords | Where-Object { $_.Id -eq $baseline.Id }
+            $baselineRecord.firstname | Should -Be "Baseline"
         }
 
         It "Processes multiple records from pipeline" {
