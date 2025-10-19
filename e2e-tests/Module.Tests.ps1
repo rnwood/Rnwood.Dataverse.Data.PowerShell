@@ -207,11 +207,13 @@ Describe "Module" {
                 
                 # Test parallel processing with WhoAmI call
                 $results = 1..5 | Invoke-DataverseParallel -Connection $connection -ChunkSize 2 -MaxDegreeOfParallelism 3 -ScriptBlock {
-                    $whoami = Get-DataverseWhoAmI
-                    # Return a simple object with the item and user ID
-                    [PSCustomObject]@{
-                        Item = $_
-                        UserId = $whoami.UserId
+                    $_ | %{
+                        $whoami = Get-DataverseWhoAmI
+                        # Return a simple object with the item and user ID
+                        [PSCustomObject]@{
+                            Item = $_
+                            UserId = $whoami.UserId
+                        }
                     }
                 }
                 
@@ -238,7 +240,7 @@ Describe "Module" {
         }
     }
 
-    It "Invoke-DataverseParallel can create, update and verify $numberofrecords account records consistently" -skip -Tag "LongRunning" {
+    It "Invoke-DataverseParallel can create, update and verify $numberofrecords account records consistently" -Tag "LongRunning" {
         pwsh -noninteractive -noprofile -command {
             $env:PSModulePath = $env:ChildProcessPSModulePath
             
