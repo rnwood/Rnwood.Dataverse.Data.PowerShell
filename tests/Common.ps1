@@ -1,17 +1,36 @@
-function getMockConnection($failNextExecuteMultiple = $false, $failExecuteMultipleIndices = @()) {
-    $context = New-XrmFakedContext
-    $context.InitializeFromFile("$PSScriptRoot\contact.xml")
-    $innerService = $context.GetOrganizationService()
+function Copy-ModuleToTemp($ModulePath) {
+    $tempDir = [System.IO.Path]::GetTempPath() + [System.Guid]::NewGuid().ToString()
+    Copy-Item -Path $ModulePath -Destination $tempDir -Recurse
+    return $tempDir
+}
+
+$metadata = $null;
+if (-not $metadata) {
+    Add-Type -AssemblyName "System.Runtime.Serialization"
+    $serializer = New-Object System.Runtime.Serialization.DataContractSerializer([Microsoft.Xrm.Sdk.Metadata.EntityMetadata])
+    get-item $PSScriptRoot/*.xml | foreach-object {
+        $stream = [IO.File]::OpenRead($_.FullName)
+        $metadata += $serializer.ReadObject($stream)
+        $stream.Close();
+    }
+}
+
+function getMockConnection($failNextExecuteMultiple = $false, $failExecuteMultipleIndices = @(), $failExecuteMultipleTimes = 0) {
+    $mockService = get-dataverseconnection -url https://fake.crm.dynamics.com/ -mock $metadata
+    $innerService = $mockService.OrganizationService
     
-    if ($failNextExecuteMultiple -or $failExecuteMultipleIndices.Count -gt 0) {
-        $wrapper = New-Object Rnwood.Dataverse.Data.PowerShell.Commands.MockOrganizationServiceWithFailures -ArgumentList $innerService
+    if ($failNextExecuteMultiple -or $failExecuteMultipleIndices.Count -gt 0 -or $failExecuteMultipleTimes -gt 0) {
+        $type = [Rnwood.Dataverse.Data.PowerShell.Commands.MockOrganizationServiceWithFailures]
+        $constructor = $type.GetConstructor([Microsoft.Xrm.Sdk.IOrganizationService])
+        $wrapper = $constructor.Invoke(@($innerService))
         $wrapper.FailNextExecuteMultiple = $failNextExecuteMultiple
         foreach ($index in $failExecuteMultipleIndices) {
             $wrapper.FailExecuteMultipleIndices.Add($index)
         }
+        $wrapper.FailExecuteMultipleTimes = $failExecuteMultipleTimes
         $service = New-Object Microsoft.PowerPlatform.Dataverse.Client.ServiceClient -ArgumentList $wrapper
     } else {
-        $service = New-Object Microsoft.PowerPlatform.Dataverse.Client.ServiceClient -ArgumentList $innerService
+        $service = $mockService
     }
     
     return $service

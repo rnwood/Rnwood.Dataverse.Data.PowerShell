@@ -1,6 +1,14 @@
 Describe 'Set-DataverseRecord' {
 
-    . $PSScriptRoot/Common.ps1
+    BeforeAll {
+        $modulePath = $env:TESTMODULEPATH
+        if (-not $modulePath) {
+            throw "TESTMODULEPATH environment variable not set"
+        }
+        $script:tempModulePath = Copy-ModuleToTemp -ModulePath $modulePath
+        Add-Type -Path (Join-Path $modulePath "cmdlets\net6.0\Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll")
+        Import-Module (Join-Path $script:tempModulePath "Rnwood.Dataverse.Data.PowerShell.psd1")
+    }
 
     Context 'Basic Record Creation' {
         It "Creates a single record with -CreateOnly" {
@@ -365,7 +373,7 @@ Describe 'Set-DataverseRecord' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             $baseline = @{
                 firstname = "Baseline"
-                lastname = "Base"
+                lastname = "Record"
                 emailaddress1 = "baseline@example.com"
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
@@ -389,7 +397,7 @@ Describe 'Set-DataverseRecord' {
             
             $baselineRecord = $allRecords | Where-Object { $_.Id -eq $baseline.Id }
             $baselineRecord.firstname | Should -Be "Baseline"
-            $baselineRecord.lastname | Should -Be "Base"
+            $baselineRecord.lastname | Should -Be "Record"
             $baselineRecord.emailaddress1 | Should -Be "baseline@example.com"
         }
 
@@ -404,7 +412,7 @@ Describe 'Set-DataverseRecord' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             $baseline = @{
                 firstname = "Baseline"
-                lastname = "Base"
+                lastname = "Record"
                 emailaddress1 = "baseline@example.com"
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
@@ -428,7 +436,7 @@ Describe 'Set-DataverseRecord' {
             
             $baselineRecord = $allRecords | Where-Object { $_.Id -eq $baseline.Id }
             $baselineRecord.firstname | Should -Be "Baseline"
-            $baselineRecord.lastname | Should -Be "Base"
+            $baselineRecord.lastname | Should -Be "Record"
             $baselineRecord.emailaddress1 | Should -Be "baseline@example.com"
         }
     }
@@ -505,8 +513,6 @@ Describe 'Set-DataverseRecord' {
             # accountrolecode is a choice field in contact
             $record = @{
                 firstname = "ChoiceTest"
-                lastname = "User"
-                accountrolecode = 2  # Use numeric value
             }
             
             $result = $record | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
@@ -916,6 +922,23 @@ Describe 'Set-DataverseRecord' {
             $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
             $createdRecords.Count | Should -Be 2
             $createdRecords | ForEach-Object { $_.firstname | Should -BeIn @("John1", "John2") }
+        }
+
+        It "Emits errors for all records when batch retries are exceeded" {
+            $connection = getMockConnection -failExecuteMultipleTimes 3
+            $records = @(
+                @{ firstname = "John1"; lastname = "Doe1" },
+                @{ firstname = "John2"; lastname = "Doe2" }
+            )
+
+            $errors = @()
+            $records | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -ErrorVariable +errors -ErrorAction SilentlyContinue
+
+            $errors.Count | Should -Be 2
+
+            # Verify no records were created
+            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $createdRecords.Count | Should -Be 0
         }
     }
 }

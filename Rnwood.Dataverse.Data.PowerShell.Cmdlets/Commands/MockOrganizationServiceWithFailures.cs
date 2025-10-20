@@ -47,6 +47,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public List<int> FailExecuteMultipleIndices { get; } = new List<int>();
 
         /// <summary>
+        /// Number of times ExecuteMultipleRequest should fail before succeeding.
+        /// </summary>
+        public int FailExecuteMultipleTimes { get; set; }
+
+        /// <summary>
         /// Executes a request, potentially failing or modifying based on configuration.
         /// </summary>
         public OrganizationResponse Execute(OrganizationRequest request)
@@ -64,9 +69,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Handle ExecuteMultiple specially
             if (request is ExecuteMultipleRequest executeMultipleRequest)
             {
-                if (FailNextExecuteMultiple)
+                if (FailExecuteMultipleTimes > 0)
                 {
-                    FailNextExecuteMultiple = false;
+                    FailExecuteMultipleTimes--;
                     throw new Exception("Simulated ExecuteMultiple failure");
                 }
 
