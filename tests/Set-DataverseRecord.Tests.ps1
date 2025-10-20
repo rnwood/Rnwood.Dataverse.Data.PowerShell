@@ -1,14 +1,6 @@
 Describe 'Set-DataverseRecord' {
 
-    BeforeAll {
-        $modulePath = $env:TESTMODULEPATH
-        if (-not $modulePath) {
-            throw "TESTMODULEPATH environment variable not set"
-        }
-        $script:tempModulePath = Copy-ModuleToTemp -ModulePath $modulePath
-        Add-Type -Path (Join-Path $modulePath "cmdlets\net6.0\Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll")
-        Import-Module (Join-Path $script:tempModulePath "Rnwood.Dataverse.Data.PowerShell.psd1")
-    }
+        . $PSScriptRoot/Common.ps1
 
     Context 'Basic Record Creation' {
         It "Creates a single record with -CreateOnly" {

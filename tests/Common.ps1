@@ -1,8 +1,3 @@
-function Copy-ModuleToTemp($ModulePath) {
-    $tempDir = [System.IO.Path]::GetTempPath() + [System.Guid]::NewGuid().ToString()
-    Copy-Item -Path $ModulePath -Destination $tempDir -Recurse
-    return $tempDir
-}
 
 $metadata = $null;
 if (-not $metadata) {
