@@ -398,7 +398,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private void ProcessRetries()
 		{
-			while (!Stopping && _pendingRetries.Where(r => !r.RetryInProgress).Count > 0)
+			while (!Stopping && _pendingRetries.Where(r => !r.RetryInProgress).Any())
 			{
 				DateTime now = DateTime.UtcNow;
 				var readyForRetry = _pendingRetries.Where(r => !r.RetryInProgress && r.NextRetryTime <= now).ToList();
