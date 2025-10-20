@@ -59,12 +59,7 @@ BeforeAll {
 
 
     function newPwsh([scriptblock] $scriptblock) {
-        if ([System.Environment]::OSVersion.Platform -eq "Unix") {
-            pwsh -noninteractive -noprofile -command $scriptblock
-        }
-        else {
-            cmd /c pwsh -noninteractive -noprofile -command $scriptblock
-        }
+        pwsh -noninteractive -noprofile -command $scriptblock
     }
 
     AfterEach {
