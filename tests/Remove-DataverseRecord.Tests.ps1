@@ -21,12 +21,12 @@ Describe "Remove-DataverseRecord" {
                 @{ firstname = "Test1"; lastname = "User1" },
                 @{ firstname = "Test2"; lastname = "User2" }
             )
-            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -PassThru
+            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -PassThru -verbose
             $created.Count | Should -Be 2
 
-            $created | Remove-DataverseRecord -Connection $connection -TableName contact
+            $created | Remove-DataverseRecord -Connection $connection -TableName contact -verbose
 
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -verbose
             $remaining.Count | Should -Be 0
         }
     }
@@ -40,14 +40,14 @@ Describe "Remove-DataverseRecord" {
                 @{ firstname = "John1"; lastname = "Doe1" },
                 @{ firstname = "John2"; lastname = "Doe2" }
             )
-            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -PassThru
+            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -PassThru -verbose 
             $ids = $created | Select-Object -ExpandProperty Id
 
             # Now remove with failure
             $ids | ForEach-Object { @{ Id = $_; TableName = "contact" } } | Remove-DataverseRecord -Connection $connection -Retries 1 -Verbose
 
             # Check they are deleted
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -verbose 
             $remaining.Count | Should -Be 0
         }
 
@@ -59,14 +59,14 @@ Describe "Remove-DataverseRecord" {
                 @{ firstname = "John1"; lastname = "Doe1" },
                 @{ firstname = "John2"; lastname = "Doe2" }
             )
-            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -PassThru
+            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -PassThru -verbose
             $ids = $created | Select-Object -ExpandProperty Id
 
             # Now remove with failure on first item
             $ids | ForEach-Object { @{ Id = $_; TableName = "contact" } } | Remove-DataverseRecord -Connection $connection -Retries 1 -Verbose
 
             # Check they are deleted
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -verbose
             $remaining.Count | Should -Be 0
         }
 
@@ -78,17 +78,17 @@ Describe "Remove-DataverseRecord" {
                 @{ firstname = "John1"; lastname = "Doe1" },
                 @{ firstname = "John2"; lastname = "Doe2" }
             )
-            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -PassThru
+            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -PassThru -verbose
             $ids = $created | Select-Object -ExpandProperty Id
 
             # Now remove with failure exceeding retries
             $errors = @()
-            $ids | ForEach-Object { @{ Id = $_; TableName = "contact" } } | Remove-DataverseRecord -Connection $connection -Retries 1 -ErrorVariable +errors -ErrorAction SilentlyContinue
+            $ids | ForEach-Object { @{ Id = $_; TableName = "contact" } } | Remove-DataverseRecord -Connection $connection -Retries 1 -verbose -ErrorVariable errors -ErrorAction SilentlyContinue
 
             $errors.Count | Should -Be 2
 
             # Verify records are still there
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -verbose
             $remaining.Count | Should -Be 2
         }
     }
