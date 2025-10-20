@@ -17,18 +17,25 @@ BeforeAll {
 
     $metadata = $null;
 
-    if (-not $metadata) {
-        Add-Type -AssemblyName "System.Runtime.Serialization"
-        $serializer = New-Object System.Runtime.Serialization.DataContractSerializer([Microsoft.Xrm.Sdk.Metadata.EntityMetadata])
-        get-item $PSScriptRoot/*.xml | foreach-object {
-            $stream = [IO.File]::OpenRead($_.FullName)
-            $metadata += $serializer.ReadObject($stream)
-            $stream.Close();
-        }
-    }
-
-
     function getMockConnection($failNextExecuteMultiple = $false, $failExecuteMultipleIndices = @(), $failExecuteMultipleTimes = 0) {
+       
+        if (-not $metadata) {
+            if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
+                Import-Module Rnwood.Dataverse.Data.PowerShell
+            }
+            Add-Type -AssemblyName "System.Runtime.Serialization"
+
+            # Define the DataContractSerializer
+            $serializer = New-Object System.Runtime.Serialization.DataContractSerializer([Microsoft.Xrm.Sdk.Metadata.EntityMetadata])
+        
+            get-item $PSScriptRoot/*.xml | foreach-object {
+        
+                $stream = [IO.File]::OpenRead($_.FullName)
+                $metadata += $serializer.ReadObject($stream)
+                $stream.Close();
+            }
+        }
+       
         $mockService = get-dataverseconnection -url https://fake.crm.dynamics.com/ -mock $metadata
         $innerService = $mockService.OrganizationService
     
