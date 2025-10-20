@@ -21,7 +21,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Initial delay in seconds before first retry. Subsequent retries use exponential backoff. Default is 5s.
 		/// </summary>
-		[Parameter(HelpMessage = "Initial delay in second before first retry. Subsequent retries use exponential backoff. Default is 5s.")]
+		[Parameter(HelpMessage = "Initial delay in seconds before first retry. Subsequent retries use exponential backoff. Default is 5s.")]
 		public int InitialRetryDelay { get; set; } = 5;
 
 		/// <summary>
