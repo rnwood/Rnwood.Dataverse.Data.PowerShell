@@ -144,7 +144,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			public int RetriesRemaining { get; set; }
 			public DateTime NextRetryTime { get; set; }
 			public Exception LastError { get; set; }
-            public bool RetryInProgress { get; internal set; }
+            public bool RetryInProgress { get; private set; }
         }
 
 		private List<RetryRecord> _pendingRetries;
