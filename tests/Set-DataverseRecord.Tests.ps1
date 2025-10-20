@@ -888,4 +888,34 @@ Describe 'Set-DataverseRecord' {
             $results | Should -HaveCount 5
         }
     }
+
+    Context "Retries" {
+        It "Retries whole batch on ExecuteMultiple failure" {
+            $connection = getMockConnection -failNextExecuteMultiple $true
+            $records = @(
+                @{ firstname = "John1"; lastname = "Doe1" },
+                @{ firstname = "John2"; lastname = "Doe2" }
+            )
+
+            $records | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -Verbose
+
+            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $createdRecords.Count | Should -Be 2
+            $createdRecords | ForEach-Object { $_.firstname | Should -BeIn @("John1", "John2") }
+        }
+
+        It "Retries individual failed items in batch" {
+            $connection = getMockConnection -failExecuteMultipleIndices @(0)
+            $records = @(
+                @{ firstname = "John1"; lastname = "Doe1" },
+                @{ firstname = "John2"; lastname = "Doe2" }
+            )
+
+            $records | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -Verbose
+
+            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $createdRecords.Count | Should -Be 2
+            $createdRecords | ForEach-Object { $_.firstname | Should -BeIn @("John1", "John2") }
+        }
+    }
 }
