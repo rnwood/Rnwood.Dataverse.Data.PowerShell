@@ -265,7 +265,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         if (itemResponse.Fault != null)
                         {
-                            // Final failure - write error
+                            // Build fault details for failed request
                             StringBuilder details = new StringBuilder();
                             AppendFaultDetails(itemResponse.Fault, details);
                             var e = new Exception(details.ToString());
