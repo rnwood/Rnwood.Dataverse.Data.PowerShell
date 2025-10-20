@@ -676,10 +676,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 				if (_nextBatchItems != null)
 				{
-					if (targetUpdate.Id == Guid.Empty && targetUpdate.KeyAttributes.Count == 0)
-					{
-						targetUpdate.Id = Guid.NewGuid();
-					}
 
 					var inputObject = InputObject;
 
