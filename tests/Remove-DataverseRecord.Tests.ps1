@@ -1,6 +1,6 @@
 Describe "Remove-DataverseRecord" {
    
-        . $PSScriptRoot/Common.ps1
+    . $PSScriptRoot/Common.ps1
 
     Context "Basic Removal" {
         It "Removes a single record" {
@@ -92,4 +92,4 @@ Describe "Remove-DataverseRecord" {
             $remaining.Count | Should -Be 2
         }
     }
-}}}}}}}}
+}
