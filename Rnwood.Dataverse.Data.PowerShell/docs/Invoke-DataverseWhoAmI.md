@@ -92,7 +92,7 @@ Accept wildcard characters: False
 ```
 
 ### -InitialRetryDelay
-Initial delay in second before first retry. Subsequent retries use exponential backoff. Default is 5s.
+Initial delay in seconds before first retry. Subsequent retries use exponential backoff. Default is 5s.
 
 ```yaml
 Type: Int32
