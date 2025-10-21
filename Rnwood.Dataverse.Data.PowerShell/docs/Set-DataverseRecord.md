@@ -17,8 +17,8 @@ Set-DataverseRecord -InputObject <PSObject> -TableName <String> [-BatchSize <UIn
  [-RetrievalBatchSize <UInt32>] [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>] [-PassThru]
  [-NoUpdate] [-NoCreate] [-NoUpdateColumns <String[]>] [-CallerId <Guid>] [-UpdateAllColumns] [-CreateOnly]
  [-Upsert] [-LookupColumns <Hashtable>] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
- [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-Retries <Int32>] [-InitialRetryDelay <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -58,6 +58,17 @@ Key Batch Behavior:
 - Batching continues on error - all operations are attempted and errors are reported at the end
 - Each error includes the input record for correlation
 - For best performance with `-CallerId`, sort records by caller ID since a new batch is needed when the caller changes
+
+**Retry Logic:**
+
+Individual batch items can be automatically retried on failure using exponential backoff:
+- Use `-Retries` parameter to specify the number of retry attempts (default is 0 - no retries)
+- Use `-InitialRetryDelay` to set the initial delay in seconds before the first retry (default is 5s)
+- Each subsequent retry doubles the delay time (exponential backoff)
+- Records are added to the next batch after the delay period has elapsed
+- If only retries are pending at the end of processing, the cmdlet will wait for the appropriate delay before retrying
+- After all retries are exhausted, failures are written as errors as usual
+- Retries are particularly useful for transient errors like throttling or temporary connectivity issues
 
 How Create vs Update is Determined:
 
@@ -374,6 +385,28 @@ PS C:\> $associations | Set-DataverseRecord -Connection $c -TableName "listconta
 ```
 
 Creates multiple many-to-many associations in a batch operation. This example associates multiple contacts with a marketing list using the `listcontact` intersect table. The property names (`contactid`, `listid`) must match the exact column names in the intersect table. The cmdlet automatically batches these operations for improved performance.
+
+### Example 18: Using retry logic for transient failures
+```powershell
+PS C:\> $records = @(
+    @{ firstname = "Alice"; lastname = "Smith" }
+    @{ firstname = "Bob"; lastname = "Jones" }
+    @{ firstname = "Carol"; lastname = "Williams" }
+)
+
+PS C:\> # Retry each failed record up to 3 times with exponential backoff
+PS C:\> $records | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -Retries 3 -InitialRetryDelay 500 -Verbose
+```
+
+Creates multiple contacts with automatic retry on transient failures. Failed requests will be retried up to 3 times with delays of 500ms, 1000ms, and 2000ms respectively. The `-Verbose` flag shows retry attempts and wait times.
+
+### Example 19: Custom retry delay for rate limiting
+```powershell
+PS C:\> # Handle rate limiting with longer initial delay
+PS C:\> $largeDataset | Set-DataverseRecord -Connection $c -TableName account -Retries 5 -InitialRetryDelay 2000
+```
+
+Processes a large dataset with automatic retry configured for rate limiting scenarios. Uses 5 retry attempts with an initial 2-second delay, doubling on each retry (2s, 4s, 8s, 16s, 32s).
 
 ## PARAMETERS
 
@@ -732,6 +765,36 @@ Aliases:
 Required: False
 Position: Named
 Default value: 500
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InitialRetryDelay
+Initial delay in seconds before first retry. Subsequent retries use exponential backoff (delay doubles each time). Default is 5s.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 5
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Retries
+Number of times to retry each batch item on failure. Default is 0 (no retries). Each retry uses exponential backoff based on the `-InitialRetryDelay` parameter.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 0
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

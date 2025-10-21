@@ -1,6 +1,6 @@
 Describe 'Set-DataverseRecord' {
 
-    . $PSScriptRoot/Common.ps1
+        . $PSScriptRoot/Common.ps1
 
     Context 'Basic Record Creation' {
         It "Creates a single record with -CreateOnly" {
@@ -61,6 +61,40 @@ Describe 'Set-DataverseRecord' {
             # Verify record still created
             $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
             $allContacts | Where-Object { $_.firstname -eq "Test" -and $_.lastname -eq "User" } | Should -HaveCount 1
+        }
+
+        It "With -PassThru returns each input record exactly once, no duplicates" {
+            $connection = getMockConnection
+            
+            $records = @(
+                @{ firstname = "Alice"; lastname = "Smith"; emailaddress1 = "alice@example.com" }
+                @{ firstname = "Bob"; lastname = "Johnson"; emailaddress1 = "bob@example.com" }
+                @{ firstname = "Charlie"; lastname = "Williams"; emailaddress1 = "charlie@example.com" }
+                @{ firstname = "Diana"; lastname = "Brown"; emailaddress1 = "diana@example.com" }
+                @{ firstname = "Eve"; lastname = "Davis"; emailaddress1 = "eve@example.com" }
+            )
+            
+            $results = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            
+            # Verify count matches input exactly
+            $results | Should -HaveCount 5
+            
+            # Verify each result has unique Id
+            $uniqueIds = $results | Select-Object -ExpandProperty Id -Unique
+            $uniqueIds | Should -HaveCount 5
+            
+            # Verify we can match each input to exactly one output
+            $results | Where-Object { $_.firstname -eq "Alice" -and $_.lastname -eq "Smith" } | Should -HaveCount 1
+            $results | Where-Object { $_.firstname -eq "Bob" -and $_.lastname -eq "Johnson" } | Should -HaveCount 1
+            $results | Where-Object { $_.firstname -eq "Charlie" -and $_.lastname -eq "Williams" } | Should -HaveCount 1
+            $results | Where-Object { $_.firstname -eq "Diana" -and $_.lastname -eq "Brown" } | Should -HaveCount 1
+            $results | Where-Object { $_.firstname -eq "Eve" -and $_.lastname -eq "Davis" } | Should -HaveCount 1
+            
+            # Verify all results are valid records
+            $results | ForEach-Object {
+                $_.Id | Should -BeOfType [Guid]
+                $_.Id | Should -Not -Be ([Guid]::Empty)
+            }
         }
     }
 
@@ -365,7 +399,7 @@ Describe 'Set-DataverseRecord' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             $baseline = @{
                 firstname = "Baseline"
-                lastname = "Base"
+                lastname = "Record"
                 emailaddress1 = "baseline@example.com"
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
@@ -389,7 +423,7 @@ Describe 'Set-DataverseRecord' {
             
             $baselineRecord = $allRecords | Where-Object { $_.Id -eq $baseline.Id }
             $baselineRecord.firstname | Should -Be "Baseline"
-            $baselineRecord.lastname | Should -Be "Base"
+            $baselineRecord.lastname | Should -Be "Record"
             $baselineRecord.emailaddress1 | Should -Be "baseline@example.com"
         }
 
@@ -404,7 +438,7 @@ Describe 'Set-DataverseRecord' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             $baseline = @{
                 firstname = "Baseline"
-                lastname = "Base"
+                lastname = "Record"
                 emailaddress1 = "baseline@example.com"
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
@@ -428,7 +462,7 @@ Describe 'Set-DataverseRecord' {
             
             $baselineRecord = $allRecords | Where-Object { $_.Id -eq $baseline.Id }
             $baselineRecord.firstname | Should -Be "Baseline"
-            $baselineRecord.lastname | Should -Be "Base"
+            $baselineRecord.lastname | Should -Be "Record"
             $baselineRecord.emailaddress1 | Should -Be "baseline@example.com"
         }
     }
@@ -504,9 +538,7 @@ Describe 'Set-DataverseRecord' {
             
             # accountrolecode is a choice field in contact
             $record = @{
-                firstname = "ChoiceTest"
-                lastname = "User"
-                accountrolecode = 2  # Use numeric value
+                accountrolecode = "Employee"
             }
             
             $result = $record | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
@@ -886,6 +918,88 @@ Describe 'Set-DataverseRecord' {
             } | Set-DataverseRecord -Connection $connection -CreateOnly -PassThru
             
             $results | Should -HaveCount 5
+        }
+    }
+
+    Context "Retries" {
+        It "Retries whole batch on ExecuteMultiple failure" {
+            $state = [PSCustomObject]@{ FailCount = 0 }
+            $interceptor = {
+                param($request)
+                if ($request -is [Microsoft.Xrm.Sdk.Messages.ExecuteMultipleRequest]) {
+                    if ($state.FailCount -lt 1) {
+                        $state.FailCount++
+                        throw [Exception]::new("Simulated failure")
+                    }
+                }
+            }.GetNewClosure()
+            $connection = getMockConnection -RequestInterceptor $interceptor
+
+
+            $existingrewcords = Get-DataverseRecord -Connection $connection -TableName contact
+            $existingrewcords.Count | Should -Be 0
+
+            $records = @(
+                @{ firstname = "John1"; lastname = "Doe1" },
+                @{ firstname = "John2"; lastname = "Doe2" }
+            )
+
+            $records | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -Verbose
+
+            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $createdRecords.Count | Should -Be 2
+            $createdRecords | ForEach-Object { $_.firstname | Should -BeIn @("John1", "John2") }
+        }
+
+        It "Retries individual failed items in batch" {
+            $state = [PSCustomObject]@{ FailCount = 0 }
+            $interceptor = {
+                param($request)
+                if ($request -is [Microsoft.Xrm.Sdk.Messages.ExecuteMultipleRequest]) {
+                    if ($state.FailCount -lt 1) {
+                        $state.FailCount++
+                        throw [Exception]::new("Simulated failure")
+                    }
+                }
+            }.GetNewClosure()
+            $connection = getMockConnection -RequestInterceptor $interceptor
+            $records = @(
+                @{ firstname = "John1"; lastname = "Doe1" },
+                @{ firstname = "John2"; lastname = "Doe2" }
+            )
+
+            $records | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -Verbose
+
+            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $createdRecords.Count | Should -Be 2
+            $createdRecords | ForEach-Object { $_.firstname | Should -BeIn @("John1", "John2") }
+        }
+
+        It "Emits errors for all records when batch retries are exceeded" {
+            $state = [PSCustomObject]@{ FailCount = 0 }
+            $interceptor = {
+                param($request)
+                if ($request -is [Microsoft.Xrm.Sdk.Messages.ExecuteMultipleRequest]) {
+                    if ($state.FailCount -lt 3) {
+                        $state.FailCount++
+                        throw [Exception]::new("Simulated failure")
+                    }
+                }
+            }.GetNewClosure()
+            $connection = getMockConnection -RequestInterceptor $interceptor
+            $records = @(
+                @{ firstname = "John1"; lastname = "Doe1" },
+                @{ firstname = "John2"; lastname = "Doe2" }
+            )
+
+            $errors = @()
+            $records | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -ErrorVariable +errors -ErrorAction SilentlyContinue
+
+            $errors.Count | Should -Be 2
+
+            # Verify no records were created
+            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $createdRecords.Count | Should -Be 0
         }
     }
 }

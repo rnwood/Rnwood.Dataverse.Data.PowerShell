@@ -1,3 +1,4 @@
+
 BeforeAll {
 
     if ($env:TESTMODULEPATH) {
@@ -12,10 +13,12 @@ BeforeAll {
     copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Data.PowerShell
     $env:PSModulePath = $tempmodulefolder;
     $env:ChildProcessPSModulePath = $tempmodulefolder
-     
+
+
     $metadata = $null;
 
-    function getMockConnection() {
+    function getMockConnection([ScriptBlock]$RequestInterceptor = $null) {
+       
         if (-not $metadata) {
             if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
                 Import-Module Rnwood.Dataverse.Data.PowerShell
@@ -32,14 +35,19 @@ BeforeAll {
                 $stream.Close();
             }
         }
-
-        get-dataverseconnection -url https://fake.crm.dynamics.com/ -mock $metadata
+       
+        $mockService = get-dataverseconnection -url https://fake.crm.dynamics.com/ -mock $metadata -RequestInterceptor $RequestInterceptor
+        return $mockService
+    
+        return $service
     }
+
 
     function newPwsh([scriptblock] $scriptblock) {
         if ([System.Environment]::OSVersion.Platform -eq "Unix") {
             pwsh -noninteractive -noprofile -command $scriptblock
-        } else {
+        }
+        else {
             cmd /c pwsh -noninteractive -noprofile -command $scriptblock
         }
     }
@@ -49,6 +57,6 @@ BeforeAll {
             Remove-Module Rnwood.Dataverse.Data.PowerShell
         }
     }
-}
 
+}
 

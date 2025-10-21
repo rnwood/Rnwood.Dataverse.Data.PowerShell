@@ -15,12 +15,27 @@ Deletes an existing Dataverse record, including M:M association records.
 ```
 Remove-DataverseRecord [-InputObject <PSObject>] -TableName <String> -Id <Guid> [-BatchSize <UInt32>]
  [-IfExists] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
- [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-Retries <Int32>] [-InitialRetryDelay <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 The `TableName` and `Id` can be read from the pipeline when piping in a record obtained from `get-dataverserecord` instead of being specified separately. This allows you to delete a stream of records from the pipeline.
+
+**Batch Operations:**
+
+When multiple records are deleted, batching is automatically used to improve performance. The batch continues on error and any errors are reported once the batch has completed. Each error includes the input record for correlation.
+
+**Retry Logic:**
+
+Individual batch items can be automatically retried on failure using exponential backoff:
+- Use `-Retries` parameter to specify the number of retry attempts (default is 0 - no retries)
+- Use `-InitialRetryDelay` to set the initial delay in seconds before the first retry (default is 5s)
+- Each subsequent retry doubles the delay time (exponential backoff)
+- Records are added to the next batch after the delay period has elapsed
+- If only retries are pending at the end of processing, the cmdlet will wait for the appropriate delay before retrying
+- After all retries are exhausted, failures are written as errors as usual
+- Retries are particularly useful for transient errors like throttling or temporary connectivity issues
 
 ## EXAMPLES
 
@@ -108,6 +123,24 @@ PS C:\> $intersectRecord | Remove-DataverseRecord -Connection $c
 ```
 
 Removes a many-to-many association by deleting the corresponding record from the intersect table. This disassociates the two related entities without affecting the entities themselves.
+
+### Example 7: Using retry logic for transient delete failures
+```powershell
+PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -Filter @{ lastname = "TestUser" }
+
+PS C:\> # Retry each failed delete up to 3 times with exponential backoff
+PS C:\> $recordsToDelete | Remove-DataverseRecord -Connection $c -Retries 3 -InitialRetryDelay 500 -Verbose
+```
+
+Deletes multiple contacts with automatic retry on transient failures. Failed deletion requests will be retried up to 3 times with delays of 500ms, 1000ms, and 2000ms respectively. The `-Verbose` flag shows retry attempts and wait times.
+
+### Example 8: Custom retry delay for rate limiting
+```powershell
+PS C:\> # Handle rate limiting with longer initial delay
+PS C:\> $largeDataset | Remove-DataverseRecord -Connection $c -Retries 5 -InitialRetryDelay 2000
+```
+
+Deletes a large dataset with automatic retry configured for rate limiting scenarios. Uses 5 retry attempts with an initial 2-second delay, doubling on each retry (2s, 4s, 8s, 16s, 32s).
 
 ## PARAMETERS
 
@@ -278,6 +311,36 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InitialRetryDelay
+Initial delay in seconds before first retry. Subsequent retries use exponential backoff (delay doubles each time). Default is 5s.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 5
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Retries
+Number of times to retry each batch item on failure. Default is 0 (no retries). Each retry uses exponential backoff based on the `-InitialRetryDelay` parameter.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 0
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

@@ -24,8 +24,8 @@ Get-DataverseConnection [-GetDefault] [-SetAsDefault] [-Timeout <UInt32>] [-Prog
 
 ### Return a mock connection
 ```
-Get-DataverseConnection [-SetAsDefault] -Mock <EntityMetadata[]> -Url <Uri> [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] -Mock <EntityMetadata[]> [-RequestInterceptor <ScriptBlock>] -Url <Uri>
+ [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with client secret
@@ -402,6 +402,21 @@ See standard PS documentation.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RequestInterceptor
+ScriptBlock to intercept and modify requests. The ScriptBlock receives the OrganizationRequest and can throw exceptions or return modified responses.
+
+```yaml
+Type: ScriptBlock
+Parameter Sets: Return a mock connection
+Aliases:
 
 Required: False
 Position: Named
