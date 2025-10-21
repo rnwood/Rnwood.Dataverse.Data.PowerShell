@@ -2118,23 +2118,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 
 
-        private void AssociateUpsertGetIdCompletion(OrganizationResponse response, PSObject inputObject)
-        {
-            Guid id = ((RetrieveMultipleResponse)response).EntityCollection.Entities.Single().Id;
-
-            SetOperationContext.SetIdProperty(inputObject, id);
-
-            WriteObject(inputObject);
-        }
-
-        private void UpsertCompletion(Entity targetUpdate, PSObject inputObject, UpsertResponse response)
-        {
-            // Delegate to context method
-            var context = new SetOperationContext(inputObject, TableName, null, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
-            context.Target = targetUpdate;
-            context.UpsertCompletion(targetUpdate, response);
-        }
-
+        
         private void CreateNewRecord(PSObject inputObject, string tableName, Guid? callerId, EntityMetadata entityMetadata, Entity target)
         {
             // Create context for this operation
@@ -2205,40 +2189,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
         }
-
-        private void CreateCompletion(Entity target, PSObject inputObject, Entity targetCreate, string columnSummary, CreateResponse response)
-        {
-            // Delegate to context method
-            var context = new SetOperationContext(inputObject, TableName, null, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
-            context.Target = target;
-            context.CreateCompletion(target, targetCreate, columnSummary, response);
-        }
-
-        private bool AssociateUpsertError(OrganizationServiceFault fault, Entity target, PSObject inputObject, ManyToManyRelationshipMetadata manyToManyRelationshipMetadata, EntityReference record1, EntityReference record2)
-        {
-            // Delegate to context method
-            var context = new SetOperationContext(inputObject, TableName, null, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
-            context.Target = target;
-            return context.AssociateUpsertError(fault, target, manyToManyRelationshipMetadata, record1, record2);
-        }
-
-        private void AssociateUpsertCompletion(bool recordWasCreated, Entity target, PSObject inputObject, ManyToManyRelationshipMetadata manyToManyRelationshipMetadata, EntityReference record1, EntityReference record2)
-        {
-            // Delegate to context method
-            var context = new SetOperationContext(inputObject, TableName, null, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
-            context.Target = target;
-            context.AssociateUpsertCompletion(recordWasCreated, target, manyToManyRelationshipMetadata, record1, record2);
-        }
-
-        private void AssociateCompletion(Entity target, PSObject inputObject, ManyToManyRelationshipMetadata manyToManyRelationshipMetadata, EntityReference record1, EntityReference record2)
-        {
-            // Delegate to context method
-            var context = new SetOperationContext(inputObject, TableName, null, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
-            context.Target = target;
-            context.AssociateCompletion(target, manyToManyRelationshipMetadata, record1, record2);
-        }
-
-
 
         private void UpdateExistingRecord(PSObject inputObject, string tableName, Guid? callerId, EntityMetadata entityMetadata, Entity target, Entity existingRecord)
         {
