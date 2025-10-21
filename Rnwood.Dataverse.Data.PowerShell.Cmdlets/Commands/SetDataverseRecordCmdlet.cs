@@ -443,6 +443,117 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return existingRecord;
         }
 
+        /// <summary>
+        /// Completion handler for create operations.
+        /// </summary>
+        public void CreateCompletion(Entity target, Entity targetCreate, string columnSummary, CreateResponse response)
+        {
+            SetIdProperty(InputObject, response.id);
+            _writeVerbose(string.Format("Created new record {0}:{1} columns:\n{2}", target.LogicalName, response.id, columnSummary));
+
+            if (PassThru)
+            {
+                _writeObject(InputObject);
+            }
+        }
+
+        /// <summary>
+        /// Completion handler for update operations.
+        /// </summary>
+        public void UpdateCompletion(Entity target, Entity existingRecord, string updatedColumnSummary)
+        {
+            _writeVerbose(string.Format("Updated existing record {0}:{1} columns:\n{2}", target.LogicalName, existingRecord.Id, updatedColumnSummary));
+
+            if (PassThru)
+            {
+                _writeObject(InputObject);
+            }
+        }
+
+        /// <summary>
+        /// Completion handler for upsert operations.
+        /// </summary>
+        public void UpsertCompletion(Entity targetUpdate, UpsertResponse response)
+        {
+            targetUpdate.Id = response.Target.Id;
+
+            SetIdProperty(InputObject, targetUpdate.Id);
+
+            string columnSummary = GetColumnSummary(targetUpdate, EntityConverter);
+
+            if (response.RecordCreated)
+            {
+                _writeVerbose(string.Format("Upsert created new record {0}:{1} columns:\n{2}", TableName, GetKeySummary(targetUpdate), columnSummary));
+            }
+            else
+            {
+                _writeVerbose(string.Format("Upsert updated existing record {0}:{1} columns:\n{2}", TableName, GetKeySummary(targetUpdate), columnSummary));
+            }
+
+            if (PassThru)
+            {
+                _writeObject(InputObject);
+            }
+        }
+
+        /// <summary>
+        /// Completion handler for M:M association operations.
+        /// </summary>
+        public void AssociateCompletion(Entity target, ManyToManyRelationshipMetadata manyToManyRelationshipMetadata, EntityReference record1, EntityReference record2)
+        {
+            QueryExpression getIdQuery = new QueryExpression(TableName);
+            getIdQuery.Criteria.AddCondition(manyToManyRelationshipMetadata.Entity1IntersectAttribute, ConditionOperator.Equal, record1.Id);
+            getIdQuery.Criteria.AddCondition(manyToManyRelationshipMetadata.Entity2IntersectAttribute, ConditionOperator.Equal, record2.Id);
+            Guid id = Connection.RetrieveMultiple(getIdQuery).Entities.Single().Id;
+
+            SetIdProperty(InputObject, id);
+            _writeVerbose(string.Format("Created new intersect record {0}:{1}", target.LogicalName, id));
+
+            if (PassThru)
+            {
+                _writeObject(InputObject);
+            }
+        }
+
+        /// <summary>
+        /// Completion handler for M:M association with upsert semantics.
+        /// </summary>
+        public void AssociateUpsertCompletion(bool recordWasCreated, Entity target, ManyToManyRelationshipMetadata manyToManyRelationshipMetadata, EntityReference record1, EntityReference record2)
+        {
+            if (recordWasCreated)
+            {
+                _writeVerbose(string.Format("Created intersect record {0}:{1}:{2}", target.LogicalName, record1.Id, record2.Id));
+            }
+            else
+            {
+                _writeVerbose(string.Format("Skipped creating (upsert) intersect record as already exists {0}:{1}:{2}", target.LogicalName, record1.Id, record2.Id));
+            }
+        }
+
+        /// <summary>
+        /// Error handler for M:M association with upsert semantics.
+        /// Returns true if the error was handled (record already exists).
+        /// </summary>
+        public bool AssociateUpsertError(OrganizationServiceFault fault, Entity target, ManyToManyRelationshipMetadata manyToManyRelationshipMetadata, EntityReference record1, EntityReference record2)
+        {
+            if (fault.ErrorCode != -2147220937)
+            {
+                return false;
+            }
+
+            AssociateUpsertCompletion(false, target, manyToManyRelationshipMetadata, record1, record2);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Completion handler for getting the ID of a newly associated record.
+        /// </summary>
+        public void AssociateUpsertGetIdCompletion(OrganizationResponse response)
+        {
+            SetIdProperty(InputObject, ((UpsertResponse)response).Target.Id);
+        }
+
         public override string ToString()
         {
             return $"Set {TableName}:{Id}";
@@ -1481,25 +1592,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void UpsertCompletion(Entity targetUpdate, PSObject inputObject, UpsertResponse response)
         {
-            targetUpdate.Id = response.Target.Id;
-
-            SetOperationContext.SetIdProperty(inputObject, targetUpdate.Id);
-
-            string columnSummary = SetOperationContext.GetColumnSummary(targetUpdate, entityConverter);
-
-            if (response.RecordCreated)
-            {
-                WriteVerbose(string.Format("Upsert created new record {0}:{1} columns:\n{2}", TableName, SetOperationContext.GetKeySummary(targetUpdate), columnSummary));
-            }
-            else
-            {
-                WriteVerbose(string.Format("Upsert updated existing record {0}:{1} columns:\n{2}", TableName, SetOperationContext.GetKeySummary(targetUpdate), columnSummary));
-            }
-
-            if (PassThru.IsPresent)
-            {
-                WriteObject(inputObject);
-            }
+            // Delegate to context method
+            var context = new SetOperationContext(inputObject, TableName, null, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
+            context.Target = targetUpdate;
+            context.UpsertCompletion(targetUpdate, response);
         }
 
         private void CreateNewRecord(PSObject inputObject, string tableName, Guid? callerId, EntityMetadata entityMetadata, Entity target)
@@ -1624,53 +1720,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void CreateCompletion(Entity target, PSObject inputObject, Entity targetCreate, string columnSummary, CreateResponse response)
         {
-            SetOperationContext.SetIdProperty(inputObject, response.id);
-            WriteVerbose(string.Format("Created new record {0}:{1} columns:\n{2}", target.LogicalName, response.id, columnSummary));
-
-            if (PassThru.IsPresent)
-            {
-                WriteObject(inputObject);
-            }
+            // Delegate to context method
+            var context = new SetOperationContext(inputObject, TableName, null, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
+            context.Target = target;
+            context.CreateCompletion(target, targetCreate, columnSummary, response);
         }
 
         private bool AssociateUpsertError(OrganizationServiceFault fault, Entity target, PSObject inputObject, ManyToManyRelationshipMetadata manyToManyRelationshipMetadata, EntityReference record1, EntityReference record2)
         {
-            if (fault.ErrorCode != -2147220937)
-            {
-                return false;
-            }
-
-            AssociateUpsertCompletion(false, target, inputObject, manyToManyRelationshipMetadata, record1, record2);
-
-            return true;
+            // Delegate to context method
+            var context = new SetOperationContext(inputObject, TableName, null, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
+            context.Target = target;
+            return context.AssociateUpsertError(fault, target, manyToManyRelationshipMetadata, record1, record2);
         }
 
         private void AssociateUpsertCompletion(bool recordWasCreated, Entity target, PSObject inputObject, ManyToManyRelationshipMetadata manyToManyRelationshipMetadata, EntityReference record1, EntityReference record2)
         {
-            if (recordWasCreated)
-            {
-                WriteVerbose(string.Format("Created intersect record {0}:{1}:{2}", target.LogicalName, record1.Id, record2.Id));
-            }
-            else
-            {
-                WriteVerbose(string.Format("Skipped creating (upsert) intersect record as already exists {0}:{1}:{2}", target.LogicalName, record1.Id, record2.Id));
-            }
+            // Delegate to context method
+            var context = new SetOperationContext(inputObject, TableName, null, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
+            context.Target = target;
+            context.AssociateUpsertCompletion(recordWasCreated, target, manyToManyRelationshipMetadata, record1, record2);
         }
 
         private void AssociateCompletion(Entity target, PSObject inputObject, ManyToManyRelationshipMetadata manyToManyRelationshipMetadata, EntityReference record1, EntityReference record2)
         {
-            QueryExpression getIdQuery = new QueryExpression(TableName);
-            getIdQuery.Criteria.AddCondition(manyToManyRelationshipMetadata.Entity1IntersectAttribute, ConditionOperator.Equal, record1.Id);
-            getIdQuery.Criteria.AddCondition(manyToManyRelationshipMetadata.Entity2IntersectAttribute, ConditionOperator.Equal, record2.Id);
-            Guid id = Connection.RetrieveMultiple(getIdQuery).Entities.Single().Id;
-
-            SetOperationContext.SetIdProperty(inputObject, id);
-            WriteVerbose(string.Format("Created new intersect record {0}:{1}", target.LogicalName, id));
-
-            if (PassThru.IsPresent)
-            {
-                WriteObject(inputObject);
-            }
+            // Delegate to context method
+            var context = new SetOperationContext(inputObject, TableName, null, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
+            context.Target = target;
+            context.AssociateCompletion(target, manyToManyRelationshipMetadata, record1, record2);
         }
 
 
@@ -1750,12 +1827,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void UpdateCompletion(Entity target, PSObject inputObject, Entity existingRecord, string updatedColumnSummary)
         {
-            WriteVerbose(string.Format("Updated existing record {0}:{1} columns:\n{2}", target.LogicalName, existingRecord.Id, updatedColumnSummary));
-
-            if (PassThru.IsPresent)
-            {
-                WriteObject(inputObject);
-            }
+            // Delegate to context method
+            var context = new SetOperationContext(inputObject, TableName, null, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
+            context.Target = target;
+            context.ExistingRecord = existingRecord;
+            context.UpdateCompletion(target, existingRecord, updatedColumnSummary);
         }
 
 
