@@ -1800,10 +1800,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private void AppendFaultDetails(OrganizationServiceFault fault, StringBuilder output)
-        {
-            SetBatchProcessor.AppendFaultDetails(fault, output);
-        }
 
 
 
