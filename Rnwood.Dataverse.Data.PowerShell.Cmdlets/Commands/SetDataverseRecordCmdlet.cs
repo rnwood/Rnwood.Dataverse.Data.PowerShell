@@ -16,10 +16,438 @@ using System.Threading;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
+    /// <summary>
+    /// Interface defining parameters for set operations that can be shared between cmdlet and operation context.
+    /// </summary>
+    internal interface ISetOperationParameters
+    {
+        /// <summary>
+        /// Gets the business logic types to bypass.
+        /// </summary>
+        CustomLogicBypassableOrganizationServiceCmdlet.BusinessLogicTypes[] BypassBusinessLogicExecution { get; }
+
+        /// <summary>
+        /// Gets the business logic execution step IDs to bypass.
+        /// </summary>
+        Guid[] BypassBusinessLogicExecutionStepIds { get; }
+
+        /// <summary>
+        /// Gets the number of retries for failed operations.
+        /// </summary>
+        int Retries { get; }
+
+        /// <summary>
+        /// Gets the initial retry delay in seconds.
+        /// </summary>
+        int InitialRetryDelay { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether to skip updating existing records.
+        /// </summary>
+        bool NoUpdate { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether to skip creating new records.
+        /// </summary>
+        bool NoCreate { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether to use create-only mode.
+        /// </summary>
+        bool CreateOnly { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether to use upsert mode.
+        /// </summary>
+        bool Upsert { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether to pass through the input object with Id set.
+        /// </summary>
+        bool PassThru { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether to update all columns without comparison.
+        /// </summary>
+        bool UpdateAllColumns { get; }
+
+        /// <summary>
+        /// Gets the list of columns that should not be updated.
+        /// </summary>
+        string[] NoUpdateColumns { get; }
+
+        /// <summary>
+        /// Gets the match-on column lists for finding existing records.
+        /// </summary>
+        string[][] MatchOn { get; }
+
+        /// <summary>
+        /// Gets the ID of the record.
+        /// </summary>
+        Guid Id { get; }
+    }
+
+    /// <summary>
+    /// Handles the complete lifecycle of a set operation for a single record, including
+    /// request creation, execution, error handling, and retry logic.
+    /// </summary>
+    internal class SetOperationContext : ISetOperationParameters
+    {
+        private readonly Action<string> _writeVerbose;
+        private readonly Action<ErrorRecord> _writeError;
+        private readonly Action<object> _writeObject;
+        private readonly Func<string, bool> _shouldProcess;
+
+        public SetOperationContext(
+            PSObject inputObject,
+            string tableName,
+            Guid? callerId,
+            ISetOperationParameters parameters,
+            EntityMetadataFactory metadataFactory,
+            DataverseEntityConverter entityConverter,
+            IOrganizationService connection,
+            ConvertToDataverseEntityOptions conversionOptions,
+            Action<string> writeVerbose,
+            Action<ErrorRecord> writeError,
+            Action<object> writeObject,
+            Func<string, bool> shouldProcess)
+        {
+            InputObject = inputObject;
+            TableName = tableName;
+            CallerId = callerId;
+            BypassBusinessLogicExecution = parameters.BypassBusinessLogicExecution;
+            BypassBusinessLogicExecutionStepIds = parameters.BypassBusinessLogicExecutionStepIds;
+            NoUpdate = parameters.NoUpdate;
+            NoCreate = parameters.NoCreate;
+            CreateOnly = parameters.CreateOnly;
+            Upsert = parameters.Upsert;
+            PassThru = parameters.PassThru;
+            UpdateAllColumns = parameters.UpdateAllColumns;
+            NoUpdateColumns = parameters.NoUpdateColumns;
+            MatchOn = parameters.MatchOn;
+            Id = parameters.Id;
+            Retries = parameters.Retries;
+            InitialRetryDelay = parameters.InitialRetryDelay;
+            RetriesRemaining = parameters.Retries;
+            NextRetryTime = DateTime.MinValue;
+            MetadataFactory = metadataFactory;
+            EntityConverter = entityConverter;
+            Connection = connection;
+            ConversionOptions = conversionOptions;
+            _writeVerbose = writeVerbose;
+            _writeError = writeError;
+            _writeObject = writeObject;
+            _shouldProcess = shouldProcess;
+            Requests = new List<OrganizationRequest>();
+        }
+
+        public PSObject InputObject { get; }
+        public string TableName { get; }
+        public Guid? CallerId { get; }
+        public CustomLogicBypassableOrganizationServiceCmdlet.BusinessLogicTypes[] BypassBusinessLogicExecution { get; }
+        public Guid[] BypassBusinessLogicExecutionStepIds { get; }
+        public bool NoUpdate { get; }
+        public bool NoCreate { get; }
+        public bool CreateOnly { get; }
+        public bool Upsert { get; }
+        public bool PassThru { get; }
+        public bool UpdateAllColumns { get; }
+        public string[] NoUpdateColumns { get; }
+        public string[][] MatchOn { get; }
+        public Guid Id { get; }
+        public int Retries { get; }
+        public int InitialRetryDelay { get; }
+        public int RetriesRemaining { get; set; }
+        public DateTime NextRetryTime { get; set; }
+        public List<OrganizationRequest> Requests { get; set; }
+        public EntityMetadataFactory MetadataFactory { get; }
+        public DataverseEntityConverter EntityConverter { get; }
+        public IOrganizationService Connection { get; }
+        public ConvertToDataverseEntityOptions ConversionOptions { get; }
+        public Entity Target { get; set; }
+        public EntityMetadata EntityMetadata { get; set; }
+        public Entity ExistingRecord { get; set; }
+
+        /// <summary>
+        /// Schedules this operation for retry after a failure.
+        /// </summary>
+        public void ScheduleRetry(Exception e)
+        {
+            // Schedule for retry with exponential backoff
+            int attemptNumber = Retries - RetriesRemaining + 1;
+            int delayS = InitialRetryDelay * (int)Math.Pow(2, attemptNumber - 1);
+            NextRetryTime = DateTime.UtcNow.AddSeconds(delayS);
+            RetriesRemaining--;
+
+            _writeVerbose($"Request failed, will retry in {delayS}s (attempt {attemptNumber} of {Retries + 1}): {this}\n{e}");
+        }
+
+        /// <summary>
+        /// Reports an error for this operation.
+        /// </summary>
+        public void ReportError(Exception e)
+        {
+            _writeError(new ErrorRecord(e, null, ErrorCategory.InvalidResult, InputObject));
+        }
+
+        public override string ToString()
+        {
+            return $"Set {TableName}:{Id}";
+        }
+    }
+
+    /// <summary>
+    /// Manages batching and retry logic for set operations.
+    /// </summary>
+    internal class SetBatchProcessor
+    {
+        private readonly List<SetOperationContext> _nextBatchItems;
+        private readonly List<SetOperationContext> _pendingRetries;
+        private readonly uint _batchSize;
+        private readonly IOrganizationService _connection;
+        private readonly Action<string> _writeVerbose;
+        private readonly Func<string, bool> _shouldProcess;
+        private readonly Func<bool> _isStopping;
+        private readonly CancellationToken _cancellationToken;
+        private readonly Action<Guid?> _setCallerId;
+        private readonly Func<Guid> _getCallerId;
+        private Guid? _nextBatchCallerId;
+
+        public SetBatchProcessor(
+            uint batchSize,
+            IOrganizationService connection,
+            Action<string> writeVerbose,
+            Func<string, bool> shouldProcess,
+            Func<bool> isStopping,
+            CancellationToken cancellationToken,
+            Action<Guid?> setCallerId,
+            Func<Guid> getCallerId)
+        {
+            _batchSize = batchSize;
+            _connection = connection;
+            _writeVerbose = writeVerbose;
+            _shouldProcess = shouldProcess;
+            _isStopping = isStopping;
+            _cancellationToken = cancellationToken;
+            _setCallerId = setCallerId;
+            _getCallerId = getCallerId;
+            _nextBatchItems = new List<SetOperationContext>();
+            _pendingRetries = new List<SetOperationContext>();
+        }
+
+        /// <summary>
+        /// Adds an operation to the batch, executing the batch if it reaches the batch size or caller ID changes.
+        /// </summary>
+        public void QueueOperation(SetOperationContext context)
+        {
+            if (_nextBatchItems.Any() && _nextBatchCallerId != context.CallerId)
+            {
+                ExecuteBatch();
+            }
+
+            _nextBatchCallerId = context.CallerId;
+            _nextBatchItems.Add(context);
+
+            if (_nextBatchItems.Count >= _batchSize)
+            {
+                ExecuteBatch();
+            }
+        }
+
+        /// <summary>
+        /// Executes any remaining operations in the batch.
+        /// </summary>
+        public void Flush()
+        {
+            if (_nextBatchItems.Count > 0)
+            {
+                ExecuteBatch();
+            }
+        }
+
+        /// <summary>
+        /// Processes all pending retries.
+        /// </summary>
+        public void ProcessRetries()
+        {
+            while (!_isStopping() && !_cancellationToken.IsCancellationRequested && _pendingRetries.Count > 0)
+            {
+                DateTime now = DateTime.UtcNow;
+                var readyForRetry = _pendingRetries.Where(r => r.NextRetryTime <= now).ToList();
+
+                if (readyForRetry.Count == 0)
+                {
+                    // Calculate wait time for next retry
+                    var nextRetryTime = _pendingRetries.Min(r => r.NextRetryTime);
+                    var waitTimeMs = (int)Math.Max(100, (nextRetryTime - now).TotalMilliseconds);
+
+                    _writeVerbose($"Waiting {waitTimeMs / 1000.0:F1}s for next retry batch...");
+                    Thread.Sleep(waitTimeMs);
+
+                    continue;
+                }
+
+                // Remove from pending and add to batch for retry
+                foreach (var item in readyForRetry)
+                {
+                    _pendingRetries.Remove(item);
+                    _nextBatchItems.Add(item);
+
+                    if (_nextBatchItems.Count >= _batchSize)
+                    {
+                        ExecuteBatch();
+                    }
+                }
+
+                // Process any remaining items in batch
+                if (_nextBatchItems.Count > 0)
+                {
+                    ExecuteBatch();
+                }
+            }
+        }
+
+        private void ExecuteBatch()
+        {
+            if (_nextBatchItems.Count == 0)
+            {
+                return;
+            }
+
+            if (!_shouldProcess("Execute batch of requests:\n" + string.Join("\n", _nextBatchItems.Select(r => r.ToString()))))
+            {
+                _nextBatchItems.Clear();
+                return;
+            }
+
+            ExecuteMultipleRequest batchRequest = new ExecuteMultipleRequest()
+            {
+                Settings = new ExecuteMultipleSettings()
+                {
+                    ReturnResponses = true,
+                    ContinueOnError = true
+                },
+                Requests = new OrganizationRequestCollection(),
+                RequestId = Guid.NewGuid()
+            };
+
+            // Apply bypass logic from first item (they should all be the same within a batch)
+            if (_nextBatchItems.Count > 0)
+            {
+                var firstContext = _nextBatchItems[0];
+                if (firstContext.BypassBusinessLogicExecution?.Length > 0)
+                {
+                    batchRequest.Parameters["BypassBusinessLogicExecution"] = string.Join(",", firstContext.BypassBusinessLogicExecution.Select(o => o.ToString()));
+                }
+                if (firstContext.BypassBusinessLogicExecutionStepIds?.Length > 0)
+                {
+                    batchRequest.Parameters["BypassBusinessLogicExecutionStepIds"] = string.Join(",", firstContext.BypassBusinessLogicExecutionStepIds.Select(id => id.ToString()));
+                }
+            }
+
+            // Add all requests from all contexts to the batch
+            foreach (var context in _nextBatchItems)
+            {
+                batchRequest.Requests.AddRange(context.Requests);
+            }
+
+            Guid oldCallerId = _getCallerId();
+            _setCallerId(_nextBatchCallerId);
+
+            ExecuteMultipleResponse response = null;
+
+            try
+            {
+                response = (ExecuteMultipleResponse)_connection.Execute(batchRequest);
+            }
+            catch (Exception e)
+            {
+                foreach (var context in _nextBatchItems)
+                {
+                    if (context.RetriesRemaining > 0)
+                    {
+                        context.ScheduleRetry(e);
+                        _pendingRetries.Add(context);
+                    }
+                    else
+                    {
+                        context.ReportError(e);
+                    }
+                }
+
+                _nextBatchItems.Clear();
+                return;
+            }
+            finally
+            {
+                _setCallerId(oldCallerId);
+            }
+
+            // Process responses - note that we need to map back to contexts
+            // Since each context may have multiple requests, we need to track which requests belong to which context
+            int requestIndex = 0;
+            foreach (var context in _nextBatchItems)
+            {
+                bool hasError = false;
+                Exception firstError = null;
+
+                // Process all requests for this context
+                for (int i = 0; i < context.Requests.Count; i++)
+                {
+                    if (requestIndex < response.Responses.Count)
+                    {
+                        var itemResponse = response.Responses[requestIndex];
+                        
+                        if (itemResponse.Fault != null)
+                        {
+                            // Build fault details for failed request
+                            StringBuilder details = new StringBuilder();
+                            AppendFaultDetails(itemResponse.Fault, details);
+                            if (firstError == null)
+                            {
+                                firstError = new Exception(details.ToString());
+                            }
+                            hasError = true;
+                        }
+                    }
+                    requestIndex++;
+                }
+
+                if (hasError)
+                {
+                    if (context.RetriesRemaining > 0)
+                    {
+                        context.ScheduleRetry(firstError);
+                        _pendingRetries.Add(context);
+                    }
+                    else
+                    {
+                        context.ReportError(firstError);
+                    }
+                }
+                // Success handling would go here
+            }
+
+            _nextBatchItems.Clear();
+        }
+
+        private void AppendFaultDetails(OrganizationServiceFault fault, StringBuilder output)
+        {
+            output.AppendLine("OrganizationServiceFault " + fault.ErrorCode + ": " + fault.Message);
+            output.AppendLine(fault.TraceText);
+
+            if (fault.InnerFault != null)
+            {
+                output.AppendLine("---");
+                AppendFaultDetails(fault.InnerFault, output);
+            }
+        }
+    }
+
     /// <summary>Creates or updates records in a Dataverse environment. If a matching record is found then it will be updated, otherwise a new record is created (some options can override this).
     /// This command can also handle creation/update of intersect records (many to many relationships).</summary>
     [Cmdlet(VerbsCommon.Set, "DataverseRecord", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
-    public class SetDataverseRecordCmdlet : CustomLogicBypassableOrganizationServiceCmdlet
+    public class SetDataverseRecordCmdlet : CustomLogicBypassableOrganizationServiceCmdlet, ISetOperationParameters
     {
         /// <summary>
         /// Object containing values to be used. Property names must match the logical names of Dataverse columns in the specified table and the property values are used to set the values of the Dataverse record being created/updated. The properties may include ownerid, statecode and statuscode which will assign and change the record state/status.
@@ -137,6 +565,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(HelpMessage = "Initial delay in seconds before first retry. Subsequent retries use exponential backoff. Default is 5s.")]
         public int InitialRetryDelay { get; set; } = 5;
+
+        // Explicit interface implementations for ISetOperationParameters
+        bool ISetOperationParameters.NoUpdate => NoUpdate.IsPresent;
+        bool ISetOperationParameters.NoCreate => NoCreate.IsPresent;
+        bool ISetOperationParameters.CreateOnly => CreateOnly.IsPresent;
+        bool ISetOperationParameters.Upsert => Upsert.IsPresent;
+        bool ISetOperationParameters.PassThru => PassThru.IsPresent;
+        bool ISetOperationParameters.UpdateAllColumns => UpdateAllColumns.IsPresent;
+        CustomLogicBypassableOrganizationServiceCmdlet.BusinessLogicTypes[] ISetOperationParameters.BypassBusinessLogicExecution => BypassBusinessLogicExecution;
+        Guid[] ISetOperationParameters.BypassBusinessLogicExecutionStepIds => BypassBusinessLogicExecutionStepIds;
+        int ISetOperationParameters.Retries => Retries;
+        int ISetOperationParameters.InitialRetryDelay => InitialRetryDelay;
+        string[] ISetOperationParameters.NoUpdateColumns => NoUpdateColumns;
+        string[][] ISetOperationParameters.MatchOn => MatchOn;
+        Guid ISetOperationParameters.Id => Id;
 
         // Track records that need to be retried with full processing
         private class RetryRecord
