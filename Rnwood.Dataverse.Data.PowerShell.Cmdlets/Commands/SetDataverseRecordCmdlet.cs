@@ -190,6 +190,64 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _writeError(new ErrorRecord(e, null, ErrorCategory.InvalidResult, InputObject));
         }
 
+        /// <summary>
+        /// Gets a summary of the key for an entity (ID or alternate keys).
+        /// </summary>
+        public static string GetKeySummary(Entity record)
+        {
+            if (record.Id != Guid.Empty)
+            {
+                return record.Id.ToString();
+            }
+
+            if (record.KeyAttributes.Any())
+            {
+                return string.Join(",", record.KeyAttributes.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+            }
+
+            return "<No ID>";
+        }
+
+        /// <summary>
+        /// Truncates a string value to 100 characters with ellipsis.
+        /// </summary>
+        public static string Ellipsis(string value)
+        {
+            if (value == null)
+            {
+                return null;
+            }
+
+            if (value.Length <= 100)
+            {
+                return value;
+            }
+
+            return value.Substring(0, 100) + "...";
+        }
+
+        /// <summary>
+        /// Gets a summary of values, handling collections.
+        /// </summary>
+        public static object GetValueSummary(object value)
+        {
+            if ((!(value is string)) && value is IEnumerable enumerable)
+            {
+                return "[" + string.Join(", ", enumerable.Cast<object>().Select(i => GetValueSummary(i))) + "]";
+            }
+
+            return value ?? "<null>";
+        }
+
+        /// <summary>
+        /// Gets a formatted summary of all columns in an entity.
+        /// </summary>
+        public static string GetColumnSummary(Entity entity, DataverseEntityConverter converter)
+        {
+            PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(entity.Attributes.Select(a => a.Key).ToArray()), a => ValueType.Raw);
+            return string.Join("\n", psObject.Properties.Select(a => a.Name + " = " + Ellipsis((GetValueSummary(a.Value)).ToString())));
+        }
+
         public override string ToString()
         {
             return $"Set {TableName}:{Id}";
@@ -1160,7 +1218,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 targetUpdate.Attributes.AddRange(target.Attributes.Where(a => !dontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
 
-                string columnSummary = GetColumnSummary(targetUpdate);
+                string columnSummary = SetOperationContext.GetColumnSummary(targetUpdate, entityConverter);
 
                 UpsertRequest request = new UpsertRequest()
                 {
@@ -1169,7 +1227,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (_nextBatchItems != null)
                 {
-                    WriteVerbose(string.Format("Added upsert of new record {0}:{1} to batch - columns:\n{2}", TableName, GetKeySummary(targetUpdate), columnSummary));
+                    WriteVerbose(string.Format("Added upsert of new record {0}:{1} to batch - columns:\n{2}", TableName, SetOperationContext.GetKeySummary(targetUpdate), columnSummary));
                     QueueBatchItem(new BatchItem(inputObject, tableName, callerId, request, (response) => { UpsertCompletion(targetUpdate, inputObject, (UpsertResponse)response); }), CallerId);
                 }
                 else
@@ -1179,7 +1237,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         targetUpdate.Id = Guid.NewGuid();
                     }
 
-                    if (ShouldProcess(string.Format("Upsert record {0}:{1} columns:\n{2}", TableName, GetKeySummary(targetUpdate), columnSummary)))
+                    if (ShouldProcess(string.Format("Upsert record {0}:{1} columns:\n{2}", TableName, SetOperationContext.GetKeySummary(targetUpdate), columnSummary)))
                     {
                         try
                         {
@@ -1189,7 +1247,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         catch (Exception e)
                         {
                             result = false;
-                            WriteError(new ErrorRecord(new Exception(string.Format("Error creating record {0}:{1} {2}, columns: {3}", TableName, GetKeySummary(targetUpdate), e.Message, columnSummary), e), null, ErrorCategory.InvalidResult, inputObject));
+                            WriteError(new ErrorRecord(new Exception(string.Format("Error creating record {0}:{1} {2}, columns: {3}", TableName, SetOperationContext.GetKeySummary(targetUpdate), e.Message, columnSummary), e), null, ErrorCategory.InvalidResult, inputObject));
                         }
                     }
                 }
@@ -1198,20 +1256,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return result;
         }
 
-        private static string GetKeySummary(Entity record)
-        {
-            if (record.Id != Guid.Empty)
-            {
-                return record.Id.ToString();
-            }
 
-            if (record.KeyAttributes.Any())
-            {
-                return string.Join(",", record.KeyAttributes.Select(kvp => $"{kvp.Key}={kvp.Value}"));
-            }
-
-            return "<No ID>";
-        }
 
         private void AssociateUpsertGetIdCompletion(OrganizationResponse response, PSObject inputObject)
         {
@@ -1237,15 +1282,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             inputObject.Properties.Add(new PSNoteProperty("Id", targetUpdate.Id));
 
-            string columnSummary = GetColumnSummary(targetUpdate);
+            string columnSummary = SetOperationContext.GetColumnSummary(targetUpdate, entityConverter);
 
             if (response.RecordCreated)
             {
-                WriteVerbose(string.Format("Upsert created new record {0}:{1} columns:\n{2}", TableName, GetKeySummary(targetUpdate), columnSummary));
+                WriteVerbose(string.Format("Upsert created new record {0}:{1} columns:\n{2}", TableName, SetOperationContext.GetKeySummary(targetUpdate), columnSummary));
             }
             else
             {
-                WriteVerbose(string.Format("Upsert updated existing record {0}:{1} columns:\n{2}", TableName, GetKeySummary(targetUpdate), columnSummary));
+                WriteVerbose(string.Format("Upsert updated existing record {0}:{1} columns:\n{2}", TableName, SetOperationContext.GetKeySummary(targetUpdate), columnSummary));
             }
 
             if (PassThru.IsPresent)
@@ -1327,7 +1372,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 Entity targetCreate = new Entity(target.LogicalName) { Id = target.Id };
                 targetCreate.Attributes.AddRange(target.Attributes.Where(a => !dontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
 
-                string columnSummary = GetColumnSummary(targetCreate);
+                string columnSummary = SetOperationContext.GetColumnSummary(targetCreate, entityConverter);
 
                 CreateRequest request = new CreateRequest()
                 {
@@ -1434,38 +1479,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private string Ellipsis(string value)
-        {
-            if (value == null)
-            {
-                return null;
-            }
 
-            if (value.Length <= 100)
-            {
-                return value;
-            }
-
-            return value.Substring(0, 100) + "...";
-        }
-
-        private string GetColumnSummary(Entity entity)
-        {
-            DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
-            PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(entity.Attributes.Select(a => a.Key).ToArray()), a => ValueType.Raw);
-
-            return string.Join("\n", psObject.Properties.Select(a => a.Name + " = " + Ellipsis((GetValueSummary(a.Value)).ToString())));
-        }
-
-        private static object GetValueSummary(object value)
-        {
-            if ((!(value is string)) && value is IEnumerable enumberable)
-            {
-                return "[" + string.Join(", ", enumberable.Cast<object>().Select(i => GetValueSummary(i))) + "]";
-            }
-
-            return value ?? "<null>";
-        }
 
         private string[] dontUpdateDirectlyColumnNames = new[] { "statuscode", "statecode", "ownerid" };
 
@@ -1512,7 +1526,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 UpdateRequest request = new UpdateRequest() { Target = target };
                 ApplyBypassBusinessLogicExecution(request);
-                string updatedColumnSummary = GetColumnSummary(targetUpdate);
+                string updatedColumnSummary = SetOperationContext.GetColumnSummary(targetUpdate, entityConverter);
 
                 if (_nextBatchItems != null)
                 {
