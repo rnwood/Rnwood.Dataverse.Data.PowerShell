@@ -2068,6 +2068,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (ShouldProcess(request.RequestName))
                 {
+                    Guid oldCallerId = Connection.CallerId;
                     try
                     {
                         if (callerId.HasValue)
@@ -2076,11 +2077,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
 
                         var response = Connection.Execute(request);
-                        
-                        if (callerId.HasValue)
-                        {
-                            Connection.CallerId = Guid.Empty;
-                        }
 
                         // Call completion callback
                         if (context.ResponseCompletion != null)
@@ -2090,12 +2086,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                     catch (Exception e)
                     {
-                        if (callerId.HasValue)
-                        {
-                            Connection.CallerId = Guid.Empty;
-                        }
                         result = false;
                         WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, inputObject));
+                    }
+                    finally
+                    {
+                        Connection.CallerId = oldCallerId;
                     }
                 }
             }
@@ -2145,6 +2141,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var request = context.Requests[0];
                 if (ShouldProcess(request.RequestName))
                 {
+                    Guid oldCallerId = Connection.CallerId;
                     try
                     {
                         if (callerId.HasValue)
@@ -2153,11 +2150,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
 
                         var response = Connection.Execute(request);
-                        
-                        if (callerId.HasValue)
-                        {
-                            Connection.CallerId = Guid.Empty;
-                        }
 
                         // Call completion callback
                         if (context.ResponseCompletion != null)
@@ -2167,11 +2159,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                     catch (Exception e)
                     {
-                        if (callerId.HasValue)
-                        {
-                            Connection.CallerId = Guid.Empty;
-                        }
                         WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, inputObject));
+                    }
+                    finally
+                    {
+                        Connection.CallerId = oldCallerId;
                     }
                 }
             }
@@ -2217,6 +2209,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var request = context.Requests[0];
                 if (ShouldProcess(request.RequestName))
                 {
+                    Guid oldCallerId = Connection.CallerId;
                     try
                     {
                         if (callerId.HasValue)
@@ -2225,11 +2218,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
 
                         var response = Connection.Execute(request);
-                        
-                        if (callerId.HasValue)
-                        {
-                            Connection.CallerId = Guid.Empty;
-                        }
 
                         // Call completion callback
                         if (context.ResponseCompletion != null)
@@ -2239,11 +2227,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                     catch (Exception e)
                     {
-                        if (callerId.HasValue)
-                        {
-                            Connection.CallerId = Guid.Empty;
-                        }
                         WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, inputObject));
+                    }
+                    finally
+                    {
+                        Connection.CallerId = oldCallerId;
                     }
                 }
             }
