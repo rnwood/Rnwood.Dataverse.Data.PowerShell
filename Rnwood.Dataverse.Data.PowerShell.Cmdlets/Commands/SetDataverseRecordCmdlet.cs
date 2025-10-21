@@ -304,6 +304,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
+        /// <summary>
+        /// Sets the Id property on a PSObject, removing any existing Id property first.
+        /// </summary>
+        public static void SetIdProperty(PSObject inputObject, Guid id)
+        {
+            if (inputObject.Properties.Any(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase)))
+            {
+                inputObject.Properties.Remove("Id");
+            }
+            inputObject.Properties.Add(new PSNoteProperty("Id", id));
+        }
+
         public override string ToString()
         {
             return $"Set {TableName}:{Id}";
@@ -1318,11 +1330,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             Guid id = ((RetrieveMultipleResponse)response).EntityCollection.Entities.Single().Id;
 
-            if (inputObject.Properties.Any(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase)))
-            {
-                inputObject.Properties.Remove("Id");
-            }
-            inputObject.Properties.Add(new PSNoteProperty("Id", id));
+            SetOperationContext.SetIdProperty(inputObject, id);
 
             WriteObject(inputObject);
         }
@@ -1331,12 +1339,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             targetUpdate.Id = response.Target.Id;
 
-            if (inputObject.Properties.Any(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase)))
-            {
-                inputObject.Properties.Remove("Id");
-            }
-
-            inputObject.Properties.Add(new PSNoteProperty("Id", targetUpdate.Id));
+            SetOperationContext.SetIdProperty(inputObject, targetUpdate.Id);
 
             string columnSummary = SetOperationContext.GetColumnSummary(targetUpdate, entityConverter);
 
@@ -1477,12 +1480,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void CreateCompletion(Entity target, PSObject inputObject, Entity targetCreate, string columnSummary, CreateResponse response)
         {
-            if (inputObject.Properties.Any(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase)))
-            {
-                inputObject.Properties.Remove("Id");
-            }
-
-            inputObject.Properties.Add(new PSNoteProperty("Id", response.id));
+            SetOperationContext.SetIdProperty(inputObject, response.id);
             WriteVerbose(string.Format("Created new record {0}:{1} columns:\n{2}", target.LogicalName, response.id, columnSummary));
 
             if (PassThru.IsPresent)
@@ -1522,11 +1520,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             getIdQuery.Criteria.AddCondition(manyToManyRelationshipMetadata.Entity2IntersectAttribute, ConditionOperator.Equal, record2.Id);
             Guid id = Connection.RetrieveMultiple(getIdQuery).Entities.Single().Id;
 
-            if (inputObject.Properties.Any(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase)))
-            {
-                inputObject.Properties.Remove("Id");
-            }
-            inputObject.Properties.Add(new PSNoteProperty("Id", id));
+            SetOperationContext.SetIdProperty(inputObject, id);
             WriteVerbose(string.Format("Created new intersect record {0}:{1}", target.LogicalName, id));
 
             if (PassThru.IsPresent)
@@ -1548,11 +1542,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             target.Id = existingRecord.Id;
             target[entityMetadata.PrimaryIdAttribute] = existingRecord[entityMetadata.PrimaryIdAttribute];
 
-            if (inputObject.Properties.Any(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase)))
-            {
-                inputObject.Properties.Remove("Id");
-            }
-            inputObject.Properties.Add(new PSNoteProperty("Id", existingRecord.Id));
+            SetOperationContext.SetIdProperty(inputObject, existingRecord.Id);
 
             SetOperationContext.RemoveUnchangedColumns(target, existingRecord);
 
