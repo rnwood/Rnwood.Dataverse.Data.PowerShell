@@ -280,6 +280,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             target.Id = existingRecord.Id;
         }
 
+        /// <summary>
+        /// Applies bypass business logic execution parameters to a request.
+        /// </summary>
+        public void ApplyBypassBusinessLogicExecution(OrganizationRequest request)
+        {
+            if (BypassBusinessLogicExecution?.Length > 0)
+            {
+                request.Parameters["BypassBusinessLogicExecution"] = string.Join(",", BypassBusinessLogicExecution.Select(o => o.ToString()));
+            }
+            else
+            {
+                request.Parameters.Remove("BypassBusinessLogicExecution");
+            }
+
+            if (BypassBusinessLogicExecutionStepIds?.Length > 0)
+            {
+                request.Parameters["BypassBusinessLogicExecutionStepIds"] = string.Join(",", BypassBusinessLogicExecutionStepIds.Select(id => id.ToString()));
+            }
+            else
+            {
+                request.Parameters.Remove("BypassBusinessLogicExecutionStepIds");
+            }
+        }
+
         public override string ToString()
         {
             return $"Set {TableName}:{Id}";
