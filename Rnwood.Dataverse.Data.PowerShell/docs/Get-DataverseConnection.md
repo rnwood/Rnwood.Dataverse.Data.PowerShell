@@ -70,6 +70,12 @@ Get-DataverseConnection [-SetAsDefault] [-Url <Uri>] [-ManagedIdentity] [-Manage
  [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### Authenticate with access token script block
+```
+Get-DataverseConnection [-SetAsDefault] -Url <Uri> -AccessToken <ScriptBlock> [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ## DESCRIPTION
 
 This cmdlet establishes a connection to a Microsoft Dataverse environment which can then be used with other cmdlets in this module.
@@ -131,6 +137,13 @@ PS C:\> $c = Get-DataverseConnection -Interactive
 ```
 
 Authenticates interactively without specifying a URL. The cmdlet will automatically display a list of available Dataverse environments for the user to select from. This is useful when you have access to multiple environments and don't want to manually specify the URL.
+
+### Example 7
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -AccessToken { "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Im5PbzNaRHJ1VW1sMGhrR2ZaRjBqZWFHWW9XQT..." }
+```
+
+Gets a connection to MYORG using a script block that returns an access token. The script block is called whenever a new access token is needed. This is useful for custom authentication scenarios where you manage token acquisition externally.
 
 ## PARAMETERS
 
@@ -311,21 +324,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -RequestInterceptor
-ScriptBlock to intercept and modify requests. The ScriptBlock receives the OrganizationRequest and can throw exceptions or return modified responses.
-
-```yaml
-Type: ScriptBlock
-Parameter Sets: Return a mock connection
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -SetAsDefault
 When set, this connection will be used as the default for cmdlets that don't have a connection parameter specified.
 
@@ -361,7 +359,7 @@ URL of the Dataverse environment to connect to. For example https://myorg.crm11.
 
 ```yaml
 Type: Uri
-Parameter Sets: Return a mock connection, Authenticate with client secret, Authenticate with Dataverse SDK connection string.
+Parameter Sets: Return a mock connection, Authenticate with client secret, Authenticate with Dataverse SDK connection string., Authenticate with access token script block
 Aliases:
 
 Required: True
@@ -419,6 +417,36 @@ Parameter Sets: (All)
 Aliases: proga
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RequestInterceptor
+ScriptBlock to intercept and modify requests. The ScriptBlock receives the OrganizationRequest and can throw exceptions or return modified responses.
+
+```yaml
+Type: ScriptBlock
+Parameter Sets: Return a mock connection
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AccessToken
+Script block that returns an access token string. Called whenever a new access token is needed.
+
+```yaml
+Type: ScriptBlock
+Parameter Sets: Authenticate with access token script block
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False

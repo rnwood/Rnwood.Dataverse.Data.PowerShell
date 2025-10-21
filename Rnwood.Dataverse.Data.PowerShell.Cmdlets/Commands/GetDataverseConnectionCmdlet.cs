@@ -53,6 +53,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private const string PARAMSET_CONNECTIONSTRING = "Authenticate with Dataverse SDK connection string.";
 		private const string PARAMSET_DEFAULTAZURECREDENTIAL = "Authenticate with DefaultAzureCredential";
 		private const string PARAMSET_MANAGEDIDENTITY = "Authenticate with ManagedIdentityCredential";
+		private const string PARAMSET_ACCESSTOKEN = "Authenticate with access token script block";
 
 		private const string PARAMSET_MOCK = "Return a mock connection";
 		private const string PARAMSET_GETDEFAULT = "Get default connection";
@@ -101,6 +102,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEFAULTAZURECREDENTIAL, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_MOCK, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_ACCESSTOKEN, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
 		public Uri Url { get; set; }
 
 		/// <summary>
@@ -158,6 +160,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// </summary>
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "Client ID of the user-assigned managed identity. If not specified, the system-assigned managed identity will be used.")]
 		public string ManagedIdentityClientId { get; set; }
+
+		/// <summary>
+		/// Gets or sets the script block to provide access tokens.
+		/// </summary>
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_ACCESSTOKEN, HelpMessage = "Script block that returns an access token string. Called whenever a new access token is needed.")]
+		public ScriptBlock AccessToken { get; set; }
 
 		/// <summary>
 		/// Gets or sets the timeout for authentication operations in seconds.
@@ -394,6 +402,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							break;
 						}
 
+					case PARAMSET_ACCESSTOKEN:
+						result = new ServiceClient(Url, url => GetTokenWithScriptBlock());
+						break;
+
 					default:
 						throw new NotImplementedException(ParameterSetName);
 				}
@@ -614,6 +626,19 @@ Url + "/api/data/v9.2/");
 			{
 				var token = await credential.GetTokenAsync(tokenRequestContext, cts.Token);
 				return token.Token;
+			}
+		}
+
+		private async Task<string> GetTokenWithScriptBlock()
+		{
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
+			{
+				var results = await Task.Run(() => AccessToken.Invoke(), cts.Token);
+				if (results.Count == 0)
+				{
+					throw new InvalidOperationException("AccessToken script block did not return a value.");
+				}
+				return results[0].BaseObject.ToString();
 			}
 		}
 
