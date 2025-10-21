@@ -1197,8 +1197,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         foreach (var item in recordsById)
                         {
                             ScheduleRecordRetry(item.InputObject, item.TableName, item.CallerId, e);
+                            // Remove from main queue so they're not processed below
+                            _retrievalBatchQueue.Remove(item);
                         }
-                        // Remove from queue so they're not processed below
+                        // Clear local list
                         recordsById.Clear();
                     }
                     else
@@ -1208,6 +1210,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             RecordRetryDone(item.InputObject);
                             _writeError(new ErrorRecord(new Exception($"Error retrieving existing record: {e.Message}", e), null, ErrorCategory.InvalidOperation, item.InputObject));
+                            // Remove from main queue so they're not processed below
+                            _retrievalBatchQueue.Remove(item);
                         }
                         recordsById.Clear();
                     }
@@ -1230,8 +1234,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         foreach (var item in recordsByMatchOn)
                         {
                             ScheduleRecordRetry(item.InputObject, item.TableName, item.CallerId, e);
+                            // Remove from main queue so they're not processed below
+                            _retrievalBatchQueue.Remove(item);
                         }
-                        // Remove from queue so they're not processed below
+                        // Clear local list
                         recordsByMatchOn.Clear();
                     }
                     else
@@ -1241,6 +1247,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             RecordRetryDone(item.InputObject);
                             _writeError(new ErrorRecord(new Exception($"Error retrieving existing record: {e.Message}", e), null, ErrorCategory.InvalidOperation, item.InputObject));
+                            // Remove from main queue so they're not processed below
+                            _retrievalBatchQueue.Remove(item);
                         }
                         recordsByMatchOn.Clear();
                     }
@@ -1263,8 +1271,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         foreach (var item in recordsIntersect)
                         {
                             ScheduleRecordRetry(item.InputObject, item.TableName, item.CallerId, e);
+                            // Remove from main queue so they're not processed below
+                            _retrievalBatchQueue.Remove(item);
                         }
-                        // Remove from queue so they're not processed below
+                        // Clear local list
                         recordsIntersect.Clear();
                     }
                     else
@@ -1274,6 +1284,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             RecordRetryDone(item.InputObject);
                             _writeError(new ErrorRecord(new Exception($"Error retrieving existing record: {e.Message}", e), null, ErrorCategory.InvalidOperation, item.InputObject));
+                            // Remove from main queue so they're not processed below
+                            _retrievalBatchQueue.Remove(item);
                         }
                         recordsIntersect.Clear();
                     }
