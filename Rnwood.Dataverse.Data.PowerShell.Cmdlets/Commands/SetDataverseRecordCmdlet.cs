@@ -167,6 +167,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Entity Target { get; set; }
         public EntityMetadata EntityMetadata { get; set; }
         public Entity ExistingRecord { get; set; }
+        
+        /// <summary>
+        /// Callback to invoke when the operation completes successfully.
+        /// </summary>
+        public Action<OrganizationResponse> ResponseCompletion { get; set; }
+        
+        /// <summary>
+        /// Callback to invoke when the operation encounters a fault.
+        /// Returns true if the fault was handled, false otherwise.
+        /// </summary>
+        public Func<OrganizationServiceFault, bool> ResponseExceptionCompletion { get; set; }
 
         /// <summary>
         /// Schedules this operation for retry after a failure.
@@ -753,7 +764,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             foreach (var context in _nextBatchItems)
             {
                 bool hasError = false;
+                bool handledError = false;
                 Exception firstError = null;
+                OrganizationServiceFault firstFault = null;
 
                 // Process all requests for this context
                 for (int i = 0; i < context.Requests.Count; i++)
@@ -764,20 +777,35 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         
                         if (itemResponse.Fault != null)
                         {
-                            // Build fault details for failed request
-                            StringBuilder details = new StringBuilder();
-                            AppendFaultDetails(itemResponse.Fault, details);
-                            if (firstError == null)
+                            // Try to handle fault with context's exception handler
+                            if (context.ResponseExceptionCompletion != null && !handledError)
                             {
-                                firstError = new Exception(details.ToString());
+                                handledError = context.ResponseExceptionCompletion(itemResponse.Fault);
                             }
-                            hasError = true;
+                            
+                            if (!handledError)
+                            {
+                                // Build fault details for failed request
+                                StringBuilder details = new StringBuilder();
+                                AppendFaultDetails(itemResponse.Fault, details);
+                                if (firstError == null)
+                                {
+                                    firstError = new Exception(details.ToString());
+                                    firstFault = itemResponse.Fault;
+                                }
+                                hasError = true;
+                            }
+                        }
+                        else if (context.ResponseCompletion != null && i == 0)
+                        {
+                            // Call success completion callback for the first (typically only) response
+                            context.ResponseCompletion(itemResponse.Response);
                         }
                     }
                     requestIndex++;
                 }
 
-                if (hasError)
+                if (hasError && !handledError)
                 {
                     if (context.RetriesRemaining > 0)
                     {
@@ -789,7 +817,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         context.ReportError(firstError);
                     }
                 }
-                // Success handling would go here
             }
 
             _nextBatchItems.Clear();
