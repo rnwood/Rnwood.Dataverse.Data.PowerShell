@@ -566,6 +566,175 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
+        /// Upserts a record (creates if doesn't exist, updates if exists).
+        /// Sets up the upsert request and completion callbacks.
+        /// </summary>
+        public void UpsertRecord()
+        {
+            if (NoCreate || NoUpdate)
+            {
+                throw new ArgumentException("-NoCreate and -NoUpdate are not supported with -Upsert");
+            }
+
+            if (EntityMetadata.IsIntersect.GetValueOrDefault())
+            {
+                if (MatchOn != null)
+                {
+                    throw new ArgumentException("-MatchOn is not supported for -Upsert of M:M");
+                }
+
+                ManyToManyRelationshipMetadata manyToManyRelationshipMetadata = EntityMetadata.ManyToManyRelationships[0];
+
+                EntityReference record1 = new EntityReference(manyToManyRelationshipMetadata.Entity1LogicalName,
+                         Target.GetAttributeValue<Guid>(
+                             manyToManyRelationshipMetadata.Entity1IntersectAttribute));
+                EntityReference record2 = new EntityReference(manyToManyRelationshipMetadata.Entity2LogicalName,
+                         Target.GetAttributeValue<Guid>(
+                             manyToManyRelationshipMetadata.Entity2IntersectAttribute));
+
+                AssociateRequest request = new AssociateRequest()
+                {
+                    Target = record1,
+                    RelatedEntities = new EntityReferenceCollection() { record2 },
+                    Relationship = new Relationship(manyToManyRelationshipMetadata.SchemaName)
+                    {
+                        PrimaryEntityRole = EntityRole.Referencing
+                    },
+                };
+                ApplyBypassBusinessLogicExecution(request);
+                Requests.Add(request);
+
+                _writeVerbose($"Added create of new intersect record {TableName}:{record1.Id},{record2.Id} to batch");
+
+                // Set up completion callback and error handler
+                ResponseCompletion = (response) => {
+                    AssociateUpsertCompletion(true, Target, manyToManyRelationshipMetadata, record1, record2);
+                };
+                ResponseExceptionCompletion = (fault) => {
+                    return AssociateUpsertError(fault, Target, manyToManyRelationshipMetadata, record1, record2);
+                };
+
+                if (PassThru)
+                {
+                    QueryExpression getIdQuery = new QueryExpression(TableName);
+                    getIdQuery.Criteria.AddCondition(manyToManyRelationshipMetadata.Entity1IntersectAttribute, ConditionOperator.Equal, record1.Id);
+                    getIdQuery.Criteria.AddCondition(manyToManyRelationshipMetadata.Entity2IntersectAttribute, ConditionOperator.Equal, record2.Id);
+                    Requests.Add(new RetrieveMultipleRequest() { Query = getIdQuery });
+                    
+                    // Additional completion for getting ID - this will be called for the second request
+                    // Note: this is a limitation of the current design - multiple requests with different completions
+                    // For now, we'll handle this in the first completion callback
+                }
+            }
+            else
+            {
+                Entity targetUpdate = new Entity(Target.LogicalName) { Id = Target.Id };
+
+                if (MatchOn != null)
+                {
+                    if (MatchOn.Length > 1)
+                    {
+                        throw new NotSupportedException("MatchOn must only have a single array when used with Upsert");
+                    }
+
+                    var key = MetadataFactory.GetMetadata(Target.LogicalName).Keys.FirstOrDefault(k => 
+                        k.KeyAttributes.Length == MatchOn[0].Length && k.KeyAttributes.All(a => MatchOn[0].Contains(a)));
+                    if (key == null)
+                    {
+                        throw new ArgumentException($"MatchOn must match a key that is defined on the table");
+                    }
+
+                    targetUpdate.KeyAttributes = new KeyAttributeCollection();
+
+                    foreach (var matchOnField in MatchOn[0])
+                    {
+                        targetUpdate.KeyAttributes.Add(matchOnField, Target.GetAttributeValue<object>(matchOnField));
+                    }
+                }
+
+                targetUpdate.Attributes.AddRange(Target.Attributes.Where(a => 
+                    !DontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
+
+                string columnSummary = GetColumnSummary(targetUpdate, EntityConverter);
+
+                UpsertRequest request = new UpsertRequest() { Target = targetUpdate };
+                Requests.Add(request);
+
+                _writeVerbose($"Added upsert of new record {TableName}:{GetKeySummary(targetUpdate)} to batch - columns:\n{columnSummary}");
+
+                // Set up completion callback
+                ResponseCompletion = (response) => {
+                    UpsertCompletion(targetUpdate, (UpsertResponse)response);
+                };
+            }
+        }
+
+        /// <summary>
+        /// Updates an existing record.
+        /// Sets up the update request and completion callbacks.
+        /// </summary>
+        public void UpdateExistingRecord()
+        {
+            if (NoUpdate)
+            {
+                _writeVerbose($"Skipped updated existing record {TableName}:{Id} - NoUpdate enabled");
+                return;
+            }
+
+            Target.Id = ExistingRecord.Id;
+            Target[EntityMetadata.PrimaryIdAttribute] = ExistingRecord[EntityMetadata.PrimaryIdAttribute];
+
+            SetIdProperty(InputObject, ExistingRecord.Id);
+
+            RemoveUnchangedColumns(Target, ExistingRecord);
+
+            if (NoUpdateColumns != null)
+            {
+                foreach (string noUpdateColumn in NoUpdateColumns)
+                {
+                    Target.Attributes.Remove(noUpdateColumn);
+                }
+            }
+
+            Entity targetUpdate = new Entity(Target.LogicalName);
+            targetUpdate.Attributes.AddRange(Target.Attributes.Where(a => 
+                !DontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
+
+            if (EntityMetadata.IsIntersect.GetValueOrDefault())
+            {
+                // Intersect entities don't support update, just return with PassThru
+                if (PassThru)
+                {
+                    _writeObject(InputObject);
+                }
+            }
+            else if (targetUpdate.Attributes.Any())
+            {
+                UpdateRequest request = new UpdateRequest() { Target = Target };
+                ApplyBypassBusinessLogicExecution(request);
+                string updatedColumnSummary = GetColumnSummary(targetUpdate, EntityConverter);
+
+                Requests.Add(request);
+
+                _writeVerbose($"Added updated of existing record {TableName}:{ExistingRecord.Id} to batch - columns:\n{updatedColumnSummary}");
+
+                // Set up completion callback
+                ResponseCompletion = (response) => {
+                    UpdateCompletion(Target, ExistingRecord, updatedColumnSummary);
+                };
+            }
+            else
+            {
+                _writeVerbose($"Skipped updated existing record {TableName}:{Id} - nothing changed");
+
+                if (PassThru)
+                {
+                    _writeObject(InputObject);
+                }
+            }
+        }
+
+        /// <summary>
         /// Creates a new record (regular entity or M:M association).
         /// Sets up the create request and completion callbacks.
         /// </summary>
@@ -1567,121 +1736,90 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             bool result = true;
 
-            if (NoCreate || NoUpdate)
+            // Create context for this operation
+            var context = new SetOperationContext(
+                inputObject,
+                tableName,
+                callerId,
+                this,
+                entityMetadataFactory,
+                entityConverter,
+                Connection,
+                GetConversionOptions(),
+                WriteVerbose,
+                WriteError,
+                WriteObject,
+                ShouldProcess);
+            context.Target = target;
+            context.EntityMetadata = entityMetadata;
+
+            // Let context build the request and set up callbacks
+            try
             {
-                throw new ArgumentException("-NoCreate and -NoUpdate are not supported with -Upsert");
+                context.UpsertRecord();
+            }
+            catch (NotSupportedException e)
+            {
+                // Upsert not supported for intersect entities in non-batch mode
+                throw;
             }
 
-            if (entityMetadata.IsIntersect.GetValueOrDefault())
+            // If no requests were created, return early
+            if (context.Requests.Count == 0)
             {
-                if (MatchOn != null)
-                {
-                    throw new ArgumentException("-MatchOn is not supported for -Upsert of M:M");
-                }
+                return result;
+            }
 
-                ManyToManyRelationshipMetadata manyToManyRelationshipMetadata = entityMetadata.ManyToManyRelationships[0];
-
-                EntityReference record1 = new EntityReference(manyToManyRelationshipMetadata.Entity1LogicalName,
-                         target.GetAttributeValue<Guid>(
-                             manyToManyRelationshipMetadata.Entity1IntersectAttribute));
-                EntityReference record2 = new EntityReference(manyToManyRelationshipMetadata.Entity2LogicalName,
-                         target.GetAttributeValue<Guid>(
-                             manyToManyRelationshipMetadata.Entity2IntersectAttribute));
-
-                AssociateRequest request = new AssociateRequest()
-                {
-                    Target = record1,
-                    RelatedEntities =
-                            new EntityReferenceCollection()
-                    {
-                                record2
-                    },
-                    Relationship = new Relationship(manyToManyRelationshipMetadata.SchemaName)
-                    {
-                        PrimaryEntityRole = EntityRole.Referencing
-                    },
-                };
-                ApplyBypassBusinessLogicExecution(request);
-
-                if (_nextBatchItems != null)
-                {
-                    WriteVerbose(string.Format("Added create of new intersect record {0}:{1},{2} to batch", TableName, record1.Id, record2.Id));
-                    QueueBatchItem(new BatchItem(inputObject, tableName, callerId, request, (response) => { AssociateUpsertCompletion(true, target, inputObject, manyToManyRelationshipMetadata, record1, record2); }, fault => { return AssociateUpsertError(fault, target, inputObject, manyToManyRelationshipMetadata, record1, record2); }), CallerId);
-
-                    if (PassThru.IsPresent)
-                    {
-                        QueryExpression getIdQuery = new QueryExpression(TableName);
-                        getIdQuery.Criteria.AddCondition(manyToManyRelationshipMetadata.Entity1IntersectAttribute, ConditionOperator.Equal, record1.Id);
-                        getIdQuery.Criteria.AddCondition(manyToManyRelationshipMetadata.Entity2IntersectAttribute, ConditionOperator.Equal, record2.Id);
-                        QueueBatchItem(new BatchItem(inputObject, tableName, callerId, new RetrieveMultipleRequest() { Query = getIdQuery }, response =>
-                        {
-                            AssociateUpsertGetIdCompletion(response, inputObject);
-                        }), CallerId);
-                    }
-                }
-                else
-                {
-                    throw new NotSupportedException("Upsert not supported for insertsect entities except in batch mode");
-                }
+            // Queue for batch processing if available, otherwise execute immediately
+            if (_setBatchProcessor != null)
+            {
+                _setBatchProcessor.QueueOperation(context);
             }
             else
             {
-                Entity targetUpdate = new Entity(target.LogicalName) { Id = target.Id };
-
-                if (MatchOn != null)
+                // Non-batch mode: execute immediately
+                var request = context.Requests[0];
+                
+                // For non-batch upsert, need to generate ID if not set
+                if (request is UpsertRequest upsertRequest)
                 {
-                    if (MatchOn.Length > 1)
+                    if (upsertRequest.Target.Id == Guid.Empty && 
+                        (upsertRequest.Target.KeyAttributes == null || upsertRequest.Target.KeyAttributes.Count == 0))
                     {
-                        throw new NotSupportedException("MatchOn must only have a single array when used with Upsert");
-                    }
-
-                    var key = entityMetadataFactory.GetMetadata(target.LogicalName).Keys.FirstOrDefault(k => k.KeyAttributes.Length == MatchOn[0].Length && k.KeyAttributes.All(a => MatchOn[0].Contains(a)));
-                    if (key == null)
-                    {
-                        throw new ArgumentException($"MatchOn must match a key that is defined on the table");
-                    }
-
-                    targetUpdate.KeyAttributes = new KeyAttributeCollection();
-
-                    foreach (var matchOnField in MatchOn[0])
-                    {
-                        targetUpdate.KeyAttributes.Add(matchOnField, target.GetAttributeValue<object>(matchOnField));
+                        upsertRequest.Target.Id = Guid.NewGuid();
                     }
                 }
 
-                targetUpdate.Attributes.AddRange(target.Attributes.Where(a => !SetOperationContext.DontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
-
-                string columnSummary = SetOperationContext.GetColumnSummary(targetUpdate, entityConverter);
-
-                UpsertRequest request = new UpsertRequest()
+                if (ShouldProcess(request.RequestName))
                 {
-                    Target = targetUpdate
-                };
-
-                if (_nextBatchItems != null)
-                {
-                    WriteVerbose(string.Format("Added upsert of new record {0}:{1} to batch - columns:\n{2}", TableName, SetOperationContext.GetKeySummary(targetUpdate), columnSummary));
-                    QueueBatchItem(new BatchItem(inputObject, tableName, callerId, request, (response) => { UpsertCompletion(targetUpdate, inputObject, (UpsertResponse)response); }), CallerId);
-                }
-                else
-                {
-                    if (targetUpdate.Id == Guid.Empty && targetUpdate.KeyAttributes.Count == 0)
+                    try
                     {
-                        targetUpdate.Id = Guid.NewGuid();
+                        if (callerId.HasValue)
+                        {
+                            Connection.CallerId = callerId.Value;
+                        }
+
+                        var response = Connection.Execute(request);
+                        
+                        if (callerId.HasValue)
+                        {
+                            Connection.CallerId = Guid.Empty;
+                        }
+
+                        // Call completion callback
+                        if (context.ResponseCompletion != null)
+                        {
+                            context.ResponseCompletion(response);
+                        }
                     }
-
-                    if (ShouldProcess(string.Format("Upsert record {0}:{1} columns:\n{2}", TableName, SetOperationContext.GetKeySummary(targetUpdate), columnSummary)))
+                    catch (Exception e)
                     {
-                        try
+                        if (callerId.HasValue)
                         {
-                            UpsertResponse response = (UpsertResponse)Connection.Execute(request);
-                            UpsertCompletion(targetUpdate, inputObject, response);
+                            Connection.CallerId = Guid.Empty;
                         }
-                        catch (Exception e)
-                        {
-                            result = false;
-                            WriteError(new ErrorRecord(new Exception(string.Format("Error creating record {0}:{1} {2}, columns: {3}", TableName, SetOperationContext.GetKeySummary(targetUpdate), e.Message, columnSummary), e), null, ErrorCategory.InvalidResult, inputObject));
-                        }
+                        result = false;
+                        WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, inputObject));
                     }
                 }
             }
@@ -1815,73 +1953,72 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void UpdateExistingRecord(PSObject inputObject, string tableName, Guid? callerId, EntityMetadata entityMetadata, Entity target, Entity existingRecord)
         {
-            if (NoUpdate.IsPresent)
+            // Create context for this operation
+            var context = new SetOperationContext(
+                inputObject,
+                tableName,
+                callerId,
+                this,
+                entityMetadataFactory,
+                entityConverter,
+                Connection,
+                GetConversionOptions(),
+                WriteVerbose,
+                WriteError,
+                WriteObject,
+                ShouldProcess);
+            context.Target = target;
+            context.EntityMetadata = entityMetadata;
+            context.ExistingRecord = existingRecord;
+
+            // Let context build the request and set up callbacks
+            context.UpdateExistingRecord();
+
+            // If no requests were created (e.g., NoUpdate is set or no changes), return early
+            if (context.Requests.Count == 0)
             {
-                WriteVerbose(string.Format("Skipped updated existing record {0}:{1} - NoUpdate enabled", TableName, Id));
                 return;
             }
 
-            target.Id = existingRecord.Id;
-            target[entityMetadata.PrimaryIdAttribute] = existingRecord[entityMetadata.PrimaryIdAttribute];
-
-            SetOperationContext.SetIdProperty(inputObject, existingRecord.Id);
-
-            SetOperationContext.RemoveUnchangedColumns(target, existingRecord);
-
-            if (NoUpdateColumns != null)
+            // Queue for batch processing if available, otherwise execute immediately
+            if (_setBatchProcessor != null)
             {
-                foreach (string noUpdateColumns in NoUpdateColumns)
-                {
-                    target.Attributes.Remove(noUpdateColumns);
-                }
-            }
-
-            Entity targetUpdate = new Entity(target.LogicalName);
-            targetUpdate.Attributes.AddRange(target.Attributes.Where(a => !SetOperationContext.DontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
-
-            if (entityMetadata.IsIntersect.GetValueOrDefault())
-            {
-                if (PassThru.IsPresent)
-                {
-                    WriteObject(inputObject);
-                }
-            }
-            else if (targetUpdate.Attributes.Any())
-            {
-                DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
-
-                UpdateRequest request = new UpdateRequest() { Target = target };
-                ApplyBypassBusinessLogicExecution(request);
-                string updatedColumnSummary = SetOperationContext.GetColumnSummary(targetUpdate, entityConverter);
-
-                if (_nextBatchItems != null)
-                {
-                    WriteVerbose(string.Format("Added updated of existing record {0}:{1} to batch - columns:\n{2}", TableName, existingRecord.Id, updatedColumnSummary));
-                    QueueBatchItem(new BatchItem(inputObject, tableName, callerId, request, (response) => { UpdateCompletion(target, inputObject, existingRecord, updatedColumnSummary); }), CallerId);
-                }
-                else
-                {
-                    if (ShouldProcess(string.Format("Update existing record {0}:{1} columns:\n{2}", TableName, existingRecord.Id, updatedColumnSummary)))
-                    {
-                        try
-                        {
-                            Connection.Execute(request);
-                            UpdateCompletion(target, inputObject, existingRecord, updatedColumnSummary);
-                        }
-                        catch (Exception e)
-                        {
-                            WriteError(new ErrorRecord(new Exception(string.Format("Error updating record {0}:{1}, {2} columns: {3}", TableName, existingRecord.Id, e.Message, updatedColumnSummary), e), null, ErrorCategory.InvalidResult, inputObject));
-                        }
-                    }
-                }
+                _setBatchProcessor.QueueOperation(context);
             }
             else
             {
-                WriteVerbose(string.Format("Skipped updated existing record {0}:{1} - nothing changed", TableName, Id));
-
-                if (PassThru.IsPresent)
+                // Non-batch mode: execute immediately
+                var request = context.Requests[0];
+                if (ShouldProcess(request.RequestName))
                 {
-                    WriteObject(inputObject);
+                    try
+                    {
+                        if (callerId.HasValue)
+                        {
+                            Connection.CallerId = callerId.Value;
+                        }
+
+                        var response = Connection.Execute(request);
+                        
+                        if (callerId.HasValue)
+                        {
+                            Connection.CallerId = Guid.Empty;
+                        }
+
+                        // Call completion callback
+                        if (context.ResponseCompletion != null)
+                        {
+                            context.ResponseCompletion(response);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        if (callerId.HasValue)
+                        {
+                            Connection.CallerId = Guid.Empty;
+                        }
+                        WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, inputObject));
+                    }
                 }
             }
         }
