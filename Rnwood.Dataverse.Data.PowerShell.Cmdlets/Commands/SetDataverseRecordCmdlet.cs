@@ -338,6 +338,69 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
+        /// Converts an input object to a PSObject with the Id property set for PassThru output.
+        /// Handles hashtables, Entity objects, and PSObjects uniformly.
+        /// </summary>
+        public static PSObject ConvertInputToPSObjectForPassThru(PSObject inputObject, Guid id)
+        {
+            PSObject result = new PSObject();
+
+            // Add Id first
+            result.Properties.Add(new PSNoteProperty("Id", id));
+
+            // Handle different input types
+            if (inputObject.ImmediateBaseObject is Hashtable ht)
+            {
+                // Input is a hashtable - copy all properties from hashtable
+                foreach (DictionaryEntry entry in ht)
+                {
+                    string propName = (string)entry.Key;
+                    // Skip Id if it exists in the hashtable - we've already set it
+                    if (!propName.Equals("Id", StringComparison.OrdinalIgnoreCase))
+                    {
+                        result.Properties.Add(new PSNoteProperty(propName, entry.Value));
+                    }
+                }
+            }
+            else if (inputObject.ImmediateBaseObject is Entity entity)
+            {
+                // Input is an Entity object - copy logical name and attributes
+                result.Properties.Add(new PSNoteProperty("TableName", entity.LogicalName));
+                foreach (KeyValuePair<string, object> attr in entity.Attributes)
+                {
+                    // Skip the Id attribute - we've already set it
+                    if (!attr.Key.Equals("Id", StringComparison.OrdinalIgnoreCase) &&
+                        !attr.Key.Equals(entity.LogicalName + "id", StringComparison.OrdinalIgnoreCase))
+                    {
+                        result.Properties.Add(new PSNoteProperty(attr.Key, attr.Value));
+                    }
+                }
+            }
+            else
+            {
+                // Input is already a PSObject or other type - copy all properties
+                foreach (PSPropertyInfo prop in inputObject.Properties)
+                {
+                    // Skip Id if it exists - we've already set it
+                    if (!prop.Name.Equals("Id", StringComparison.OrdinalIgnoreCase))
+                    {
+                        try
+                        {
+                            result.Properties.Add(new PSNoteProperty(prop.Name, prop.Value));
+                        }
+                        catch
+                        {
+                            // Some properties might not be copyable (e.g., script properties)
+                            // Skip them silently
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Determines if a record needs to be retrieved from the server before processing.
         /// </summary>
         public bool NeedsRetrieval(EntityMetadata entityMetadata, Entity target)
@@ -474,7 +537,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (PassThru)
             {
-                _writeObject(InputObject);
+                _writeObject(ConvertInputToPSObjectForPassThru(InputObject, response.id));
             }
         }
 
@@ -487,7 +550,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (PassThru)
             {
-                _writeObject(InputObject);
+                _writeObject(ConvertInputToPSObjectForPassThru(InputObject, existingRecord.Id));
             }
         }
 
@@ -513,7 +576,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (PassThru)
             {
-                _writeObject(InputObject);
+                _writeObject(ConvertInputToPSObjectForPassThru(InputObject, targetUpdate.Id));
             }
         }
 
@@ -532,7 +595,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (PassThru)
             {
-                _writeObject(InputObject);
+                _writeObject(ConvertInputToPSObjectForPassThru(InputObject, id));
             }
         }
 
@@ -715,7 +778,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Intersect entities don't support update, just return with PassThru
                 if (PassThru)
                 {
-                    _writeObject(InputObject);
+                    _writeObject(ConvertInputToPSObjectForPassThru(InputObject, ExistingRecord.Id));
                 }
             }
             else if (targetUpdate.Attributes.Any())
@@ -739,7 +802,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (PassThru)
                 {
-                    _writeObject(InputObject);
+                    _writeObject(ConvertInputToPSObjectForPassThru(InputObject, ExistingRecord.Id));
                 }
             }
         }
@@ -1687,9 +1750,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = false, HelpMessage = "List of list of column names that identify an existing record to update based on the values of those columns in the InputObject. For update/create these are used if a record with an Id matching the value of the Id cannot be found. The first list that returns a match is used.")]
         public string[][] MatchOn { get; set; }
         /// <summary>
-        /// If specified, the InputObject is written to the pipeline with an Id property set indicating the primary key of the affected record (even if nothing was updated).
+        /// If specified, the InputObject is written to the pipeline as a PSObject with an Id property set indicating the primary key of the affected record (even if nothing was updated). The output is always converted to a PSObject format regardless of the input object type for uniformity.
         /// </summary>
-        [Parameter(HelpMessage = "If specified, the InputObject is written to the pipeline with an Id property set indicating the primary key of the affected record (even if nothing was updated).")]
+        [Parameter(HelpMessage = "If specified, the InputObject is written to the pipeline as a PSObject with an Id property set indicating the primary key of the affected record (even if nothing was updated). The output is always converted to a PSObject format regardless of the input object type for uniformity.")]
         public SwitchParameter PassThru { get; set; }
         /// <summary>
         /// If specified, existing records matching the ID and or MatchOn columns will not be updated.

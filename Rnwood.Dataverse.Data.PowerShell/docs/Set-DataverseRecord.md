@@ -666,7 +666,7 @@ Accept wildcard characters: False
 ```
 
 ### -PassThru
-If specified, the InputObject is written to the pipeline with an Id property set indicating the primary key of the affected record (even if nothing was updated).
+If specified, the InputObject is written to the pipeline as a PSObject with an Id property set indicating the primary key of the affected record (even if nothing was updated). The output is always converted to a PSObject format regardless of the input object type (hashtable, Entity, or PSObject) for uniformity.
 
 ```yaml
 Type: SwitchParameter
