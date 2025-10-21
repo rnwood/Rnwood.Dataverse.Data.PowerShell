@@ -51,15 +51,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     }
 
     /// <summary>
-    /// Wraps a delete operation with its input record and cmdlet parameters at the time of invocation.
+    /// Handles the complete lifecycle of a delete operation for a single record, including
+    /// request creation, execution, error handling, and retry logic.
     /// </summary>
     internal class DeleteOperationContext : IDeleteOperationParameters
     {
+        private readonly Action<string> _writeVerbose;
+        private readonly Action<ErrorRecord> _writeError;
+        private readonly Func<string, bool> _shouldProcess;
+
         public DeleteOperationContext(
             PSObject inputObject,
             string tableName,
             Guid id,
-            IDeleteOperationParameters parameters)
+            IDeleteOperationParameters parameters,
+            EntityMetadataFactory metadataFactory,
+            IOrganizationService connection,
+            Action<string> writeVerbose,
+            Action<ErrorRecord> writeError,
+            Func<string, bool> shouldProcess)
         {
             InputObject = inputObject;
             TableName = tableName;
@@ -71,6 +81,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             InitialRetryDelay = parameters.InitialRetryDelay;
             RetriesRemaining = parameters.Retries;
             NextRetryTime = DateTime.MinValue;
+            MetadataFactory = metadataFactory;
+            Connection = connection;
+            _writeVerbose = writeVerbose;
+            _writeError = writeError;
+            _shouldProcess = shouldProcess;
         }
 
         public PSObject InputObject { get; }
@@ -84,10 +99,355 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public int RetriesRemaining { get; set; }
         public DateTime NextRetryTime { get; set; }
         public OrganizationRequest Request { get; set; }
+        public EntityMetadataFactory MetadataFactory { get; }
+        public IOrganizationService Connection { get; }
+
+        /// <summary>
+        /// Creates the delete request for this operation, handling both regular and intersect records.
+        /// </summary>
+        public void CreateRequest()
+        {
+            EntityMetadata metadata = MetadataFactory.GetMetadata(TableName);
+
+            if (metadata.IsIntersect.GetValueOrDefault())
+            {
+                // For intersect (many-to-many) records, we need to use DisassociateRequest
+                ManyToManyRelationshipMetadata manyToManyRelationshipMetadata = metadata.ManyToManyRelationships[0];
+
+                QueryExpression getRecordWithMMColumns = new QueryExpression(TableName);
+                getRecordWithMMColumns.ColumnSet = new ColumnSet(
+                    manyToManyRelationshipMetadata.Entity1IntersectAttribute,
+                    manyToManyRelationshipMetadata.Entity2IntersectAttribute);
+                getRecordWithMMColumns.Criteria.AddCondition(metadata.PrimaryIdAttribute, ConditionOperator.Equal, Id);
+
+                Entity record = Connection.RetrieveMultiple(getRecordWithMMColumns).Entities.Single();
+
+                DisassociateRequest request = new DisassociateRequest()
+                {
+                    Target = new EntityReference(manyToManyRelationshipMetadata.Entity1LogicalName,
+                        record.GetAttributeValue<Guid>(manyToManyRelationshipMetadata.Entity1IntersectAttribute)),
+                    RelatedEntities = new EntityReferenceCollection()
+                    {
+                        new EntityReference(manyToManyRelationshipMetadata.Entity2LogicalName,
+                            record.GetAttributeValue<Guid>(manyToManyRelationshipMetadata.Entity2IntersectAttribute))
+                    },
+                    Relationship = new Relationship(manyToManyRelationshipMetadata.SchemaName) { PrimaryEntityRole = EntityRole.Referencing }
+                };
+                ApplyBypassBusinessLogicExecution(request);
+                Request = request;
+            }
+            else
+            {
+                DeleteRequest request = new DeleteRequest { Target = new EntityReference(TableName, Id) };
+                ApplyBypassBusinessLogicExecution(request);
+                Request = request;
+            }
+        }
+
+        /// <summary>
+        /// Executes the delete operation without batching.
+        /// </summary>
+        public void ExecuteNonBatched()
+        {
+            if (_shouldProcess(string.Format("Delete record {0}:{1}", TableName, Id)))
+            {
+                try
+                {
+                    Connection.Execute(Request);
+                    _writeVerbose(string.Format("Deleted record {0}:{1}", TableName, Id));
+                }
+                catch (FaultException ex)
+                {
+                    if (IfExists && ex.HResult == -2147220969)
+                    {
+                        _writeVerbose(string.Format("Record {0}:{1} was not present", TableName, Id));
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles a fault that occurred during batch execution.
+        /// </summary>
+        /// <returns>True if the fault was handled and should not be reported as an error.</returns>
+        public bool HandleFault(OrganizationServiceFault fault)
+        {
+            // Handle specific error codes that should be ignored
+            if (IfExists && fault.ErrorCode == -2147220969)
+            {
+                _writeVerbose(string.Format("Record {0}:{1} was not present", TableName, Id));
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Called when the delete operation completes successfully.
+        /// </summary>
+        public void Complete()
+        {
+            _writeVerbose(string.Format("Deleted record {0}:{1}", TableName, Id));
+        }
+
+        /// <summary>
+        /// Schedules this operation for retry after a failure.
+        /// </summary>
+        public void ScheduleRetry(Exception e)
+        {
+            // Schedule for retry with exponential backoff
+            int attemptNumber = Retries - RetriesRemaining + 1;
+            int delayS = InitialRetryDelay * (int)Math.Pow(2, attemptNumber - 1);
+            NextRetryTime = DateTime.UtcNow.AddSeconds(delayS);
+            RetriesRemaining--;
+
+            _writeVerbose($"Request failed, will retry in {delayS}s (attempt {attemptNumber} of {Retries + 1}): {this}\n{e}");
+        }
+
+        /// <summary>
+        /// Reports an error for this operation.
+        /// </summary>
+        public void ReportError(Exception e)
+        {
+            _writeError(new ErrorRecord(e, null, ErrorCategory.InvalidResult, InputObject));
+        }
+
+        private void ApplyBypassBusinessLogicExecution(OrganizationRequest request)
+        {
+            if (BypassBusinessLogicExecution?.Length > 0)
+            {
+                request.Parameters["BypassBusinessLogicExecution"] = string.Join(",", BypassBusinessLogicExecution.Select(o => o.ToString()));
+            }
+            else
+            {
+                request.Parameters.Remove("BypassBusinessLogicExecution");
+            }
+
+            if (BypassBusinessLogicExecutionStepIds?.Length > 0)
+            {
+                request.Parameters["BypassBusinessLogicExecutionStepIds"] = string.Join(",", BypassBusinessLogicExecutionStepIds.Select(id => id.ToString()));
+            }
+            else
+            {
+                request.Parameters.Remove("BypassBusinessLogicExecutionStepIds");
+            }
+        }
 
         public override string ToString()
         {
             return $"Delete {TableName}:{Id}";
+        }
+    }
+
+    /// <summary>
+    /// Manages batching and retry logic for delete operations.
+    /// </summary>
+    internal class DeleteBatchProcessor
+    {
+        private readonly List<DeleteOperationContext> _nextBatchItems;
+        private readonly List<DeleteOperationContext> _pendingRetries;
+        private readonly uint _batchSize;
+        private readonly IOrganizationService _connection;
+        private readonly Action<string> _writeVerbose;
+        private readonly Func<string, bool> _shouldProcess;
+        private readonly Func<bool> _isStopping;
+        private readonly CancellationToken _cancellationToken;
+
+        public DeleteBatchProcessor(
+            uint batchSize,
+            IOrganizationService connection,
+            Action<string> writeVerbose,
+            Func<string, bool> shouldProcess,
+            Func<bool> isStopping,
+            CancellationToken cancellationToken)
+        {
+            _batchSize = batchSize;
+            _connection = connection;
+            _writeVerbose = writeVerbose;
+            _shouldProcess = shouldProcess;
+            _isStopping = isStopping;
+            _cancellationToken = cancellationToken;
+            _nextBatchItems = new List<DeleteOperationContext>();
+            _pendingRetries = new List<DeleteOperationContext>();
+        }
+
+        /// <summary>
+        /// Adds an operation to the batch, executing the batch if it reaches the batch size.
+        /// </summary>
+        public void QueueOperation(DeleteOperationContext context)
+        {
+            _nextBatchItems.Add(context);
+
+            if (_nextBatchItems.Count >= _batchSize)
+            {
+                ExecuteBatch();
+            }
+        }
+
+        /// <summary>
+        /// Executes any remaining operations in the batch.
+        /// </summary>
+        public void Flush()
+        {
+            if (_nextBatchItems.Count > 0)
+            {
+                ExecuteBatch();
+            }
+        }
+
+        /// <summary>
+        /// Processes all pending retries.
+        /// </summary>
+        public void ProcessRetries()
+        {
+            while (!_isStopping() && !_cancellationToken.IsCancellationRequested && _pendingRetries.Count > 0)
+            {
+                DateTime now = DateTime.UtcNow;
+                var readyForRetry = _pendingRetries.Where(r => r.NextRetryTime <= now).ToList();
+
+                if (readyForRetry.Count == 0)
+                {
+                    // Calculate wait time for next retry
+                    var nextRetryTime = _pendingRetries.Min(r => r.NextRetryTime);
+                    var waitTimeMs = (int)Math.Max(100, (nextRetryTime - now).TotalMilliseconds);
+
+                    _writeVerbose($"Waiting {waitTimeMs / 1000.0:F1}s for next retry batch...");
+                    Thread.Sleep(waitTimeMs);
+
+                    continue;
+                }
+
+                // Remove from pending and add to batch for retry
+                foreach (var item in readyForRetry)
+                {
+                    _pendingRetries.Remove(item);
+                    _nextBatchItems.Add(item);
+
+                    if (_nextBatchItems.Count >= _batchSize)
+                    {
+                        ExecuteBatch();
+                    }
+                }
+
+                // Process any remaining items in batch
+                if (_nextBatchItems.Count > 0)
+                {
+                    ExecuteBatch();
+                }
+            }
+        }
+
+        private void ExecuteBatch()
+        {
+            if (_nextBatchItems.Count == 0)
+            {
+                return;
+            }
+
+            if (!_shouldProcess("Execute batch of requests:\n" + string.Join("\n", _nextBatchItems.Select(r => r.ToString()))))
+            {
+                _nextBatchItems.Clear();
+                return;
+            }
+
+            ExecuteMultipleRequest batchRequest = new ExecuteMultipleRequest()
+            {
+                Settings = new ExecuteMultipleSettings()
+                {
+                    ReturnResponses = true,
+                    ContinueOnError = true
+                },
+                Requests = new OrganizationRequestCollection(),
+                RequestId = Guid.NewGuid()
+            };
+
+            // Apply bypass logic from first item (they should all be the same within a batch)
+            if (_nextBatchItems.Count > 0)
+            {
+                var firstContext = _nextBatchItems[0];
+                if (firstContext.BypassBusinessLogicExecution?.Length > 0)
+                {
+                    batchRequest.Parameters["BypassBusinessLogicExecution"] = string.Join(",", firstContext.BypassBusinessLogicExecution.Select(o => o.ToString()));
+                }
+                if (firstContext.BypassBusinessLogicExecutionStepIds?.Length > 0)
+                {
+                    batchRequest.Parameters["BypassBusinessLogicExecutionStepIds"] = string.Join(",", firstContext.BypassBusinessLogicExecutionStepIds.Select(id => id.ToString()));
+                }
+            }
+
+            batchRequest.Requests.AddRange(_nextBatchItems.Select(i => i.Request));
+
+            ExecuteMultipleResponse response = null;
+
+            try
+            {
+                response = (ExecuteMultipleResponse)_connection.Execute(batchRequest);
+            }
+            catch (Exception e)
+            {
+                foreach (var context in _nextBatchItems)
+                {
+                    if (context.RetriesRemaining > 0)
+                    {
+                        context.ScheduleRetry(e);
+                        _pendingRetries.Add(context);
+                    }
+                    else
+                    {
+                        context.ReportError(e);
+                    }
+                }
+
+                _nextBatchItems.Clear();
+                return;
+            }
+
+            foreach (var itemResponse in response.Responses)
+            {
+                DeleteOperationContext context = _nextBatchItems[itemResponse.RequestIndex];
+
+                if (itemResponse.Fault != null)
+                {
+                    // Build fault details for failed request
+                    StringBuilder details = new StringBuilder();
+                    AppendFaultDetails(itemResponse.Fault, details);
+                    var e = new Exception(details.ToString());
+
+                    bool handled = context.HandleFault(itemResponse.Fault);
+
+                    if (!handled && context.RetriesRemaining > 0)
+                    {
+                        context.ScheduleRetry(e);
+                        _pendingRetries.Add(context);
+                    }
+                    else if (!handled)
+                    {
+                        context.ReportError(e);
+                    }
+                }
+                else
+                {
+                    context.Complete();
+                }
+            }
+
+            _nextBatchItems.Clear();
+        }
+
+        private void AppendFaultDetails(OrganizationServiceFault fault, StringBuilder output)
+        {
+            output.AppendLine("OrganizationServiceFault " + fault.ErrorCode + ": " + fault.Message);
+            output.AppendLine(fault.TraceText);
+
+            if (fault.InnerFault != null)
+            {
+                output.AppendLine("---");
+                AppendFaultDetails(fault.InnerFault, output);
+            }
         }
     }
 
@@ -154,223 +514,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         int IDeleteOperationParameters.Retries => Retries;
         int IDeleteOperationParameters.InitialRetryDelay => InitialRetryDelay;
 
-        private List<DeleteOperationContext> _nextBatchItems;
-        private List<DeleteOperationContext> _pendingRetries;
-
-        /// <summary>Processes each record in the pipeline.</summary>
-
-
-        protected override void ProcessRecord()
-        {
-            base.ProcessRecord();
-
-            Delete(TableName, Id);
-        }
-
-        private void Delete(string entityName, Guid id)
-        {
-            EntityMetadata metadata = metadataFactory.GetMetadata(entityName);
-
-            if (metadata.IsIntersect.GetValueOrDefault())
-            {
-                if (ShouldProcess(string.Format("Delete intersect record {0}:{1}", entityName, id)))
-                {
-                    ManyToManyRelationshipMetadata manyToManyRelationshipMetadata = metadata.ManyToManyRelationships[0];
-
-                    QueryExpression getRecordWithMMColumns = new QueryExpression(entityName);
-                    getRecordWithMMColumns.ColumnSet = new ColumnSet(manyToManyRelationshipMetadata.Entity1IntersectAttribute, manyToManyRelationshipMetadata.Entity2IntersectAttribute);
-                    getRecordWithMMColumns.Criteria.AddCondition(metadata.PrimaryIdAttribute, ConditionOperator.Equal, id);
-
-                    Entity record = Connection.RetrieveMultiple(getRecordWithMMColumns).Entities.Single();
-
-                    DisassociateRequest request = new DisassociateRequest()
-                    {
-                        Target = new EntityReference(manyToManyRelationshipMetadata.Entity1LogicalName,
-                                                                         record.GetAttributeValue<Guid>(
-                                                                             manyToManyRelationshipMetadata.Entity1IntersectAttribute)),
-                        RelatedEntities =
-                                                new EntityReferenceCollection()
-                                                    {
-                                    new EntityReference(manyToManyRelationshipMetadata.Entity2LogicalName,
-                                                        record.GetAttributeValue<Guid>(
-                                                            manyToManyRelationshipMetadata.Entity2IntersectAttribute))
-                                                    },
-                        Relationship = new Relationship(manyToManyRelationshipMetadata.SchemaName) { PrimaryEntityRole = EntityRole.Referencing }
-                    };
-                    ApplyBypassBusinessLogicExecution(request);
-                    Connection.Execute(request);
-
-                    WriteVerbose(string.Format("Deleted intersect record {0}:{1}", entityName, id));
-                }
-            }
-            else
-            {
-                DeleteRequest request = new DeleteRequest { Target = new EntityReference(entityName, id) };
-                ApplyBypassBusinessLogicExecution(request);
-
-                if (_nextBatchItems != null)
-                {
-                    WriteVerbose(string.Format("Added delete of {0}:{1} to batch", entityName, id));
-                    var context = new DeleteOperationContext(InputObject, entityName, id, this);
-                    context.Request = request;
-                    QueueBatchItem(context);
-                }
-                else
-                {
-                    if (ShouldProcess(string.Format("Delete record {0}:{1}", entityName, id)))
-                    {
-                        try
-                        {
-                            DeleteRequest deleteRequest = new DeleteRequest { Target = new EntityReference(entityName, id) };
-                            ApplyBypassBusinessLogicExecution(deleteRequest);
-                            Connection.Execute(deleteRequest);
-                        }
-                        catch (FaultException ex)
-                        {
-                            if (IfExists.IsPresent && ex.HResult == -2147220969)
-                            {
-                                WriteVerbose(string.Format("Record {0}:{1} was not present", entityName, id));
-                            }
-                            else
-                            {
-                                throw;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        private void QueueBatchItem(DeleteOperationContext context)
-        {
-            _nextBatchItems.Add(context);
-
-            if (_nextBatchItems.Count == BatchSize)
-            {
-                ProcessBatch();
-            }
-        }
-        private void AppendFaultDetails(OrganizationServiceFault fault, StringBuilder output)
-        {
-            output.AppendLine("OrganizationServiceFault " + fault.ErrorCode + ": " + fault.Message);
-            output.AppendLine(fault.TraceText);
-
-            if (fault.InnerFault != null)
-            {
-                output.AppendLine("---");
-                AppendFaultDetails(fault.InnerFault, output);
-            }
-        }
-
-
-        private void ProcessBatch()
-        {
-            if (_nextBatchItems.Count > 0 &&
-                ShouldProcess("Execute batch of requests:\n" + string.Join("\n", _nextBatchItems.Select(r => r.ToString()))))
-            {
-
-                ExecuteMultipleRequest batchRequest = new ExecuteMultipleRequest()
-                {
-                    Settings = new ExecuteMultipleSettings()
-                    {
-                        ReturnResponses = true,
-                        ContinueOnError = true
-                    },
-                    Requests = new OrganizationRequestCollection(),
-                    RequestId = Guid.NewGuid()
-                };
-                ApplyBypassBusinessLogicExecution(batchRequest);
-
-                batchRequest.Requests.AddRange(_nextBatchItems.Select(i => i.Request));
-
-                ExecuteMultipleResponse response = null;
-
-                try
-                {
-                    response = (ExecuteMultipleResponse)Connection.Execute(batchRequest);
-                }
-                catch (Exception e)
-                {
-                    foreach (var context in _nextBatchItems)
-                    {
-                        if (context.RetriesRemaining > 0)
-                        {
-                            ScheduleRetry(context, e);
-                        }
-                        else
-                        {
-                            WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidResult, context.InputObject));
-                        }
-                    }
-
-                    _nextBatchItems.Clear();
-                    return;
-                }
-
-                foreach (var itemResponse in response.Responses)
-                {
-                    DeleteOperationContext context = _nextBatchItems[itemResponse.RequestIndex];
-
-                    if (itemResponse.Fault != null)
-                    {
-                        // Build fault details for failed request
-                        StringBuilder details = new StringBuilder();
-                        AppendFaultDetails(itemResponse.Fault, details);
-                        var e = new Exception(details.ToString());
-
-                        bool handled = HandleDeleteFault(context, itemResponse.Fault);
-
-                        if (!handled && context.RetriesRemaining > 0)
-                        {
-                            ScheduleRetry(context, e);
-                        }
-                        else if (!handled)
-                        {
-                            WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidResult, context.InputObject));
-                        }
-                    }
-                    else
-                    {
-                        CompleteDelete(context, (DeleteResponse)itemResponse.Response);
-                    }
-                }
-            }
-
-            _nextBatchItems.Clear();
-        }
-
-        private bool HandleDeleteFault(DeleteOperationContext context, OrganizationServiceFault fault)
-        {
-            // Handle specific error codes that should be ignored
-            if (context.IfExists && fault.ErrorCode == -2147220969)
-            {
-                WriteVerbose(string.Format("Record {0}:{1} was not present", context.TableName, context.Id));
-                return true;
-            }
-
-            return false;
-        }
-
-        private void CompleteDelete(DeleteOperationContext context, DeleteResponse response)
-        {
-            WriteVerbose(string.Format("Deleted record {0}:{1}", context.TableName, context.Id));
-        }
-
-        private void ScheduleRetry(DeleteOperationContext context, Exception e)
-        {
-            // Schedule for retry with exponential backoff
-            int attemptNumber = context.Retries - context.RetriesRemaining + 1;
-            int delayS = context.InitialRetryDelay * (int)Math.Pow(2, attemptNumber - 1);
-            context.NextRetryTime = DateTime.UtcNow.AddSeconds(delayS);
-            context.RetriesRemaining--;
-
-            WriteVerbose($"Request failed, will retry in {delayS}s (attempt {attemptNumber} of {context.Retries + 1}): {context}\n{e}");
-            _pendingRetries.Add(context);
-        }
+        private EntityMetadataFactory _metadataFactory;
+        private DeleteBatchProcessor _batchProcessor;
+        private CancellationTokenSource _userCancellationCts;
 
         /// <summary>Initializes the cmdlet.</summary>
-
-
         protected override void BeginProcessing()
         {
             base.BeginProcessing();
@@ -378,38 +526,63 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // initialize cancellation token source for this pipeline invocation
             _userCancellationCts = new CancellationTokenSource();
 
-            metadataFactory = new EntityMetadataFactory(Connection);
-            _pendingRetries = new List<DeleteOperationContext>();
+            _metadataFactory = new EntityMetadataFactory(Connection);
 
             if (BatchSize > 1)
             {
-                _nextBatchItems = new List<DeleteOperationContext>();
+                _batchProcessor = new DeleteBatchProcessor(
+                    BatchSize,
+                    Connection,
+                    WriteVerbose,
+                    ShouldProcess,
+                    () => Stopping,
+                    _userCancellationCts.Token);
             }
         }
 
-        private EntityMetadataFactory metadataFactory;
+        /// <summary>Processes each record in the pipeline.</summary>
+        protected override void ProcessRecord()
+        {
+            base.ProcessRecord();
+
+            var context = new DeleteOperationContext(
+                InputObject,
+                TableName,
+                Id,
+                this,
+                _metadataFactory,
+                Connection,
+                WriteVerbose,
+                WriteError,
+                ShouldProcess);
+
+            context.CreateRequest();
+
+            if (_batchProcessor != null)
+            {
+                WriteVerbose(string.Format("Added delete of {0}:{1} to batch", TableName, Id));
+                _batchProcessor.QueueOperation(context);
+            }
+            else
+            {
+                context.ExecuteNonBatched();
+            }
+        }
 
         /// <summary>Completes cmdlet processing.</summary>
-
-
         protected override void EndProcessing()
         {
             base.EndProcessing();
 
-            if (_nextBatchItems != null)
+            if (_batchProcessor != null)
             {
-                ProcessBatch();
+                _batchProcessor.Flush();
+                _batchProcessor.ProcessRetries();
             }
-
-            // Process any pending retries
-            ProcessRetries();
 
             _userCancellationCts?.Dispose();
             _userCancellationCts = null;
         }
-
-        // Cancellation token source that is cancelled when the user hits Ctrl+C (StopProcessing)
-        private CancellationTokenSource _userCancellationCts;
 
         /// <summary>
         /// Called when the user cancels the cmdlet.
@@ -423,45 +596,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             catch { }
             base.StopProcessing();
-        }
-
-        private void ProcessRetries()
-        {
-            while (!Stopping && !_userCancellationCts.IsCancellationRequested && _pendingRetries.Count > 0)
-            {
-                DateTime now = DateTime.UtcNow;
-                var readyForRetry = _pendingRetries.Where(r => r.NextRetryTime <= now).ToList();
-
-                if (readyForRetry.Count == 0)
-                {
-                    // Calculate wait time for next retry
-                    var nextRetryTime = _pendingRetries.Min(r => r.NextRetryTime);
-                    var waitTimeMs = (int)Math.Max(100, (nextRetryTime - now).TotalMilliseconds);
-
-                    WriteVerbose($"Waiting {waitTimeMs / 1000.0:F1}s for next retry batch...");
-                    Thread.Sleep(waitTimeMs);
-
-                    continue;
-                }
-
-                // Remove from pending and add to batch for retry
-                foreach (var item in readyForRetry)
-                {
-                    _pendingRetries.Remove(item);
-                    _nextBatchItems.Add(item);
-
-                    if (_nextBatchItems.Count == BatchSize)
-                    {
-                        ProcessBatch();
-                    }
-                }
-
-                // Process any remaining items in batch
-                if (_nextBatchItems.Count > 0)
-                {
-                    ProcessBatch();
-                }
-            }
         }
     }
 }
