@@ -311,6 +311,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -RequestInterceptor
+ScriptBlock to intercept and modify requests. The ScriptBlock receives the OrganizationRequest and can throw exceptions or return modified responses.
+
+```yaml
+Type: ScriptBlock
+Parameter Sets: Return a mock connection
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -SetAsDefault
 When set, this connection will be used as the default for cmdlets that don't have a connection parameter specified.
 
@@ -402,21 +417,6 @@ See standard PS documentation.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -RequestInterceptor
-ScriptBlock to intercept and modify requests. The ScriptBlock receives the OrganizationRequest and can throw exceptions or return modified responses.
-
-```yaml
-Type: ScriptBlock
-Parameter Sets: Return a mock connection
-Aliases:
 
 Required: False
 Position: Named
