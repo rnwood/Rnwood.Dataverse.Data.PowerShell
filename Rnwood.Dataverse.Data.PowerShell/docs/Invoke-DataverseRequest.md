@@ -164,23 +164,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -InitialRetryDelay
-Initial delay in seconds before first retry. Subsequent retries use exponential backoff (delay doubles each time). Default is 5s.
-
-Only applies to Request and NameAndInputs parameter sets. REST API calls do not support retries.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: 5
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Method
 HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).
 
@@ -259,6 +242,38 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+See standard PS docs.
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InitialRetryDelay
+Initial delay in seconds before first retry. Subsequent retries use exponential backoff (delay doubles each time). Default is 5s.
+
+Only applies to Request and NameAndInputs parameter sets. REST API calls do not support retries.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 5
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Retries
 Number of times to retry the request on failure. Default is 0 (no retries). Each retry uses exponential backoff based on the `-InitialRetryDelay` parameter.
 
@@ -272,21 +287,6 @@ Aliases:
 Required: False
 Position: Named
 Default value: 0
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-See standard PS docs.
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

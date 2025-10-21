@@ -254,21 +254,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -InitialRetryDelay
-Initial delay in seconds before first retry. Subsequent retries use exponential backoff (delay doubles each time). Default is 5s.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: 5
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -InputObject
 Record from pipeline. This allows piping in record to delete.
 
@@ -281,21 +266,6 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
-```
-
-### -Retries
-Number of times to retry each batch item on failure. Default is 0 (no retries). Each retry uses exponential backoff based on the `-InitialRetryDelay` parameter.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: 0
-Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
@@ -341,6 +311,36 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InitialRetryDelay
+Initial delay in seconds before first retry. Subsequent retries use exponential backoff (delay doubles each time). Default is 5s.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 5
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Retries
+Number of times to retry each batch item on failure. Default is 0 (no retries). Each retry uses exponential backoff based on the `-InitialRetryDelay` parameter.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 0
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

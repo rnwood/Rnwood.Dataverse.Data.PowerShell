@@ -124,4 +124,23 @@ Describe 'Default Connection' {
         $default = Get-DataverseConnection -GetDefault
         $default | Should -Not -BeNullOrEmpty
     }
+
+    It "AccessToken parameter set accepts ScriptBlock" {
+        # Test that the AccessToken parameter accepts a ScriptBlock
+        $scriptBlock = { "fake-token" }
+        $parameters = @{
+            Url = "https://test.crm.dynamics.com"
+            AccessToken = $scriptBlock
+        }
+        
+        # Verify the cmdlet accepts the parameters without throwing during parameter binding
+        $cmdlet = Get-Command Get-DataverseConnection
+        $parameterSet = $cmdlet.ParameterSets | Where-Object { $_.Name -eq "Authenticate with access token script block" }
+        $parameterSet | Should -Not -BeNullOrEmpty
+        
+        # Verify AccessToken parameter exists and is of type ScriptBlock
+        $accessTokenParam = $parameterSet.Parameters | Where-Object { $_.Name -eq "AccessToken" }
+        $accessTokenParam | Should -Not -BeNullOrEmpty
+        $accessTokenParam.ParameterType | Should -Be ([System.Management.Automation.ScriptBlock])
+    }
 }
