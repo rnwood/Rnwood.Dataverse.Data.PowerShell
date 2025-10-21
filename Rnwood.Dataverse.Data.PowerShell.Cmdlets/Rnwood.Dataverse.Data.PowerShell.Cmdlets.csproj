@@ -68,4 +68,5 @@
     <Copy SourceFiles="@(_DataversePackageXml)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="@(_DataversePackageXml) != ''" />
     <Copy SourceFiles="@(_DataversePackageXml)" DestinationFolder="$(OutputPath)$(TargetFramework)\" SkipUnchangedFiles="true" Condition="@(_DataversePackageXml) != ''" />
   </Target>
+
 </Project>

@@ -16,6 +16,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Loader\Rnwood.Dataverse.Data.PowerShell.Loader.csproj" />
+    <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Cmdlets\Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -44,7 +47,7 @@
     <HelpInput Include="..\Rnwood.Dataverse.Data.PowerShell.Cmdlets\bin\$(Configuration)\**\Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll" />
   </ItemGroup>
 
-  <Target Name="BuildCmdlets" AfterTargets="Build">
+  <Target Name="BuildCmdlets" AfterTargets="Build" Inputs="..\Rnwood.Dataverse.Data.PowerShell.Cmdlets\**\*;..\Rnwood.Dataverse.Data.PowerShell.Cmdlets\Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj" Outputs="$(IntermediateOutputPath)cmdlets.stamp">
     <MSBuild Projects="../Rnwood.Dataverse.Data.PowerShell.Cmdlets/Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration)" BuildInParallel="true">
     </MSBuild>
     <ItemGroup>
@@ -52,6 +55,20 @@
     </ItemGroup>
     <!-- Avoid touching timestamps for files that are identical to avoid spuriously updating downstream inputs -->
     <Copy SourceFiles="@(CmdletsOutputs)" DestinationFolder="$(OutDir)\cmdlets\%(RecursiveDir)" SkipUnchangedFiles="true" />
+
+    <!-- Ensure intermediate output directory exists -->
+    <MakeDir Directories="$(IntermediateOutputPath)" Condition="!Exists('$(IntermediateOutputPath)')" />
+
+    <!-- Build an item list of lines to write to the stamp file -->
+    <ItemGroup>
+      <CmdletsStampLines Include="Cmdlets built at $(MSBuildThisFileFullPath)" />
+      <CmdletsStampLines Include="@(CmdletsOutputs -> '%(FullPath)')" />
+      <CmdletsStampLines Include="../Rnwood.Dataverse.Data.PowerShell.Cmdlets/**" />
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(IntermediateOutputPath)cmdlets.stamp"
+                      Lines="@(CmdletsStampLines)"
+                      Overwrite="true" />
 
   </Target>
 
