@@ -565,6 +565,71 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             SetIdProperty(InputObject, ((UpsertResponse)response).Target.Id);
         }
 
+        /// <summary>
+        /// Creates a new record (regular entity or M:M association).
+        /// Sets up the create request and completion callbacks.
+        /// </summary>
+        public void CreateNewRecord()
+        {
+            if (NoCreate)
+            {
+                _writeVerbose($"Skipped creating new record {TableName}:{Id} - NoCreate enabled");
+                return;
+            }
+
+            if (EntityMetadata.IsIntersect.GetValueOrDefault())
+            {
+                // Handle M:M association creation
+                ManyToManyRelationshipMetadata manyToManyRelationshipMetadata = EntityMetadata.ManyToManyRelationships[0];
+
+                EntityReference record1 = new EntityReference(manyToManyRelationshipMetadata.Entity1LogicalName,
+                         Target.GetAttributeValue<Guid>(
+                             manyToManyRelationshipMetadata.Entity1IntersectAttribute));
+                EntityReference record2 = new EntityReference(manyToManyRelationshipMetadata.Entity2LogicalName,
+                         Target.GetAttributeValue<Guid>(
+                             manyToManyRelationshipMetadata.Entity2IntersectAttribute));
+
+                AssociateRequest request = new AssociateRequest()
+                {
+                    Target = record1,
+                    RelatedEntities = new EntityReferenceCollection() { record2 },
+                    Relationship = new Relationship(manyToManyRelationshipMetadata.SchemaName)
+                    {
+                        PrimaryEntityRole = EntityRole.Referencing
+                    },
+                };
+                ApplyBypassBusinessLogicExecution(request);
+                Requests.Add(request);
+
+                _writeVerbose($"Added create of new intersect record {TableName}:{record1.Id},{record2.Id} to batch");
+                
+                // Set up completion callback
+                ResponseCompletion = (response) => {
+                    AssociateCompletion(Target, manyToManyRelationshipMetadata, record1, record2);
+                };
+            }
+            else
+            {
+                // Handle regular entity creation
+                Entity targetCreate = new Entity(Target.LogicalName) { Id = Target.Id };
+                targetCreate.Attributes.AddRange(Target.Attributes.Where(a => 
+                    !DontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
+
+                string columnSummary = GetColumnSummary(targetCreate, EntityConverter);
+
+                CreateRequest request = new CreateRequest() { Target = targetCreate };
+                ApplyBypassBusinessLogicExecution(request);
+                Requests.Add(request);
+
+                _writeVerbose($"Added created of new record {TableName}:{targetCreate.Id} to batch - columns:\n{columnSummary}");
+                
+                // Set up completion callback
+                ResponseCompletion = (response) => {
+                    CreateCompletion(Target, targetCreate, columnSummary, (CreateResponse)response);
+                };
+            }
+        }
+
         public override string ToString()
         {
             return $"Set {TableName}:{Id}";
@@ -1250,6 +1315,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ProcessQueuedRecords();
             }
 
+            // Flush new batch processor if it was used
+            if (_setBatchProcessor != null)
+            {
+                _setBatchProcessor.Flush();
+            }
+
+            // Also process old batch system (for methods not yet migrated)
             if (_nextBatchItems != null)
             {
                 ProcessBatch();
@@ -1627,119 +1699,70 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void CreateNewRecord(PSObject inputObject, string tableName, Guid? callerId, EntityMetadata entityMetadata, Entity target)
         {
-            if (NoCreate.IsPresent)
+            // Create context for this operation
+            var context = new SetOperationContext(
+                inputObject,
+                tableName,
+                callerId,
+                this,
+                entityMetadataFactory,
+                entityConverter,
+                Connection,
+                GetConversionOptions(),
+                WriteVerbose,
+                WriteError,
+                WriteObject,
+                ShouldProcess);
+            context.Target = target;
+            context.EntityMetadata = entityMetadata;
+
+            // Let context build the request and set up callbacks
+            context.CreateNewRecord();
+
+            // If no requests were created (e.g., NoCreate is set), return early
+            if (context.Requests.Count == 0)
             {
-                WriteVerbose(string.Format("Skipped creating new record {0}:{1} - NoCreate enabled", TableName, Id));
                 return;
             }
 
-            if (entityMetadata.IsIntersect.GetValueOrDefault())
+            // Queue for batch processing if available, otherwise execute immediately
+            if (_setBatchProcessor != null)
             {
-                ManyToManyRelationshipMetadata manyToManyRelationshipMetadata = entityMetadata.ManyToManyRelationships[0];
-
-                EntityReference record1 = new EntityReference(manyToManyRelationshipMetadata.Entity1LogicalName,
-                         target.GetAttributeValue<Guid>(
-                             manyToManyRelationshipMetadata.Entity1IntersectAttribute));
-                EntityReference record2 = new EntityReference(manyToManyRelationshipMetadata.Entity2LogicalName,
-                         target.GetAttributeValue<Guid>(
-                             manyToManyRelationshipMetadata.Entity2IntersectAttribute));
-
-                AssociateRequest request = new AssociateRequest()
-                {
-                    Target = record1,
-                    RelatedEntities =
-                            new EntityReferenceCollection()
-                    {
-                                record2
-                    },
-                    Relationship = new Relationship(manyToManyRelationshipMetadata.SchemaName)
-                    {
-                        PrimaryEntityRole = EntityRole.Referencing
-                    },
-                };
-                ApplyBypassBusinessLogicExecution(request);
-
-                if (_nextBatchItems != null)
-                {
-                    WriteVerbose(string.Format("Added create of new intersect record {0}:{1},{2} to batch", TableName, record1.Id, record2.Id));
-                    QueueBatchItem(new BatchItem(inputObject, tableName, callerId, request, (response) => { AssociateCompletion(target, inputObject, manyToManyRelationshipMetadata, record1, record2); }), CallerId);
-                }
-                else
-                {
-                    if (ShouldProcess(string.Format("Create new intersect record {0}", TableName)))
-                    {
-                        try
-                        {
-                            if (CallerId.HasValue)
-                            {
-                                Connection.CallerId = CallerId.Value;
-                            }
-                            Connection.Execute(request);
-                            if (CallerId.HasValue)
-                            {
-                                Connection.CallerId = Guid.Empty;
-                            }
-
-                            AssociateCompletion(target, inputObject, manyToManyRelationshipMetadata, record1, record2);
-                        }
-                        catch (Exception e)
-                        {
-                            if (CallerId.HasValue)
-                            {
-                                Connection.CallerId = Guid.Empty;
-                            }
-                            WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, inputObject));
-                        }
-                    }
-                }
+                _setBatchProcessor.QueueOperation(context);
             }
             else
             {
-                Entity targetCreate = new Entity(target.LogicalName) { Id = target.Id };
-                targetCreate.Attributes.AddRange(target.Attributes.Where(a => !SetOperationContext.DontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
-
-                string columnSummary = SetOperationContext.GetColumnSummary(targetCreate, entityConverter);
-
-                CreateRequest request = new CreateRequest()
+                // Non-batch mode: execute immediately
+                var request = context.Requests[0];
+                if (ShouldProcess(request.RequestName))
                 {
-                    Target = targetCreate
-                };
-                ApplyBypassBusinessLogicExecution(request);
-
-                if (_nextBatchItems != null)
-                {
-                    WriteVerbose(string.Format("Added created of new record {0}:{1} to batch - columns:\n{2}", TableName, targetCreate.Id, columnSummary));
-                    QueueBatchItem(new BatchItem(inputObject, tableName, callerId, request, (response) => { CreateCompletion(target, inputObject, targetCreate, columnSummary, (CreateResponse)response); }), CallerId);
-                }
-                else
-                {
-                    if (ShouldProcess(string.Format("Create new record {0}:{1} columns:\n{2}", TableName, targetCreate.Id, columnSummary)))
+                    try
                     {
-                        try
+                        if (callerId.HasValue)
                         {
-                            if (CallerId.HasValue)
-                            {
-                                Connection.CallerId = CallerId.Value;
-                            }
-
-                            CreateResponse response = (CreateResponse)Connection.Execute(request);
-
-                            if (CallerId.HasValue)
-                            {
-                                Connection.CallerId = Guid.Empty;
-                            }
-
-                            CreateCompletion(target, inputObject, targetCreate, columnSummary, response);
+                            Connection.CallerId = callerId.Value;
                         }
-                        catch (Exception e)
+
+                        var response = Connection.Execute(request);
+                        
+                        if (callerId.HasValue)
                         {
-                            if (CallerId.HasValue)
-                            {
-                                Connection.CallerId = Guid.Empty;
-                            }
-
-                            WriteError(new ErrorRecord(new Exception(string.Format("Error creating record {0}:{1} {2}, columns: {3}", TableName, targetCreate.Id, e.Message, columnSummary), e), null, ErrorCategory.InvalidResult, inputObject));
+                            Connection.CallerId = Guid.Empty;
                         }
+
+                        // Call completion callback
+                        if (context.ResponseCompletion != null)
+                        {
+                            context.ResponseCompletion(response);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        if (callerId.HasValue)
+                        {
+                            Connection.CallerId = Guid.Empty;
+                        }
+                        WriteError(new ErrorRecord(e, null, ErrorCategory.WriteError, inputObject));
                     }
                 }
             }
