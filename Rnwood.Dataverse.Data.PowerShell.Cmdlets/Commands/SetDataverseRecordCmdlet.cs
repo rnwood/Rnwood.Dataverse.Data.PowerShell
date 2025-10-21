@@ -431,7 +431,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _nextBatchItems.Clear();
         }
 
-        private void AppendFaultDetails(OrganizationServiceFault fault, StringBuilder output)
+        public static void AppendFaultDetails(OrganizationServiceFault fault, StringBuilder output)
         {
             output.AppendLine("OrganizationServiceFault " + fault.ErrorCode + ": " + fault.Message);
             output.AppendLine(fault.TraceText);
@@ -700,14 +700,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void AppendFaultDetails(OrganizationServiceFault fault, StringBuilder output)
         {
-            output.AppendLine("OrganizationServiceFault " + fault.ErrorCode + ": " + fault.Message);
-            output.AppendLine(fault.TraceText);
-
-            if (fault.InnerFault != null)
-            {
-                output.AppendLine("---");
-                AppendFaultDetails(fault.InnerFault, output);
-            }
+            SetBatchProcessor.AppendFaultDetails(fault, output);
         }
 
         private void ProcessBatch()
