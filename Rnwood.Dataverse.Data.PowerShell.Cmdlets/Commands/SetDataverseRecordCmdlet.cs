@@ -1327,7 +1327,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ProcessBatch();
             }
 
-            // Process any pending retries
+            // Process any pending retries from both systems
+            if (_setBatchProcessor != null)
+            {
+                _setBatchProcessor.ProcessRetries();
+            }
             ProcessRetries();
 
             // Cleanup cancellation token source
@@ -1385,6 +1389,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     ProcessQueuedRecords();
                 }
 
+                // Flush new batch processor if it was used
+                if (_setBatchProcessor != null)
+                {
+                    _setBatchProcessor.Flush();
+                }
+
+                // Also process old batch system (for methods not yet migrated)
                 if (_nextBatchItems != null && _nextBatchItems.Count > 0)
                 {
                     ProcessBatch();
