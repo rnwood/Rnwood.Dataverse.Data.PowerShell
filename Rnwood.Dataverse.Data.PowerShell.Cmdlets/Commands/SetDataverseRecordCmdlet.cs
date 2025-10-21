@@ -1220,58 +1220,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private List<RetryRecord> _pendingRetries;
 
-        private class BatchItem
-        {
-            public BatchItem(PSObject inputObject, string tableName, Guid? callerId, OrganizationRequest request, Action<OrganizationResponse> responseCompletion) : this(inputObject, tableName, callerId, request, responseCompletion, null)
-            {
-            }
-
-            public BatchItem(PSObject inputObject, string tableName, Guid? callerId, OrganizationRequest request, Action<OrganizationResponse> responseCompletion, Func<OrganizationServiceFault, bool> responseExceptionCompletion)
-            {
-                InputObject = inputObject;
-                Request = request;
-                ResponseCompletion = responseCompletion;
-                ResponseExceptionCompletion = responseExceptionCompletion;
-                TableName = tableName;
-                CallerId = callerId;
-            }
-
-            public string TableName { get; set; }
-
-            public Guid? CallerId { get; set; }
-
-            public OrganizationRequest Request { get; set; }
-
-            public Action<OrganizationResponse> ResponseCompletion { get; set; }
-
-            public Func<OrganizationServiceFault, bool> ResponseExceptionCompletion { get; set; }
-
-            public PSObject InputObject { get; set; }
-
-            private object FormatValue(object value)
-            {
-                if (value is EntityReference er)
-                {
-                    return $"{er.LogicalName}:{er.Id}";
-                }
-
-                if (value is Entity en)
-                {
-                    string attributeValues = string.Join(", ", en.Attributes.Select(a => $"{a.Key}='{a.Value}'"));
-                    return $"{en.LogicalName} : {{{attributeValues}}}";
-                }
-
-                return value?.ToString();
-            }
-
-            public override string ToString()
-            {
-                return Request.RequestName + " " + string.Join(", ", Request.Parameters.Select(p => $"{p.Key}='{FormatValue(p.Value)}'"));
-            }
-        }
-
-        private List<BatchItem> _nextBatchItems;
-        private Guid? _nextBatchCallerId;
         private SetBatchProcessor _setBatchProcessor;
         private CancellationTokenSource _userCancellationCts;
 
@@ -1288,21 +1236,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private List<RecordProcessingItem> _retrievalBatchQueue;
 
-        private void QueueBatchItem(BatchItem item, Guid? callerId)
-        {
-            if (_nextBatchItems.Any() && _nextBatchCallerId != callerId)
-            {
-                ProcessBatch();
-            }
-
-            _nextBatchCallerId = callerId;
-            _nextBatchItems.Add(item);
-
-            if (_nextBatchItems.Count == BatchSize)
-            {
-                ProcessBatch();
-            }
-        }
         /// <summary>
         /// Initializes the cmdlet.
         /// </summary>
@@ -1324,9 +1257,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (BatchSize > 1)
             {
-                _nextBatchItems = new List<BatchItem>();
-
-                // Initialize the batch processor (not yet fully used but wired up)
+                // Initialize the batch processor
                 _setBatchProcessor = new SetBatchProcessor(
                     BatchSize,
                     Connection,
@@ -1342,87 +1273,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private void AppendFaultDetails(OrganizationServiceFault fault, StringBuilder output)
         {
             SetBatchProcessor.AppendFaultDetails(fault, output);
-        }
-
-        private void ProcessBatch()
-        {
-            if (_nextBatchItems.Count > 0 &&
-                ShouldProcess("Execute batch of requests:\n" + string.Join("\n", _nextBatchItems.Select(r => r.ToString()))))
-            {
-                ExecuteMultipleRequest batchRequest = new ExecuteMultipleRequest()
-                {
-                    Settings = new ExecuteMultipleSettings()
-                    {
-                        ReturnResponses = true,
-                        ContinueOnError = true
-                    },
-                    Requests = new OrganizationRequestCollection(),
-                    RequestId = Guid.NewGuid()
-                };
-                ApplyBypassBusinessLogicExecution(batchRequest);
-
-                batchRequest.Requests.AddRange(_nextBatchItems.Select(i => i.Request));
-
-                Guid oldCallerId = Connection.CallerId;
-                Connection.CallerId = _nextBatchCallerId.GetValueOrDefault();
-
-                ExecuteMultipleResponse response = null;
-                try
-                {
-                    response = (ExecuteMultipleResponse)Connection.Execute(batchRequest);
-                }
-                catch (Exception e)
-                {
-                    foreach (var batchItem in _nextBatchItems)
-                    {
-                        
-                        this.ScheduleRecordRetry(batchItem.InputObject, batchItem.TableName, batchItem.CallerId, e);
-                    }
-                    _nextBatchItems.Clear();
-                    return;
-                }
-                finally
-                {
-                    Connection.CallerId = oldCallerId;
-                }
-
-                foreach (var itemResponse in response.Responses)
-                {
-                    BatchItem batchItem = _nextBatchItems[itemResponse.RequestIndex];
-
-                    if (itemResponse.Fault != null)
-                    {
-                        bool handledByCompletion = batchItem.ResponseExceptionCompletion != null && batchItem.ResponseExceptionCompletion(itemResponse.Fault);
-
-                        if (!handledByCompletion)
-                        {
-                            // Schedule the full record for retry (not just the batch item)
-                            if (Retries > 0)
-                            {
-                                ScheduleRecordRetry(batchItem.InputObject, batchItem.TableName, batchItem.CallerId, new Exception($"OrganizationServiceFault {itemResponse.Fault.ErrorCode}: {itemResponse.Fault.Message}"));
-                            }
-                            else
-                            {
-                                RecordRetryDone(batchItem.InputObject);
-                                // No retries configured - write error immediately
-                                StringBuilder details = new StringBuilder();
-                                AppendFaultDetails(itemResponse.Fault, details);
-                                WriteError(new ErrorRecord(new Exception(details.ToString()), null, ErrorCategory.InvalidResult, batchItem.InputObject));
-                            }
-                        }
-                    }
-                    else
-                    {
-                        this.RecordRetryDone(batchItem.InputObject);
-                        batchItem.ResponseCompletion(itemResponse.Response);
-                    }
-                }
-
-
-            }
-
-            _nextBatchItems.Clear();
-            _nextBatchCallerId = null;
         }
 
         private void ScheduleRecordRetry(PSObject inputObject, string tableName, Guid? callerId, Exception error)
@@ -1484,19 +1334,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ProcessQueuedRecords();
             }
 
-            // Flush new batch processor if it was used
+            // Flush batch processor if it was used
             if (_setBatchProcessor != null)
             {
                 _setBatchProcessor.Flush();
             }
 
-            // Also process old batch system (for methods not yet migrated)
-            if (_nextBatchItems != null)
-            {
-                ProcessBatch();
-            }
-
-            // Process any pending retries from both systems
+            // Process any pending retries
             if (_setBatchProcessor != null)
             {
                 _setBatchProcessor.ProcessRetries();
@@ -1558,16 +1402,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     ProcessQueuedRecords();
                 }
 
-                // Flush new batch processor if it was used
+                // Flush batch processor if it was used
                 if (_setBatchProcessor != null)
                 {
                     _setBatchProcessor.Flush();
-                }
-
-                // Also process old batch system (for methods not yet migrated)
-                if (_nextBatchItems != null && _nextBatchItems.Count > 0)
-                {
-                    ProcessBatch();
                 }
             }
         }
@@ -2427,10 +2265,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     };
                     ApplyBypassBusinessLogicExecution(request);
 
-                    if (_nextBatchItems != null)
+                    if (_setBatchProcessor != null)
                     {
+                        // Create context for this assign operation
+                        var assignContext = new SetOperationContext(inputObject, tableName, callerId, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
+                        assignContext.Target = target;
+                        assignContext.Requests.Add(request);
+                        assignContext.ResponseCompletion = (response) => { AssignRecordCompletion(target, ownerid); };
+                        
                         WriteVerbose(string.Format("Added assignment of record {0}:{1} to {2} to batch", TableName, target.Id, ownerid.Name));
-                        QueueBatchItem(new BatchItem(inputObject, tableName, callerId, request, (response) => { AssignRecordCompletion(target, ownerid); }), CallerId);
+                        _setBatchProcessor.QueueOperation(assignContext);
                     }
                     else
                     {
@@ -2473,10 +2317,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     };
                     ApplyBypassBusinessLogicExecution(request);
 
-                    if (_nextBatchItems != null)
+                    if (_setBatchProcessor != null)
                     {
+                        // Create context for this setstate operation
+                        var setStateContext = new SetOperationContext(inputObject, tableName, callerId, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
+                        setStateContext.Target = target;
+                        setStateContext.Requests.Add(request);
+                        setStateContext.ResponseCompletion = (response) => { SetStateCompletion(target, statuscode, stateCode); };
+                        
                         WriteVerbose(string.Format("Added set record {0}:{1} status to State:{2} Status: {3} to batch", TableName, Id, stateCode.Value, statuscode.Value));
-                        QueueBatchItem(new BatchItem(inputObject, tableName, callerId, request, (response) => { SetStateCompletion(target, statuscode, stateCode); }), CallerId);
+                        _setBatchProcessor.QueueOperation(setStateContext);
                     }
                     else
                     {
