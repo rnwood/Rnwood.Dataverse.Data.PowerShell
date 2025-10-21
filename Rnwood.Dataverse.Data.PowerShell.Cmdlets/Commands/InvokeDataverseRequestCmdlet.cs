@@ -62,8 +62,47 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(ParameterSetName = "NameAndInputs", HelpMessage = "Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable.")]
 		public uint BatchSize { get; set; } = 1;
 
+		/// <summary>
+		/// Specifies the types of business logic (for example plugins) to bypass
+		/// </summary>
+		[Parameter(ParameterSetName = "Request", HelpMessage = "Specifies the types of business logic (for example plugins) to bypass")]
+		[Parameter(ParameterSetName = "NameAndInputs", HelpMessage = "Specifies the types of business logic (for example plugins) to bypass")]
+		public CustomLogicBypassableOrganizationServiceCmdlet.BusinessLogicTypes[] BypassBusinessLogicExecution { get; set; }
+
+		/// <summary>
+		/// Specifies the IDs of plugin steps to bypass
+		/// </summary>
+		[Parameter(ParameterSetName = "Request", HelpMessage = "Specifies the IDs of plugin steps to bypass")]
+		[Parameter(ParameterSetName = "NameAndInputs", HelpMessage = "Specifies the IDs of plugin steps to bypass")]
+		public Guid[] BypassBusinessLogicExecutionStepIds { get; set; }
+
 		private RequestBatchProcessor _batchProcessor;
 		private CancellationTokenSource _userCancellationCts;
+
+		/// <summary>
+		/// Applies business logic bypass parameters to the request.
+		/// </summary>
+		/// <param name="request">The organization request to apply bypass parameters to.</param>
+		protected void ApplyBypassBusinessLogicExecution(OrganizationRequest request)
+		{
+			if (BypassBusinessLogicExecution?.Length > 0)
+			{
+				request.Parameters["BypassBusinessLogicExecution"] = string.Join(",", BypassBusinessLogicExecution.Select(o => o.ToString()));
+			}
+			else
+			{
+				request.Parameters.Remove("BypassBusinessLogicExecution");
+			}
+
+			if (BypassBusinessLogicExecutionStepIds?.Length > 0)
+			{
+				request.Parameters["BypassBusinessLogicExecutionStepIds"] = string.Join(",", BypassBusinessLogicExecutionStepIds.Select(id => id.ToString()));
+			}
+			else
+			{
+				request.Parameters.Remove("BypassBusinessLogicExecutionStepIds");
+			}
+		}
 
 		/// <summary>
 		/// Initializes the cmdlet.
@@ -85,7 +124,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					(err) => WriteError(err),
 					ShouldProcess,
 					() => Stopping,
-					_userCancellationCts.Token);
+					_userCancellationCts.Token,
+					BypassBusinessLogicExecution,
+					BypassBusinessLogicExecutionStepIds);
 			}
 		}
 
@@ -129,6 +170,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					Request = new OrganizationRequest(RequestName);
 					Request.Parameters.AddRange(Parameters.Cast<DictionaryEntry>().Select(e => new KeyValuePair<string, object>((string)e.Key, e.Value)));
 				}
+
+				// Apply bypass parameters to the request
+				ApplyBypassBusinessLogicExecution(Request);
 
 				// If batching is enabled, queue the request for batch execution
 				if (_batchProcessor != null)
@@ -266,8 +310,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			private readonly Func<string, bool> _shouldProcess;
 			private readonly Func<bool> _isStopping;
 			private readonly CancellationToken _cancellationToken;
+			private readonly CustomLogicBypassableOrganizationServiceCmdlet.BusinessLogicTypes[] _bypassBusinessLogicExecution;
+			private readonly Guid[] _bypassBusinessLogicExecutionStepIds;
 
-			public RequestBatchProcessor(uint batchSize, IOrganizationService connection, Action<string> writeVerbose, Action<object> writeObject, Action<ErrorRecord> writeError, Func<string, bool> shouldProcess, Func<bool> isStopping, CancellationToken cancellationToken)
+			public RequestBatchProcessor(uint batchSize, IOrganizationService connection, Action<string> writeVerbose, Action<object> writeObject, Action<ErrorRecord> writeError, Func<string, bool> shouldProcess, Func<bool> isStopping, CancellationToken cancellationToken, CustomLogicBypassableOrganizationServiceCmdlet.BusinessLogicTypes[] bypassBusinessLogicExecution, Guid[] bypassBusinessLogicExecutionStepIds)
 			{
 				_batchSize = batchSize;
 				_connection = connection;
@@ -277,6 +323,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				_shouldProcess = shouldProcess;
 				_isStopping = isStopping;
 				_cancellationToken = cancellationToken;
+				_bypassBusinessLogicExecution = bypassBusinessLogicExecution;
+				_bypassBusinessLogicExecutionStepIds = bypassBusinessLogicExecutionStepIds;
 				_nextBatchItems = new List<RequestOperationContext>();
 				_pendingRetries = new List<RequestOperationContext>();
 			}
@@ -358,6 +406,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					Requests = new OrganizationRequestCollection(),
 					RequestId = Guid.NewGuid()
 				};
+
+				// Apply bypass logic at batch level
+				if (_bypassBusinessLogicExecution?.Length > 0)
+				{
+					batchRequest.Parameters["BypassBusinessLogicExecution"] = string.Join(",", _bypassBusinessLogicExecution.Select(o => o.ToString()));
+				}
+				if (_bypassBusinessLogicExecutionStepIds?.Length > 0)
+				{
+					batchRequest.Parameters["BypassBusinessLogicExecutionStepIds"] = string.Join(",", _bypassBusinessLogicExecutionStepIds.Select(id => id.ToString()));
+				}
 
 				batchRequest.Requests.AddRange(_nextBatchItems.Select(i => i.Request));
 
