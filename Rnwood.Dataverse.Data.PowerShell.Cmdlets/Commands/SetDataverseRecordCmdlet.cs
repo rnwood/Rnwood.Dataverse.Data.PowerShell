@@ -139,6 +139,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _writeObject = writeObject;
             _shouldProcess = shouldProcess;
             Requests = new List<OrganizationRequest>();
+            ResponseCompletions = new List<Action<OrganizationResponse>>();
         }
 
         public PSObject InputObject { get; }
@@ -169,15 +170,37 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Entity ExistingRecord { get; set; }
         
         /// <summary>
-        /// Callback to invoke when the operation completes successfully.
+        /// Callbacks to invoke when each request completes successfully.
+        /// One callback per request in the Requests list.
         /// </summary>
-        public Action<OrganizationResponse> ResponseCompletion { get; set; }
+        public List<Action<OrganizationResponse>> ResponseCompletions { get; set; }
         
         /// <summary>
         /// Callback to invoke when the operation encounters a fault.
         /// Returns true if the fault was handled, false otherwise.
         /// </summary>
         public Func<OrganizationServiceFault, bool> ResponseExceptionCompletion { get; set; }
+        
+        /// <summary>
+        /// Callback to invoke when the operation completes successfully.
+        /// This is a convenience property for single-request contexts.
+        /// Setting this property adds the callback to ResponseCompletions.
+        /// </summary>
+        public Action<OrganizationResponse> ResponseCompletion 
+        { 
+            get => ResponseCompletions.Count > 0 ? ResponseCompletions[0] : null;
+            set 
+            {
+                if (ResponseCompletions.Count == 0)
+                {
+                    ResponseCompletions.Add(value);
+                }
+                else
+                {
+                    ResponseCompletions[0] = value;
+                }
+            }
+        }
 
         /// <summary>
         /// Schedules this operation for retry after a failure.
@@ -631,9 +654,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     getIdQuery.Criteria.AddCondition(manyToManyRelationshipMetadata.Entity2IntersectAttribute, ConditionOperator.Equal, record2.Id);
                     Requests.Add(new RetrieveMultipleRequest() { Query = getIdQuery });
                     
-                    // Additional completion for getting ID - this will be called for the second request
-                    // Note: this is a limitation of the current design - multiple requests with different completions
-                    // For now, we'll handle this in the first completion callback
+                    // Add completion for the second request to set the Id on the InputObject
+                    ResponseCompletions.Add((response) => {
+                        AssociateUpsertGetIdCompletion(response);
+                    });
                 }
             }
             else
@@ -1040,10 +1064,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 hasError = true;
                             }
                         }
-                        else if (context.ResponseCompletion != null && i == 0)
+                        else if (context.ResponseCompletions != null && i < context.ResponseCompletions.Count && context.ResponseCompletions[i] != null)
                         {
-                            // Call success completion callback for the first (typically only) response
-                            context.ResponseCompletion(itemResponse.Response);
+                            // Call the completion callback for this request
+                            context.ResponseCompletions[i](itemResponse.Response);
                         }
                     }
                     requestIndex++;
@@ -2075,20 +2099,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             else
             {
-                // Non-batch mode: execute immediately
-                var request = context.Requests[0];
-                
-                // For non-batch upsert, need to generate ID if not set
-                if (request is UpsertRequest upsertRequest)
-                {
-                    if (upsertRequest.Target.Id == Guid.Empty && 
-                        (upsertRequest.Target.KeyAttributes == null || upsertRequest.Target.KeyAttributes.Count == 0))
-                    {
-                        upsertRequest.Target.Id = Guid.NewGuid();
-                    }
-                }
-
-                if (ShouldProcess(request.RequestName))
+                // Non-batch mode: execute all requests immediately
+                if (ShouldProcess(context.Requests.Count == 1 ? context.Requests[0].RequestName : $"Execute {context.Requests.Count} requests"))
                 {
                     Guid oldCallerId = Connection.CallerId;
                     try
@@ -2098,12 +2110,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             Connection.CallerId = callerId.Value;
                         }
 
-                        var response = Connection.Execute(request);
-
-                        // Call completion callback
-                        if (context.ResponseCompletion != null)
+                        // Execute each request and call its completion callback
+                        for (int i = 0; i < context.Requests.Count; i++)
                         {
-                            context.ResponseCompletion(response);
+                            var request = context.Requests[i];
+                            
+                            // For non-batch upsert, need to generate ID if not set
+                            if (request is UpsertRequest upsertRequest)
+                            {
+                                if (upsertRequest.Target.Id == Guid.Empty && 
+                                    (upsertRequest.Target.KeyAttributes == null || upsertRequest.Target.KeyAttributes.Count == 0))
+                                {
+                                    upsertRequest.Target.Id = Guid.NewGuid();
+                                }
+                            }
+
+                            var response = Connection.Execute(request);
+
+                            // Call completion callback for this request
+                            if (context.ResponseCompletions != null && i < context.ResponseCompletions.Count && context.ResponseCompletions[i] != null)
+                            {
+                                context.ResponseCompletions[i](response);
+                            }
                         }
                     }
                     catch (Exception e)
@@ -2159,9 +2187,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             else
             {
-                // Non-batch mode: execute immediately
-                var request = context.Requests[0];
-                if (ShouldProcess(request.RequestName))
+                // Non-batch mode: execute all requests immediately
+                if (ShouldProcess(context.Requests.Count == 1 ? context.Requests[0].RequestName : $"Execute {context.Requests.Count} requests"))
                 {
                     Guid oldCallerId = Connection.CallerId;
                     try
@@ -2171,12 +2198,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             Connection.CallerId = callerId.Value;
                         }
 
-                        var response = Connection.Execute(request);
-
-                        // Call completion callback
-                        if (context.ResponseCompletion != null)
+                        // Execute each request and call its completion callback
+                        for (int i = 0; i < context.Requests.Count; i++)
                         {
-                            context.ResponseCompletion(response);
+                            var request = context.Requests[i];
+                            var response = Connection.Execute(request);
+
+                            // Call completion callback for this request
+                            if (context.ResponseCompletions != null && i < context.ResponseCompletions.Count && context.ResponseCompletions[i] != null)
+                            {
+                                context.ResponseCompletions[i](response);
+                            }
                         }
                     }
                     catch (Exception e)
@@ -2227,9 +2259,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             else
             {
-                // Non-batch mode: execute immediately
-                var request = context.Requests[0];
-                if (ShouldProcess(request.RequestName))
+                // Non-batch mode: execute all requests immediately
+                if (ShouldProcess(context.Requests.Count == 1 ? context.Requests[0].RequestName : $"Execute {context.Requests.Count} requests"))
                 {
                     Guid oldCallerId = Connection.CallerId;
                     try
@@ -2239,12 +2270,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             Connection.CallerId = callerId.Value;
                         }
 
-                        var response = Connection.Execute(request);
-
-                        // Call completion callback
-                        if (context.ResponseCompletion != null)
+                        // Execute each request and call its completion callback
+                        for (int i = 0; i < context.Requests.Count; i++)
                         {
-                            context.ResponseCompletion(response);
+                            var request = context.Requests[i];
+                            var response = Connection.Execute(request);
+
+                            // Call completion callback for this request
+                            if (context.ResponseCompletions != null && i < context.ResponseCompletions.Count && context.ResponseCompletions[i] != null)
+                            {
+                                context.ResponseCompletions[i](response);
+                            }
                         }
                     }
                     catch (Exception e)
