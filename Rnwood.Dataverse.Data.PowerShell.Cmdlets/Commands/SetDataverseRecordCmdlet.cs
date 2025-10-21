@@ -249,6 +249,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
+        /// Column names that should not be updated directly - they require special handling.
+        /// </summary>
+        public static readonly string[] DontUpdateDirectlyColumnNames = new[] { "statuscode", "statecode", "ownerid" };
+
+        /// <summary>
         /// Removes unchanged columns from target entity by comparing with existing record.
         /// Also sets target.Id to existing record's Id.
         /// </summary>
@@ -1243,7 +1248,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
 
-                targetUpdate.Attributes.AddRange(target.Attributes.Where(a => !dontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
+                targetUpdate.Attributes.AddRange(target.Attributes.Where(a => !SetOperationContext.DontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
 
                 string columnSummary = SetOperationContext.GetColumnSummary(targetUpdate, entityConverter);
 
@@ -1397,7 +1402,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             else
             {
                 Entity targetCreate = new Entity(target.LogicalName) { Id = target.Id };
-                targetCreate.Attributes.AddRange(target.Attributes.Where(a => !dontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
+                targetCreate.Attributes.AddRange(target.Attributes.Where(a => !SetOperationContext.DontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
 
                 string columnSummary = SetOperationContext.GetColumnSummary(targetCreate, entityConverter);
 
@@ -1508,8 +1513,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 
 
-        private string[] dontUpdateDirectlyColumnNames = new[] { "statuscode", "statecode", "ownerid" };
-
         private void UpdateExistingRecord(PSObject inputObject, string tableName, Guid? callerId, EntityMetadata entityMetadata, Entity target, Entity existingRecord)
         {
             if (NoUpdate.IsPresent)
@@ -1538,7 +1541,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             Entity targetUpdate = new Entity(target.LogicalName);
-            targetUpdate.Attributes.AddRange(target.Attributes.Where(a => !dontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
+            targetUpdate.Attributes.AddRange(target.Attributes.Where(a => !SetOperationContext.DontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
 
             if (entityMetadata.IsIntersect.GetValueOrDefault())
             {
