@@ -647,6 +647,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private List<BatchItem> _nextBatchItems;
         private Guid? _nextBatchCallerId;
+        private SetBatchProcessor _setBatchProcessor;
+        private CancellationTokenSource _userCancellationCts;
 
         // Retrieval batching support
         private class RecordProcessingItem
@@ -685,6 +687,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.BeginProcessing();
 
+            // Initialize cancellation token source for this pipeline invocation
+            _userCancellationCts = new CancellationTokenSource();
+
             recordCount = 0;
             entityMetadataFactory = new EntityMetadataFactory(Connection);
             entityConverter = new DataverseEntityConverter(Connection, entityMetadataFactory);
@@ -695,6 +700,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (BatchSize > 1)
             {
                 _nextBatchItems = new List<BatchItem>();
+
+                // Initialize the batch processor (not yet fully used but wired up)
+                _setBatchProcessor = new SetBatchProcessor(
+                    BatchSize,
+                    Connection,
+                    WriteVerbose,
+                    ShouldProcess,
+                    () => Stopping,
+                    _userCancellationCts.Token,
+                    callerId => Connection.CallerId = callerId.GetValueOrDefault(),
+                    () => Connection.CallerId);
             }
         }
 
@@ -850,6 +866,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Process any pending retries
             ProcessRetries();
+
+            // Cleanup cancellation token source
+            _userCancellationCts?.Dispose();
+            _userCancellationCts = null;
+        }
+
+        /// <summary>
+        /// Called when the user cancels the cmdlet.
+        /// </summary>
+        protected override void StopProcessing()
+        {
+            // Called when user presses Ctrl+C. Signal cancellation to any ongoing operations.
+            try
+            {
+                _userCancellationCts?.Cancel();
+            }
+            catch { }
+            base.StopProcessing();
         }
 
         private void ProcessRetries()
