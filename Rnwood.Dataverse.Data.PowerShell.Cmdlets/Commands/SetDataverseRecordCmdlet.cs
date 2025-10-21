@@ -248,6 +248,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return string.Join("\n", psObject.Properties.Select(a => a.Name + " = " + Ellipsis((GetValueSummary(a.Value)).ToString())));
         }
 
+        /// <summary>
+        /// Removes unchanged columns from target entity by comparing with existing record.
+        /// Also sets target.Id to existing record's Id.
+        /// </summary>
+        public static void RemoveUnchangedColumns(Entity target, Entity existingRecord)
+        {
+            foreach (KeyValuePair<string, object> column in target.Attributes.ToArray())
+            {
+                if ((existingRecord.Contains(column.Key) && Equals(column.Value, existingRecord[column.Key]))
+                    ||
+                    //Dataverse seems to consider that null and "" string are equal and doesn't include the attribute in retrieve records if the value is either
+                    ((column.Value == null || column.Value as string == "") && !existingRecord.Contains(column.Key)))
+                {
+                    target.Attributes.Remove(column.Key);
+                }
+                else if (existingRecord.GetAttributeValue<object>(column.Key) is OptionSetValueCollection existingCollection && target.GetAttributeValue<object>(column.Key) is OptionSetValueCollection targetCollection)
+                {
+                    if (existingCollection.Count == targetCollection.Count && targetCollection.All(existingCollection.Contains))
+                    {
+                        target.Attributes.Remove(column.Key);
+                    }
+                }
+            }
+
+            target.Id = existingRecord.Id;
+        }
+
         public override string ToString()
         {
             return $"Set {TableName}:{Id}";
@@ -1500,7 +1527,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             inputObject.Properties.Add(new PSNoteProperty("Id", existingRecord.Id));
 
-            RemoveUnchangedColumns(target, existingRecord);
+            SetOperationContext.RemoveUnchangedColumns(target, existingRecord);
 
             if (NoUpdateColumns != null)
             {
@@ -2154,27 +2181,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return existingRecord;
         }
 
-        private void RemoveUnchangedColumns(Entity target, Entity existingRecord)
-        {
-            foreach (KeyValuePair<string, object> column in target.Attributes.ToArray())
-            {
-                if ((existingRecord.Contains(column.Key) && Equals(column.Value, existingRecord[column.Key]))
-                    ||
-                    //Dataverse seems to consider that null and "" string are equal and doesn't include the attribute in retrieve records if the value is either
-                    ((column.Value == null || column.Value as string == "") && !existingRecord.Contains(column.Key)))
-                {
-                    target.Attributes.Remove(column.Key);
-                }
-                else if (existingRecord.GetAttributeValue<object>(column.Key) is OptionSetValueCollection existingCollection && target.GetAttributeValue<object>(column.Key) is OptionSetValueCollection targetCollection)
-                {
-                    if (existingCollection.Count == targetCollection.Count && targetCollection.All(existingCollection.Contains))
-                    {
-                        target.Attributes.Remove(column.Key);
-                    }
-                }
-            }
 
-            target.Id = existingRecord.Id;
-        }
     }
 }
