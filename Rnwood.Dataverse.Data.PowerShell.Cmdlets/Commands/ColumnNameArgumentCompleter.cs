@@ -14,7 +14,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// determine which entity's attributes to list. If a Connection parameter is bound it
     /// will be used to retrieve entity metadata.
     /// </summary>
-    public class ColumnNameArgumentCompleter : IArgumentCompleter
+    public class ColumnNameArgumentCompleter : IArgumentCompleter  
     {
     /// <summary>
     /// Provide completion results for a parameter that expects a Dataverse column/logical name.
