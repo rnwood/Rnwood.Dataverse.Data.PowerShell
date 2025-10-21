@@ -921,6 +921,88 @@ Describe 'Set-DataverseRecord' {
         }
     }
 
+    Context 'CallerId Restoration' {
+        It "Restores previous CallerId after non-batch create request when CallerId was Guid.Empty" {
+            $connection = getMockConnection
+            
+            # Ensure CallerId starts as empty (mock connections don't support non-empty CallerId)
+            $connection.CallerId | Should -Be ([Guid]::Empty)
+            
+            # Create a record with a CallerId (non-batch mode with BatchSize=1)
+            $record = @{
+                firstname = "John"
+                lastname = "Doe"
+            }
+            
+            $operationCallerId = [Guid]::NewGuid()
+            $result = $record | Set-DataverseRecord -Connection $connection -TableName contact -CallerId $operationCallerId -CreateOnly -BatchSize 1
+            
+            # Verify the CallerId was restored to Guid.Empty
+            $connection.CallerId | Should -Be ([Guid]::Empty)
+        }
+
+        It "Restores previous CallerId after non-batch update request when CallerId was Guid.Empty" {
+            $connection = getMockConnection
+            
+            # Create a record first
+            $record = @{
+                firstname = "John"
+                lastname = "Doe"
+            }
+            $created = $record | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            
+            # Ensure CallerId is empty (mock connections don't support non-empty CallerId)
+            $connection.CallerId | Should -Be ([Guid]::Empty)
+            
+            # Update the record with a CallerId (non-batch mode with BatchSize=1)
+            $record.Id = $created.Id
+            $record.firstname = "Jane"
+            
+            $operationCallerId = [Guid]::NewGuid()
+            $result = $record | Set-DataverseRecord -Connection $connection -TableName contact -CallerId $operationCallerId -BatchSize 1
+            
+            # Verify the CallerId was restored to Guid.Empty
+            $connection.CallerId | Should -Be ([Guid]::Empty)
+        }
+
+        It "Restores previous CallerId after non-batch upsert request when CallerId was Guid.Empty" {
+            $connection = getMockConnection
+            
+            # Ensure CallerId is empty (mock connections don't support non-empty CallerId)
+            $connection.CallerId | Should -Be ([Guid]::Empty)
+            
+            # Upsert a record with a CallerId (non-batch mode with BatchSize=1)
+            $record = @{
+                firstname = "John"
+                lastname = "Doe"
+            }
+            
+            $operationCallerId = [Guid]::NewGuid()
+            $result = $record | Set-DataverseRecord -Connection $connection -TableName contact -CallerId $operationCallerId -Upsert -BatchSize 1
+            
+            # Verify the CallerId was restored to Guid.Empty
+            $connection.CallerId | Should -Be ([Guid]::Empty)
+        }
+
+        It "Does not modify connection CallerId when CallerId parameter is not specified" {
+            $connection = getMockConnection
+            
+            # Ensure CallerId starts as empty
+            $connection.CallerId | Should -Be ([Guid]::Empty)
+            
+            # Create a record WITHOUT specifying CallerId (non-batch mode with BatchSize=1)
+            $record = @{
+                firstname = "John"
+                lastname = "Doe"
+            }
+            
+            $result = $record | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -BatchSize 1
+            
+            # Verify the CallerId is still Guid.Empty (unchanged)
+            $connection.CallerId | Should -Be ([Guid]::Empty)
+        }
+    }
+
     Context "Retries" {
         It "Retries whole batch on ExecuteMultiple failure" {
             $state = [PSCustomObject]@{ FailCount = 0 }
