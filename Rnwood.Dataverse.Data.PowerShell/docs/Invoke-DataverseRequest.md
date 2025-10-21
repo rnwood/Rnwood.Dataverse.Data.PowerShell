@@ -29,8 +29,8 @@ Invoke-DataverseRequest [-RequestName] <String> [[-Parameters] <Hashtable>] [-Ba
 ### REST
 ```
 Invoke-DataverseRequest [-Method] <HttpMethod> [-Path] <String> [[-Body] <PSObject>]
- [-CustomHeaders <Hashtable>] [-BatchSize <UInt32>] [-Retries <Int32>] [-InitialRetryDelay <Int32>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-CustomHeaders <Hashtable>] [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -119,6 +119,21 @@ PS C:\> $response = Invoke-DataverseRequest -Connection $c -Request $request -Re
 Invokes a WhoAmI request with automatic retry on transient failures. Failed requests will be retried up to 3 times with delays of 5s, 10s, and 20s respectively. The `-Verbose` flag shows retry attempts and wait times.
 
 ## PARAMETERS
+
+### -BatchSize
+Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable.
+
+```yaml
+Type: UInt32
+Parameter Sets: Request, NameAndInputs
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -Body
 Body of the REST API request. Can be a string (JSON) or a PSObject which will be converted to JSON.
@@ -292,28 +307,12 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -BatchSize
-Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### Microsoft.Xrm.Sdk.OrganizationRequest
-
 ## OUTPUTS
 
 ### System.Object
