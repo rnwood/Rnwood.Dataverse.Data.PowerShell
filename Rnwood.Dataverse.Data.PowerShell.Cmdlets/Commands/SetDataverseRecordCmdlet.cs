@@ -2011,15 +2011,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private void SetStateCompletion(Entity target, OptionSetValue statuscode, OptionSetValue stateCode)
-        {
-            WriteVerbose(string.Format("Record {0}:{1} status set to State:{2} Status: {3}", target.LogicalName, target.Id, stateCode.Value, statuscode.Value));
-        }
-
-        private void AssignRecordCompletion(Entity target, EntityReference ownerid)
-        {
-            WriteVerbose(string.Format("Record {0}:{1} assigned to {2}", target.LogicalName, target.Id, ownerid.Name));
-        }
 
         private bool UpsertRecord(PSObject inputObject, string tableName, Guid? callerId, EntityMetadata entityMetadata, Entity target)
         {
@@ -2310,7 +2301,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         var assignContext = new SetOperationContext(inputObject, tableName, callerId, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
                         assignContext.Target = target;
                         assignContext.Requests.Add(request);
-                        assignContext.ResponseCompletion = (response) => { AssignRecordCompletion(target, ownerid); };
+                        assignContext.ResponseCompletion = (response) => { 
+                            WriteVerbose(string.Format("Record {0}:{1} assigned to {2}", target.LogicalName, target.Id, ownerid.Name));
+                        };
                         
                         WriteVerbose(string.Format("Added assignment of record {0}:{1} to {2} to batch", TableName, target.Id, ownerid.Name));
                         _setBatchProcessor.QueueOperation(assignContext);
@@ -2322,7 +2315,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             try
                             {
                                 Connection.Execute(request);
-                                AssignRecordCompletion(target, ownerid);
+                                WriteVerbose(string.Format("Record {0}:{1} assigned to {2}", target.LogicalName, target.Id, ownerid.Name));
                             }
                             catch (Exception e)
                             {
@@ -2362,7 +2355,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         var setStateContext = new SetOperationContext(inputObject, tableName, callerId, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
                         setStateContext.Target = target;
                         setStateContext.Requests.Add(request);
-                        setStateContext.ResponseCompletion = (response) => { SetStateCompletion(target, statuscode, stateCode); };
+                        setStateContext.ResponseCompletion = (response) => { 
+                            WriteVerbose(string.Format("Record {0}:{1} status set to State:{2} Status: {3}", target.LogicalName, target.Id, stateCode.Value, statuscode.Value));
+                        };
                         
                         WriteVerbose(string.Format("Added set record {0}:{1} status to State:{2} Status: {3} to batch", TableName, Id, stateCode.Value, statuscode.Value));
                         _setBatchProcessor.QueueOperation(setStateContext);
@@ -2374,7 +2369,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             try
                             {
                                 Connection.Execute(request);
-                                SetStateCompletion(target, statuscode, stateCode);
+                                WriteVerbose(string.Format("Record {0}:{1} status set to State:{2} Status: {3}", target.LogicalName, target.Id, stateCode.Value, statuscode.Value));
                             }
                             catch (Exception e)
                             {
