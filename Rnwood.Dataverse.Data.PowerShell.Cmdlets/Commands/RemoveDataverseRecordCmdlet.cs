@@ -19,9 +19,81 @@ using System.Threading;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
+    /// <summary>
+    /// Interface defining parameters for delete operations that can be shared between cmdlet and operation context.
+    /// </summary>
+    internal interface IDeleteOperationParameters
+    {
+        /// <summary>
+        /// Gets the business logic types to bypass.
+        /// </summary>
+        CustomLogicBypassableOrganizationServiceCmdlet.BusinessLogicTypes[] BypassBusinessLogicExecution { get; }
+
+        /// <summary>
+        /// Gets the business logic execution step IDs to bypass.
+        /// </summary>
+        Guid[] BypassBusinessLogicExecutionStepIds { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether to suppress errors if the record doesn't exist.
+        /// </summary>
+        bool IfExists { get; }
+
+        /// <summary>
+        /// Gets the number of retries for failed operations.
+        /// </summary>
+        int Retries { get; }
+
+        /// <summary>
+        /// Gets the initial retry delay in seconds.
+        /// </summary>
+        int InitialRetryDelay { get; }
+    }
+
+    /// <summary>
+    /// Wraps a delete operation with its input record and cmdlet parameters at the time of invocation.
+    /// </summary>
+    internal class DeleteOperationContext : IDeleteOperationParameters
+    {
+        public DeleteOperationContext(
+            PSObject inputObject,
+            string tableName,
+            Guid id,
+            IDeleteOperationParameters parameters)
+        {
+            InputObject = inputObject;
+            TableName = tableName;
+            Id = id;
+            BypassBusinessLogicExecution = parameters.BypassBusinessLogicExecution;
+            BypassBusinessLogicExecutionStepIds = parameters.BypassBusinessLogicExecutionStepIds;
+            IfExists = parameters.IfExists;
+            Retries = parameters.Retries;
+            InitialRetryDelay = parameters.InitialRetryDelay;
+            RetriesRemaining = parameters.Retries;
+            NextRetryTime = DateTime.MinValue;
+        }
+
+        public PSObject InputObject { get; }
+        public string TableName { get; }
+        public Guid Id { get; }
+        public CustomLogicBypassableOrganizationServiceCmdlet.BusinessLogicTypes[] BypassBusinessLogicExecution { get; }
+        public Guid[] BypassBusinessLogicExecutionStepIds { get; }
+        public bool IfExists { get; }
+        public int Retries { get; }
+        public int InitialRetryDelay { get; }
+        public int RetriesRemaining { get; set; }
+        public DateTime NextRetryTime { get; set; }
+        public OrganizationRequest Request { get; set; }
+
+        public override string ToString()
+        {
+            return $"Delete {TableName}:{Id}";
+        }
+    }
+
     ///<summary>Deletes records from a Dataverse organization.</summary>
     [Cmdlet(VerbsCommon.Remove, "DataverseRecord", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
-    public class RemoveDataverseRecordCmdlet : CustomLogicBypassableOrganizationServiceCmdlet
+    public class RemoveDataverseRecordCmdlet : CustomLogicBypassableOrganizationServiceCmdlet, IDeleteOperationParameters
     {
         /// <summary>
         /// Record from pipeline. This allows piping in record to delete.
@@ -50,6 +122,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(HelpMessage = "If specified, the cmdlet will not raise an error if the record does not exist.")]
         public SwitchParameter IfExists { get; set; }
+
         /// <summary>
         /// Specifies the types of business logic (for example plugins) to bypass
         /// </summary>
@@ -74,47 +147,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "Initial delay in seconds before first retry. Subsequent retries use exponential backoff. Default is 5s.")]
         public int InitialRetryDelay { get; set; } = 5;
 
-        private class BatchItem
-        {
-            public BatchItem(PSObject inputObject, OrganizationRequest request, Action<OrganizationResponse> responseCompletion) : this(inputObject, request, responseCompletion, null)
-            {
-            }
+        // Explicit interface implementations for IDeleteOperationParameters
+        bool IDeleteOperationParameters.IfExists => IfExists.IsPresent;
+        CustomLogicBypassableOrganizationServiceCmdlet.BusinessLogicTypes[] IDeleteOperationParameters.BypassBusinessLogicExecution => BypassBusinessLogicExecution;
+        Guid[] IDeleteOperationParameters.BypassBusinessLogicExecutionStepIds => BypassBusinessLogicExecutionStepIds;
+        int IDeleteOperationParameters.Retries => Retries;
+        int IDeleteOperationParameters.InitialRetryDelay => InitialRetryDelay;
 
-            public BatchItem(PSObject inputObject, OrganizationRequest request, Action<OrganizationResponse> responseCompletion, Func<OrganizationServiceFault, bool> responseExceptionCompletion)
-            {
-                InputObject = inputObject;
-                Request = request;
-                ResponseCompletion = responseCompletion;
-                ResponseExceptionCompletion = responseExceptionCompletion;
-                RetriesRemaining = 0;
-                NextRetryTime = DateTime.MinValue;
-            }
-
-            public OrganizationRequest Request { get; set; }
-
-            public Action<OrganizationResponse> ResponseCompletion { get; set; }
-
-            public Func<OrganizationServiceFault, bool> ResponseExceptionCompletion { get; set; }
-
-            public PSObject InputObject { get; set; }
-
-            public int RetriesRemaining { get; set; }
-
-            public DateTime NextRetryTime { get; set; }
-
-            public override string ToString()
-            {
-                return Request.RequestName + " " + string.Join(", ", Request.Parameters.Select(p => $"{p.Key}='{FormatValue(p.Value)}'"));
-            }
-
-            private object FormatValue(object value)
-            {
-                return value is EntityReference er ? $"{er.LogicalName}:{er.Id}" : value?.ToString();
-            }
-        }
-
-        private List<BatchItem> _nextBatchItems;
-        private List<BatchItem> _pendingRetries;
+        private List<DeleteOperationContext> _nextBatchItems;
+        private List<DeleteOperationContext> _pendingRetries;
 
         /// <summary>Processes each record in the pipeline.</summary>
 
@@ -170,17 +211,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (_nextBatchItems != null)
                 {
                     WriteVerbose(string.Format("Added delete of {0}:{1} to batch", entityName, id));
-                    var inputObject = InputObject;
-                    QueueBatchItem(new BatchItem(inputObject, request, (response) => { DeleteCompletion(inputObject, entityName, id, (DeleteResponse)response); }, ex =>
-                    {
-                        if (IfExists.IsPresent && ex.ErrorCode == -2147220969)
-                        {
-                            WriteVerbose(string.Format("Record {0}:{1} was not present", entityName, id));
-                            return true;
-                        }
-
-                        return false;
-                    }));
+                    var context = new DeleteOperationContext(InputObject, entityName, id, this);
+                    context.Request = request;
+                    QueueBatchItem(context);
                 }
                 else
                 {
@@ -208,15 +241,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private void DeleteCompletion(PSObject inputObject, string entityName, Guid id, DeleteResponse response)
+        private void QueueBatchItem(DeleteOperationContext context)
         {
-            WriteVerbose(string.Format("Deleted record {0}:{1}", entityName, id));
-        }
-
-        private void QueueBatchItem(BatchItem item)
-        {
-            item.RetriesRemaining = Retries;
-            _nextBatchItems.Add(item);
+            _nextBatchItems.Add(context);
 
             if (_nextBatchItems.Count == BatchSize)
             {
@@ -264,15 +291,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 catch (Exception e)
                 {
-                    foreach (var batchItem in _nextBatchItems)
+                    foreach (var context in _nextBatchItems)
                     {
-                        if (batchItem.RetriesRemaining > 0)
+                        if (context.RetriesRemaining > 0)
                         {
-                            ScheduleRetry(batchItem, e);
+                            ScheduleRetry(context, e);
                         }
                         else
                         {
-                            WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidResult, batchItem.InputObject));
+                            WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidResult, context.InputObject));
                         }
                     }
 
@@ -282,7 +309,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 foreach (var itemResponse in response.Responses)
                 {
-                    BatchItem batchItem = _nextBatchItems[itemResponse.RequestIndex];
+                    DeleteOperationContext context = _nextBatchItems[itemResponse.RequestIndex];
 
                     if (itemResponse.Fault != null)
                     {
@@ -291,22 +318,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         AppendFaultDetails(itemResponse.Fault, details);
                         var e = new Exception(details.ToString());
 
-                        bool handledByCompletion = batchItem.ResponseExceptionCompletion != null && batchItem.ResponseExceptionCompletion(itemResponse.Fault);
+                        bool handled = HandleDeleteFault(context, itemResponse.Fault);
 
-                        if (!handledByCompletion && batchItem.RetriesRemaining > 0)
+                        if (!handled && context.RetriesRemaining > 0)
                         {
-                            ScheduleRetry(batchItem, e);
+                            ScheduleRetry(context, e);
                         }
-                        else if (!handledByCompletion)
+                        else if (!handled)
                         {
-
-
-                            WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidResult, batchItem.InputObject));
+                            WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidResult, context.InputObject));
                         }
                     }
                     else
                     {
-                        batchItem.ResponseCompletion(itemResponse.Response);
+                        CompleteDelete(context, (DeleteResponse)itemResponse.Response);
                     }
                 }
             }
@@ -314,16 +339,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _nextBatchItems.Clear();
         }
 
-        private void ScheduleRetry(BatchItem batchItem, Exception e)
+        private bool HandleDeleteFault(DeleteOperationContext context, OrganizationServiceFault fault)
+        {
+            // Handle specific error codes that should be ignored
+            if (context.IfExists && fault.ErrorCode == -2147220969)
+            {
+                WriteVerbose(string.Format("Record {0}:{1} was not present", context.TableName, context.Id));
+                return true;
+            }
+
+            return false;
+        }
+
+        private void CompleteDelete(DeleteOperationContext context, DeleteResponse response)
+        {
+            WriteVerbose(string.Format("Deleted record {0}:{1}", context.TableName, context.Id));
+        }
+
+        private void ScheduleRetry(DeleteOperationContext context, Exception e)
         {
             // Schedule for retry with exponential backoff
-            int attemptNumber = Retries - batchItem.RetriesRemaining + 1;
-            int delayS = InitialRetryDelay * (int)Math.Pow(2, attemptNumber - 1);
-            batchItem.NextRetryTime = DateTime.UtcNow.AddSeconds(delayS);
-            batchItem.RetriesRemaining--;
+            int attemptNumber = context.Retries - context.RetriesRemaining + 1;
+            int delayS = context.InitialRetryDelay * (int)Math.Pow(2, attemptNumber - 1);
+            context.NextRetryTime = DateTime.UtcNow.AddSeconds(delayS);
+            context.RetriesRemaining--;
 
-            WriteVerbose($"Request failed, will retry in {delayS}s (attempt {attemptNumber} of {Retries + 1}): {batchItem}\n{e}");
-            _pendingRetries.Add(batchItem);
+            WriteVerbose($"Request failed, will retry in {delayS}s (attempt {attemptNumber} of {context.Retries + 1}): {context}\n{e}");
+            _pendingRetries.Add(context);
         }
 
         /// <summary>Initializes the cmdlet.</summary>
@@ -337,11 +379,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _userCancellationCts = new CancellationTokenSource();
 
             metadataFactory = new EntityMetadataFactory(Connection);
-            _pendingRetries = new List<BatchItem>();
+            _pendingRetries = new List<DeleteOperationContext>();
 
             if (BatchSize > 1)
             {
-                _nextBatchItems = new List<BatchItem>();
+                _nextBatchItems = new List<DeleteOperationContext>();
             }
         }
 
@@ -394,13 +436,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     // Calculate wait time for next retry
                     var nextRetryTime = _pendingRetries.Min(r => r.NextRetryTime);
-                    var waitTime = (nextRetryTime - now).TotalSeconds;
+                    var waitTimeMs = (int)Math.Max(100, (nextRetryTime - now).TotalMilliseconds);
 
-                    if (waitTime > 0)
-                    {
-                        WriteVerbose($"Waiting {waitTime:F0}s for next retry batch...");
-                        Thread.Sleep((int)waitTime * 1000);
-                    }
+                    WriteVerbose($"Waiting {waitTimeMs / 1000.0:F1}s for next retry batch...");
+                    Thread.Sleep(waitTimeMs);
 
                     continue;
                 }
