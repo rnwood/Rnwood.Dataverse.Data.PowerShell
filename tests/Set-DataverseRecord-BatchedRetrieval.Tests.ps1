@@ -213,4 +213,129 @@ Describe "Set-DataverseRecord Batched Retrieval" {
             { $contact | Set-DataverseRecord -Connection $connection -RetrievalBatchSize 500 -ErrorAction SilentlyContinue } | Should -Not -Throw
         }
     }
+
+    Context "Retrieval Batch Failure with Retries" {
+        It "Does not process failed retrieval items immediately - schedules them for retry instead" {
+            # This test validates the fix for the bug where failed retrieval items
+            # were being processed immediately with null ExistingRecord, causing
+            # unwanted creates/updates and lost retries.
+            
+            $state = [PSCustomObject]@{ 
+                FailCount = 0
+                RetrieveMultipleCalls = 0
+                CreateCount = 0
+            }
+            
+            $interceptor = {
+                param($request)
+                
+                # Track RetrieveMultiple calls (used for retrieval batching)
+                if ($request -is [Microsoft.Xrm.Sdk.Messages.RetrieveMultipleRequest]) {
+                    $state.RetrieveMultipleCalls++
+                    
+                    # Fail the first retrieval batch
+                    if ($state.FailCount -lt 1) {
+                        $state.FailCount++
+                        throw [System.Exception]::new("Simulated retrieval batch failure")
+                    }
+                }
+                
+                # Track Create requests (should only happen after successful retry)
+                if ($request -is [Microsoft.Xrm.Sdk.Messages.ExecuteMultipleRequest]) {
+                    foreach ($req in $request.Requests) {
+                        if ($req -is [Microsoft.Xrm.Sdk.Messages.CreateRequest]) {
+                            $state.CreateCount++
+                        }
+                    }
+                }
+            }.GetNewClosure()
+            
+            $connection = getMockConnection -RequestInterceptor $interceptor
+            
+            # Create contacts with IDs (these need retrieval)
+            $contacts = 1..3 | ForEach-Object {
+                $contact = [Microsoft.Xrm.Sdk.Entity]::new("contact")
+                $id = [Guid]::NewGuid()
+                $contact.Id = $contact["contactid"] = $id
+                $contact["firstname"] = "Test$_"
+                $contact
+            }
+            
+            # Process with retries enabled and small retrieval batch size
+            $contacts | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 1 -RetrievalBatchSize 3 -Verbose
+            
+            # Verify behavior:
+            # 1. First RetrieveMultiple should fail
+            # 2. Items should be scheduled for retry (NOT processed immediately)
+            # 3. Second RetrieveMultiple should succeed on retry
+            # 4. Creates should only happen after successful retry
+            
+            $state.RetrieveMultipleCalls | Should -Be 2 -Because "First retrieval should fail, second should succeed on retry"
+            
+            # Verify records were created (meaning retry succeeded)
+            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $createdRecords.Count | Should -Be 3 -Because "All 3 records should be created after successful retry"
+            
+            # The key assertion: records should NOT have been created during the failed batch
+            # (if they were processed immediately with null ExistingRecord, they would be created twice)
+            $state.CreateCount | Should -Be 3 -Because "Records should only be created once, not during failed retrieval"
+        }
+        
+        It "Retries failed retrieval batch and eventually succeeds" {
+            # Test that retry logic works correctly after retrieval failure
+            $state = [PSCustomObject]@{ FailCount = 0 }
+            
+            $interceptor = {
+                param($request)
+                if ($request -is [Microsoft.Xrm.Sdk.Messages.RetrieveMultipleRequest]) {
+                    # Fail first 2 attempts, succeed on 3rd
+                    if ($state.FailCount -lt 2) {
+                        $state.FailCount++
+                        throw [System.Exception]::new("Simulated retrieval failure $($state.FailCount)")
+                    }
+                }
+            }.GetNewClosure()
+            
+            $connection = getMockConnection -RequestInterceptor $interceptor
+            
+            $contacts = 1..2 | ForEach-Object {
+                $contact = [Microsoft.Xrm.Sdk.Entity]::new("contact")
+                $id = [Guid]::NewGuid()
+                $contact.Id = $contact["contactid"] = $id
+                $contact["firstname"] = "Retry$_"
+                $contact
+            }
+            
+            # Process with 2 retries (should succeed on 3rd attempt)
+            $contacts | Set-DataverseRecord -Connection $connection -TableName contact -Retries 2 -InitialRetryDelay 1 -RetrievalBatchSize 2 -Verbose
+            
+            # Verify retry succeeded
+            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $createdRecords.Count | Should -Be 2 -Because "Records should be created after retry succeeds"
+        }
+        
+        It "Reports error after exhausting all retries on retrieval failure" {
+            # Test that errors are reported when retries are exhausted
+            $interceptor = {
+                param($request)
+                if ($request -is [Microsoft.Xrm.Sdk.Messages.RetrieveMultipleRequest]) {
+                    # Always fail
+                    throw [System.Exception]::new("Persistent retrieval failure")
+                }
+            }.GetNewClosure()
+            
+            $connection = getMockConnection -RequestInterceptor $interceptor
+            
+            $contact = [Microsoft.Xrm.Sdk.Entity]::new("contact")
+            $contact.Id = $contact["contactid"] = [Guid]::NewGuid()
+            $contact["firstname"] = "WillFail"
+            
+            # Process with retries, but all will fail
+            $errors = @()
+            $contact | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 1 -RetrievalBatchSize 1 -ErrorVariable errors -ErrorAction SilentlyContinue
+            
+            # Should have at least one error
+            $errors.Count | Should -BeGreaterThan 0 -Because "Error should be reported after retries exhausted"
+        }
+    }
 }
