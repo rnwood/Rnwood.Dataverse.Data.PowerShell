@@ -316,6 +316,133 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             inputObject.Properties.Add(new PSNoteProperty("Id", id));
         }
 
+        /// <summary>
+        /// Determines if a record needs to be retrieved from the server before processing.
+        /// </summary>
+        public bool NeedsRetrieval(EntityMetadata entityMetadata, Entity target)
+        {
+            if (CreateOnly || Upsert)
+            {
+                return false;
+            }
+
+            if (!entityMetadata.IsIntersect.GetValueOrDefault())
+            {
+                if (Id != Guid.Empty && UpdateAllColumns)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Gets an existing record from the server if it exists, using Id or MatchOn criteria.
+        /// </summary>
+        public Entity GetExistingRecord(EntityMetadata entityMetadata, Entity target)
+        {
+            Entity existingRecord = null;
+
+            if (CreateOnly || Upsert)
+            {
+                return null;
+            }
+
+            if (!entityMetadata.IsIntersect.GetValueOrDefault())
+            {
+                if (Id != Guid.Empty)
+                {
+                    if (UpdateAllColumns)
+                    {
+                        existingRecord = new Entity(target.LogicalName) { Id = Id };
+                        existingRecord[entityMetadata.PrimaryIdAttribute] = Id;
+                    }
+                    else
+                    {
+                        QueryByAttribute existingRecordQuery = new QueryByAttribute(TableName);
+                        existingRecordQuery.AddAttributeValue(entityMetadata.PrimaryIdAttribute, Id);
+                        existingRecordQuery.ColumnSet = target.LogicalName.Equals("calendar", StringComparison.OrdinalIgnoreCase) ? new ColumnSet(true) : new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+
+                        existingRecord = Connection.RetrieveMultiple(existingRecordQuery
+                        ).Entities.FirstOrDefault();
+                    }
+                }
+
+                if (existingRecord == null && MatchOn != null)
+                {
+                    foreach (string[] matchOnColumnList in MatchOn)
+                    {
+                        QueryByAttribute matchOnQuery = new QueryByAttribute(TableName);
+                        matchOnQuery.TopCount = 2;
+
+                        foreach (string matchOnColumn in matchOnColumnList)
+                        {
+                            object queryValue = target.GetAttributeValue<object>(matchOnColumn);
+
+                            if (queryValue is EntityReference)
+                            {
+                                queryValue = ((EntityReference)queryValue).Id;
+                            }
+
+                            if (queryValue is OptionSetValue)
+                            {
+                                queryValue = ((OptionSetValue)queryValue).Value;
+                            }
+
+                            matchOnQuery.AddAttributeValue(matchOnColumn, queryValue);
+                        }
+
+                        matchOnQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+
+                        var existingRecords = Connection.RetrieveMultiple(matchOnQuery
+                            ).Entities;
+
+                        if (existingRecords.Count == 1)
+                        {
+                            existingRecord = existingRecords[0];
+                            break;
+                        }
+                        else if (existingRecords.Count > 1)
+                        {
+                            string matchOnSummary = string.Join("\n", matchOnColumnList.Select(c => c + "='" +
+                            matchOnQuery.Values[matchOnQuery.Attributes.IndexOf(c)] + "'" ?? "<null>").ToArray());
+
+                            throw new Exception(string.Format("Match on values {0} resulted in more than one record to update. Match on values:\n", matchOnSummary));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (MatchOn != null)
+                {
+                    throw new ArgumentException("MatchOn not supported for intersect entities", "MatchOn");
+                }
+
+                ManyToManyRelationshipMetadata manyToManyRelationshipMetadata = entityMetadata.ManyToManyRelationships[0];
+
+                Guid? entity1Value =
+                    target.GetAttributeValue<Guid?>(manyToManyRelationshipMetadata.Entity1IntersectAttribute);
+                Guid? entity2Value =
+                    target.GetAttributeValue<Guid?>(manyToManyRelationshipMetadata.Entity2IntersectAttribute);
+
+                if (entity1Value == null || entity2Value == null)
+                {
+                    throw new Exception("For intersect entities (many to many relationships), The input object must contain values for both attributes involved in the relationship.");
+                }
+
+                QueryByAttribute existingRecordQuery = new QueryByAttribute(TableName);
+                existingRecordQuery.AddAttributeValue(manyToManyRelationshipMetadata.Entity1IntersectAttribute, entity1Value.Value);
+                existingRecordQuery.AddAttributeValue(manyToManyRelationshipMetadata.Entity2IntersectAttribute, entity2Value.Value);
+                existingRecordQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+
+                existingRecord = Connection.RetrieveMultiple(existingRecordQuery
+                    ).Entities.FirstOrDefault();
+            }
+            return existingRecord;
+        }
+
         public override string ToString()
         {
             return $"Set {TableName}:{Id}";
@@ -1141,8 +1268,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             EntityMetadata entityMetadata = entityMetadataFactory.GetMetadata(TableName);
 
+            // Create a context to access utility methods
+            var context = new SetOperationContext(
+                inputObject,
+                tableName,
+                callerId,
+                this,
+                entityMetadataFactory,
+                entityConverter,
+                Connection,
+                GetConversionOptions(),
+                WriteVerbose,
+                WriteError,
+                WriteObject,
+                ShouldProcess);
+            context.Target = target;
+            context.EntityMetadata = entityMetadata;
+
             // Check if this record needs retrieval
-            if (NeedsRetrieval(entityMetadata, target))
+            if (context.NeedsRetrieval(entityMetadata, target))
             {
                 // Queue for batched retrieval
                 _retrievalBatchQueue.Add(new RecordProcessingItem
@@ -1168,7 +1312,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 try
                 {
-                    existingRecord = GetExistingRecord(entityMetadata, target);
+                    existingRecord = context.GetExistingRecord(entityMetadata, target);
                 }
                 catch (Exception e)
                 {
@@ -1614,23 +1758,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private bool NeedsRetrieval(EntityMetadata entityMetadata, Entity target)
-        {
-            if (CreateOnly.IsPresent || Upsert.IsPresent)
-            {
-                return false;
-            }
 
-            if (!entityMetadata.IsIntersect.GetValueOrDefault())
-            {
-                if (Id != Guid.Empty && UpdateAllColumns.IsPresent)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
 
         private void ProcessQueuedRecords()
         {
@@ -2095,108 +2223,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private Entity GetExistingRecord(EntityMetadata entityMetadata, Entity target)
-        {
-            Entity existingRecord = null;
 
-            if (CreateOnly.IsPresent || Upsert.IsPresent)
-            {
-                return null;
-            }
-
-            if (!entityMetadata.IsIntersect.GetValueOrDefault())
-            {
-                if (Id != Guid.Empty)
-                {
-                    if (UpdateAllColumns.IsPresent)
-                    {
-                        existingRecord = new Entity(target.LogicalName) { Id = Id };
-                        existingRecord[entityMetadata.PrimaryIdAttribute] = Id;
-                    }
-                    else
-                    {
-                        QueryByAttribute existingRecordQuery = new QueryByAttribute(TableName);
-                        existingRecordQuery.AddAttributeValue(entityMetadata.PrimaryIdAttribute, Id);
-                        existingRecordQuery.ColumnSet = target.LogicalName.Equals("calendar", StringComparison.OrdinalIgnoreCase) ? new ColumnSet(true) : new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
-
-                        existingRecord = Connection.RetrieveMultiple(existingRecordQuery
-                        ).Entities.FirstOrDefault();
-                    }
-                }
-
-                if (existingRecord == null && MatchOn != null)
-                {
-                    foreach (string[] matchOnColumnList in MatchOn)
-                    {
-                        QueryByAttribute matchOnQuery = new QueryByAttribute(TableName);
-                        matchOnQuery.TopCount = 2;
-
-                        foreach (string matchOnColumn in matchOnColumnList)
-                        {
-                            object queryValue = target.GetAttributeValue<object>(matchOnColumn);
-
-                            if (queryValue is EntityReference)
-                            {
-                                queryValue = ((EntityReference)queryValue).Id;
-                            }
-
-                            if (queryValue is OptionSetValue)
-                            {
-                                queryValue = ((OptionSetValue)queryValue).Value;
-                            }
-
-                            matchOnQuery.AddAttributeValue(matchOnColumn, queryValue);
-                        }
-
-                        matchOnQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
-
-                        var existingRecords = Connection.RetrieveMultiple(matchOnQuery
-                            ).Entities;
-
-                        if (existingRecords.Count == 1)
-                        {
-                            existingRecord = existingRecords[0];
-                            break;
-                        }
-                        else if (existingRecords.Count > 1)
-                        {
-                            string matchOnSummary = string.Join("\n", matchOnColumnList.Select(c => c + "='" +
-                            matchOnQuery.Values[matchOnQuery.Attributes.IndexOf(c)] + "'" ?? "<null>").ToArray());
-
-                            throw new Exception(string.Format("Match on values {0} resulted in more than one record to update. Match on values:\n", matchOnSummary));
-                        }
-                    }
-                }
-            }
-            else
-            {
-                if (MatchOn != null)
-                {
-                    throw new ArgumentException("MatchOn not supported for intersect entities", "MatchOn");
-                }
-
-                ManyToManyRelationshipMetadata manyToManyRelationshipMetadata = entityMetadata.ManyToManyRelationships[0];
-
-                Guid? entity1Value =
-                    target.GetAttributeValue<Guid?>(manyToManyRelationshipMetadata.Entity1IntersectAttribute);
-                Guid? entity2Value =
-                    target.GetAttributeValue<Guid?>(manyToManyRelationshipMetadata.Entity2IntersectAttribute);
-
-                if (entity1Value == null || entity2Value == null)
-                {
-                    throw new Exception("For intersect entities (many to many relationships), The input object must contain values for both attributes involved in the relationship.");
-                }
-
-                QueryByAttribute existingRecordQuery = new QueryByAttribute(TableName);
-                existingRecordQuery.AddAttributeValue(manyToManyRelationshipMetadata.Entity1IntersectAttribute, entity1Value.Value);
-                existingRecordQuery.AddAttributeValue(manyToManyRelationshipMetadata.Entity2IntersectAttribute, entity2Value.Value);
-                existingRecordQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
-
-                existingRecord = Connection.RetrieveMultiple(existingRecordQuery
-                    ).Entities.FirstOrDefault();
-            }
-            return existingRecord;
-        }
 
 
     }
