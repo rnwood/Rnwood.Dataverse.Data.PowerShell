@@ -2,6 +2,7 @@
 
 
 
+using Azure;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
@@ -135,7 +136,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     ManyToManyRelationshipMetadata manyToManyRelationshipMetadata = metadata.ManyToManyRelationships[0];
 
-                    QueryExpression getRecordWithMMColumns = new QueryExpression(TableName);
+                    QueryExpression getRecordWithMMColumns = new QueryExpression(entityName);
                     getRecordWithMMColumns.ColumnSet = new ColumnSet(manyToManyRelationshipMetadata.Entity1IntersectAttribute, manyToManyRelationshipMetadata.Entity2IntersectAttribute);
                     getRecordWithMMColumns.Criteria.AddCondition(metadata.PrimaryIdAttribute, ConditionOperator.Equal, id);
 
@@ -169,7 +170,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (_nextBatchItems != null)
                 {
                     WriteVerbose(string.Format("Added delete of {0}:{1} to batch", entityName, id));
-                    QueueBatchItem(new BatchItem(InputObject, request, (response) => { DeleteCompletion(InputObject, entityName, id, (DeleteResponse)response); }, ex =>
+                    var inputObject = InputObject;
+                    QueueBatchItem(new BatchItem(inputObject, request, (response) => { DeleteCompletion(inputObject, entityName, id, (DeleteResponse)response); }, ex =>
                     {
                         if (IfExists.IsPresent && ex.ErrorCode == -2147220969)
                         {
@@ -254,46 +256,57 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 batchRequest.Requests.AddRange(_nextBatchItems.Select(i => i.Request));
 
+                ExecuteMultipleResponse response = null;
+
                 try
                 {
-
-                    ExecuteMultipleResponse response = (ExecuteMultipleResponse)Connection.Execute(batchRequest);
-
-                    foreach (var itemResponse in response.Responses)
-                    {
-                        BatchItem batchItem = _nextBatchItems[itemResponse.RequestIndex];
-
-                        if (itemResponse.Fault != null)
-                        {
-                            // Build fault details for failed request
-                            StringBuilder details = new StringBuilder();
-                            AppendFaultDetails(itemResponse.Fault, details);
-                            var e = new Exception(details.ToString());
-
-                            bool handledByCompletion = batchItem.ResponseExceptionCompletion != null && batchItem.ResponseExceptionCompletion(itemResponse.Fault);
-
-                            if (!handledByCompletion && batchItem.RetriesRemaining > 0)
-                            {
-                                ScheduleRetry(batchItem, e);
-                            }
-                            else if (!handledByCompletion)
-                            {
-
-
-                                WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidResult, batchItem.InputObject));
-                            }
-                        }
-                        else
-                        {
-                            batchItem.ResponseCompletion(itemResponse.Response);
-                        }
-                    }
+                    response = (ExecuteMultipleResponse)Connection.Execute(batchRequest);
                 }
                 catch (Exception e)
                 {
                     foreach (var batchItem in _nextBatchItems)
                     {
-                        ScheduleRetry(batchItem, e);
+                        if (batchItem.RetriesRemaining > 0)
+                        {
+                            ScheduleRetry(batchItem, e);
+                        }
+                        else
+                        {
+                            WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidResult, batchItem.InputObject));
+                        }
+                    }
+
+                    _nextBatchItems.Clear();
+                    return;
+                }
+
+                foreach (var itemResponse in response.Responses)
+                {
+                    BatchItem batchItem = _nextBatchItems[itemResponse.RequestIndex];
+
+                    if (itemResponse.Fault != null)
+                    {
+                        // Build fault details for failed request
+                        StringBuilder details = new StringBuilder();
+                        AppendFaultDetails(itemResponse.Fault, details);
+                        var e = new Exception(details.ToString());
+
+                        bool handledByCompletion = batchItem.ResponseExceptionCompletion != null && batchItem.ResponseExceptionCompletion(itemResponse.Fault);
+
+                        if (!handledByCompletion && batchItem.RetriesRemaining > 0)
+                        {
+                            ScheduleRetry(batchItem, e);
+                        }
+                        else if (!handledByCompletion)
+                        {
+
+
+                            WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidResult, batchItem.InputObject));
+                        }
+                    }
+                    else
+                    {
+                        batchItem.ResponseCompletion(itemResponse.Response);
                     }
                 }
             }
@@ -320,6 +333,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.BeginProcessing();
 
+            // initialize cancellation token source for this pipeline invocation
+            _userCancellationCts = new CancellationTokenSource();
+
             metadataFactory = new EntityMetadataFactory(Connection);
             _pendingRetries = new List<BatchItem>();
 
@@ -345,11 +361,31 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Process any pending retries
             ProcessRetries();
+
+            _userCancellationCts?.Dispose();
+            _userCancellationCts = null;
+        }
+
+        // Cancellation token source that is cancelled when the user hits Ctrl+C (StopProcessing)
+        private CancellationTokenSource _userCancellationCts;
+
+        /// <summary>
+        /// Called when the user cancels the cmdlet.
+        /// </summary>
+        protected override void StopProcessing()
+        {
+            // Called when user presses Ctrl+C. Signal cancellation to any ongoing operations.
+            try
+            {
+                _userCancellationCts?.Cancel();
+            }
+            catch { }
+            base.StopProcessing();
         }
 
         private void ProcessRetries()
         {
-            while (!Stopping && _pendingRetries.Count > 0)
+            while (!Stopping && !_userCancellationCts.IsCancellationRequested && _pendingRetries.Count > 0)
             {
                 DateTime now = DateTime.UtcNow;
                 var readyForRetry = _pendingRetries.Where(r => r.NextRetryTime <= now).ToList();

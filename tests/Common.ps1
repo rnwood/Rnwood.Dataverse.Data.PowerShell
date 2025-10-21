@@ -17,7 +17,7 @@ BeforeAll {
 
     $metadata = $null;
 
-    function getMockConnection($failNextExecuteMultiple = $false, $failExecuteMultipleIndices = @(), $failExecuteMultipleTimes = 0) {
+    function getMockConnection([ScriptBlock]$RequestInterceptor = $null) {
        
         if (-not $metadata) {
             if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
@@ -36,23 +36,8 @@ BeforeAll {
             }
         }
        
-        $mockService = get-dataverseconnection -url https://fake.crm.dynamics.com/ -mock $metadata
-        $innerService = $mockService.OrganizationService
-    
-        if ($failNextExecuteMultiple -or $failExecuteMultipleIndices.Count -gt 0 -or $failExecuteMultipleTimes -gt 0) {
-            $type = [Rnwood.Dataverse.Data.PowerShell.Commands.MockOrganizationServiceWithFailures]
-            $constructor = $type.GetConstructor([Microsoft.Xrm.Sdk.IOrganizationService])
-            $wrapper = $constructor.Invoke(@($innerService))
-            $wrapper.FailNextExecuteMultiple = $failNextExecuteMultiple
-            foreach ($index in $failExecuteMultipleIndices) {
-                $wrapper.FailExecuteMultipleIndices.Add($index)
-            }
-            $wrapper.FailExecuteMultipleTimes = $failExecuteMultipleTimes
-            $service = New-Object Microsoft.PowerPlatform.Dataverse.Client.ServiceClient -ArgumentList $wrapper
-        }
-        else {
-            $service = $mockService
-        }
+        $mockService = get-dataverseconnection -url https://fake.crm.dynamics.com/ -mock $metadata -RequestInterceptor $RequestInterceptor
+        return $mockService
     
         return $service
     }
