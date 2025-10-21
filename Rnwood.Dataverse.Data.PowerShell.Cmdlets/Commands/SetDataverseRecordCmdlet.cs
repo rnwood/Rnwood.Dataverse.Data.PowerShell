@@ -281,9 +281,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 else if (existingRecord.GetAttributeValue<object>(column.Key) is OptionSetValueCollection existingCollection && target.GetAttributeValue<object>(column.Key) is OptionSetValueCollection targetCollection)
                 {
-                    if (existingCollection.Count == targetCollection.Count && targetCollection.All(existingCollection.Contains))
+                    // Compare OptionSetValueCollection by values, not by reference
+                    // Collections are considered equal if they have the same values with same frequencies, regardless of order
+                    if (existingCollection.Count == targetCollection.Count)
                     {
-                        target.Attributes.Remove(column.Key);
+                        // Create sorted lists of values for comparison
+                        var existingValues = existingCollection.Select(o => o.Value).OrderBy(v => v).ToList();
+                        var targetValues = targetCollection.Select(o => o.Value).OrderBy(v => v).ToList();
+                        
+                        // Compare sorted lists - this handles duplicates and order correctly
+                        if (existingValues.SequenceEqual(targetValues))
+                        {
+                            target.Attributes.Remove(column.Key);
+                        }
                     }
                 }
             }
