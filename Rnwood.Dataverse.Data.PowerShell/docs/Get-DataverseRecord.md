@@ -83,6 +83,41 @@ PS C:\> Get-DataverseRecord -connection $connection -tablename contact -filterva
 
 Find contacts with age greater than 25 by using a nested hashtable to specify operator and value.
 
+### Example 4: Retrieve record by MatchOn with single column
+```powershell
+PS C:\> @{ emailaddress1 = "user@example.com" } | 
+    Get-DataverseRecord -Connection $c -TableName contact -MatchOn emailaddress1
+```
+
+Retrieves a contact record by matching on the email address. If multiple contacts have the same email, an error is raised unless -AllowMultipleMatches is used.
+
+### Example 5: Retrieve record by MatchOn with multiple columns
+```powershell
+PS C:\> @{ firstname = "John"; lastname = "Doe" } | 
+    Get-DataverseRecord -Connection $c -TableName contact -MatchOn @("firstname", "lastname")
+```
+
+Retrieves a contact record by matching on both firstname and lastname together. This helps ensure you're retrieving the correct record when names might not be unique individually.
+
+### Example 6: Retrieve all matching records with AllowMultipleMatches
+```powershell
+PS C:\> @{ lastname = "Smith" } | 
+    Get-DataverseRecord -Connection $c -TableName contact -MatchOn lastname -AllowMultipleMatches
+```
+
+Retrieves ALL contact records with the lastname "Smith". The -AllowMultipleMatches switch allows retrieving multiple records that match the criteria. Without this switch, an error would be raised if multiple matches are found.
+
+### Example 7: Use multiple MatchOn criteria with fallback
+```powershell
+PS C:\> @{ 
+    emailaddress1 = "user@example.com"
+    firstname = "John"
+    lastname = "Doe"
+} | Get-DataverseRecord -Connection $c -TableName contact -MatchOn @("emailaddress1"), @("firstname", "lastname")
+```
+
+Attempts to match first on emailaddress1, then falls back to matching on firstname+lastname if no email match is found. Uses the first matching set that returns records.
+
 ## PARAMETERS
 
 ### -ActiveOnly
