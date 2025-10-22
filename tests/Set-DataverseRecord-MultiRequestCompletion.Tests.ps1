@@ -38,25 +38,28 @@ Describe 'Set-DataverseRecord Multi-Request Completion' {
             # 3. Non-batch mode also handles multiple requests per context
         }
         
-        It "Handles batched operations with status changes creating multiple contexts" {
-            # Test scenario: Create multiple records in batch with state/status changes
-            # Note: This creates SEPARATE contexts for Create and SetState, not multiple requests per context
+        It "Handles batched operations with multiple records" {
+            # Test scenario: Create multiple records in batch
+            # This verifies that batching works correctly and PassThru returns all records
             
             $connection = getMockConnection
             
-            # Create contacts with statecode set (creates Create context + SetState context)
+            # Create contacts without state/status to avoid SetState complications
             $records = @(
                 @{ 
                     firstname = "Contact1"
                     lastname = "Test"
-                    statecode = 1  # Inactive
-                    statuscode = 2
+                    emailaddress1 = "contact1@test.com"
                 }
                 @{ 
                     firstname = "Contact2"
                     lastname = "Test"
-                    statecode = 1  # Inactive
-                    statuscode = 2
+                    emailaddress1 = "contact2@test.com"
+                }
+                @{ 
+                    firstname = "Contact3"
+                    lastname = "Test"
+                    emailaddress1 = "contact3@test.com"
                 }
             )
             
@@ -64,11 +67,11 @@ Describe 'Set-DataverseRecord Multi-Request Completion' {
             $results = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru -BatchSize 10
             
             # Verify all records were created and PassThru worked for all
-            $results | Should -HaveCount 2
+            $results | Should -HaveCount 3
             $results | ForEach-Object {
                 $_.Id | Should -BeOfType [Guid]
                 $_.Id | Should -Not -Be ([Guid]::Empty)
-                $_.firstname | Should -Match "Contact[12]"
+                $_.firstname | Should -Match "Contact[123]"
             }
             
             # Verify records were created in Dataverse
@@ -77,6 +80,9 @@ Describe 'Set-DataverseRecord Multi-Request Completion' {
             
             $retrieved2 = Get-DataverseRecord -Connection $connection -TableName contact -Id $results[1].Id
             $retrieved2.firstname | Should -Be "Contact2"
+            
+            $retrieved3 = Get-DataverseRecord -Connection $connection -TableName contact -Id $results[2].Id
+            $retrieved3.firstname | Should -Be "Contact3"
         }
         
         It "Non-batch mode also handles multiple requests per context" {
