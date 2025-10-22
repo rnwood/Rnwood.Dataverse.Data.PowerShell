@@ -438,7 +438,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     var query = new QueryExpression(TableName)
                     {
-                        ColumnSet = Columns != null ? new ColumnSet(Columns) : new ColumnSet(true)
+                        ColumnSet = Columns != null ? new ColumnSet(Columns.Concat(new[] { matchColumn }).Distinct().ToArray()) : new ColumnSet(true)
                     };
 
                     if (!AllowMultipleMatches.IsPresent)
