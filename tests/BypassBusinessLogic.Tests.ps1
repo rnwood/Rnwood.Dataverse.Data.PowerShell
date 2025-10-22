@@ -55,12 +55,20 @@ Describe "Bypass Business Logic Parameters" {
 
     Context "Remove-DataverseRecord with bypass parameters" {
         It "Does not throw when bypass parameters are provided with batching" {
-            # Create test record IDs to delete
-            $ids = 1..3 | ForEach-Object { [Guid]::NewGuid() }
+            # Create test records first so we can delete them
+            $records = 1..3 | ForEach-Object {
+                [PSCustomObject]@{
+                    firstname = "BypassTest$_"
+                    lastname = "ToDelete$_"
+                }
+            }
+            
+            $createdIds = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru | 
+                ForEach-Object { $_.Id }
 
             # Execute with bypass parameters and batching - should not throw
             {
-                $ids | ForEach-Object {
+                $createdIds | ForEach-Object {
                     Remove-DataverseRecord -Connection $connection -TableName contact -Id $_ `
                         -BypassBusinessLogicExecution CustomSync `
                         -BypassBusinessLogicExecutionStepIds @([Guid]::NewGuid()) `
