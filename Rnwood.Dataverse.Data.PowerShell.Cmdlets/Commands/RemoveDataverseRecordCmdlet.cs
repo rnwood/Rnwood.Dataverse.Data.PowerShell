@@ -149,13 +149,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     },
                     Relationship = new Relationship(manyToManyRelationshipMetadata.SchemaName) { PrimaryEntityRole = EntityRole.Referencing }
                 };
-                ApplyBypassBusinessLogicExecution(request);
+                QueryHelpers.ApplyBypassBusinessLogicExecution(request, BypassBusinessLogicExecution, BypassBusinessLogicExecutionStepIds);
                 Request = request;
             }
             else
             {
                 DeleteRequest request = new DeleteRequest { Target = new EntityReference(TableName, Id) };
-                ApplyBypassBusinessLogicExecution(request);
+                QueryHelpers.ApplyBypassBusinessLogicExecution(request, BypassBusinessLogicExecution, BypassBusinessLogicExecutionStepIds);
                 Request = request;
             }
         }
@@ -232,26 +232,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _writeError(new ErrorRecord(e, null, ErrorCategory.InvalidResult, InputObject));
         }
 
-        private void ApplyBypassBusinessLogicExecution(OrganizationRequest request)
-        {
-            if (BypassBusinessLogicExecution?.Length > 0)
-            {
-                request.Parameters["BypassBusinessLogicExecution"] = string.Join(",", BypassBusinessLogicExecution.Select(o => o.ToString()));
-            }
-            else
-            {
-                request.Parameters.Remove("BypassBusinessLogicExecution");
-            }
 
-            if (BypassBusinessLogicExecutionStepIds?.Length > 0)
-            {
-                request.Parameters["BypassBusinessLogicExecutionStepIds"] = string.Join(",", BypassBusinessLogicExecutionStepIds.Select(id => id.ToString()));
-            }
-            else
-            {
-                request.Parameters.Remove("BypassBusinessLogicExecutionStepIds");
-            }
-        }
 
         public override string ToString()
         {
@@ -430,7 +411,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     // Build fault details for failed request
                     StringBuilder details = new StringBuilder();
-                    AppendFaultDetails(itemResponse.Fault, details);
+                    QueryHelpers.AppendFaultDetails(itemResponse.Fault, details);
                     var e = new Exception(details.ToString());
 
                     bool handled = context.HandleFault(itemResponse.Fault);
@@ -454,17 +435,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _nextBatchItems.Clear();
         }
 
-        private void AppendFaultDetails(OrganizationServiceFault fault, StringBuilder output)
-        {
-            output.AppendLine("OrganizationServiceFault " + fault.ErrorCode + ": " + fault.Message);
-            output.AppendLine(fault.TraceText);
 
-            if (fault.InnerFault != null)
-            {
-                output.AppendLine("---");
-                AppendFaultDetails(fault.InnerFault, output);
-            }
-        }
     }
 
     /// <summary>

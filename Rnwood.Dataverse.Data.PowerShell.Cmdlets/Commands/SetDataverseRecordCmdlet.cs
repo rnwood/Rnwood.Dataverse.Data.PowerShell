@@ -336,23 +336,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         public void ApplyBypassBusinessLogicExecution(OrganizationRequest request)
         {
-            if (BypassBusinessLogicExecution?.Length > 0)
-            {
-                request.Parameters["BypassBusinessLogicExecution"] = string.Join(",", BypassBusinessLogicExecution.Select(o => o.ToString()));
-            }
-            else
-            {
-                request.Parameters.Remove("BypassBusinessLogicExecution");
-            }
-
-            if (BypassBusinessLogicExecutionStepIds?.Length > 0)
-            {
-                request.Parameters["BypassBusinessLogicExecutionStepIds"] = string.Join(",", BypassBusinessLogicExecutionStepIds.Select(id => id.ToString()));
-            }
-            else
-            {
-                request.Parameters.Remove("BypassBusinessLogicExecutionStepIds");
-            }
+            QueryHelpers.ApplyBypassBusinessLogicExecution(request, BypassBusinessLogicExecution, BypassBusinessLogicExecutionStepIds);
         }
 
         /// <summary>
@@ -1144,7 +1128,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             {
                                 // Build fault details for failed request
                                 StringBuilder details = new StringBuilder();
-                                AppendFaultDetails(itemResponse.Fault, details);
+                                QueryHelpers.AppendFaultDetails(itemResponse.Fault, details);
                                 if (firstError == null)
                                 {
                                     firstError = new Exception(details.ToString());
@@ -1179,17 +1163,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _nextBatchItems.Clear();
         }
 
-        public static void AppendFaultDetails(OrganizationServiceFault fault, StringBuilder output)
-        {
-            output.AppendLine("OrganizationServiceFault " + fault.ErrorCode + ": " + fault.Message);
-            output.AppendLine(fault.TraceText);
 
-            if (fault.InnerFault != null)
-            {
-                output.AppendLine("---");
-                AppendFaultDetails(fault.InnerFault, output);
-            }
-        }
     }
 
     /// <summary>

@@ -4,13 +4,14 @@ using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Shared helper methods for query execution and formatting.
+    /// Shared helper methods for query execution, formatting, and batch processing utilities.
     /// </summary>
     internal static class QueryHelpers
     {
@@ -177,6 +178,53 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // For other types, use standard equality
             return Equals(value1, value2);
+        }
+
+        /// <summary>
+        /// Applies bypass business logic execution parameters to a request.
+        /// </summary>
+        /// <param name="request">The organization request to apply bypass parameters to</param>
+        /// <param name="bypassBusinessLogicExecution">Types of business logic to bypass</param>
+        /// <param name="bypassBusinessLogicExecutionStepIds">IDs of specific steps to bypass</param>
+        public static void ApplyBypassBusinessLogicExecution(
+            OrganizationRequest request,
+            CustomLogicBypassableOrganizationServiceCmdlet.BusinessLogicTypes[] bypassBusinessLogicExecution,
+            Guid[] bypassBusinessLogicExecutionStepIds)
+        {
+            if (bypassBusinessLogicExecution?.Length > 0)
+            {
+                request.Parameters["BypassBusinessLogicExecution"] = string.Join(",", bypassBusinessLogicExecution.Select(o => o.ToString()));
+            }
+            else
+            {
+                request.Parameters.Remove("BypassBusinessLogicExecution");
+            }
+
+            if (bypassBusinessLogicExecutionStepIds?.Length > 0)
+            {
+                request.Parameters["BypassBusinessLogicExecutionStepIds"] = string.Join(",", bypassBusinessLogicExecutionStepIds.Select(id => id.ToString()));
+            }
+            else
+            {
+                request.Parameters.Remove("BypassBusinessLogicExecutionStepIds");
+            }
+        }
+
+        /// <summary>
+        /// Appends fault details to a string builder, including inner faults recursively.
+        /// </summary>
+        /// <param name="fault">The organization service fault</param>
+        /// <param name="output">The string builder to append to</param>
+        public static void AppendFaultDetails(OrganizationServiceFault fault, StringBuilder output)
+        {
+            output.AppendLine("OrganizationServiceFault " + fault.ErrorCode + ": " + fault.Message);
+            output.AppendLine(fault.TraceText);
+
+            if (fault.InnerFault != null)
+            {
+                output.AppendLine("---");
+                AppendFaultDetails(fault.InnerFault, output);
+            }
         }
     }
 }

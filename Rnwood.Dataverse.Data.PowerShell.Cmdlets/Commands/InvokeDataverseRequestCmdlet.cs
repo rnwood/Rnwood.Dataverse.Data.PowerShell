@@ -79,30 +79,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private RequestBatchProcessor _batchProcessor;
 		private CancellationTokenSource _userCancellationCts;
 
-		/// <summary>
-		/// Applies business logic bypass parameters to the request.
-		/// </summary>
-		/// <param name="request">The organization request to apply bypass parameters to.</param>
-		protected void ApplyBypassBusinessLogicExecution(OrganizationRequest request)
-		{
-			if (BypassBusinessLogicExecution?.Length > 0)
-			{
-				request.Parameters["BypassBusinessLogicExecution"] = string.Join(",", BypassBusinessLogicExecution.Select(o => o.ToString()));
-			}
-			else
-			{
-				request.Parameters.Remove("BypassBusinessLogicExecution");
-			}
 
-			if (BypassBusinessLogicExecutionStepIds?.Length > 0)
-			{
-				request.Parameters["BypassBusinessLogicExecutionStepIds"] = string.Join(",", BypassBusinessLogicExecutionStepIds.Select(id => id.ToString()));
-			}
-			else
-			{
-				request.Parameters.Remove("BypassBusinessLogicExecutionStepIds");
-			}
-		}
 
 		/// <summary>
 		/// Initializes the cmdlet.
@@ -172,7 +149,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				}
 
 				// Apply bypass parameters to the request
-				ApplyBypassBusinessLogicExecution(Request);
+				QueryHelpers.ApplyBypassBusinessLogicExecution(Request, BypassBusinessLogicExecution, BypassBusinessLogicExecutionStepIds);
 
 				// If batching is enabled, queue the request for batch execution
 				if (_batchProcessor != null)
@@ -452,7 +429,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					if (itemResponse.Fault != null)
 					{
 						StringBuilder details = new StringBuilder();
-						AppendFaultDetails(itemResponse.Fault, details);
+						QueryHelpers.AppendFaultDetails(itemResponse.Fault, details);
 						var e = new Exception(details.ToString());
 
 						bool handled = context.HandleFault(itemResponse.Fault);
@@ -476,17 +453,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				_nextBatchItems.Clear();
 			}
 
-			private void AppendFaultDetails(OrganizationServiceFault fault, StringBuilder output)
-			{
-				output.AppendLine("OrganizationServiceFault " + fault.ErrorCode + ": " + fault.Message);
-				output.AppendLine(fault.TraceText);
 
-				if (fault.InnerFault != null)
-				{
-					output.AppendLine("---");
-					AppendFaultDetails(fault.InnerFault, output);
-				}
-			}
 		}
 	}
 }
