@@ -199,6 +199,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [ArgumentCompleter(typeof(ColumnNamesArgumentCompleter))]
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to exclude from records (default is none). Ignored if Columns parameter is used.s")]
+        [Parameter(ParameterSetName = PARAMSET_MATCHON, Mandatory = false, HelpMessage = "List of columns to exclude from records (default is none). Ignored if Columns parameter is used.s")]
         public string[] ExcludeColumns
         {
             get;
@@ -208,6 +209,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// List of columns to order records by. Suffix column name with - to sort descending. e.g \
         /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to order records by. Suffix column name with - to sort descending. e.g \"age-\", \"lastname\" will sort by age descending then lastname ascending")]
+        [Parameter(ParameterSetName = PARAMSET_MATCHON, Mandatory = false, HelpMessage = "List of columns to order records by. Suffix column name with - to sort descending. e.g \"age-\", \"lastname\" will sort by age descending then lastname ascending")]
         public string[] OrderBy
         {
             get;
@@ -217,6 +219,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Number of records to limit result to. Default is all results.
         /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "Number of records to limit result to. Default is all results.")]
+        [Parameter(ParameterSetName = PARAMSET_MATCHON, Mandatory = false, HelpMessage = "Number of records to limit result to. Default is all results.")]
         public int? Top
         {
             get;
@@ -226,6 +229,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Number of records to request per page. Default is 1000.
         /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "Number of records to request per page. Default is 1000.")]
+        [Parameter(ParameterSetName = PARAMSET_MATCHON, Mandatory = false, HelpMessage = "Number of records to request per page. Default is 1000.")]
         public int? PageSize
         {
             get;
@@ -240,6 +244,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.
         /// </summary>
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.")]
+        [Parameter(ParameterSetName = PARAMSET_MATCHON, HelpMessage = "Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.")]
         public SwitchParameter IncludeSystemColumns { get; set; }
 
         private EntityMetadataFactory entiyMetadataFactory;
@@ -454,6 +459,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         finalQuery.Criteria.AddCondition(candidateQuery.Attributes[i], ConditionOperator.Equal, candidateQuery.Values[i]);
                     }
+                    
+                    // Apply ordering, top, and page size if specified
+                    ApplyOutputParameters(finalQuery);
                     break;
                 }
                 else if (matchCount > 1)
@@ -468,6 +476,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             finalQuery.Criteria.AddCondition(candidateQuery.Attributes[i], ConditionOperator.Equal, candidateQuery.Values[i]);
                         }
+                        
+                        // Apply ordering, top, and page size if specified
+                        ApplyOutputParameters(finalQuery);
                         break;
                     }
                     else
@@ -487,6 +498,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             return finalQuery;
+        }
+
+        /// <summary>
+        /// Applies output-related parameters (OrderBy, Top) to a query.
+        /// PageSize is handled by GetRecords method.
+        /// </summary>
+        private void ApplyOutputParameters(QueryExpression query)
+        {
+            if (OrderBy != null)
+            {
+                foreach (string orderByColumnName in OrderBy)
+                {
+                    query.AddOrder(orderByColumnName.TrimEnd('+', '-'), orderByColumnName.EndsWith("-") ? OrderType.Descending : OrderType.Ascending);
+                }
+            }
+
+            if (Top.HasValue)
+            {
+                query.TopCount = Top.Value;
+            }
         }
 
         // Filter parsing and helper methods were moved to FilterHelpers to

@@ -25,8 +25,9 @@ Get-DataverseRecord [-TableName] <String> [-VerboseRecordCount] [-RecordCount] [
 ### MatchOn
 ```
 Get-DataverseRecord [-TableName] <String> -InputObject <PSObject> -MatchOn <String[][]> [-AllowMultipleMatches]
- [-VerboseRecordCount] [-RecordCount] [-LookupValuesReturnName] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-VerboseRecordCount] [-RecordCount] [-Columns <String[]>] [-ExcludeColumns <String[]>] [-OrderBy <String[]>]
+ [-Top <Int32>] [-PageSize <Int32>] [-LookupValuesReturnName] [-IncludeSystemColumns]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### FetchXml
@@ -155,7 +156,7 @@ List of columns to return in records (default is all). Each column name may be s
 
 ```yaml
 Type: String[]
-Parameter Sets: Simple
+Parameter Sets: Simple, MatchOn
 Aliases:
 
 Required: False
@@ -200,7 +201,7 @@ List of columns to exclude from records (default is none). Ignored if Columns pa
 
 ```yaml
 Type: String[]
-Parameter Sets: Simple
+Parameter Sets: Simple, MatchOn
 Aliases:
 
 Required: False
@@ -489,7 +490,7 @@ Include system columns in output. By default system columns are excluded; use th
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: Simple
+Parameter Sets: Simple, MatchOn
 Aliases:
 
 Required: False
@@ -671,7 +672,7 @@ e.g "age-", "lastname" will sort by age descending then lastname ascending
 
 ```yaml
 Type: String[]
-Parameter Sets: Simple
+Parameter Sets: Simple, MatchOn
 Aliases:
 
 Required: False
@@ -687,7 +688,7 @@ Default is 1000.
 
 ```yaml
 Type: Int32
-Parameter Sets: Simple
+Parameter Sets: Simple, MatchOn
 Aliases:
 
 Required: False
@@ -733,7 +734,7 @@ Default is all results.
 
 ```yaml
 Type: Int32
-Parameter Sets: Simple
+Parameter Sets: Simple, MatchOn
 Aliases:
 
 Required: False
