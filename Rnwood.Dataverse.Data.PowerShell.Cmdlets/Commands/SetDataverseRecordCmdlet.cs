@@ -1837,9 +1837,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = false, HelpMessage = "List of list of column names that identify an existing record to update based on the values of those columns in the InputObject. For update/create these are used if a record with an Id matching the value of the Id cannot be found. The first list that returns a match is used.")]
         public string[][] MatchOn { get; set; }
         /// <summary>
-        /// If specified, allows updating of multiple records when MatchOn criteria matches more than one record. By default, only the first match is processed. Without this switch, an error is raised if MatchOn finds multiple matches.
+        /// If specified, allows updating of multiple records when MatchOn criteria matches more than one record. Without this switch, an error is raised if MatchOn finds multiple matches.
         /// </summary>
-        [Parameter(HelpMessage = "If specified, allows updating of multiple records when MatchOn criteria matches more than one record. By default, only the first match is processed. Without this switch, an error is raised if MatchOn finds multiple matches.")]
+        [Parameter(HelpMessage = "If specified, allows updating of multiple records when MatchOn criteria matches more than one record. Without this switch, an error is raised if MatchOn finds multiple matches.")]
         public SwitchParameter AllowMultipleMatches { get; set; }
         /// <summary>
         /// If specified, the InputObject is written to the pipeline as a PSObject with an Id property set indicating the primary key of the affected record (even if nothing was updated). The output is always converted to a PSObject format regardless of the input object type for uniformity.
