@@ -488,7 +488,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     // Multi-column - use Or with And conditions
                     var query = new QueryExpression(TableName)
                     {
-                        ColumnSet = Columns != null ? new ColumnSet(Columns) : new ColumnSet(true)
+                        ColumnSet = Columns != null ? new ColumnSet(Columns.Concat(matchOnColumnList).Distinct().ToArray()) : new ColumnSet(true)
                     };
 
                     var orFilter = new FilterExpression(LogicalOperator.Or);
