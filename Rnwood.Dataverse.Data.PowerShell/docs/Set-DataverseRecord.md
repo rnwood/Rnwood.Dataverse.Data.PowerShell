@@ -14,11 +14,12 @@ Creates or updates Dataverse records including M:M association/disassociation, s
 
 ```
 Set-DataverseRecord -InputObject <PSObject> -TableName <String> [-BatchSize <UInt32>]
- [-RetrievalBatchSize <UInt32>] [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>] [-PassThru]
- [-NoUpdate] [-NoCreate] [-NoUpdateColumns <String[]>] [-CallerId <Guid>] [-UpdateAllColumns] [-CreateOnly]
- [-Upsert] [-LookupColumns <Hashtable>] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
- [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-Retries <Int32>] [-InitialRetryDelay <Int32>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-RetrievalBatchSize <UInt32>] [-IgnoreProperties <String[]>] [-Id <Guid>] [-MatchOn <String[][]>]
+ [-AllowMultipleMatches] [-PassThru] [-NoUpdate] [-NoCreate] [-NoUpdateColumns <String[]>] [-CallerId <Guid>]
+ [-UpdateAllColumns] [-CreateOnly] [-Upsert] [-LookupColumns <Hashtable>]
+ [-BypassBusinessLogicExecution <BusinessLogicTypes[]>] [-BypassBusinessLogicExecutionStepIds <Guid[]>]
+ [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -408,6 +409,17 @@ PS C:\> $largeDataset | Set-DataverseRecord -Connection $c -TableName account -R
 
 Processes a large dataset with automatic retry configured for rate limiting scenarios. Uses 5 retry attempts with an initial 2-second delay, doubling on each retry (2s, 4s, 8s, 16s, 32s).
 
+### Example 20: Update multiple matching records with AllowMultipleMatches
+```powershell
+PS C:\> # Update all contacts with a specific last name
+PS C:\> @{ 
+    lastname = "TestUser"
+    emailaddress1 = "updated@example.com" 
+} | Set-DataverseRecord -Connection $c -TableName contact -MatchOn lastname -AllowMultipleMatches
+```
+
+Updates all contacts with lastname "TestUser" by setting their email address. The -AllowMultipleMatches switch allows updating the first matching record when multiple records match the MatchOn criteria. Without this switch, an error would be raised if multiple matches are found.
+
 ## PARAMETERS
 
 ### -BatchSize
@@ -608,6 +620,8 @@ e.g.
 ("firstname", "lastname"), "fullname" will try to find an existing record based on the firstname AND listname from the InputObject and if not found it will try by fullname.
 For upsert only a single list is allowed and it must match the properties of an alternate key defined on the table.
 
+When multiple records match the MatchOn criteria, an error is raised unless -AllowMultipleMatches is specified.
+
 ```yaml
 Type: String[][]
 Parameter Sets: (All)
@@ -616,6 +630,21 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AllowMultipleMatches
+If specified, allows updating of multiple records when MatchOn criteria matches more than one record. By default, only the first match is processed. Without this switch, an error is raised if MatchOn finds multiple matches.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

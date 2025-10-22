@@ -13,14 +13,22 @@ Deletes an existing Dataverse record, including M:M association records.
 ## SYNTAX
 
 ```
-Remove-DataverseRecord [-InputObject <PSObject>] -TableName <String> -Id <Guid> [-BatchSize <UInt32>]
- [-IfExists] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
+Remove-DataverseRecord [-InputObject <PSObject>] -TableName <String> [-Id <Guid>] [-MatchOn <String[][]>]
+ [-AllowMultipleMatches] [-BatchSize <UInt32>] [-IfExists] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
  [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-Retries <Int32>] [-InitialRetryDelay <Int32>]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 The `TableName` and `Id` can be read from the pipeline when piping in a record obtained from `get-dataverserecord` instead of being specified separately. This allows you to delete a stream of records from the pipeline.
+
+**Finding Records:**
+
+Records can be identified for deletion in two ways:
+- By `-Id` parameter: Specify the GUID of the record to delete
+- By `-MatchOn` parameter: Specify column name(s) to match against values in the InputObject. The first matching set of columns that returns records is used.
+
+When using `-MatchOn`, if multiple records match the criteria, an error is raised unless `-AllowMultipleMatches` is specified.
 
 **Batch Operations:**
 
@@ -142,6 +150,39 @@ PS C:\> $largeDataset | Remove-DataverseRecord -Connection $c -Retries 5 -Initia
 
 Deletes a large dataset with automatic retry configured for rate limiting scenarios. Uses 5 retry attempts with an initial 2-second delay, doubling on each retry (2s, 4s, 8s, 16s, 32s).
 
+### Example 9: Delete record using MatchOn with single column
+```powershell
+PS C:\> @{ emailaddress1 = "user@example.com" } | Remove-DataverseRecord -Connection $c -TableName contact -MatchOn emailaddress1
+```
+
+Deletes a contact record by matching on the email address. If multiple contacts have the same email, an error is raised unless -AllowMultipleMatches is used.
+
+### Example 10: Delete record using MatchOn with multiple columns
+```powershell
+PS C:\> @{ firstname = "John"; lastname = "Doe" } | Remove-DataverseRecord -Connection $c -TableName contact -MatchOn @("firstname", "lastname")
+```
+
+Deletes a contact record by matching on both firstname and lastname. This helps ensure you're deleting the correct record when names might not be unique individually.
+
+### Example 11: Delete multiple matching records with AllowMultipleMatches
+```powershell
+PS C:\> @{ lastname = "TestUser" } | Remove-DataverseRecord -Connection $c -TableName contact -MatchOn lastname -AllowMultipleMatches
+```
+
+Deletes all contact records with the lastname "TestUser". The -AllowMultipleMatches switch allows deletion of multiple records that match the criteria.
+
+### Example 12: Use multiple MatchOn criteria with fallback
+```powershell
+PS C:\> $record = @{ 
+    emailaddress1 = "user@example.com"
+    firstname = "John"
+    lastname = "Doe"
+}
+PS C:\> $record | Remove-DataverseRecord -Connection $c -TableName contact -MatchOn @("emailaddress1"), @("firstname", "lastname")
+```
+
+Attempts to match first on emailaddress1, then falls back to matching on firstname+lastname if no email match is found. Uses the first matching set that returns records.
+
 ## PARAMETERS
 
 ### -BatchSize
@@ -225,17 +266,54 @@ Accept wildcard characters: False
 ```
 
 ### -Id
-Id of record to process
+Id of record to process. Either -Id or -MatchOn must be specified.
 
 ```yaml
 Type: Guid
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -MatchOn
+List of list of column names that identify records to delete based on the values of those columns in the InputObject. The first list that returns a match is used. If AllowMultipleMatches is not specified, an error will be raised if more than one record matches.
+
+For example:
+- `@("emailaddress1")` - Match on email address alone
+- `@("firstname", "lastname")` - Match on both first and last name together
+- `@("emailaddress1"), @("firstname", "lastname")` - Try email first, fall back to name if no email match
+
+Either -Id or -MatchOn must be specified.
+
+```yaml
+Type: String[][]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AllowMultipleMatches
+If specified, allows deletion of multiple records when MatchOn criteria matches more than one record. Without this switch, an error is raised if MatchOn finds multiple matches.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
