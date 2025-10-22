@@ -738,7 +738,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // Use QueryByAttribute - same as original non-batched code
                         QueryByAttribute matchOnQuery = new QueryByAttribute(TableName);
                         // Include both the primary ID and the match column for matching back
-                        matchOnQuery.ColumnSet = new ColumnSet(entityMetadata.PrimaryIdAttribute, matchColumn);
+                        matchOnQuery.ColumnSet = new ColumnSet(new[] { entityMetadata.PrimaryIdAttribute, matchColumn });
                         matchOnQuery.AddAttributeValue(matchColumn, matchValues[0]);
 
                         WriteVerbose($"Retrieving records by MatchOn ({matchColumn}) using QueryByAttribute");
@@ -772,7 +772,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         var query = new QueryExpression(TableName)
                         {
                             // Include both the primary ID and the match column for matching back
-                            ColumnSet = new ColumnSet(entityMetadata.PrimaryIdAttribute, matchColumn)
+                            ColumnSet = new ColumnSet(new[] { entityMetadata.PrimaryIdAttribute, matchColumn })
                         };
 
                         query.Criteria.AddCondition(matchColumn, ConditionOperator.In, matchValues.ToArray());

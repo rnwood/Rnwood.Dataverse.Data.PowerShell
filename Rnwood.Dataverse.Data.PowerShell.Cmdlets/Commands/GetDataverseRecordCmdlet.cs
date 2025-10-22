@@ -27,6 +27,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public PSObject InputObject { get; set; }
         public Entity InputEntity { get; set; }
         public List<Entity> MatchedRecords { get; set; }
+        public string[] MatchedOnColumns { get; set; }
     }
 
     /// <summary>
@@ -480,6 +481,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         if (matches.Count > 0)
                         {
                             item.MatchedRecords.AddRange(matches);
+                            item.MatchedOnColumns = matchOnColumnList;
                         }
                     }
                 }
@@ -538,6 +540,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         if (matches.Count > 0)
                         {
                             item.MatchedRecords.AddRange(matches);
+                            item.MatchedOnColumns = matchOnColumnList;
                         }
                     }
                 }
@@ -570,7 +573,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     else
                     {
                         // Multiple matches not allowed - error
-                        string matchOnSummary = string.Join(", ", MatchOn[0].Select(c => $"{c}='{item.InputEntity.GetAttributeValue<object>(c)}'"));
+                        string matchOnSummary = string.Join(", ", (item.MatchedOnColumns ?? MatchOn[0]).Select(c => $"{c}='{item.InputEntity.GetAttributeValue<object>(c)}'"));
                         WriteError(new ErrorRecord(
                             new Exception($"Match on values {matchOnSummary} resulted in more than one record. Use -AllowMultipleMatches to retrieve all matching records."),
                             null,
