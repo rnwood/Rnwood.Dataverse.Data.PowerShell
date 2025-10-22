@@ -20,22 +20,11 @@ using System.Xml.Linq;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Represents an InputObject queued for MatchOn resolution in GetDataverseRecordCmdlet.
-    /// </summary>
-    internal class GetMatchOnItem
-    {
-        public PSObject InputObject { get; set; }
-        public Entity InputEntity { get; set; }
-        public List<Entity> MatchedRecords { get; set; }
-        public string[] MatchedOnColumns { get; set; }
-    }
-
-    /// <summary>
     /// Retrieves records from a Dataverse table using various query methods.
     /// </summary>
     [Cmdlet(VerbsCommon.Get, "DataverseRecord")]
     [OutputType(typeof(IEnumerable<PSObject>))]
-    public class GetDataverseRecordCmdlet : OrganizationServiceCmdlet
+    public partial class GetDataverseRecordCmdlet : OrganizationServiceCmdlet
     {
         private const int MaxXorItems = 8;
 
