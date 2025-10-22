@@ -316,6 +316,50 @@ Describe 'Set-DataverseRecord' {
         }
     }
 
+    Context 'AllowMultipleMatches Support' {
+        It "Raises error when MatchOn finds multiple matches without AllowMultipleMatches" {
+            $connection = getMockConnection
+            
+            # Create multiple records with same email
+            $record1 = @{ firstname = "John1"; lastname = "Doe"; emailaddress1 = "duplicate@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $record2 = @{ firstname = "John2"; lastname = "Doe"; emailaddress1 = "duplicate@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            
+            # Try to update without AllowMultipleMatches - should error
+            {
+                @{ firstname = "Updated"; lastname = "Name"; emailaddress1 = "duplicate@test.com" } | 
+                    Set-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1 -ErrorAction Stop
+            } | Should -Throw "*AllowMultipleMatches*"
+            
+            # Verify no records were updated
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords | Where-Object { $_.firstname -eq "Updated" } | Should -BeNullOrEmpty
+        }
+
+        It "Updates first matching record with AllowMultipleMatches switch" {
+            $connection = getMockConnection
+            
+            # Create multiple records with same last name
+            $record1 = @{ firstname = "John"; lastname = "TestUser"; emailaddress1 = "john@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $record2 = @{ firstname = "Jane"; lastname = "TestUser"; emailaddress1 = "jane@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $record3 = @{ firstname = "Bob"; lastname = "Different"; emailaddress1 = "bob@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            
+            # Update using MatchOn with AllowMultipleMatches (updates first match)
+            @{ lastname = "TestUser"; emailaddress1 = "updated@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -MatchOn lastname -AllowMultipleMatches
+            
+            # Verify at least one record was updated
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $updated = $allRecords | Where-Object { $_.emailaddress1 -eq "updated@test.com" }
+            $updated | Should -Not -BeNullOrEmpty
+            $updated.lastname | Should -Be "TestUser"
+        }
+    }
+
     Context 'NoUpdate and NoCreate Flags' {
         It "With -NoUpdate, creates new but does not update existing" {
             $connection = getMockConnection

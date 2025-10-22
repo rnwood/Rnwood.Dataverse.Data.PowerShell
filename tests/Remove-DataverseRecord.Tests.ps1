@@ -31,6 +31,117 @@ Describe "Remove-DataverseRecord" {
         }
     }
 
+    Context "MatchOn Support" {
+        It "Removes a single record using MatchOn with single column" {
+            $connection = getMockConnection
+            
+            # Create test records
+            $record1 = @{ firstname = "John"; lastname = "Doe"; emailaddress1 = "john@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $record2 = @{ firstname = "Jane"; lastname = "Smith"; emailaddress1 = "jane@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            
+            # Remove using MatchOn
+            @{ emailaddress1 = "john@test.com" } | 
+                Remove-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1
+            
+            # Verify only John was deleted
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining.Count | Should -Be 1
+            $remaining.emailaddress1 | Should -Be "jane@test.com"
+        }
+
+        It "Removes a single record using MatchOn with multiple columns" {
+            $connection = getMockConnection
+            
+            # Create test records with distinct combinations
+            $record1 = @{ firstname = "Alice"; lastname = "Brown"; emailaddress1 = "alice.brown@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $record2 = @{ firstname = "Bob"; lastname = "Green"; emailaddress1 = "bob.green@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            
+            # Remove using MatchOn with multiple columns
+            @{ firstname = "Alice"; lastname = "Brown" } | 
+                Remove-DataverseRecord -Connection $connection -TableName contact -MatchOn @("firstname", "lastname")
+            
+            # Verify only Alice was deleted
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining.Count | Should -Be 1
+            $remaining.firstname | Should -Be "Bob"
+        }
+
+        It "Raises error when MatchOn finds multiple matches without AllowMultipleMatches" {
+            $connection = getMockConnection
+            
+            # Create multiple records with same email pattern
+            $record1 = @{ firstname = "John1"; lastname = "Doe"; emailaddress1 = "test@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $record2 = @{ firstname = "John2"; lastname = "Doe"; emailaddress1 = "test@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            
+            # Try to remove without AllowMultipleMatches - should error
+            {
+                @{ emailaddress1 = "test@test.com" } | 
+                    Remove-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1 -ErrorAction Stop
+            } | Should -Throw "*AllowMultipleMatches*"
+            
+            # Verify no records were deleted
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining.Count | Should -Be 2
+        }
+
+        It "Removes multiple records with AllowMultipleMatches switch" {
+            $connection = getMockConnection
+            
+            # Create multiple records with same last name
+            $record1 = @{ firstname = "John"; lastname = "TestUser"; emailaddress1 = "john@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $record2 = @{ firstname = "Jane"; lastname = "TestUser"; emailaddress1 = "jane@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            $record3 = @{ firstname = "Bob"; lastname = "Different"; emailaddress1 = "bob@test.com" } | 
+                Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
+            
+            # Remove all matching records
+            @{ lastname = "TestUser" } | 
+                Remove-DataverseRecord -Connection $connection -TableName contact -MatchOn lastname -AllowMultipleMatches
+            
+            # Verify only Bob remains
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining.Count | Should -Be 1
+            $remaining.firstname | Should -Be "Bob"
+        }
+
+        It "Does not raise error when MatchOn finds no matches with IfExists" {
+            $connection = getMockConnection
+            
+            # Try to remove non-existent record
+            @{ emailaddress1 = "nonexistent@test.com" } | 
+                Remove-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1 -IfExists
+            
+            # Should complete without error (verified by not throwing)
+        }
+
+        It "Raises error when MatchOn finds no matches without IfExists" {
+            $connection = getMockConnection
+            
+            # Try to remove non-existent record without IfExists
+            {
+                @{ emailaddress1 = "nonexistent@test.com" } | 
+                    Remove-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1 -ErrorAction Stop
+            } | Should -Throw "*No records found*"
+        }
+
+        It "Raises error when neither Id nor MatchOn is specified" {
+            $connection = getMockConnection
+            
+            # Try to remove without Id or MatchOn
+            {
+                @{ firstname = "Test" } | 
+                    Remove-DataverseRecord -Connection $connection -TableName contact -ErrorAction Stop
+            } | Should -Throw "*Either Id or MatchOn must be specified*"
+        }
+    }
+
     Context "Retries" {
         It "Retries whole batch on ExecuteMultiple failure" {
             # Set up interceptor for delete operations
