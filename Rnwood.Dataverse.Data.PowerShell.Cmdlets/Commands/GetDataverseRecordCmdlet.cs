@@ -20,6 +20,17 @@ using System.Xml.Linq;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
+    /// Represents an InputObject queued for MatchOn resolution in GetDataverseRecordCmdlet.
+    /// </summary>
+    internal class GetMatchOnItem
+    {
+        public PSObject InputObject { get; set; }
+        public Entity InputEntity { get; set; }
+        public List<Entity> MatchedRecords { get; set; }
+        public string[] MatchedOnColumns { get; set; }
+    }
+
+    /// <summary>
     /// Retrieves records from a Dataverse table using various query methods.
     /// </summary>
     [Cmdlet(VerbsCommon.Get, "DataverseRecord")]
@@ -235,6 +246,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             get;
             set;
         }
+        
+        /// <summary>
+        /// Controls the maximum number of records to resolve in a single query when using MatchOn. Default is 500. Specify 1 to resolve one record at a time.
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_MATCHON, HelpMessage = "Controls the maximum number of records to resolve in a single query when using MatchOn. Default is 500. Specify 1 to resolve one record at a time.")]
+        public uint RetrievalBatchSize { get; set; } = 500;
         /// <summary>
         /// Outputs Names for lookup values. The default behaviour is to output the ID.
         /// </summary>
@@ -250,6 +267,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private EntityMetadataFactory entiyMetadataFactory;
         private DataverseEntityConverter entityConverter;
         private EntityMetadata entityMetadata;
+        private List<GetMatchOnItem> _matchOnQueue;
 
         /// <summary>
         /// Initializes the cmdlet and sets up required helpers.
@@ -257,6 +275,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         protected override void BeginProcessing()
         {
             base.BeginProcessing();
+
+            // Initialize the queue for MatchOn parameter set
+            if (ParameterSetName == PARAMSET_MATCHON)
+            {
+                _matchOnQueue = new List<GetMatchOnItem>();
+            }
         }
 
         /// <summary>
@@ -266,7 +290,49 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            ExecuteQuery();
+            // For MatchOn parameter set, queue items for batched processing
+            if (ParameterSetName == PARAMSET_MATCHON)
+            {
+                entiyMetadataFactory = entiyMetadataFactory ?? new EntityMetadataFactory(Connection);
+                entityConverter = entityConverter ?? new DataverseEntityConverter(Connection, entiyMetadataFactory);
+                entityMetadata = entityMetadata ?? entiyMetadataFactory.GetMetadata(TableName);
+
+                // Convert InputObject to Entity to extract match values
+                var conversionOptions = new ConvertToDataverseEntityOptions();
+                Entity inputEntity = entityConverter.ConvertToDataverseEntity(InputObject, TableName, conversionOptions);
+
+                _matchOnQueue.Add(new GetMatchOnItem
+                {
+                    InputObject = InputObject,
+                    InputEntity = inputEntity,
+                    MatchedRecords = new List<Entity>()
+                });
+
+                // Process batch if it's full
+                if (_matchOnQueue.Count >= RetrievalBatchSize)
+                {
+                    ProcessMatchOnBatch();
+                }
+            }
+            else
+            {
+                // For non-MatchOn parameter sets, execute query immediately
+                ExecuteQuery();
+            }
+        }
+
+        /// <summary>
+        /// Completes cmdlet processing by handling any remaining queued MatchOn items.
+        /// </summary>
+        protected override void EndProcessing()
+        {
+            base.EndProcessing();
+
+            // Process any remaining queued MatchOn items
+            if (ParameterSetName == PARAMSET_MATCHON && _matchOnQueue != null && _matchOnQueue.Count > 0)
+            {
+                ProcessMatchOnBatch();
+            }
         }
 
         private ValueType GetColumnValueType(AttributeMetadata attribute)
@@ -336,6 +402,190 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Processes a batch of MatchOn items using efficient batched queries.
+        /// </summary>
+        private void ProcessMatchOnBatch()
+        {
+            if (_matchOnQueue.Count == 0)
+            {
+                return;
+            }
+
+            WriteVerbose($"Processing MatchOn batch of {_matchOnQueue.Count} record(s)");
+
+            // Try each MatchOn column list in order until records are found
+            foreach (string[] matchOnColumnList in MatchOn)
+            {
+                var itemsNeedingMatch = _matchOnQueue.Where(item => item.MatchedRecords.Count == 0).ToList();
+                if (itemsNeedingMatch.Count == 0)
+                {
+                    break;
+                }
+
+                if (matchOnColumnList.Length == 1)
+                {
+                    // Single column - use In operator for efficiency
+                    var matchColumn = matchOnColumnList[0];
+                    var matchValues = itemsNeedingMatch.Select(item =>
+                    {
+                        var val = item.InputEntity.GetAttributeValue<object>(matchColumn);
+                        if (val is EntityReference er) return (object)er.Id;
+                        if (val is OptionSetValue osv) return (object)osv.Value;
+                        return val;
+                    }).Distinct().ToList();
+
+                    var query = new QueryExpression(TableName)
+                    {
+                        ColumnSet = Columns != null ? new ColumnSet(Columns.Concat(new[] { matchColumn }).Distinct().ToArray()) : new ColumnSet(true)
+                    };
+
+                    // When AllowMultipleMatches is off, limit to 2 records to detect multiple matches efficiently
+                    if (!AllowMultipleMatches.IsPresent)
+                    {
+                        query.TopCount = 2;
+                    }
+
+                    if (matchValues.Count == 1)
+                    {
+                        query.Criteria.AddCondition(matchColumn, ConditionOperator.Equal, matchValues[0]);
+                    }
+                    else
+                    {
+                        query.Criteria.AddCondition(matchColumn, ConditionOperator.In, matchValues.ToArray());
+                    }
+
+                    // Apply ordering, top, and page size if specified
+                    ApplyOutputParameters(query);
+
+                    WriteVerbose($"Retrieving records by MatchOn ({matchColumn}) in batch");
+
+                    // Match back to items using streaming to avoid buffering all records
+                    foreach (var entity in ExecuteQueryWithPaging(query, Connection, WriteVerbose))
+                    {
+                        foreach (var item in itemsNeedingMatch)
+                        {
+                            var itemValue = item.InputEntity.GetAttributeValue<object>(matchColumn);
+                            if (itemValue is EntityReference er) itemValue = er.Id;
+                            if (itemValue is OptionSetValue osv) itemValue = osv.Value;
+
+                            var recValue = entity.GetAttributeValue<object>(matchColumn);
+                            if (recValue is EntityReference er2) recValue = er2.Id;
+                            if (recValue is OptionSetValue osv2) recValue = osv2.Value;
+                            
+                            if (AreValuesEqual(itemValue, recValue))
+                            {
+                                item.MatchedRecords.Add(entity);
+                                item.MatchedOnColumns = matchOnColumnList;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // Multi-column - use Or with And conditions
+                    var query = new QueryExpression(TableName)
+                    {
+                        ColumnSet = Columns != null ? new ColumnSet(Columns.Concat(matchOnColumnList).Distinct().ToArray()) : new ColumnSet(true)
+                    };
+
+                    // When AllowMultipleMatches is off, limit to 2 records to detect multiple matches efficiently
+                    if (!AllowMultipleMatches.IsPresent)
+                    {
+                        query.TopCount = 2;
+                    }
+
+                    var orFilter = new FilterExpression(LogicalOperator.Or);
+
+                    foreach (var item in itemsNeedingMatch)
+                    {
+                        var andFilter = new FilterExpression(LogicalOperator.And);
+                        foreach (var matchColumn in matchOnColumnList)
+                        {
+                            var queryValue = item.InputEntity.GetAttributeValue<object>(matchColumn);
+                            if (queryValue is EntityReference er1) queryValue = er1.Id;
+                            if (queryValue is OptionSetValue osv1) queryValue = osv1.Value;
+
+                            andFilter.AddCondition(matchColumn, ConditionOperator.Equal, queryValue);
+                        }
+                        orFilter.AddFilter(andFilter);
+                    }
+
+                    query.Criteria.AddFilter(orFilter);
+
+                    // Apply ordering, top, and page size if specified
+                    ApplyOutputParameters(query);
+
+                    WriteVerbose($"Retrieving records by MatchOn ({string.Join(",", matchOnColumnList)}) in batch");
+
+                    // Match back to items using streaming to avoid buffering all records
+                    foreach (var entity in ExecuteQueryWithPaging(query, Connection, WriteVerbose))
+                    {
+                        foreach (var item in itemsNeedingMatch)
+                        {
+                            bool allMatch = matchOnColumnList.All(col =>
+                            {
+                                var itemValue = item.InputEntity.GetAttributeValue<object>(col);
+                                var recValue = entity.GetAttributeValue<object>(col);
+
+                                if (itemValue is EntityReference er1) itemValue = er1.Id;
+                                if (itemValue is OptionSetValue osv1) itemValue = osv1.Value;
+                                if (recValue is EntityReference er2) recValue = er2.Id;
+                                if (recValue is OptionSetValue osv2) recValue = osv2.Value;
+
+                                return AreValuesEqual(itemValue, recValue);
+                            });
+                            
+                            if (allMatch)
+                            {
+                                item.MatchedRecords.Add(entity);
+                                item.MatchedOnColumns = matchOnColumnList;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Output matched records
+            foreach (var item in _matchOnQueue)
+            {
+                if (item.MatchedRecords.Count == 0)
+                {
+                    // No matches found - no output
+                }
+                else if (item.MatchedRecords.Count == 1)
+                {
+                    // Single match - output it
+                    PSObject output = entityConverter.ConvertToPSObject(item.MatchedRecords[0], GetColumnSet(""), GetColumnValueType);
+                    WriteObject(output);
+                }
+                else if (item.MatchedRecords.Count > 1)
+                {
+                    if (AllowMultipleMatches.IsPresent)
+                    {
+                        // Multiple matches allowed - output all
+                        foreach (var record in item.MatchedRecords)
+                        {
+                            PSObject output = entityConverter.ConvertToPSObject(record, GetColumnSet(""), GetColumnValueType);
+                            WriteObject(output);
+                        }
+                    }
+                    else
+                    {
+                        // Multiple matches not allowed - error
+                        string matchOnSummary = string.Join(", ", (item.MatchedOnColumns ?? MatchOn[0]).Select(c => $"{c}='{item.InputEntity.GetAttributeValue<object>(c)}'"));
+                        WriteError(new ErrorRecord(
+                            new Exception($"Match on values {matchOnSummary} resulted in more than one record. Use -AllowMultipleMatches to retrieve all matching records."),
+                            null,
+                            ErrorCategory.InvalidOperation,
+                            item.InputObject));
+                    }
+                }
+            }
+
+            _matchOnQueue.Clear();
         }
 
         private QueryExpression GetSimpleQuery()
@@ -548,28 +798,42 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private IEnumerable<Entity> GetRecords(QueryExpression query)
         {
+            return ExecuteQueryWithPaging(query, Connection, WriteVerbose);
+        }
+
+        /// <summary>
+        /// Executes a query with automatic paging and verbose output.
+        /// </summary>
+        private static IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query, IOrganizationService connection, Action<string> writeVerbose)
+        {
+            writeVerbose($"Executing query: {QueryToVerboseString(query)}");
+
             // Only set PageInfo if TopCount is not already set (e.g., from FetchXML top attribute)
             // because Dataverse doesn't allow both TopCount and PageInfo to be set simultaneously
-            if (!query.TopCount.HasValue)
+            if (query is QueryExpression qe && !qe.TopCount.HasValue)
             {
                 PagingInfo pageInfo = new PagingInfo()
                 {
                     PageNumber = 1,
-                    Count = Top.GetValueOrDefault(PageSize.GetValueOrDefault(1000))
+                    Count = 1000
                 };
 
-                query.PageInfo = pageInfo;
+                qe.PageInfo = pageInfo;
 
                 RetrieveMultipleRequest request = new RetrieveMultipleRequest()
                 {
-                    Query = query
+                    Query = qe
                 };
 
                 RetrieveMultipleResponse response;
+                int pageNum = 0;
 
                 do
                 {
-                    response = (RetrieveMultipleResponse)Connection.Execute(request);
+                    pageNum++;
+                    writeVerbose($"Retrieving page {pageNum}...");
+                    response = (RetrieveMultipleResponse)connection.Execute(request);
+                    writeVerbose($"Page {pageNum} returned {response.EntityCollection.Entities.Count} records");
 
                     pageInfo.PageNumber++;
                     pageInfo.PagingCookie = response.EntityCollection.PagingCookie;
@@ -580,22 +844,117 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
 
                 } while (response.EntityCollection.MoreRecords);
+                
+                writeVerbose($"Query complete. Retrieved {pageNum} page(s)");
             }
             else
             {
                 // When TopCount is set (e.g., from FetchXML), execute without PageInfo
+                string topCountStr = query is QueryExpression qe2 ? qe2.TopCount?.ToString() : (query is QueryByAttribute qba2 ? qba2.TopCount?.ToString() : "null");
+                writeVerbose($"Executing query with TopCount={topCountStr}");
                 RetrieveMultipleRequest request = new RetrieveMultipleRequest()
                 {
                     Query = query
                 };
 
-                RetrieveMultipleResponse response = (RetrieveMultipleResponse)Connection.Execute(request);
+                RetrieveMultipleResponse response = (RetrieveMultipleResponse)connection.Execute(request);
+                writeVerbose($"Query returned {response.EntityCollection.Entities.Count} records");
 
                 foreach (Entity entity in response.EntityCollection.Entities)
                 {
                     yield return entity;
                 }
             }
+        }
+
+        /// <summary>
+        /// Converts a query to a verbose string representation.
+        /// </summary>
+        private static string QueryToVerboseString(QueryBase query)
+        {
+            if (query is QueryExpression qe)
+            {
+                var sb = new StringBuilder();
+                sb.Append($"QueryExpression(EntityName={qe.EntityName}");
+                if (qe.TopCount.HasValue)
+                    sb.Append($", TopCount={qe.TopCount}");
+                if (qe.Criteria?.Conditions?.Count > 0)
+                    sb.Append($", Conditions={qe.Criteria.Conditions.Count}");
+                if (qe.ColumnSet != null)
+                {
+                    if (qe.ColumnSet.AllColumns)
+                        sb.Append($", Columns=All");
+                    else
+                        sb.Append($", Columns={qe.ColumnSet.Columns.Count}");
+                }
+                sb.Append(")");
+                
+                // Add JSON serialization for full query details
+                try
+                {
+                    var serializer = new DataContractSerializer(typeof(QueryExpression));
+                    using (var sw = new StringWriter())
+                    using (var writer = new System.Xml.XmlTextWriter(sw))
+                    {
+                        writer.Formatting = System.Xml.Formatting.Indented;
+                        serializer.WriteObject(writer, qe);
+                        sb.Append($"\nFull Query XML:\n{sw}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    sb.Append($"\nQuery serialization error: {ex.Message}");
+                }
+                
+                return sb.ToString();
+            }
+            else if (query is QueryByAttribute qba)
+            {
+                var sb = new StringBuilder();
+                sb.Append($"QueryByAttribute(EntityName={qba.EntityName}, Attributes={qba.Attributes.Count}, Columns={qba.ColumnSet?.Columns?.Count ?? 0}");
+                if (qba.TopCount.HasValue)
+                    sb.Append($", TopCount={qba.TopCount}");
+                sb.Append(")");
+                
+                // Add JSON serialization for full query details
+                try
+                {
+                    var serializer = new DataContractSerializer(typeof(QueryByAttribute));
+                    using (var sw = new StringWriter())
+                    using (var writer = new System.Xml.XmlTextWriter(sw))
+                    {
+                        writer.Formatting = System.Xml.Formatting.Indented;
+                        serializer.WriteObject(writer, qba);
+                        sb.Append($"\nFull Query XML:\n{sw}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    sb.Append($"\nQuery serialization error: {ex.Message}");
+                }
+                
+                return sb.ToString();
+            }
+            return query.GetType().Name;
+        }
+
+        /// <summary>
+        /// Compares two values with proper case-insensitive comparison for strings to match Dataverse query behavior.
+        /// </summary>
+        private static bool AreValuesEqual(object value1, object value2)
+        {
+            // Handle nulls
+            if (value1 == null && value2 == null) return true;
+            if (value1 == null || value2 == null) return false;
+
+            // Use case-insensitive comparison for strings to match Dataverse behavior
+            if (value1 is string str1 && value2 is string str2)
+            {
+                return string.Equals(str1, str2, StringComparison.OrdinalIgnoreCase);
+            }
+
+            // For other types, use standard equality
+            return Equals(value1, value2);
         }
 
 

@@ -14,7 +14,7 @@ Deletes an existing Dataverse record, including M:M association records.
 
 ```
 Remove-DataverseRecord [-InputObject <PSObject>] -TableName <String> [-Id <Guid>] [-MatchOn <String[][]>]
- [-AllowMultipleMatches] [-BatchSize <UInt32>] [-IfExists]
+ [-AllowMultipleMatches] [-BatchSize <UInt32>] [-RetrievalBatchSize <UInt32>] [-IfExists]
  [-BypassBusinessLogicExecution <BusinessLogicTypes[]>] [-BypassBusinessLogicExecutionStepIds <Guid[]>]
  [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
@@ -374,6 +374,21 @@ Aliases:
 Required: False
 Position: Named
 Default value: 0
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RetrievalBatchSize
+Controls the maximum number of records to resolve in a single query when using MatchOn. Default is 500. Specify 1 to resolve one record at a time.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
