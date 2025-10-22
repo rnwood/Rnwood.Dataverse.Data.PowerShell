@@ -608,10 +608,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 try
                 {
                     // Convert InputObject to Entity to get values for matching
-                    // Create a fresh entity converter to avoid any caching issues
-                    var entityConverter = new DataverseEntityConverter(Connection, _metadataFactory);
+                    // Use the existing entity converter instance for efficiency
                     var conversionOptions = new ConvertToDataverseEntityOptions();
-                    Entity inputEntity = entityConverter.ConvertToDataverseEntity(InputObject, TableName, conversionOptions);
+                    Entity inputEntity = _entityConverter.ConvertToDataverseEntity(InputObject, TableName, conversionOptions);
 
                     _matchOnResolveQueue.Add(new MatchOnResolveItem
                     {
