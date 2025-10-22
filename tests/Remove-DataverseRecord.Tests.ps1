@@ -46,9 +46,9 @@ Describe "Remove-DataverseRecord" {
                 Remove-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1
             
             # Verify only John was deleted
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining = @(Get-DataverseRecord -Connection $connection -TableName contact)
             $remaining.Count | Should -Be 1
-            $remaining.emailaddress1 | Should -Be "jane@test.com"
+            $remaining[0].emailaddress1 | Should -Be "jane@test.com"
         }
 
         It "Removes a single record using MatchOn with multiple columns" {
@@ -65,9 +65,9 @@ Describe "Remove-DataverseRecord" {
                 Remove-DataverseRecord -Connection $connection -TableName contact -MatchOn @("firstname", "lastname")
             
             # Verify only Alice was deleted
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining = @(Get-DataverseRecord -Connection $connection -TableName contact)
             $remaining.Count | Should -Be 1
-            $remaining.firstname | Should -Be "Bob"
+            $remaining[0].firstname | Should -Be "Bob"
         }
 
         It "Raises error when MatchOn finds multiple matches without AllowMultipleMatches" {
@@ -86,7 +86,7 @@ Describe "Remove-DataverseRecord" {
             } | Should -Throw "*AllowMultipleMatches*"
             
             # Verify no records were deleted
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining = @(Get-DataverseRecord -Connection $connection -TableName contact)
             $remaining.Count | Should -Be 2
         }
 
@@ -106,9 +106,9 @@ Describe "Remove-DataverseRecord" {
                 Remove-DataverseRecord -Connection $connection -TableName contact -MatchOn lastname -AllowMultipleMatches
             
             # Verify only Bob remains
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining = @(Get-DataverseRecord -Connection $connection -TableName contact)
             $remaining.Count | Should -Be 1
-            $remaining.firstname | Should -Be "Bob"
+            $remaining[0].firstname | Should -Be "Bob"
         }
 
         It "Does not raise error when MatchOn finds no matches with IfExists" {
