@@ -32,13 +32,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private const string PARAMSET_SIMPLE = "Simple";
 
+        private const string PARAMSET_MATCHON = "MatchOn";
+
         /// <summary>
         /// Gets or sets the logical name of the table to query.
         /// </summary>
         [ArgumentCompleter(typeof(TableNameArgumentCompleter))]
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = true, Position = 0, HelpMessage = "Logical name of table for which to retrieve records")]
+        [Parameter(ParameterSetName = PARAMSET_MATCHON, Mandatory = true, HelpMessage = "Logical name of table for which to retrieve records")]
         [Alias("EntityName")]
         public string TableName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the input object containing values to match against.
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_MATCHON, Mandatory = true, ValueFromPipeline = true, HelpMessage = "Object containing values to match against. Property names must match column names in the table.")]
+        public PSObject InputObject { get; set; }
+
+        /// <summary>
+        /// List of list of column names to match against values in the InputObject. The first list that returns matches is used.
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_MATCHON, Mandatory = true, HelpMessage = "List of list of column names to match against values in the InputObject. The first list that returns matches is used.")]
+        public string[][] MatchOn { get; set; }
+
+        /// <summary>
+        /// If specified, returns all records matching the MatchOn criteria. Without this switch, an error is raised if MatchOn finds multiple matches.
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_MATCHON, HelpMessage = "If specified, returns all records matching the MatchOn criteria. Without this switch, an error is raised if MatchOn finds multiple matches.")]
+        public SwitchParameter AllowMultipleMatches { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether to write the total record count to verbose output.
@@ -276,6 +297,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     entityMetadata = entiyMetadataFactory.GetMetadata(TableName);
                     query = GetSimpleQuery();
                     break;
+                case PARAMSET_MATCHON:
+                    entityMetadata = entiyMetadataFactory.GetMetadata(TableName);
+                    query = GetMatchOnQuery();
+                    break;
                 default:
                     throw new NotImplementedException($"ParameterSetName not implemented: {ParameterSetName}");
             }
@@ -374,6 +399,95 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             return query;
         }
+
+        private QueryExpression GetMatchOnQuery()
+        {
+            // Convert InputObject to Entity to extract match values
+            var conversionOptions = new ConvertToDataverseEntityOptions();
+            Entity inputEntity = entityConverter.ConvertToDataverseEntity(InputObject, TableName, conversionOptions);
+
+            QueryExpression finalQuery = null;
+            int matchCount = 0;
+
+            // Try each MatchOn column list in order
+            foreach (string[] matchOnColumnList in MatchOn)
+            {
+                QueryByAttribute candidateQuery = new QueryByAttribute(TableName);
+                candidateQuery.ColumnSet = Columns != null ? new ColumnSet(Columns) : new ColumnSet(true);
+
+                if (!AllowMultipleMatches.IsPresent)
+                {
+                    candidateQuery.TopCount = 2; // Get 2 to detect multiple matches
+                }
+
+                // Add conditions for each column in the match list
+                foreach (string matchOnColumn in matchOnColumnList)
+                {
+                    object queryValue = inputEntity.GetAttributeValue<object>(matchOnColumn);
+
+                    if (queryValue is EntityReference er)
+                    {
+                        queryValue = er.Id;
+                    }
+
+                    if (queryValue is OptionSetValue osv)
+                    {
+                        queryValue = osv.Value;
+                    }
+
+                    candidateQuery.AddAttributeValue(matchOnColumn, queryValue);
+                }
+
+                // Execute the query to see if this match criteria returns records
+                var testResults = Connection.RetrieveMultiple(candidateQuery).Entities;
+                matchCount = testResults.Count;
+
+                if (matchCount == 1)
+                {
+                    // Convert to QueryExpression for consistency
+                    finalQuery = new QueryExpression(TableName);
+                    finalQuery.ColumnSet = candidateQuery.ColumnSet;
+                    finalQuery.TopCount = candidateQuery.TopCount;
+                    finalQuery.Criteria.FilterOperator = LogicalOperator.And;
+                    for (int i = 0; i < candidateQuery.Attributes.Count; i++)
+                    {
+                        finalQuery.Criteria.AddCondition(candidateQuery.Attributes[i], ConditionOperator.Equal, candidateQuery.Values[i]);
+                    }
+                    break;
+                }
+                else if (matchCount > 1)
+                {
+                    if (AllowMultipleMatches.IsPresent)
+                    {
+                        // Convert to QueryExpression without TopCount restriction
+                        finalQuery = new QueryExpression(TableName);
+                        finalQuery.ColumnSet = candidateQuery.ColumnSet;
+                        finalQuery.Criteria.FilterOperator = LogicalOperator.And;
+                        for (int i = 0; i < candidateQuery.Attributes.Count; i++)
+                        {
+                            finalQuery.Criteria.AddCondition(candidateQuery.Attributes[i], ConditionOperator.Equal, candidateQuery.Values[i]);
+                        }
+                        break;
+                    }
+                    else
+                    {
+                        string matchOnSummary = string.Join(", ", matchOnColumnList.Select(c => $"{c}='{inputEntity.GetAttributeValue<object>(c)}'"));
+                        throw new Exception($"Match on values {matchOnSummary} resulted in more than one record. Use -AllowMultipleMatches to retrieve all matching records.");
+                    }
+                }
+            }
+
+            if (finalQuery == null)
+            {
+                // No matches found - return an empty query that will return no results
+                finalQuery = new QueryExpression(TableName);
+                finalQuery.ColumnSet = Columns != null ? new ColumnSet(Columns) : new ColumnSet(true);
+                finalQuery.Criteria.AddCondition(entityMetadata.PrimaryIdAttribute, ConditionOperator.Equal, Guid.Empty);
+            }
+
+            return finalQuery;
+        }
+
         // Filter parsing and helper methods were moved to FilterHelpers to
         // avoid duplication between Get-DataverseRecord and DataverseLinkEntity.
         private QueryExpression GetFetchXmlQuery()

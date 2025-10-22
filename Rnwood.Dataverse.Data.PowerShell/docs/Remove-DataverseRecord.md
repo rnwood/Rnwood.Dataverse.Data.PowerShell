@@ -14,9 +14,10 @@ Deletes an existing Dataverse record, including M:M association records.
 
 ```
 Remove-DataverseRecord [-InputObject <PSObject>] -TableName <String> [-Id <Guid>] [-MatchOn <String[][]>]
- [-AllowMultipleMatches] [-BatchSize <UInt32>] [-IfExists] [-BypassBusinessLogicExecution <BusinessLogicTypes[]>]
- [-BypassBusinessLogicExecutionStepIds <Guid[]>] [-Retries <Int32>] [-InitialRetryDelay <Int32>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-AllowMultipleMatches] [-BatchSize <UInt32>] [-IfExists]
+ [-BypassBusinessLogicExecution <BusinessLogicTypes[]>] [-BypassBusinessLogicExecutionStepIds <Guid[]>]
+ [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -185,6 +186,21 @@ Attempts to match first on emailaddress1, then falls back to matching on firstna
 
 ## PARAMETERS
 
+### -AllowMultipleMatches
+If specified, allows deletion of multiple records when MatchOn criteria matches more than one record. Without this switch, an error is raised if MatchOn finds multiple matches.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -BatchSize
 Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable.
 
@@ -280,43 +296,6 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -MatchOn
-List of list of column names that identify records to delete based on the values of those columns in the InputObject. The first list that returns a match is used. If AllowMultipleMatches is not specified, an error will be raised if more than one record matches.
-
-For example:
-- `@("emailaddress1")` - Match on email address alone
-- `@("firstname", "lastname")` - Match on both first and last name together
-- `@("emailaddress1"), @("firstname", "lastname")` - Try email first, fall back to name if no email match
-
-Either -Id or -MatchOn must be specified.
-
-```yaml
-Type: String[][]
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -AllowMultipleMatches
-If specified, allows deletion of multiple records when MatchOn criteria matches more than one record. Without this switch, an error is raised if MatchOn finds multiple matches.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -IfExists
 If specified, the cmdlet will not raise an error if the record does not exist.
 
@@ -359,6 +338,28 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -MatchOn
+List of list of column names that identify records to delete based on the values of those columns in the InputObject. The first list that returns a match is used. If AllowMultipleMatches is not specified, an error will be raised if more than one record matches.
+
+For example:
+- `@("emailaddress1")` - Match on email address alone
+- `@("firstname", "lastname")` - Match on both first and last name together
+- `@("emailaddress1"), @("firstname", "lastname")` - Try email first, fall back to name if no email match
+
+Either -Id or -MatchOn must be specified.
+
+```yaml
+Type: String[][]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 

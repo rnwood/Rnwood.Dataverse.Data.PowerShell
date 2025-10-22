@@ -418,9 +418,24 @@ PS C:\> @{
 } | Set-DataverseRecord -Connection $c -TableName contact -MatchOn lastname -AllowMultipleMatches
 ```
 
-Updates all contacts with lastname "TestUser" by setting their email address. The -AllowMultipleMatches switch allows updating the first matching record when multiple records match the MatchOn criteria. Without this switch, an error would be raised if multiple matches are found.
+Updates ALL contacts with lastname "TestUser" by setting their email address. The -AllowMultipleMatches switch allows updating all matching records when multiple records match the MatchOn criteria. Without this switch, an error would be raised if multiple matches are found.
 
 ## PARAMETERS
+
+### -AllowMultipleMatches
+If specified, allows updating of ALL matching records when MatchOn criteria matches more than one record. Without this switch, an error is raised if MatchOn finds multiple matches.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -BatchSize
 Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable.
@@ -630,21 +645,6 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -AllowMultipleMatches
-If specified, allows updating of multiple records when MatchOn criteria matches more than one record. By default, only the first match is processed. Without this switch, an error is raised if MatchOn finds multiple matches.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

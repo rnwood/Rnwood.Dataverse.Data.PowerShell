@@ -22,6 +22,13 @@ Get-DataverseRecord [-TableName] <String> [-VerboseRecordCount] [-RecordCount] [
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### MatchOn
+```
+Get-DataverseRecord [-TableName] <String> -InputObject <PSObject> -MatchOn <String[][]> [-AllowMultipleMatches]
+ [-VerboseRecordCount] [-RecordCount] [-LookupValuesReturnName] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ### FetchXml
 ```
 Get-DataverseRecord [-VerboseRecordCount] [-RecordCount] [-FetchXml <String>] [-LookupValuesReturnName]
@@ -84,6 +91,21 @@ If specified only active records (statecode=0 or isactive=true) will be output
 ```yaml
 Type: SwitchParameter
 Parameter Sets: Simple
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AllowMultipleMatches
+If specified, returns all records matching the MatchOn criteria. Without this switch, an error is raised if MatchOn finds multiple matches.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: MatchOn
 Aliases:
 
 Required: False
@@ -442,6 +464,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -InputObject
+Object containing values to match against. Property names must match column names in the table.
+
+```yaml
+Type: PSObject
+Parameter Sets: MatchOn
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
 ### -Links
 Link entities to apply to query. Accepts `DataverseLinkEntity` objects (a lightweight wrapper around the SDK `LinkEntity` that allows easier pipeline usage and serialization). `DataverseLinkEntity` supports implicit conversion from `LinkEntity` and from simplified hashtable syntax.
 
@@ -562,6 +599,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -MatchOn
+List of list of column names to match against values in the InputObject. The first list that returns matches is used.
+
+```yaml
+Type: String[][]
+Parameter Sets: MatchOn
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Name
 List of names (primary attribute value) of records to retrieve.
 
@@ -630,7 +682,7 @@ Logical name of entity for which to retrieve records
 
 ```yaml
 Type: String
-Parameter Sets: Simple
+Parameter Sets: Simple, MatchOn
 Aliases: EntityName
 
 Required: True
@@ -691,7 +743,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
+### System.Management.Automation.PSObject
 ## OUTPUTS
 
 ### System.Collections.Generic.IEnumerable`1[[System.Management.Automation.PSObject, System.Management.Automation, Version=7.4.6.500, Culture=neutral, PublicKeyToken=31bf3856ad364e35]]

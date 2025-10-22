@@ -337,7 +337,7 @@ Describe 'Set-DataverseRecord' {
             $allRecords | Where-Object { $_.firstname -eq "Updated" } | Should -BeNullOrEmpty
         }
 
-        It "Updates first matching record with AllowMultipleMatches switch" {
+        It "Updates all matching records with AllowMultipleMatches switch" {
             $connection = getMockConnection
             
             # Create multiple records with same last name
@@ -348,15 +348,19 @@ Describe 'Set-DataverseRecord' {
             $record3 = @{ firstname = "Bob"; lastname = "Different"; emailaddress1 = "bob@test.com" } | 
                 Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # Update using MatchOn with AllowMultipleMatches (updates first match)
+            # Update using MatchOn with AllowMultipleMatches (updates all matches)
             @{ lastname = "TestUser"; emailaddress1 = "updated@test.com" } | 
                 Set-DataverseRecord -Connection $connection -TableName contact -MatchOn lastname -AllowMultipleMatches
             
-            # Verify at least one record was updated
+            # Verify ALL matching records were updated
             $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
             $updated = $allRecords | Where-Object { $_.emailaddress1 -eq "updated@test.com" }
-            $updated | Should -Not -BeNullOrEmpty
-            $updated.lastname | Should -Be "TestUser"
+            $updated | Should -HaveCount 2
+            $updated | ForEach-Object { $_.lastname | Should -Be "TestUser" }
+            
+            # Verify Bob was not updated
+            $bob = $allRecords | Where-Object { $_.firstname -eq "Bob" }
+            $bob.emailaddress1 | Should -Be "bob@test.com"
         }
     }
 

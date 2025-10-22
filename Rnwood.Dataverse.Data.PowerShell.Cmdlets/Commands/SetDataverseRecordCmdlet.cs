@@ -429,15 +429,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
-        /// Gets an existing record from the server if it exists, using Id or MatchOn criteria.
+        /// Gets existing records from the server using Id or MatchOn criteria.
+        /// Returns a list of matching records. When AllowMultipleMatches is false, list contains at most one record.
         /// </summary>
-        public Entity GetExistingRecord(EntityMetadata entityMetadata, Entity target)
+        public List<Entity> GetExistingRecords(EntityMetadata entityMetadata, Entity target)
         {
-            Entity existingRecord = null;
+            List<Entity> existingRecords = new List<Entity>();
 
             if (CreateOnly || Upsert)
             {
-                return null;
+                return existingRecords;
             }
 
             if (!entityMetadata.IsIntersect.GetValueOrDefault())
@@ -446,8 +447,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     if (UpdateAllColumns)
                     {
-                        existingRecord = new Entity(target.LogicalName) { Id = Id };
+                        Entity existingRecord = new Entity(target.LogicalName) { Id = Id };
                         existingRecord[entityMetadata.PrimaryIdAttribute] = Id;
+                        existingRecords.Add(existingRecord);
                     }
                     else
                     {
@@ -455,17 +457,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         existingRecordQuery.AddAttributeValue(entityMetadata.PrimaryIdAttribute, Id);
                         existingRecordQuery.ColumnSet = target.LogicalName.Equals("calendar", StringComparison.OrdinalIgnoreCase) ? new ColumnSet(true) : new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
 
-                        existingRecord = Connection.RetrieveMultiple(existingRecordQuery
-                        ).Entities.FirstOrDefault();
+                        var record = Connection.RetrieveMultiple(existingRecordQuery).Entities.FirstOrDefault();
+                        if (record != null)
+                        {
+                            existingRecords.Add(record);
+                        }
                     }
                 }
 
-                if (existingRecord == null && MatchOn != null)
+                if (existingRecords.Count == 0 && MatchOn != null)
                 {
                     foreach (string[] matchOnColumnList in MatchOn)
                     {
                         QueryByAttribute matchOnQuery = new QueryByAttribute(TableName);
-                        matchOnQuery.TopCount = 2;
+                        if (!AllowMultipleMatches)
+                        {
+                            matchOnQuery.TopCount = 2; // Get 2 to detect multiple matches
+                        }
 
                         foreach (string matchOnColumn in matchOnColumnList)
                         {
@@ -486,20 +494,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         matchOnQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
 
-                        var existingRecords = Connection.RetrieveMultiple(matchOnQuery
-                            ).Entities;
+                        var matchedRecords = Connection.RetrieveMultiple(matchOnQuery).Entities;
 
-                        if (existingRecords.Count == 1)
+                        if (matchedRecords.Count == 1)
                         {
-                            existingRecord = existingRecords[0];
+                            existingRecords.Add(matchedRecords[0]);
                             break;
                         }
-                        else if (existingRecords.Count > 1)
+                        else if (matchedRecords.Count > 1)
                         {
                             if (AllowMultipleMatches)
                             {
-                                // Take the first match when multiple matches are allowed
-                                existingRecord = existingRecords[0];
+                                // Add all matching records when multiple matches are allowed
+                                existingRecords.AddRange(matchedRecords);
                                 break;
                             }
                             else
@@ -537,10 +544,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 existingRecordQuery.AddAttributeValue(manyToManyRelationshipMetadata.Entity2IntersectAttribute, entity2Value.Value);
                 existingRecordQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
 
-                existingRecord = Connection.RetrieveMultiple(existingRecordQuery
-                    ).Entities.FirstOrDefault();
+                var record = Connection.RetrieveMultiple(existingRecordQuery).Entities.FirstOrDefault();
+                if (record != null)
+                {
+                    existingRecords.Add(record);
+                }
             }
-            return existingRecord;
+            return existingRecords;
         }
 
         /// <summary>
@@ -1600,8 +1610,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             if (_allowMultipleMatches)
                             {
-                                // Take the first match when multiple matches are allowed
+                                // When multiple matches are allowed, set the first match and add duplicates for the rest
                                 item.ExistingRecord = matches[0];
+                                
+                                // Add additional items to the queue for remaining matches
+                                // Each needs a clone of the Target entity to avoid shared state
+                                for (int i = 1; i < matches.Count; i++)
+                                {
+                                    var clonedTarget = new Entity(item.Target.LogicalName, item.Target.Id);
+                                    foreach (var attr in item.Target.Attributes)
+                                    {
+                                        clonedTarget[attr.Key] = attr.Value;
+                                    }
+                                    
+                                    _retrievalBatchQueue.Add(new RecordProcessingItem
+                                    {
+                                        InputObject = item.InputObject,
+                                        Target = clonedTarget,
+                                        EntityMetadata = item.EntityMetadata,
+                                        ExistingRecord = matches[i],
+                                        TableName = item.TableName,
+                                        CallerId = item.CallerId
+                                    });
+                                }
                             }
                             else
                             {
@@ -1667,8 +1698,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             if (_allowMultipleMatches)
                             {
-                                // Take the first match when multiple matches are allowed
+                                // When multiple matches are allowed, set the first match and add duplicates for the rest
                                 item.ExistingRecord = matches[0];
+                                
+                                // Add additional items to the queue for remaining matches
+                                // Each needs a clone of the Target entity to avoid shared state
+                                for (int i = 1; i < matches.Count; i++)
+                                {
+                                    var clonedTarget = new Entity(item.Target.LogicalName, item.Target.Id);
+                                    foreach (var attr in item.Target.Attributes)
+                                    {
+                                        clonedTarget[attr.Key] = attr.Value;
+                                    }
+                                    
+                                    _retrievalBatchQueue.Add(new RecordProcessingItem
+                                    {
+                                        InputObject = item.InputObject,
+                                        Target = clonedTarget,
+                                        EntityMetadata = item.EntityMetadata,
+                                        ExistingRecord = matches[i],
+                                        TableName = item.TableName,
+                                        CallerId = item.CallerId
+                                    });
+                                }
                             }
                             else
                             {
@@ -2110,11 +2162,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             else
             {
                 // Process immediately without retrieval
-                Entity existingRecord;
+                List<Entity> existingRecords;
 
                 try
                 {
-                    existingRecord = context.GetExistingRecord(entityMetadata, target);
+                    existingRecords = context.GetExistingRecords(entityMetadata, target);
                 }
                 catch (Exception e)
                 {
@@ -2130,7 +2182,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     return;
                 }
 
-                ProcessRecordWithExistingRecord(inputObject, tableName, callerId, target, entityMetadata, existingRecord);
+                // Process each existing record found
+                if (existingRecords.Count == 0)
+                {
+                    ProcessRecordWithExistingRecord(inputObject, tableName, callerId, target, entityMetadata, null);
+                }
+                else
+                {
+                    foreach (var existingRecord in existingRecords)
+                    {
+                        ProcessRecordWithExistingRecord(inputObject, tableName, callerId, target, entityMetadata, existingRecord);
+                    }
+                }
             }
         }
 
