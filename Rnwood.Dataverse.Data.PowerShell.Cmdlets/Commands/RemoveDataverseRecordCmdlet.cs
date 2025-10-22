@@ -740,29 +740,32 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // Include both the primary ID and the match column for matching back
                         matchOnQuery.ColumnSet = new ColumnSet(new[] { entityMetadata.PrimaryIdAttribute, matchColumn });
                         matchOnQuery.AddAttributeValue(matchColumn, matchValues[0]);
+                        
+                        // When AllowMultipleMatches is off, limit to 2 records to detect multiple matches efficiently
+                        if (!AllowMultipleMatches.IsPresent)
+                        {
+                            matchOnQuery.TopCount = 2;
+                        }
 
                         WriteVerbose($"Retrieving records by MatchOn ({matchColumn}) using QueryByAttribute");
 
-                        var retrievedRecords = Connection.RetrieveMultiple(matchOnQuery).Entities;
-
-                        // Match back to items
-                        foreach (var item in itemsNeedingMatch)
+                        // Match back to items using streaming
+                        foreach (var entity in ExecuteQueryWithPaging(matchOnQuery))
                         {
-                            var itemValue = item.InputEntity.GetAttributeValue<object>(matchColumn);
-                            if (itemValue is EntityReference er) itemValue = er.Id;
-                            if (itemValue is OptionSetValue osv) itemValue = osv.Value;
-
-                            var matches = retrievedRecords.Where(e =>
+                            foreach (var item in itemsNeedingMatch)
                             {
-                                var recValue = e.GetAttributeValue<object>(matchColumn);
+                                var itemValue = item.InputEntity.GetAttributeValue<object>(matchColumn);
+                                if (itemValue is EntityReference er) itemValue = er.Id;
+                                if (itemValue is OptionSetValue osv) itemValue = osv.Value;
+
+                                var recValue = entity.GetAttributeValue<object>(matchColumn);
                                 if (recValue is EntityReference er2) recValue = er2.Id;
                                 if (recValue is OptionSetValue osv2) recValue = osv2.Value;
-                                return Equals(itemValue, recValue);
-                            }).ToList();
-
-                            if (matches.Count > 0)
-                            {
-                                item.ResolvedIds.AddRange(matches.Select(m => m.Id));
+                                
+                                if (Equals(itemValue, recValue))
+                                {
+                                    item.ResolvedIds.Add(entity.Id);
+                                }
                             }
                         }
                     }
@@ -775,30 +778,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             ColumnSet = new ColumnSet(new[] { entityMetadata.PrimaryIdAttribute, matchColumn })
                         };
 
+                        // When AllowMultipleMatches is off, limit to 2 records to detect multiple matches efficiently
+                        if (!AllowMultipleMatches.IsPresent)
+                        {
+                            query.TopCount = 2;
+                        }
+
                         query.Criteria.AddCondition(matchColumn, ConditionOperator.In, matchValues.ToArray());
 
                         WriteVerbose($"Retrieving records by MatchOn ({matchColumn}) in batch");
 
-                        var retrievedRecords = Connection.RetrieveMultiple(query).Entities;
-
-                        // Match back to items
-                        foreach (var item in itemsNeedingMatch)
+                        // Match back to items using streaming
+                        foreach (var entity in ExecuteQueryWithPaging(query))
                         {
-                            var itemValue = item.InputEntity.GetAttributeValue<object>(matchColumn);
-                            if (itemValue is EntityReference er) itemValue = er.Id;
-                            if (itemValue is OptionSetValue osv) itemValue = osv.Value;
-
-                            var matches = retrievedRecords.Where(e =>
+                            foreach (var item in itemsNeedingMatch)
                             {
-                                var recValue = e.GetAttributeValue<object>(matchColumn);
+                                var itemValue = item.InputEntity.GetAttributeValue<object>(matchColumn);
+                                if (itemValue is EntityReference er) itemValue = er.Id;
+                                if (itemValue is OptionSetValue osv) itemValue = osv.Value;
+
+                                var recValue = entity.GetAttributeValue<object>(matchColumn);
                                 if (recValue is EntityReference er2) recValue = er2.Id;
                                 if (recValue is OptionSetValue osv2) recValue = osv2.Value;
-                                return Equals(itemValue, recValue);
-                            }).ToList();
-
-                            if (matches.Count > 0)
-                            {
-                                item.ResolvedIds.AddRange(matches.Select(m => m.Id));
+                                
+                                if (Equals(itemValue, recValue))
+                                {
+                                    item.ResolvedIds.Add(entity.Id);
+                                }
                             }
                         }
                     }
@@ -811,6 +817,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // Include the primary ID and all match columns for matching back
                         ColumnSet = new ColumnSet(new[] { entityMetadata.PrimaryIdAttribute }.Concat(matchOnColumnList).ToArray())
                     };
+
+                    // When AllowMultipleMatches is off, limit to 2 records to detect multiple matches efficiently
+                    if (!AllowMultipleMatches.IsPresent)
+                    {
+                        query.TopCount = 2;
+                    }
 
                     var orFilter = new FilterExpression(LogicalOperator.Or);
 
@@ -832,17 +844,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     WriteVerbose($"Retrieving records by MatchOn ({string.Join(",", matchOnColumnList)}) in batch");
 
-                    var retrievedRecords = Connection.RetrieveMultiple(query).Entities;
-
-                    // Match back to items
-                    foreach (var item in itemsNeedingMatch)
+                    // Match back to items using streaming
+                    foreach (var entity in ExecuteQueryWithPaging(query))
                     {
-                        var matches = retrievedRecords.Where(e =>
+                        foreach (var item in itemsNeedingMatch)
                         {
-                            return matchOnColumnList.All(col =>
+                            bool allMatch = matchOnColumnList.All(col =>
                             {
                                 var itemValue = item.InputEntity.GetAttributeValue<object>(col);
-                                var recValue = e.GetAttributeValue<object>(col);
+                                var recValue = entity.GetAttributeValue<object>(col);
 
                                 if (itemValue is EntityReference er1) itemValue = er1.Id;
                                 if (itemValue is OptionSetValue osv1) itemValue = osv1.Value;
@@ -851,11 +861,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                                 return Equals(itemValue, recValue);
                             });
-                        }).ToList();
-
-                        if (matches.Count > 0)
-                        {
-                            item.ResolvedIds.AddRange(matches.Select(m => m.Id));
+                            
+                            if (allMatch)
+                            {
+                                item.ResolvedIds.Add(entity.Id);
+                            }
                         }
                     }
                 }
@@ -962,6 +972,101 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             catch { }
             base.StopProcessing();
+        }
+
+        /// <summary>
+        /// Executes a query with automatic paging and verbose output.
+        /// </summary>
+        private IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query)
+        {
+            WriteVerbose($"Executing query: {QueryToVerboseString(query)}");
+
+            // Only set PageInfo if TopCount is not already set
+            if (query is QueryExpression qe && !qe.TopCount.HasValue)
+            {
+                PagingInfo pageInfo = new PagingInfo()
+                {
+                    PageNumber = 1,
+                    Count = 1000
+                };
+
+                qe.PageInfo = pageInfo;
+
+                RetrieveMultipleRequest request = new RetrieveMultipleRequest()
+                {
+                    Query = qe
+                };
+
+                RetrieveMultipleResponse response;
+                int pageNum = 0;
+
+                do
+                {
+                    pageNum++;
+                    WriteVerbose($"Retrieving page {pageNum}...");
+                    response = (RetrieveMultipleResponse)Connection.Execute(request);
+                    WriteVerbose($"Page {pageNum} returned {response.EntityCollection.Entities.Count} records");
+
+                    pageInfo.PageNumber++;
+                    pageInfo.PagingCookie = response.EntityCollection.PagingCookie;
+
+                    foreach (Entity entity in response.EntityCollection.Entities)
+                    {
+                        yield return entity;
+                    }
+
+                } while (response.EntityCollection.MoreRecords);
+                
+                WriteVerbose($"Query complete. Retrieved {pageNum} page(s)");
+            }
+            else
+            {
+                // When TopCount is set, execute without PageInfo
+                string topCountStr = query is QueryExpression qe2 ? qe2.TopCount?.ToString() : (query is QueryByAttribute qba2 ? qba2.TopCount?.ToString() : "null");
+                WriteVerbose($"Executing query with TopCount={topCountStr}");
+                RetrieveMultipleRequest request = new RetrieveMultipleRequest()
+                {
+                    Query = query
+                };
+
+                RetrieveMultipleResponse response = (RetrieveMultipleResponse)Connection.Execute(request);
+                WriteVerbose($"Query returned {response.EntityCollection.Entities.Count} records");
+
+                foreach (Entity entity in response.EntityCollection.Entities)
+                {
+                    yield return entity;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Converts a query to a verbose string representation.
+        /// </summary>
+        private static string QueryToVerboseString(QueryBase query)
+        {
+            if (query is QueryExpression qe)
+            {
+                var sb = new StringBuilder();
+                sb.Append($"QueryExpression(EntityName={qe.EntityName}");
+                if (qe.TopCount.HasValue)
+                    sb.Append($", TopCount={qe.TopCount}");
+                if (qe.Criteria?.Conditions?.Count > 0)
+                    sb.Append($", Conditions={qe.Criteria.Conditions.Count}");
+                if (qe.ColumnSet != null)
+                {
+                    if (qe.ColumnSet.AllColumns)
+                        sb.Append($", Columns=All");
+                    else
+                        sb.Append($", Columns={qe.ColumnSet.Columns.Count}");
+                }
+                sb.Append(")");
+                return sb.ToString();
+            }
+            else if (query is QueryByAttribute qba)
+            {
+                return $"QueryByAttribute(EntityName={qba.EntityName}, Attributes={qba.Attributes.Count}, Columns={qba.ColumnSet?.Columns?.Count ?? 0})";
+            }
+            return query.GetType().Name;
         }
     }
 }
