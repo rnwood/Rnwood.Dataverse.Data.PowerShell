@@ -607,37 +607,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 try
                 {
-                    // TEMPORARY: Call old method directly to test
-                    var resolvedIds = ResolveRecordsByMatchOn();
-                    if (resolvedIds.Count == 0)
+                    // Convert InputObject to Entity to get values for matching
+                    // Create a fresh entity converter to avoid any caching issues
+                    var entityConverter = new DataverseEntityConverter(Connection, _metadataFactory);
+                    var conversionOptions = new ConvertToDataverseEntityOptions();
+                    Entity inputEntity = entityConverter.ConvertToDataverseEntity(InputObject, TableName, conversionOptions);
+
+                    _matchOnResolveQueue.Add(new MatchOnResolveItem
                     {
-                        if (!IfExists.IsPresent)
-                        {
-                            WriteError(new ErrorRecord(
-                                new Exception("No records found matching the MatchOn criteria"),
-                                null,
-                                ErrorCategory.ObjectNotFound,
-                                InputObject));
-                        }
-                        else
-                        {
-                            WriteVerbose("No records found matching the MatchOn criteria");
-                        }
-                        return;
-                    }
-                    else if (resolvedIds.Count > 1 && !AllowMultipleMatches.IsPresent)
+                        InputObject = InputObject,
+                        InputEntity = inputEntity,
+                        ResolvedIds = new List<Guid>()
+                    });
+
+                    // Process batch if it's full
+                    if (_matchOnResolveQueue.Count >= RetrievalBatchSize)
                     {
-                        WriteError(new ErrorRecord(
-                            new Exception($"MatchOn criteria matched {resolvedIds.Count} records. Use -AllowMultipleMatches to delete all matching records."),
-                            null,
-                            ErrorCategory.InvalidOperation,
-                            InputObject));
-                        return;
-                    }
-                    
-                    foreach (var idToDelete in resolvedIds)
-                    {
-                        ProcessDeleteById(InputObject, idToDelete);
+                        ProcessMatchOnBatch();
                     }
                 }
                 catch (Exception e)
@@ -706,17 +692,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         private void ProcessMatchOnBatch()
         {
-            WriteVerbose($"ProcessMatchOnBatch called - queue count: {_matchOnResolveQueue?.Count ?? -1}");
-            
-            if (_matchOnResolveQueue == null)
+            if (_matchOnResolveQueue == null || _matchOnResolveQueue.Count == 0)
             {
-                WriteVerbose("Queue is null!");
-                return;
-            }
-            
-            if (_matchOnResolveQueue.Count == 0)
-            {
-                WriteVerbose("Queue is empty!");
                 return;
             }
 
@@ -740,13 +717,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var matchValues = itemsNeedingMatch.Select(item =>
                     {
                         var val = item.InputEntity.GetAttributeValue<object>(matchColumn);
-                        WriteVerbose($"Extracting match value for column '{matchColumn}': {val ?? "<null>"}");
                         if (val is EntityReference er) return (object)er.Id;
                         if (val is OptionSetValue osv) return (object)osv.Value;
                         return val;
                     }).Distinct().ToList();
-
-                    WriteVerbose($"Match values to query: {string.Join(", ", matchValues.Select(v => v?.ToString() ?? "<null>"))}");
 
                     // Check if any values are null - this indicates a conversion problem
                     if (matchValues.Any(v => v == null))
@@ -764,7 +738,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         // Use QueryByAttribute - same as original non-batched code
                         QueryByAttribute matchOnQuery = new QueryByAttribute(TableName);
-                        matchOnQuery.ColumnSet = new ColumnSet(entityMetadata.PrimaryIdAttribute);
+                        // Include both the primary ID and the match column for matching back
+                        matchOnQuery.ColumnSet = new ColumnSet(entityMetadata.PrimaryIdAttribute, matchColumn);
                         matchOnQuery.AddAttributeValue(matchColumn, matchValues[0]);
 
                         WriteVerbose($"Retrieving records by MatchOn ({matchColumn}) using QueryByAttribute");
@@ -797,7 +772,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // For multiple values, use QueryExpression with In operator
                         var query = new QueryExpression(TableName)
                         {
-                            ColumnSet = new ColumnSet(entityMetadata.PrimaryIdAttribute)
+                            // Include both the primary ID and the match column for matching back
+                            ColumnSet = new ColumnSet(entityMetadata.PrimaryIdAttribute, matchColumn)
                         };
 
                         query.Criteria.AddCondition(matchColumn, ConditionOperator.In, matchValues.ToArray());
@@ -833,7 +809,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     // Multi-column - use Or with And conditions
                     var query = new QueryExpression(TableName)
                     {
-                        ColumnSet = new ColumnSet(entityMetadata.PrimaryIdAttribute)
+                        // Include the primary ID and all match columns for matching back
+                        ColumnSet = new ColumnSet(new[] { entityMetadata.PrimaryIdAttribute }.Concat(matchOnColumnList).ToArray())
                     };
 
                     var orFilter = new FilterExpression(LogicalOperator.Or);
