@@ -188,6 +188,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [ArgumentCompleter(typeof(ColumnNamesArgumentCompleter))]
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, Mandatory = false, HelpMessage = "List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default")]
+        [Parameter(ParameterSetName = PARAMSET_MATCHON, Mandatory = false, HelpMessage = "List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default")]
         public string[] Columns
         {
             get;
