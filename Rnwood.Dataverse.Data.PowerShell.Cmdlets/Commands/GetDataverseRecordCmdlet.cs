@@ -475,7 +475,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             if (recValue is EntityReference er2) recValue = er2.Id;
                             if (recValue is OptionSetValue osv2) recValue = osv2.Value;
                             
-                            if (Equals(itemValue, recValue))
+                            if (AreValuesEqual(itemValue, recValue))
                             {
                                 item.MatchedRecords.Add(entity);
                                 item.MatchedOnColumns = matchOnColumnList;
@@ -535,7 +535,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 if (recValue is EntityReference er2) recValue = er2.Id;
                                 if (recValue is OptionSetValue osv2) recValue = osv2.Value;
 
-                                return Equals(itemValue, recValue);
+                                return AreValuesEqual(itemValue, recValue);
                             });
                             
                             if (allMatch)
@@ -888,13 +888,73 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         sb.Append($", Columns={qe.ColumnSet.Columns.Count}");
                 }
                 sb.Append(")");
+                
+                // Add JSON serialization for full query details
+                try
+                {
+                    var serializer = new DataContractSerializer(typeof(QueryExpression));
+                    using (var sw = new StringWriter())
+                    using (var writer = new System.Xml.XmlTextWriter(sw))
+                    {
+                        writer.Formatting = System.Xml.Formatting.Indented;
+                        serializer.WriteObject(writer, qe);
+                        sb.Append($"\nFull Query XML:\n{sw}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    sb.Append($"\nQuery serialization error: {ex.Message}");
+                }
+                
                 return sb.ToString();
             }
             else if (query is QueryByAttribute qba)
             {
-                return $"QueryByAttribute(EntityName={qba.EntityName}, Attributes={qba.Attributes.Count}, Columns={qba.ColumnSet?.Columns?.Count ?? 0})";
+                var sb = new StringBuilder();
+                sb.Append($"QueryByAttribute(EntityName={qba.EntityName}, Attributes={qba.Attributes.Count}, Columns={qba.ColumnSet?.Columns?.Count ?? 0}");
+                if (qba.TopCount.HasValue)
+                    sb.Append($", TopCount={qba.TopCount}");
+                sb.Append(")");
+                
+                // Add JSON serialization for full query details
+                try
+                {
+                    var serializer = new DataContractSerializer(typeof(QueryByAttribute));
+                    using (var sw = new StringWriter())
+                    using (var writer = new System.Xml.XmlTextWriter(sw))
+                    {
+                        writer.Formatting = System.Xml.Formatting.Indented;
+                        serializer.WriteObject(writer, qba);
+                        sb.Append($"\nFull Query XML:\n{sw}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    sb.Append($"\nQuery serialization error: {ex.Message}");
+                }
+                
+                return sb.ToString();
             }
             return query.GetType().Name;
+        }
+
+        /// <summary>
+        /// Compares two values with proper case-insensitive comparison for strings to match Dataverse query behavior.
+        /// </summary>
+        private static bool AreValuesEqual(object value1, object value2)
+        {
+            // Handle nulls
+            if (value1 == null && value2 == null) return true;
+            if (value1 == null || value2 == null) return false;
+
+            // Use case-insensitive comparison for strings to match Dataverse behavior
+            if (value1 is string str1 && value2 is string str2)
+            {
+                return string.Equals(str1, str2, StringComparison.OrdinalIgnoreCase);
+            }
+
+            // For other types, use standard equality
+            return Equals(value1, value2);
         }
 
 

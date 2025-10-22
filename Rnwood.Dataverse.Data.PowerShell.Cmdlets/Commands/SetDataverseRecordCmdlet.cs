@@ -1623,7 +1623,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             var recValue = e.GetAttributeValue<object>(matchColumn);
                             if (recValue is EntityReference er2) recValue = er2.Id;
                             if (recValue is OptionSetValue osv2) recValue = osv2.Value;
-                            return Equals(itemValue, recValue);
+                            return AreValuesEqual(itemValue, recValue);
                         }).ToList();
 
                         if (matches.Count == 1)
@@ -1710,7 +1710,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 if (recValue is EntityReference er2) recValue = er2.Id;
                                 if (recValue is OptionSetValue osv2) recValue = osv2.Value;
 
-                                return Equals(itemValue, recValue);
+                                return AreValuesEqual(itemValue, recValue);
                             });
                         }).ToList();
 
@@ -1809,6 +1809,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Compares two values with proper case-insensitive comparison for strings to match Dataverse query behavior.
+        /// </summary>
+        private static bool AreValuesEqual(object value1, object value2)
+        {
+            // Handle nulls
+            if (value1 == null && value2 == null) return true;
+            if (value1 == null || value2 == null) return false;
+
+            // Use case-insensitive comparison for strings to match Dataverse behavior
+            if (value1 is string str1 && value2 is string str2)
+            {
+                return string.Equals(str1, str2, StringComparison.OrdinalIgnoreCase);
+            }
+
+            // For other types, use standard equality
+            return Equals(value1, value2);
         }
     }
 
