@@ -14,14 +14,16 @@ Invokes an arbitrary Dataverse request and returns the response.
 
 ### Request
 ```
-Invoke-DataverseRequest -Request <OrganizationRequest> [-BatchSize <UInt32>] [-Retries <Int32>]
- [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Invoke-DataverseRequest -Request <OrganizationRequest> [-BatchSize <UInt32>]
+ [-BypassBusinessLogicExecution <BusinessLogicTypes[]>] [-BypassBusinessLogicExecutionStepIds <Guid[]>]
+ [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### NameAndInputs
 ```
 Invoke-DataverseRequest [-RequestName] <String> [[-Parameters] <Hashtable>] [-BatchSize <UInt32>]
+ [-BypassBusinessLogicExecution <BusinessLogicTypes[]>] [-BypassBusinessLogicExecutionStepIds <Guid[]>]
  [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
@@ -145,6 +147,37 @@ Aliases:
 
 Required: False
 Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -BypassBusinessLogicExecution
+Specifies the types of business logic (for example plugins) to bypass
+
+```yaml
+Type: BusinessLogicTypes[]
+Parameter Sets: Request, NameAndInputs
+Aliases:
+Accepted values: CustomSync, CustomAsync
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -BypassBusinessLogicExecutionStepIds
+Specifies the IDs of plugin steps to bypass
+
+```yaml
+Type: Guid[]
+Parameter Sets: Request, NameAndInputs
+Aliases:
+
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
