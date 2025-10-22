@@ -607,21 +607,37 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 try
                 {
-                    // Convert InputObject to Entity to get values for matching
-                    var conversionOptions = new ConvertToDataverseEntityOptions();
-                    Entity inputEntity = _entityConverter.ConvertToDataverseEntity(InputObject, TableName, conversionOptions);
-
-                    _matchOnResolveQueue.Add(new MatchOnResolveItem
+                    // TEMPORARY: Call old method directly to test
+                    var resolvedIds = ResolveRecordsByMatchOn();
+                    if (resolvedIds.Count == 0)
                     {
-                        InputObject = InputObject,
-                        InputEntity = inputEntity,
-                        ResolvedIds = new List<Guid>()
-                    });
-
-                    // Process batch if it's full
-                    if (_matchOnResolveQueue.Count >= RetrievalBatchSize)
+                        if (!IfExists.IsPresent)
+                        {
+                            WriteError(new ErrorRecord(
+                                new Exception("No records found matching the MatchOn criteria"),
+                                null,
+                                ErrorCategory.ObjectNotFound,
+                                InputObject));
+                        }
+                        else
+                        {
+                            WriteVerbose("No records found matching the MatchOn criteria");
+                        }
+                        return;
+                    }
+                    else if (resolvedIds.Count > 1 && !AllowMultipleMatches.IsPresent)
                     {
-                        ProcessMatchOnBatch();
+                        WriteError(new ErrorRecord(
+                            new Exception($"MatchOn criteria matched {resolvedIds.Count} records. Use -AllowMultipleMatches to delete all matching records."),
+                            null,
+                            ErrorCategory.InvalidOperation,
+                            InputObject));
+                        return;
+                    }
+                    
+                    foreach (var idToDelete in resolvedIds)
+                    {
+                        ProcessDeleteById(InputObject, idToDelete);
                     }
                 }
                 catch (Exception e)
@@ -690,8 +706,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         private void ProcessMatchOnBatch()
         {
+            WriteVerbose($"ProcessMatchOnBatch called - queue count: {_matchOnResolveQueue?.Count ?? -1}");
+            
+            if (_matchOnResolveQueue == null)
+            {
+                WriteVerbose("Queue is null!");
+                return;
+            }
+            
             if (_matchOnResolveQueue.Count == 0)
             {
+                WriteVerbose("Queue is empty!");
                 return;
             }
 
@@ -715,47 +740,91 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var matchValues = itemsNeedingMatch.Select(item =>
                     {
                         var val = item.InputEntity.GetAttributeValue<object>(matchColumn);
+                        WriteVerbose($"Extracting match value for column '{matchColumn}': {val ?? "<null>"}");
                         if (val is EntityReference er) return (object)er.Id;
                         if (val is OptionSetValue osv) return (object)osv.Value;
                         return val;
                     }).Distinct().ToList();
 
-                    var query = new QueryExpression(TableName)
-                    {
-                        ColumnSet = new ColumnSet(entityMetadata.PrimaryIdAttribute)
-                    };
+                    WriteVerbose($"Match values to query: {string.Join(", ", matchValues.Select(v => v?.ToString() ?? "<null>"))}");
 
+                    // Check if any values are null - this indicates a conversion problem
+                    if (matchValues.Any(v => v == null))
+                    {
+                        WriteError(new ErrorRecord(
+                            new Exception($"MatchOn column '{matchColumn}' has null value in InputObject - conversion may have failed"),
+                            null,
+                            ErrorCategory.InvalidData,
+                            null));
+                        continue;
+                    }
+
+                    // For single-column MatchOn with single value, use QueryByAttribute for compatibility
                     if (matchValues.Count == 1)
                     {
-                        query.Criteria.AddCondition(matchColumn, ConditionOperator.Equal, matchValues[0]);
+                        // Use QueryByAttribute - same as original non-batched code
+                        QueryByAttribute matchOnQuery = new QueryByAttribute(TableName);
+                        matchOnQuery.ColumnSet = new ColumnSet(entityMetadata.PrimaryIdAttribute);
+                        matchOnQuery.AddAttributeValue(matchColumn, matchValues[0]);
+
+                        WriteVerbose($"Retrieving records by MatchOn ({matchColumn}) using QueryByAttribute");
+
+                        var retrievedRecords = Connection.RetrieveMultiple(matchOnQuery).Entities;
+
+                        // Match back to items
+                        foreach (var item in itemsNeedingMatch)
+                        {
+                            var itemValue = item.InputEntity.GetAttributeValue<object>(matchColumn);
+                            if (itemValue is EntityReference er) itemValue = er.Id;
+                            if (itemValue is OptionSetValue osv) itemValue = osv.Value;
+
+                            var matches = retrievedRecords.Where(e =>
+                            {
+                                var recValue = e.GetAttributeValue<object>(matchColumn);
+                                if (recValue is EntityReference er2) recValue = er2.Id;
+                                if (recValue is OptionSetValue osv2) recValue = osv2.Value;
+                                return Equals(itemValue, recValue);
+                            }).ToList();
+
+                            if (matches.Count > 0)
+                            {
+                                item.ResolvedIds.AddRange(matches.Select(m => m.Id));
+                            }
+                        }
                     }
                     else
                     {
+                        // For multiple values, use QueryExpression with In operator
+                        var query = new QueryExpression(TableName)
+                        {
+                            ColumnSet = new ColumnSet(entityMetadata.PrimaryIdAttribute)
+                        };
+
                         query.Criteria.AddCondition(matchColumn, ConditionOperator.In, matchValues.ToArray());
-                    }
 
-                    WriteVerbose($"Retrieving records by MatchOn ({matchColumn}) in batch");
+                        WriteVerbose($"Retrieving records by MatchOn ({matchColumn}) in batch");
 
-                    var retrievedRecords = Connection.RetrieveMultiple(query).Entities;
+                        var retrievedRecords = Connection.RetrieveMultiple(query).Entities;
 
-                    // Match back to items
-                    foreach (var item in itemsNeedingMatch)
-                    {
-                        var itemValue = item.InputEntity.GetAttributeValue<object>(matchColumn);
-                        if (itemValue is EntityReference er) itemValue = er.Id;
-                        if (itemValue is OptionSetValue osv) itemValue = osv.Value;
-
-                        var matches = retrievedRecords.Where(e =>
+                        // Match back to items
+                        foreach (var item in itemsNeedingMatch)
                         {
-                            var recValue = e.GetAttributeValue<object>(matchColumn);
-                            if (recValue is EntityReference er2) recValue = er2.Id;
-                            if (recValue is OptionSetValue osv2) recValue = osv2.Value;
-                            return Equals(itemValue, recValue);
-                        }).ToList();
+                            var itemValue = item.InputEntity.GetAttributeValue<object>(matchColumn);
+                            if (itemValue is EntityReference er) itemValue = er.Id;
+                            if (itemValue is OptionSetValue osv) itemValue = osv.Value;
 
-                        if (matches.Count > 0)
-                        {
-                            item.ResolvedIds.AddRange(matches.Select(m => m.Id));
+                            var matches = retrievedRecords.Where(e =>
+                            {
+                                var recValue = e.GetAttributeValue<object>(matchColumn);
+                                if (recValue is EntityReference er2) recValue = er2.Id;
+                                if (recValue is OptionSetValue osv2) recValue = osv2.Value;
+                                return Equals(itemValue, recValue);
+                            }).ToList();
+
+                            if (matches.Count > 0)
+                            {
+                                item.ResolvedIds.AddRange(matches.Select(m => m.Id));
+                            }
                         }
                     }
                 }

@@ -26,8 +26,9 @@ Get-DataverseRecord [-TableName] <String> [-VerboseRecordCount] [-RecordCount] [
 ```
 Get-DataverseRecord [-TableName] <String> -InputObject <PSObject> -MatchOn <String[][]> [-AllowMultipleMatches]
  [-VerboseRecordCount] [-RecordCount] [-Columns <String[]>] [-ExcludeColumns <String[]>] [-OrderBy <String[]>]
- [-Top <Int32>] [-PageSize <Int32>] [-LookupValuesReturnName] [-IncludeSystemColumns]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Top <Int32>] [-PageSize <Int32>] [-RetrievalBatchSize <UInt32>] [-LookupValuesReturnName]
+ [-IncludeSystemColumns] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ### FetchXml
@@ -704,6 +705,21 @@ If set writes total record count matching query to output output instead of resu
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RetrievalBatchSize
+Controls the maximum number of records to resolve in a single query when using MatchOn. Default is 500. Specify 1 to resolve one record at a time.
+
+```yaml
+Type: UInt32
+Parameter Sets: MatchOn
 Aliases:
 
 Required: False
