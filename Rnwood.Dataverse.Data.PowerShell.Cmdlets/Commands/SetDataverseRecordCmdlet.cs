@@ -336,23 +336,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         public void ApplyBypassBusinessLogicExecution(OrganizationRequest request)
         {
-            if (BypassBusinessLogicExecution?.Length > 0)
-            {
-                request.Parameters["BypassBusinessLogicExecution"] = string.Join(",", BypassBusinessLogicExecution.Select(o => o.ToString()));
-            }
-            else
-            {
-                request.Parameters.Remove("BypassBusinessLogicExecution");
-            }
-
-            if (BypassBusinessLogicExecutionStepIds?.Length > 0)
-            {
-                request.Parameters["BypassBusinessLogicExecutionStepIds"] = string.Join(",", BypassBusinessLogicExecutionStepIds.Select(id => id.ToString()));
-            }
-            else
-            {
-                request.Parameters.Remove("BypassBusinessLogicExecutionStepIds");
-            }
+            QueryHelpers.ApplyBypassBusinessLogicExecution(request, BypassBusinessLogicExecution, BypassBusinessLogicExecutionStepIds);
         }
 
         /// <summary>
@@ -1144,7 +1128,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             {
                                 // Build fault details for failed request
                                 StringBuilder details = new StringBuilder();
-                                AppendFaultDetails(itemResponse.Fault, details);
+                                QueryHelpers.AppendFaultDetails(itemResponse.Fault, details);
                                 if (firstError == null)
                                 {
                                     firstError = new Exception(details.ToString());
@@ -1179,17 +1163,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _nextBatchItems.Clear();
         }
 
-        public static void AppendFaultDetails(OrganizationServiceFault fault, StringBuilder output)
-        {
-            output.AppendLine("OrganizationServiceFault " + fault.ErrorCode + ": " + fault.Message);
-            output.AppendLine(fault.TraceText);
 
-            if (fault.InnerFault != null)
-            {
-                output.AppendLine("---");
-                AppendFaultDetails(fault.InnerFault, output);
-            }
-        }
     }
 
     /// <summary>
@@ -1623,7 +1597,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             var recValue = e.GetAttributeValue<object>(matchColumn);
                             if (recValue is EntityReference er2) recValue = er2.Id;
                             if (recValue is OptionSetValue osv2) recValue = osv2.Value;
-                            return AreValuesEqual(itemValue, recValue);
+                            return QueryHelpers.AreValuesEqual(itemValue, recValue);
                         }).ToList();
 
                         if (matches.Count == 1)
@@ -1710,7 +1684,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 if (recValue is EntityReference er2) recValue = er2.Id;
                                 if (recValue is OptionSetValue osv2) recValue = osv2.Value;
 
-                                return AreValuesEqual(itemValue, recValue);
+                                return QueryHelpers.AreValuesEqual(itemValue, recValue);
                             });
                         }).ToList();
 
@@ -1811,24 +1785,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        /// <summary>
-        /// Compares two values with proper case-insensitive comparison for strings to match Dataverse query behavior.
-        /// </summary>
-        private static bool AreValuesEqual(object value1, object value2)
-        {
-            // Handle nulls
-            if (value1 == null && value2 == null) return true;
-            if (value1 == null || value2 == null) return false;
-
-            // Use case-insensitive comparison for strings to match Dataverse behavior
-            if (value1 is string str1 && value2 is string str2)
-            {
-                return string.Equals(str1, str2, StringComparison.OrdinalIgnoreCase);
-            }
-
-            // For other types, use standard equality
-            return Equals(value1, value2);
-        }
     }
 
     /// <summary>Creates or updates records in a Dataverse environment. If a matching record is found then it will be updated, otherwise a new record is created (some options can override this).
