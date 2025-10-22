@@ -93,6 +93,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "Initial delay in seconds before first retry. Subsequent retries use exponential backoff. Default is 5s.")]
         public int InitialRetryDelay { get; set; } = 5;
 
+        /// <summary>
+        /// Maximum number of parallel delete operations. Default is 1 (parallel processing disabled).
+        /// When set to a value greater than 1, records are processed in parallel using multiple connections.
+        /// </summary>
+        [Parameter(HelpMessage = "Maximum number of parallel delete operations. Default is 1 (parallel processing disabled). When set to a value greater than 1, records are processed in parallel using multiple connections.")]
+        public int MaxDegreeOfParallelism { get; set; } = 1;
+
         // Explicit interface implementations for IDeleteOperationParameters
         bool IDeleteOperationParameters.IfExists => IfExists.IsPresent;
         CustomLogicBypassableOrganizationServiceCmdlet.BusinessLogicTypes[] IDeleteOperationParameters.BypassBusinessLogicExecution => BypassBusinessLogicExecution;
@@ -107,6 +114,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private CancellationTokenSource _userCancellationCts;
         private DataverseEntityConverter _entityConverter;
         private List<MatchOnResolveItem> _matchOnResolveQueue;
+        private ParallelDeleteProcessor _parallelProcessor;
 
         /// <summary>Initializes the cmdlet.</summary>
         protected override void BeginProcessing()
@@ -120,7 +128,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _entityConverter = new DataverseEntityConverter(Connection, _metadataFactory);
             _matchOnResolveQueue = new List<MatchOnResolveItem>();
 
-            if (BatchSize > 1)
+            if (MaxDegreeOfParallelism > 1)
+            {
+                // Use parallel processing
+                _parallelProcessor = new ParallelDeleteProcessor(
+                    MaxDegreeOfParallelism,
+                    BatchSize,
+                    Connection,
+                    WriteVerbose,
+                    WriteError,
+                    WriteProgress,
+                    ShouldProcess,
+                    () => Stopping,
+                    _userCancellationCts.Token,
+                    this);
+            }
+            else if (BatchSize > 1)
             {
                 _batchProcessor = new DeleteBatchProcessor(
                     BatchSize,
@@ -474,7 +497,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             context.CreateRequest();
 
-            if (_batchProcessor != null)
+            if (_parallelProcessor != null)
+            {
+                WriteVerbose(string.Format("Queued delete of {0}:{1} for parallel processing", TableName, idToDelete));
+                _parallelProcessor.QueueOperation(context);
+            }
+            else if (_batchProcessor != null)
             {
                 WriteVerbose(string.Format("Added delete of {0}:{1} to batch", TableName, idToDelete));
                 _batchProcessor.QueueOperation(context);
@@ -496,7 +524,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ProcessMatchOnBatch();
             }
 
-            if (_batchProcessor != null)
+            if (_parallelProcessor != null)
+            {
+                _parallelProcessor.WaitForCompletion();
+            }
+            else if (_batchProcessor != null)
             {
                 _batchProcessor.Flush();
                 _batchProcessor.ProcessRetries();
