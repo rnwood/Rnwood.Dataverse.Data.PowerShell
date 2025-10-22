@@ -22,6 +22,14 @@ Get-DataverseRecord [-TableName] <String> [-VerboseRecordCount] [-RecordCount] [
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### MatchOn
+```
+Get-DataverseRecord [-TableName] <String> -InputObject <PSObject> -MatchOn <String[][]> [-AllowMultipleMatches]
+ [-VerboseRecordCount] [-RecordCount] [-Columns <String[]>] [-ExcludeColumns <String[]>] [-OrderBy <String[]>]
+ [-Top <Int32>] [-PageSize <Int32>] [-LookupValuesReturnName] [-IncludeSystemColumns]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ### FetchXml
 ```
 Get-DataverseRecord [-VerboseRecordCount] [-RecordCount] [-FetchXml <String>] [-LookupValuesReturnName]
@@ -76,6 +84,41 @@ PS C:\> Get-DataverseRecord -connection $connection -tablename contact -filterva
 
 Find contacts with age greater than 25 by using a nested hashtable to specify operator and value.
 
+### Example 4: Retrieve record by MatchOn with single column
+```powershell
+PS C:\> @{ emailaddress1 = "user@example.com" } | 
+    Get-DataverseRecord -Connection $c -TableName contact -MatchOn emailaddress1
+```
+
+Retrieves a contact record by matching on the email address. If multiple contacts have the same email, an error is raised unless -AllowMultipleMatches is used.
+
+### Example 5: Retrieve record by MatchOn with multiple columns
+```powershell
+PS C:\> @{ firstname = "John"; lastname = "Doe" } | 
+    Get-DataverseRecord -Connection $c -TableName contact -MatchOn @("firstname", "lastname")
+```
+
+Retrieves a contact record by matching on both firstname and lastname together. This helps ensure you're retrieving the correct record when names might not be unique individually.
+
+### Example 6: Retrieve all matching records with AllowMultipleMatches
+```powershell
+PS C:\> @{ lastname = "Smith" } | 
+    Get-DataverseRecord -Connection $c -TableName contact -MatchOn lastname -AllowMultipleMatches
+```
+
+Retrieves ALL contact records with the lastname "Smith". The -AllowMultipleMatches switch allows retrieving multiple records that match the criteria. Without this switch, an error would be raised if multiple matches are found.
+
+### Example 7: Use multiple MatchOn criteria with fallback
+```powershell
+PS C:\> @{ 
+    emailaddress1 = "user@example.com"
+    firstname = "John"
+    lastname = "Doe"
+} | Get-DataverseRecord -Connection $c -TableName contact -MatchOn @("emailaddress1"), @("firstname", "lastname")
+```
+
+Attempts to match first on emailaddress1, then falls back to matching on firstname+lastname if no email match is found. Uses the first matching set that returns records.
+
 ## PARAMETERS
 
 ### -ActiveOnly
@@ -93,12 +136,27 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -AllowMultipleMatches
+If specified, returns all records matching the MatchOn criteria. Without this switch, an error is raised if MatchOn finds multiple matches.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: MatchOn
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Columns
 List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default
 
 ```yaml
 Type: String[]
-Parameter Sets: Simple
+Parameter Sets: Simple, MatchOn
 Aliases:
 
 Required: False
@@ -143,7 +201,7 @@ List of columns to exclude from records (default is none). Ignored if Columns pa
 
 ```yaml
 Type: String[]
-Parameter Sets: Simple
+Parameter Sets: Simple, MatchOn
 Aliases:
 
 Required: False
@@ -432,13 +490,28 @@ Include system columns in output. By default system columns are excluded; use th
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: Simple
+Parameter Sets: Simple, MatchOn
 Aliases:
 
 Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+Object containing values to match against. Property names must match column names in the table.
+
+```yaml
+Type: PSObject
+Parameter Sets: MatchOn
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
@@ -562,6 +635,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -MatchOn
+List of list of column names to match against values in the InputObject. The first list that returns matches is used.
+
+```yaml
+Type: String[][]
+Parameter Sets: MatchOn
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Name
 List of names (primary attribute value) of records to retrieve.
 
@@ -584,7 +672,7 @@ e.g "age-", "lastname" will sort by age descending then lastname ascending
 
 ```yaml
 Type: String[]
-Parameter Sets: Simple
+Parameter Sets: Simple, MatchOn
 Aliases:
 
 Required: False
@@ -600,7 +688,7 @@ Default is 1000.
 
 ```yaml
 Type: Int32
-Parameter Sets: Simple
+Parameter Sets: Simple, MatchOn
 Aliases:
 
 Required: False
@@ -630,7 +718,7 @@ Logical name of entity for which to retrieve records
 
 ```yaml
 Type: String
-Parameter Sets: Simple
+Parameter Sets: Simple, MatchOn
 Aliases: EntityName
 
 Required: True
@@ -646,7 +734,7 @@ Default is all results.
 
 ```yaml
 Type: Int32
-Parameter Sets: Simple
+Parameter Sets: Simple, MatchOn
 Aliases:
 
 Required: False
@@ -691,7 +779,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
+### System.Management.Automation.PSObject
 ## OUTPUTS
 
 ### System.Collections.Generic.IEnumerable`1[[System.Management.Automation.PSObject, System.Management.Automation, Version=7.4.6.500, Culture=neutral, PublicKeyToken=31bf3856ad364e35]]

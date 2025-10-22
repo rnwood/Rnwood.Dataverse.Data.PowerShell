@@ -48,6 +48,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets the initial retry delay in seconds.
         /// </summary>
         int InitialRetryDelay { get; }
+
+        /// <summary>
+        /// Gets the match-on column lists for finding existing records.
+        /// </summary>
+        string[][] MatchOn { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether to allow processing multiple matching records.
+        /// </summary>
+        bool AllowMultipleMatches { get; }
     }
 
     /// <summary>
@@ -79,6 +89,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             IfExists = parameters.IfExists;
             Retries = parameters.Retries;
             InitialRetryDelay = parameters.InitialRetryDelay;
+            MatchOn = parameters.MatchOn;
+            AllowMultipleMatches = parameters.AllowMultipleMatches;
             RetriesRemaining = parameters.Retries;
             NextRetryTime = DateTime.MinValue;
             MetadataFactory = metadataFactory;
@@ -96,6 +108,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public bool IfExists { get; }
         public int Retries { get; }
         public int InitialRetryDelay { get; }
+        public string[][] MatchOn { get; }
+        public bool AllowMultipleMatches { get; }
         public int RetriesRemaining { get; set; }
         public DateTime NextRetryTime { get; set; }
         public OrganizationRequest Request { get; set; }
@@ -470,8 +484,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Id of record to process
         /// </summary>
-        [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Id of record to process")]
+        [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Id of record to process")]
         public Guid Id { get; set; }
+        /// <summary>
+        /// List of list of column names that identify records to delete based on the values of those columns in the InputObject. The first list that returns a match is used. If AllowMultipleMatches is not specified, an error will be raised if more than one record matches.
+        /// </summary>
+        [Parameter(Mandatory = false, HelpMessage = "List of list of column names that identify records to delete based on the values of those columns in the InputObject. The first list that returns a match is used. If AllowMultipleMatches is not specified, an error will be raised if more than one record matches.")]
+        public string[][] MatchOn { get; set; }
+        /// <summary>
+        /// If specified, allows deletion of multiple records when MatchOn criteria matches more than one record. Without this switch, an error is raised if MatchOn finds multiple matches.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, allows deletion of multiple records when MatchOn criteria matches more than one record. Without this switch, an error is raised if MatchOn finds multiple matches.")]
+        public SwitchParameter AllowMultipleMatches { get; set; }
         /// <summary>
         /// Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable. When value is 1, requests are sent to Dataverse one request at a time. When > 1, batching is used. Note that the batch will continue on error and any errors will be returned once the batch has completed. The error contains the input record to allow correlation.
         /// </summary>
@@ -513,6 +537,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         Guid[] IDeleteOperationParameters.BypassBusinessLogicExecutionStepIds => BypassBusinessLogicExecutionStepIds;
         int IDeleteOperationParameters.Retries => Retries;
         int IDeleteOperationParameters.InitialRetryDelay => InitialRetryDelay;
+        string[][] IDeleteOperationParameters.MatchOn => MatchOn;
+        bool IDeleteOperationParameters.AllowMultipleMatches => AllowMultipleMatches.IsPresent;
 
         private EntityMetadataFactory _metadataFactory;
         private DeleteBatchProcessor _batchProcessor;
@@ -545,28 +571,137 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            var context = new DeleteOperationContext(
-                InputObject,
-                TableName,
-                Id,
-                this,
-                _metadataFactory,
-                Connection,
-                WriteVerbose,
-                WriteError,
-                ShouldProcess);
-
-            context.CreateRequest();
-
-            if (_batchProcessor != null)
+            // Validate parameters
+            if (Id == Guid.Empty && MatchOn == null)
             {
-                WriteVerbose(string.Format("Added delete of {0}:{1} to batch", TableName, Id));
-                _batchProcessor.QueueOperation(context);
+                WriteError(new ErrorRecord(
+                    new ArgumentException("Either Id or MatchOn must be specified"),
+                    null,
+                    ErrorCategory.InvalidArgument,
+                    InputObject));
+                return;
             }
-            else
+
+            // If MatchOn is specified, resolve the record(s) to delete
+            List<Guid> idsToDelete = new List<Guid>();
+            
+            if (Id != Guid.Empty)
             {
-                context.ExecuteNonBatched();
+                idsToDelete.Add(Id);
             }
+            else if (MatchOn != null)
+            {
+                try
+                {
+                    var resolvedIds = ResolveRecordsByMatchOn();
+                    if (resolvedIds.Count == 0)
+                    {
+                        if (!IfExists.IsPresent)
+                        {
+                            WriteError(new ErrorRecord(
+                                new Exception("No records found matching the MatchOn criteria"),
+                                null,
+                                ErrorCategory.ObjectNotFound,
+                                InputObject));
+                        }
+                        else
+                        {
+                            WriteVerbose("No records found matching the MatchOn criteria");
+                        }
+                        return;
+                    }
+                    else if (resolvedIds.Count > 1 && !AllowMultipleMatches.IsPresent)
+                    {
+                        WriteError(new ErrorRecord(
+                            new Exception($"MatchOn criteria matched {resolvedIds.Count} records. Use -AllowMultipleMatches to delete all matching records."),
+                            null,
+                            ErrorCategory.InvalidOperation,
+                            InputObject));
+                        return;
+                    }
+                    
+                    idsToDelete.AddRange(resolvedIds);
+                }
+                catch (Exception e)
+                {
+                    WriteError(new ErrorRecord(e, null, ErrorCategory.InvalidOperation, InputObject));
+                    return;
+                }
+            }
+
+            // Process each resolved ID
+            foreach (var idToDelete in idsToDelete)
+            {
+                var context = new DeleteOperationContext(
+                    InputObject,
+                    TableName,
+                    idToDelete,
+                    this,
+                    _metadataFactory,
+                    Connection,
+                    WriteVerbose,
+                    WriteError,
+                    ShouldProcess);
+
+                context.CreateRequest();
+
+                if (_batchProcessor != null)
+                {
+                    WriteVerbose(string.Format("Added delete of {0}:{1} to batch", TableName, idToDelete));
+                    _batchProcessor.QueueOperation(context);
+                }
+                else
+                {
+                    context.ExecuteNonBatched();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Resolves record IDs based on MatchOn criteria.
+        /// </summary>
+        private List<Guid> ResolveRecordsByMatchOn()
+        {
+            List<Guid> resolvedIds = new List<Guid>();
+            EntityMetadata entityMetadata = _metadataFactory.GetMetadata(TableName);
+
+            // Convert InputObject to Entity to get values for matching
+            var entityConverter = new DataverseEntityConverter(Connection, _metadataFactory);
+            var conversionOptions = new ConvertToDataverseEntityOptions();
+            Entity inputEntity = entityConverter.ConvertToDataverseEntity(InputObject, TableName, conversionOptions);
+
+            foreach (string[] matchOnColumnList in MatchOn)
+            {
+                QueryByAttribute matchOnQuery = new QueryByAttribute(TableName);
+                matchOnQuery.ColumnSet = new ColumnSet(entityMetadata.PrimaryIdAttribute);
+
+                foreach (string matchOnColumn in matchOnColumnList)
+                {
+                    object queryValue = inputEntity.GetAttributeValue<object>(matchOnColumn);
+
+                    if (queryValue is EntityReference er)
+                    {
+                        queryValue = er.Id;
+                    }
+
+                    if (queryValue is OptionSetValue osv)
+                    {
+                        queryValue = osv.Value;
+                    }
+
+                    matchOnQuery.AddAttributeValue(matchOnColumn, queryValue);
+                }
+
+                var matchingRecords = Connection.RetrieveMultiple(matchOnQuery).Entities;
+
+                if (matchingRecords.Count > 0)
+                {
+                    resolvedIds.AddRange(matchingRecords.Select(r => r.Id));
+                    break; // First match set wins
+                }
+            }
+
+            return resolvedIds;
         }
 
         /// <summary>Completes cmdlet processing.</summary>

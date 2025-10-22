@@ -85,6 +85,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets the ID of the record.
         /// </summary>
         Guid Id { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether to allow processing multiple matching records.
+        /// </summary>
+        bool AllowMultipleMatches { get; }
     }
 
     /// <summary>
@@ -126,6 +131,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             NoUpdateColumns = parameters.NoUpdateColumns;
             MatchOn = parameters.MatchOn;
             Id = parameters.Id;
+            AllowMultipleMatches = parameters.AllowMultipleMatches;
             Retries = parameters.Retries;
             InitialRetryDelay = parameters.InitialRetryDelay;
             RetriesRemaining = parameters.Retries;
@@ -156,6 +162,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string[] NoUpdateColumns { get; }
         public string[][] MatchOn { get; }
         public Guid Id { get; }
+        public bool AllowMultipleMatches { get; }
         public int Retries { get; }
         public int InitialRetryDelay { get; }
         public int RetriesRemaining { get; set; }
@@ -445,15 +452,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
-        /// Gets an existing record from the server if it exists, using Id or MatchOn criteria.
+        /// Gets existing records from the server using Id or MatchOn criteria.
+        /// Returns a list of matching records. When AllowMultipleMatches is false, list contains at most one record.
         /// </summary>
-        public Entity GetExistingRecord(EntityMetadata entityMetadata, Entity target)
+        public List<Entity> GetExistingRecords(EntityMetadata entityMetadata, Entity target)
         {
-            Entity existingRecord = null;
+            List<Entity> existingRecords = new List<Entity>();
 
             if (CreateOnly || Upsert)
             {
-                return null;
+                return existingRecords;
             }
 
             if (!entityMetadata.IsIntersect.GetValueOrDefault())
@@ -462,8 +470,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     if (UpdateAllColumns)
                     {
-                        existingRecord = new Entity(target.LogicalName) { Id = Id };
+                        Entity existingRecord = new Entity(target.LogicalName) { Id = Id };
                         existingRecord[entityMetadata.PrimaryIdAttribute] = Id;
+                        existingRecords.Add(existingRecord);
                     }
                     else
                     {
@@ -471,17 +480,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         existingRecordQuery.AddAttributeValue(entityMetadata.PrimaryIdAttribute, Id);
                         existingRecordQuery.ColumnSet = target.LogicalName.Equals("calendar", StringComparison.OrdinalIgnoreCase) ? new ColumnSet(true) : new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
 
-                        existingRecord = Connection.RetrieveMultiple(existingRecordQuery
-                        ).Entities.FirstOrDefault();
+                        var record = Connection.RetrieveMultiple(existingRecordQuery).Entities.FirstOrDefault();
+                        if (record != null)
+                        {
+                            existingRecords.Add(record);
+                        }
                     }
                 }
 
-                if (existingRecord == null && MatchOn != null)
+                if (existingRecords.Count == 0 && MatchOn != null)
                 {
                     foreach (string[] matchOnColumnList in MatchOn)
                     {
                         QueryByAttribute matchOnQuery = new QueryByAttribute(TableName);
-                        matchOnQuery.TopCount = 2;
+                        if (!AllowMultipleMatches)
+                        {
+                            matchOnQuery.TopCount = 2; // Get 2 to detect multiple matches
+                        }
 
                         foreach (string matchOnColumn in matchOnColumnList)
                         {
@@ -502,20 +517,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         matchOnQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
 
-                        var existingRecords = Connection.RetrieveMultiple(matchOnQuery
-                            ).Entities;
+                        var matchedRecords = Connection.RetrieveMultiple(matchOnQuery).Entities;
 
-                        if (existingRecords.Count == 1)
+                        if (matchedRecords.Count == 1)
                         {
-                            existingRecord = existingRecords[0];
+                            existingRecords.Add(matchedRecords[0]);
                             break;
                         }
-                        else if (existingRecords.Count > 1)
+                        else if (matchedRecords.Count > 1)
                         {
-                            string matchOnSummary = string.Join("\n", matchOnColumnList.Select(c => c + "='" +
-                            matchOnQuery.Values[matchOnQuery.Attributes.IndexOf(c)] + "'" ?? "<null>").ToArray());
+                            if (AllowMultipleMatches)
+                            {
+                                // Add all matching records when multiple matches are allowed
+                                existingRecords.AddRange(matchedRecords);
+                                break;
+                            }
+                            else
+                            {
+                                string matchOnSummary = string.Join("\n", matchOnColumnList.Select(c => c + "='" +
+                                matchOnQuery.Values[matchOnQuery.Attributes.IndexOf(c)] + "'" ?? "<null>").ToArray());
 
-                            throw new Exception(string.Format("Match on values {0} resulted in more than one record to update. Match on values:\n", matchOnSummary));
+                                throw new Exception(string.Format("Match on values {0} resulted in more than one record to update. Use -AllowMultipleMatches to update all matching records. Match on values:\n", matchOnSummary));
+                            }
                         }
                     }
                 }
@@ -544,10 +567,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 existingRecordQuery.AddAttributeValue(manyToManyRelationshipMetadata.Entity2IntersectAttribute, entity2Value.Value);
                 existingRecordQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
 
-                existingRecord = Connection.RetrieveMultiple(existingRecordQuery
-                    ).Entities.FirstOrDefault();
+                var record = Connection.RetrieveMultiple(existingRecordQuery).Entities.FirstOrDefault();
+                if (record != null)
+                {
+                    existingRecords.Add(record);
+                }
             }
-            return existingRecord;
+            return existingRecords;
         }
 
         /// <summary>
@@ -1210,6 +1236,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private readonly int _initialRetryDelay;
         private readonly Guid _id;
         private readonly string[][] _matchOn;
+        private readonly bool _allowMultipleMatches;
 
         public RetrievalBatchProcessor(
             IOrganizationService connection,
@@ -1220,7 +1247,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             int retries,
             int initialRetryDelay,
             Guid id,
-            string[][] matchOn)
+            string[][] matchOn,
+            bool allowMultipleMatches)
         {
             _connection = connection;
             _writeVerbose = writeVerbose;
@@ -1231,6 +1259,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _initialRetryDelay = initialRetryDelay;
             _id = id;
             _matchOn = matchOn;
+            _allowMultipleMatches = allowMultipleMatches;
             _retrievalBatchQueue = new List<RecordProcessingItem>();
             _pendingRetries = new List<RetryRecord>();
         }
@@ -1603,7 +1632,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
                         else if (matches.Count > 1)
                         {
-                            _writeError(new ErrorRecord(new Exception($"Match on {matchColumn} resulted in more than one record"), null, ErrorCategory.InvalidOperation, item.InputObject));
+                            if (_allowMultipleMatches)
+                            {
+                                // When multiple matches are allowed, set the first match and add duplicates for the rest
+                                item.ExistingRecord = matches[0];
+                                
+                                // Add additional items to the queue for remaining matches
+                                // Each needs a clone of the Target entity to avoid shared state
+                                for (int i = 1; i < matches.Count; i++)
+                                {
+                                    var clonedTarget = new Entity(item.Target.LogicalName, item.Target.Id);
+                                    foreach (var attr in item.Target.Attributes)
+                                    {
+                                        clonedTarget[attr.Key] = attr.Value;
+                                    }
+                                    
+                                    _retrievalBatchQueue.Add(new RecordProcessingItem
+                                    {
+                                        InputObject = item.InputObject,
+                                        Target = clonedTarget,
+                                        EntityMetadata = item.EntityMetadata,
+                                        ExistingRecord = matches[i],
+                                        TableName = item.TableName,
+                                        CallerId = item.CallerId
+                                    });
+                                }
+                            }
+                            else
+                            {
+                                _writeError(new ErrorRecord(new Exception($"Match on {matchColumn} resulted in more than one record. Use -AllowMultipleMatches to update all matching records."), null, ErrorCategory.InvalidOperation, item.InputObject));
+                            }
                         }
                     }
                 }
@@ -1662,8 +1720,37 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
                         else if (matches.Count > 1)
                         {
-                            var matchOnSummary = string.Join(", ", matchOnColumnList.Select(c => $"{c}='{item.Target.GetAttributeValue<object>(c)}'"));
-                            _writeError(new ErrorRecord(new Exception($"Match on values {matchOnSummary} resulted in more than one record"), null, ErrorCategory.InvalidOperation, item.InputObject));
+                            if (_allowMultipleMatches)
+                            {
+                                // When multiple matches are allowed, set the first match and add duplicates for the rest
+                                item.ExistingRecord = matches[0];
+                                
+                                // Add additional items to the queue for remaining matches
+                                // Each needs a clone of the Target entity to avoid shared state
+                                for (int i = 1; i < matches.Count; i++)
+                                {
+                                    var clonedTarget = new Entity(item.Target.LogicalName, item.Target.Id);
+                                    foreach (var attr in item.Target.Attributes)
+                                    {
+                                        clonedTarget[attr.Key] = attr.Value;
+                                    }
+                                    
+                                    _retrievalBatchQueue.Add(new RecordProcessingItem
+                                    {
+                                        InputObject = item.InputObject,
+                                        Target = clonedTarget,
+                                        EntityMetadata = item.EntityMetadata,
+                                        ExistingRecord = matches[i],
+                                        TableName = item.TableName,
+                                        CallerId = item.CallerId
+                                    });
+                                }
+                            }
+                            else
+                            {
+                                var matchOnSummary = string.Join(", ", matchOnColumnList.Select(c => $"{c}='{item.Target.GetAttributeValue<object>(c)}'"));
+                                _writeError(new ErrorRecord(new Exception($"Match on values {matchOnSummary} resulted in more than one record. Use -AllowMultipleMatches to update all matching records."), null, ErrorCategory.InvalidOperation, item.InputObject));
+                            }
                         }
                     }
                 }
@@ -1774,6 +1861,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = false, HelpMessage = "List of list of column names that identify an existing record to update based on the values of those columns in the InputObject. For update/create these are used if a record with an Id matching the value of the Id cannot be found. The first list that returns a match is used.")]
         public string[][] MatchOn { get; set; }
         /// <summary>
+        /// If specified, allows updating of multiple records when MatchOn criteria matches more than one record. Without this switch, an error is raised if MatchOn finds multiple matches.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, allows updating of multiple records when MatchOn criteria matches more than one record. Without this switch, an error is raised if MatchOn finds multiple matches.")]
+        public SwitchParameter AllowMultipleMatches { get; set; }
+        /// <summary>
         /// If specified, the InputObject is written to the pipeline as a PSObject with an Id property set indicating the primary key of the affected record (even if nothing was updated). The output is always converted to a PSObject format regardless of the input object type for uniformity.
         /// </summary>
         [Parameter(HelpMessage = "If specified, the InputObject is written to the pipeline as a PSObject with an Id property set indicating the primary key of the affected record (even if nothing was updated). The output is always converted to a PSObject format regardless of the input object type for uniformity.")]
@@ -1861,6 +1953,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         string[] ISetOperationParameters.NoUpdateColumns => NoUpdateColumns;
         string[][] ISetOperationParameters.MatchOn => MatchOn;
         Guid ISetOperationParameters.Id => Id;
+        bool ISetOperationParameters.AllowMultipleMatches => AllowMultipleMatches.IsPresent;
 
         private SetBatchProcessor _setBatchProcessor;
         private RetrievalBatchProcessor _retrievalBatchProcessor;
@@ -1892,7 +1985,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 Retries,
                 InitialRetryDelay,
                 Id,
-                MatchOn);
+                MatchOn,
+                AllowMultipleMatches.IsPresent);
 
             if (BatchSize > 1)
             {
@@ -2092,11 +2186,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             else
             {
                 // Process immediately without retrieval
-                Entity existingRecord;
+                List<Entity> existingRecords;
 
                 try
                 {
-                    existingRecord = context.GetExistingRecord(entityMetadata, target);
+                    existingRecords = context.GetExistingRecords(entityMetadata, target);
                 }
                 catch (Exception e)
                 {
@@ -2112,7 +2206,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     return;
                 }
 
-                ProcessRecordWithExistingRecord(inputObject, tableName, callerId, target, entityMetadata, existingRecord);
+                // Process each existing record found
+                if (existingRecords.Count == 0)
+                {
+                    ProcessRecordWithExistingRecord(inputObject, tableName, callerId, target, entityMetadata, null);
+                }
+                else
+                {
+                    foreach (var existingRecord in existingRecords)
+                    {
+                        ProcessRecordWithExistingRecord(inputObject, tableName, callerId, target, entityMetadata, existingRecord);
+                    }
+                }
             }
         }
 
