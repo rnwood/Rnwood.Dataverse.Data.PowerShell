@@ -189,16 +189,31 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 
                 while (!_isStopping() && !_cancellationToken.IsCancellationRequested)
                 {
-                    if (_workQueue.TryDequeue(out DeleteOperationContext context))
+                    if (_workQueue.TryDequeue(out DeleteOperationContext originalContext))
                     {
                         try
                         {
+                            // Create a new context with queued output methods for thread safety
+                            var workerContext = new DeleteOperationContext(
+                                originalContext.InputObject,
+                                originalContext.TableName,
+                                originalContext.Id,
+                                _parameters,
+                                originalContext.MetadataFactory,
+                                workerConnection,
+                                (msg) => _verboseQueue.Enqueue(msg),
+                                (err) => _errorQueue.Enqueue(err),
+                                (target) => true); // Always return true - ShouldProcess was already called
+                            
+                            // Copy the request from the original context
+                            workerContext.Request = originalContext.Request;
+                            
                             // Update the connection in the context's request if needed
                             // The request was already created by the original context
                             if (batchProcessor != null)
                             {
-                                batchProcessor.QueueOperation(context);
-                                batchedContexts.Add(context);
+                                batchProcessor.QueueOperation(workerContext);
+                                batchedContexts.Add(workerContext);
                             }
                             else
                             {
@@ -206,8 +221,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 // In parallel mode, we don't call ShouldProcess from the worker thread
                                 try
                                 {
-                                    workerConnection.Execute(context.Request);
-                                    _verboseQueue.Enqueue(string.Format("Deleted record {0}:{1}", context.TableName, context.Id));
+                                    workerConnection.Execute(workerContext.Request);
+                                    _verboseQueue.Enqueue(string.Format("Deleted record {0}:{1}", workerContext.TableName, workerContext.Id));
                                     
                                     int completed = Interlocked.Increment(ref _totalCompletedCount);
 
@@ -224,9 +239,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 }
                                 catch (System.ServiceModel.FaultException ex)
                                 {
-                                    if (context.IfExists && ex.HResult == -2147220969)
+                                    if (workerContext.IfExists && ex.HResult == -2147220969)
                                     {
-                                        _verboseQueue.Enqueue(string.Format("Record {0}:{1} was not present", context.TableName, context.Id));
+                                        _verboseQueue.Enqueue(string.Format("Record {0}:{1} was not present", workerContext.TableName, workerContext.Id));
                                     }
                                     else
                                     {
@@ -237,7 +252,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
                         catch (Exception ex)
                         {
-                            _errorQueue.Enqueue(new ErrorRecord(ex, null, ErrorCategory.InvalidOperation, context.InputObject));
+                            _errorQueue.Enqueue(new ErrorRecord(ex, null, ErrorCategory.InvalidOperation, originalContext.InputObject));
                         }
                     }
                     else if (_inputComplete)
