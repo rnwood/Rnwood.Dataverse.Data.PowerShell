@@ -218,10 +218,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 (obj) => _outputQueue.Enqueue(obj),
                                 (target) => true); // Always return true - ShouldProcess was already called
                             
-                            // Disable retries in parallel mode to avoid deadlocks
-                            // Retries with shared connections can cause workers to wait indefinitely
-                            workerContext.RetriesRemaining = 0;
-                            
                             // Copy the context data from the original context
                             workerContext.Target = originalContext.Target;
                             workerContext.EntityMetadata = originalContext.EntityMetadata;
@@ -322,19 +318,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
 
-                // Flush any remaining batched operations
-                // NOTE: Do NOT call ProcessRetries() here - retries in parallel mode can cause deadlocks
-                // when multiple workers share the same connection (e.g., mock connections).
-                // Workers should only flush their batches. Any retries will fail and be reported as errors.
+                // Flush any remaining batched operations and process retries
                 if (batchProcessor != null)
                 {
                     try
                     {
                         batchProcessor.Flush();
+                        batchProcessor.ProcessRetries();
                     }
                     catch (Exception ex)
                     {
-                        _verboseQueue.Enqueue($"Error flushing batch: {ex.Message}");
+                        _verboseQueue.Enqueue($"Error flushing batch or processing retries: {ex.Message}");
                     }
                     
                     // Count all batched contexts as completed
