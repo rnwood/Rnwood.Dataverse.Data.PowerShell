@@ -218,10 +218,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 (obj) => _outputQueue.Enqueue(obj),
                                 (target) => true); // Always return true - ShouldProcess was already called
                             
-                            // Disable retries in parallel mode to avoid deadlocks
-                            // Retries with shared connections can cause workers to wait indefinitely
-                            workerContext.RetriesRemaining = 0;
-                            
                             // Copy the context data from the original context
                             workerContext.Target = originalContext.Target;
                             workerContext.EntityMetadata = originalContext.EntityMetadata;
@@ -260,48 +256,71 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             }
                             else
                             {
-                                // For non-batched execution, execute requests directly
-                                Guid oldCallerId = workerConnection.CallerId;
-                                try
+                                // For non-batched execution, execute requests directly with retry support
+                                bool success = false;
+                                
+                                while (!success && workerContext.RetriesRemaining >= 0)
                                 {
-                                    if (workerContext.CallerId.HasValue)
+                                    Guid oldCallerId = workerConnection.CallerId;
+                                    try
                                     {
-                                        workerConnection.CallerId = workerContext.CallerId.Value;
-                                    }
-
-                                    // Execute each request and call its completion callback
-                                    for (int i = 0; i < workerContext.Requests.Count; i++)
-                                    {
-                                        var request = workerContext.Requests[i];
-                                        var response = workerConnection.Execute(request);
-
-                                        // Call completion callback for this request
-                                        if (workerContext.ResponseCompletions != null && i < workerContext.ResponseCompletions.Count && workerContext.ResponseCompletions[i] != null)
+                                        if (workerContext.CallerId.HasValue)
                                         {
-                                            workerContext.ResponseCompletions[i](response);
+                                            workerConnection.CallerId = workerContext.CallerId.Value;
+                                        }
+
+                                        // Execute each request and call its completion callback
+                                        for (int i = 0; i < workerContext.Requests.Count; i++)
+                                        {
+                                            var request = workerContext.Requests[i];
+                                            var response = workerConnection.Execute(request);
+
+                                            // Call completion callback for this request
+                                            if (workerContext.ResponseCompletions != null && i < workerContext.ResponseCompletions.Count && workerContext.ResponseCompletions[i] != null)
+                                            {
+                                                workerContext.ResponseCompletions[i](response);
+                                            }
+                                        }
+                                        
+                                        success = true;
+                                        
+                                        int completed = Interlocked.Increment(ref _totalCompletedCount);
+
+                                        // Update progress
+                                        if (_totalQueuedCount > 0)
+                                        {
+                                            int percent = (int)((completed * 100L) / _totalQueuedCount);
+                                            _progressQueue.Enqueue(new ProgressRecord(1, "Setting Records", $"Processed {completed} of {_totalQueuedCount} records")
+                                            {
+                                                PercentComplete = percent,
+                                                RecordType = ProgressRecordType.Processing
+                                            });
                                         }
                                     }
-                                    
-                                    int completed = Interlocked.Increment(ref _totalCompletedCount);
-
-                                    // Update progress
-                                    if (_totalQueuedCount > 0)
+                                    catch (Exception ex)
                                     {
-                                        int percent = (int)((completed * 100L) / _totalQueuedCount);
-                                        _progressQueue.Enqueue(new ProgressRecord(1, "Setting Records", $"Processed {completed} of {_totalQueuedCount} records")
+                                        if (workerContext.RetriesRemaining > 0)
                                         {
-                                            PercentComplete = percent,
-                                            RecordType = ProgressRecordType.Processing
-                                        });
+                                            workerContext.ScheduleRetry(ex);
+                                            
+                                            // Wait for retry delay
+                                            int waitMs = (int)(workerContext.NextRetryTime - DateTime.UtcNow).TotalMilliseconds;
+                                            if (waitMs > 0)
+                                            {
+                                                Thread.Sleep(waitMs);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            // No more retries, queue error and exit loop
+                                            _errorQueue.Enqueue(new ErrorRecord(ex, null, ErrorCategory.InvalidOperation, originalContext.InputObject));
+                                            break;
+                                        }
                                     }
-                                }
-                                catch (Exception ex)
-                                {
-                                    _errorQueue.Enqueue(new ErrorRecord(ex, null, ErrorCategory.InvalidOperation, originalContext.InputObject));
-                                }
-                                finally
-                                {
-                                    workerConnection.CallerId = oldCallerId;
+                                    finally
+                                    {
+                                        workerConnection.CallerId = oldCallerId;
+                                    }
                                 }
                             }
                         }
@@ -322,19 +341,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
 
-                // Flush any remaining batched operations
-                // NOTE: Do NOT call ProcessRetries() here - retries in parallel mode can cause deadlocks
-                // when multiple workers share the same connection (e.g., mock connections).
-                // Workers should only flush their batches. Any retries will fail and be reported as errors.
+                // Flush any remaining batched operations and process retries
                 if (batchProcessor != null)
                 {
                     try
                     {
                         batchProcessor.Flush();
+                        batchProcessor.ProcessRetries();
                     }
                     catch (Exception ex)
                     {
-                        _verboseQueue.Enqueue($"Error flushing batch: {ex.Message}");
+                        _verboseQueue.Enqueue($"Error flushing batch or processing retries: {ex.Message}");
                     }
                     
                     // Count all batched contexts as completed

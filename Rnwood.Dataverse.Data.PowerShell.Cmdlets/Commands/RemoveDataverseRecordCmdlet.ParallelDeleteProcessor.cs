@@ -217,35 +217,78 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             }
                             else
                             {
-                                // For non-batched execution, we need to execute the request directly
-                                // In parallel mode, we don't call ShouldProcess from the worker thread
-                                try
+                                // For non-batched execution, execute request directly with retry support
+                                bool success = false;
+                                
+                                while (!success && workerContext.RetriesRemaining >= 0)
                                 {
-                                    workerConnection.Execute(workerContext.Request);
-                                    _verboseQueue.Enqueue(string.Format("Deleted record {0}:{1}", workerContext.TableName, workerContext.Id));
-                                    
-                                    int completed = Interlocked.Increment(ref _totalCompletedCount);
+                                    try
+                                    {
+                                        workerConnection.Execute(workerContext.Request);
+                                        _verboseQueue.Enqueue(string.Format("Deleted record {0}:{1}", workerContext.TableName, workerContext.Id));
+                                        
+                                        success = true;
+                                        
+                                        int completed = Interlocked.Increment(ref _totalCompletedCount);
 
-                                    // Update progress
-                                    if (_totalQueuedCount > 0)
-                                    {
-                                        int percent = (int)((completed * 100L) / _totalQueuedCount);
-                                        _progressQueue.Enqueue(new ProgressRecord(1, "Deleting Records", $"Deleted {completed} of {_totalQueuedCount} records")
+                                        // Update progress
+                                        if (_totalQueuedCount > 0)
                                         {
-                                            PercentComplete = percent,
-                                            RecordType = ProgressRecordType.Processing
-                                        });
+                                            int percent = (int)((completed * 100L) / _totalQueuedCount);
+                                            _progressQueue.Enqueue(new ProgressRecord(1, "Deleting Records", $"Deleted {completed} of {_totalQueuedCount} records")
+                                            {
+                                                PercentComplete = percent,
+                                                RecordType = ProgressRecordType.Processing
+                                            });
+                                        }
                                     }
-                                }
-                                catch (System.ServiceModel.FaultException ex)
-                                {
-                                    if (workerContext.IfExists && ex.HResult == -2147220969)
+                                    catch (System.ServiceModel.FaultException ex)
                                     {
-                                        _verboseQueue.Enqueue(string.Format("Record {0}:{1} was not present", workerContext.TableName, workerContext.Id));
+                                        if (workerContext.IfExists && ex.HResult == -2147220969)
+                                        {
+                                            _verboseQueue.Enqueue(string.Format("Record {0}:{1} was not present", workerContext.TableName, workerContext.Id));
+                                            success = true; // Not an error, record wasn't there
+                                        }
+                                        else
+                                        {
+                                            if (workerContext.RetriesRemaining > 0)
+                                            {
+                                                workerContext.ScheduleRetry(ex);
+                                                
+                                                // Wait for retry delay
+                                                int waitMs = (int)(workerContext.NextRetryTime - DateTime.UtcNow).TotalMilliseconds;
+                                                if (waitMs > 0)
+                                                {
+                                                    Thread.Sleep(waitMs);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                // No more retries, queue error and exit loop
+                                                _errorQueue.Enqueue(new ErrorRecord(ex, null, ErrorCategory.InvalidOperation, originalContext.InputObject));
+                                                break;
+                                            }
+                                        }
                                     }
-                                    else
+                                    catch (Exception ex)
                                     {
-                                        throw;
+                                        if (workerContext.RetriesRemaining > 0)
+                                        {
+                                            workerContext.ScheduleRetry(ex);
+                                            
+                                            // Wait for retry delay
+                                            int waitMs = (int)(workerContext.NextRetryTime - DateTime.UtcNow).TotalMilliseconds;
+                                            if (waitMs > 0)
+                                            {
+                                                Thread.Sleep(waitMs);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            // No more retries, queue error and exit loop
+                                            _errorQueue.Enqueue(new ErrorRecord(ex, null, ErrorCategory.InvalidOperation, originalContext.InputObject));
+                                            break;
+                                        }
                                     }
                                 }
                             }

@@ -174,37 +174,41 @@ Describe "Set-DataverseRecord Parallel Processing" {
     }
 
     Context "Parallel Processing Limitations" {
-        It "Does not retry in parallel mode - failures are reported immediately" {
-            # NOTE: Retries are not supported in parallel mode to avoid deadlocks when workers
-            # share connections. This test verifies that failures are reported as errors immediately.
+        It "Retries in parallel mode with batching - transient failures are retried" {
+            # NOTE: Retries are now supported in parallel mode when batching is enabled (BatchSize > 1).
+            # Each worker has its own batch processor that handles retries independently.
             
-            # Set up interceptor to fail first attempt only (using non-batched Delete to avoid ExecuteMultiple complexity)
-            $state = [PSCustomObject]@{ FailCount = 0 }
+            # Set up interceptor to fail first batch attempt
+            $state = [PSCustomObject]@{ FailCount = 0; CreateCount = 0 }
             $interceptor = {
                 param($request)
-                if ($request -is [Microsoft.Xrm.Sdk.Messages.CreateRequest]) {
+                if ($request -is [Microsoft.Xrm.Sdk.Messages.ExecuteMultipleRequest]) {
+                    $state.CreateCount += $request.Requests.Count
                     if ($state.FailCount -lt 1) {
                         $state.FailCount++
-                        throw [Exception]::new("Simulated failure")
+                        throw [Exception]::new("Simulated transient failure")
                     }
                 }
             }.GetNewClosure()
             $connection = getMockConnection -RequestInterceptor $interceptor
             
-            # Try to create records with retry enabled and BatchSize=1 (no batching)
+            # Try to create records with retry enabled and BatchSize > 1 (batching enabled)
             $records = @(
                 @{ firstname = "John1"; lastname = "Doe1" },
                 @{ firstname = "John2"; lastname = "Doe2" }
             )
             $errors = @()
-            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru -Retries 5 -InitialRetryDelay 1 -MaxDegreeOfParallelism 2 -BatchSize 1 -ErrorVariable errors -ErrorAction SilentlyContinue
+            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru -Retries 5 -InitialRetryDelay 1 -MaxDegreeOfParallelism 2 -BatchSize 10 -ErrorVariable errors -ErrorAction SilentlyContinue
 
-            # Should get errors for failed create (no retry in parallel mode)
-            $errors.Count | Should -BeGreaterThan 0
+            # Should succeed after retry - no errors expected
+            $errors.Count | Should -Be 0
             
-            # Verify the interceptor was only called once (no retries)
-            # If retries were working, it would be called multiple times
-            $state.FailCount | Should -Be 1
+            # Verify the interceptor was called multiple times (initial + retries)
+            # We expect at least 2 calls: one failure + one success on retry
+            $state.CreateCount | Should -BeGreaterOrEqual 2
+            
+            # Verify both records were created
+            $created.Count | Should -Be 2
         }
     }
 
