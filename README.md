@@ -1189,7 +1189,17 @@ For operations that cannot be safely retried, consider using smaller batch sizes
 
 When processing many records you can use parallelism to reduce elapsed time. Use parallelism when network latency or per-request processing dominates total time, but be careful to avoid overwhelming the Dataverse service (throttling).
 
-**Recommended: Use [`Invoke-DataverseParallel`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseParallel.md)** — This module provides a built-in cmdlet that handles connection cloning, chunking, and parallel execution for you. It works on both PowerShell 5.1 and PowerShell 7+.
+**For single-step operations (create/update/delete):** Use the built-in `-MaxDegreeOfParallelism` parameter on `Remove-DataverseRecord`. This provides a simple way to parallelize single operations without additional complexity.
+
+Example with `Remove-DataverseRecord`:
+
+```powershell
+# Delete records in parallel using 4 workers
+$records = Get-DataverseRecord -Connection $c -TableName contact -Filter @{ status = 'inactive' }
+$records | Remove-DataverseRecord -Connection $c -MaxDegreeOfParallelism 4 -Verbose
+```
+
+**For multi-step workflows or complex operations:** Use [`Invoke-DataverseParallel`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseParallel.md) when you need to perform multiple operations on each record or execute custom PowerShell logic in parallel. This cmdlet handles connection cloning, chunking, and parallel execution for you. It works on both PowerShell 5.1 and PowerShell 7+.
 
 Example with `Invoke-DataverseParallel`:
 

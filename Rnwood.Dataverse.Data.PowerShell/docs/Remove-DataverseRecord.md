@@ -16,8 +16,8 @@ Deletes an existing Dataverse record, including M:M association records.
 Remove-DataverseRecord [-InputObject <PSObject>] -TableName <String> [-Id <Guid>] [-MatchOn <String[][]>]
  [-AllowMultipleMatches] [-BatchSize <UInt32>] [-RetrievalBatchSize <UInt32>] [-IfExists]
  [-BypassBusinessLogicExecution <BusinessLogicTypes[]>] [-BypassBusinessLogicExecutionStepIds <Guid[]>]
- [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-MaxDegreeOfParallelism <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -34,6 +34,16 @@ When using `-MatchOn`, if multiple records match the criteria, an error is raise
 **Batch Operations:**
 
 When multiple records are deleted, batching is automatically used to improve performance. The batch continues on error and any errors are reported once the batch has completed. Each error includes the input record for correlation.
+
+**Parallel Processing:**
+
+For large delete operations, parallel processing can significantly improve performance by processing records concurrently using multiple connections:
+- Use `-MaxDegreeOfParallelism` parameter to specify the number of parallel operations (default is 1 - parallel processing disabled)
+- When set to a value greater than 1, records are distributed across parallel worker tasks
+- Each parallel worker uses its own cloned connection to avoid contention
+- Batching is still applied within each parallel worker for optimal throughput
+- Progress is reported showing the total number of records processed
+- Works best with large datasets where network latency is a bottleneck
 
 **Retry Logic:**
 
@@ -183,6 +193,27 @@ PS C:\> $record | Remove-DataverseRecord -Connection $c -TableName contact -Matc
 ```
 
 Attempts to match first on emailaddress1, then falls back to matching on firstname+lastname if no email match is found. Uses the first matching set that returns records.
+
+### Example 13: Delete large dataset with parallel processing
+```powershell
+PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -Filter @{ lastname = "TestUser" }
+
+PS C:\> # Delete using 4 parallel workers for improved performance
+PS C:\> $recordsToDelete | Remove-DataverseRecord -Connection $c -MaxDegreeOfParallelism 4 -Verbose
+```
+
+Deletes multiple contact records using parallel processing with 4 concurrent workers. Each worker processes records in batches using its own cloned connection. Parallel processing is most effective for large datasets where network latency is a bottleneck. The `-Verbose` flag shows worker task creation and progress updates.
+
+### Example 14: Combine parallel processing with batching for maximum throughput
+```powershell
+PS C:\> # Get large dataset of records to delete
+PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName account -Filter @{ statuscode = 2 }
+
+PS C:\> # Delete using 8 parallel workers, each using batch size of 200
+PS C:\> $recordsToDelete | Remove-DataverseRecord -Connection $c -MaxDegreeOfParallelism 8 -BatchSize 200 -Verbose
+```
+
+Combines parallel processing with large batch sizes for maximum throughput when deleting thousands of records. Uses 8 parallel workers, each processing records in batches of 200. This configuration is optimal for very large delete operations where both network latency and API throughput are concerns.
 
 ## PARAMETERS
 
@@ -359,6 +390,31 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MaxDegreeOfParallelism
+Maximum number of parallel delete operations. Default is 1 (parallel processing disabled).
+
+When set to a value greater than 1, records are processed in parallel using multiple connections. Each parallel worker uses its own cloned connection and can process records in batches for optimal throughput. Parallel processing is most effective for large datasets where network latency is a bottleneck.
+
+Recommended values:
+- 1 (default): Sequential processing - use for small datasets or when order matters
+- 2-4: Moderate parallelism - good balance for most scenarios
+- 4-8: High parallelism - for very large datasets with good network connectivity
+- Environment.ProcessorCount: Maximum parallelism - only use with very large datasets and robust network
+
+Note: Parallel processing requires connection cloning support. Mock connections that don't support cloning will fall back to using a shared connection.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 1
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

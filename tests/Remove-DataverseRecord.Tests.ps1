@@ -245,4 +245,93 @@ Describe "Remove-DataverseRecord" {
             $remaining.Count | Should -Be 2
         }
     }
+
+    Context "Parallel Processing" {
+        It "Processes deletes in parallel with MaxDegreeOfParallelism > 1" {
+            $connection = getMockConnection
+            
+            # Create test records
+            $records = 1..10 | ForEach-Object {
+                @{ firstname = "Test$_"; lastname = "User$_" }
+            }
+            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -PassThru -verbose
+            $created.Count | Should -Be 10
+
+            # Delete with parallel processing
+            $created | Remove-DataverseRecord -Connection $connection -TableName contact -MaxDegreeOfParallelism 2 -verbose
+
+            # Verify all deleted
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -verbose
+            $remaining.Count | Should -Be 0
+        }
+
+        It "Works with MaxDegreeOfParallelism 1 (sequential)" {
+            $connection = getMockConnection
+            
+            # Create test records
+            $records = 1..5 | ForEach-Object {
+                @{ firstname = "Test$_"; lastname = "User$_" }
+            }
+            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -PassThru
+            $created.Count | Should -Be 5
+
+            # Delete with MaxDegreeOfParallelism 1 (should behave like normal batching)
+            $created | Remove-DataverseRecord -Connection $connection -TableName contact -MaxDegreeOfParallelism 1
+
+            # Verify all deleted
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining.Count | Should -Be 0
+        }
+
+        It "Combines parallel processing with batching" {
+            $connection = getMockConnection
+            
+            # Create test records
+            $records = 1..20 | ForEach-Object {
+                @{ firstname = "Test$_"; lastname = "User$_" }
+            }
+            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -PassThru
+            $created.Count | Should -Be 20
+
+            # Delete with parallel processing and small batch size
+            $created | Remove-DataverseRecord -Connection $connection -TableName contact -MaxDegreeOfParallelism 3 -BatchSize 5 -verbose
+
+            # Verify all deleted
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining.Count | Should -Be 0
+        }
+
+        It "Handles errors in parallel processing" {
+            # Set up interceptor to fail some delete operations
+            $state = [PSCustomObject]@{ CallCount = 0 }
+            $interceptor = {
+                param($request)
+                if ($request -is [Microsoft.Xrm.Sdk.Messages.DeleteRequest]) {
+                    $state.CallCount++
+                    # Fail every 3rd delete request
+                    if ($state.CallCount % 3 -eq 0) {
+                        throw [Exception]::new("Simulated delete failure")
+                    }
+                }
+            }.GetNewClosure()
+            $connection = getMockConnection -RequestInterceptor $interceptor
+            
+            # Create test records
+            $records = 1..9 | ForEach-Object {
+                @{ firstname = "Test$_"; lastname = "User$_" }
+            }
+            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -PassThru
+
+            # Delete with parallel processing - some will fail
+            $errors = @()
+            $created | Remove-DataverseRecord -Connection $connection -TableName contact -MaxDegreeOfParallelism 2 -BatchSize 1 -ErrorVariable errors -ErrorAction SilentlyContinue -verbose
+
+            # Should have some errors (every 3rd record fails)
+            $errors.Count | Should -BeGreaterThan 0
+            
+            # Should have deleted some records (not all failed)
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining.Count | Should -BeLessThan 9
+        }
+    }
 }
