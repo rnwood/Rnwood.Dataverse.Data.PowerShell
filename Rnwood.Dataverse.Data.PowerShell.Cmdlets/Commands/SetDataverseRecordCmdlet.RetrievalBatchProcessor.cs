@@ -239,8 +239,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (waitTime > 0)
                     {
+                        // Write verbose message once and sleep for the full duration
                         _writeVerbose($"Waiting {waitTime:F0}s for next retry...");
-                        Thread.Sleep((int)waitTime * 1000);
+                        
+                        // Sleep for the full wait time, checking stopping condition periodically
+                        int waitTimeMs = (int)(waitTime * 1000);
+                        int sleptMs = 0;
+                        while (sleptMs < waitTimeMs && !_isStopping())
+                        {
+                            int sleepChunkMs = Math.Min(100, waitTimeMs - sleptMs);
+                            Thread.Sleep(sleepChunkMs);
+                            sleptMs += sleepChunkMs;
+                        }
                     }
 
                     continue;
