@@ -219,7 +219,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             {
                                 // For non-batched execution, execute request directly with retry support
                                 bool success = false;
-                                Exception lastException = null;
                                 
                                 while (!success && workerContext.RetriesRemaining >= 0)
                                 {
@@ -252,8 +251,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                         }
                                         else
                                         {
-                                            lastException = ex;
-                                            
                                             if (workerContext.RetriesRemaining > 0)
                                             {
                                                 workerContext.ScheduleRetry(ex);
@@ -267,15 +264,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                             }
                                             else
                                             {
-                                                // No more retries, queue error
+                                                // No more retries, queue error and exit loop
                                                 _errorQueue.Enqueue(new ErrorRecord(ex, null, ErrorCategory.InvalidOperation, originalContext.InputObject));
+                                                break;
                                             }
                                         }
                                     }
                                     catch (Exception ex)
                                     {
-                                        lastException = ex;
-                                        
                                         if (workerContext.RetriesRemaining > 0)
                                         {
                                             workerContext.ScheduleRetry(ex);
@@ -289,8 +285,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                         }
                                         else
                                         {
-                                            // No more retries, queue error
+                                            // No more retries, queue error and exit loop
                                             _errorQueue.Enqueue(new ErrorRecord(ex, null, ErrorCategory.InvalidOperation, originalContext.InputObject));
+                                            break;
                                         }
                                     }
                                 }

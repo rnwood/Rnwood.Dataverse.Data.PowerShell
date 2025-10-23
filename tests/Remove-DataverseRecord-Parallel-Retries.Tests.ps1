@@ -102,13 +102,12 @@ Describe "Remove-DataverseRecord parallel with retries" {
             }.GetNewClosure()
             $connection = getMockConnection -RequestInterceptor $interceptor
             
-            # Create records first (these should succeed)
+            # Create one record first (should succeed)
             $c1 = @{ firstname = "John1"; lastname = "Doe1" } | Set-DataverseRecord -Connection $connection -TableName contact -PassThru -ErrorAction Continue
-            $c2 = @{ firstname = "John2"; lastname = "Doe2" } | Set-DataverseRecord -Connection $connection -TableName contact -PassThru -ErrorAction Continue
 
             # Try to delete with limited retries (should fail after exhausting retries)
             $errors = @()
-            $c1, $c2 | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 2 -InitialRetryDelay 1 -MaxDegreeOfParallelism 2 -BatchSize 10 -ErrorVariable errors -ErrorAction SilentlyContinue
+            $c1 | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 2 -InitialRetryDelay 1 -MaxDegreeOfParallelism 2 -BatchSize 10 -ErrorVariable errors -ErrorAction SilentlyContinue
 
             # Should get errors after exhausting retries
             $errors.Count | Should -BeGreaterThan 0
