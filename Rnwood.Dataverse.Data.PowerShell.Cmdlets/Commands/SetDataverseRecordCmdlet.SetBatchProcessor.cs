@@ -97,8 +97,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var nextRetryTime = _pendingRetries.Min(r => r.NextRetryTime);
                     var waitTimeMs = (int)Math.Max(100, (nextRetryTime - now).TotalMilliseconds);
 
+                    // Write verbose message once and sleep for the full duration
                     _writeVerbose($"Waiting {waitTimeMs / 1000.0:F1}s for next retry batch...");
-                    Thread.Sleep(waitTimeMs);
+                    
+                    // Sleep for the full wait time, checking cancellation periodically
+                    int sleptMs = 0;
+                    while (sleptMs < waitTimeMs && !_isStopping() && !_cancellationToken.IsCancellationRequested)
+                    {
+                        int sleepChunkMs = Math.Min(100, waitTimeMs - sleptMs);
+                        Thread.Sleep(sleepChunkMs);
+                        sleptMs += sleepChunkMs;
+                    }
 
                     continue;
                 }
