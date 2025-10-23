@@ -18,8 +18,8 @@ Set-DataverseRecord -InputObject <PSObject> -TableName <String> [-BatchSize <UIn
  [-AllowMultipleMatches] [-PassThru] [-NoUpdate] [-NoCreate] [-NoUpdateColumns <String[]>] [-CallerId <Guid>]
  [-UpdateAllColumns] [-CreateOnly] [-Upsert] [-LookupColumns <Hashtable>]
  [-BypassBusinessLogicExecution <BusinessLogicTypes[]>] [-BypassBusinessLogicExecutionStepIds <Guid[]>]
- [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-MaxDegreeOfParallelism <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -71,7 +71,21 @@ Individual batch items can be automatically retried on failure using exponential
 - After all retries are exhausted, failures are written as errors as usual
 - Retries are particularly useful for transient errors like throttling or temporary connectivity issues
 
-How Create vs Update is Determined:
+**Parallel Processing:**
+
+For maximum throughput when processing large numbers of records, you can enable parallel processing:
+- Use `-MaxDegreeOfParallelism` parameter to specify the number of parallel worker threads (default is 1 - parallel processing disabled)
+- Each worker processes records concurrently using its own cloned connection to Dataverse
+- Parallel processing can be combined with batching for even better performance
+- When set to a value greater than 1, records are distributed across multiple workers
+- Each worker maintains its own batch queue when `-BatchSize` > 1
+- Progress is tracked and reported across all workers
+- All output types (Verbose, Error, Progress, PassThru) work correctly in parallel mode
+- Note: With mock connections that don't support cloning, workers share the same connection (may have reduced parallelism)
+
+See Example 20 and Example 21 in the EXAMPLES section for usage demonstrations.
+
+**How Create vs Update is Determined:**
 
 The cmdlet follows this decision logic for each record:
 
@@ -409,7 +423,38 @@ PS C:\> $largeDataset | Set-DataverseRecord -Connection $c -TableName account -R
 
 Processes a large dataset with automatic retry configured for rate limiting scenarios. Uses 5 retry attempts with an initial 2-second delay, doubling on each retry (2s, 4s, 8s, 16s, 32s).
 
-### Example 20: Update multiple matching records with AllowMultipleMatches
+### Example 20: Process records in parallel for maximum throughput
+```powershell
+PS C:\> # Create 10,000 records with 4 parallel workers and batches of 100
+PS C:\> $records = 1..10000 | ForEach-Object {
+    @{ 
+        firstname = "User$_"
+        lastname = "Parallel"
+        emailaddress1 = "user$_@example.com" 
+    }
+}
+
+PS C:\> $records | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -MaxDegreeOfParallelism 4 -BatchSize 100 -Verbose
+```
+
+Processes 10,000 records using 4 parallel worker threads. Each worker maintains its own batch of 100 records. This results in multiple ExecuteMultipleRequest operations running concurrently for maximum throughput. The `-Verbose` flag shows worker activity and progress across all threads.
+
+### Example 21: Parallel updates with MatchOn
+```powershell
+PS C:\> # Update records in parallel by email address
+PS C:\> $updates = 1..1000 | ForEach-Object {
+    @{ 
+        emailaddress1 = "user$_@example.com"
+        telephone1 = "555-$_"
+    }
+}
+
+PS C:\> $updates | Set-DataverseRecord -Connection $c -TableName contact -MatchOn emailaddress1 -MaxDegreeOfParallelism 3 -BatchSize 50
+```
+
+Updates 1000 existing contacts in parallel using email address as the match key. Uses 3 workers with batch size of 50 for optimal performance.
+
+### Example 22: Update multiple matching records with AllowMultipleMatches
 ```powershell
 PS C:\> # Update all contacts with a specific last name
 PS C:\> @{ 
@@ -645,6 +690,31 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MaxDegreeOfParallelism
+Maximum number of parallel set operations. Default is 1 (parallel processing disabled).
+When set to a value greater than 1, records are processed in parallel using multiple connections.
+
+Each worker thread processes records concurrently with its own cloned connection to Dataverse.
+Parallel processing can be combined with batching (`-BatchSize` > 1) for even better performance.
+Progress, errors, and verbose output are all handled thread-safely.
+
+Example: Process 1000 records with 4 workers and batches of 100:
+
+
+$records | Set-DataverseRecord -Connection $conn -TableName contact -CreateOnly -MaxDegreeOfParallelism 4 -BatchSize 100
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 1
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

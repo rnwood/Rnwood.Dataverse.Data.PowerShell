@@ -144,6 +144,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "Initial delay in seconds before first retry. Subsequent retries use exponential backoff. Default is 5s.")]
         public int InitialRetryDelay { get; set; } = 5;
 
+        /// <summary>
+        /// Maximum number of parallel set operations. Default is 1 (parallel processing disabled).
+        /// When set to a value greater than 1, records are processed in parallel using multiple connections.
+        /// </summary>
+        [Parameter(HelpMessage = "Maximum number of parallel set operations. Default is 1 (parallel processing disabled). When set to a value greater than 1, records are processed in parallel using multiple connections.")]
+        public int MaxDegreeOfParallelism { get; set; } = 1;
+
         // Explicit interface implementations for ISetOperationParameters
         bool ISetOperationParameters.NoUpdate => NoUpdate.IsPresent;
         bool ISetOperationParameters.NoCreate => NoCreate.IsPresent;
@@ -162,6 +169,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private SetBatchProcessor _setBatchProcessor;
         private RetrievalBatchProcessor _retrievalBatchProcessor;
+        private ParallelSetProcessor _parallelProcessor;
         private CancellationTokenSource _userCancellationCts;
 
         /// <summary>
@@ -193,7 +201,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 MatchOn,
                 AllowMultipleMatches.IsPresent);
 
-            if (BatchSize > 1)
+            if (MaxDegreeOfParallelism > 1)
+            {
+                // Use parallel processing
+                _parallelProcessor = new ParallelSetProcessor(
+                    MaxDegreeOfParallelism,
+                    BatchSize,
+                    Connection,
+                    WriteVerbose,
+                    WriteError,
+                    WriteProgress,
+                    WriteObject,
+                    ShouldProcess,
+                    () => Stopping,
+                    _userCancellationCts.Token,
+                    callerId => Connection.CallerId = callerId.GetValueOrDefault(),
+                    () => Connection.CallerId);
+            }
+            else if (BatchSize > 1)
             {
                 // Initialize the batch processor
                 _setBatchProcessor = new SetBatchProcessor(
@@ -226,22 +251,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 _retrievalBatchProcessor.ProcessQueuedRecords(ProcessRecordWithExistingRecord);
             }
 
-            // Flush batch processor if it was used
-            if (_setBatchProcessor != null)
+            // Wait for parallel processing to complete if it was used
+            if (_parallelProcessor != null)
             {
-                _setBatchProcessor.Flush();
+                _parallelProcessor.WaitForCompletion();
             }
-
-            // Process any pending retries (both batch and retrieval retries)
-            if (_setBatchProcessor != null)
+            else if (_setBatchProcessor != null)
             {
+                // Flush batch processor if it was used
+                _setBatchProcessor.Flush();
+
+                // Process any pending retries
                 _setBatchProcessor.ProcessRetries();
             }
+
+            // Process any pending retrieval retries
             if (_retrievalBatchProcessor != null && _retrievalBatchProcessor.PendingRetryCount > 0)
             {
                 _retrievalBatchProcessor.ProcessRetries(
                     ProcessSingleRecord,
-                    () => { if (_setBatchProcessor != null) _setBatchProcessor.Flush(); });
+                    () => 
+                    { 
+                        if (_parallelProcessor != null)
+                        {
+                            _parallelProcessor.WaitForCompletion();
+                        }
+                        else if (_setBatchProcessor != null)
+                        {
+                            _setBatchProcessor.Flush();
+                        }
+                    });
             }
 
             // Cleanup cancellation token source
@@ -465,8 +504,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return result;
             }
 
-            // Queue for batch processing if available, otherwise execute immediately
-            if (_setBatchProcessor != null)
+            // Queue for parallel or batch processing if available, otherwise execute immediately
+            if (_parallelProcessor != null)
+            {
+                WriteVerbose(string.Format("Queued upsert of {0}:{1} for parallel processing", tableName, context.Target.Id));
+                _parallelProcessor.QueueOperation(context);
+            }
+            else if (_setBatchProcessor != null)
             {
                 _setBatchProcessor.QueueOperation(context);
             }
@@ -553,8 +597,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
-            // Queue for batch processing if available, otherwise execute immediately
-            if (_setBatchProcessor != null)
+            // Queue for parallel or batch processing if available, otherwise execute immediately
+            if (_parallelProcessor != null)
+            {
+                WriteVerbose(string.Format("Queued create of {0}:{1} for parallel processing", tableName, context.Target.Id));
+                _parallelProcessor.QueueOperation(context);
+            }
+            else if (_setBatchProcessor != null)
             {
                 _setBatchProcessor.QueueOperation(context);
             }
@@ -625,8 +674,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
-            // Queue for batch processing if available, otherwise execute immediately
-            if (_setBatchProcessor != null)
+            // Queue for parallel or batch processing if available, otherwise execute immediately
+            if (_parallelProcessor != null)
+            {
+                WriteVerbose(string.Format("Queued update of {0}:{1} for parallel processing", tableName, existingRecord.Id));
+                _parallelProcessor.QueueOperation(context);
+            }
+            else if (_setBatchProcessor != null)
             {
                 _setBatchProcessor.QueueOperation(context);
             }
@@ -710,7 +764,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     };
                     ApplyBypassBusinessLogicExecution(request);
 
-                    if (_setBatchProcessor != null)
+                    if (_parallelProcessor != null)
+                    {
+                        // Create context for this assign operation
+                        var assignContext = new SetOperationContext(inputObject, tableName, callerId, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
+                        assignContext.Target = target;
+                        assignContext.Requests.Add(request);
+                        assignContext.ResponseCompletion = (response) => { 
+                            WriteVerbose(string.Format("Record {0}:{1} assigned to {2}", target.LogicalName, target.Id, ownerid.Name));
+                        };
+                        
+                        WriteVerbose(string.Format("Queued assignment of record {0}:{1} to {2} for parallel processing", TableName, target.Id, ownerid.Name));
+                        _parallelProcessor.QueueOperation(assignContext);
+                    }
+                    else if (_setBatchProcessor != null)
                     {
                         // Create context for this assign operation
                         var assignContext = new SetOperationContext(inputObject, tableName, callerId, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
@@ -764,7 +831,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     };
                     ApplyBypassBusinessLogicExecution(request);
 
-                    if (_setBatchProcessor != null)
+                    if (_parallelProcessor != null)
+                    {
+                        // Create context for this setstate operation
+                        var setStateContext = new SetOperationContext(inputObject, tableName, callerId, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
+                        setStateContext.Target = target;
+                        setStateContext.Requests.Add(request);
+                        setStateContext.ResponseCompletion = (response) => { 
+                            WriteVerbose(string.Format("Record {0}:{1} status set to State:{2} Status: {3}", target.LogicalName, target.Id, stateCode.Value, statuscode.Value));
+                        };
+                        
+                        WriteVerbose(string.Format("Queued set record {0}:{1} status to State:{2} Status: {3} for parallel processing", TableName, Id, stateCode.Value, statuscode.Value));
+                        _parallelProcessor.QueueOperation(setStateContext);
+                    }
+                    else if (_setBatchProcessor != null)
                     {
                         // Create context for this setstate operation
                         var setStateContext = new SetOperationContext(inputObject, tableName, callerId, this, entityMetadataFactory, entityConverter, Connection, GetConversionOptions(), WriteVerbose, WriteError, WriteObject, ShouldProcess);
