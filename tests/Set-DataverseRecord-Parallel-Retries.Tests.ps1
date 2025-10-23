@@ -42,7 +42,7 @@ Describe "Set-DataverseRecord parallel with retries" {
         }
 
         It "Retries failed operations in parallel mode without batching" {
-            # Test with BatchSize=1 to test non-batched parallel execution
+            # Test with BatchSize=1 to test non-batched parallel execution with retries
             $state = [PSCustomObject]@{ 
                 FailCount = 0
                 CreateCount = 0
@@ -51,8 +51,8 @@ Describe "Set-DataverseRecord parallel with retries" {
                 param($request)
                 if ($request -is [Microsoft.Xrm.Sdk.Messages.CreateRequest]) {
                     $state.CreateCount++
-                    # Fail first create only
-                    if ($state.FailCount -eq 0) {
+                    # Fail first 2 attempts, succeed on 3rd
+                    if ($state.FailCount -lt 2) {
                         $state.FailCount++
                         throw [Exception]::new("Simulated transient failure")
                     }
@@ -60,18 +60,20 @@ Describe "Set-DataverseRecord parallel with retries" {
             }.GetNewClosure()
             $connection = getMockConnection -RequestInterceptor $interceptor
             
-            # Create records with retry enabled and parallel processing, no batching
+            # Create a single record with retry enabled and parallel processing, no batching
             $records = @(
-                @{ firstname = "John1"; lastname = "Doe1" },
-                @{ firstname = "John2"; lastname = "Doe2" }
+                @{ firstname = "John1"; lastname = "Doe1" }
             )
             $errors = @()
-            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru -Retries 2 -InitialRetryDelay 1 -MaxDegreeOfParallelism 2 -BatchSize 1 -ErrorVariable errors -ErrorAction SilentlyContinue
+            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru -Retries 3 -InitialRetryDelay 1 -MaxDegreeOfParallelism 2 -BatchSize 1 -ErrorVariable errors -ErrorAction SilentlyContinue
 
-            # One should succeed, one might fail (since we only fail the first one)
-            # The exact behavior depends on which worker gets the first request
-            $state.FailCount | Should -Be 1
-            $state.CreateCount | Should -BeGreaterOrEqual 2
+            # Should succeed after retries
+            $errors.Count | Should -Be 0
+            $created.Count | Should -Be 1
+            
+            # Verify retries happened (2 failures + 1 success = 3 attempts)
+            $state.FailCount | Should -Be 2
+            $state.CreateCount | Should -Be 3
         }
 
         It "Exhausts retries and reports error in parallel mode" {

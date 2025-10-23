@@ -256,48 +256,73 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             }
                             else
                             {
-                                // For non-batched execution, execute requests directly
-                                Guid oldCallerId = workerConnection.CallerId;
-                                try
+                                // For non-batched execution, execute requests directly with retry support
+                                bool success = false;
+                                Exception lastException = null;
+                                
+                                while (!success && workerContext.RetriesRemaining >= 0)
                                 {
-                                    if (workerContext.CallerId.HasValue)
+                                    Guid oldCallerId = workerConnection.CallerId;
+                                    try
                                     {
-                                        workerConnection.CallerId = workerContext.CallerId.Value;
-                                    }
-
-                                    // Execute each request and call its completion callback
-                                    for (int i = 0; i < workerContext.Requests.Count; i++)
-                                    {
-                                        var request = workerContext.Requests[i];
-                                        var response = workerConnection.Execute(request);
-
-                                        // Call completion callback for this request
-                                        if (workerContext.ResponseCompletions != null && i < workerContext.ResponseCompletions.Count && workerContext.ResponseCompletions[i] != null)
+                                        if (workerContext.CallerId.HasValue)
                                         {
-                                            workerContext.ResponseCompletions[i](response);
+                                            workerConnection.CallerId = workerContext.CallerId.Value;
+                                        }
+
+                                        // Execute each request and call its completion callback
+                                        for (int i = 0; i < workerContext.Requests.Count; i++)
+                                        {
+                                            var request = workerContext.Requests[i];
+                                            var response = workerConnection.Execute(request);
+
+                                            // Call completion callback for this request
+                                            if (workerContext.ResponseCompletions != null && i < workerContext.ResponseCompletions.Count && workerContext.ResponseCompletions[i] != null)
+                                            {
+                                                workerContext.ResponseCompletions[i](response);
+                                            }
+                                        }
+                                        
+                                        success = true;
+                                        
+                                        int completed = Interlocked.Increment(ref _totalCompletedCount);
+
+                                        // Update progress
+                                        if (_totalQueuedCount > 0)
+                                        {
+                                            int percent = (int)((completed * 100L) / _totalQueuedCount);
+                                            _progressQueue.Enqueue(new ProgressRecord(1, "Setting Records", $"Processed {completed} of {_totalQueuedCount} records")
+                                            {
+                                                PercentComplete = percent,
+                                                RecordType = ProgressRecordType.Processing
+                                            });
                                         }
                                     }
-                                    
-                                    int completed = Interlocked.Increment(ref _totalCompletedCount);
-
-                                    // Update progress
-                                    if (_totalQueuedCount > 0)
+                                    catch (Exception ex)
                                     {
-                                        int percent = (int)((completed * 100L) / _totalQueuedCount);
-                                        _progressQueue.Enqueue(new ProgressRecord(1, "Setting Records", $"Processed {completed} of {_totalQueuedCount} records")
+                                        lastException = ex;
+                                        
+                                        if (workerContext.RetriesRemaining > 0)
                                         {
-                                            PercentComplete = percent,
-                                            RecordType = ProgressRecordType.Processing
-                                        });
+                                            workerContext.ScheduleRetry(ex);
+                                            
+                                            // Wait for retry delay
+                                            int waitMs = (int)(workerContext.NextRetryTime - DateTime.UtcNow).TotalMilliseconds;
+                                            if (waitMs > 0)
+                                            {
+                                                Thread.Sleep(waitMs);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            // No more retries, queue error
+                                            _errorQueue.Enqueue(new ErrorRecord(ex, null, ErrorCategory.InvalidOperation, originalContext.InputObject));
+                                        }
                                     }
-                                }
-                                catch (Exception ex)
-                                {
-                                    _errorQueue.Enqueue(new ErrorRecord(ex, null, ErrorCategory.InvalidOperation, originalContext.InputObject));
-                                }
-                                finally
-                                {
-                                    workerConnection.CallerId = oldCallerId;
+                                    finally
+                                    {
+                                        workerConnection.CallerId = oldCallerId;
+                                    }
                                 }
                             }
                         }
