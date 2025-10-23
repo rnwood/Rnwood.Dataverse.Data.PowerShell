@@ -34,6 +34,14 @@ Get-DataverseConnection [-SetAsDefault] -ClientId <Guid> -Url <Uri> -ClientSecre
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### Authenticate with client certificate
+```
+Get-DataverseConnection [-SetAsDefault] -ClientId <Guid> -Url <Uri> -CertificatePath <String>
+ [-CertificatePassword <String>] [-CertificateThumbprint <String>] [-CertificateStoreLocation <StoreLocation>]
+ [-CertificateStoreName <StoreName>] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
+```
+
 ### Authenticate interactively
 ```
 Get-DataverseConnection [-SetAsDefault] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>] [-Interactive]
@@ -89,6 +97,7 @@ Multiple authentication methods are supported:
 - Device code flow (for remote/headless scenarios)
 - Username/password
 - Client secret (for service principal authentication)
+- Client certificate (for certificate-based service principal authentication)
 - DefaultAzureCredential (automatic credential discovery for Azure environments)
 - ManagedIdentityCredential (for Azure managed identity authentication)
 - Connection string (for advanced scenarios)
@@ -145,6 +154,34 @@ PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Acce
 
 Gets a connection to MYORG using a script block that returns an access token. The script block is called whenever a new access token is needed. This is useful for custom authentication scenarios where you manage token acquisition externally.
 
+### Example 8
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ClientId "12345678-1234-1234-1234-123456789abc" -CertificatePath "C:\certs\mycert.pfx" -CertificatePassword "P@ssw0rd"
+```
+
+Gets a connection to MYORG using client certificate authentication with a certificate file. The certificate file is password-protected.
+
+### Example 9
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ClientId "12345678-1234-1234-1234-123456789abc" -CertificateThumbprint "A1B2C3D4E5F6789012345678901234567890ABCD"
+```
+
+Gets a connection to MYORG using client certificate authentication with a certificate from the Windows certificate store (CurrentUser\My by default).
+
+### Example 10
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ClientId "12345678-1234-1234-1234-123456789abc" -CertificateThumbprint "A1B2C3D4E5F6789012345678901234567890ABCD" -CertificateStoreLocation LocalMachine -CertificateStoreName Root
+```
+
+Gets a connection to MYORG using client certificate authentication with a certificate from the LocalMachine\Root certificate store.
+
+### Example 11
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ClientId "12345678-1234-1234-1234-123456789abc" -CertificatePath "./mycert.pfx"
+```
+
+Gets a connection to MYORG using client certificate authentication with an unencrypted certificate file (no password required).
+
 ## PARAMETERS
 
 ### -AccessToken
@@ -162,12 +199,89 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -CertificatePassword
+Password for the client certificate file. If not provided, the certificate is assumed to be unencrypted.
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with client certificate
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificatePath
+Path to the client certificate file (.pfx or .p12) for authentication.
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with client certificate
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificateStoreLocation
+Certificate store location to search for the certificate. Default is CurrentUser. Valid values: CurrentUser, LocalMachine.
+
+```yaml
+Type: StoreLocation
+Parameter Sets: Authenticate with client certificate
+Aliases:
+Accepted values: CurrentUser, LocalMachine
+
+Required: False
+Position: Named
+Default value: CurrentUser
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificateStoreName
+Certificate store name to search for the certificate. Default is My (Personal). Valid values include: My, Root, CA, Trust, Disallowed, etc.
+
+```yaml
+Type: StoreName
+Parameter Sets: Authenticate with client certificate
+Aliases:
+Accepted values: AddressBook, AuthRoot, CertificateAuthority, Disallowed, My, Root, TrustedPeople, TrustedPublisher
+
+Required: False
+Position: Named
+Default value: My
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificateThumbprint
+Thumbprint of the certificate in the certificate store. Used to load certificate from the Windows certificate store instead of a file.
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with client certificate
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ClientId
 Client ID to use for authentication. By default the MS provided ID for PAC CLI (`9cee029c-6210-4654-90bb-17e6e9d36617`) is used to make it easy to get started.
 
 ```yaml
 Type: Guid
-Parameter Sets: Authenticate with client secret
+Parameter Sets: Authenticate with client secret, Authenticate with client certificate
 Aliases:
 
 Required: True
@@ -389,7 +503,7 @@ URL of the Dataverse environment to connect to. For example https://myorg.crm11.
 
 ```yaml
 Type: Uri
-Parameter Sets: Return a mock connection, Authenticate with client secret, Authenticate with Dataverse SDK connection string., Authenticate with access token script block
+Parameter Sets: Return a mock connection, Authenticate with client secret, Authenticate with client certificate, Authenticate with Dataverse SDK connection string., Authenticate with access token script block
 Aliases:
 
 Required: True

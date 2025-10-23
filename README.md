@@ -210,6 +210,24 @@ Service principal authentication (good for automation).
 $c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -clientid "3004eb1e-7a00-45e0-a1dc-6703735eac18" -clientsecret "itsasecret"
 ```
 
+##### Client Certificate
+Certificate-based service principal authentication (good for secure automation).
+
+*Example: Using client certificate from file:*
+```powershell
+$c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -clientid "3004eb1e-7a00-45e0-a1dc-6703735eac18" -certificatepath "C:\certs\mycert.pfx" -certificatepassword "P@ssw0rd"
+```
+
+*Example: Using client certificate from Windows certificate store:*
+```powershell
+$c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -clientid "3004eb1e-7a00-45e0-a1dc-6703735eac18" -certificatethumbprint "A1B2C3D4E5F6789012345678901234567890ABCD"
+```
+
+*Example: Using client certificate from LocalMachine store:*
+```powershell
+$c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -clientid "3004eb1e-7a00-45e0-a1dc-6703735eac18" -certificatethumbprint "A1B2C3D4E5F6789012345678901234567890ABCD" -certificatestorelocation LocalMachine
+```
+
 ##### DefaultAzureCredential
 Automatic credential discovery in Azure environments (tries environment variables, managed identity, Visual Studio, Azure CLI, Azure PowerShell, and interactive browser).
 
