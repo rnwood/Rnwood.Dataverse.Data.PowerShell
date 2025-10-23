@@ -4,7 +4,7 @@ Describe "Remove-DataverseRecord parallel with retries" {
 
     Context "Retries with parallelism enabled" {
         It "Retries failed delete operations in parallel mode with batching" {
-            # Set up interceptor to fail first attempt, succeed on retry
+            # Set up interceptor to fail first delete batch, succeed on retry
             $state = [PSCustomObject]@{ 
                 FailCount = 0
                 DeleteCount = 0
@@ -12,9 +12,17 @@ Describe "Remove-DataverseRecord parallel with retries" {
             $interceptor = {
                 param($request)
                 if ($request -is [Microsoft.Xrm.Sdk.Messages.ExecuteMultipleRequest]) {
-                    $state.DeleteCount += $request.Requests.Count
-                    # Fail first batch
-                    if ($state.FailCount -eq 0) {
+                    # Check if this batch contains delete requests
+                    $hasDelete = $false
+                    foreach ($req in $request.Requests) {
+                        if ($req -is [Microsoft.Xrm.Sdk.Messages.DeleteRequest]) {
+                            $hasDelete = $true
+                            $state.DeleteCount++
+                        }
+                    }
+                    
+                    # Only fail delete batches
+                    if ($hasDelete -and $state.FailCount -eq 0) {
                         $state.FailCount++
                         throw [Exception]::new("Simulated transient failure")
                     }
@@ -22,13 +30,9 @@ Describe "Remove-DataverseRecord parallel with retries" {
             }.GetNewClosure()
             $connection = getMockConnection -RequestInterceptor $interceptor
             
-            # Create records first
+            # Create records first (these should succeed)
             $c1 = @{ firstname = "John1"; lastname = "Doe1" } | Set-DataverseRecord -Connection $connection -TableName contact -PassThru
             $c2 = @{ firstname = "John2"; lastname = "Doe2" } | Set-DataverseRecord -Connection $connection -TableName contact -PassThru
-
-            # Reset state after creation
-            $state.FailCount = 0
-            $state.DeleteCount = 0
             
             # Delete records with retry enabled and parallel processing
             $errors = @()
