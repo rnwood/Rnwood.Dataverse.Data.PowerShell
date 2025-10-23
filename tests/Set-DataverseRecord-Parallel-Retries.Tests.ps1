@@ -69,7 +69,8 @@ Describe "Set-DataverseRecord parallel with retries" {
 
             # Should succeed after retries
             $errors.Count | Should -Be 0
-            $created.Count | Should -Be 1
+            $created | Should -Not -BeNullOrEmpty
+            @($created).Count | Should -Be 1
             
             # Verify retries happened (2 failures + 1 success = 3 attempts)
             $state.FailCount | Should -Be 2
