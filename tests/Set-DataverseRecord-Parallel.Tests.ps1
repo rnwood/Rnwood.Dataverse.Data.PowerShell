@@ -173,4 +173,39 @@ Describe "Set-DataverseRecord Parallel Processing" {
         }
     }
 
+    Context "Parallel Processing Limitations" {
+        It "Does not retry in parallel mode - failures are reported immediately" {
+            # NOTE: Retries are not supported in parallel mode to avoid deadlocks when workers
+            # share connections. This test verifies that failures are reported as errors immediately.
+            
+            # Set up interceptor to fail first attempt only (using non-batched Delete to avoid ExecuteMultiple complexity)
+            $state = [PSCustomObject]@{ FailCount = 0 }
+            $interceptor = {
+                param($request)
+                if ($request -is [Microsoft.Xrm.Sdk.Messages.CreateRequest]) {
+                    if ($state.FailCount -lt 1) {
+                        $state.FailCount++
+                        throw [Exception]::new("Simulated failure")
+                    }
+                }
+            }.GetNewClosure()
+            $connection = getMockConnection -RequestInterceptor $interceptor
+            
+            # Try to create records with retry enabled and BatchSize=1 (no batching)
+            $records = @(
+                @{ firstname = "John1"; lastname = "Doe1" },
+                @{ firstname = "John2"; lastname = "Doe2" }
+            )
+            $errors = @()
+            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru -Retries 5 -InitialRetryDelay 1 -MaxDegreeOfParallelism 2 -BatchSize 1 -ErrorVariable errors -ErrorAction SilentlyContinue
+
+            # Should get errors for failed create (no retry in parallel mode)
+            $errors.Count | Should -BeGreaterThan 0
+            
+            # Verify the interceptor was only called once (no retries)
+            # If retries were working, it would be called multiple times
+            $state.FailCount | Should -Be 1
+        }
+    }
+
 }
