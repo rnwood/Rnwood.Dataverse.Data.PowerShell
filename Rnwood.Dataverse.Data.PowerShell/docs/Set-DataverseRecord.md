@@ -18,8 +18,8 @@ Set-DataverseRecord -InputObject <PSObject> -TableName <String> [-BatchSize <UIn
  [-AllowMultipleMatches] [-PassThru] [-NoUpdate] [-NoCreate] [-NoUpdateColumns <String[]>] [-CallerId <Guid>]
  [-UpdateAllColumns] [-CreateOnly] [-Upsert] [-LookupColumns <Hashtable>]
  [-BypassBusinessLogicExecution <BusinessLogicTypes[]>] [-BypassBusinessLogicExecutionStepIds <Guid[]>]
- [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-MaxDegreeOfParallelism <Int32>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-MaxDegreeOfParallelism <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -83,12 +83,9 @@ For maximum throughput when processing large numbers of records, you can enable 
 - All output types (Verbose, Error, Progress, PassThru) work correctly in parallel mode
 - Note: With mock connections that don't support cloning, workers share the same connection (may have reduced parallelism)
 
-Example: Process 1000 records with 4 parallel workers and batches of 100:
-```powershell
-$records | Set-DataverseRecord -Connection $conn -TableName contact -CreateOnly -MaxDegreeOfParallelism 4 -BatchSize 100
-```
+See Example 20 and Example 21 in the EXAMPLES section for usage demonstrations.
 
-How Create vs Update is Determined:
+**How Create vs Update is Determined:**
 
 The cmdlet follows this decision logic for each record:
 
@@ -706,9 +703,9 @@ Parallel processing can be combined with batching (`-BatchSize` > 1) for even be
 Progress, errors, and verbose output are all handled thread-safely.
 
 Example: Process 1000 records with 4 workers and batches of 100:
-```
+
+
 $records | Set-DataverseRecord -Connection $conn -TableName contact -CreateOnly -MaxDegreeOfParallelism 4 -BatchSize 100
-```
 
 ```yaml
 Type: Int32
