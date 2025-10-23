@@ -17,6 +17,16 @@ Describe "Examples-Comparison Documentation Tests" {
             $conn = getMockConnection
             $conn | Should -Not -BeNull
         }
+        
+        It "Client Certificate authentication parameters are documented" {
+            # Validates that certificate authentication parameters exist as documented
+            $cmd = Get-Command Get-DataverseConnection
+            $cmd.Parameters.ContainsKey('CertificatePath') | Should -Be $true
+            $cmd.Parameters.ContainsKey('CertificatePassword') | Should -Be $true
+            $cmd.Parameters.ContainsKey('CertificateThumbprint') | Should -Be $true
+            $cmd.Parameters.ContainsKey('CertificateStoreLocation') | Should -Be $true
+            $cmd.Parameters.ContainsKey('CertificateStoreName') | Should -Be $true
+        }
     }
 
     Context "Basic CRUD Operations" {
