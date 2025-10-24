@@ -221,7 +221,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         WriteVerbose($"  Setting environment variable '{envVarName}' to value '{envVarValue}'");
 
-                        var componentParam = new Entity("environmentvariabledefinition");
+                        var componentParam = new Entity("environmentvariablevalue");
                         componentParam["schemaname"] = envVarName;
                         componentParam["value"] = envVarValue;
                         
@@ -394,20 +394,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private bool DoesSolutionExist(byte[] solutionBytes)
         {
-            // Try to extract solution unique name from the customizations.xml within the zip
-            // This is a simplified implementation - in production you'd want to parse the XML properly
             try
             {
-                // For now, we'll just query all solutions and see if any match
-                // A better implementation would extract the solution name from the zip file
-                // and query specifically for it
+                // Extract the solution unique name from customizations.xml inside the zip
+                string solutionUniqueName = ExtractSolutionUniqueName(solutionBytes);
                 
-                // Note: This is a simplified approach. In a real implementation, you would:
-                // 1. Extract customizations.xml from the zip
-                // 2. Parse the XML to get the UniqueName
-                // 3. Query for that specific solution
+                if (string.IsNullOrEmpty(solutionUniqueName))
+                {
+                    WriteVerbose("Could not extract solution unique name from ZIP. Assuming solution doesn't exist.");
+                    return false;
+                }
+
+                WriteVerbose($"Checking if solution '{solutionUniqueName}' exists in target environment...");
                 
-                WriteVerbose("Checking if any solutions exist (simplified check)...");
                 var query = new QueryExpression("solution")
                 {
                     ColumnSet = new ColumnSet("uniquename"),
@@ -415,7 +414,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         Conditions =
                         {
-                            new ConditionExpression("ismanaged", ConditionOperator.Equal, false)
+                            new ConditionExpression("uniquename", ConditionOperator.Equal, solutionUniqueName)
                         }
                     },
                     TopCount = 1
@@ -423,9 +422,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 var solutions = Connection.RetrieveMultiple(query);
                 
-                // For simplicity, we'll assume if there are any solutions, this might be an upgrade
-                // A proper implementation would check for the specific solution being imported
-                return solutions.Entities.Count > 0;
+                bool exists = solutions.Entities.Count > 0;
+                WriteVerbose($"Solution '{solutionUniqueName}' {(exists ? "exists" : "does not exist")} in target environment.");
+                
+                return exists;
             }
             catch (Exception ex)
             {
@@ -433,6 +433,47 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // If we can't determine, assume it doesn't exist and do regular import
                 return false;
             }
+        }
+
+        private string ExtractSolutionUniqueName(byte[] solutionBytes)
+        {
+            try
+            {
+                using (var memoryStream = new MemoryStream(solutionBytes))
+                using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
+                {
+                    // Find the solution.xml file in the solution
+                    var solutionXmlEntry = archive.Entries.FirstOrDefault(e => 
+                        e.FullName.Equals("solution.xml", StringComparison.OrdinalIgnoreCase));
+
+                    if (solutionXmlEntry != null)
+                    {
+                        using (var stream = solutionXmlEntry.Open())
+                        using (var reader = new StreamReader(stream))
+                        {
+                            var xmlContent = reader.ReadToEnd();
+                            var xdoc = XDocument.Parse(xmlContent);
+
+                            // Extract the UniqueName from the solution XML
+                            var uniqueNameElement = xdoc.Descendants()
+                                .FirstOrDefault(e => e.Name.LocalName == "UniqueName");
+                            
+                            if (uniqueNameElement != null)
+                            {
+                                var uniqueName = uniqueNameElement.Value;
+                                WriteVerbose($"Extracted solution unique name: {uniqueName}");
+                                return uniqueName;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteVerbose($"Error extracting solution unique name: {ex.Message}");
+            }
+
+            return null;
         }
 
         private void ValidateSolutionComponents(byte[] solutionBytes)

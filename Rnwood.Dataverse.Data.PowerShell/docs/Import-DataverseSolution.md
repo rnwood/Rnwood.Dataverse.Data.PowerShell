@@ -430,8 +430,8 @@ For synchronous imports (useful for small solutions), use Invoke-DataverseImport
 **Connection References & Environment Variables:**
 When importing solutions with connection references or environment variables, use the `-ConnectionReferences` and `-EnvironmentVariables` parameters with hashtables mapping names to values. The cmdlet converts these to the ComponentParameters format required by the API.
 
-Connection references use schema names (e.g., 'new_sharedconnectionref') mapped to connection IDs.
-Environment variables use schema names (e.g., 'new_apiurl') mapped to their values.
+Connection references use the `connectionreference` entity with `connectionreferencelogicalname` and `connectionid` attributes.
+Environment variables use the `environmentvariablevalue` entity with `schemaname` and `value` attributes.
 
 **Automatic Validation:**
 By default, the cmdlet validates that all connection references and environment variables in the solution are either:
@@ -444,7 +444,7 @@ Use `-SkipConnectionReferenceValidation` to bypass validation of connection refe
 Use `-SkipEnvironmentVariableValidation` to bypass validation of environment variables.
 
 **Upgrade Scenarios:**
-When using -HoldingSolution to import a solution as an upgrade, the cmdlet automatically detects if the solution doesn't already exist and falls back to a regular import. This prevents errors when deploying to new environments.
+When using -HoldingSolution to import a solution as an upgrade, the cmdlet extracts the solution's unique name from the solution.xml file within the ZIP and queries the target environment to check if it already exists. If it doesn't exist, the cmdlet automatically falls back to a regular import. This prevents errors when deploying to new environments.
 
 Progress is reported using PowerShell's progress API and shows:
 - Current status (Waiting, In progress, etc.)
