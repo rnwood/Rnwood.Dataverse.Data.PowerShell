@@ -43,6 +43,14 @@ Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -Cli
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### Authenticate with client certificate
+```
+Get-DataverseConnection [-SetAsDefault] -ClientId <Guid> -Url <Uri> -CertificatePath <String>
+ [-CertificatePassword <String>] [-CertificateThumbprint <String>] [-CertificateStoreLocation <StoreLocation>]
+ [-CertificateStoreName <StoreName>] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
+```
+
 ### Authenticate interactively
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>]
