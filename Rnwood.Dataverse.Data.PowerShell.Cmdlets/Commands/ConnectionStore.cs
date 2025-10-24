@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -48,6 +50,123 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			
 			// Ensure directory exists
 			Directory.CreateDirectory(_cacheDirectory);
+		}
+		
+		/// <summary>
+		/// Encrypts a string using platform-specific best practices.
+		/// Windows: Uses Data Protection API (DPAPI)
+		/// Linux/macOS: Uses AES with a machine-specific key
+		/// </summary>
+		private string EncryptString(string plainText)
+		{
+			if (string.IsNullOrEmpty(plainText))
+			{
+				return plainText;
+			}
+			
+			byte[] plainBytes = Encoding.UTF8.GetBytes(plainText);
+			byte[] encryptedBytes;
+			
+			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+			{
+				// Windows: Use DPAPI
+				encryptedBytes = ProtectedData.Protect(plainBytes, null, DataProtectionScope.CurrentUser);
+			}
+			else
+			{
+				// Linux/macOS: Use AES with machine-specific key
+				// This provides basic encryption, though not as secure as OS keyring
+				byte[] key = GetMachineKey();
+				using (Aes aes = Aes.Create())
+				{
+					aes.Key = key;
+					aes.GenerateIV();
+					
+					using (var encryptor = aes.CreateEncryptor())
+					using (var ms = new MemoryStream())
+					{
+						// Prepend IV to encrypted data
+						ms.Write(aes.IV, 0, aes.IV.Length);
+						using (var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+						{
+							cs.Write(plainBytes, 0, plainBytes.Length);
+						}
+						encryptedBytes = ms.ToArray();
+					}
+				}
+			}
+			
+			return Convert.ToBase64String(encryptedBytes);
+		}
+		
+		/// <summary>
+		/// Decrypts a string that was encrypted with EncryptString.
+		/// </summary>
+		private string DecryptString(string encryptedText)
+		{
+			if (string.IsNullOrEmpty(encryptedText))
+			{
+				return encryptedText;
+			}
+			
+			try
+			{
+				byte[] encryptedBytes = Convert.FromBase64String(encryptedText);
+				byte[] plainBytes;
+				
+				if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+				{
+					// Windows: Use DPAPI
+					plainBytes = ProtectedData.Unprotect(encryptedBytes, null, DataProtectionScope.CurrentUser);
+				}
+				else
+				{
+					// Linux/macOS: Use AES with machine-specific key
+					byte[] key = GetMachineKey();
+					using (Aes aes = Aes.Create())
+					{
+						aes.Key = key;
+						
+						// Extract IV from the beginning of encrypted data
+						byte[] iv = new byte[aes.BlockSize / 8];
+						Array.Copy(encryptedBytes, 0, iv, 0, iv.Length);
+						aes.IV = iv;
+						
+						using (var decryptor = aes.CreateDecryptor())
+						using (var ms = new MemoryStream(encryptedBytes, iv.Length, encryptedBytes.Length - iv.Length))
+						using (var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
+						using (var resultMs = new MemoryStream())
+						{
+							cs.CopyTo(resultMs);
+							plainBytes = resultMs.ToArray();
+						}
+					}
+				}
+				
+				return Encoding.UTF8.GetString(plainBytes);
+			}
+			catch
+			{
+				// If decryption fails, return null to indicate corruption or tampering
+				return null;
+			}
+		}
+		
+		/// <summary>
+		/// Gets a machine-specific encryption key for non-Windows platforms.
+		/// </summary>
+		private byte[] GetMachineKey()
+		{
+			// Generate a deterministic key based on machine ID and a constant salt
+			// This isn't as secure as OS keyring but provides basic protection
+			string machineId = Environment.MachineName + Environment.UserName;
+			string salt = "Rnwood.Dataverse.Data.PowerShell.Encryption.v1";
+			
+			using (var sha256 = SHA256.Create())
+			{
+				byte[] combinedBytes = Encoding.UTF8.GetBytes(machineId + salt);
+				return sha256.ComputeHash(combinedBytes);
+			}
 		}
 		
 		/// <summary>
@@ -102,8 +221,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			if (string.IsNullOrWhiteSpace(name))
 				throw new ArgumentException("Connection name cannot be empty.", nameof(name));
 			
+			// Encrypt sensitive fields before saving
+			var metadataToSave = new ConnectionMetadata
+			{
+				Url = metadata.Url,
+				AuthMethod = metadata.AuthMethod,
+				ClientId = metadata.ClientId,
+				Username = metadata.Username,
+				Password = EncryptString(metadata.Password),
+				ManagedIdentityClientId = metadata.ManagedIdentityClientId,
+				ClientSecret = EncryptString(metadata.ClientSecret),
+				CertificatePath = metadata.CertificatePath,
+				CertificatePassword = EncryptString(metadata.CertificatePassword),
+				CertificateThumbprint = metadata.CertificateThumbprint,
+				CertificateStoreLocation = metadata.CertificateStoreLocation,
+				CertificateStoreName = metadata.CertificateStoreName,
+				SavedAt = metadata.SavedAt
+			};
+			
 			var connections = LoadAllMetadata();
-			connections[name] = metadata;
+			connections[name] = metadataToSave;
 			SaveAllMetadata(connections);
 		}
 		
@@ -115,7 +252,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			var connections = LoadAllMetadata();
 			if (connections.TryGetValue(name, out var metadata))
 			{
-				return metadata;
+				// Decrypt sensitive fields after loading
+				var decryptedMetadata = new ConnectionMetadata
+				{
+					Url = metadata.Url,
+					AuthMethod = metadata.AuthMethod,
+					ClientId = metadata.ClientId,
+					Username = metadata.Username,
+					Password = DecryptString(metadata.Password),
+					ManagedIdentityClientId = metadata.ManagedIdentityClientId,
+					ClientSecret = DecryptString(metadata.ClientSecret),
+					CertificatePath = metadata.CertificatePath,
+					CertificatePassword = DecryptString(metadata.CertificatePassword),
+					CertificateThumbprint = metadata.CertificateThumbprint,
+					CertificateStoreLocation = metadata.CertificateStoreLocation,
+					CertificateStoreName = metadata.CertificateStoreName,
+					SavedAt = metadata.SavedAt
+				};
+				return decryptedMetadata;
 			}
 			return null;
 		}
@@ -141,6 +295,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				SaveAllMetadata(connections);
 			}
 			return removed;
+		}
+		
+		/// <summary>
+		/// Deletes all saved connections and clears the cache.
+		/// </summary>
+		public void ClearAllConnections()
+		{
+			// Delete metadata file
+			if (File.Exists(_metadataFilePath))
+			{
+				File.Delete(_metadataFilePath);
+			}
+			
+			// Delete MSAL cache file
+			if (File.Exists(_cacheFilePath))
+			{
+				File.Delete(_cacheFilePath);
+			}
 		}
 		
 		/// <summary>
@@ -211,12 +383,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public string Username { get; set; }
 		
 		/// <summary>
+		/// Password for username/password authentication (NOT RECOMMENDED to save, encrypted if saved).
+		/// </summary>
+		public string Password { get; set; }
+		
+		/// <summary>
 		/// Client ID for user-assigned managed identity.
 		/// </summary>
 		public string ManagedIdentityClientId { get; set; }
 		
 		/// <summary>
-		/// Client secret for client secret authentication (NOT RECOMMENDED to save).
+		/// Client secret for client secret authentication (NOT RECOMMENDED to save, encrypted if saved).
 		/// </summary>
 		public string ClientSecret { get; set; }
 		
@@ -226,7 +403,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public string CertificatePath { get; set; }
 		
 		/// <summary>
-		/// Certificate password for certificate authentication (NOT RECOMMENDED to save).
+		/// Certificate password for certificate authentication (NOT RECOMMENDED to save, encrypted if saved).
 		/// </summary>
 		public string CertificatePassword { get; set; }
 		

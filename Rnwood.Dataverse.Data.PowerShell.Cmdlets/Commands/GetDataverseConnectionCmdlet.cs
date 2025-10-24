@@ -62,6 +62,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private const string PARAMSET_LOADNAMED = "Load a saved named connection";
 		private const string PARAMSET_LISTNAMED = "List saved named connections";
 		private const string PARAMSET_DELETENAMED = "Delete a saved named connection";
+		private const string PARAMSET_CLEARALL = "Clear all saved connections";
 
 		/// <summary>
 		/// Gets or sets a value indicating whether to get the current default connection.
@@ -78,8 +79,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Gets or sets a value indicating whether to save credentials/secrets with the connection (NOT RECOMMENDED).
 		/// </summary>
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "WARNING: Saves the client secret with the connection. This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.")]
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "WARNING: Saves certificate path and password with the connection. This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "WARNING: Saves the password with the connection (encrypted). This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "WARNING: Saves the client secret with the connection (encrypted). This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "WARNING: Saves certificate path and password with the connection (encrypted). This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.")]
 		public SwitchParameter SaveCredentials { get; set; }
 
 		/// <summary>
@@ -101,6 +103,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DELETENAMED, HelpMessage = "Deletes a saved named connection. Use with -Name to specify which connection to delete.")]
 		public SwitchParameter DeleteConnection { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether to clear all saved connections.
+		/// </summary>
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLEARALL, HelpMessage = "Clears all saved named connections and cached tokens.")]
+		public SwitchParameter ClearAllConnections { get; set; }
 
 		/// <summary>
 		/// Gets or sets a value indicating whether to list all saved connections.
@@ -328,6 +336,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				return;
 			}
 
+			if (ParameterSetName == PARAMSET_CLEARALL)
+			{
+				base.ProcessRecord();
+				var store = new ConnectionStore();
+				store.ClearAllConnections();
+				WriteObject("All saved connections and cached tokens have been cleared.");
+				return;
+			}
+
 			if (ParameterSetName == PARAMSET_DELETENAMED)
 			{
 				base.ProcessRecord();
@@ -369,6 +386,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				ManagedIdentityClientId = metadata.ManagedIdentityClientId;
 
 				// Restore saved credentials if available
+				if (!string.IsNullOrEmpty(metadata.Password))
+				{
+					Password = metadata.Password;
+					WriteVerbose("Restored saved password");
+				}
 				if (!string.IsNullOrEmpty(metadata.ClientSecret))
 				{
 					ClientSecret = metadata.ClientSecret;
@@ -509,14 +531,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							if (!string.IsNullOrEmpty(Name))
 							{
 								var store = new ConnectionStore();
-								store.SaveConnection(Name, new ConnectionMetadata
+								var metadata = new ConnectionMetadata
 								{
 									Url = Url.ToString(),
 									AuthMethod = "UsernamePassword",
 									ClientId = ClientId.ToString(),
 									Username = Username,
 									SavedAt = DateTime.UtcNow
-								});
+								};
+
+								// Save password if SaveCredentials is specified (NOT RECOMMENDED)
+								if (SaveCredentials)
+								{
+									metadata.Password = Password;
+									WriteWarning("SECURITY WARNING: Password has been saved (encrypted). This is NOT RECOMMENDED for production use.");
+								}
+								else
+								{
+									WriteVerbose("Password is not saved. You will need to provide it again when loading this connection.");
+								}
+
+								store.SaveConnection(Name, metadata);
 								WriteVerbose($"Connection saved as '{Name}'");
 							}
 
@@ -600,7 +635,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								if (SaveCredentials)
 								{
 									metadata.ClientSecret = ClientSecret;
-									WriteWarning("SECURITY WARNING: Client secret has been saved in plain text. This is NOT RECOMMENDED for production use.");
+									WriteWarning("SECURITY WARNING: Client secret has been saved (encrypted). This is NOT RECOMMENDED for production use.");
 								}
 								else
 								{
@@ -656,7 +691,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 									metadata.CertificateThumbprint = CertificateThumbprint;
 									metadata.CertificateStoreLocation = CertificateStoreLocation.ToString();
 									metadata.CertificateStoreName = CertificateStoreName.ToString();
-									WriteWarning("SECURITY WARNING: Certificate details (including password) have been saved in plain text. This is NOT RECOMMENDED for production use.");
+									WriteWarning("SECURITY WARNING: Certificate details (including password) have been saved (encrypted). This is NOT RECOMMENDED for production use.");
 								}
 								else
 								{

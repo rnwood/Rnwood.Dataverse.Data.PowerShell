@@ -277,11 +277,14 @@ Get-DataverseConnection -url https://myorg.crm11.dynamics.com -devicecode -Name 
 Get-DataverseConnection -url https://myorg.crm11.dynamics.com -username "user@domain.com" -password "pass" -Name "MyOrgTest"
 ```
 
-**Security Note:** By default, client secrets and certificate passwords are NOT saved for security reasons. You'll need to provide them again when loading the connection.
+**Security Note:** By default, client secrets, certificate passwords, and user passwords are NOT saved for security reasons. You'll need to provide them again when loading the connection.
 
 If you need to save credentials for testing or non-production scenarios, use the `-SaveCredentials` switch (NOT RECOMMENDED for production):
 
 ```powershell
+# Save username/password (NOT RECOMMENDED for production)
+Get-DataverseConnection -url https://myorg.crm11.dynamics.com -username "user@domain.com"****** -Name "MyOrgTest" -SaveCredentials
+
 # Save client secret (NOT RECOMMENDED for production)
 Get-DataverseConnection -url https://myorg.crm11.dynamics.com -clientid "..." -clientsecret "..." -Name "MyOrgTest" -SaveCredentials
 
@@ -289,7 +292,11 @@ Get-DataverseConnection -url https://myorg.crm11.dynamics.com -clientid "..." -c
 Get-DataverseConnection -url https://myorg.crm11.dynamics.com -clientid "..." -CertificatePath "cert.pfx" -CertificatePassword "..." -Name "MyOrgCert" -SaveCredentials
 ```
 
-**WARNING:** Using `-SaveCredentials` stores secrets in plain text on disk. Only use this for testing or non-production scenarios.
+**IMPORTANT:** Using `-SaveCredentials` stores secrets **encrypted** on disk using:
+- **Windows**: Data Protection API (DPAPI) - user-specific encryption
+- **Linux/macOS**: AES encryption with machine-specific key
+
+While encrypted, this is still NOT RECOMMENDED for production use. Only use for testing or non-production scenarios.
 
 ##### Loading a Named Connection
 
@@ -299,6 +306,16 @@ Restore a saved connection by name. The module will use cached authentication to
 ```powershell
 $c = Get-DataverseConnection -Name "MyOrgProd"
 # Connection restored with cached credentials
+```
+
+##### Clearing All Saved Connections
+
+Remove all saved connections and cached tokens:
+
+*Example: Clear all connections:*
+```powershell
+Get-DataverseConnection -ClearAllConnections
+# All saved connections and cached tokens have been cleared.
 ```
 
 ##### Listing Saved Connections
