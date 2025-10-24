@@ -239,6 +239,64 @@ Advanced scenarios using connection strings.
 $c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -connectionstring "AuthType=ClientSecret;ClientId=3004eb1e-7a00-45e0-a1dc-6703735eac18;ClientSecret=itsasecret;Url=https://myorg.crm11.dynamics.com"
 ```
 
+#### Named Connections
+
+You can save connections with a name for easy reuse. Named connections persist authentication tokens securely using the platform's credential storage (Keychain on macOS, Credential Manager on Windows, libsecret on Linux) and save connection metadata for later retrieval.
+
+##### Saving a Named Connection
+
+Add the `-Name` parameter when connecting to save the connection:
+
+*Example: Save a connection for later use:*
+```powershell
+# Interactive authentication - tokens are cached securely
+Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive -Name "MyOrgProd"
+
+# Device code authentication
+Get-DataverseConnection -url https://myorg.crm11.dynamics.com -devicecode -Name "MyOrgDev"
+
+# Username/password authentication
+Get-DataverseConnection -url https://myorg.crm11.dynamics.com -username "user@domain.com" -password "pass" -Name "MyOrgTest"
+```
+
+**Security Note:** For client secret authentication, the secret itself is NOT saved. You'll need to provide it again when loading the connection.
+
+##### Loading a Named Connection
+
+Restore a saved connection by name. The module will use cached authentication tokens (if still valid) or prompt for re-authentication:
+
+*Example: Load a saved connection:*
+```powershell
+$c = Get-DataverseConnection -Name "MyOrgProd"
+# Connection restored with cached credentials
+```
+
+##### Listing Saved Connections
+
+View all saved named connections:
+
+*Example: List all saved connections:*
+```powershell
+Get-DataverseConnection -ListConnections
+# Output shows: Name, Url, AuthMethod, Username, SavedAt
+```
+
+##### Deleting a Named Connection
+
+Remove a saved connection and its cached credentials:
+
+*Example: Delete a saved connection:*
+```powershell
+Get-DataverseConnection -DeleteConnection -Name "MyOrgDev"
+# Connection 'MyOrgDev' deleted successfully.
+```
+
+**Benefits of Named Connections:**
+- **Convenience**: No need to remember URLs or re-authenticate frequently
+- **Security**: Tokens are stored securely using platform-native credential storage
+- **Multiple Environments**: Easily switch between dev, test, and production environments
+- **CI/CD Friendly**: Save connections in CI/CD pipelines with service principal credentials
+
 ### Main Cmdlets
 
 The module exposes a small set of main cmdlets for common operations. See the detailed docs linked below for full parameter lists and examples.

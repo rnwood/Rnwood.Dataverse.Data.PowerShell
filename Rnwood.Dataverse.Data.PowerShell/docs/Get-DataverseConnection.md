@@ -145,6 +145,41 @@ PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Acce
 
 Gets a connection to MYORG using a script block that returns an access token. The script block is called whenever a new access token is needed. This is useful for custom authentication scenarios where you manage token acquisition externally.
 
+### Example 8: Save a named connection
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Interactive -Name "MyOrgProd"
+```
+
+Connects to MYORG using interactive authentication and saves the connection with the name "MyOrgProd". The authentication tokens will be cached securely, and connection metadata will be saved for later use.
+
+### Example 9: Load a saved named connection
+```powershell
+PS C:\> $c = Get-DataverseConnection -Name "MyOrgProd"
+```
+
+Loads the previously saved connection named "MyOrgProd". The cmdlet will use the cached authentication tokens, avoiding the need to authenticate again unless the tokens have expired.
+
+### Example 10: List all saved connections
+```powershell
+PS C:\> Get-DataverseConnection -ListConnections
+```
+
+Lists all saved named connections, showing their names, URLs, authentication methods, usernames, and when they were last saved.
+
+### Example 11: Delete a saved connection
+```powershell
+PS C:\> Get-DataverseConnection -DeleteConnection -Name "MyOrgProd"
+```
+
+Deletes the saved connection named "MyOrgProd", removing both the connection metadata and cached authentication tokens.
+
+### Example 12: Save connection with client secret
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ClientId "3004eb1e-7a00-45e0-a1dc-6703735eac18" -ClientSecret "itsasecret" -Name "MyOrgService"
+```
+
+Connects using client secret authentication and saves the connection as "MyOrgService". Note: The client secret itself is NOT saved for security reasons. When loading this connection later, you will need to provide the client secret again.
+
 ## PARAMETERS
 
 ### -AccessToken
