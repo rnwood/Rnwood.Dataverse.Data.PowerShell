@@ -709,24 +709,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							break;
 						}
 
-					case PARAMSET_CLIENTCERTIFICATE:
-						{
-							string authority = GetAuthority();
-
-							X509Certificate2 certificate = LoadCertificate();
-
-							var confApp = ConfidentialClientApplicationBuilder
-							.Create(ClientId.ToString())
-							.WithRedirectUri("http://localhost")
-							.WithCertificate(certificate)
-							.WithAuthority(authority)
-							.Build();
-
-							result = new ServiceClient(Url, url => GetTokenWithClientCertificate(confApp, url));
-
-							break;
-						}
-
 					case PARAMSET_DEFAULTAZURECREDENTIAL:
 						{
 							var credential = new Azure.Identity.DefaultAzureCredential();
