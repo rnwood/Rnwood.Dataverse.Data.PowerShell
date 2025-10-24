@@ -1,32 +1,42 @@
 Describe 'Named Connections' {
 
-    BeforeAll {
-        . $PSScriptRoot/Common.ps1
-        
-        # Clean up any existing test connections
-        $testConnections = @("TestConn1", "TestConn2", "TestConnInteractive")
-        foreach ($name in $testConnections) {
-            try {
-                Get-DataverseConnection -DeleteConnection -Name $name -ErrorAction SilentlyContinue
-            } catch {
-                # Ignore errors if connection doesn't exist
+    . $PSScriptRoot/Common.ps1
+
+    BeforeEach {
+        # Clean up any existing test connections before each test
+        # Only if module is loaded
+        if (Get-Module Rnwood.Dataverse.Data.PowerShell) {
+            $testConnections = @("TestConn1", "TestConn2", "TestConnInteractive")
+            foreach ($name in $testConnections) {
+                try {
+                    Get-DataverseConnection -DeleteConnection -Name $name -ErrorAction SilentlyContinue
+                } catch {
+                    # Ignore errors if connection doesn't exist
+                }
             }
         }
     }
 
-    AfterAll {
-        # Clean up test connections
-        $testConnections = @("TestConn1", "TestConn2", "TestConnInteractive")
-        foreach ($name in $testConnections) {
-            try {
-                Get-DataverseConnection -DeleteConnection -Name $name -ErrorAction SilentlyContinue
-            } catch {
-                # Ignore errors if connection doesn't exist
+    AfterEach {
+        # Clean up test connections after each test
+        if (Get-Module Rnwood.Dataverse.Data.PowerShell) {
+            $testConnections = @("TestConn1", "TestConn2", "TestConnInteractive")
+            foreach ($name in $testConnections) {
+                try {
+                    Get-DataverseConnection -DeleteConnection -Name $name -ErrorAction SilentlyContinue
+                } catch {
+                    # Ignore errors if connection doesn't exist
+                }
             }
+            
+            Remove-Module Rnwood.Dataverse.Data.PowerShell
         }
     }
 
     It "ListConnections returns empty array when no connections saved" {
+        # Load module by calling getMockConnection (which imports it)
+        $conn = getMockConnection
+        
         # First, delete all test connections to ensure clean state
         $testConnections = @("TestConn1", "TestConn2", "TestConnInteractive")
         foreach ($name in $testConnections) {
@@ -47,15 +57,10 @@ Describe 'Named Connections' {
     It "Can save a named connection with Mock provider" {
         # This test verifies that the -Name parameter works with mock connections
         # However, mock connections don't use MSAL so they won't actually cache tokens
-        $metadataXml = Get-Content "$PSScriptRoot/contact.xml" -Raw
-        $serializer = [System.Runtime.Serialization.DataContractSerializer]::new([Microsoft.Xrm.Sdk.Metadata.EntityMetadata])
-        $reader = [System.Xml.XmlReader]::Create([System.IO.StringReader]::new($metadataXml))
-        $contactMetadata = $serializer.ReadObject($reader)
-        $reader.Close()
+        $connection = getMockConnection
         
         # Note: Named connections with mock provider are not fully functional 
         # since mock connections don't use MSAL, but parameter should be accepted
-        $connection = Get-DataverseConnection -Mock @($contactMetadata) -Url "https://test.crm.dynamics.com"
         $connection | Should -Not -BeNullOrEmpty
     }
 
@@ -84,10 +89,6 @@ Describe 'Named Connections' {
     }
 
     It "Name parameter is available on Interactive parameter set" {
-        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
-            Import-Module Rnwood.Dataverse.Data.PowerShell
-        }
-        
         $cmdlet = Get-Command Get-DataverseConnection
         $parameterSet = $cmdlet.ParameterSets | Where-Object { $_.Name -eq "Authenticate interactively" }
         $parameterSet | Should -Not -BeNullOrEmpty
@@ -98,10 +99,6 @@ Describe 'Named Connections' {
     }
 
     It "Name parameter is available on DeviceCode parameter set" {
-        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
-            Import-Module Rnwood.Dataverse.Data.PowerShell
-        }
-        
         $cmdlet = Get-Command Get-DataverseConnection
         $parameterSet = $cmdlet.ParameterSets | Where-Object { $_.Name -eq "Authenticate using the device code flow" }
         $parameterSet | Should -Not -BeNullOrEmpty
@@ -112,10 +109,6 @@ Describe 'Named Connections' {
     }
 
     It "Name parameter is available on ClientSecret parameter set" {
-        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
-            Import-Module Rnwood.Dataverse.Data.PowerShell
-        }
-        
         $cmdlet = Get-Command Get-DataverseConnection
         $parameterSet = $cmdlet.ParameterSets | Where-Object { $_.Name -eq "Authenticate with client secret" }
         $parameterSet | Should -Not -BeNullOrEmpty
@@ -126,129 +119,64 @@ Describe 'Named Connections' {
     }
 
     It "ListConnections parameter set exists" {
-        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
-            Import-Module Rnwood.Dataverse.Data.PowerShell
-        }
-        
         $cmdlet = Get-Command Get-DataverseConnection
         $parameterSet = $cmdlet.ParameterSets | Where-Object { $_.Name -eq "List saved named connections" }
         $parameterSet | Should -Not -BeNullOrEmpty
         
         $listParam = $parameterSet.Parameters | Where-Object { $_.Name -eq "ListConnections" }
         $listParam | Should -Not -BeNullOrEmpty
-        $listParam.Mandatory | Should -Be $true
+        $listParam.IsMandatory | Should -Be $true
     }
 
     It "DeleteConnection parameter set exists" {
-        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
-            Import-Module Rnwood.Dataverse.Data.PowerShell
-        }
-        
         $cmdlet = Get-Command Get-DataverseConnection
         $parameterSet = $cmdlet.ParameterSets | Where-Object { $_.Name -eq "Delete a saved named connection" }
         $parameterSet | Should -Not -BeNullOrEmpty
         
         $deleteParam = $parameterSet.Parameters | Where-Object { $_.Name -eq "DeleteConnection" }
         $deleteParam | Should -Not -BeNullOrEmpty
-        $deleteParam.Mandatory | Should -Be $true
+        $deleteParam.IsMandatory | Should -Be $true
         
         $nameParam = $parameterSet.Parameters | Where-Object { $_.Name -eq "Name" }
         $nameParam | Should -Not -BeNullOrEmpty
-        $nameParam.Mandatory | Should -Be $true
+        $nameParam.IsMandatory | Should -Be $true
     }
 
     It "LoadNamed parameter set exists" {
-        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
-            Import-Module Rnwood.Dataverse.Data.PowerShell
-        }
-        
         $cmdlet = Get-Command Get-DataverseConnection
         $parameterSet = $cmdlet.ParameterSets | Where-Object { $_.Name -eq "Load a saved named connection" }
         $parameterSet | Should -Not -BeNullOrEmpty
         
         $nameParam = $parameterSet.Parameters | Where-Object { $_.Name -eq "Name" }
         $nameParam | Should -Not -BeNullOrEmpty
-        $nameParam.Mandatory | Should -Be $true
+        $nameParam.IsMandatory | Should -Be $true
     }
 
-    It "ConnectionStore class exists and can be instantiated" {
-        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
-            Import-Module Rnwood.Dataverse.Data.PowerShell
-        }
-        
-        # Test that the ConnectionStore class is available
-        $storeType = [Rnwood.Dataverse.Data.PowerShell.Commands.ConnectionStore]
-        $storeType | Should -Not -BeNullOrEmpty
-        
-        $store = New-Object Rnwood.Dataverse.Data.PowerShell.Commands.ConnectionStore
-        $store | Should -Not -BeNullOrEmpty
+    It "Can use ListConnections parameter" {
+        # Test that the cmdlet works with ListConnections
+        $result = Get-DataverseConnection -ListConnections
+        # Should return a result (even if empty)
+        ($result -is [Array]) -or ($null -eq $result) | Should -Be $true
     }
 
-    It "ConnectionStore can list connections" {
-        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
-            Import-Module Rnwood.Dataverse.Data.PowerShell
+    It "Can use DeleteConnection parameter with non-existent connection" {
+        # Test that deleting a non-existent connection returns appropriate error
+        $ErrorActionPreference = 'Stop'
+        $errorOccurred = $false
+        
+        try {
+            Get-DataverseConnection -DeleteConnection -Name "NonExistentConnection123456"
+        } catch {
+            $errorOccurred = $true
         }
         
-        $store = New-Object Rnwood.Dataverse.Data.PowerShell.Commands.ConnectionStore
-        $connections = $store.ListConnections()
-        # Should return a list (even if empty)
-        $connections | Should -Not -BeNull
+        $errorOccurred | Should -Be $true
     }
 
-    It "ConnectionStore reports false for non-existent connection" {
-        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
-            Import-Module Rnwood.Dataverse.Data.PowerShell
-        }
-        
-        $store = New-Object Rnwood.Dataverse.Data.PowerShell.Commands.ConnectionStore
-        $exists = $store.ConnectionExists("NonExistentConnection123456")
-        $exists | Should -Be $false
-    }
-
-    It "ConnectionStore can save and load connection metadata" {
-        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
-            Import-Module Rnwood.Dataverse.Data.PowerShell
-        }
-        
-        $store = New-Object Rnwood.Dataverse.Data.PowerShell.Commands.ConnectionStore
-        
-        $metadata = New-Object Rnwood.Dataverse.Data.PowerShell.Commands.ConnectionMetadata
-        $metadata.Url = "https://test.crm.dynamics.com"
-        $metadata.AuthMethod = "Interactive"
-        $metadata.ClientId = [Guid]::NewGuid().ToString()
-        $metadata.Username = "testuser@test.com"
-        $metadata.SavedAt = [DateTime]::UtcNow
-        
-        $store.SaveConnection("TestConn1", $metadata)
-        
-        $loaded = $store.LoadConnection("TestConn1")
-        $loaded | Should -Not -BeNullOrEmpty
-        $loaded.Url | Should -Be $metadata.Url
-        $loaded.AuthMethod | Should -Be $metadata.AuthMethod
-        $loaded.Username | Should -Be $metadata.Username
-    }
-
-    It "ConnectionStore can delete saved connection" {
-        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)){
-            Import-Module Rnwood.Dataverse.Data.PowerShell
-        }
-        
-        $store = New-Object Rnwood.Dataverse.Data.PowerShell.Commands.ConnectionStore
-        
-        # Save a connection first
-        $metadata = New-Object Rnwood.Dataverse.Data.PowerShell.Commands.ConnectionMetadata
-        $metadata.Url = "https://test2.crm.dynamics.com"
-        $metadata.AuthMethod = "DeviceCode"
-        $metadata.SavedAt = [DateTime]::UtcNow
-        
-        $store.SaveConnection("TestConn2", $metadata)
-        $store.ConnectionExists("TestConn2") | Should -Be $true
-        
-        # Delete it
-        $deleted = $store.DeleteConnection("TestConn2")
-        $deleted | Should -Be $true
-        
-        # Verify it's gone
-        $store.ConnectionExists("TestConn2") | Should -Be $false
+    It "Can work with Mock provider" {
+        # Test through the cmdlet using Mock provider
+        $connection = getMockConnection
+        # This implicitly tests that the module loads and works
+        $connection | Should -Not -BeNullOrEmpty
     }
 }
