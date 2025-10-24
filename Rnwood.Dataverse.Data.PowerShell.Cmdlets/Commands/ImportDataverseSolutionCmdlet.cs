@@ -216,13 +216,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     WriteVerbose($"Processing {EnvironmentVariables.Count} environment variable(s)...");
                     foreach (DictionaryEntry entry in EnvironmentVariables)
                     {
-                        var envVarName = entry.Key.ToString();
+                        var envVarSchemaName = entry.Key.ToString();
                         var envVarValue = entry.Value.ToString();
 
-                        WriteVerbose($"  Setting environment variable '{envVarName}' to value '{envVarValue}'");
+                        WriteVerbose($"  Setting environment variable '{envVarSchemaName}' to value '{envVarValue}'");
+
+                        // Query for the environment variable definition to get its ID
+                        Guid? definitionId = GetEnvironmentVariableDefinitionId(envVarSchemaName);
+                        
+                        if (!definitionId.HasValue)
+                        {
+                            WriteWarning($"Could not find environment variable definition for '{envVarSchemaName}'. Skipping.");
+                            continue;
+                        }
 
                         var componentParam = new Entity("environmentvariablevalue");
-                        componentParam["SchemaName"] = envVarName;
+                        componentParam["environmentvariabledefinitionid"] = new EntityReference("environmentvariabledefinition", definitionId.Value);
                         componentParam["Value"] = envVarValue;
                         
                         componentParameters.Entities.Add(componentParam);
@@ -775,6 +784,40 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteVerbose($"Error checking environment variable '{envVarSchemaName}': {ex.Message}");
                 // If we can't query, assume it doesn't exist
                 return false;
+            }
+        }
+
+        private Guid? GetEnvironmentVariableDefinitionId(string envVarSchemaName)
+        {
+            try
+            {
+                // Query for environment variable definition by schema name
+                var query = new QueryExpression("environmentvariabledefinition")
+                {
+                    ColumnSet = new ColumnSet("environmentvariabledefinitionid", "schemaname"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("schemaname", ConditionOperator.Equal, envVarSchemaName)
+                        }
+                    },
+                    TopCount = 1
+                };
+
+                var results = Connection.RetrieveMultiple(query);
+                
+                if (results.Entities.Count > 0)
+                {
+                    return results.Entities[0].Id;
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                WriteVerbose($"Error getting environment variable definition ID for '{envVarSchemaName}': {ex.Message}");
+                return null;
             }
         }
 
