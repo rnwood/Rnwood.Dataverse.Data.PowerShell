@@ -1,9 +1,13 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Management.Automation;
+using System.Text;
 using System.Threading;
+using System.Xml.Linq;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
@@ -103,6 +107,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public int TimeoutSeconds { get; set; } = 1800;
 
         /// <summary>
+        /// Gets or sets whether to skip validation of connection references.
+        /// </summary>
+        [Parameter(HelpMessage = "Skip validation that all required connection references are provided.")]
+        public SwitchParameter SkipConnectionReferenceValidation { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether to skip validation of environment variables.
+        /// </summary>
+        [Parameter(HelpMessage = "Skip validation that all required environment variables are provided.")]
+        public SwitchParameter SkipEnvironmentVariableValidation { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -143,6 +159,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             WriteVerbose($"Solution file size: {solutionBytes.Length} bytes");
+
+            // Validate solution components (connection references and environment variables)
+            ValidateSolutionComponents(solutionBytes);
 
             // Check if this is an upgrade scenario and if the solution already exists
             bool shouldFallbackToRegularImport = false;
@@ -412,6 +431,308 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 WriteVerbose($"Error checking for existing solution: {ex.Message}");
                 // If we can't determine, assume it doesn't exist and do regular import
+                return false;
+            }
+        }
+
+        private void ValidateSolutionComponents(byte[] solutionBytes)
+        {
+            try
+            {
+                WriteVerbose("Validating solution components...");
+
+                // Extract connection references and environment variables from the solution
+                var solutionComponents = ExtractSolutionComponents(solutionBytes);
+
+                // Validate connection references if not skipped
+                if (!SkipConnectionReferenceValidation.IsPresent)
+                {
+                    ValidateConnectionReferences(solutionComponents.ConnectionReferences);
+                }
+
+                // Validate environment variables if not skipped
+                if (!SkipEnvironmentVariableValidation.IsPresent)
+                {
+                    ValidateEnvironmentVariables(solutionComponents.EnvironmentVariables);
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteVerbose($"Error during solution component validation: {ex.Message}");
+                // If we can't parse the solution, we'll let the import proceed and let Dataverse handle any issues
+            }
+        }
+
+        private (List<string> ConnectionReferences, List<string> EnvironmentVariables) ExtractSolutionComponents(byte[] solutionBytes)
+        {
+            var connectionReferences = new List<string>();
+            var environmentVariables = new List<string>();
+
+            try
+            {
+                using (var memoryStream = new MemoryStream(solutionBytes))
+                using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
+                {
+                    // Find the customizations.xml file in the solution
+                    var customizationsEntry = archive.Entries.FirstOrDefault(e => 
+                        e.FullName.Equals("customizations.xml", StringComparison.OrdinalIgnoreCase));
+
+                    if (customizationsEntry != null)
+                    {
+                        using (var stream = customizationsEntry.Open())
+                        using (var reader = new StreamReader(stream))
+                        {
+                            var xmlContent = reader.ReadToEnd();
+                            var xdoc = XDocument.Parse(xmlContent);
+
+                            // Extract connection references
+                            // Connection references are stored in the solution XML with specific schema
+                            var connRefElements = xdoc.Descendants()
+                                .Where(e => e.Name.LocalName == "connectionreference");
+                            
+                            foreach (var connRef in connRefElements)
+                            {
+                                var logicalName = connRef.Attribute("connectionreferencelogicalname")?.Value;
+                                if (!string.IsNullOrEmpty(logicalName))
+                                {
+                                    connectionReferences.Add(logicalName);
+                                    WriteVerbose($"Found connection reference in solution: {logicalName}");
+                                }
+                            }
+
+                            // Extract environment variables
+                            // Environment variables are stored with their schema names
+                            var envVarElements = xdoc.Descendants()
+                                .Where(e => e.Name.LocalName == "environmentvariabledefinition");
+                            
+                            foreach (var envVar in envVarElements)
+                            {
+                                var schemaName = envVar.Element(XName.Get("schemaname", envVar.Name.NamespaceName))?.Value;
+                                if (!string.IsNullOrEmpty(schemaName))
+                                {
+                                    environmentVariables.Add(schemaName);
+                                    WriteVerbose($"Found environment variable in solution: {schemaName}");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteVerbose($"Error extracting solution components: {ex.Message}");
+            }
+
+            return (connectionReferences, environmentVariables);
+        }
+
+        private void ValidateConnectionReferences(List<string> requiredConnectionRefs)
+        {
+            if (requiredConnectionRefs == null || requiredConnectionRefs.Count == 0)
+            {
+                WriteVerbose("No connection references found in solution.");
+                return;
+            }
+
+            WriteVerbose($"Validating {requiredConnectionRefs.Count} connection reference(s)...");
+
+            var missingConnectionRefs = new List<string>();
+
+            foreach (var connRefName in requiredConnectionRefs)
+            {
+                // Check if this connection reference is provided in the parameters
+                bool isProvided = ConnectionReferences != null && ConnectionReferences.ContainsKey(connRefName);
+
+                if (!isProvided)
+                {
+                    // Check if it exists in the target environment with a value
+                    bool existsInTarget = CheckConnectionReferenceExistsInTarget(connRefName);
+                    
+                    if (!existsInTarget)
+                    {
+                        missingConnectionRefs.Add(connRefName);
+                        WriteVerbose($"Connection reference '{connRefName}' is not provided and does not exist in target environment.");
+                    }
+                    else
+                    {
+                        WriteVerbose($"Connection reference '{connRefName}' exists in target environment.");
+                    }
+                }
+                else
+                {
+                    WriteVerbose($"Connection reference '{connRefName}' is provided in parameters.");
+                }
+            }
+
+            if (missingConnectionRefs.Count > 0)
+            {
+                var errorMessage = new StringBuilder();
+                errorMessage.AppendLine($"The following connection reference(s) are required but not provided:");
+                foreach (var connRef in missingConnectionRefs)
+                {
+                    errorMessage.AppendLine($"  - {connRef}");
+                }
+                errorMessage.AppendLine();
+                errorMessage.AppendLine("Please provide values using the -ConnectionReferences parameter, or use -SkipConnectionReferenceValidation to skip this check.");
+
+                ThrowTerminatingError(new ErrorRecord(
+                    new InvalidOperationException(errorMessage.ToString()),
+                    "MissingConnectionReferences",
+                    ErrorCategory.InvalidArgument,
+                    ConnectionReferences));
+            }
+        }
+
+        private void ValidateEnvironmentVariables(List<string> requiredEnvVars)
+        {
+            if (requiredEnvVars == null || requiredEnvVars.Count == 0)
+            {
+                WriteVerbose("No environment variables found in solution.");
+                return;
+            }
+
+            WriteVerbose($"Validating {requiredEnvVars.Count} environment variable(s)...");
+
+            var missingEnvVars = new List<string>();
+
+            foreach (var envVarName in requiredEnvVars)
+            {
+                // Check if this environment variable is provided in the parameters
+                bool isProvided = EnvironmentVariables != null && EnvironmentVariables.ContainsKey(envVarName);
+
+                if (!isProvided)
+                {
+                    // Check if it exists in the target environment with a value
+                    bool existsInTarget = CheckEnvironmentVariableExistsInTarget(envVarName);
+                    
+                    if (!existsInTarget)
+                    {
+                        missingEnvVars.Add(envVarName);
+                        WriteVerbose($"Environment variable '{envVarName}' is not provided and does not exist in target environment.");
+                    }
+                    else
+                    {
+                        WriteVerbose($"Environment variable '{envVarName}' exists in target environment.");
+                    }
+                }
+                else
+                {
+                    WriteVerbose($"Environment variable '{envVarName}' is provided in parameters.");
+                }
+            }
+
+            if (missingEnvVars.Count > 0)
+            {
+                var errorMessage = new StringBuilder();
+                errorMessage.AppendLine($"The following environment variable(s) are required but not provided:");
+                foreach (var envVar in missingEnvVars)
+                {
+                    errorMessage.AppendLine($"  - {envVar}");
+                }
+                errorMessage.AppendLine();
+                errorMessage.AppendLine("Please provide values using the -EnvironmentVariables parameter, or use -SkipEnvironmentVariableValidation to skip this check.");
+
+                ThrowTerminatingError(new ErrorRecord(
+                    new InvalidOperationException(errorMessage.ToString()),
+                    "MissingEnvironmentVariables",
+                    ErrorCategory.InvalidArgument,
+                    EnvironmentVariables));
+            }
+        }
+
+        private bool CheckConnectionReferenceExistsInTarget(string connectionRefLogicalName)
+        {
+            try
+            {
+                var query = new QueryExpression("connectionreference")
+                {
+                    ColumnSet = new ColumnSet("connectionreferencelogicalname", "connectionid"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("connectionreferencelogicalname", ConditionOperator.Equal, connectionRefLogicalName)
+                        }
+                    },
+                    TopCount = 1
+                };
+
+                var results = Connection.RetrieveMultiple(query);
+                
+                if (results.Entities.Count > 0)
+                {
+                    var connRef = results.Entities[0];
+                    var connectionId = connRef.GetAttributeValue<Guid?>("connectionid");
+                    // Connection reference exists and has a value set
+                    return connectionId.HasValue && connectionId.Value != Guid.Empty;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                WriteVerbose($"Error checking connection reference '{connectionRefLogicalName}': {ex.Message}");
+                // If we can't query, assume it doesn't exist
+                return false;
+            }
+        }
+
+        private bool CheckEnvironmentVariableExistsInTarget(string envVarSchemaName)
+        {
+            try
+            {
+                // Query for environment variable definition
+                var defQuery = new QueryExpression("environmentvariabledefinition")
+                {
+                    ColumnSet = new ColumnSet("environmentvariabledefinitionid", "schemaname"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("schemaname", ConditionOperator.Equal, envVarSchemaName)
+                        }
+                    },
+                    TopCount = 1
+                };
+
+                var defResults = Connection.RetrieveMultiple(defQuery);
+                
+                if (defResults.Entities.Count > 0)
+                {
+                    var envVarDef = defResults.Entities[0];
+                    var envVarDefId = envVarDef.Id;
+
+                    // Check if there's a value set for this environment variable
+                    var valueQuery = new QueryExpression("environmentvariablevalue")
+                    {
+                        ColumnSet = new ColumnSet("value"),
+                        Criteria = new FilterExpression
+                        {
+                            Conditions =
+                            {
+                                new ConditionExpression("environmentvariabledefinitionid", ConditionOperator.Equal, envVarDefId)
+                            }
+                        },
+                        TopCount = 1
+                    };
+
+                    var valueResults = Connection.RetrieveMultiple(valueQuery);
+                    
+                    if (valueResults.Entities.Count > 0)
+                    {
+                        var envVarValue = valueResults.Entities[0];
+                        var value = envVarValue.GetAttributeValue<string>("value");
+                        // Environment variable exists and has a value set
+                        return !string.IsNullOrEmpty(value);
+                    }
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                WriteVerbose($"Error checking environment variable '{envVarSchemaName}': {ex.Message}");
+                // If we can't query, assume it doesn't exist
                 return false;
             }
         }

@@ -1144,6 +1144,8 @@ Describe "Examples-Comparison Documentation Tests" {
             $cmd.Parameters.ContainsKey('HoldingSolution') | Should -Be $true
             $cmd.Parameters.ContainsKey('ConnectionReferences') | Should -Be $true
             $cmd.Parameters.ContainsKey('EnvironmentVariables') | Should -Be $true
+            $cmd.Parameters.ContainsKey('SkipConnectionReferenceValidation') | Should -Be $true
+            $cmd.Parameters.ContainsKey('SkipEnvironmentVariableValidation') | Should -Be $true
             $cmd.Parameters.ContainsKey('PollingIntervalSeconds') | Should -Be $true
             $cmd.Parameters.ContainsKey('TimeoutSeconds') | Should -Be $true
         }
@@ -1174,6 +1176,13 @@ Describe "Examples-Comparison Documentation Tests" {
             # Validates that the EnvironmentVariables parameter type is correct
             $cmd = Get-Command Import-DataverseSolution
             $cmd.Parameters['EnvironmentVariables'].ParameterType.Name | Should -Be 'Hashtable'
+        }
+
+        It "Import-DataverseSolution validation skip switches are available" {
+            # Validates that validation skip parameters exist
+            $cmd = Get-Command Import-DataverseSolution
+            $cmd.Parameters['SkipConnectionReferenceValidation'].ParameterType.Name | Should -Be 'SwitchParameter'
+            $cmd.Parameters['SkipEnvironmentVariableValidation'].ParameterType.Name | Should -Be 'SwitchParameter'
         }
     }
 }

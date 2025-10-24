@@ -18,8 +18,8 @@ Import-DataverseSolution [-InFile] <String> [-OverwriteUnmanagedCustomizations] 
  [-SkipProductUpdateDependencies] [-HoldingSolution] [-ConnectionReferences <Hashtable>]
  [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
  [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-PollingIntervalSeconds <Int32>]
- [-TimeoutSeconds <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
+ [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation] [-SkipEnvironmentVariableValidation]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### FromBytes
@@ -28,8 +28,8 @@ Import-DataverseSolution -SolutionFile <Byte[]> [-OverwriteUnmanagedCustomizatio
  [-SkipProductUpdateDependencies] [-HoldingSolution] [-ConnectionReferences <Hashtable>]
  [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
  [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-PollingIntervalSeconds <Int32>]
- [-TimeoutSeconds <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
+ [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation] [-SkipEnvironmentVariableValidation]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -98,6 +98,13 @@ PS C:\> Import-DataverseSolution -InFile "C:\Solutions\LargeSolution.zip" -Timeo
 ```
 
 Imports a large solution with a 60-minute timeout and checks status every 10 seconds.
+
+### Example 7: Skip validation for pre-configured environments
+```powershell
+PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -SkipConnectionReferenceValidation -SkipEnvironmentVariableValidation
+```
+
+Imports the solution and skips validation checks, useful when connection references and environment variables are already configured in the target environment.
 
 ## PARAMETERS
 
@@ -285,6 +292,36 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -SkipConnectionReferenceValidation
+Skip validation that all required connection references are provided.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SkipEnvironmentVariableValidation
+Skip validation that all required environment variables are provided.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -SkipProductUpdateDependencies
 Skip enforcement of dependencies related to product updates.
 
@@ -395,6 +432,16 @@ When importing solutions with connection references or environment variables, us
 
 Connection references use schema names (e.g., 'new_sharedconnectionref') mapped to connection IDs.
 Environment variables use schema names (e.g., 'new_apiurl') mapped to their values.
+
+**Automatic Validation:**
+By default, the cmdlet validates that all connection references and environment variables in the solution are either:
+1. Provided in the `-ConnectionReferences` or `-EnvironmentVariables` parameters, OR
+2. Already exist in the target environment with values set
+
+If any required components are missing, the cmdlet will throw an error listing the missing items. This helps catch configuration errors before the import begins.
+
+Use `-SkipConnectionReferenceValidation` to bypass validation of connection references.
+Use `-SkipEnvironmentVariableValidation` to bypass validation of environment variables.
 
 **Upgrade Scenarios:**
 When using -HoldingSolution to import a solution as an upgrade, the cmdlet automatically detects if the solution doesn't already exist and falls back to a regular import. This prevents errors when deploying to new environments.

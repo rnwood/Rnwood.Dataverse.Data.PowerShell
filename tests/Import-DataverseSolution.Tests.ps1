@@ -22,6 +22,8 @@ Describe "Import-DataverseSolution" {
         $cmdlet.Parameters.Keys | Should -Contain "Connection"
         $cmdlet.Parameters.Keys | Should -Contain "PollingIntervalSeconds"
         $cmdlet.Parameters.Keys | Should -Contain "TimeoutSeconds"
+        $cmdlet.Parameters.Keys | Should -Contain "SkipConnectionReferenceValidation"
+        $cmdlet.Parameters.Keys | Should -Contain "SkipEnvironmentVariableValidation"
     }
 
     It "InFile parameter is mandatory in FromFile parameter set" {
@@ -58,6 +60,20 @@ Describe "Import-DataverseSolution" {
         $cmdlet = Get-Command Import-DataverseSolution
         $envVarParam = $cmdlet.Parameters["EnvironmentVariables"]
         $envVarParam.ParameterType.Name | Should -Be "Hashtable"
+    }
+
+    It "SkipConnectionReferenceValidation parameter exists" {
+        $cmdlet = Get-Command Import-DataverseSolution
+        $cmdlet.Parameters.Keys | Should -Contain "SkipConnectionReferenceValidation"
+        $skipParam = $cmdlet.Parameters["SkipConnectionReferenceValidation"]
+        $skipParam.ParameterType.Name | Should -Be "SwitchParameter"
+    }
+
+    It "SkipEnvironmentVariableValidation parameter exists" {
+        $cmdlet = Get-Command Import-DataverseSolution
+        $cmdlet.Parameters.Keys | Should -Contain "SkipEnvironmentVariableValidation"
+        $skipParam = $cmdlet.Parameters["SkipEnvironmentVariableValidation"]
+        $skipParam.ParameterType.Name | Should -Be "SwitchParameter"
     }
 
     # Note: Full end-to-end testing of the async monitoring requires a real Dataverse

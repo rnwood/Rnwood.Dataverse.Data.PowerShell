@@ -44,7 +44,13 @@
 # Import-DataverseSolution -Connection $connection -InFile "C:\Solutions\MySolution.zip" `
 #     -WhatIf
 
-# Example 8: Complete export-import workflow between environments
+# Example 8: Skip validation for environments where components already exist
+# Import-DataverseSolution -Connection $connection -InFile "C:\Solutions\MySolution.zip" `
+#     -SkipConnectionReferenceValidation `
+#     -SkipEnvironmentVariableValidation `
+#     -Verbose
+
+# Example 9: Complete export-import workflow between environments
 # # Export from source
 # $solutionBytes = Export-DataverseSolution -Connection $sourceConnection `
 #     -SolutionName "MySolution" `
