@@ -216,6 +216,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public string ManagedIdentityClientId { get; set; }
 		
 		/// <summary>
+		/// Client secret for client secret authentication (NOT RECOMMENDED to save).
+		/// </summary>
+		public string ClientSecret { get; set; }
+		
+		/// <summary>
+		/// Certificate path for certificate authentication (NOT RECOMMENDED to save).
+		/// </summary>
+		public string CertificatePath { get; set; }
+		
+		/// <summary>
+		/// Certificate password for certificate authentication (NOT RECOMMENDED to save).
+		/// </summary>
+		public string CertificatePassword { get; set; }
+		
+		/// <summary>
+		/// Certificate thumbprint for certificate authentication.
+		/// </summary>
+		public string CertificateThumbprint { get; set; }
+		
+		/// <summary>
+		/// Certificate store location for certificate authentication.
+		/// </summary>
+		public string CertificateStoreLocation { get; set; }
+		
+		/// <summary>
+		/// Certificate store name for certificate authentication.
+		/// </summary>
+		public string CertificateStoreName { get; set; }
+		
+		/// <summary>
 		/// When the connection was last saved.
 		/// </summary>
 		public DateTime SavedAt { get; set; }

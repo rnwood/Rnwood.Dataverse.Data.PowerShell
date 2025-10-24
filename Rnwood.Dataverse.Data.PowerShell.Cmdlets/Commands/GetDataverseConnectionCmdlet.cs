@@ -76,6 +76,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public SwitchParameter SetAsDefault { get; set; }
 
 		/// <summary>
+		/// Gets or sets a value indicating whether to save credentials/secrets with the connection (NOT RECOMMENDED).
+		/// </summary>
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "WARNING: Saves the client secret with the connection. This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "WARNING: Saves certificate path and password with the connection. This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.")]
+		public SwitchParameter SaveCredentials { get; set; }
+
+		/// <summary>
 		/// Gets or sets the name of the connection to save or load.
 		/// </summary>
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
@@ -361,6 +368,32 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				Username = metadata.Username;
 				ManagedIdentityClientId = metadata.ManagedIdentityClientId;
 
+				// Restore saved credentials if available
+				if (!string.IsNullOrEmpty(metadata.ClientSecret))
+				{
+					ClientSecret = metadata.ClientSecret;
+					WriteVerbose("Restored saved client secret");
+				}
+				if (!string.IsNullOrEmpty(metadata.CertificatePath))
+				{
+					CertificatePath = metadata.CertificatePath;
+					CertificatePassword = metadata.CertificatePassword;
+					WriteVerbose("Restored saved certificate path and password");
+				}
+				if (!string.IsNullOrEmpty(metadata.CertificateThumbprint))
+				{
+					CertificateThumbprint = metadata.CertificateThumbprint;
+					if (!string.IsNullOrEmpty(metadata.CertificateStoreLocation))
+					{
+						CertificateStoreLocation = (StoreLocation)Enum.Parse(typeof(StoreLocation), metadata.CertificateStoreLocation);
+					}
+					if (!string.IsNullOrEmpty(metadata.CertificateStoreName))
+					{
+						CertificateStoreName = (StoreName)Enum.Parse(typeof(StoreName), metadata.CertificateStoreName);
+					}
+					WriteVerbose("Restored certificate thumbprint and store location");
+				}
+
 				// Set the appropriate parameter set name based on the auth method
 				// and continue with authentication - the MSAL cache will be used
 				WriteVerbose($"Loading connection '{Name}' using {metadata.AuthMethod} authentication");
@@ -552,19 +585,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							result = new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url));
 
 							// Save connection metadata if a name was provided
-							// Note: We don't save the client secret for security reasons
 							if (!string.IsNullOrEmpty(Name))
 							{
 								var store = new ConnectionStore();
-								store.SaveConnection(Name, new ConnectionMetadata
+								var metadata = new ConnectionMetadata
 								{
 									Url = Url.ToString(),
 									AuthMethod = "ClientSecret",
 									ClientId = ClientId.ToString(),
 									SavedAt = DateTime.UtcNow
-								});
+								};
+
+								// Save client secret if SaveCredentials is specified (NOT RECOMMENDED)
+								if (SaveCredentials)
+								{
+									metadata.ClientSecret = ClientSecret;
+									WriteWarning("SECURITY WARNING: Client secret has been saved in plain text. This is NOT RECOMMENDED for production use.");
+								}
+								else
+								{
+									WriteVerbose("Client secret is not saved. You will need to provide it again when loading this connection.");
+								}
+
+								store.SaveConnection(Name, metadata);
 								WriteVerbose($"Connection saved as '{Name}'");
-								WriteWarning("Client secret is not saved. You will need to provide it again when loading this connection.");
 							}
 
 							break;
@@ -593,19 +637,38 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							result = new ServiceClient(Url, url => GetTokenWithClientCertificate(confApp, url));
 
 							// Save connection metadata if a name was provided
-							// Note: Certificate details are not saved for security reasons
 							if (!string.IsNullOrEmpty(Name))
 							{
 								var store = new ConnectionStore();
-								store.SaveConnection(Name, new ConnectionMetadata
+								var metadata = new ConnectionMetadata
 								{
 									Url = Url.ToString(),
 									AuthMethod = "ClientCertificate",
 									ClientId = ClientId.ToString(),
 									SavedAt = DateTime.UtcNow
-								});
+								};
+
+								// Save certificate details if SaveCredentials is specified (NOT RECOMMENDED)
+								if (SaveCredentials)
+								{
+									metadata.CertificatePath = CertificatePath;
+									metadata.CertificatePassword = CertificatePassword;
+									metadata.CertificateThumbprint = CertificateThumbprint;
+									metadata.CertificateStoreLocation = CertificateStoreLocation.ToString();
+									metadata.CertificateStoreName = CertificateStoreName.ToString();
+									WriteWarning("SECURITY WARNING: Certificate details (including password) have been saved in plain text. This is NOT RECOMMENDED for production use.");
+								}
+								else
+								{
+									// Still save thumbprint and store location as they are not secrets
+									metadata.CertificateThumbprint = CertificateThumbprint;
+									metadata.CertificateStoreLocation = CertificateStoreLocation.ToString();
+									metadata.CertificateStoreName = CertificateStoreName.ToString();
+									WriteVerbose("Certificate path and password are not saved. You will need to provide the certificate again when loading this connection.");
+								}
+
+								store.SaveConnection(Name, metadata);
 								WriteVerbose($"Connection saved as '{Name}'");
-								WriteWarning("Certificate details are not saved. You will need to provide the certificate again when loading this connection.");
 							}
 
 							break;

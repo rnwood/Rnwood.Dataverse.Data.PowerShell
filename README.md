@@ -277,7 +277,19 @@ Get-DataverseConnection -url https://myorg.crm11.dynamics.com -devicecode -Name 
 Get-DataverseConnection -url https://myorg.crm11.dynamics.com -username "user@domain.com" -password "pass" -Name "MyOrgTest"
 ```
 
-**Security Note:** For client secret authentication, the secret itself is NOT saved. You'll need to provide it again when loading the connection.
+**Security Note:** By default, client secrets and certificate passwords are NOT saved for security reasons. You'll need to provide them again when loading the connection.
+
+If you need to save credentials for testing or non-production scenarios, use the `-SaveCredentials` switch (NOT RECOMMENDED for production):
+
+```powershell
+# Save client secret (NOT RECOMMENDED for production)
+Get-DataverseConnection -url https://myorg.crm11.dynamics.com -clientid "..." -clientsecret "..." -Name "MyOrgTest" -SaveCredentials
+
+# Save certificate with password (NOT RECOMMENDED for production)
+Get-DataverseConnection -url https://myorg.crm11.dynamics.com -clientid "..." -CertificatePath "cert.pfx" -CertificatePassword "..." -Name "MyOrgCert" -SaveCredentials
+```
+
+**WARNING:** Using `-SaveCredentials` stores secrets in plain text on disk. Only use this for testing or non-production scenarios.
 
 ##### Loading a Named Connection
 
