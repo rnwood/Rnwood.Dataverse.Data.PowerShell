@@ -1107,4 +1107,28 @@ Describe "Examples-Comparison Documentation Tests" {
             $retrieved.firstname | Should -Be "BatchTest0"
         }
     }
+
+    Context "Solution Export Examples" {
+        It "Export-DataverseSolution cmdlet is available and properly documented" {
+            # Validates that the Export-DataverseSolution cmdlet exists with expected parameters
+            $cmd = Get-Command Export-DataverseSolution -ErrorAction SilentlyContinue
+            $cmd | Should -Not -BeNull
+            $cmd.Parameters.ContainsKey('SolutionName') | Should -Be $true
+            $cmd.Parameters.ContainsKey('Managed') | Should -Be $true
+            $cmd.Parameters.ContainsKey('OutFile') | Should -Be $true
+            $cmd.Parameters.ContainsKey('PassThru') | Should -Be $true
+            $cmd.Parameters.ContainsKey('PollingIntervalSeconds') | Should -Be $true
+            $cmd.Parameters.ContainsKey('TimeoutSeconds') | Should -Be $true
+            
+            # Validate export settings parameters are available
+            $cmd.Parameters.ContainsKey('ExportAutoNumberingSettings') | Should -Be $true
+            $cmd.Parameters.ContainsKey('ExportCalendarSettings') | Should -Be $true
+        }
+
+        It "Export-DataverseSolution supports WhatIf as documented in examples" {
+            # Validates the WhatIf example from Examples-Export-DataverseSolution.ps1
+            $conn = getMockConnection
+            { Export-DataverseSolution -Connection $conn -SolutionName "TestSolution" -OutFile "test.zip" -WhatIf } | Should -Not -Throw
+        }
+    }
 }
