@@ -222,8 +222,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         WriteVerbose($"  Setting environment variable '{envVarName}' to value '{envVarValue}'");
 
                         var componentParam = new Entity("environmentvariablevalue");
-                        componentParam["schemaname"] = envVarName;
-                        componentParam["value"] = envVarValue;
+                        componentParam["SchemaName"] = envVarName;
+                        componentParam["Value"] = envVarValue;
                         
                         componentParameters.Entities.Add(componentParam);
                     }

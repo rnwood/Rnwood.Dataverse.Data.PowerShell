@@ -431,7 +431,7 @@ For synchronous imports (useful for small solutions), use Invoke-DataverseImport
 When importing solutions with connection references or environment variables, use the `-ConnectionReferences` and `-EnvironmentVariables` parameters with hashtables mapping names to values. The cmdlet converts these to the ComponentParameters format required by the API.
 
 Connection references use the `connectionreference` entity with `connectionreferencelogicalname` and `connectionid` attributes.
-Environment variables use the `environmentvariablevalue` entity with `schemaname` and `value` attributes.
+Environment variables use the `environmentvariablevalue` entity with `SchemaName` and `Value` attributes (case-sensitive as per Microsoft documentation).
 
 **Automatic Validation:**
 By default, the cmdlet validates that all connection references and environment variables in the solution are either:
