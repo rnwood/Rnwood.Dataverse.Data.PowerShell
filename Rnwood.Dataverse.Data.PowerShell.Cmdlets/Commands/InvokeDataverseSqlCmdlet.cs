@@ -27,6 +27,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private string _progressMessage;
 		private ConcurrentQueue<string> _infoMessages;
 		private ConcurrentQueue<Task> _pendingConfirmations;
+		private System.Threading.CancellationTokenSource _userCancellationCts;
 		/// <summary>
 		/// SQL to execute. See Sql4Cds docs.
 		/// </summary>
@@ -84,6 +85,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();
+
+			// Initialize cancellation token source for this pipeline invocation
+			_userCancellationCts = new System.Threading.CancellationTokenSource();
 
 			_sqlConnection = new Sql4CdsConnection(Connection);
 			_sqlConnection.UseTDSEndpoint = false;
@@ -163,6 +167,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_command = null;
 			_commandPrepared = false;
 
+			// Cleanup cancellation token source
+			_userCancellationCts?.Dispose();
+			_userCancellationCts = null;
+		}
+
+		/// <summary>
+		/// Called when the user cancels the cmdlet.
+		/// </summary>
+		protected override void StopProcessing()
+		{
+			// Called when user presses Ctrl+C. Signal cancellation to any ongoing operations.
+			try
+			{
+				_userCancellationCts?.Cancel();
+			}
+			catch { }
+			base.StopProcessing();
 		}
 
 		/// <summary>
@@ -216,6 +237,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			while (!task.IsCompleted)
 			{
+				// Check for cancellation
+				if (Stopping || (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested))
+				{
+					WriteVerbose("SQL query execution cancelled by user");
+					// Note: Sql4Cds doesn't support cancellation tokens directly, so the task may continue
+					// but we'll stop processing results
+					return;
+				}
+
 				//Wait for either the original task to complete, or a fixed wait
 				Task.WaitAny(task, Task.Delay(100));
 
@@ -238,6 +268,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				{
 					while (reader.Read())
 					{
+						// Check for cancellation during result reading
+						if (Stopping || (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested))
+						{
+							WriteVerbose("SQL query result reading cancelled by user");
+							break;
+						}
+
 						PSObject output = new PSObject();
 
 						for (int f = 0; f < reader.VisibleFieldCount; f++)

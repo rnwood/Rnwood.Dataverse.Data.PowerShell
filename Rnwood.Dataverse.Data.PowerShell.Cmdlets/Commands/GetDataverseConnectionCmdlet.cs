@@ -27,6 +27,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AuthenticationResult = Microsoft.Identity.Client.AuthenticationResult;
 using System.Security;
+using System.Security.Cryptography.X509Certificates;
 
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -47,6 +48,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		}
 
 		private const string PARAMSET_CLIENTSECRET = "Authenticate with client secret";
+		private const string PARAMSET_CLIENTCERTIFICATE = "Authenticate with client certificate";
 		private const string PARAMSET_INTERACTIVE = "Authenticate interactively";
 		private const string PARAMSET_DEVICECODE = "Authenticate using the device code flow";
 		private const string PARAMSET_USERNAMEPASSWORD = "Authenticate with username and password";
@@ -80,6 +82,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEFAULTAZURECREDENTIAL, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_LOADNAMED, HelpMessage = "Name of a saved connection to load. The connection will be restored with cached credentials.")]
@@ -114,6 +117,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// Gets or sets the client ID to use for authentication.
 		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "Client ID to use for authentication. Required for client certificate authentication.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
@@ -123,6 +127,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// Gets or sets the URL of the Dataverse environment to connect to.
 		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
@@ -138,6 +143,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client secret to authenticate with, as registered for the Entra ID application.")]
 		public string ClientSecret { get; set; }
+
+		/// <summary>
+		/// Gets or sets the path to the client certificate file (.pfx or .p12).
+		/// </summary>
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "Path to the client certificate file (.pfx or .p12) for authentication.")]
+		public string CertificatePath { get; set; }
+
+		/// <summary>
+		/// Gets or sets the password for the client certificate file.
+		/// </summary>
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "Password for the client certificate file. If not provided, the certificate is assumed to be unencrypted.")]
+		public string CertificatePassword { get; set; }
+
+		/// <summary>
+		/// Gets or sets the thumbprint of the certificate in the certificate store.
+		/// </summary>
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "Thumbprint of the certificate in the certificate store. Used to load certificate from the Windows certificate store instead of a file.")]
+		public string CertificateThumbprint { get; set; }
+
+		/// <summary>
+		/// Gets or sets the certificate store location to search for the certificate.
+		/// </summary>
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "Certificate store location to search for the certificate. Default is CurrentUser.")]
+		public StoreLocation CertificateStoreLocation { get; set; } = StoreLocation.CurrentUser;
+
+		/// <summary>
+		/// Gets or sets the certificate store name to search for the certificate.
+		/// </summary>
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "Certificate store name to search for the certificate. Default is My (Personal).")]
+		public StoreName CertificateStoreName { get; set; } = StoreName.My;
 
 		/// <summary>
 		/// Gets or sets the username for authentication.
@@ -535,6 +570,47 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							break;
 						}
 
+					case PARAMSET_CLIENTCERTIFICATE:
+						{
+							string authority = GetAuthority();
+
+							X509Certificate2 certificate = LoadCertificate();
+
+							var confApp = ConfidentialClientApplicationBuilder
+							.Create(ClientId.ToString())
+							.WithRedirectUri("http://localhost")
+							.WithCertificate(certificate)
+							.WithAuthority(authority)
+							.Build();
+
+							// Register MSAL cache if saving a named connection
+							if (!string.IsNullOrEmpty(Name))
+							{
+								var store = new ConnectionStore();
+								store.RegisterCache(confApp);
+							}
+
+							result = new ServiceClient(Url, url => GetTokenWithClientCertificate(confApp, url));
+
+							// Save connection metadata if a name was provided
+							// Note: Certificate details are not saved for security reasons
+							if (!string.IsNullOrEmpty(Name))
+							{
+								var store = new ConnectionStore();
+								store.SaveConnection(Name, new ConnectionMetadata
+								{
+									Url = Url.ToString(),
+									AuthMethod = "ClientCertificate",
+									ClientId = ClientId.ToString(),
+									SavedAt = DateTime.UtcNow
+								});
+								WriteVerbose($"Connection saved as '{Name}'");
+								WriteWarning("Certificate details are not saved. You will need to provide the certificate again when loading this connection.");
+							}
+
+							break;
+						}
+
 					case PARAMSET_DEFAULTAZURECREDENTIAL:
 						{
 							var credential = new Azure.Identity.DefaultAzureCredential();
@@ -712,6 +788,66 @@ Url + "/api/data/v9.2/");
 			{
 				AuthenticationResult authResult = await app.AcquireTokenForClient(scopes).ExecuteAsync(cts.Token);
 				return authResult.AccessToken;
+			}
+		}
+
+		private async Task<string> GetTokenWithClientCertificate(IConfidentialClientApplication app, string url)
+		{
+			Uri scope = new Uri(Url, "/.default");
+			string[] scopes = new[] { scope.ToString() };
+
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
+			{
+				AuthenticationResult authResult = await app.AcquireTokenForClient(scopes).ExecuteAsync(cts.Token);
+				return authResult.AccessToken;
+			}
+		}
+
+		private X509Certificate2 LoadCertificate()
+		{
+			// If thumbprint is provided, load from certificate store
+			if (!string.IsNullOrEmpty(CertificateThumbprint))
+			{
+				using (X509Store store = new X509Store(CertificateStoreName, CertificateStoreLocation))
+				{
+					store.Open(OpenFlags.ReadOnly);
+					X509Certificate2Collection certificates = store.Certificates.Find(
+						X509FindType.FindByThumbprint,
+						CertificateThumbprint,
+						validOnly: false);
+
+					if (certificates.Count == 0)
+					{
+						throw new InvalidOperationException(
+							$"Certificate with thumbprint '{CertificateThumbprint}' not found in {CertificateStoreLocation}\\{CertificateStoreName} store.");
+					}
+
+					return certificates[0];
+				}
+			}
+			// Otherwise load from file path
+			else if (!string.IsNullOrEmpty(CertificatePath))
+			{
+				string resolvedPath = GetUnresolvedProviderPathFromPSPath(CertificatePath);
+				
+				if (!System.IO.File.Exists(resolvedPath))
+				{
+					throw new System.IO.FileNotFoundException($"Certificate file not found: {resolvedPath}");
+				}
+
+				if (!string.IsNullOrEmpty(CertificatePassword))
+				{
+					return new X509Certificate2(resolvedPath, CertificatePassword);
+				}
+				else
+				{
+					return new X509Certificate2(resolvedPath);
+				}
+			}
+			else
+			{
+				throw new InvalidOperationException(
+					"Either CertificatePath or CertificateThumbprint must be provided for certificate authentication.");
 			}
 		}
 

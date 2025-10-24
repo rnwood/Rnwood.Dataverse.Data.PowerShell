@@ -24,6 +24,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <returns>Enumerable of entities from all pages</returns>
         public static IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query, IOrganizationService connection, Action<string> writeVerbose)
         {
+            return ExecuteQueryWithPaging(query, connection, writeVerbose, null, null);
+        }
+
+        /// <summary>
+        /// Executes a query with automatic paging, verbose output, and cancellation support.
+        /// </summary>
+        /// <param name="query">The query to execute</param>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="writeVerbose">Action to write verbose messages</param>
+        /// <param name="isStopping">Function to check if the cmdlet is stopping</param>
+        /// <param name="cancellationToken">Cancellation token to check during IO operations</param>
+        /// <returns>Enumerable of entities from all pages</returns>
+        public static IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query, IOrganizationService connection, Action<string> writeVerbose, Func<bool> isStopping, System.Threading.CancellationToken? cancellationToken)
+        {
             writeVerbose($"Executing query: {QueryToVerboseString(query)}");
 
             // Only set PageInfo if TopCount is not already set (e.g., from FetchXML top attribute)
@@ -48,6 +62,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 do
                 {
+                    // Check for cancellation before fetching next page
+                    if ((isStopping != null && isStopping()) || (cancellationToken.HasValue && cancellationToken.Value.IsCancellationRequested))
+                    {
+                        writeVerbose($"Query execution cancelled after {pageNum} page(s)");
+                        yield break;
+                    }
+
                     pageNum++;
                     writeVerbose($"Retrieving page {pageNum}...");
                     response = (RetrieveMultipleResponse)connection.Execute(request);
@@ -58,6 +79,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     foreach (Entity entity in response.EntityCollection.Entities)
                     {
+                        // Check for cancellation during record iteration
+                        if ((isStopping != null && isStopping()) || (cancellationToken.HasValue && cancellationToken.Value.IsCancellationRequested))
+                        {
+                            writeVerbose($"Query execution cancelled after {pageNum} page(s)");
+                            yield break;
+                        }
+                        
                         yield return entity;
                     }
 

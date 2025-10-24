@@ -257,6 +257,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private DataverseEntityConverter entityConverter;
         private EntityMetadata entityMetadata;
         private List<GetMatchOnItem> _matchOnQueue;
+        private System.Threading.CancellationTokenSource _userCancellationCts;
 
         /// <summary>
         /// Initializes the cmdlet and sets up required helpers.
@@ -264,6 +265,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         protected override void BeginProcessing()
         {
             base.BeginProcessing();
+
+            // Initialize cancellation token source for this pipeline invocation
+            _userCancellationCts = new System.Threading.CancellationTokenSource();
 
             // Initialize the queue for MatchOn parameter set
             if (ParameterSetName == PARAMSET_MATCHON)
@@ -322,6 +326,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 ProcessMatchOnBatch();
             }
+
+            // Cleanup cancellation token source
+            _userCancellationCts?.Dispose();
+            _userCancellationCts = null;
+        }
+
+        /// <summary>
+        /// Called when the user cancels the cmdlet.
+        /// </summary>
+        protected override void StopProcessing()
+        {
+            // Called when user presses Ctrl+C. Signal cancellation to any ongoing operations.
+            try
+            {
+                _userCancellationCts?.Cancel();
+            }
+            catch { }
+            base.StopProcessing();
         }
 
         private ValueType GetColumnValueType(AttributeMetadata attribute)
@@ -452,7 +474,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     WriteVerbose($"Retrieving records by MatchOn ({matchColumn}) in batch");
 
                     // Match back to items using streaming to avoid buffering all records
-                    foreach (var entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose))
+                    foreach (var entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, () => Stopping, _userCancellationCts?.Token))
                     {
                         foreach (var item in itemsNeedingMatch)
                         {
@@ -510,7 +532,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     WriteVerbose($"Retrieving records by MatchOn ({string.Join(",", matchOnColumnList)}) in batch");
 
                     // Match back to items using streaming to avoid buffering all records
-                    foreach (var entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose))
+                    foreach (var entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, () => Stopping, _userCancellationCts?.Token))
                     {
                         foreach (var item in itemsNeedingMatch)
                         {
@@ -787,7 +809,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private IEnumerable<Entity> GetRecords(QueryExpression query)
         {
-            return QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose);
+            return QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, () => Stopping, _userCancellationCts?.Token);
         }
 
 
