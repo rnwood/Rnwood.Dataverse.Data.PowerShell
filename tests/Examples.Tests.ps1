@@ -1143,6 +1143,7 @@ Describe "Examples-Comparison Documentation Tests" {
             $cmd.Parameters.ContainsKey('PublishWorkflows') | Should -Be $true
             $cmd.Parameters.ContainsKey('HoldingSolution') | Should -Be $true
             $cmd.Parameters.ContainsKey('ConnectionReferences') | Should -Be $true
+            $cmd.Parameters.ContainsKey('EnvironmentVariables') | Should -Be $true
             $cmd.Parameters.ContainsKey('PollingIntervalSeconds') | Should -Be $true
             $cmd.Parameters.ContainsKey('TimeoutSeconds') | Should -Be $true
         }
@@ -1167,6 +1168,12 @@ Describe "Examples-Comparison Documentation Tests" {
             # Validates that the ConnectionReferences parameter type is correct
             $cmd = Get-Command Import-DataverseSolution
             $cmd.Parameters['ConnectionReferences'].ParameterType.Name | Should -Be 'Hashtable'
+        }
+
+        It "Import-DataverseSolution EnvironmentVariables parameter accepts hashtable" {
+            # Validates that the EnvironmentVariables parameter type is correct
+            $cmd = Get-Command Import-DataverseSolution
+            $cmd.Parameters['EnvironmentVariables'].ParameterType.Name | Should -Be 'Hashtable'
         }
     }
 }

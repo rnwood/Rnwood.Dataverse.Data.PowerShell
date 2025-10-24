@@ -7,11 +7,16 @@
 # Example 1: Import a solution from a file with progress monitoring
 # Import-DataverseSolution -Connection $connection -InFile "C:\Solutions\MySolution.zip" -Verbose
 
-# Example 2: Import with connection references set
+# Example 2: Import with connection references and environment variables
 # Import-DataverseSolution -Connection $connection -InFile "C:\Solutions\MySolution.zip" `
 #     -ConnectionReferences @{
 #         'new_sharepoint' = '12345678-1234-1234-1234-123456789012'
 #         'new_sql' = '87654321-4321-4321-4321-210987654321'
+#     } `
+#     -EnvironmentVariables @{
+#         'new_apiurl' = 'https://api.production.example.com'
+#         'new_apikey' = 'prod-key-12345'
+#         'new_environmentname' = 'Production'
 #     }
 
 # Example 3: Import as holding solution for upgrade (auto-fallback to regular import if not exists)
@@ -46,11 +51,14 @@
 #     -Managed `
 #     -PassThru
 #
-# # Import to target with connection references
+# # Import to target with connection references and environment variables
 # $result = $solutionBytes | Import-DataverseSolution -Connection $targetConnection `
 #     -OverwriteUnmanagedCustomizations `
 #     -ConnectionReferences @{
 #         'new_prod_sharepoint' = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+#     } `
+#     -EnvironmentVariables @{
+#         'new_apiurl' = 'https://api.production.example.com'
 #     }
 #
 # Write-Host "Import completed. Job ID: $($result.ImportJobId)"

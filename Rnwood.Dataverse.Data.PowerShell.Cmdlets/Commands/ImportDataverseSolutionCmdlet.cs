@@ -57,8 +57,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets connection references as a hashtable.
         /// </summary>
-        [Parameter(HelpMessage = "Hashtable of connection reference logical names to connection IDs (e.g., @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'}).")]
+        [Parameter(HelpMessage = "Hashtable of connection reference schema names to connection IDs (e.g., @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'}).")]
         public Hashtable ConnectionReferences { get; set; }
+
+        /// <summary>
+        /// Gets or sets environment variable values as a hashtable.
+        /// </summary>
+        [Parameter(HelpMessage = "Hashtable of environment variable schema names to values (e.g., @{'new_apiurl' = 'https://api.example.com'}).")]
+        public Hashtable EnvironmentVariables { get; set; }
 
         /// <summary>
         /// Gets or sets whether to convert to managed (obsolete).
@@ -156,25 +162,52 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            // Build ComponentParameters from ConnectionReferences hashtable
+            // Build ComponentParameters from ConnectionReferences and EnvironmentVariables hashtables
             EntityCollection componentParameters = null;
-            if (ConnectionReferences != null && ConnectionReferences.Count > 0)
+            
+            int totalParams = (ConnectionReferences?.Count ?? 0) + (EnvironmentVariables?.Count ?? 0);
+            
+            if (totalParams > 0)
             {
-                WriteVerbose($"Processing {ConnectionReferences.Count} connection reference(s)...");
+                WriteVerbose($"Processing {totalParams} component parameter(s)...");
                 componentParameters = new EntityCollection();
 
-                foreach (DictionaryEntry entry in ConnectionReferences)
+                // Process connection references
+                if (ConnectionReferences != null && ConnectionReferences.Count > 0)
                 {
-                    var connectionRefName = entry.Key.ToString();
-                    var connectionId = entry.Value.ToString();
+                    WriteVerbose($"Processing {ConnectionReferences.Count} connection reference(s)...");
+                    foreach (DictionaryEntry entry in ConnectionReferences)
+                    {
+                        var connectionRefName = entry.Key.ToString();
+                        var connectionId = entry.Value.ToString();
 
-                    WriteVerbose($"  Setting connection reference '{connectionRefName}' to connection '{connectionId}'");
+                        WriteVerbose($"  Setting connection reference '{connectionRefName}' to connection '{connectionId}'");
 
-                    var componentParam = new Entity("componentparameter");
-                    componentParam["componentparametername"] = connectionRefName;
-                    componentParam["componentparametervalue"] = connectionId;
-                    
-                    componentParameters.Entities.Add(componentParam);
+                        var componentParam = new Entity("connectionreference");
+                        componentParam["connectionreferencelogicalname"] = connectionRefName;
+                        componentParam["connectionid"] = connectionId;
+                        
+                        componentParameters.Entities.Add(componentParam);
+                    }
+                }
+
+                // Process environment variables
+                if (EnvironmentVariables != null && EnvironmentVariables.Count > 0)
+                {
+                    WriteVerbose($"Processing {EnvironmentVariables.Count} environment variable(s)...");
+                    foreach (DictionaryEntry entry in EnvironmentVariables)
+                    {
+                        var envVarName = entry.Key.ToString();
+                        var envVarValue = entry.Value.ToString();
+
+                        WriteVerbose($"  Setting environment variable '{envVarName}' to value '{envVarValue}'");
+
+                        var componentParam = new Entity("environmentvariabledefinition");
+                        componentParam["schemaname"] = envVarName;
+                        componentParam["value"] = envVarValue;
+                        
+                        componentParameters.Entities.Add(componentParam);
+                    }
                 }
             }
 

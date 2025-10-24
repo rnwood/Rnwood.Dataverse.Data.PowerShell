@@ -16,20 +16,20 @@ Imports a solution to Dataverse using an asynchronous job with progress reportin
 ```
 Import-DataverseSolution [-InFile] <String> [-OverwriteUnmanagedCustomizations] [-PublishWorkflows]
  [-SkipProductUpdateDependencies] [-HoldingSolution] [-ConnectionReferences <Hashtable>]
- [-ConvertToManaged] [-SkipQueueRibbonJob] [-LayerDesiredOrder <LayerDesiredOrder>]
- [-AsyncRibbonProcessing] [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>]
- [-Connection <ServiceClient>] [-WhatIf] [-Confirm] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
+ [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-PollingIntervalSeconds <Int32>]
+ [-TimeoutSeconds <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ### FromBytes
 ```
 Import-DataverseSolution -SolutionFile <Byte[]> [-OverwriteUnmanagedCustomizations] [-PublishWorkflows]
  [-SkipProductUpdateDependencies] [-HoldingSolution] [-ConnectionReferences <Hashtable>]
- [-ConvertToManaged] [-SkipQueueRibbonJob] [-LayerDesiredOrder <LayerDesiredOrder>]
- [-AsyncRibbonProcessing] [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>]
- [-Connection <ServiceClient>] [-WhatIf] [-Confirm] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
+ [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-PollingIntervalSeconds <Int32>]
+ [-TimeoutSeconds <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -55,15 +55,20 @@ PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip"
 
 Imports the solution from the specified file with default settings.
 
-### Example 2: Import with connection references
+### Example 2: Import with connection references and environment variables
 ```powershell
-PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -ConnectionReferences @{
-    'new_sharepoint' = '12345678-1234-1234-1234-123456789012'
-    'new_sql' = '87654321-4321-4321-4321-210987654321'
-}
+PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" `
+    -ConnectionReferences @{
+        'new_sharepoint' = '12345678-1234-1234-1234-123456789012'
+        'new_sql' = '87654321-4321-4321-4321-210987654321'
+    } `
+    -EnvironmentVariables @{
+        'new_apiurl' = 'https://api.production.example.com'
+        'new_apikey' = 'prod-key-12345'
+    }
 ```
 
-Imports the solution and sets connection references for two connections.
+Imports the solution and sets connection references for two connections and environment variables for two settings.
 
 ### Example 3: Import as holding solution (upgrade)
 ```powershell
@@ -96,6 +101,115 @@ Imports a large solution with a 60-minute timeout and checks status every 10 sec
 
 ## PARAMETERS
 
+### -AsyncRibbonProcessing
+For internal use only.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+
+```yaml
+Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ConnectionReferences
+Hashtable of connection reference schema names to connection IDs. Used to set connection references during import.
+
+Example: @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'}
+
+```yaml
+Type: Hashtable
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ConvertToManaged
+Obsolete. The system will convert unmanaged solution components to managed when you import a managed solution.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EnvironmentVariables
+Hashtable of environment variable schema names to values. Used to set environment variable values during import.
+
+Example: @{'new_apiurl' = 'https://api.example.com'}
+
+```yaml
+Type: Hashtable
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -HoldingSolution
+Import the solution as a holding solution staged for upgrade. Automatically falls back to regular import if solution doesn't exist.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -InFile
 Path to the solution file (.zip) to import.
 
@@ -111,18 +225,18 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SolutionFile
-Solution file bytes to import.
+### -LayerDesiredOrder
+For internal use only.
 
 ```yaml
-Type: Byte[]
-Parameter Sets: FromBytes
+Type: LayerDesiredOrder
+Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
-Accept pipeline input: True (ByValue)
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
@@ -137,6 +251,21 @@ Aliases:
 Required: False
 Position: Named
 Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PollingIntervalSeconds
+Polling interval in seconds for checking job status. Default is 5.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 5
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -171,53 +300,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -HoldingSolution
-Import the solution as a holding solution staged for upgrade. Automatically falls back to regular import if solution doesn't exist.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ConnectionReferences
-Hashtable of connection reference logical names to connection IDs. Used to set connection references during import.
-
-Example: @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'}
-
-```yaml
-Type: Hashtable
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ConvertToManaged
-Obsolete. The system will convert unmanaged solution components to managed when you import a managed solution.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -SkipQueueRibbonJob
 For internal use only.
 
@@ -233,48 +315,18 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -LayerDesiredOrder
-For internal use only.
+### -SolutionFile
+Solution file bytes to import.
 
 ```yaml
-Type: LayerDesiredOrder
-Parameter Sets: (All)
+Type: Byte[]
+Parameter Sets: FromBytes
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -AsyncRibbonProcessing
-For internal use only.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -PollingIntervalSeconds
-Polling interval in seconds for checking job status. Default is 5.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: 5
-Accept pipeline input: False
+Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
@@ -293,21 +345,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
-
-```yaml
-Type: ServiceClient
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -WhatIf
 Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
@@ -315,21 +352,6 @@ Shows what would happen if the cmdlet runs. The cmdlet is not run.
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
 
 Required: False
 Position: Named
@@ -359,21 +381,20 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Byte[]
-When using the FromBytes parameter set, accepts solution file bytes.
-
 ## OUTPUTS
 
-### System.Management.Automation.PSObject
-Outputs an object with ImportJobId, AsyncOperationId, and Status properties.
-
+### System.Object
 ## NOTES
 
 This cmdlet uses the ImportSolutionAsyncRequest API which imports the solution in the background. The cmdlet monitors the async operation and outputs the job details when complete.
 
 For synchronous imports (useful for small solutions), use Invoke-DataverseImportSolution.
 
-**Connection References:**
-When importing solutions with connection references, use the -ConnectionReferences parameter with a hashtable mapping connection reference names to connection IDs. The cmdlet converts this to the ComponentParameters format required by the API.
+**Connection References & Environment Variables:**
+When importing solutions with connection references or environment variables, use the `-ConnectionReferences` and `-EnvironmentVariables` parameters with hashtables mapping names to values. The cmdlet converts these to the ComponentParameters format required by the API.
+
+Connection references use schema names (e.g., 'new_sharedconnectionref') mapped to connection IDs.
+Environment variables use schema names (e.g., 'new_apiurl') mapped to their values.
 
 **Upgrade Scenarios:**
 When using -HoldingSolution to import a solution as an upgrade, the cmdlet automatically detects if the solution doesn't already exist and falls back to a regular import. This prevents errors when deploying to new environments.

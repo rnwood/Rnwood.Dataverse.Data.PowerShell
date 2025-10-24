@@ -18,6 +18,7 @@ Describe "Import-DataverseSolution" {
         $cmdlet.Parameters.Keys | Should -Contain "PublishWorkflows"
         $cmdlet.Parameters.Keys | Should -Contain "HoldingSolution"
         $cmdlet.Parameters.Keys | Should -Contain "ConnectionReferences"
+        $cmdlet.Parameters.Keys | Should -Contain "EnvironmentVariables"
         $cmdlet.Parameters.Keys | Should -Contain "Connection"
         $cmdlet.Parameters.Keys | Should -Contain "PollingIntervalSeconds"
         $cmdlet.Parameters.Keys | Should -Contain "TimeoutSeconds"
@@ -51,6 +52,12 @@ Describe "Import-DataverseSolution" {
         $cmdlet = Get-Command Import-DataverseSolution
         $connRefParam = $cmdlet.Parameters["ConnectionReferences"]
         $connRefParam.ParameterType.Name | Should -Be "Hashtable"
+    }
+
+    It "EnvironmentVariables parameter accepts Hashtable" {
+        $cmdlet = Get-Command Import-DataverseSolution
+        $envVarParam = $cmdlet.Parameters["EnvironmentVariables"]
+        $envVarParam.ParameterType.Name | Should -Be "Hashtable"
     }
 
     # Note: Full end-to-end testing of the async monitoring requires a real Dataverse
