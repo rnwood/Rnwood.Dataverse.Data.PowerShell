@@ -1131,4 +1131,42 @@ Describe "Examples-Comparison Documentation Tests" {
             { Export-DataverseSolution -Connection $conn -SolutionName "TestSolution" -OutFile "test.zip" -WhatIf } | Should -Not -Throw
         }
     }
+
+    Context "Solution Import Examples" {
+        It "Import-DataverseSolution cmdlet is available and properly documented" {
+            # Validates that the Import-DataverseSolution cmdlet exists with expected parameters
+            $cmd = Get-Command Import-DataverseSolution -ErrorAction SilentlyContinue
+            $cmd | Should -Not -BeNull
+            $cmd.Parameters.ContainsKey('InFile') | Should -Be $true
+            $cmd.Parameters.ContainsKey('SolutionFile') | Should -Be $true
+            $cmd.Parameters.ContainsKey('OverwriteUnmanagedCustomizations') | Should -Be $true
+            $cmd.Parameters.ContainsKey('PublishWorkflows') | Should -Be $true
+            $cmd.Parameters.ContainsKey('HoldingSolution') | Should -Be $true
+            $cmd.Parameters.ContainsKey('ConnectionReferences') | Should -Be $true
+            $cmd.Parameters.ContainsKey('PollingIntervalSeconds') | Should -Be $true
+            $cmd.Parameters.ContainsKey('TimeoutSeconds') | Should -Be $true
+        }
+
+        It "Import-DataverseSolution supports WhatIf as documented in examples" {
+            # Validates the WhatIf example from Examples-Import-DataverseSolution.ps1
+            $conn = getMockConnection
+            $tempFile = [System.IO.Path]::GetTempFileName()
+            [System.IO.File]::WriteAllBytes($tempFile, [byte[]](1,2,3,4,5))
+            
+            try {
+                { Import-DataverseSolution -Connection $conn -InFile $tempFile -WhatIf } | Should -Not -Throw
+            }
+            finally {
+                if (Test-Path $tempFile) {
+                    Remove-Item $tempFile -Force
+                }
+            }
+        }
+
+        It "Import-DataverseSolution ConnectionReferences parameter accepts hashtable" {
+            # Validates that the ConnectionReferences parameter type is correct
+            $cmd = Get-Command Import-DataverseSolution
+            $cmd.Parameters['ConnectionReferences'].ParameterType.Name | Should -Be 'Hashtable'
+        }
+    }
 }
