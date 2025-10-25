@@ -110,6 +110,12 @@ Get-DataverseConnection [-SetAsDefault] -Url <Uri> -AccessToken <ScriptBlock> [-
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### Load connection from PAC CLI profile
+```
+Get-DataverseConnection [-SetAsDefault] [-FromPac] [-ProfileName <String>] [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ## DESCRIPTION
 
 This cmdlet establishes a connection to a Microsoft Dataverse environment which can then be used with other cmdlets in this module.
@@ -127,6 +133,7 @@ Multiple authentication methods are supported:
 - DefaultAzureCredential (automatic credential discovery for Azure environments)
 - ManagedIdentityCredential (for Azure managed identity authentication)
 - Connection string (for advanced scenarios)
+- PAC CLI profile (leverages existing Power Platform CLI authentication)
 - Mock connection (for testing)
 
 ## EXAMPLES
@@ -270,6 +277,20 @@ PS C:\> Get-DataverseConnection -ClearAllConnections
 ```
 
 Clears all saved named connections and cached authentication tokens. This removes all connection metadata and MSAL token cache files.
+
+### Example 21: Use PAC CLI profile
+```powershell
+PS C:\> $c = Get-DataverseConnection -FromPac
+```
+
+Connects to Dataverse using the current Power Platform CLI (PAC) authentication profile. This leverages the authentication you've already established with `pac auth create` and will use the currently selected environment (set via `pac org select`).
+
+### Example 22: Use specific PAC CLI profile by name
+```powershell
+PS C:\> $c = Get-DataverseConnection -FromPac -ProfileName "MyDevProfile"
+```
+
+Connects to Dataverse using a specific named PAC CLI profile. The profile name must match one of the profiles created with `pac auth create --name`.
 
 ## PARAMETERS
 
@@ -476,6 +497,36 @@ Parameter Sets: Authenticate using the device code flow
 Aliases:
 
 Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FromPac
+Load connection from a Power Platform CLI (PAC) authentication profile. This uses the authentication profiles created with `pac auth create` and leverages the cached tokens from PAC CLI. The environment URL is determined from the profile's selected organization (set via `pac org select`).
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Load connection from PAC CLI profile
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProfileName
+Name of the PAC CLI profile to use when -FromPac is specified. If not specified, uses the first available profile. Profile names are set when creating a PAC CLI auth profile with `pac auth create --name <profilename>`. Use `pac auth list` to see available profile names.
+
+```yaml
+Type: String
+Parameter Sets: Load connection from PAC CLI profile
+Aliases:
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
