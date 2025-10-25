@@ -25,6 +25,8 @@ CompatiblePSEditions = @("Core", "Desktop")
 # Description = ''
 
 # Minimum version of the Windows PowerShell engine required by this module
+# For Desktop edition: 5.1+
+# For Core edition: 7.4+ (requires .NET 8.0 runtime)
 PowerShellVersion = '5.1'
 
 # Name of the Windows PowerShell host required by this module
@@ -54,7 +56,7 @@ PrivateData = @{
 }
 
 # Script files (.ps1) that are run in the caller's environment prior to importing this module.
-# ScriptsToProcess = @()
+ScriptsToProcess = @('ValidateVersion.ps1')
 
 # Type files (.ps1xml) to be loaded when importing this module
 # TypesToProcess = @()
@@ -66,8 +68,8 @@ PrivateData = @{
 NestedModules = 
 @(if ($PSEdition -eq 'Core') {
 	@(
-		"loader/net6.0/Rnwood.Dataverse.Data.PowerShell.Loader.dll",
-		"cmdlets/net6.0/Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll",
+		"loader/net8.0/Rnwood.Dataverse.Data.PowerShell.Loader.dll",
+		"cmdlets/net8.0/Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll",
 		"Get-DataverseRecordsFolder.psm1",
 		"Set-DataverseRecordsFolder.psm1"
 	)

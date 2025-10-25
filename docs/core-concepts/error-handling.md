@@ -1,3 +1,12 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [Error Handling and Batch Operations](#error-handling-and-batch-operations)
+    - [Parallelising work for best performance](#parallelising-work-for-best-performance)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Error Handling and Batch Operations
 
 <!-- TOC -->

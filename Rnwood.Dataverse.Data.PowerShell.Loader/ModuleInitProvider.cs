@@ -15,7 +15,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 		{
 
 #if NET
-			string basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/../../cmdlets/net6.0";
+			// The manifest loads the appropriate target framework (net8.0 for Core)
+			// The loader just needs to handle dependency resolution for the cmdlets
+			string basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/../../cmdlets";
+			// Get the actual target framework directory that was loaded
+			var loaderPath = Assembly.GetExecutingAssembly().Location;
+			var targetFramework = Path.GetFileName(Path.GetDirectoryName(loaderPath));
+			basePath = Path.Combine(basePath, targetFramework);
+			
 			var alc = new CmdletsLoadContext(basePath);
 
 			AssemblyLoadContext.Default.Resolving += (s, args) =>
@@ -27,9 +34,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 
 				return null;
 			};
-
-			//Load the assembly
-			AssemblyLoadContext.Default.LoadFromAssemblyName(new AssemblyName("Rnwood.Dataverse.Data.PowerShell.Cmdlets"));
 #else
 			string basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/../../cmdlets/net462";
 
@@ -51,7 +55,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 
 
 		}
-
 
 #if NET
 

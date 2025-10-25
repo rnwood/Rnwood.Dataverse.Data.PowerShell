@@ -1,3 +1,20 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [Rnwood.Dataverse.Data.PowerShell Documentation](#rnwooddataversedatapowershell-documentation)
+  - [Documentation Sections](#documentation-sections)
+    - [Getting Started](#getting-started)
+    - [Core Concepts](#core-concepts)
+    - [Advanced Topics](#advanced-topics)
+    - [Cmdlet Reference](#cmdlet-reference)
+  - [Quick Reference](#quick-reference)
+    - [Main Cmdlets](#main-cmdlets)
+    - [Common Tasks](#common-tasks)
+  - [Additional Resources](#additional-resources)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Rnwood.Dataverse.Data.PowerShell Documentation
 
 <!-- TOC -->
