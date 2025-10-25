@@ -9,7 +9,7 @@ Describe 'Get-DataverseConnection -FromPac' {
             $source = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0/"
         }
 
-        $tempmodulefolder = "$([IO.Path]::GetTempPath())/$([Guid]::NewGuid())"
+        $tempmodulefolder = "$([IO.Path]::GetTempPath())/$([System.Guid]::NewGuid().ToString())"
         New-Item -ItemType Directory $tempmodulefolder | Out-Null
         Copy-Item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Data.PowerShell
         $env:PSModulePath = $tempmodulefolder
@@ -19,7 +19,7 @@ Describe 'Get-DataverseConnection -FromPac' {
         
         # Create a temporary PAC CLI profiles directory for testing
         $tempDir = if ($env:TEMP) { $env:TEMP } elseif ($env:TMP) { $env:TMP } else { [System.IO.Path]::GetTempPath() }
-        $tempPacDir = Join-Path $tempDir "PacCliTest-$(New-Guid)"
+        $tempPacDir = Join-Path $tempDir "PacCliTest-$([System.Guid]::NewGuid().ToString())"
         $tempPacFile = Join-Path $tempPacDir "authprofiles_v2.json"
         
         # Make variables available to tests
