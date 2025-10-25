@@ -214,6 +214,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (EnvironmentVariables != null && EnvironmentVariables.Count > 0)
                 {
                     WriteVerbose($"Processing {EnvironmentVariables.Count} environment variable(s)...");
+                    
+                    // Query for existing environment variable values by schema name
+                    var existingEnvVarValuesBySchemaName = GetExistingEnvironmentVariableValueIds(EnvironmentVariables.Keys.Cast<object>().Select(k => k.ToString()).ToList());
+                    
                     foreach (DictionaryEntry entry in EnvironmentVariables)
                     {
                         var envVarSchemaName = entry.Key.ToString();
@@ -221,18 +225,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         WriteVerbose($"  Setting environment variable '{envVarSchemaName}' to value '{envVarValue}'");
 
-                        // Query for the environment variable definition to get its ID
-                        Guid? definitionId = GetEnvironmentVariableDefinitionId(envVarSchemaName);
-                        
-                        if (!definitionId.HasValue)
-                        {
-                            WriteWarning($"Could not find environment variable definition for '{envVarSchemaName}'. Skipping.");
-                            continue;
-                        }
-
                         var componentParam = new Entity("environmentvariablevalue");
-                        componentParam["environmentvariabledefinitionid"] = new EntityReference("environmentvariabledefinition", definitionId.Value);
-                        componentParam["Value"] = envVarValue;
+                        componentParam["schemaname"] = envVarSchemaName;
+                        componentParam["value"] = envVarValue;
+                        
+                        // If there's an existing value record, include its ID for update
+                        if (existingEnvVarValuesBySchemaName.TryGetValue(envVarSchemaName, out var existingValueId))
+                        {
+                            componentParam["environmentvariablevalueid"] = existingValueId;
+                            WriteVerbose($"    Found existing value record with ID: {existingValueId}");
+                        }
                         
                         componentParameters.Entities.Add(componentParam);
                     }
@@ -787,37 +789,51 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private Guid? GetEnvironmentVariableDefinitionId(string envVarSchemaName)
+        private Dictionary<string, Guid> GetExistingEnvironmentVariableValueIds(List<string> schemaNames)
         {
+            var result = new Dictionary<string, Guid>();
+            
+            if (schemaNames == null || schemaNames.Count == 0)
+            {
+                return result;
+            }
+
             try
             {
-                // Query for environment variable definition by schema name
-                var query = new QueryExpression("environmentvariabledefinition")
+                WriteVerbose($"Querying for existing environment variable values for {schemaNames.Count} schema name(s)...");
+                
+                // Query for environment variable values by schema name
+                var query = new QueryExpression("environmentvariablevalue")
                 {
-                    ColumnSet = new ColumnSet("environmentvariabledefinitionid", "schemaname"),
+                    ColumnSet = new ColumnSet("environmentvariablevalueid", "schemaname"),
                     Criteria = new FilterExpression
                     {
                         Conditions =
                         {
-                            new ConditionExpression("schemaname", ConditionOperator.Equal, envVarSchemaName)
+                            new ConditionExpression("schemaname", ConditionOperator.In, schemaNames.ToArray())
                         }
-                    },
-                    TopCount = 1
+                    }
                 };
 
                 var results = Connection.RetrieveMultiple(query);
                 
-                if (results.Entities.Count > 0)
+                foreach (var entity in results.Entities)
                 {
-                    return results.Entities[0].Id;
+                    if (entity.Contains("schemaname"))
+                    {
+                        var schemaName = entity.GetAttributeValue<string>("schemaname");
+                        result[schemaName] = entity.Id;
+                        WriteVerbose($"  Found existing value for '{schemaName}': {entity.Id}");
+                    }
                 }
 
-                return null;
+                WriteVerbose($"Found {result.Count} existing environment variable value(s).");
+                return result;
             }
             catch (Exception ex)
             {
-                WriteVerbose($"Error getting environment variable definition ID for '{envVarSchemaName}': {ex.Message}");
-                return null;
+                WriteVerbose($"Error querying for existing environment variable values: {ex.Message}");
+                return result;
             }
         }
 
