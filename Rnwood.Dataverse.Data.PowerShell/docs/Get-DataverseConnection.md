@@ -518,21 +518,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProfileName
-Name of the PAC CLI profile to use when -FromPac is specified. If not specified, uses the first available profile. Profile names are set when creating a PAC CLI auth profile with `pac auth create --name <profilename>`. Use `pac auth list` to see available profile names.
-
-```yaml
-Type: String
-Parameter Sets: Load connection from PAC CLI profile
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -GetDefault
 Gets the current default connection. Returns an error if no default connection is set.
 
@@ -659,6 +644,21 @@ Parameter Sets: Authenticate with username and password
 Aliases:
 
 Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProfileName
+Name of the PAC CLI profile to use when -FromPac is specified. If not specified, uses the first available profile. Profile names are set when creating a PAC CLI auth profile with `pac auth create --name <profilename>`. Use `pac auth list` to see available profile names.
+
+```yaml
+Type: String
+Parameter Sets: Load connection from PAC CLI profile
+Aliases:
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
