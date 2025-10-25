@@ -16,32 +16,6 @@ using Microsoft.Xrm.Sdk.Query;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Specifies the import mode for solution imports.
-    /// </summary>
-    public enum ImportMode
-    {
-        /// <summary>
-        /// Automatically determine the best import method based on solution existence and managed status.
-        /// </summary>
-        Auto,
-
-        /// <summary>
-        /// Skip upgrade logic and perform regular import.
-        /// </summary>
-        NoUpgrade,
-
-        /// <summary>
-        /// Import the solution using Stage and Upgrade mode.
-        /// </summary>
-        StageAndUpgrade,
-
-        /// <summary>
-        /// Import the solution as a holding solution staged for upgrade.
-        /// </summary>
-        HoldingSolution
-    }
-
-    /// <summary>
     /// Imports a solution to Dataverse using an asynchronous job with progress reporting.
     /// </summary>
     [Cmdlet(VerbsData.Import, "DataverseSolution", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
@@ -79,10 +53,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter SkipProductUpdateDependencies { get; set; }
 
         /// <summary>
-        /// Gets or sets the import mode.
+        /// Gets or sets whether to import as a holding solution staged for upgrade.
         /// </summary>
-        [Parameter(HelpMessage = "The import mode to use. Auto (default) automatically determines the best method based on solution existence and managed status.")]
-        public ImportMode Mode { get; set; } = ImportMode.Auto;
+        [Parameter(HelpMessage = "Import the solution as a holding solution staged for upgrade. Falls back to regular import if solution doesn't exist.")]
+        public SwitchParameter HoldingSolution { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether to use Stage and Upgrade mode.
+        /// </summary>
+        [Parameter(HelpMessage = "Import the solution using Stage and Upgrade mode.")]
+        public SwitchParameter StageAndUpgrade { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether to disable upgrade mode for managed solutions.
+        /// </summary>
+        [Parameter(HelpMessage = "Disable upgrade mode for managed solutions. By default, managed solutions are imported in upgrade mode.")]
+        public SwitchParameter NoUpgrade { get; set; }
 
         /// <summary>
         /// Gets or sets the connection references.
@@ -189,11 +175,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Validate solution components (connection references and environment variables)
             ValidateSolutionComponents(solutionBytes);
 
-            // Determine import mode based on Mode parameter
-            bool useNoUpgrade = Mode == ImportMode.NoUpgrade;
-            bool useHoldingSolution = Mode == ImportMode.HoldingSolution;
-            bool useStageAndUpgrade = Mode == ImportMode.Auto || Mode == ImportMode.StageAndUpgrade;
-
             // Extract solution info
             var (solutionUniqueName, isManaged) = ExtractSolutionInfo(solutionBytes);
             WriteVerbose($"Source solution '{solutionUniqueName}' is {(isManaged ? "managed" : "unmanaged")}");
@@ -201,14 +182,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Check if this is an upgrade scenario and if the solution already exists
             bool shouldUseStageAndUpgrade = false;
             bool shouldUseHoldingSolution = false;
-            if (useHoldingSolution)
+            
+            if (HoldingSolution.IsPresent)
             {
-                // Extract solution unique name from the solution file (this is a simplified approach)
-                // In a real scenario, you might want to parse the solution XML
                 WriteVerbose("HoldingSolution mode specified - checking if solution already exists...");
 
-                // Try to detect if solution exists by attempting to query for it
-                // We'll catch the exception if it doesn't exist and fallback
                 bool exists = DoesSolutionExist(solutionBytes);
                 if (exists)
                 {
@@ -219,33 +197,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     WriteWarning("Solution does not exist in the target environment. Falling back to regular import instead of upgrade.");
                 }
             }
-            else if (useStageAndUpgrade)
+            else if (StageAndUpgrade.IsPresent)
             {
-                if (Mode == ImportMode.Auto)
+                WriteVerbose("StageAndUpgrade mode specified - checking if solution already exists...");
+
+                bool exists = DoesSolutionExist(solutionBytes);
+                if (exists)
                 {
-                    WriteVerbose("Auto mode - checking if solution already exists and is managed...");
+                    shouldUseStageAndUpgrade = true;
                 }
                 else
                 {
-                    WriteVerbose("StageAndUpgrade mode specified - checking if solution already exists...");
+                    WriteWarning("Solution does not exist in the target environment. Falling back to regular import instead of upgrade.");
                 }
-
+            }
+            else if (!NoUpgrade.IsPresent && isManaged)
+            {
+                // Auto mode: For managed solutions, use StageAndUpgrade if solution exists
+                WriteVerbose("Auto mode - checking if solution already exists for managed solution upgrade...");
+                
                 bool exists = DoesSolutionExist(solutionBytes);
-                if (exists && (Mode == ImportMode.StageAndUpgrade || isManaged))
+                if (exists)
                 {
                     shouldUseStageAndUpgrade = true;
                     WriteVerbose("Solution exists and source is managed - using StageAndUpgradeAsyncRequest");
-                }
-                else
-                {
-                    if (!exists)
-                    {
-                        WriteWarning("Solution does not exist in the target environment. Falling back to regular import instead of upgrade.");
-                    }
-                    else if (Mode == ImportMode.Auto && !isManaged)
-                    {
-                        WriteWarning("Source solution is unmanaged. Falling back to regular import instead of upgrade.");
-                    }
                 }
             }
 

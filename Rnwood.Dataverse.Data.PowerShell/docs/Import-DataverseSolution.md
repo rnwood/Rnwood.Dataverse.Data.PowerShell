@@ -252,6 +252,22 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Mode
+The import mode to use. Auto (default) automatically determines the best method based on solution existence and managed status.
+
+```yaml
+Type: ImportMode
+Parameter Sets: (All)
+Aliases:
+Accepted values: Auto, NoUpgrade, StageAndUpgrade, HoldingSolution
+
+Required: False
+Position: Named
+Default value: Auto
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -OverwriteUnmanagedCustomizations
 Overwrite any unmanaged customizations that have been applied over existing managed solution components.
 
@@ -413,21 +429,6 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Mode
-The import mode to use. Auto (default) automatically determines the best method based on solution existence and managed status.
-
-```yaml
-Type: ImportMode
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: Auto
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
