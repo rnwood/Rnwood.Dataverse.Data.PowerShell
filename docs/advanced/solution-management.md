@@ -1,6 +1,14 @@
 # Solution Management
 
 <!-- TOC -->
+    - [Parsing solution files](#parsing-solution-files)
+    - [Exporting solutions](#exporting-solutions)
+    - [Listing solutions](#listing-solutions)
+    - [Creating and updating solutions](#creating-and-updating-solutions)
+    - [Publishing customizations](#publishing-customizations)
+    - [Importing solutions](#importing-solutions)
+    - [Uninstalling/removing solutions](#uninstallingremoving-solutions)
+      - [Handling Connection References and Environment Variables](#handling-connection-references-and-environment-variables)
 <!-- /TOC -->
 
 

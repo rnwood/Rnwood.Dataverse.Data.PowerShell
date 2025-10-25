@@ -1,6 +1,16 @@
 # Quick Start Guide
 
 <!-- TOC -->
+- [PowerShell Best Practices](#powershell-best-practices)
+- [Getting a Connection](#getting-a-connection)
+  - [Simple Interactive Connection](#simple-interactive-connection)
+  - [Default Connection](#default-connection)
+- [Basic Operations](#basic-operations)
+  - [Query Records](#query-records)
+  - [Create a Record](#create-a-record)
+  - [Update a Record](#update-a-record)
+  - [Delete a Record](#delete-a-record)
+- [Next Steps](#next-steps)
 <!-- /TOC -->
 
 ## PowerShell Best Practices

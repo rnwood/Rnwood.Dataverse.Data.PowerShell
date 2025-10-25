@@ -1,6 +1,12 @@
 # Creating and Updating Records
 
 <!-- TOC -->
+    - [Input object shape and type conversion (create/update)](#input-object-shape-and-type-conversion-createupdate)
+    - [Advanced Set-DataverseRecord Parameters](#advanced-set-dataverserecord-parameters)
+  - [Assigning records](#assigning-records)
+  - [Setting state and status](#setting-state-and-status)
+    - [Alternate Keys Explanation](#alternate-keys-explanation)
+  - [SQL alternative — Create / Update](#sql-alternative-create-update)
 <!-- /TOC -->
 
 

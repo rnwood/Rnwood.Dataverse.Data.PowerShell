@@ -1,6 +1,16 @@
 # Authentication Methods
 
 <!-- TOC -->
+- [Interactive Authentication](#interactive-authentication)
+- [PAC CLI Profile](#pac-cli-profile)
+- [Device Code](#device-code)
+- [Username/Password](#usernamepassword)
+- [Client Secret](#client-secret)
+- [Client Certificate](#client-certificate)
+- [DefaultAzureCredential](#defaultazurecredential)
+- [ManagedIdentity](#managedidentity)
+- [Connection String](#connection-string)
+- [See Also](#see-also)
 <!-- /TOC -->
 
 The module supports multiple authentication methods for different scenarios:

@@ -1,6 +1,8 @@
 # Deleting Records
 
 <!-- TOC -->
+    - [Deleting only if the record still exists](#deleting-only-if-the-record-still-exists)
+      - [SQL alternative — Delete](#sql-alternative-delete)
 <!-- /TOC -->
 
 > [!WARNING]

@@ -1,6 +1,7 @@
 # Error Handling and Batch Operations
 
 <!-- TOC -->
+  - [Parallelising work for best performance](#parallelising-work-for-best-performance)
 <!-- /TOC -->
 
 
