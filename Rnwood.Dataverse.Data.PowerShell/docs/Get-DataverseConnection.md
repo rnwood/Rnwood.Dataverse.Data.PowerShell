@@ -135,6 +135,9 @@ Multiple authentication methods are supported:
 - Connection string (for advanced scenarios)
 - PAC CLI profile (leverages existing Power Platform CLI authentication)
 - Mock connection (for testing)
+- Access token script block (for custom authentication scenarios)
+
+Connections can be saved with names for later reuse, with optional credential persistence (not recommended for production).
 
 ## EXAMPLES
 
@@ -266,7 +269,7 @@ Saves the connection with certificate path and password included (encrypted). WA
 
 ### Example 19: Save username/password connection with credentials encrypted (NOT RECOMMENDED)
 ```powershell
-PS C:\> Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Username "user@domain.com"****** -Name "MyUserConn" -SaveCredentials
+PS C:\> Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Username "user@domain.com" -Password "mypassword" -Name "MyUserConn" -SaveCredentials
 ```
 
 Saves the connection with the password included (encrypted). WARNING: This stores the password encrypted on disk and is NOT RECOMMENDED for production use. Only use for testing or non-production scenarios.
@@ -444,7 +447,7 @@ Accept wildcard characters: False
 ```
 
 ### -ConnectionString
-Specifies the conneciton string to authenticate with - see https://learn.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect
+Specifies the connection string to authenticate with - see https://learn.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect
 
 ```yaml
 Type: String
