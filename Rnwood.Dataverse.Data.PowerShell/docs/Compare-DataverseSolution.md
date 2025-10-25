@@ -130,7 +130,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
-Common parameter for PowerShell progress preferences.
+Standard PowerShell preference parameter that controls the display of progress information. This cmdlet does not emit progress directly but respects this parameter if passed.
 
 ```yaml
 Type: ActionPreference
@@ -155,9 +155,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Management.Automation.PSObject
 ## NOTES
 - If the solution does not exist in the target environment, all components will be marked as "Added"
-- Components that exist in both the file and environment are always marked as "Modified" (this cmdlet does not perform deep component inspection to detect actual changes)
-- Behavior changes (e.g., full to shell) are detected and marked as "Modified"
-- The cmdlet uses the solutioncomponentdefinition table to understand component types
+- Components that exist in both the file and environment are marked as "Modified" because this cmdlet cannot perform deep inspection of component definitions to detect actual content changes - it only compares component presence and behavior
+- Behavior changes (e.g., full component to shell component) are detected and the component is marked as "Modified"
+- The cmdlet uses the solutioncomponent table to query components in the target environment
 
 ## RELATED LINKS
 
