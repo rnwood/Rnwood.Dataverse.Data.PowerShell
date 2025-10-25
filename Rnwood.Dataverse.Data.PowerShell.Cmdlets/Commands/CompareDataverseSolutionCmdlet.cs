@@ -186,11 +186,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             var components = new List<SolutionComponentInfo>();
             string uniqueName = null;
+            XDocument customizationsXdoc = null;
 
             using (var memoryStream = new MemoryStream(solutionBytes))
             using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
             {
-                // First, get the solution unique name from solution.xml
+                // First, load customizations.xml for later use
+                var customizationsEntry = archive.Entries.FirstOrDefault(e =>
+                    e.FullName.Equals("customizations.xml", StringComparison.OrdinalIgnoreCase));
+
+                if (customizationsEntry != null)
+                {
+                    using (var stream = customizationsEntry.Open())
+                    using (var reader = new StreamReader(stream))
+                    {
+                        var xmlContent = reader.ReadToEnd();
+                        customizationsXdoc = XDocument.Parse(xmlContent);
+                    }
+                }
+                
+                // Get the solution unique name and root components from solution.xml
                 var solutionXmlEntry = archive.Entries.FirstOrDefault(e =>
                     e.FullName.Equals("solution.xml", StringComparison.OrdinalIgnoreCase));
 
@@ -203,6 +218,51 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         var xdoc = XDocument.Parse(xmlContent);
                         var solutionManifest = xdoc.Root?.Element("SolutionManifest");
                         uniqueName = solutionManifest?.Element("UniqueName")?.Value;
+                        
+                        // Parse root components from solution.xml
+                        var rootComponents = solutionManifest?.Element("RootComponents");
+                        if (rootComponents != null && customizationsXdoc != null)
+                        {
+                            foreach (var rootComponent in rootComponents.Elements())
+                            {
+                                if (rootComponent.Name.LocalName == "RootComponent")
+                                {
+                                    var idAttr = rootComponent.Attribute("id");
+                                    var schemaNameAttr = rootComponent.Attribute("schemaName");
+                                    var typeAttr = rootComponent.Attribute("type");
+                                    var behaviorAttr = rootComponent.Attribute("behavior");
+
+                                    Guid componentId = Guid.Empty;
+                                    
+                                    if (idAttr != null)
+                                    {
+                                        componentId = Guid.Parse(idAttr.Value);
+                                    }
+                                    else if (schemaNameAttr != null && typeAttr != null)
+                                    {
+                                        // For entities referenced by schemaName, need to find the MetadataId in customizations.xml
+                                        var componentType = int.Parse(typeAttr.Value);
+                                        if (componentType == 1) // Entity
+                                        {
+                                            componentId = FindEntityMetadataIdBySchemaName(customizationsXdoc, schemaNameAttr.Value);
+                                        }
+                                    }
+                                    
+                                    if (componentId != Guid.Empty && typeAttr != null)
+                                    {
+                                        var component = new SolutionComponentInfo
+                                        {
+                                            ObjectId = componentId,
+                                            ComponentType = int.Parse(typeAttr.Value),
+                                            RootComponentBehavior = behaviorAttr != null 
+                                                ? int.Parse(behaviorAttr.Value) 
+                                                : 0
+                                        };
+                                        components.Add(component);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -215,51 +275,59 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         null));
                     return (null, components);
                 }
-
-                // Now parse customizations.xml for root components
-                var customizationsEntry = archive.Entries.FirstOrDefault(e =>
-                    e.FullName.Equals("customizations.xml", StringComparison.OrdinalIgnoreCase));
-
-                if (customizationsEntry != null)
-                {
-                    using (var stream = customizationsEntry.Open())
-                    using (var reader = new StreamReader(stream))
-                    {
-                        var xmlContent = reader.ReadToEnd();
-                        var xdoc = XDocument.Parse(xmlContent);
-
-                        // Find RootComponents section
-                        var rootComponents = xdoc.Descendants()
-                            .FirstOrDefault(e => e.Name.LocalName == "RootComponents");
-
-                        if (rootComponents != null)
-                        {
-                            foreach (var rootComponent in rootComponents.Elements())
-                            {
-                                if (rootComponent.Name.LocalName == "RootComponent")
-                                {
-                                    var idAttr = rootComponent.Attribute("id");
-                                    var typeAttr = rootComponent.Attribute("type");
-                                    var behaviorAttr = rootComponent.Attribute("behavior");
-
-                                    if (idAttr != null && typeAttr != null)
-                                    {
-                                        var component = new SolutionComponentInfo
-                                        {
-                                            ObjectId = Guid.Parse(idAttr.Value),
-                                            ComponentType = int.Parse(typeAttr.Value),
-                                            RootComponentBehavior = behaviorAttr != null ? int.Parse(behaviorAttr.Value) : 0
-                                        };
-                                        components.Add(component);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
             }
 
             return (uniqueName, components);
+        }
+
+        private Guid FindEntityMetadataIdBySchemaName(XDocument xdoc, string schemaName)
+        {
+            try
+            {
+                var entities = xdoc.Descendants()
+                    .Where(e => e.Name.LocalName == "Entity");
+                
+                foreach (var entity in entities)
+                {
+                    var nameElement = entity.Elements().FirstOrDefault(e => e.Name.LocalName == "Name");
+                    var name = nameElement?.Value;
+                    
+                    if (string.Equals(name, schemaName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Try to find MetadataId - it may not exist for shell components
+                        var metadataId = entity.Descendants()
+                            .FirstOrDefault(e => e.Name.LocalName == "MetadataId")
+                            ?.Value;
+                        
+                        if (metadataId != null && Guid.TryParse(metadataId, out var parsedId))
+                        {
+                            return parsedId;
+                        }
+                        
+                        // For shell components without MetadataId, we can't extract subcomponents
+                        // but we should still allow the root component to be compared
+                        // Generate a deterministic GUID based on the schema name
+                        WriteVerbose($"Entity '{schemaName}' has no MetadataId (likely shell component), using schema name hash");
+                        return GenerateDeterministicGuid(schemaName);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteVerbose($"Failed to find MetadataId for entity schema name '{schemaName}': {ex.Message}");
+            }
+            
+            return Guid.Empty;
+        }
+
+        private Guid GenerateDeterministicGuid(string input)
+        {
+            // Generate a deterministic GUID from a string (using MD5 hash of the string)
+            using (var md5 = System.Security.Cryptography.MD5.Create())
+            {
+                var hash = md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(input.ToLowerInvariant()));
+                return new Guid(hash);
+            }
         }
 
         private List<SolutionComponentInfo> GetEnvironmentComponents(Guid solutionId)
@@ -612,6 +680,53 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     });
                 }
                 
+                // Add entity keys from metadata
+                if (entityMetadata.Keys != null)
+                {
+                    foreach (var key in entityMetadata.Keys)
+                    {
+                        if (key.MetadataId.HasValue)
+                        {
+                            subcomponents.Add(new SolutionComponentInfo
+                            {
+                                ComponentType = 14, // Entity Key
+                                ObjectId = key.MetadataId.Value,
+                                RootComponentBehavior = 0,
+                                IsSubcomponent = true,
+                                ParentComponentType = 1,
+                                ParentObjectId = entityId
+                            });
+                        }
+                    }
+                }
+                
+                // Query for charts (component type 59 - Saved Query Visualization)
+                var chartQuery = new QueryExpression("savedqueryvisualization")
+                {
+                    ColumnSet = new ColumnSet("savedqueryvisualizationid"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("primaryentitytypecode", ConditionOperator.Equal, entityMetadata.LogicalName)
+                        }
+                    }
+                };
+                
+                var charts = Connection.RetrieveMultiple(chartQuery);
+                foreach (var chart in charts.Entities)
+                {
+                    subcomponents.Add(new SolutionComponentInfo
+                    {
+                        ComponentType = 59, // Saved Query Visualization (Chart)
+                        ObjectId = chart.Id,
+                        RootComponentBehavior = 0,
+                        IsSubcomponent = true,
+                        ParentComponentType = 1,
+                        ParentObjectId = entityId
+                    });
+                }
+                
                 WriteVerbose($"Found {subcomponents.Count} subcomponents for entity {entityMetadata.LogicalName}");
             }
             catch (Exception ex)
@@ -777,6 +892,48 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             ComponentType = 10, // Entity Relationship
                             ObjectId = relId,
+                            RootComponentBehavior = 0,
+                            IsSubcomponent = true,
+                            ParentComponentType = 1,
+                            ParentObjectId = entityId
+                        });
+                    }
+                }
+                
+                // Extract entity keys
+                var entityKeys = targetEntity.Descendants()
+                    .Where(e => e.Name.LocalName == "EntityKey");
+                
+                foreach (var entityKey in entityKeys)
+                {
+                    var keyMetadataId = entityKey.Element(XName.Get("MetadataId", entityKey.Name.NamespaceName))?.Value;
+                    if (keyMetadataId != null && Guid.TryParse(keyMetadataId, out var keyId))
+                    {
+                        subcomponents.Add(new SolutionComponentInfo
+                        {
+                            ComponentType = 14, // Entity Key
+                            ObjectId = keyId,
+                            RootComponentBehavior = 0,
+                            IsSubcomponent = true,
+                            ParentComponentType = 1,
+                            ParentObjectId = entityId
+                        });
+                    }
+                }
+                
+                // Extract charts/visualizations (Saved Query Visualizations)
+                var visualizations = targetEntity.Descendants()
+                    .Where(e => e.Name.LocalName == "visualization");
+                
+                foreach (var visualization in visualizations)
+                {
+                    var vizId = visualization.Element(XName.Get("savedqueryvisualizationid", visualization.Name.NamespaceName))?.Value;
+                    if (vizId != null && Guid.TryParse(vizId, out var vId))
+                    {
+                        subcomponents.Add(new SolutionComponentInfo
+                        {
+                            ComponentType = 59, // Saved Query Visualization (Chart)
+                            ObjectId = vId,
                             RootComponentBehavior = 0,
                             IsSubcomponent = true,
                             ParentComponentType = 1,

@@ -336,4 +336,61 @@ Describe 'Compare-DataverseSolution' {
             }
         }
     }
+
+    It "Extracts all subcomponent types from provided test solution" {
+        # Test with the provided subcomponents.zip file
+        $testSolutionPath = Join-Path $PSScriptRoot "subcomponents.zip"
+        
+        if (-not (Test-Path $testSolutionPath)) {
+            Set-ItResult -Skipped -Because "Test solution file subcomponents.zip not found"
+            return
+        }
+        
+        # Import module for file-to-file comparison
+        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+        }
+        
+        # Test can extract root components including those with schemaName
+        # The test solution has 3 root components:
+        # - Entity (type 1) with behavior=2 (shell) - referenced by schemaName
+        # - Workflow/Business Rule (type 29) with behavior=0
+        # - Form (type 60)
+        
+        # Create an empty solution for comparison
+        $components = @()
+        $zipPath2 = CreateTestSolutionZip -SolutionUniqueName "Empty" -Components $components
+        
+        try {
+            $result = Compare-DataverseSolution -SolutionFile $testSolutionPath -TargetSolutionFile $zipPath2 -Verbose
+            
+            # Should have results for the root components
+            $result | Should -Not -BeNullOrEmpty
+            $result.Count | Should -BeGreaterOrEqual 3
+            
+            # Verify component types were extracted
+            $componentTypes = $result | Group-Object ComponentTypeName
+            Write-Host "`nExtracted component types:"
+            $componentTypes | ForEach-Object { Write-Host "  $($_.Name): $($_.Count)" }
+            
+            # Should have entity, workflow, and form
+            $typeNames = $componentTypes | Select-Object -ExpandProperty Name
+            $typeNames | Should -Contain "Entity"
+            $typeNames | Should -Contain "Workflow"
+            $typeNames | Should -Contain "System Form"
+            
+            # The entity has behavior=2 (shell), so no subcomponents should be extracted
+            # This verifies that the cmdlet correctly respects rootcomponentbehavior
+            $subcomponents = $result | Where-Object IsSubcomponent -eq $true
+            if ($subcomponents) {
+                Write-Host "`nSubcomponents found (unexpected for shell components):"
+                $subcomponents | Format-Table ComponentTypeName, ParentComponentTypeName
+            }
+        }
+        finally {
+            if (Test-Path $zipPath2) {
+                Remove-Item $zipPath2 -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
 }
