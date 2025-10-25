@@ -15,9 +15,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 		{
 
 #if NET
-			// Determine the appropriate target framework based on PowerShell version
-			string targetFramework = GetTargetFrameworkForPowerShellVersion();
-			string basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + $"/../../cmdlets/{targetFramework}";
+			// The manifest loads the appropriate target framework (net8.0 for Core)
+			// The loader just needs to handle dependency resolution for the cmdlets
+			string basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/../../cmdlets";
+			// Get the actual target framework directory that was loaded
+			var loaderPath = Assembly.GetExecutingAssembly().Location;
+			var targetFramework = Path.GetFileName(Path.GetDirectoryName(loaderPath));
+			basePath = Path.Combine(basePath, targetFramework);
+			
 			var alc = new CmdletsLoadContext(basePath);
 
 			AssemblyLoadContext.Default.Resolving += (s, args) =>
@@ -29,9 +34,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 
 				return null;
 			};
-
-			// Don't explicitly load the assembly here - let PowerShell load it from the manifest
-			// The Resolving event above will intercept and redirect the load
 #else
 			string basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/../../cmdlets/net462";
 
@@ -53,47 +55,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 
 
 		}
-
-#if NET
-		private static string GetTargetFrameworkForPowerShellVersion()
-		{
-			try
-			{
-				// Get PowerShell version from the PSVersionTable
-				var psVersionTable = System.Management.Automation.PowerShell.Create()
-					.AddScript("$PSVersionTable.PSVersion")
-					.Invoke();
-
-				if (psVersionTable.Count > 0 && psVersionTable[0].BaseObject != null)
-				{
-					var versionObj = psVersionTable[0].BaseObject;
-					// Extract Major and Minor properties using reflection
-					var majorProp = versionObj.GetType().GetProperty("Major");
-					var minorProp = versionObj.GetType().GetProperty("Minor");
-					
-					if (majorProp != null && minorProp != null)
-					{
-						int major = (int)majorProp.GetValue(versionObj);
-						int minor = (int)minorProp.GetValue(versionObj);
-						
-						// Use net8.0 for PowerShell 7.4 and later
-						if (major > 7 || (major == 7 && minor >= 4))
-						{
-							return "net8.0";
-						}
-					}
-				}
-			}
-			catch
-			{
-				// Fall back to net6.0 on any error
-			}
-
-			// Fall back to net6.0 for older PowerShell Core versions
-			return "net6.0";
-		}
-#endif
-
 
 #if NET
 

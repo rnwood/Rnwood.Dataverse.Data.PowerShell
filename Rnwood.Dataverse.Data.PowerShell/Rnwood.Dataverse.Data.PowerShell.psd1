@@ -66,8 +66,8 @@ PrivateData = @{
 NestedModules = 
 @(if ($PSEdition -eq 'Core') {
 	@(
-		"loader/net6.0/Rnwood.Dataverse.Data.PowerShell.Loader.dll",
-		"cmdlets/net6.0/Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll",
+		"loader/net8.0/Rnwood.Dataverse.Data.PowerShell.Loader.dll",
+		"cmdlets/net8.0/Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll",
 		"Get-DataverseRecordsFolder.psm1",
 		"Set-DataverseRecordsFolder.psm1"
 	)
