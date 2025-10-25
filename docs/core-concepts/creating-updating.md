@@ -1,3 +1,17 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [Creating and Updating Records](#creating-and-updating-records)
+      - [Input object shape and type conversion (create/update)](#input-object-shape-and-type-conversion-createupdate)
+      - [Advanced Set-DataverseRecord Parameters](#advanced-set-dataverserecord-parameters)
+    - [Assigning records](#assigning-records)
+    - [Setting state and status](#setting-state-and-status)
+      - [Alternate Keys Explanation](#alternate-keys-explanation)
+    - [SQL alternative — Create / Update](#sql-alternative--create--update)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Creating and Updating Records
 
 <!-- TOC -->

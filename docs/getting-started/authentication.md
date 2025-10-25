@@ -1,3 +1,21 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [Authentication Methods](#authentication-methods)
+  - [Interactive Authentication](#interactive-authentication)
+  - [PAC CLI Profile](#pac-cli-profile)
+  - [Device Code](#device-code)
+  - [Username/Password](#usernamepassword)
+  - [Client Secret](#client-secret)
+  - [Client Certificate](#client-certificate)
+  - [DefaultAzureCredential](#defaultazurecredential)
+  - [ManagedIdentity](#managedidentity)
+  - [Connection String](#connection-string)
+  - [See Also](#see-also)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Authentication Methods
 
 <!-- TOC -->

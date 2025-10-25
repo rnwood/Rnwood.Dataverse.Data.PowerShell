@@ -1,3 +1,28 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [Querying Records](#querying-records)
+      - [Column output and type conversions](#column-output-and-type-conversions)
+      - [Paging and Limiting How Many Records](#paging-and-limiting-how-many-records)
+      - [Including and Excluding by Name or Id](#including-and-excluding-by-name-or-id)
+      - [Filtering with simple syntax](#filtering-with-simple-syntax)
+        - [Excluding records](#excluding-records)
+      - [Advanced Filtering with QueryExpression](#advanced-filtering-with-queryexpression)
+      - [Advanced Filtering with FetchXML](#advanced-filtering-with-fetchxml)
+    - [Querying with SQL](#querying-with-sql)
+      - [Specialized Invoke-Dataverse* Cmdlets](#specialized-invoke-dataverse-cmdlets)
+        - [How to Find and Use Specialized Cmdlets](#how-to-find-and-use-specialized-cmdlets)
+        - [Usage Pattern](#usage-pattern)
+        - [When to Use Specialized Cmdlets](#when-to-use-specialized-cmdlets)
+    - [Getting total record count](#getting-total-record-count)
+      - [Using -TotalRecordCount switch](#using--totalrecordcount-switch)
+      - [Using -VerboseRecordCount switch](#using--verboserecordcount-switch)
+    - [Sorting records](#sorting-records)
+      - [Linking Related Tables](#linking-related-tables)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Querying Records
 
 <!-- TOC -->

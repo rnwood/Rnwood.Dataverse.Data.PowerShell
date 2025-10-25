@@ -1,3 +1,19 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [Connection Management](#connection-management)
+  - [Default Connection](#default-connection)
+  - [Named Connections](#named-connections)
+    - [Saving a Named Connection](#saving-a-named-connection)
+    - [Loading a Named Connection](#loading-a-named-connection)
+    - [Clearing All Saved Connections](#clearing-all-saved-connections)
+    - [Listing Saved Connections](#listing-saved-connections)
+    - [Deleting a Named Connection](#deleting-a-named-connection)
+  - [See Also](#see-also)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Connection Management
 
 <!-- TOC -->

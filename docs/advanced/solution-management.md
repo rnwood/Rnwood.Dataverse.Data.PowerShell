@@ -1,3 +1,19 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [Solution Management](#solution-management)
+      - [Parsing solution files](#parsing-solution-files)
+      - [Exporting solutions](#exporting-solutions)
+      - [Listing solutions](#listing-solutions)
+      - [Creating and updating solutions](#creating-and-updating-solutions)
+      - [Publishing customizations](#publishing-customizations)
+      - [Importing solutions](#importing-solutions)
+      - [Uninstalling/removing solutions](#uninstallingremoving-solutions)
+        - [Handling Connection References and Environment Variables](#handling-connection-references-and-environment-variables)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Solution Management
 
 <!-- TOC -->
