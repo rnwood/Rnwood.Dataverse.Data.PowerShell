@@ -1,0 +1,198 @@
+---
+external help file: Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll-Help.xml
+Module Name: Rnwood.Dataverse.Data.PowerShell
+online version:
+schema: 2.0.0
+---
+
+# Set-DataverseSolution
+
+## SYNOPSIS
+Updates properties of a solution in Dataverse.
+
+## SYNTAX
+
+```
+Set-DataverseSolution [-UniqueName] <String> [-Name <String>] [-Description <String>] [-Version <String>]
+ [-Connection <ServiceClient>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+## DESCRIPTION
+
+This cmdlet updates properties of a solution in Dataverse including the friendly name, description, and version.
+
+Note that managed solutions have restrictions on what can be updated. Only the description can be updated for managed solutions. For unmanaged solutions, you can update the name, description, and version.
+
+## EXAMPLES
+
+### Example 1: Update solution description
+```powershell
+PS C:\> Set-DataverseSolution -UniqueName "MySolution" -Description "Updated solution description"
+Solution 'MySolution' updated successfully.
+```
+
+Updates the description of an unmanaged solution.
+
+### Example 2: Update solution name and version
+```powershell
+PS C:\> Set-DataverseSolution -UniqueName "MySolution" -Name "My Updated Solution" -Version "1.1.0.0"
+Solution 'MySolution' updated successfully.
+```
+
+Updates both the friendly name and version of an unmanaged solution.
+
+### Example 3: Update all updatable properties
+```powershell
+PS C:\> Set-DataverseSolution -UniqueName "MySolution" -Name "Updated Name" -Description "New description" -Version "2.0.0.0"
+Solution 'MySolution' updated successfully.
+```
+
+Updates the name, description, and version in one operation.
+
+### Example 4: Attempt to update managed solution (shows warning)
+```powershell
+PS C:\> Set-DataverseSolution -UniqueName "ManagedSolution" -Name "New Name" -Version "2.0.0.0"
+WARNING: Solution is managed. Only the description can be updated for managed solutions.
+WARNING: Cannot update name of managed solution. Skipping name update.
+WARNING: Cannot update version of managed solution. Skipping version update.
+WARNING: No updates to apply. Please specify at least one property to update (Name, Description, or Version).
+```
+
+Attempts to update a managed solution, but only description updates are allowed.
+
+## PARAMETERS
+
+### -UniqueName
+The unique name of the solution to update.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+The new friendly name for the solution. Only applicable to unmanaged solutions.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Description
+The new description for the solution. Can be updated for both managed and unmanaged solutions.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Version
+The new version for the solution (e.g., '1.0.0.0'). Only applicable to unmanaged solutions.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+
+```yaml
+Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+This cmdlet does not accept pipeline input.
+
+## OUTPUTS
+
+### System.String
+
+Returns a success message when the update completes.
+
+## NOTES
+
+- Managed solutions can only have their description updated.
+- For unmanaged solutions, you can update the name, description, and version.
+- Version must be in the format 'major.minor.build.revision' (e.g., '1.0.0.0').
+- At least one property (Name, Description, or Version) must be specified for the update to proceed.
+
+## RELATED LINKS
+
+[Get-DataverseSolution](Get-DataverseSolution.md)
+
+[Remove-DataverseSolution](Remove-DataverseSolution.md)
+
+[Import-DataverseSolution](Import-DataverseSolution.md)
