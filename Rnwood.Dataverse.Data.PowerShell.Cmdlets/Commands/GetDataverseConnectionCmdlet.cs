@@ -30,7 +30,7 @@ using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.IO;
 using System.Text.Json;
-
+using Rnwood.Dataverse.Data.PowerShell.Commands.PacProfileParsing;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -122,7 +122,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Gets or sets the entity metadata for creating a mock connection.
 		/// </summary>
-		[Parameter(Mandatory =true, ParameterSetName =PARAMSET_MOCK, HelpMessage = "Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.")] 
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_MOCK, HelpMessage = "Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.")]
 		public EntityMetadata[] Mock { get; set; }
 
 		/// <summary>
@@ -255,16 +255,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public SwitchParameter FromPac { get; set; }
 
 		/// <summary>
-		/// Gets or sets the PAC CLI profile name to use.
+		/// Gets or sets the PAC CLI profile name or index to use.
 		/// </summary>
-		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_FROMPAC, HelpMessage = "Name of the PAC CLI profile to use. If not specified, uses the current/active profile.")]
-		public string ProfileName { get; set; }
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_FROMPAC, HelpMessage = "Name or index of the PAC CLI profile to use. If not specified, uses the current/active profile.")]
+		public string Profile { get; set; }
 
 		/// <summary>
 		/// Gets or sets the timeout for authentication operations in seconds.
 		/// </summary>
 		[Parameter(Mandatory = false, HelpMessage = "Timeout for authentication operations. Defaults to 5 minutes.")]
-		public uint Timeout { get; set; } = 5*60;
+		public uint Timeout { get; set; } = 5 * 60;
 
 		// Cancellation token source that is cancelled when the user hits Ctrl+C (StopProcessing)
 		private CancellationTokenSource _userCancellationCts;
@@ -440,8 +440,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			{
 				base.ProcessRecord();
 
-				
-
 				ServiceClient result;
 
 				switch (ParameterSetName)
@@ -449,13 +447,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					case PARAMSET_MOCK:
 
 						IXrmFakedContext xrmFakeContext = MiddlewareBuilder
-                        .New()
-                        .AddCrud()
+						.New()
+						.AddCrud()
 						.AddFakeMessageExecutors(Assembly.GetAssembly(typeof(FakeXrmEasy.FakeMessageExecutors.RetrieveEntityRequestExecutor)))
 						.UseMessages()
-                        .UseCrud()
-                        .SetLicense(FakeXrmEasyLicense.RPL_1_5)
-                        .Build();
+						.UseCrud()
+						.SetLicense(FakeXrmEasyLicense.RPL_1_5)
+						.Build();
 						xrmFakeContext.InitializeMetadata(Mock);
 
 						// Wrap the fake service with a thread-safe proxy since FakeXrmEasy is not thread-safe
@@ -727,7 +725,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					case PARAMSET_DEFAULTAZURECREDENTIAL:
 						{
 							var credential = new Azure.Identity.DefaultAzureCredential();
-							
+
 							// If URL is not provided, discover and select environment
 							if (Url == null)
 							{
@@ -739,7 +737,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
 								Url = new Uri(discoveryUrl);
 							}
-							
+
 							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
 
 							// Save connection metadata if a name was provided
@@ -770,7 +768,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							{
 								credential = new ManagedIdentityCredential();
 							}
-							
+
 							// If URL is not provided, discover and select environment
 							if (Url == null)
 							{
@@ -782,7 +780,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
 								Url = new Uri(discoveryUrl);
 							}
-							
+
 							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
 
 							// Save connection metadata if a name was provided
@@ -809,109 +807,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 					case PARAMSET_FROMPAC:
 						{
-							// Read PAC CLI profiles
-							var profilesPath = Path.Combine(
-								Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-								"Microsoft",
-								"PowerPlatform",
-								"Cli",
-								"authprofiles_v2.json");
-
-							if (!File.Exists(profilesPath))
-							{
-								ThrowTerminatingError(new ErrorRecord(
-									new FileNotFoundException($"PAC CLI profiles file not found at: {profilesPath}. Please run 'pac auth create' first to authenticate with PAC CLI."),
-									"PacProfilesNotFound",
-									ErrorCategory.ObjectNotFound,
-									profilesPath));
-								return;
-							}
-
-							WriteVerbose($"Reading PAC profiles from: {profilesPath}");
-
-							// Read and parse the profiles JSON
-							string json = File.ReadAllText(profilesPath);
-							var jsonOptions = new JsonSerializerOptions
-							{
-								PropertyNameCaseInsensitive = true
-							};
-							
-							PacProfilesData pacProfiles;
+							string environmentUrlString;
 							try
 							{
-								pacProfiles = JsonSerializer.Deserialize<PacProfilesData>(json, jsonOptions);
+								environmentUrlString = PacProfileParser.GetEnvironmentUrl(Profile);
 							}
 							catch (Exception ex)
 							{
-								ThrowTerminatingError(new ErrorRecord(
-									new InvalidDataException($"Failed to parse PAC CLI profiles file: {ex.Message}", ex),
-									"PacProfilesParseError",
-									ErrorCategory.ParserError,
-									profilesPath));
+								ThrowTerminatingError(new ErrorRecord(ex, "PacProfileError", ErrorCategory.InvalidData, null));
 								return;
 							}
 
-							if (pacProfiles == null || pacProfiles.Profiles == null || pacProfiles.Profiles.Count == 0)
-							{
-								ThrowTerminatingError(new ErrorRecord(
-									new InvalidOperationException("No profiles found in PAC CLI. Please run 'pac auth create' first to authenticate with PAC CLI."),
-									"NoPacProfiles",
-									ErrorCategory.ObjectNotFound,
-									null));
-								return;
-							}
-
-							// Find the profile to use
-							PacProfileData profile = null;
-							if (!string.IsNullOrEmpty(ProfileName))
-							{
-								// Find profile by name
-								profile = pacProfiles.Profiles.FirstOrDefault(p => 
-									p.Name != null && 
-									string.Equals(p.Name.Value, ProfileName, StringComparison.OrdinalIgnoreCase));
-								
-								if (profile == null)
-								{
-									var availableProfiles = string.Join(", ", pacProfiles.Profiles.Where(p => p.Name != null).Select(p => p.Name.Value));
-									ThrowTerminatingError(new ErrorRecord(
-										new InvalidOperationException($"PAC CLI profile '{ProfileName}' not found. Available profiles: {availableProfiles}"),
-										"PacProfileNotFound",
-										ErrorCategory.ObjectNotFound,
-										ProfileName));
-									return;
-								}
-							}
-							else
-							{
-								// Use the first profile
-								profile = pacProfiles.Profiles.FirstOrDefault();
-								
-								if (profile == null)
-								{
-									ThrowTerminatingError(new ErrorRecord(
-										new InvalidOperationException("No current PAC CLI profile found."),
-										"NoCurrentPacProfile",
-										ErrorCategory.ObjectNotFound,
-										null));
-									return;
-								}
-								
-								var profileName = profile.Name?.Value ?? "(unnamed)";
-								WriteVerbose($"Using PAC CLI profile: {profileName}");
-							}
-
-							// Extract connection details from the profile
-							if (profile.ActiveEnvironmentUrl == null && profile.LegacyResource?.Resource == null)
-							{
-								ThrowTerminatingError(new ErrorRecord(
-									new InvalidOperationException($"The selected PAC CLI profile does not have an active environment URL. Please select an environment with 'pac org select'."),
-									"PacProfileNoEnvironment",
-									ErrorCategory.InvalidData,
-									profile));
-								return;
-							}
-
-							string environmentUrlString = profile.ActiveEnvironmentUrl ?? profile.LegacyResource.Resource;
 							Uri environmentUrl;
 							if (!Uri.TryCreate(environmentUrlString, UriKind.Absolute, out environmentUrl))
 							{
@@ -927,7 +833,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 							// Use MSAL with the same client ID that PAC CLI uses
 							var pacClientId = new Guid("04b07795-8ddb-461a-bbee-02f9e1bf7b46"); // PAC CLI's default client ID
-							
+
 							var publicClient = PublicClientApplicationBuilder
 								.Create(pacClientId.ToString())
 								.WithRedirectUri("http://localhost")
@@ -1079,7 +985,7 @@ Url + "/api/data/v9.2/");
 			else if (!string.IsNullOrEmpty(CertificatePath))
 			{
 				string resolvedPath = GetUnresolvedProviderPathFromPSPath(CertificatePath);
-				
+
 				if (!System.IO.File.Exists(resolvedPath))
 				{
 					throw new System.IO.FileNotFoundException($"Certificate file not found: {resolvedPath}");
@@ -1109,7 +1015,7 @@ Url + "/api/data/v9.2/");
 			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
 			{
 				AuthenticationResult authResult = null;
-				
+
 				// Try to get token silently from cache first
 				if (!string.IsNullOrEmpty(Username))
 				{
@@ -1351,34 +1257,10 @@ Url + "/api/data/v9.2/");
 				var selectedOrg = orgList[selection - 1];
 				var url = selectedOrg.Endpoints[Microsoft.Xrm.Sdk.Discovery.EndpointType.WebApplication];
 
-				Host.UI.WriteLine($"Selected environment: {selectedOrg.FriendlyName} ({url})");
+				Host.UI.WriteLine($"Selected environment: {selectedOrg.FriendlyName} ({selectedOrg.UniqueName})");
 
 				return url;
 			}
 		}
 	}
-
-	// Simple classes for parsing PAC CLI profile JSON without depending on bolt.authentication types
-	internal class PacProfileData
-	{
-		public PacProfileName Name { get; set; }
-		public string ActiveEnvironmentUrl { get; set; }
-		public PacProfileLegacyResource LegacyResource { get; set; }
-	}
-
-	internal class PacProfileName
-	{
-		public string Value { get; set; }
-	}
-
-	internal class PacProfileLegacyResource
-	{
-		public string Resource { get; set; }
-	}
-
-	internal class PacProfilesData
-	{
-		public List<PacProfileData> Profiles { get; set; }
-	}
-
 }
