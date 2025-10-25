@@ -43,7 +43,8 @@ The cmdlet outputs detailed comparison results showing whether components have b
 When a component has behavior 0 (Include Subcomponents), the cmdlet automatically enumerates and compares all subcomponents:
 - **Entity subcomponents**: Attributes, Relationships, Forms, Views
 - Subcomponent changes are tracked with parent component information
-- Only available for environment comparisons (requires Connection)
+- **File-to-file comparisons**: Subcomponents extracted from customizations.xml in solution ZIP
+- **File-to-environment comparisons**: Subcomponents queried from environment metadata
 
 Component behavior statuses:
 - **Added**: Component exists in source but not in target
@@ -231,8 +232,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - **Subcomponent enumeration**:
   - When a component has behavior 0 (Include Subcomponents), all subcomponents are automatically enumerated
   - Entity subcomponents include: Attributes (type 2), Relationships (type 10), Forms (type 60), Views (type 26)
-  - Subcomponent enumeration requires a Connection (environment comparison)
-  - File-to-file comparisons do not enumerate subcomponents
+  - **File-to-file comparisons**: Subcomponents extracted from customizations.xml in solution ZIP
+  - **Environment comparisons**: Subcomponents queried from environment metadata
+  - Works for both comparison modes - no Connection required for file-to-file
   
 - If the solution does not exist in the target environment, all components will be marked as "Added"
 - Components that exist in both locations with the same behavior are marked as "Modified" (deep content inspection is not performed)
