@@ -59,6 +59,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private const string PARAMSET_MOCK = "Return a mock connection";
 		private const string PARAMSET_GETDEFAULT = "Get default connection";
+		private const string PARAMSET_LOADNAMED = "Load a saved named connection";
+		private const string PARAMSET_LISTNAMED = "List saved named connections";
+		private const string PARAMSET_DELETENAMED = "Delete a saved named connection";
+		private const string PARAMSET_CLEARALL = "Clear all saved connections";
 
 		/// <summary>
 		/// Gets or sets a value indicating whether to get the current default connection.
@@ -71,6 +75,46 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// </summary>
 		[Parameter(Mandatory = false, HelpMessage = "When set, this connection will be used as the default for cmdlets that don't have a connection parameter specified.")]
 		public SwitchParameter SetAsDefault { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether to save credentials/secrets with the connection (NOT RECOMMENDED).
+		/// </summary>
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "WARNING: Saves the password with the connection (encrypted). This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "WARNING: Saves the client secret with the connection (encrypted). This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "WARNING: Saves certificate path and password with the connection (encrypted). This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.")]
+		public SwitchParameter SaveCredentials { get; set; }
+
+		/// <summary>
+		/// Gets or sets the name of the connection to save or load.
+		/// </summary>
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEFAULTAZURECREDENTIAL, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_LOADNAMED, HelpMessage = "Name of a saved connection to load. The connection will be restored with cached credentials.")]
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DELETENAMED, HelpMessage = "Name of the saved connection to delete.")]
+		public string Name { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether to delete the named connection.
+		/// </summary>
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_DELETENAMED, HelpMessage = "Deletes a saved named connection. Use with -Name to specify which connection to delete.")]
+		public SwitchParameter DeleteConnection { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether to clear all saved connections.
+		/// </summary>
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLEARALL, HelpMessage = "Clears all saved named connections and cached tokens.")]
+		public SwitchParameter ClearAllConnections { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether to list all saved connections.
+		/// </summary>
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_LISTNAMED, HelpMessage = "Lists all saved named connections.")]
+		public SwitchParameter ListConnections { get; set; }
 
 		/// <summary>
 		/// Gets or sets the entity metadata for creating a mock connection.
@@ -255,7 +299,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// </summary>
 		protected override void ProcessRecord()
 		{
-			// Handle GetDefault specially to avoid wrapping its error
+			// Handle special parameter sets first
 			if (ParameterSetName == PARAMSET_GETDEFAULT)
 			{
 				base.ProcessRecord();
@@ -270,6 +314,111 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				}
 				WriteObject(result);
 				return;
+			}
+
+			if (ParameterSetName == PARAMSET_LISTNAMED)
+			{
+				base.ProcessRecord();
+				var store = new ConnectionStore();
+				var connections = store.ListConnections();
+				foreach (var connName in connections)
+				{
+					var metadata = store.LoadConnection(connName);
+					WriteObject(new
+					{
+						Name = connName,
+						Url = metadata.Url,
+						AuthMethod = metadata.AuthMethod,
+						Username = metadata.Username,
+						SavedAt = metadata.SavedAt
+					});
+				}
+				return;
+			}
+
+			if (ParameterSetName == PARAMSET_CLEARALL)
+			{
+				base.ProcessRecord();
+				var store = new ConnectionStore();
+				store.ClearAllConnections();
+				WriteObject("All saved connections and cached tokens have been cleared.");
+				return;
+			}
+
+			if (ParameterSetName == PARAMSET_DELETENAMED)
+			{
+				base.ProcessRecord();
+				var store = new ConnectionStore();
+				if (store.DeleteConnection(Name))
+				{
+					WriteObject($"Connection '{Name}' deleted successfully.");
+				}
+				else
+				{
+					ThrowTerminatingError(new ErrorRecord(
+						new InvalidOperationException($"Connection '{Name}' not found."),
+						"ConnectionNotFound",
+						ErrorCategory.ObjectNotFound,
+						Name));
+				}
+				return;
+			}
+
+			if (ParameterSetName == PARAMSET_LOADNAMED)
+			{
+				base.ProcessRecord();
+				var store = new ConnectionStore();
+				var metadata = store.LoadConnection(Name);
+				if (metadata == null)
+				{
+					ThrowTerminatingError(new ErrorRecord(
+						new InvalidOperationException($"Connection '{Name}' not found."),
+						"ConnectionNotFound",
+						ErrorCategory.ObjectNotFound,
+						Name));
+					return;
+				}
+
+				// Restore connection parameters from metadata
+				Url = new Uri(metadata.Url);
+				ClientId = string.IsNullOrEmpty(metadata.ClientId) ? ClientId : new Guid(metadata.ClientId);
+				Username = metadata.Username;
+				ManagedIdentityClientId = metadata.ManagedIdentityClientId;
+
+				// Restore saved credentials if available
+				if (!string.IsNullOrEmpty(metadata.Password))
+				{
+					Password = metadata.Password;
+					WriteVerbose("Restored saved password");
+				}
+				if (!string.IsNullOrEmpty(metadata.ClientSecret))
+				{
+					ClientSecret = metadata.ClientSecret;
+					WriteVerbose("Restored saved client secret");
+				}
+				if (!string.IsNullOrEmpty(metadata.CertificatePath))
+				{
+					CertificatePath = metadata.CertificatePath;
+					CertificatePassword = metadata.CertificatePassword;
+					WriteVerbose("Restored saved certificate path and password");
+				}
+				if (!string.IsNullOrEmpty(metadata.CertificateThumbprint))
+				{
+					CertificateThumbprint = metadata.CertificateThumbprint;
+					if (!string.IsNullOrEmpty(metadata.CertificateStoreLocation))
+					{
+						CertificateStoreLocation = (StoreLocation)Enum.Parse(typeof(StoreLocation), metadata.CertificateStoreLocation);
+					}
+					if (!string.IsNullOrEmpty(metadata.CertificateStoreName))
+					{
+						CertificateStoreName = (StoreName)Enum.Parse(typeof(StoreName), metadata.CertificateStoreName);
+					}
+					WriteVerbose("Restored certificate thumbprint and store location");
+				}
+
+				// Set the appropriate parameter set name based on the auth method
+				// and continue with authentication - the MSAL cache will be used
+				WriteVerbose($"Loading connection '{Name}' using {metadata.AuthMethod} authentication");
 			}
 
 			try
@@ -313,11 +462,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						break;
 
 					case PARAMSET_INTERACTIVE:
+					case PARAMSET_LOADNAMED:
 						{
 							var publicClient = PublicClientApplicationBuilder
 								.Create(ClientId.ToString())
 								.WithRedirectUri("http://localhost")
 								.Build();
+
+							// Register MSAL cache if saving or loading a named connection
+							if (!string.IsNullOrEmpty(Name))
+							{
+								var store = new ConnectionStore();
+								store.RegisterCache(publicClient);
+							}
 
 							// If URL is not provided, discover and select environment
 							if (Url == null)
@@ -327,6 +484,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							}
 
 							result = new ServiceClient(Url, url => GetTokenInteractive(publicClient, url));
+
+							// Save connection metadata if a name was provided
+							if (!string.IsNullOrEmpty(Name) && ParameterSetName != PARAMSET_LOADNAMED)
+							{
+								var store = new ConnectionStore();
+								store.SaveConnection(Name, new ConnectionMetadata
+								{
+									Url = Url.ToString(),
+									AuthMethod = "Interactive",
+									ClientId = ClientId.ToString(),
+									Username = Username,
+									SavedAt = DateTime.UtcNow
+								});
+								WriteVerbose($"Connection saved as '{Name}'");
+							}
 
 							break;
 						}
@@ -339,6 +511,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								.WithAuthority(AadAuthorityAudience.AzureAdMultipleOrgs)
 								.Build();
 
+							// Register MSAL cache if saving a named connection
+							if (!string.IsNullOrEmpty(Name))
+							{
+								var store = new ConnectionStore();
+								store.RegisterCache(publicClient);
+							}
+
 							// If URL is not provided, discover and select environment
 							if (Url == null)
 							{
@@ -347,6 +526,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							}
 
 							result = new ServiceClient(Url, url => GetTokenWithUsernamePassword(publicClient, url));
+
+							// Save connection metadata if a name was provided
+							if (!string.IsNullOrEmpty(Name))
+							{
+								var store = new ConnectionStore();
+								var metadata = new ConnectionMetadata
+								{
+									Url = Url.ToString(),
+									AuthMethod = "UsernamePassword",
+									ClientId = ClientId.ToString(),
+									Username = Username,
+									SavedAt = DateTime.UtcNow
+								};
+
+								// Save password if SaveCredentials is specified (NOT RECOMMENDED)
+								if (SaveCredentials)
+								{
+									metadata.Password = Password;
+									WriteWarning("SECURITY WARNING: Password has been saved (encrypted). This is NOT RECOMMENDED for production use.");
+								}
+								else
+								{
+									WriteVerbose("Password is not saved. You will need to provide it again when loading this connection.");
+								}
+
+								store.SaveConnection(Name, metadata);
+								WriteVerbose($"Connection saved as '{Name}'");
+							}
 
 							break;
 						}
@@ -358,6 +565,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								.WithRedirectUri("http://localhost")
 								.Build();
 
+							// Register MSAL cache if saving a named connection
+							if (!string.IsNullOrEmpty(Name))
+							{
+								var store = new ConnectionStore();
+								store.RegisterCache(publicClient);
+							}
+
 							// If URL is not provided, discover and select environment
 							if (Url == null)
 							{
@@ -366,6 +580,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							}
 
 							result = new ServiceClient(Url, url => GetTokenWithDeviceCode(publicClient, url));
+
+							// Save connection metadata if a name was provided
+							if (!string.IsNullOrEmpty(Name))
+							{
+								var store = new ConnectionStore();
+								store.SaveConnection(Name, new ConnectionMetadata
+								{
+									Url = Url.ToString(),
+									AuthMethod = "DeviceCode",
+									ClientId = ClientId.ToString(),
+									Username = Username,
+									SavedAt = DateTime.UtcNow
+								});
+								WriteVerbose($"Connection saved as '{Name}'");
+							}
 
 							break;
 						}
@@ -381,7 +610,41 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							.WithAuthority(authority)
 							.Build();
 
+							// Register MSAL cache if saving a named connection
+							if (!string.IsNullOrEmpty(Name))
+							{
+								var store = new ConnectionStore();
+								store.RegisterCache(confApp);
+							}
+
 							result = new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url));
+
+							// Save connection metadata if a name was provided
+							if (!string.IsNullOrEmpty(Name))
+							{
+								var store = new ConnectionStore();
+								var metadata = new ConnectionMetadata
+								{
+									Url = Url.ToString(),
+									AuthMethod = "ClientSecret",
+									ClientId = ClientId.ToString(),
+									SavedAt = DateTime.UtcNow
+								};
+
+								// Save client secret if SaveCredentials is specified (NOT RECOMMENDED)
+								if (SaveCredentials)
+								{
+									metadata.ClientSecret = ClientSecret;
+									WriteWarning("SECURITY WARNING: Client secret has been saved (encrypted). This is NOT RECOMMENDED for production use.");
+								}
+								else
+								{
+									WriteVerbose("Client secret is not saved. You will need to provide it again when loading this connection.");
+								}
+
+								store.SaveConnection(Name, metadata);
+								WriteVerbose($"Connection saved as '{Name}'");
+							}
 
 							break;
 						}
@@ -399,7 +662,49 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							.WithAuthority(authority)
 							.Build();
 
+							// Register MSAL cache if saving a named connection
+							if (!string.IsNullOrEmpty(Name))
+							{
+								var store = new ConnectionStore();
+								store.RegisterCache(confApp);
+							}
+
 							result = new ServiceClient(Url, url => GetTokenWithClientCertificate(confApp, url));
+
+							// Save connection metadata if a name was provided
+							if (!string.IsNullOrEmpty(Name))
+							{
+								var store = new ConnectionStore();
+								var metadata = new ConnectionMetadata
+								{
+									Url = Url.ToString(),
+									AuthMethod = "ClientCertificate",
+									ClientId = ClientId.ToString(),
+									SavedAt = DateTime.UtcNow
+								};
+
+								// Save certificate details if SaveCredentials is specified (NOT RECOMMENDED)
+								if (SaveCredentials)
+								{
+									metadata.CertificatePath = CertificatePath;
+									metadata.CertificatePassword = CertificatePassword;
+									metadata.CertificateThumbprint = CertificateThumbprint;
+									metadata.CertificateStoreLocation = CertificateStoreLocation.ToString();
+									metadata.CertificateStoreName = CertificateStoreName.ToString();
+									WriteWarning("SECURITY WARNING: Certificate details (including password) have been saved (encrypted). This is NOT RECOMMENDED for production use.");
+								}
+								else
+								{
+									// Still save thumbprint and store location as they are not secrets
+									metadata.CertificateThumbprint = CertificateThumbprint;
+									metadata.CertificateStoreLocation = CertificateStoreLocation.ToString();
+									metadata.CertificateStoreName = CertificateStoreName.ToString();
+									WriteVerbose("Certificate path and password are not saved. You will need to provide the certificate again when loading this connection.");
+								}
+
+								store.SaveConnection(Name, metadata);
+								WriteVerbose($"Connection saved as '{Name}'");
+							}
 
 							break;
 						}
@@ -421,6 +726,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							}
 							
 							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
+
+							// Save connection metadata if a name was provided
+							if (!string.IsNullOrEmpty(Name))
+							{
+								var store = new ConnectionStore();
+								store.SaveConnection(Name, new ConnectionMetadata
+								{
+									Url = Url.ToString(),
+									AuthMethod = "DefaultAzureCredential",
+									ClientId = ClientId.ToString(),
+									SavedAt = DateTime.UtcNow
+								});
+								WriteVerbose($"Connection saved as '{Name}'");
+							}
 
 							break;
 						}
@@ -450,6 +769,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							}
 							
 							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
+
+							// Save connection metadata if a name was provided
+							if (!string.IsNullOrEmpty(Name))
+							{
+								var store = new ConnectionStore();
+								store.SaveConnection(Name, new ConnectionMetadata
+								{
+									Url = Url.ToString(),
+									AuthMethod = "ManagedIdentity",
+									ClientId = ClientId.ToString(),
+									ManagedIdentityClientId = ManagedIdentityClientId,
+									SavedAt = DateTime.UtcNow
+								});
+								WriteVerbose($"Connection saved as '{Name}'");
+							}
 
 							break;
 						}

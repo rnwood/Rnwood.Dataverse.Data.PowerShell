@@ -22,41 +22,79 @@ Get-DataverseConnection [-GetDefault] [-SetAsDefault] [-Timeout <UInt32>] [-Prog
  [<CommonParameters>]
 ```
 
-### Return a mock connection
+### Authenticate with username and password
 ```
-Get-DataverseConnection [-SetAsDefault] -Mock <EntityMetadata[]> [-RequestInterceptor <ScriptBlock>] -Url <Uri>
- [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>]
+ -Username <String> -Password <String> [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ### Authenticate with client secret
 ```
-Get-DataverseConnection [-SetAsDefault] -ClientId <Guid> -Url <Uri> -ClientSecret <String> [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> -Url <Uri>
+ -ClientSecret <String> [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with client certificate
 ```
-Get-DataverseConnection [-SetAsDefault] -ClientId <Guid> -Url <Uri> -CertificatePath <String>
- [-CertificatePassword <String>] [-CertificateThumbprint <String>] [-CertificateStoreLocation <StoreLocation>]
- [-CertificateStoreName <StoreName>] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> -Url <Uri>
+ -CertificatePath <String> [-CertificatePassword <String>] [-CertificateThumbprint <String>]
+ [-CertificateStoreLocation <StoreLocation>] [-CertificateStoreName <StoreName>] [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate interactively
 ```
-Get-DataverseConnection [-SetAsDefault] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>] [-Interactive]
- [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>]
+ [-Interactive] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate using the device code flow
 ```
-Get-DataverseConnection [-SetAsDefault] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>] [-DeviceCode]
+Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>]
+ [-DeviceCode] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### Authenticate with DefaultAzureCredential
+```
+Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-Url <Uri>] [-DefaultAzureCredential]
  [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
-### Authenticate with username and password
+### Authenticate with ManagedIdentityCredential
 ```
-Get-DataverseConnection [-SetAsDefault] [-ClientId <Guid>] [-Url <Uri>] -Username <String> -Password <String>
+Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-Url <Uri>] [-ManagedIdentity]
+ [-ManagedIdentityClientId <String>] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
+```
+
+### Load a saved named connection
+```
+Get-DataverseConnection [-SetAsDefault] -Name <String> [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
+```
+
+### Delete a saved named connection
+```
+Get-DataverseConnection [-SetAsDefault] -Name <String> [-DeleteConnection] [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### Clear all saved connections
+```
+Get-DataverseConnection [-SetAsDefault] [-ClearAllConnections] [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### List saved named connections
+```
+Get-DataverseConnection [-SetAsDefault] [-ListConnections] [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### Return a mock connection
+```
+Get-DataverseConnection [-SetAsDefault] -Mock <EntityMetadata[]> [-RequestInterceptor <ScriptBlock>] -Url <Uri>
  [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -64,18 +102,6 @@ Get-DataverseConnection [-SetAsDefault] [-ClientId <Guid>] [-Url <Uri>] -Usernam
 ```
 Get-DataverseConnection [-SetAsDefault] -Url <Uri> -ConnectionString <String> [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
-### Authenticate with DefaultAzureCredential
-```
-Get-DataverseConnection [-SetAsDefault] [-Url <Uri>] [-DefaultAzureCredential] [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
-### Authenticate with ManagedIdentityCredential
-```
-Get-DataverseConnection [-SetAsDefault] [-Url <Uri>] [-ManagedIdentity] [-ManagedIdentityClientId <String>]
- [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with access token script block
@@ -182,6 +208,69 @@ PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Clie
 
 Gets a connection to MYORG using client certificate authentication with an unencrypted certificate file (no password required).
 
+### Example 12: Save a named connection
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Interactive -Name "MyOrgProd"
+```
+
+Connects to MYORG using interactive authentication and saves the connection with the name "MyOrgProd". The authentication tokens will be cached securely, and connection metadata will be saved for later use.
+
+### Example 13: Load a saved named connection
+```powershell
+PS C:\> $c = Get-DataverseConnection -Name "MyOrgProd"
+```
+
+Loads the previously saved connection named "MyOrgProd". The cmdlet will use the cached authentication tokens, avoiding the need to authenticate again unless the tokens have expired.
+
+### Example 14: List all saved connections
+```powershell
+PS C:\> Get-DataverseConnection -ListConnections
+```
+
+Lists all saved named connections, showing their names, URLs, authentication methods, usernames, and when they were last saved.
+
+### Example 15: Delete a saved connection
+```powershell
+PS C:\> Get-DataverseConnection -DeleteConnection -Name "MyOrgProd"
+```
+
+Deletes the saved connection named "MyOrgProd", removing both the connection metadata and cached authentication tokens.
+
+### Example 16: Save connection with client secret
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ClientId "3004eb1e-7a00-45e0-a1dc-6703735eac18" -ClientSecret "itsasecret" -Name "MyOrgService"
+```
+
+Connects using client secret authentication and saves the connection as "MyOrgService". Note: The client secret itself is NOT saved for security reasons. When loading this connection later, you will need to provide the client secret again.
+
+### Example 17: Save connection with credentials encrypted (NOT RECOMMENDED)
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ClientId "3004eb1e-7a00-45e0-a1dc-6703735eac18" -ClientSecret "itsasecret" -Name "MyOrgService" -SaveCredentials
+```
+
+Saves the connection with the client secret included (encrypted). WARNING: This stores the secret encrypted on disk and is NOT RECOMMENDED for production use. Only use for testing or non-production scenarios. On Windows, uses DPAPI (Data Protection API); on Linux/macOS, uses AES encryption with machine-specific key.
+
+### Example 18: Save certificate connection with credentials encrypted (NOT RECOMMENDED)
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ClientId "12345678-1234-1234-1234-123456789abc" -CertificatePath "C:\certs\mycert.pfx" -CertificatePassword "P@ssw0rd" -Name "MyCertConn" -SaveCredentials
+```
+
+Saves the connection with certificate path and password included (encrypted). WARNING: This stores the password encrypted on disk and is NOT RECOMMENDED for production use. Only use for testing or non-production scenarios.
+
+### Example 19: Save username/password connection with credentials encrypted (NOT RECOMMENDED)
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Username "user@domain.com"****** -Name "MyUserConn" -SaveCredentials
+```
+
+Saves the connection with the password included (encrypted). WARNING: This stores the password encrypted on disk and is NOT RECOMMENDED for production use. Only use for testing or non-production scenarios.
+
+### Example 20: Clear all saved connections
+```powershell
+PS C:\> Get-DataverseConnection -ClearAllConnections
+```
+
+Clears all saved named connections and cached authentication tokens. This removes all connection metadata and MSAL token cache files.
+
 ## PARAMETERS
 
 ### -AccessToken
@@ -276,12 +365,12 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ClientId
-Client ID to use for authentication. By default the MS provided ID for PAC CLI (`9cee029c-6210-4654-90bb-17e6e9d36617`) is used to make it easy to get started.
+### -ClearAllConnections
+Clears all saved named connections and cached tokens.
 
 ```yaml
-Type: Guid
-Parameter Sets: Authenticate with client secret, Authenticate with client certificate
+Type: SwitchParameter
+Parameter Sets: Clear all saved connections
 Aliases:
 
 Required: True
@@ -291,12 +380,27 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ClientId
+Client ID to use for authentication. By default the MS provided ID for PAC CLI (`9cee029c-6210-4654-90bb-17e6e9d36617`) is used to make it easy to get started.
+
 ```yaml
 Type: Guid
-Parameter Sets: Authenticate interactively, Authenticate using the device code flow, Authenticate with username and password
+Parameter Sets: Authenticate with username and password, Authenticate interactively, Authenticate using the device code flow
 Aliases:
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: Guid
+Parameter Sets: Authenticate with client secret, Authenticate with client certificate
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -339,6 +443,21 @@ Use DefaultAzureCredential for authentication. This will try multiple authentica
 ```yaml
 Type: SwitchParameter
 Parameter Sets: Authenticate with DefaultAzureCredential
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DeleteConnection
+Deletes a saved named connection. Use with -Name to specify which connection to delete.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Delete a saved named connection
 Aliases:
 
 Required: True
@@ -393,6 +512,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ListConnections
+Lists all saved named connections.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: List saved named connections
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ManagedIdentity
 Use ManagedIdentityCredential for authentication. Authenticates using the managed identity assigned to the Azure resource.
 
@@ -438,6 +572,33 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Name
+Name to save this connection under for later retrieval. Allows you to persist and reuse connections.
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with username and password, Authenticate with client secret, Authenticate with client certificate, Authenticate interactively, Authenticate using the device code flow, Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: Load a saved named connection, Delete a saved named connection
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Password
 Password to authenticate with.
 
@@ -459,6 +620,21 @@ ScriptBlock to intercept and modify requests. The ScriptBlock receives the Organ
 ```yaml
 Type: ScriptBlock
 Parameter Sets: Return a mock connection
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SaveCredentials
+WARNING: Saves the client secret with the connection. This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Authenticate with username and password, Authenticate with client secret, Authenticate with client certificate
 Aliases:
 
 Required: False
@@ -503,10 +679,10 @@ URL of the Dataverse environment to connect to. For example https://myorg.crm11.
 
 ```yaml
 Type: Uri
-Parameter Sets: Return a mock connection, Authenticate with client secret, Authenticate with client certificate, Authenticate with Dataverse SDK connection string., Authenticate with access token script block
+Parameter Sets: Authenticate with username and password, Authenticate interactively, Authenticate using the device code flow, Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -515,10 +691,10 @@ Accept wildcard characters: False
 
 ```yaml
 Type: Uri
-Parameter Sets: Authenticate interactively, Authenticate using the device code flow, Authenticate with username and password, Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
+Parameter Sets: Authenticate with client secret, Authenticate with client certificate, Return a mock connection, Authenticate with Dataverse SDK connection string., Authenticate with access token script block
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -530,10 +706,10 @@ Username to authenticate with.
 
 ```yaml
 Type: String
-Parameter Sets: Authenticate interactively, Authenticate using the device code flow
+Parameter Sets: Authenticate with username and password
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -542,10 +718,10 @@ Accept wildcard characters: False
 
 ```yaml
 Type: String
-Parameter Sets: Authenticate with username and password
+Parameter Sets: Authenticate interactively, Authenticate using the device code flow
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
