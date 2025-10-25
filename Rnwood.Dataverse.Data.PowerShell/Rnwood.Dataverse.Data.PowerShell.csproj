@@ -37,6 +37,9 @@
     <None Update="updatehelp.ps1">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+    <None Update="ValidateVersion.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
