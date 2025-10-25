@@ -15,7 +15,11 @@ namespace Rnwood.Dataverse.Data.PowerShell
 		/// </summary>
         public Version Version { get; set; }
 		/// <summary>
-		/// Gets or sets the name of the solution.
+		/// Gets or sets the unique name of the solution.
+		/// </summary>
+        public string UniqueName { get; set; }
+		/// <summary>
+		/// Gets or sets the friendly name of the solution.
 		/// </summary>
         public string Name { get; set; }
 		/// <summary>
@@ -30,5 +34,17 @@ namespace Rnwood.Dataverse.Data.PowerShell
 		/// Gets or sets the unique identifier of the solution.
 		/// </summary>
         public Guid Id { get; set; }
+		/// <summary>
+		/// Gets or sets the publisher name.
+		/// </summary>
+        public string PublisherName { get; set; }
+		/// <summary>
+		/// Gets or sets the publisher unique name.
+		/// </summary>
+        public string PublisherUniqueName { get; set; }
+		/// <summary>
+		/// Gets or sets the publisher customization prefix.
+		/// </summary>
+        public string PublisherPrefix { get; set; }
     }
 }
