@@ -59,8 +59,13 @@ Non features:
   - [Retry Logic](#retry-logic)
   - [Parallelising work for best performance](#parallelising-work-for-best-performance)
   - [Solution Management](#solution-management)
+    - [Parsing solution files](#parsing-solution-files)
     - [Exporting solutions](#exporting-solutions)
+    - [Listing solutions](#listing-solutions)
+    - [Creating and updating solutions](#creating-and-updating-solutions)
+    - [Publishing customizations](#publishing-customizations)
     - [Importing solutions](#importing-solutions)
+    - [Uninstalling/removing solutions](#uninstallingremoving-solutions)
 - [Specialized Invoke-Dataverse* Cmdlets](#specialized-invoke-dataverse-cmdlets)
   - [How to Find and Use Specialized Cmdlets](#how-to-find-and-use-specialized-cmdlets)
   - [Usage Pattern](#usage-pattern)
@@ -1234,12 +1239,91 @@ To stop on first error instead, use `-BatchSize 1` with `-ErrorAction Stop`.
 
 
 
+Example: Retry failed operations up to 3 times with 15s initial delay:
+```powershell
+$records | Set-DataverseRecord -Connection $c -TableName contact -Retries 3 -InitialRetryDelay 15 -Verbose
+```
+
+**Drawbacks and Considerations:**
+
+While retry logic improves resilience, it may not be appropriate for all operations:
+
+- **Operations with side effects**: Some operations cannot be safely retried if they have already partially succeeded. For example, creating records might result in duplicates if the initial request succeeded but the response was lost.
+- **Idempotent operations**: Retries are safest with idempotent operations (those that can be repeated without changing the result). Reading data (`Get-DataverseRecord`) and updating existing records are typically safe to retry.
+- **Default behavior for Set-DataverseRecord**: The default mode performs existence checks before operations, making updates and upserts generally safe to retry. However, create-only operations (`-CreateOnly`) should be used cautiously with retries as they may create duplicate records on failure.
+
+For operations that cannot be safely retried, consider using smaller batch sizes (`-BatchSize 1`) or handling errors explicitly rather than relying on automatic retries.
+
+### Parallelising work for best performance
+
+When processing many records you can use parallelism to reduce elapsed time. Use parallelism when network latency or per-request processing dominates total time, but be careful to avoid overwhelming the Dataverse service (throttling).
+
+**For single-step operations (create/update/delete):** Use the built-in `-MaxDegreeOfParallelism` parameter on `Set-DataverseRecord` and `Remove-DataverseRecord`. This provides a simple way to parallelize single operations without additional complexity.
+
+Example with `Set-DataverseRecord`:
+
+```powershell
+# Create records in parallel using 4 workers with batches of 100
+$records = 1..10000 | ForEach-Object { @{ firstname = "User$_"; lastname = "Parallel" } }
+$records | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -MaxDegreeOfParallelism 4 -BatchSize 100 -Verbose
+```
+
+Example with `Remove-DataverseRecord`:
+
+```powershell
+# Delete records in parallel using 4 workers
+$records = Get-DataverseRecord -Connection $c -TableName contact -Filter @{ status = 'inactive' }
+$records | Remove-DataverseRecord -Connection $c -MaxDegreeOfParallelism 4 -Verbose
+```
+
+**For multi-step workflows or complex operations:** Use [`Invoke-DataverseParallel`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseParallel.md) when you need to perform multiple operations on each record or execute custom PowerShell logic in parallel. This cmdlet handles connection cloning, chunking, and parallel execution for you. It works on both PowerShell 5.1 and PowerShell 7+.
+
+Example with `Invoke-DataverseParallel`:
+
+```powershell
+$connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET -TenantId $env:TENANT_ID
+
+# Get records and update them in parallel
+Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
+  Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
+    $_ |
+       ForEach-Object{ $_.emailaddress1 = "updated-$($_.contactid)@example.com"; $_ } |
+       Set-DataverseRecord -TableName contact -UpdateAllColumns
+  }
+```
+
+Please read the full cmdlet documentation for more recommendations.
 
 
 
 ### Solution Management
 
-You can manage Dataverse solutions from this module. Prefer the high-level `Export-DataverseSolution` and `Import-DataverseSolution` cmdlets for common operations. For advanced control use the `Invoke-` variants (`Invoke-DataverseExportSolution`, `Invoke-DataverseExportSolutionAsync`, `Invoke-DataverseImportSolution`, `Invoke-DataverseImportSolutionAsync`) documented in the `docs/` folder.
+You can manage Dataverse solutions from this module. The module provides cmdlets for:
+- Exporting solutions (`Export-DataverseSolution`)
+- Importing solutions (`Import-DataverseSolution`)
+- Listing installed solutions (`Get-DataverseSolution`)
+- Parsing solution files (`Get-DataverseSolutionFile`)
+- Creating/updating solutions (`Set-DataverseSolution`)
+- Removing solutions (`Remove-DataverseSolution`)
+- Publishing customizations (`Publish-DataverseCustomizations`)
+
+For advanced control, use the `Invoke-` variants documented in the `docs/` folder.
+
+#### Parsing solution files
+
+- `Get-DataverseSolutionFile` parses a solution ZIP file and extracts metadata without requiring a Dataverse connection.
+- Useful for inspecting solution files before importing or for automation scripts.
+- See the full parameter reference: [Get-DataverseSolutionFile](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSolutionFile.md).
+
+Examples:
+
+```powershell
+# Parse a solution file and display metadata
+$info = Get-DataverseSolutionFile -Path "C:\Solutions\MySolution_1_0_0_0.zip"
+Write-Host "Solution: $($info.Name) v$($info.Version)"
+Write-Host "Publisher: $($info.PublisherName)"
+Write-Host "Managed: $($info.IsManaged)"
+```
 
 #### Exporting solutions
 
@@ -1254,6 +1338,63 @@ Export-DataverseSolution -Connection $c -SolutionName "MySolution" -OutFile "C:\
 # Export managed solution and capture bytes
 $b = Export-DataverseSolution -Connection $c -SolutionName "MySolution" -Managed -PassThru
 [System.IO.File]::WriteAllBytes("C:\Exports\MySolution_managed.zip", $b)
+```
+
+#### Listing solutions
+
+- `Get-DataverseSolution` retrieves information about installed solutions in a Dataverse environment.
+- Supports filtering by name, managed status, and excluding system solutions.
+- See the full parameter reference: [Get-DataverseSolution](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSolution.md).
+
+Examples:
+
+```powershell
+# List all solutions
+Get-DataverseSolution -Connection $c
+
+# List managed solutions only
+Get-DataverseSolution -Connection $c -Managed
+
+# List unmanaged solutions only
+Get-DataverseSolution -Connection $c -Unmanaged
+
+# Get details for a specific solution
+Get-DataverseSolution -Connection $c -UniqueName "MySolution"
+```
+
+#### Creating and updating solutions
+
+- `Set-DataverseSolution` creates a new solution if it doesn't exist, or updates an existing solution.
+- Supports updating friendly name, description, version (unmanaged only), and publisher.
+- See the full parameter reference: [Set-DataverseSolution](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSolution.md).
+
+Examples:
+
+```powershell
+# Create a new solution
+Set-DataverseSolution -Connection $c -UniqueName "MySolution" `
+    -Name "My Solution" -Description "My custom solution" `
+    -Version "1.0.0.0" -PublisherUniqueName "mycompany"
+
+# Update solution properties
+Set-DataverseSolution -Connection $c -UniqueName "MySolution" `
+    -Description "Updated description" -Version "1.1.0.0"
+```
+
+#### Publishing customizations
+
+- `Publish-DataverseCustomizations` publishes customizations to make them available to users.
+- Can publish all customizations or specific entity customizations.
+- See the full parameter reference: [Publish-DataverseCustomizations](Rnwood.Dataverse.Data.PowerShell/docs/Publish-DataverseCustomizations.md).
+
+Examples:
+
+```powershell
+# Publish all customizations
+Publish-DataverseCustomizations -Connection $c
+
+# Publish customizations for a specific entity
+Publish-DataverseCustomizations -Connection $c -EntityName "contact"
 ```
 
 #### Importing solutions
@@ -1286,16 +1427,27 @@ Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -M
 Import-DataverseSolution -Connection $c -SolutionBytes $bytes
 ```
 
+#### Uninstalling/removing solutions
 
+- `Remove-DataverseSolution` removes (uninstalls) a solution from a Dataverse environment using the asynchronous uninstall process. The operation is asynchronous and the cmdlet monitors the uninstall progress.
+- When removing a solution:
+  - All customizations contained in the solution are removed (for managed solutions)
+  - Unmanaged solutions only remove the solution container, not the customizations
+  - Dependencies must be resolved before removal (e.g., remove dependent solutions first)
+- The cmdlet monitors the uninstall operation and reports progress
+- See the full parameter reference: [Remove-DataverseSolution](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseSolution.md).
 
 Examples:
 
 ```powershell
-# Import and overwrite unmanaged customisations, then publish included workflows
-Invoke-DataverseImportSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -OverwriteUnmanagedCustomizations -PublishWorkflows
+# Remove a solution
+Remove-DataverseSolution -Connection $c -UniqueName "MySolution"
 
-# Import as a holding solution for staged upgrade (unless the solution is not already present, when it will just be imported)
-Invoke-DataverseImportSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -HoldingSolution $true
+# Remove with confirmation
+Remove-DataverseSolution -Connection $c -UniqueName "MySolution" -Confirm
+
+# Remove with custom timeout for large solutions
+Remove-DataverseSolution -Connection $c -UniqueName "LargeSolution" -TimeoutSeconds 1200 -PollingIntervalSeconds 10
 ```
 
 ##### Handling Connection References and Environment Variables
@@ -1332,5 +1484,8 @@ Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" `
 **Notes:**
 - Connection reference values must be valid connection IDs from the target environment which the user importing the solution has access to.
 - Environment variable values are strings that will be set during import.
+
+
+
 
 

@@ -5,17 +5,31 @@ using System.Text;
 
 namespace Rnwood.Dataverse.Data.PowerShell
 {
-	/// <summary>
-	/// Contains information about a Dataverse solution.
-	/// </summary>
-    public class SolutionInfo
+	public class SolutionInfo : SolutionInfoBase
+	{
+        public Guid? Id { get; set; }
+    }
+
+	public class SolutionFileInfo : SolutionInfoBase
+	{
+
+	}
+
+    /// <summary>
+    /// Contains information about a Dataverse solution.
+    /// </summary>
+    public class SolutionInfoBase
     {
 		/// <summary>
 		/// Gets or sets the version of the solution.
 		/// </summary>
         public Version Version { get; set; }
 		/// <summary>
-		/// Gets or sets the name of the solution.
+		/// Gets or sets the unique name of the solution.
+		/// </summary>
+        public string UniqueName { get; set; }
+		/// <summary>
+		/// Gets or sets the friendly name of the solution.
 		/// </summary>
         public string Name { get; set; }
 		/// <summary>
@@ -29,6 +43,18 @@ namespace Rnwood.Dataverse.Data.PowerShell
 		/// <summary>
 		/// Gets or sets the unique identifier of the solution.
 		/// </summary>
-        public Guid Id { get; set; }
+
+		/// <summary>
+		/// Gets or sets the publisher name.
+		/// </summary>
+        public string PublisherName { get; set; }
+		/// <summary>
+		/// Gets or sets the publisher unique name.
+		/// </summary>
+        public string PublisherUniqueName { get; set; }
+		/// <summary>
+		/// Gets or sets the publisher customization prefix.
+		/// </summary>
+        public string PublisherPrefix { get; set; }
     }
 }
