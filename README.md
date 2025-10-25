@@ -194,6 +194,21 @@ $c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive
 $c = Get-DataverseConnection -interactive
 ```
 
+##### PAC CLI Profile
+Power Platform CLI (PAC) authentication profile (leverages existing PAC CLI authentication).
+
+*Example: Using the current PAC CLI profile:*
+```powershell
+Get-DataverseConnection -FromPac -SetAsDefault
+```
+
+*Example: Using a specific PAC CLI profile by name or index:*
+```powershell
+$c = Get-DataverseConnection -FromPac -Profile "MyDevProfile"
+# or by index
+$c = Get-DataverseConnection -FromPac -Profile "0"
+```
+
 ##### Device Code
 Authentication via device code flow (good for remote/headless scenarios).
 
@@ -203,7 +218,7 @@ $c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -devicecode
 ```
 
 ##### Username/Password
-Basic credential authentication.
+Basic credential authentication (not recommended)
 
 *Example: Using username and password authentication:*
 ```powershell
@@ -1179,7 +1194,7 @@ Examples:
 Remove-DataverseRecord -Connection $c -TableName contact -Id '00000000-0000-0000-0000-000000000000' -IfExists
 ```
 
-### SQL alternative — Delete
+##### SQL alternative — Delete
 
 You can perform deletes using [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) (DELETE statements). For large deletes consider `-UseBulkDelete`. DML via SQL honours `ShouldProcess` so `-WhatIf`/`-Confirm` are supported. Example:
 
@@ -1213,75 +1228,16 @@ The `Exception.Message` contains full server response including ErrorCode, Messa
 
 To stop on first error instead, use `-BatchSize 1` with `-ErrorAction Stop`.
 
-See full documentation: [Set-DataverseRecord Error Handling](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md#example-12-handle-errors-in-batch-operations) | [Remove-DataverseRecord Error Handling](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md#example-3-handle-errors-in-batch-delete-operations)
 
-### Getting IDs of Created Records
 
-Use the `-PassThru` parameter to get the IDs of newly created records, which is useful for linking records or tracking what was created.
 
-*Example: Capture IDs of created records:*
-```powershell
-$contacts = @(
-    @{ firstname = "John"; lastname = "Doe" }
-    @{ firstname = "Jane"; lastname = "Smith" }
-)
 
-$created = $contacts | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -PassThru
 
-foreach ($record in $created) {
-    Write-Host "Created: $($record.firstname) $($record.lastname) with ID: $($record.Id)"
-}
-```
 
-*Example: Link records using PassThru:*
-```powershell
-# Create parent and capture its ID
-$account = @{ name = "Contoso Ltd" } | 
-    Set-DataverseRecord -Connection $c -TableName account -CreateOnly -PassThru
 
-# Create child linked to parent
-$contact = @{ 
-    firstname = "John"
-    lastname = "Doe"
-    parentcustomerid = $account.Id
-} | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -PassThru
-```
 
-See full documentation: [Set-DataverseRecord PassThru Examples](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md#example-15-get-ids-of-created-records-using-passthru)
 
-### Batch Operations
 
-By default, [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) and [`Remove-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) automatically batch operations when processing multiple records (default batch size is 100). This improves performance by reducing round trips to the server.
-
-**Batched Retrieval:** [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) also batches retrieval of existing records when checking for changes. By default, it retrieves up to 500 records in a single query instead of querying each record individually. Use `-RetrievalBatchSize` to control this behavior (set to 1 to disable) or use `-CreateOnly`/`-UpdateAllColumns` to skip retrieval entirely.
-
-Key behaviors:
-
-- Batching uses `ExecuteMultipleRequest` with `ContinueOnError = true` - all records are attempted even if some fail
-- Errors include the original input object as `TargetObject` for correlation
-- Use `-BatchSize 1` to disable batching and stop on first error
-- Use `-BatchSize <number>` to control batch size for performance tuning
-
-When multiple records are passed through the pipeline or provided in a single invocation, this cmdlet automatically uses `ExecuteMultipleRequest` to batch operations for improved performance. 
-
-Key Batch Behavior:
-- Default batch size is 100 records per request (configurable via `-BatchSize` parameter)
-- Set `-BatchSize 1` to disable batching and send one request at a time
-- Batching continues on error - all operations are attempted and errors are reported at the end
-- Each error includes the input record for correlation
-- For best performance with `-CallerId`, sort records by caller ID since a new batch is needed when the caller changes
-
-### Retry Logic
-
-The module includes retry logic to handle transient failures such as network issues, throttling, or temporary service unavailability. This is particularly useful for long-running operations or when processing large datasets.
-Note that the Dataverse SDK used internally has automatic request level retries for transient network/server failures already. 
-
-Key Retry Features:
-- Configurable number of retry attempts (default is 0 - no retries)
-- Exponential backoff with configurable initial delay (default 5s, doubling each retry)
-- In Set-DataverseRecord and Remove-DataverseRecord - retries are applied per batch item, allowing the end to end process to be retried without retrying all the other potentially successful requests in the batch.
-- Works with all cmdlets that support batching (`Set-DataverseRecord`, `Remove-DataverseRecord`, etc.)
-- Verbose output shows retry attempts and delays
 
 Example: Retry failed operations up to 3 times with 15s initial delay:
 ```powershell
@@ -1338,11 +1294,7 @@ Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
 
 Please read the full cmdlet documentation for more recommendations.
 
-See also [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) which supports a DOP parameter.
 
-When to avoid parallelism:
-- Small numbers of records where the overhead of cloning connections outweighs gains
-- Operations that must be strictly ordered or transactional
 
 ### Solution Management
 
