@@ -3,7 +3,6 @@
 <!-- TOC -->
 <!-- /TOC -->
 
-### Error Handling
 
 When working with batch operations, errors don't stop processing - all records are attempted and errors are collected. You can correlate errors back to the specific input records that failed.
 
@@ -13,11 +12,9 @@ $records = @(
     @{ firstname = "John"; lastname = "Doe" }
     @{ firstname = "Jane"; lastname = "Smith" }
 )
-
 $errors = @()
 $records | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly `
     -ErrorVariable +errors -ErrorAction SilentlyContinue
-
 # Process errors - each error's TargetObject contains the input that failed
 foreach ($err in $errors) {
     Write-Host "Failed: $($err.TargetObject.firstname) $($err.TargetObject.lastname)"
@@ -28,12 +25,6 @@ foreach ($err in $errors) {
 The `Exception.Message` contains full server response including ErrorCode, Message, TraceText, and InnerFault details for troubleshooting.
 
 To stop on first error instead, use `-BatchSize 1` with `-ErrorAction Stop`.
-
-
-
-
-
-
 
 
 
@@ -83,7 +74,6 @@ Example with `Invoke-DataverseParallel`:
 
 ```powershell
 $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET -TenantId $env:TENANT_ID
-
 # Get records and update them in parallel
 Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
   Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
@@ -94,6 +84,5 @@ Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
 ```
 
 Please read the full cmdlet documentation for more recommendations.
-
 
 

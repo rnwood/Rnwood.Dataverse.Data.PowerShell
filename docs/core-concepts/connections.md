@@ -11,25 +11,17 @@ You can set a connection as the default, so you don't have to pass `-Connection`
 ```powershell
 # Set a connection as default
 Connect-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive -SetAsDefault
-
 # Now you can omit -Connection from all cmdlets
 Get-DataverseRecord -tablename contact
 Set-DataverseRecord -tablename contact @{firstname="John"; lastname="Doe"}
-
 # You can retrieve the current default connection
 $currentDefault = Get-DataverseConnection -GetDefault
 ```
-
 This is especially useful in interactive sessions and scripts where you're working with a single environment.
-
 ## Named Connections
-
 You can save connections with a name for easy reuse. Named connections persist authentication tokens securely using the platform's credential storage (Keychain on macOS, Credential Manager on Windows, libsecret on Linux) and save connection metadata for later retrieval.
-
 ### Saving a Named Connection
-
 Add the `-Name` parameter when connecting to save the connection:
-
 *Example: Save a connection for later use:*
 ```powershell
 # Interactive authentication - tokens are cached securely
@@ -37,19 +29,14 @@ Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive -Name
 
 # Device code authentication
 Get-DataverseConnection -url https://myorg.crm11.dynamics.com -devicecode -Name "MyOrgDev"
-
 # Username/password authentication
 Get-DataverseConnection -url https://myorg.crm11.dynamics.com -username "user@domain.com" -password "pass" -Name "MyOrgTest"
 ```
-
 **Security Note:** By default, client secrets, certificate passwords, and user passwords are NOT saved for security reasons. You'll need to provide them again when loading the connection.
-
 If you need to save credentials for testing or non-production scenarios, use the `-SaveCredentials` switch (NOT RECOMMENDED for production):
-
 ```powershell
 # Save username/password (NOT RECOMMENDED for production)
 Get-DataverseConnection -url https://myorg.crm11.dynamics.com -username "user@domain.com" -password "pass" -Name "MyOrgTest" -SaveCredentials
-
 # Save client secret (NOT RECOMMENDED for production)
 Get-DataverseConnection -url https://myorg.crm11.dynamics.com -clientid "..." -clientsecret "..." -Name "MyOrgTest" -SaveCredentials
 

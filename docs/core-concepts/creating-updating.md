@@ -3,7 +3,6 @@
 <!-- TOC -->
 <!-- /TOC -->
 
-### Creating and Updating Records
 
 Use [`Set-DataverseRecord`](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) to create new records or update existing ones. You can pass a single hashtable, a list of hashtables, or pipeline objects. Use `-PassThru` to return the created/updated records (including their Ids). The cmdlet expects each input object to expose properties whose names match the Dataverse logical names for the target table's columns — those properties are mapped to Dataverse attributes during conversion.
 
@@ -21,11 +20,8 @@ When converting your input object into a Dataverse Entity the cmdlet performs ty
 | Numeric types (Integer, Decimal, Double, BigInt, Boolean) | numeric or parseable string | Converted to appropriate CLR type; empty values set to null. |
 | PartyList | Collection of objects (activityparty rows) | Each item converted to an `activityparty` entity; input must be enumerable. |
 | Id property | GUID or parseable GUID string | Used to target updates when present. |
-
 Errors during conversion (for example ambiguous lookups, invalid option labels, malformed GUIDs or unparsable dates) raise a `FormatException` which the cmdlet surfaces as an error record that includes the original input object for easy correlation.
-
 Guidance to avoid unexpected conversions:
-
 - Prefer GUIDs for lookups when possible.
 - Use `-LookupColumns` to control lookup resolution when names are not unique or you need to match on an alternate column (for example an external id).
 - Use `-IgnoreProperties` to skip undesired properties on the input object.
@@ -45,7 +41,6 @@ Write-Host "Created account with Id: $($created.Id)"
 
 # Update an existing record by Id
 Set-DataverseRecord -Connection $c -TableName contact -Id '00000000-0000-0000-0000-000000000000' -InputObject @{ description = 'Updated description' }
-
 # Upsert using match-on (create if not exists, update if exists)
 @{ fullname = 'Jane Smith'; emailaddress1 = 'jane.smith@contoso.com' } |
   Set-DataverseRecord -Connection $c -TableName contact -MatchOn fullname -PassThru
@@ -65,9 +60,7 @@ The [`Set-DataverseRecord`](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-Data
 - `-LookupColumns`: A hashtable specifying which columns to use for resolving lookup values when multiple options exist.
 - `-MatchOn`: Specifies one or more fields to match against for upsert operations, allowing creation if no match exists or update if a match is found.
 - `-Upsert`: Forces an upsert operation using alternate keys defined on the table, letting Dataverse decide whether to create or update.
-
 Examples:
-
 ```powershell
 # Exclude certain columns from updates
 Set-DataverseRecord -Connection $c -TableName contact -Id '00000000-0000-0000-0000-000000000000' -InputObject @{
@@ -81,13 +74,11 @@ Set-DataverseRecord -Connection $c -TableName contact -InputObject @{
     lastname = 'Doe'
     parentcustomerid = 'Contoso Ltd'
 } -LookupColumns @{ parentcustomerid = 'name' }
-
 # Upsert using specific match fields
 Set-DataverseRecord -Connection $c -TableName contact -InputObject @{
     emailaddress1 = 'john.doe@contoso.com'
     firstname = 'John'
 } -MatchOn emailaddress1
-
 # Force upsert using alternate keys
 Set-DataverseRecord -Connection $c -TableName contact -InputObject @{
     emailaddress1 = 'jane.smith@contoso.com'
@@ -109,13 +100,11 @@ How the cmdlet decides whether to create, update or upsert:
   - The cmdlet issues an `UpsertRequest` so Dataverse decides whether to create or update based on alternate keys.
   - When using `-Upsert` you must provide a single `-MatchOn` list that matches an alternate key defined on the table (the cmdlet validates this).
   - `-NoCreate` and `-NoUpdate` are not supported together with `-Upsert`.
-
 - With the `-CreateOnly` switch:
   - The cmdlet always attempts to create new records and does not check for an existing match. Use this when you know records do not already exist.
 
 - With the `-NoUpdate` switch:
   - The cmdlet will check for an existing record but will not update it; it will only create new records when no match is found.
-
 - With the `-NoCreate` switch:
   - The cmdlet will check for an existing record but will not create one; it will only update when a match is found.
 
@@ -125,15 +114,10 @@ How the cmdlet decides whether to create, update or upsert:
     - Each `-MatchOn` column set in order (if `-MatchOn` is specified).
   - If an existing record is found the cmdlet retrieves the current values and removes unchanged columns (via an internal comparison) before issuing an `UpdateRequest`; it skips the update entirely when no changes are detected. Note: this means that even when an `Id` is supplied the cmdlet will ordinarily perform a retrieve to fetch the existing record for comparison (see below for exceptions).
   - If no existing record is found the cmdlet issues a `CreateRequest`.
-
 #### Alternate Keys Explanation
-
 Alternate keys in Dataverse allow you to uniquely identify records using fields other than the primary key (Id). They are defined at the table level in Dataverse and enable efficient upsert operations.
-
 When using `-Upsert` with [`Set-DataverseRecord`](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md), the cmdlet leverages alternate keys to let Dataverse handle the create-or-update decision. You must specify a `-MatchOn` parameter that exactly matches one of the alternate keys defined on the table.
-
 Example: If a `contact` table has an alternate key on `emailaddress1`, you can upsert using that field:
-
 ```powershell
 Set-DataverseRecord -Connection $c -TableName contact -InputObject @{
     emailaddress1 = 'john.doe@contoso.com'
@@ -141,7 +125,6 @@ Set-DataverseRecord -Connection $c -TableName contact -InputObject @{
     lastname = 'Doe'
 } -Upsert -MatchOn emailaddress1
 ```
-
 Benefits of using alternate keys:
 - Avoids duplicate records by ensuring uniqueness on specified fields
 - Enables efficient bulk upserts without pre-checking existence
@@ -167,21 +150,16 @@ What to know:
 - By default platform business logic (plugins/workflows) runs; use `-BypassCustomPluginExecution` to skip custom plugins when appropriate.
 - The cmdlet supports `ShouldProcess` for DML: `-WhatIf` and `-Confirm` work for safety.
 - Use `-Timeout` to increase command timeout for long-running operations.
-
 Examples:
-
 ```powershell
 # Parameterised UPDATE run once
 Invoke-DataverseSql -Connection $c -Sql "UPDATE Contact SET description = @desc WHERE contactid = @id" -Parameters @{ desc = 'Updated'; id = $guid } -WhatIf
-
 # Pipeline-driven updates: run once per pipeline object
 @(@{ id = $id1; desc = 'A' }, @{ id = $id2; desc = 'B' }) |
   Invoke-DataverseSql -Connection $c -Sql "UPDATE Contact SET description = @desc WHERE contactid = @id"
-
 # INSERT with OUTPUT (returning created id where supported by engine)
 Invoke-DataverseSql -Connection $c -Sql "INSERT INTO account (name) OUTPUT INSERTED.accountid AS AccountId VALUES(@name)" -Parameters @{ name = 'NewCo' }
 ```
-
 Notes:
 - Prefer the module's typed [`Set-DataverseRecord`](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) for typical create/update flows — it performs per-record conversion, lookup resolution and minimizes accidental data issues. Use SQL for controlled, bulk, or complex mutations where SQL expresses the operation more clearly or efficiently.
 

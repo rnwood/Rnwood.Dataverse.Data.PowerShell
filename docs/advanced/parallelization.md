@@ -3,7 +3,6 @@
 <!-- TOC -->
 <!-- /TOC -->
 
-### Parallelising work for best performance
 
 When processing many records you can use parallelism to reduce elapsed time. Use parallelism when network latency or per-request processing dominates total time, but be careful to avoid overwhelming the Dataverse service (throttling).
 
@@ -31,7 +30,6 @@ Example with `Invoke-DataverseParallel`:
 
 ```powershell
 $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET -TenantId $env:TENANT_ID
-
 # Get records and update them in parallel
 Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
   Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
@@ -42,6 +40,5 @@ Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
 ```
 
 Please read the full cmdlet documentation for more recommendations.
-
 
 

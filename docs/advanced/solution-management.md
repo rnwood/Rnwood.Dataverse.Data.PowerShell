@@ -3,7 +3,6 @@
 <!-- TOC -->
 <!-- /TOC -->
 
-### Solution Management
 
 You can manage Dataverse solutions from this module. The module provides cmdlets for:
 - Exporting solutions (`Export-DataverseSolution`)
@@ -13,17 +12,12 @@ You can manage Dataverse solutions from this module. The module provides cmdlets
 - Creating/updating solutions (`Set-DataverseSolution`)
 - Removing solutions (`Remove-DataverseSolution`)
 - Publishing customizations (`Publish-DataverseCustomizations`)
-
 For advanced control, use the `Invoke-` variants documented in the `docs/` folder.
-
 #### Parsing solution files
-
 - `Get-DataverseSolutionFile` parses a solution ZIP file and extracts metadata without requiring a Dataverse connection.
 - Useful for inspecting solution files before importing or for automation scripts.
 - See the full parameter reference: [Get-DataverseSolutionFile](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSolutionFile.md).
-
 Examples:
-
 ```powershell
 # Parse a solution file and display metadata
 $info = Get-DataverseSolutionFile -Path "C:\Solutions\MySolution_1_0_0_0.zip"
@@ -31,17 +25,12 @@ Write-Host "Solution: $($info.Name) v$($info.Version)"
 Write-Host "Publisher: $($info.PublisherName)"
 Write-Host "Managed: $($info.IsManaged)"
 ```
-
 #### Exporting solutions
-
 - `Export-DataverseSolution` exports a solution and can save it to disk or output to the pipeline. It supports including solution settings and reports progress for long-running exports.
-
 Examples:
-
 ```powershell
 # Export unmanaged solution to file
 Export-DataverseSolution -Connection $c -SolutionName "MySolution" -OutFile "C:\Exports\MySolution.zip"
-
 # Export managed solution and capture bytes
 $b = Export-DataverseSolution -Connection $c -SolutionName "MySolution" -Managed -PassThru
 [System.IO.File]::WriteAllBytes("C:\Exports\MySolution_managed.zip", $b)
@@ -61,7 +50,6 @@ Get-DataverseSolution -Connection $c
 
 # List managed solutions only
 Get-DataverseSolution -Connection $c -Managed
-
 # List unmanaged solutions only
 Get-DataverseSolution -Connection $c -Unmanaged
 
@@ -87,25 +75,18 @@ Set-DataverseSolution -Connection $c -UniqueName "MySolution" `
 Set-DataverseSolution -Connection $c -UniqueName "MySolution" `
     -Description "Updated description" -Version "1.1.0.0"
 ```
-
 #### Publishing customizations
-
 - `Publish-DataverseCustomizations` publishes customizations to make them available to users.
 - Can publish all customizations or specific entity customizations.
 - See the full parameter reference: [Publish-DataverseCustomizations](../../Rnwood.Dataverse.Data.PowerShell/docs/Publish-DataverseCustomizations.md).
-
 Examples:
-
 ```powershell
 # Publish all customizations
 Publish-DataverseCustomizations -Connection $c
-
 # Publish customizations for a specific entity
 Publish-DataverseCustomizations -Connection $c -EntityName "contact"
 ```
-
 #### Importing solutions
-
 - `Import-DataverseSolution` imports a solution file with intelligent by default logic. By default, it automatically determines the best import method:
   - If the solution doesn't exist, performs a regular import
   - If the solution exists and is managed, performs a stage-and-upgrade operation
@@ -123,19 +104,15 @@ Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip"
 
 # Force regular import (no upgrade logic)
 Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -Mode NoUpgrade
-
 # Explicitly perform stage-and-upgrade
 Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -Mode StageAndUpgrade
 
 # Import as holding solution
 Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -Mode HoldingSolution
-
 # Import from bytes instead of file
 Import-DataverseSolution -Connection $c -SolutionBytes $bytes
 ```
-
 #### Uninstalling/removing solutions
-
 - `Remove-DataverseSolution` removes (uninstalls) a solution from a Dataverse environment using the asynchronous uninstall process. The operation is asynchronous and the cmdlet monitors the uninstall progress.
 - When removing a solution:
   - All customizations contained in the solution are removed (for managed solutions)
@@ -143,13 +120,10 @@ Import-DataverseSolution -Connection $c -SolutionBytes $bytes
   - Dependencies must be resolved before removal (e.g., remove dependent solutions first)
 - The cmdlet monitors the uninstall operation and reports progress
 - See the full parameter reference: [Remove-DataverseSolution](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseSolution.md).
-
 Examples:
-
 ```powershell
 # Remove a solution
 Remove-DataverseSolution -Connection $c -UniqueName "MySolution"
-
 # Remove with confirmation
 Remove-DataverseSolution -Connection $c -UniqueName "MySolution" -Confirm
 
@@ -187,12 +161,8 @@ Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" `
 Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" `
     -SkipConnectionReferenceValidation -SkipEnvironmentVariableValidation
 ```
-
 **Notes:**
 - Connection reference values must be valid connection IDs from the target environment which the user importing the solution has access to.
 - Environment variable values are strings that will be set during import.
-
-
-
 
 
