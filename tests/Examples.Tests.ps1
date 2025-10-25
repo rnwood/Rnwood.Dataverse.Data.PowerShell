@@ -1140,9 +1140,7 @@ Describe "Examples-Comparison Documentation Tests" {
             $cmd.Parameters.ContainsKey('SolutionFile') | Should -Be $true
             $cmd.Parameters.ContainsKey('OverwriteUnmanagedCustomizations') | Should -Be $true
             $cmd.Parameters.ContainsKey('PublishWorkflows') | Should -Be $true
-            $cmd.Parameters.ContainsKey('HoldingSolution') | Should -Be $true
-            $cmd.Parameters.ContainsKey('StageAndUpgrade') | Should -Be $true
-            $cmd.Parameters.ContainsKey('NoUpgrade') | Should -Be $true
+            $cmd.Parameters.ContainsKey('Mode') | Should -Be $true
             $cmd.Parameters.ContainsKey('ConnectionReferences') | Should -Be $true
             $cmd.Parameters.ContainsKey('EnvironmentVariables') | Should -Be $true
             $cmd.Parameters.ContainsKey('SkipConnectionReferenceValidation') | Should -Be $true
