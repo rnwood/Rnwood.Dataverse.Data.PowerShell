@@ -8,7 +8,7 @@ schema: 2.0.0
 # Compare-DataverseSolution
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Compares a solution file with the state of that solution in the target environment.
 
 ## SYNTAX
 
@@ -25,16 +25,60 @@ Compare-DataverseSolution -SolutionBytes <Byte[]> [-Connection <ServiceClient>]
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Compare-DataverseSolution cmdlet compares a solution file (ZIP) with the state of that solution in a Dataverse environment. It outputs an item for each component and subcomponent showing whether the component has been added, removed, or modified between the file and the environment.
+
+The cmdlet takes into account the rootcomponentbehavior field in the solutioncomponent table:
+- 0 = Include Subcomponents (Full component)
+- 1 = Do Not Include Subcomponents
+- 2 = Include As Shell (Shell only, no subcomponents)
+
+If a component changes from full (behavior 0) to shell (behavior 2), this counts as a modification where subcomponents would be removed.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Compare a solution file with the target environment
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
+PS C:\> Compare-DataverseSolution -Connection $conn -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip"
 ```
 
-{{ Add example description here }}
+This example compares the MySolution solution file with the state of the solution in the target environment and outputs the differences.
+
+### Example 2: Filter results to show only added components
+```powershell
+PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
+PS C:\> $results = Compare-DataverseSolution -Connection $conn -SolutionFile "C:\Solutions\MySolution.zip"
+PS C:\> $results | Where-Object { $_.Status -eq "Added" } | Format-Table
+```
+
+This example shows only the components that have been added to the solution file but don't exist in the environment.
+
+### Example 3: Compare using solution bytes from Export-DataverseSolution
+```powershell
+PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
+PS C:\> $solutionBytes = Export-DataverseSolution -Connection $conn -SolutionName "MySolution" -PassThru
+PS C:\> Compare-DataverseSolution -Connection $conn -SolutionBytes $solutionBytes
+```
+
+This example exports a solution as bytes and then compares it with the same solution in the environment.
+
+### Example 4: Identify behavior changes
+```powershell
+PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
+PS C:\> $results = Compare-DataverseSolution -Connection $conn -SolutionFile "C:\Solutions\MySolution.zip"
+PS C:\> $results | Where-Object { $_.FileBehavior -ne $_.EnvironmentBehavior } | Format-Table
+```
+
+This example shows components where the behavior has changed (e.g., from full component to shell).
+
+### Example 5: Export comparison results to CSV
+```powershell
+PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
+PS C:\> $results = Compare-DataverseSolution -Connection $conn -SolutionFile "C:\Solutions\MySolution.zip"
+PS C:\> $results | Export-Csv -Path "C:\Reports\solution-comparison.csv" -NoTypeInformation
+```
+
+This example exports the comparison results to a CSV file for further analysis.
 
 ## PARAMETERS
 
@@ -86,7 +130,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
-{{ Fill ProgressAction Description }}
+Common parameter for PowerShell progress preferences.
 
 ```yaml
 Type: ActionPreference
@@ -110,5 +154,13 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### System.Management.Automation.PSObject
 ## NOTES
+- If the solution does not exist in the target environment, all components will be marked as "Added"
+- Components that exist in both the file and environment are always marked as "Modified" (this cmdlet does not perform deep component inspection to detect actual changes)
+- Behavior changes (e.g., full to shell) are detected and marked as "Modified"
+- The cmdlet uses the solutioncomponentdefinition table to understand component types
 
 ## RELATED LINKS
+
+[Export-DataverseSolution](Export-DataverseSolution.md)
+[Import-DataverseSolution](Import-DataverseSolution.md)
+[Get-DataverseConnection](Get-DataverseConnection.md)
