@@ -5,30 +5,53 @@ using System.IO.Compression;
 using System.Linq;
 using System.Management.Automation;
 using System.Xml.Linq;
+using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Compares a solution file with the state of that solution in the target environment.
+    /// Compares a solution file with the state of that solution in the target environment or with another solution file.
     /// </summary>
     [Cmdlet(VerbsData.Compare, "DataverseSolution")]
     [OutputType(typeof(PSObject))]
-    public class CompareDataverseSolutionCmdlet : OrganizationServiceCmdlet
+    public class CompareDataverseSolutionCmdlet : PSCmdlet
     {
         /// <summary>
-        /// Gets or sets the path to the solution file to compare.
+        /// Gets or sets the Dataverse connection.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "FromFile", HelpMessage = "Path to the solution file (.zip) to compare.")]
+        [Parameter(Mandatory = true, ParameterSetName = "FileToEnvironment", HelpMessage = "Dataverse connection for comparing with environment.")]
+        [Parameter(Mandatory = true, ParameterSetName = "BytesToEnvironment", HelpMessage = "Dataverse connection for comparing with environment.")]
+        public ServiceClient Connection { get; set; }
+
+        /// <summary>
+        /// Gets or sets the path to the first solution file (source/reference) to compare.
+        /// </summary>
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "FileToEnvironment", HelpMessage = "Path to the solution file (.zip) to compare with environment.")]
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "FileToFile", HelpMessage = "Path to the first solution file (.zip) to compare.")]
         [ValidateNotNullOrEmpty]
         public string SolutionFile { get; set; }
 
         /// <summary>
         /// Gets or sets the solution file bytes to compare.
         /// </summary>
-        [Parameter(Mandatory = true, ValueFromPipeline = true, ParameterSetName = "FromBytes", HelpMessage = "Solution file bytes to compare.")]
+        [Parameter(Mandatory = true, ValueFromPipeline = true, ParameterSetName = "BytesToEnvironment", HelpMessage = "Solution file bytes to compare with environment.")]
         public byte[] SolutionBytes { get; set; }
+
+        /// <summary>
+        /// Gets or sets the path to the second solution file (target) to compare against.
+        /// </summary>
+        [Parameter(Mandatory = true, Position = 1, ParameterSetName = "FileToFile", HelpMessage = "Path to the second solution file (.zip) to compare against.")]
+        [ValidateNotNullOrEmpty]
+        public string TargetSolutionFile { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether to reverse the comparison direction (compare environment to file instead of file to environment).
+        /// </summary>
+        [Parameter(ParameterSetName = "FileToEnvironment", HelpMessage = "Compare environment to file instead of file to environment.")]
+        [Parameter(ParameterSetName = "BytesToEnvironment", HelpMessage = "Compare environment to file instead of file to environment.")]
+        public SwitchParameter ReverseComparison { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -37,9 +60,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            // Load solution file
-            byte[] solutionBytes;
-            if (ParameterSetName == "FromFile")
+            // Determine comparison mode
+            bool isFileToFile = ParameterSetName == "FileToFile";
+            bool isFileToEnvironment = ParameterSetName == "FileToEnvironment" || ParameterSetName == "BytesToEnvironment";
+
+            // Load first solution file (source)
+            byte[] sourceSolutionBytes;
+            if (ParameterSetName == "BytesToEnvironment")
+            {
+                sourceSolutionBytes = SolutionBytes;
+            }
+            else
             {
                 var filePath = GetUnresolvedProviderPathFromPSPath(SolutionFile);
                 if (!File.Exists(filePath))
@@ -53,56 +84,89 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 WriteVerbose($"Loading solution file from: {filePath}");
-                solutionBytes = File.ReadAllBytes(filePath);
+                sourceSolutionBytes = File.ReadAllBytes(filePath);
+            }
+
+            WriteVerbose($"Solution file size: {sourceSolutionBytes.Length} bytes");
+
+            // Extract solution info and components from source file
+            var (sourceSolutionName, sourceComponents) = ExtractSolutionComponents(sourceSolutionBytes);
+            WriteVerbose($"Extracted source solution: {sourceSolutionName} with {sourceComponents.Count} root components");
+
+            List<SolutionComponentInfo> targetComponents;
+            string targetSolutionName;
+
+            if (isFileToFile)
+            {
+                // Load target solution file
+                var targetFilePath = GetUnresolvedProviderPathFromPSPath(TargetSolutionFile);
+                if (!File.Exists(targetFilePath))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new FileNotFoundException($"Target solution file not found: {targetFilePath}"),
+                        "FileNotFound",
+                        ErrorCategory.ObjectNotFound,
+                        targetFilePath));
+                    return;
+                }
+
+                WriteVerbose($"Loading target solution file from: {targetFilePath}");
+                var targetSolutionBytes = File.ReadAllBytes(targetFilePath);
+                WriteVerbose($"Target solution file size: {targetSolutionBytes.Length} bytes");
+
+                (targetSolutionName, targetComponents) = ExtractSolutionComponents(targetSolutionBytes);
+                WriteVerbose($"Extracted target solution: {targetSolutionName} with {targetComponents.Count} root components");
             }
             else
             {
-                solutionBytes = SolutionBytes;
-            }
-
-            WriteVerbose($"Solution file size: {solutionBytes.Length} bytes");
-
-            // Extract solution info and components from file
-            var (solutionUniqueName, fileComponents) = ExtractSolutionComponents(solutionBytes);
-            WriteVerbose($"Extracted solution: {solutionUniqueName} with {fileComponents.Count} root components");
-
-            // Query target environment for the solution
-            var solutionQuery = new QueryExpression("solution")
-            {
-                ColumnSet = new ColumnSet("solutionid", "uniquename", "friendlyname"),
-                Criteria = new FilterExpression
+                // Query target environment for the solution
+                var solutionQuery = new QueryExpression("solution")
                 {
-                    Conditions =
+                    ColumnSet = new ColumnSet("solutionid", "uniquename", "friendlyname"),
+                    Criteria = new FilterExpression
                     {
-                        new ConditionExpression("uniquename", ConditionOperator.Equal, solutionUniqueName)
-                    }
-                },
-                TopCount = 1
-            };
+                        Conditions =
+                        {
+                            new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionName)
+                        }
+                    },
+                    TopCount = 1
+                };
 
-            var solutions = Connection.RetrieveMultiple(solutionQuery);
-            if (solutions.Entities.Count == 0)
-            {
-                WriteWarning($"Solution '{solutionUniqueName}' not found in target environment. All components will be marked as 'Added'.");
-                
-                // Output all file components as Added
-                foreach (var component in fileComponents)
+                var solutions = Connection.RetrieveMultiple(solutionQuery);
+                if (solutions.Entities.Count == 0)
                 {
-                    OutputComparisonResult(component.ComponentType, component.ObjectId, component.RootComponentBehavior, 
-                        null, "Added", solutionUniqueName);
+                    WriteWarning($"Solution '{sourceSolutionName}' not found in target environment. All components will be marked as 'Added'.");
+                    
+                    // Output all source components as Added
+                    foreach (var component in sourceComponents)
+                    {
+                        OutputComparisonResult(component.ComponentType, component.ObjectId, component.RootComponentBehavior, 
+                            null, "Added", sourceSolutionName, isReversed: ReverseComparison.IsPresent);
+                    }
+                    return;
                 }
-                return;
+
+                var solutionId = solutions.Entities[0].Id;
+                WriteVerbose($"Found solution in target environment: {solutionId}");
+
+                // Query target environment for solution components
+                targetComponents = GetEnvironmentComponents(solutionId);
+                targetSolutionName = sourceSolutionName;
+                WriteVerbose($"Found {targetComponents.Count} components in target environment");
             }
 
-            var solutionId = solutions.Entities[0].Id;
-            WriteVerbose($"Found solution in target environment: {solutionId}");
-
-            // Query target environment for solution components
-            var envComponents = GetEnvironmentComponents(solutionId);
-            WriteVerbose($"Found {envComponents.Count} components in target environment");
+            // Apply reverse comparison if requested
+            if (ReverseComparison.IsPresent && isFileToEnvironment)
+            {
+                WriteVerbose("Reversing comparison direction (environment to file)");
+                var temp = sourceComponents;
+                sourceComponents = targetComponents;
+                targetComponents = temp;
+            }
 
             // Compare components
-            CompareComponents(fileComponents, envComponents, solutionUniqueName);
+            CompareComponents(sourceComponents, targetComponents, targetSolutionName);
         }
 
         private (string UniqueName, List<SolutionComponentInfo> Components) ExtractSolutionComponents(byte[] solutionBytes)
@@ -219,66 +283,88 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return components;
         }
 
-        private void CompareComponents(List<SolutionComponentInfo> fileComponents, 
-            List<SolutionComponentInfo> envComponents, string solutionName)
+        private void CompareComponents(List<SolutionComponentInfo> sourceComponents, 
+            List<SolutionComponentInfo> targetComponents, string solutionName)
         {
             // Create lookup dictionaries for efficient comparison
-            var fileComponentDict = fileComponents
+            var sourceComponentDict = sourceComponents
                 .GroupBy(c => new { c.ComponentType, c.ObjectId })
                 .ToDictionary(g => g.Key, g => g.First());
 
-            var envComponentDict = envComponents
+            var targetComponentDict = targetComponents
                 .GroupBy(c => new { c.ComponentType, c.ObjectId })
                 .ToDictionary(g => g.Key, g => g.First());
 
-            // Find added components (in file but not in environment)
-            foreach (var fileComponent in fileComponents)
+            // Find added components (in source but not in target)
+            foreach (var sourceComponent in sourceComponents)
             {
-                var key = new { fileComponent.ComponentType, fileComponent.ObjectId };
+                var key = new { sourceComponent.ComponentType, sourceComponent.ObjectId };
                 
-                if (!envComponentDict.ContainsKey(key))
+                if (!targetComponentDict.ContainsKey(key))
                 {
-                    OutputComparisonResult(fileComponent.ComponentType, fileComponent.ObjectId, 
-                        fileComponent.RootComponentBehavior, null, "Added", solutionName);
+                    OutputComparisonResult(sourceComponent.ComponentType, sourceComponent.ObjectId, 
+                        sourceComponent.RootComponentBehavior, null, "Added", solutionName, isReversed: false);
                 }
                 else
                 {
-                    var envComponent = envComponentDict[key];
+                    var targetComponent = targetComponentDict[key];
                     
                     // Check if behavior changed
-                    if (fileComponent.RootComponentBehavior != envComponent.RootComponentBehavior)
+                    if (sourceComponent.RootComponentBehavior != targetComponent.RootComponentBehavior)
                     {
-                        // Behavior changed - consider it modified
-                        OutputComparisonResult(fileComponent.ComponentType, fileComponent.ObjectId,
-                            fileComponent.RootComponentBehavior, envComponent.RootComponentBehavior, 
-                            "Modified", solutionName);
+                        // Determine if this is an inclusion or exclusion based on behavior change
+                        string status = DetermineBehaviorChangeStatus(sourceComponent.RootComponentBehavior, targetComponent.RootComponentBehavior);
+                        
+                        OutputComparisonResult(sourceComponent.ComponentType, sourceComponent.ObjectId,
+                            sourceComponent.RootComponentBehavior, targetComponent.RootComponentBehavior, 
+                            status, solutionName, isReversed: false);
                     }
                     else
                     {
                         // Component exists in both with same behavior - assume modified
                         // (We can't detect actual changes without inspecting the component itself)
-                        OutputComparisonResult(fileComponent.ComponentType, fileComponent.ObjectId,
-                            fileComponent.RootComponentBehavior, envComponent.RootComponentBehavior, 
-                            "Modified", solutionName);
+                        OutputComparisonResult(sourceComponent.ComponentType, sourceComponent.ObjectId,
+                            sourceComponent.RootComponentBehavior, targetComponent.RootComponentBehavior, 
+                            "Modified", solutionName, isReversed: false);
                     }
                 }
             }
 
-            // Find removed components (in environment but not in file)
-            foreach (var envComponent in envComponents)
+            // Find removed components (in target but not in source)
+            foreach (var targetComponent in targetComponents)
             {
-                var key = new { envComponent.ComponentType, envComponent.ObjectId };
+                var key = new { targetComponent.ComponentType, targetComponent.ObjectId };
                 
-                if (!fileComponentDict.ContainsKey(key))
+                if (!sourceComponentDict.ContainsKey(key))
                 {
-                    OutputComparisonResult(envComponent.ComponentType, envComponent.ObjectId,
-                        null, envComponent.RootComponentBehavior, "Removed", solutionName);
+                    OutputComparisonResult(targetComponent.ComponentType, targetComponent.ObjectId,
+                        null, targetComponent.RootComponentBehavior, "Removed", solutionName, isReversed: false);
                 }
             }
         }
 
+        private string DetermineBehaviorChangeStatus(int sourceBehavior, int targetBehavior)
+        {
+            // Behavior levels: 0 (Full/Include Subcomponents) > 1 (Do Not Include Subcomponents) > 2 (Shell)
+            // Going from higher number to lower number = including more data (BehaviorIncluded)
+            // Going from lower number to higher number = excluding data (BehaviorExcluded)
+            
+            if (sourceBehavior < targetBehavior)
+            {
+                // e.g., 0 (Full) -> 2 (Shell): excluding/removing data
+                return "BehaviorExcluded";
+            }
+            else if (sourceBehavior > targetBehavior)
+            {
+                // e.g., 2 (Shell) -> 0 (Full): including more data
+                return "BehaviorIncluded";
+            }
+            
+            return "Modified";
+        }
+
         private void OutputComparisonResult(int componentType, Guid objectId, 
-            int? fileBehavior, int? envBehavior, string status, string solutionName)
+            int? sourceBehavior, int? targetBehavior, string status, string solutionName, bool isReversed)
         {
             var result = new PSObject();
             result.Properties.Add(new PSNoteProperty("SolutionName", solutionName));
@@ -286,8 +372,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             result.Properties.Add(new PSNoteProperty("ComponentTypeName", GetComponentTypeName(componentType)));
             result.Properties.Add(new PSNoteProperty("ObjectId", objectId));
             result.Properties.Add(new PSNoteProperty("Status", status));
-            result.Properties.Add(new PSNoteProperty("FileBehavior", fileBehavior.HasValue ? GetBehaviorName(fileBehavior.Value) : null));
-            result.Properties.Add(new PSNoteProperty("EnvironmentBehavior", envBehavior.HasValue ? GetBehaviorName(envBehavior.Value) : null));
+            result.Properties.Add(new PSNoteProperty("SourceBehavior", sourceBehavior.HasValue ? GetBehaviorName(sourceBehavior.Value) : null));
+            result.Properties.Add(new PSNoteProperty("TargetBehavior", targetBehavior.HasValue ? GetBehaviorName(targetBehavior.Value) : null));
             
             WriteObject(result);
         }

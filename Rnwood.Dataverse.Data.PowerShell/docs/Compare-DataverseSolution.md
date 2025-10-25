@@ -8,31 +8,47 @@ schema: 2.0.0
 # Compare-DataverseSolution
 
 ## SYNOPSIS
-Compares a solution file with the state of that solution in the target environment.
+Compares a solution file with the state of that solution in the target environment or with another solution file.
 
 ## SYNTAX
 
-### FromFile
+### FileToEnvironment
 ```
-Compare-DataverseSolution [-SolutionFile] <String> [-Connection <ServiceClient>]
+Compare-DataverseSolution [-SolutionFile] <String> -Connection <ServiceClient> [-ReverseComparison] 
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
-### FromBytes
+### FileToFile
 ```
-Compare-DataverseSolution -SolutionBytes <Byte[]> [-Connection <ServiceClient>]
+Compare-DataverseSolution [-SolutionFile] <String> [-TargetSolutionFile] <String>
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### BytesToEnvironment
+```
+Compare-DataverseSolution -SolutionBytes <Byte[]> -Connection <ServiceClient> [-ReverseComparison] 
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-The Compare-DataverseSolution cmdlet compares a solution file (ZIP) with the state of that solution in a Dataverse environment. It outputs an item for each component and subcomponent showing whether the component has been added, removed, or modified between the file and the environment.
+The Compare-DataverseSolution cmdlet compares solution files and environments to identify differences in solution components. It can:
+- Compare a solution file with the same solution in a Dataverse environment
+- Compare two solution files directly
+- Reverse the comparison direction (environment to file)
 
-The cmdlet takes into account the rootcomponentbehavior field in the solutioncomponent table:
+The cmdlet outputs detailed comparison results showing whether components have been added, removed, modified, or had their behavior changed.
+
+Component behavior statuses:
+- **Added**: Component exists in source but not in target
+- **Removed**: Component exists in target but not in source
+- **Modified**: Component exists in both with same behavior
+- **BehaviorIncluded**: Component behavior changed to include more data (e.g., Shell → Full)
+- **BehaviorExcluded**: Component behavior changed to exclude data (e.g., Full → Shell)
+
+Rootcomponentbehavior values:
 - 0 = Include Subcomponents (Full component)
 - 1 = Do Not Include Subcomponents
 - 2 = Include As Shell (Shell only, no subcomponents)
-
-If a component changes from full (behavior 0) to shell (behavior 2), this counts as a modification where subcomponents would be removed.
 
 ## EXAMPLES
 
@@ -42,9 +58,24 @@ PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" 
 PS C:\> Compare-DataverseSolution -Connection $conn -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip"
 ```
 
-This example compares the MySolution solution file with the state of the solution in the target environment and outputs the differences.
+This example compares the MySolution solution file with the state of the solution in the target environment.
 
-### Example 2: Filter results to show only added components
+### Example 2: Compare two solution files
+```powershell
+PS C:\> Compare-DataverseSolution -SolutionFile "C:\Solutions\MySolution_v1.zip" -TargetSolutionFile "C:\Solutions\MySolution_v2.zip"
+```
+
+This example compares two solution files to identify what changed between versions.
+
+### Example 3: Compare environment to file (reverse direction)
+```powershell
+PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
+PS C:\> Compare-DataverseSolution -Connection $conn -SolutionFile "C:\Solutions\MySolution.zip" -ReverseComparison
+```
+
+This example reverses the comparison to show what's in the environment compared to the file.
+
+### Example 4: Filter results to show only added components
 ```powershell
 PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
 PS C:\> $results = Compare-DataverseSolution -Connection $conn -SolutionFile "C:\Solutions\MySolution.zip"
@@ -53,25 +84,15 @@ PS C:\> $results | Where-Object { $_.Status -eq "Added" } | Format-Table
 
 This example shows only the components that have been added to the solution file but don't exist in the environment.
 
-### Example 3: Compare using solution bytes from Export-DataverseSolution
+### Example 5: Identify behavior changes between solution versions
 ```powershell
-PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
-PS C:\> $solutionBytes = Export-DataverseSolution -Connection $conn -SolutionName "MySolution" -PassThru
-PS C:\> Compare-DataverseSolution -Connection $conn -SolutionBytes $solutionBytes
+PS C:\> $results = Compare-DataverseSolution -SolutionFile "C:\v1\MySolution.zip" -TargetSolutionFile "C:\v2\MySolution.zip"
+PS C:\> $results | Where-Object { $_.Status -like "Behavior*" } | Format-Table
 ```
 
-This example exports a solution as bytes and then compares it with the same solution in the environment.
+This example compares two solution versions and shows only components where the behavior has changed (BehaviorIncluded or BehaviorExcluded).
 
-### Example 4: Identify behavior changes
-```powershell
-PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
-PS C:\> $results = Compare-DataverseSolution -Connection $conn -SolutionFile "C:\Solutions\MySolution.zip"
-PS C:\> $results | Where-Object { $_.FileBehavior -ne $_.EnvironmentBehavior } | Format-Table
-```
-
-This example shows components where the behavior has changed (e.g., from full component to shell).
-
-### Example 5: Export comparison results to CSV
+### Example 6: Export comparison results to CSV
 ```powershell
 PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
 PS C:\> $results = Compare-DataverseSolution -Connection $conn -SolutionFile "C:\Solutions\MySolution.zip"
@@ -99,12 +120,27 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ReverseComparison
+Compare environment to file instead of file to environment.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: FileToEnvironment, BytesToEnvironment
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -SolutionBytes
 Solution file bytes to compare.
 
 ```yaml
 Type: Byte[]
-Parameter Sets: FromBytes
+Parameter Sets: BytesToEnvironment
 Aliases:
 
 Required: True
@@ -119,11 +155,26 @@ Path to the solution file (.zip) to compare.
 
 ```yaml
 Type: String
-Parameter Sets: FromFile
+Parameter Sets: FileToEnvironment, FileToFile
 Aliases:
 
 Required: True
 Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TargetSolutionFile
+Path to the second solution file (.zip) to compare against.
+
+```yaml
+Type: String
+Parameter Sets: FileToFile
+Aliases:
+
+Required: True
+Position: 1
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -150,14 +201,32 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Byte[]
+You can pipe solution file bytes to this cmdlet.
+
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
+The cmdlet outputs a PSObject for each component with the following properties:
+- **SolutionName**: The unique name of the solution
+- **ComponentType**: The numeric component type code
+- **ComponentTypeName**: The friendly name of the component type (e.g., "Entity", "Web Resource", "Workflow")
+- **ObjectId**: The GUID of the component
+- **Status**: The status of the component - "Added", "Removed", "Modified", "BehaviorIncluded", or "BehaviorExcluded"
+- **SourceBehavior**: The behavior in the source (e.g., "Include Subcomponents", "Include As Shell")
+- **TargetBehavior**: The behavior in the target
+
 ## NOTES
+- **Status values**:
+  - **Added**: Component exists in source but not in target
+  - **Removed**: Component exists in target but not in source
+  - **Modified**: Component exists in both with same behavior
+  - **BehaviorIncluded**: Behavior changed to include more data (e.g., Shell → Full)
+  - **BehaviorExcluded**: Behavior changed to exclude data (e.g., Full → Shell)
+  
 - If the solution does not exist in the target environment, all components will be marked as "Added"
-- Components that exist in both the file and environment are marked as "Modified" because this cmdlet cannot perform deep inspection of component definitions to detect actual content changes - it only compares component presence and behavior
-- Behavior changes (e.g., full component to shell component) are detected and the component is marked as "Modified"
-- The cmdlet uses the solutioncomponent table to query components in the target environment
+- Components that exist in both locations with the same behavior are marked as "Modified" (deep content inspection is not performed)
+- The cmdlet can compare file-to-environment, file-to-file, or environment-to-file (with -ReverseComparison)
+- Connection parameter is only required for environment comparisons, not for file-to-file comparisons
 
 ## RELATED LINKS
 

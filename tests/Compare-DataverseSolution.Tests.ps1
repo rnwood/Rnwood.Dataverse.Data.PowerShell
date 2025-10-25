@@ -142,8 +142,8 @@ Describe 'Compare-DataverseSolution' {
                 $customizationsXmlPath = Join-Path $tempFolder "customizations.xml"
                 [System.IO.File]::WriteAllText($customizationsXmlPath, $customizationsXml)
 
-                # Create zip file
-                $zipPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "$SolutionUniqueName.zip")
+                # Create zip file with unique name
+                $zipPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "$SolutionUniqueName-$([Guid]::NewGuid()).zip")
                 if (Test-Path $zipPath) {
                     Remove-Item $zipPath -Force
                 }
@@ -178,11 +178,125 @@ Describe 'Compare-DataverseSolution' {
             $result | ForEach-Object { $_.Status | Should -Be "Added" }
             $result[0].ComponentType | Should -Be 1
             $result[1].ComponentType | Should -Be 61
+            $result[0].SourceBehavior | Should -Not -BeNullOrEmpty
+            $result[0].TargetBehavior | Should -BeNullOrEmpty
         }
         finally {
             if (Test-Path $zipPath) {
                 Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
             }
+        }
+    }
+
+    It "Compares two solution files and detects differences" {
+        # Import module for file-to-file comparison
+        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+        }
+        
+        # Create first solution file with 2 components
+        $component1Id = [Guid]::NewGuid()
+        $component2Id = [Guid]::NewGuid()
+        $components1 = @(
+            @{ Type = 1; Id = $component1Id; Behavior = 0 },
+            @{ Type = 61; Id = $component2Id; Behavior = 0 }
+        )
+        $zipPath1 = CreateTestSolutionZip -SolutionUniqueName "TestSolution" -Components $components1
+        
+        # Create second solution file with different components (one shared, one different)
+        $component3Id = [Guid]::NewGuid()
+        $components2 = @(
+            @{ Type = 1; Id = $component1Id; Behavior = 0 },
+            @{ Type = 24; Id = $component3Id; Behavior = 0 }
+        )
+        $zipPath2 = CreateTestSolutionZip -SolutionUniqueName "TestSolution" -Components $components2
+        
+        try {
+            $result = Compare-DataverseSolution -SolutionFile $zipPath1 -TargetSolutionFile $zipPath2
+            
+            $result | Should -HaveCount 3
+            
+            # Component1 should be Modified (exists in both)
+            $comp1Result = $result | Where-Object { $_.ObjectId -eq $component1Id }
+            $comp1Result.Status | Should -Be "Modified"
+            
+            # Component2 should be Added (in source but not in target)
+            $comp2Result = $result | Where-Object { $_.ObjectId -eq $component2Id }
+            $comp2Result.Status | Should -Be "Added"
+            
+            # Component3 should be Removed (in target but not in source)
+            $comp3Result = $result | Where-Object { $_.ObjectId -eq $component3Id }
+            $comp3Result.Status | Should -Be "Removed"
+        }
+        finally {
+            if (Test-Path $zipPath1) { Remove-Item $zipPath1 -Force -ErrorAction SilentlyContinue }
+            if (Test-Path $zipPath2) { Remove-Item $zipPath2 -Force -ErrorAction SilentlyContinue }
+        }
+    }
+
+    It "Detects behavior changes with BehaviorIncluded status" {
+        # Import module for file-to-file comparison
+        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+        }
+        
+        # Create first solution file with shell component (behavior 2)
+        $componentId = [Guid]::NewGuid()
+        $components1 = @(
+            @{ Type = 1; Id = $componentId; Behavior = 2 }
+        )
+        $zipPath1 = CreateTestSolutionZip -SolutionUniqueName "TestSolution" -Components $components1
+        
+        # Create second solution file with full component (behavior 0)
+        $components2 = @(
+            @{ Type = 1; Id = $componentId; Behavior = 0 }
+        )
+        $zipPath2 = CreateTestSolutionZip -SolutionUniqueName "TestSolution" -Components $components2
+        
+        try {
+            $result = Compare-DataverseSolution -SolutionFile $zipPath1 -TargetSolutionFile $zipPath2
+            
+            $result | Should -HaveCount 1
+            $result[0].Status | Should -Be "BehaviorIncluded"
+            $result[0].SourceBehavior | Should -Be "Include As Shell"
+            $result[0].TargetBehavior | Should -Be "Include Subcomponents"
+        }
+        finally {
+            if (Test-Path $zipPath1) { Remove-Item $zipPath1 -Force -ErrorAction SilentlyContinue }
+            if (Test-Path $zipPath2) { Remove-Item $zipPath2 -Force -ErrorAction SilentlyContinue }
+        }
+    }
+
+    It "Detects behavior changes with BehaviorExcluded status" {
+        # Import module for file-to-file comparison
+        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+        }
+        
+        # Create first solution file with full component (behavior 0)
+        $componentId = [Guid]::NewGuid()
+        $components1 = @(
+            @{ Type = 1; Id = $componentId; Behavior = 0 }
+        )
+        $zipPath1 = CreateTestSolutionZip -SolutionUniqueName "TestSolution" -Components $components1
+        
+        # Create second solution file with shell component (behavior 2)
+        $components2 = @(
+            @{ Type = 1; Id = $componentId; Behavior = 2 }
+        )
+        $zipPath2 = CreateTestSolutionZip -SolutionUniqueName "TestSolution" -Components $components2
+        
+        try {
+            $result = Compare-DataverseSolution -SolutionFile $zipPath1 -TargetSolutionFile $zipPath2
+            
+            $result | Should -HaveCount 1
+            $result[0].Status | Should -Be "BehaviorExcluded"
+            $result[0].SourceBehavior | Should -Be "Include Subcomponents"
+            $result[0].TargetBehavior | Should -Be "Include As Shell"
+        }
+        finally {
+            if (Test-Path $zipPath1) { Remove-Item $zipPath1 -Force -ErrorAction SilentlyContinue }
+            if (Test-Path $zipPath2) { Remove-Item $zipPath2 -Force -ErrorAction SilentlyContinue }
         }
     }
 
@@ -214,6 +328,7 @@ Describe 'Compare-DataverseSolution' {
             
             $result | Should -HaveCount 1
             $result[0].Status | Should -Be "Added"
+            $result[0].SourceBehavior | Should -Not -BeNullOrEmpty
         }
         finally {
             if (Test-Path $zipPath) {
