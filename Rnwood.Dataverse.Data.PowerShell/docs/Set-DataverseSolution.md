@@ -8,50 +8,46 @@ schema: 2.0.0
 # Set-DataverseSolution
 
 ## SYNOPSIS
-Updates properties of a solution in Dataverse.
+Creates or updates a solution in Dataverse. Allows setting friendly name, description, version, and publisher.
 
 ## SYNTAX
 
 ```
 Set-DataverseSolution [-UniqueName] <String> [-Name <String>] [-Description <String>] [-Version <String>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-PublisherUniqueName <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 
-This cmdlet updates properties of a solution in Dataverse including the friendly name, description, and version.
-
-Note that managed solutions have restrictions on what can be updated. Only the description can be updated for managed solutions. For unmanaged solutions, you can update the name, description, and version.
+This cmdlet creates a new solution if the specified unique name does not exist, or updates an existing solution. It supports updating the friendly name, description, version (unmanaged only), and publisher (unmanaged only). When creating a solution, the publisher is required.
 
 ## EXAMPLES
 
-### Example 1: Update solution description
+### Example1: Update solution description
 ```powershell
-PS C:\> Set-DataverseSolution -UniqueName "MySolution" -Description "Updated solution description"
-Solution 'MySolution' updated successfully.
+Set-DataverseSolution -Connection $c -UniqueName "MySolution" -Description "Updated solution description"
 ```
 
 Updates the description of an unmanaged solution.
 
-### Example 2: Update solution name and version
+### Example2: Update solution name and version
 ```powershell
-PS C:\> Set-DataverseSolution -UniqueName "MySolution" -Name "My Updated Solution" -Version "1.1.0.0"
-Solution 'MySolution' updated successfully.
+Set-DataverseSolution -Connection $c -UniqueName "MySolution" -Name "My Updated Solution" -Version "1.1.0.0"
 ```
 
 Updates both the friendly name and version of an unmanaged solution.
 
-### Example 3: Update all updatable properties
+### Example3: Update all updatable properties
 ```powershell
-PS C:\> Set-DataverseSolution -UniqueName "MySolution" -Name "Updated Name" -Description "New description" -Version "2.0.0.0"
-Solution 'MySolution' updated successfully.
+Set-DataverseSolution -Connection $c -UniqueName "MySolution" -Name "Updated Name" -Description "New description" -Version "2.0.0.0"
 ```
 
 Updates the name, description, and version in one operation.
 
-### Example 4: Attempt to update managed solution (shows warning)
+### Example4: Attempt to update managed solution (shows warning)
 ```powershell
-PS C:\> Set-DataverseSolution -UniqueName "ManagedSolution" -Name "New Name" -Version "2.0.0.0"
+Set-DataverseSolution -Connection $c -UniqueName "ManagedSolution" -Name "New Name" -Version "2.0.0.0"
 WARNING: Solution is managed. Only the description can be updated for managed solutions.
 WARNING: Cannot update name of managed solution. Skipping name update.
 WARNING: Cannot update version of managed solution. Skipping version update.
@@ -60,22 +56,14 @@ WARNING: No updates to apply. Please specify at least one property to update (Na
 
 Attempts to update a managed solution, but only description updates are allowed.
 
-## PARAMETERS
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
+### Example5: Create a new solution
+```powershell
+Set-DataverseSolution -Connection $c -UniqueName "NewSolution" -Name "My New Solution" -Description "Description" -Version "1.0.0.0" -PublisherUniqueName "defaultpublisher"
 ```
+
+Creates a new solution with the specified properties.
+
+## PARAMETERS
 
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
@@ -84,6 +72,21 @@ DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or st
 Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
 
 Required: False
 Position: Named
@@ -122,8 +125,23 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -PublisherUniqueName
+The unique name of the publisher. This is required when creating a new solution.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -UniqueName
-The unique name of the solution to update.
+The unique name of the solution to create or update.
 
 ```yaml
 Type: String
@@ -133,7 +151,7 @@ Aliases:
 Required: True
 Position: 0
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
@@ -197,6 +215,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - For unmanaged solutions, you can update the name, description, and version.
 - Version must be in the format 'major.minor.build.revision' (e.g., '1.0.0.0').
 - At least one property (Name, Description, or Version) must be specified for the update to proceed.
+- When creating a solution, PublisherUniqueName is required.
 
 ## RELATED LINKS
 

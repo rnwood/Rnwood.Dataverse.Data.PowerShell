@@ -19,13 +19,13 @@ Remove-DataverseSolution [-UniqueName] <String> [-PollingIntervalSeconds <Int32>
 
 ## DESCRIPTION
 
-This cmdlet removes (uninstalls) a solution from a Dataverse environment. The operation is asynchronous and the cmdlet monitors the deletion progress.
+This cmdlet removes (uninstalls) a solution from a Dataverse environment using the asynchronous uninstall process. The operation is asynchronous and the cmdlet monitors the uninstall progress.
 
 When removing a solution:
 - All customizations contained in the solution are removed (for managed solutions)
 - Unmanaged solutions only remove the solution container, not the customizations
 - Dependencies must be resolved before removal (e.g., remove dependent solutions first)
-- The cmdlet monitors the deletion and reports progress
+- The cmdlet monitors the uninstall operation and reports progress
 
 ## EXAMPLES
 
@@ -111,7 +111,7 @@ Accept wildcard characters: False
 ```
 
 ### -PollingIntervalSeconds
-Polling interval in seconds for checking deletion status. Default is 5 seconds.
+Polling interval in seconds for checking uninstall status. Default is 5 seconds.
 
 ```yaml
 Type: Int32
@@ -126,7 +126,7 @@ Accept wildcard characters: False
 ```
 
 ### -TimeoutSeconds
-Timeout in seconds for the deletion operation. Default is 600 seconds (10 minutes).
+Timeout in seconds for the uninstall operation. Default is 3600 seconds (1 hour).
 
 ```yaml
 Type: Int32
@@ -135,7 +135,7 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: 600
+Default value: 3600
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -151,7 +151,7 @@ Aliases:
 Required: True
 Position: 0
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
@@ -200,7 +200,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - Removing a managed solution removes all its customizations.
 - Removing an unmanaged solution only removes the solution container, not the customizations.
 - Dependencies must be resolved before removal (remove dependent solutions first).
-- The cmdlet monitors the deletion progress and reports via PowerShell's progress bar.
+- The cmdlet monitors the uninstall progress and reports via PowerShell's progress bar.
 - For large solutions or slow environments, consider increasing the timeout value.
 
 ## RELATED LINKS

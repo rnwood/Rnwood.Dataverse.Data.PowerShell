@@ -236,6 +236,55 @@ Describe 'Solution Cmdlets' {
             
             $result | Should -Be "Solution 'UpdateTestSolution' updated successfully."
         }
+
+        It "Creates a new solution if not found" {
+            $created = $false
+            $publisherId = [Guid]::NewGuid()
+            
+            $connection = getMockConnection -RequestInterceptor {
+                param($service, $request)
+                
+                # Mock RetrieveMultipleRequest for finding solution (return empty)
+                if ($request -is [Microsoft.Xrm.Sdk.Messages.RetrieveMultipleRequest] -and $request.Query.EntityName -eq "solution") {
+                    $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveMultipleResponse
+                    $collection = New-Object Microsoft.Xrm.Sdk.EntityCollection
+                    # Empty collection
+                    
+                    $response.Results["EntityCollection"] = $collection
+                    return $response
+                }
+                
+                # Mock RetrieveMultipleRequest for finding publisher
+                if ($request -is [Microsoft.Xrm.Sdk.Messages.RetrieveMultipleRequest] -and $request.Query.EntityName -eq "publisher") {
+                    $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveMultipleResponse
+                    $collection = New-Object Microsoft.Xrm.Sdk.EntityCollection
+                    
+                    $publisher = New-Object Microsoft.Xrm.Sdk.Entity "publisher"
+                    $publisher.Id = $publisherId
+                    $publisher["publisherid"] = $publisherId
+                    $publisher["uniquename"] = "TestPublisher"
+                    
+                    $collection.Entities.Add($publisher)
+                    
+                    $response.Results["EntityCollection"] = $collection
+                    return $response
+                }
+                
+                # Mock CreateRequest
+                if ($request -is [Microsoft.Xrm.Sdk.Messages.CreateRequest]) {
+                    $script:created = $true
+                    $response = New-Object Microsoft.Xrm.Sdk.Messages.CreateResponse
+                    $response.Results["id"] = [Guid]::NewGuid()
+                    return $response
+                }
+                
+                return $null
+            }
+            
+            $result = Set-DataverseSolution -Connection $connection -UniqueName "NewTestSolution" -Name "New Solution" -Description "New description" -Version "2.0.0.0" -PublisherUniqueName "TestPublisher" -Confirm:$false
+            
+            $result | Should -Be "Solution 'NewTestSolution' created successfully."
+        }
     }
 
     Context 'Remove-DataverseSolution' {

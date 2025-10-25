@@ -60,7 +60,9 @@ Non features:
   - [Parallelising work for best performance](#parallelising-work-for-best-performance)
   - [Solution Management](#solution-management)
     - [Exporting solutions](#exporting-solutions)
+    - [Listing solutions](#listing-solutions)
     - [Importing solutions](#importing-solutions)
+    - [Uninstalling/removing solutions](#uninstallingremoving-solutions)
 - [Specialized Invoke-Dataverse* Cmdlets](#specialized-invoke-dataverse-cmdlets)
   - [How to Find and Use Specialized Cmdlets](#how-to-find-and-use-specialized-cmdlets)
   - [Usage Pattern](#usage-pattern)
@@ -1330,6 +1332,7 @@ Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
        Set-DataverseRecord -TableName contact -UpdateAllColumns
   }
 ```
+
 Please read the full cmdlet documentation for more recommendations.
 
 See also [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) which supports a DOP parameter.
@@ -1340,7 +1343,7 @@ When to avoid parallelism:
 
 ### Solution Management
 
-You can manage Dataverse solutions from this module. Prefer the high-level `Export-DataverseSolution` and `Import-DataverseSolution` cmdlets for common operations. For advanced control use the `Invoke-` variants (`Invoke-DataverseExportSolution`, `Invoke-DataverseExportSolutionAsync`, `Invoke-DataverseImportSolution`, `Invoke-DataverseImportSolutionAsync`) documented in the `docs/` folder.
+You can manage Dataverse solutions from this module. Prefer the high-level `Export-DataverseSolution`, `Import-DataverseSolution`, and `Remove-DataverseSolution` cmdlets for common operations. For advanced control use the `Invoke-` variants (`Invoke-DataverseExportSolution`, `Invoke-DataverseExportSolutionAsync`, `Invoke-DataverseImportSolution`, `Invoke-DataverseImportSolutionAsync`) documented in the `docs/` folder.
 
 #### Exporting solutions
 
@@ -1355,6 +1358,26 @@ Export-DataverseSolution -Connection $c -SolutionName "MySolution" -OutFile "C:\
 # Export managed solution and capture bytes
 $b = Export-DataverseSolution -Connection $c -SolutionName "MySolution" -Managed -PassThru
 [System.IO.File]::WriteAllBytes("C:\Exports\MySolution_managed.zip", $b)
+```
+
+#### Listing solutions
+
+You can list solutions in a Dataverse environment using the `Get-DataverseSolution` cmdlet. This cmdlet retrieves information about installed solutions, including their unique names, display names, versions, and other metadata.
+
+Examples:
+
+```powershell
+# List all solutions
+Get-DataverseSolution -Connection $c
+
+# List managed solutions only
+Get-DataverseSolution -Connection $c -Managed
+
+# List unmanaged solutions only
+Get-DataverseSolution -Connection $c -Unmanaged
+
+# Get details for a specific solution
+Get-DataverseSolution -Connection $c -UniqueName "MySolution"
 ```
 
 #### Importing solutions
@@ -1387,16 +1410,27 @@ Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -M
 Import-DataverseSolution -Connection $c -SolutionBytes $bytes
 ```
 
+#### Uninstalling/removing solutions
 
+- `Remove-DataverseSolution` removes (uninstalls) a solution from a Dataverse environment using the asynchronous uninstall process. The operation is asynchronous and the cmdlet monitors the uninstall progress.
+- When removing a solution:
+  - All customizations contained in the solution are removed (for managed solutions)
+  - Unmanaged solutions only remove the solution container, not the customizations
+  - Dependencies must be resolved before removal (e.g., remove dependent solutions first)
+- The cmdlet monitors the uninstall operation and reports progress
+- See the full parameter reference: [Remove-DataverseSolution](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseSolution.md).
 
 Examples:
 
 ```powershell
-# Import and overwrite unmanaged customisations, then publish included workflows
-Invoke-DataverseImportSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -OverwriteUnmanagedCustomizations -PublishWorkflows
+# Remove a solution
+Remove-DataverseSolution -Connection $c -UniqueName "MySolution"
 
-# Import as a holding solution for staged upgrade (unless the solution is not already present, when it will just be imported)
-Invoke-DataverseImportSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -HoldingSolution $true
+# Remove with confirmation
+Remove-DataverseSolution -Connection $c -UniqueName "MySolution" -Confirm
+
+# Remove with custom timeout for large solutions
+Remove-DataverseSolution -Connection $c -UniqueName "LargeSolution" -TimeoutSeconds 1200 -PollingIntervalSeconds 10
 ```
 
 ##### Handling Connection References and Environment Variables
@@ -1433,5 +1467,8 @@ Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" `
 **Notes:**
 - Connection reference values must be valid connection IDs from the target environment which the user importing the solution has access to.
 - Environment variable values are strings that will be set during import.
+
+
+
 
 

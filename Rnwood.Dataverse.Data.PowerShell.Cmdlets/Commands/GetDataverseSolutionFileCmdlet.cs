@@ -65,9 +65,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             WriteObject(solutionInfo);
         }
 
-        private SolutionInfo ParseSolutionFile(byte[] solutionBytes)
+        private SolutionFileInfo ParseSolutionFile(byte[] solutionBytes)
         {
-            var solutionInfo = new SolutionInfo();
+            var solutionInfo = new SolutionFileInfo();
 
             using (var memoryStream = new MemoryStream(solutionBytes))
             using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))

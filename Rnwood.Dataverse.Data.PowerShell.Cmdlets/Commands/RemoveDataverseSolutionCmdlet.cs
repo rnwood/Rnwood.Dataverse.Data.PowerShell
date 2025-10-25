@@ -3,33 +3,34 @@ using System.Management.Automation;
 using System.Threading;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Crm.Sdk.Messages;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
     /// Removes (uninstalls) a solution from Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "DataverseSolution", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
+    [Cmdlet(VerbsCommon.Remove, "DataverseSolution", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     public class RemoveDataverseSolutionCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
         /// Gets or sets the unique name of the solution to remove.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, HelpMessage = "The unique name of the solution to remove.")]
+        [Parameter(Mandatory = true, Position = 0, HelpMessage = "The unique name of the solution to remove.", ValueFromPipelineByPropertyName =true)]
         [ValidateNotNullOrEmpty]
         public string UniqueName { get; set; }
 
         /// <summary>
-        /// Gets or sets the polling interval in seconds for checking deletion status. Default is 5 seconds.
+        /// Gets or sets the polling interval in seconds for checking uninstall status. Default is 5 seconds.
         /// </summary>
-        [Parameter(HelpMessage = "Polling interval in seconds for checking deletion status. Default is 5.")]
+        [Parameter(HelpMessage = "Polling interval in seconds for checking uninstall status. Default is 5.")]
         public int PollingIntervalSeconds { get; set; } = 5;
 
         /// <summary>
-        /// Gets or sets the timeout in seconds for the deletion operation. Default is 600 seconds (10 minutes).
+        /// Gets or sets the timeout in seconds for the uninstall operation. Default is 3600 seconds (1 hour).
         /// </summary>
-        [Parameter(HelpMessage = "Timeout in seconds for the deletion operation. Default is 600 (10 minutes).")]
-        public int TimeoutSeconds { get; set; } = 600;
+        [Parameter(HelpMessage = "Timeout in seconds for the uninstall operation. Default is 3600 (1 hour).")]
+        public int TimeoutSeconds { get; set; } = 3600;
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -77,7 +78,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var isManaged = solution.GetAttributeValue<bool>("ismanaged");
 
             WriteVerbose($"Found solution: {friendlyName} (ID: {solutionId}, Managed: {isManaged})");
-            WriteVerbose("Deleting solution...");
+            WriteVerbose("Starting asynchronous uninstall of solution...");
 
             // Create progress record
             var progressRecord = new ProgressRecord(1, "Removing Solution", $"Removing solution '{friendlyName}'")
@@ -86,12 +87,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             };
             WriteProgress(progressRecord);
 
-            // Delete the solution
-            Connection.Delete("solution", solutionId);
+            // Execute asynchronous uninstall request
+            var request = new UninstallSolutionAsyncRequest { SolutionUniqueName = UniqueName };
+            var response = (UninstallSolutionAsyncResponse)Connection.Execute(request);
+            var asyncOperationId = response.AsyncOperationId;
 
-            WriteVerbose("Delete request submitted. Monitoring deletion progress...");
+            WriteVerbose($"Uninstall request submitted. AsyncOperationId: {asyncOperationId}. Monitoring uninstall progress...");
 
-            // Monitor the deletion by checking if the solution still exists
+            // Monitor the asynchronous operation
             var startTime = DateTime.UtcNow;
             var timeout = TimeSpan.FromSeconds(TimeoutSeconds);
             var pollingInterval = TimeSpan.FromSeconds(PollingIntervalSeconds);
@@ -104,8 +107,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     progressRecord.RecordType = ProgressRecordType.Completed;
                     WriteProgress(progressRecord);
                     ThrowTerminatingError(new ErrorRecord(
-                        new TimeoutException($"Solution deletion timed out after {TimeoutSeconds} seconds."),
-                        "DeletionTimeout",
+                        new TimeoutException($"Solution uninstall timed out after {TimeoutSeconds} seconds."),
+                        "UninstallTimeout",
                         ErrorCategory.OperationTimeout,
                         UniqueName));
                     return;
@@ -116,43 +119,47 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     progressRecord.RecordType = ProgressRecordType.Completed;
                     WriteProgress(progressRecord);
-                    WriteWarning("Solution deletion was stopped by user.");
+                    WriteWarning("Solution uninstall was stopped by user.");
                     return;
                 }
 
-                // Check if solution still exists
-                var checkQuery = new QueryExpression("solution")
+                // Retrieve the async operation status
+                var asyncOp = Connection.Retrieve("asyncoperation", asyncOperationId, new ColumnSet("statecode", "statuscode", "message"));
+                var stateCode = asyncOp.GetAttributeValue<OptionSetValue>("statecode")?.Value ?? -1;
+
+                if (stateCode == 3) // Completed
                 {
-                    ColumnSet = new ColumnSet("solutionid"),
-                    Criteria = new FilterExpression
+                    var statusCode = asyncOp.GetAttributeValue<OptionSetValue>("statuscode")?.Value ?? -1;
+                    if (statusCode == 30) // Succeeded
                     {
-                        Conditions =
-                        {
-                            new ConditionExpression("solutionid", ConditionOperator.Equal, solutionId)
-                        }
-                    },
-                    TopCount = 1
-                };
-
-                var checkResults = Connection.RetrieveMultiple(checkQuery);
-
-                if (checkResults.Entities.Count == 0)
-                {
-                    // Solution has been deleted
-                    progressRecord.PercentComplete = 100;
-                    progressRecord.RecordType = ProgressRecordType.Completed;
-                    WriteProgress(progressRecord);
-                    WriteVerbose("Solution deleted successfully.");
-                    WriteObject($"Solution '{friendlyName}' removed successfully.");
-                    return;
+                        progressRecord.PercentComplete = 100;
+                        progressRecord.RecordType = ProgressRecordType.Completed;
+                        WriteProgress(progressRecord);
+                        WriteVerbose("Solution uninstalled successfully.");
+                        WriteObject($"Solution '{friendlyName}' removed successfully.");
+                        return;
+                    }
+                    else
+                    {
+                        // Failed or other status
+                        var message = asyncOp.GetAttributeValue<string>("message") ?? "Unknown error during uninstall.";
+                        progressRecord.RecordType = ProgressRecordType.Completed;
+                        WriteProgress(progressRecord);
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Solution uninstall failed: {message}"),
+                            "UninstallFailed",
+                            ErrorCategory.OperationStopped,
+                            UniqueName));
+                        return;
+                    }
                 }
 
-                // Solution still exists, update progress and continue polling
-                progressRecord.StatusDescription = "Deleting...";
+                // Operation still in progress
+                progressRecord.StatusDescription = "Uninstalling...";
                 progressRecord.PercentComplete = 50;
                 WriteProgress(progressRecord);
 
-                WriteVerbose("Solution still exists. Waiting before checking again...");
+                WriteVerbose("Uninstall operation in progress. Waiting before checking again...");
 
                 // Wait before polling again
                 Thread.Sleep(pollingInterval);

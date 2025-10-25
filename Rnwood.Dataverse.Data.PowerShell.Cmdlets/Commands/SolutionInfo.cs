@@ -5,10 +5,20 @@ using System.Text;
 
 namespace Rnwood.Dataverse.Data.PowerShell
 {
-	/// <summary>
-	/// Contains information about a Dataverse solution.
-	/// </summary>
-    public class SolutionInfo
+	public class SolutionInfo : SolutionInfoBase
+	{
+        public Guid? Id { get; set; }
+    }
+
+	public class SolutionFileInfo : SolutionInfoBase
+	{
+
+	}
+
+    /// <summary>
+    /// Contains information about a Dataverse solution.
+    /// </summary>
+    public class SolutionInfoBase
     {
 		/// <summary>
 		/// Gets or sets the version of the solution.
@@ -33,7 +43,7 @@ namespace Rnwood.Dataverse.Data.PowerShell
 		/// <summary>
 		/// Gets or sets the unique identifier of the solution.
 		/// </summary>
-        public Guid Id { get; set; }
+
 		/// <summary>
 		/// Gets or sets the publisher name.
 		/// </summary>
