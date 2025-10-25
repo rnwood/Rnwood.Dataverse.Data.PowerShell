@@ -841,7 +841,6 @@ Describe "Examples-Comparison Documentation Tests" {
             # Validates that with default batching, all records are attempted
             # This complements Example 12 by showing the batch behavior
             
-            $processedCount = 0
             $records = 1..5 | ForEach-Object {
                 $contact = New-Object Microsoft.Xrm.Sdk.Entity("contact")
                 $contact.Id = $contact["contactid"] = [Guid]::NewGuid()
@@ -1105,6 +1104,84 @@ Describe "Examples-Comparison Documentation Tests" {
             $retrieved = Get-DataverseRecord -Connection $script:conn -TableName contact -FilterValues @{"firstname"="BatchTest0"}
             $retrieved | Should -Not -BeNull
             $retrieved.firstname | Should -Be "BatchTest0"
+        }
+    }
+
+    Context "Solution Export Examples" {
+        It "Export-DataverseSolution cmdlet is available and properly documented" {
+            # Validates that the Export-DataverseSolution cmdlet exists with expected parameters
+            $cmd = Get-Command Export-DataverseSolution -ErrorAction SilentlyContinue
+            $cmd | Should -Not -BeNull
+            $cmd.Parameters.ContainsKey('SolutionName') | Should -Be $true
+            $cmd.Parameters.ContainsKey('Managed') | Should -Be $true
+            $cmd.Parameters.ContainsKey('OutFile') | Should -Be $true
+            $cmd.Parameters.ContainsKey('PassThru') | Should -Be $true
+            $cmd.Parameters.ContainsKey('PollingIntervalSeconds') | Should -Be $true
+            $cmd.Parameters.ContainsKey('TimeoutSeconds') | Should -Be $true
+            
+            # Validate export settings parameters are available
+            $cmd.Parameters.ContainsKey('ExportAutoNumberingSettings') | Should -Be $true
+            $cmd.Parameters.ContainsKey('ExportCalendarSettings') | Should -Be $true
+        }
+
+        It "Export-DataverseSolution supports WhatIf as documented in examples" {
+            # Validates the WhatIf example from Examples-Export-DataverseSolution.ps1
+            $conn = getMockConnection
+            { Export-DataverseSolution -Connection $conn -SolutionName "TestSolution" -OutFile "test.zip" -WhatIf } | Should -Not -Throw
+        }
+    }
+
+    Context "Solution Import Examples" {
+        It "Import-DataverseSolution cmdlet is available and properly documented" {
+            # Validates that the Import-DataverseSolution cmdlet exists with expected parameters
+            $cmd = Get-Command Import-DataverseSolution -ErrorAction SilentlyContinue
+            $cmd | Should -Not -BeNull
+            $cmd.Parameters.ContainsKey('InFile') | Should -Be $true
+            $cmd.Parameters.ContainsKey('SolutionFile') | Should -Be $true
+            $cmd.Parameters.ContainsKey('OverwriteUnmanagedCustomizations') | Should -Be $true
+            $cmd.Parameters.ContainsKey('PublishWorkflows') | Should -Be $true
+            $cmd.Parameters.ContainsKey('Mode') | Should -Be $true
+            $cmd.Parameters.ContainsKey('ConnectionReferences') | Should -Be $true
+            $cmd.Parameters.ContainsKey('EnvironmentVariables') | Should -Be $true
+            $cmd.Parameters.ContainsKey('SkipConnectionReferenceValidation') | Should -Be $true
+            $cmd.Parameters.ContainsKey('SkipEnvironmentVariableValidation') | Should -Be $true
+            $cmd.Parameters.ContainsKey('PollingIntervalSeconds') | Should -Be $true
+            $cmd.Parameters.ContainsKey('TimeoutSeconds') | Should -Be $true
+        }
+
+        It "Import-DataverseSolution supports WhatIf as documented in examples" {
+            # Validates the WhatIf example from Examples-Import-DataverseSolution.ps1
+            $conn = getMockConnection
+            $tempFile = [System.IO.Path]::GetTempFileName()
+            [System.IO.File]::WriteAllBytes($tempFile, [byte[]](1,2,3,4,5))
+            
+            try {
+                { Import-DataverseSolution -Connection $conn -InFile $tempFile -WhatIf } | Should -Not -Throw
+            }
+            finally {
+                if (Test-Path $tempFile) {
+                    Remove-Item $tempFile -Force
+                }
+            }
+        }
+
+        It "Import-DataverseSolution ConnectionReferences parameter accepts hashtable" {
+            # Validates that the ConnectionReferences parameter type is correct
+            $cmd = Get-Command Import-DataverseSolution
+            $cmd.Parameters['ConnectionReferences'].ParameterType.Name | Should -Be 'Hashtable'
+        }
+
+        It "Import-DataverseSolution EnvironmentVariables parameter accepts hashtable" {
+            # Validates that the EnvironmentVariables parameter type is correct
+            $cmd = Get-Command Import-DataverseSolution
+            $cmd.Parameters['EnvironmentVariables'].ParameterType.Name | Should -Be 'Hashtable'
+        }
+
+        It "Import-DataverseSolution validation skip switches are available" {
+            # Validates that validation skip parameters exist
+            $cmd = Get-Command Import-DataverseSolution
+            $cmd.Parameters['SkipConnectionReferenceValidation'].ParameterType.Name | Should -Be 'SwitchParameter'
+            $cmd.Parameters['SkipEnvironmentVariableValidation'].ParameterType.Name | Should -Be 'SwitchParameter'
         }
     }
 }

@@ -41,9 +41,23 @@ Contains the data that is needed to import a solution.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Import a solution from file
 ```powershell
-PS C:\> Invoke-DataverseImportSolution -Connection <ServiceClient> -OverwriteUnmanagedCustomizations <Boolean> -PublishWorkflows <Boolean> -CustomizationFile <Byte[]> -InFile <String> -ImportJobId <Guid> -ConvertToManaged <Boolean> -SkipProductUpdateDependencies <Boolean> -HoldingSolution <Boolean> -SkipQueueRibbonJob <Boolean> -LayerDesiredOrder <LayerDesiredOrder> -AsyncRibbonProcessing <Boolean> -ComponentParameters <EntityCollection> -IsTemplateMode <Boolean> -TemplateSuffix <String> -SolutionParameters <SolutionParameters> -TemplateDisplayNamePrefix <String>
+$solutionBytes = [System.IO.File]::ReadAllBytes("C:\Solutions\MySolution.zip")
+
+Invoke-DataverseImportSolution -Connection $c -CustomizationFile $solutionBytes -OverwriteUnmanagedCustomizations $true -PublishWorkflows $true
+```
+
+### Example 2: Import a solution with holding for upgrade
+```powershell
+Invoke-DataverseImportSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -HoldingSolution $true
+```
+
+### Example 3: Import a solution without overwriting unmanaged customizations
+```powershell
+$solutionBytes = [System.IO.File]::ReadAllBytes("C:\Solutions\MySolution.zip")
+
+Invoke-DataverseImportSolution -Connection $c -CustomizationFile $solutionBytes -OverwriteUnmanagedCustomizations $false -PublishWorkflows $true
 ```
 
 ## PARAMETERS

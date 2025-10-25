@@ -30,9 +30,25 @@ Contains the data needed to export a solution.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Export an unmanaged solution
 ```powershell
-PS C:\> Invoke-DataverseExportSolution -Connection <ServiceClient> -SolutionName <String> -Managed <Boolean> -TargetVersion <String> -ExportAutoNumberingSettings <Boolean> -ExportCalendarSettings <Boolean> -ExportCustomizationSettings <Boolean> -ExportEmailTrackingSettings <Boolean> -ExportGeneralSettings <Boolean> -ExportMarketingSettings <Boolean> -ExportOutlookSynchronizationSettings <Boolean> -ExportRelationshipRoles <Boolean> -ExportIsvConfig <Boolean> -ExportSales <Boolean> -ExportExternalApplications <Boolean> -ExportComponentsParams <ExportComponentsParams>
+$response = Invoke-DataverseExportSolution -Connection $c -SolutionName "MySolution" -Managed $false
+
+[System.IO.File]::WriteAllBytes("C:\Solutions\MySolution.zip", $response.ExportSolutionFile)
+```
+
+### Example 2: Export a managed solution with settings
+```powershell
+$response = Invoke-DataverseExportSolution -Connection $c -SolutionName "MySolution" -Managed $true -ExportCustomizationSettings $true -ExportGeneralSettings $true
+
+[System.IO.File]::WriteAllBytes("C:\Solutions\MySolution_managed.zip", $response.ExportSolutionFile)
+```
+
+### Example 3: Export solution with specific settings included
+```powershell
+$response = Invoke-DataverseExportSolution -Connection $c -SolutionName "MySolution" -Managed $false -ExportAutoNumberingSettings $true -ExportCalendarSettings $true -ExportEmailTrackingSettings $true
+
+[System.IO.File]::WriteAllBytes("C:\Solutions\MySolution_with_settings.zip", $response.ExportSolutionFile)
 ```
 
 ## PARAMETERS
