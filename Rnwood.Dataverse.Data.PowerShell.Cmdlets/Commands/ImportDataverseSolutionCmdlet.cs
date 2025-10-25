@@ -18,7 +18,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Imports a solution to Dataverse using an asynchronous job with progress reporting.
     /// </summary>
-    [Cmdlet(VerbsData.Import, "DataverseSolution", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High, DefaultParameterSetName = "FromFile")]
+    [Cmdlet(VerbsData.Import, "DataverseSolution", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium, DefaultParameterSetName = "FromFile")]
     public class ImportDataverseSolutionCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
@@ -101,10 +101,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public int PollingIntervalSeconds { get; set; } = 5;
 
         /// <summary>
-        /// Gets or sets the timeout in seconds for the import operation. Default is 1800 seconds (30 minutes).
+        /// Gets or sets the timeout in seconds for the import operation. Default is 7200 seconds (2 hours).
         /// </summary>
-        [Parameter(HelpMessage = "Timeout in seconds for the import operation. Default is 1800 (30 minutes).")]
-        public int TimeoutSeconds { get; set; } = 1800;
+        [Parameter(HelpMessage = "Timeout in seconds for the import operation. Default is 7200 (2 hours).")]
+        public int TimeoutSeconds { get; set; } = 7200;
 
         /// <summary>
         /// Gets or sets whether to skip validation of connection references.
@@ -170,11 +170,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Extract solution unique name from the solution file (this is a simplified approach)
                 // In a real scenario, you might want to parse the solution XML
                 WriteVerbose("HoldingSolution specified - checking if solution already exists...");
-                
+
                 // Try to detect if solution exists by attempting to query for it
                 // We'll catch the exception if it doesn't exist and fallback
                 shouldFallbackToRegularImport = !DoesSolutionExist(solutionBytes);
-                
+
                 if (shouldFallbackToRegularImport)
                 {
                     WriteWarning("Solution does not exist in the target environment. Falling back to regular import instead of upgrade.");
@@ -183,9 +183,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Build ComponentParameters from ConnectionReferences and EnvironmentVariables hashtables
             EntityCollection componentParameters = null;
-            
+
             int totalParams = (ConnectionReferences?.Count ?? 0) + (EnvironmentVariables?.Count ?? 0);
-            
+
             if (totalParams > 0)
             {
                 WriteVerbose($"Processing {totalParams} component parameter(s)...");
@@ -205,7 +205,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         var componentParam = new Entity("connectionreference");
                         componentParam["connectionreferencelogicalname"] = connectionRefName;
                         componentParam["connectionid"] = connectionId;
-                        
+
                         componentParameters.Entities.Add(componentParam);
                     }
                 }
@@ -214,10 +214,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (EnvironmentVariables != null && EnvironmentVariables.Count > 0)
                 {
                     WriteVerbose($"Processing {EnvironmentVariables.Count} environment variable(s)...");
-                    
+
                     // Query for existing environment variable values by schema name
                     var existingEnvVarValuesBySchemaName = GetExistingEnvironmentVariableValueIds(EnvironmentVariables.Keys.Cast<object>().Select(k => k.ToString()).ToList());
-                    
+
                     foreach (DictionaryEntry entry in EnvironmentVariables)
                     {
                         var envVarSchemaName = entry.Key.ToString();
@@ -228,14 +228,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         var componentParam = new Entity("environmentvariablevalue");
                         componentParam["schemaname"] = envVarSchemaName;
                         componentParam["value"] = envVarValue;
-                        
+
                         // If there's an existing value record, include its ID for update
                         if (existingEnvVarValuesBySchemaName.TryGetValue(envVarSchemaName, out var existingValueId))
                         {
                             componentParam["environmentvariablevalueid"] = existingValueId;
                             WriteVerbose($"    Found existing value record with ID: {existingValueId}");
                         }
-                        
+
                         componentParameters.Entities.Add(componentParam);
                     }
                 }
@@ -264,10 +264,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Execute the async import request
             var importResponse = (ImportSolutionAsyncResponse)Connection.Execute(importRequest);
-            var importJobId = (Guid)importResponse.Results["ImportJobId"];
-            var asyncOperationId = (Guid)importResponse.Results["AsyncOperationId"];
+            var importJobId = importResponse.ImportJobKey;
+            var asyncOperationId = importResponse.AsyncOperationId;
 
-            WriteVerbose($"Import job started. ImportJobId: {importJobId}, AsyncOperationId: {asyncOperationId}");
+            WriteVerbose($"Import job started. ImportJobKey: {importJobId}, AsyncOperationId: {asyncOperationId}");
 
             // Monitor the async operation
             var progressRecord = new ProgressRecord(1, "Importing Solution", "Importing solution...")
@@ -335,8 +335,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var message = asyncOperation.GetAttributeValue<string>("message");
                 var friendlyMessage = asyncOperation.GetAttributeValue<string>("friendlymessage");
 
+                // Query the importjob record to get progress
+                var jobQuery = new QueryExpression("importjob")
+                {
+                    ColumnSet = new ColumnSet("progress"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("importjobid", ConditionOperator.Equal, importJobId)
+                        }
+                    }
+                };
+
+                var jobResults = Connection.RetrieveMultiple(jobQuery);
+                int progress = 0;
+                if (jobResults.Entities.Count > 0)
+                {
+                    progress = (int) jobResults.Entities[0].GetAttributeValue<double>("progress");
+                }
+
                 var statusDescription = GetStatusDescription(statusCode);
                 progressRecord.StatusDescription = $"{statusDescription}";
+                progressRecord.PercentComplete = progress;
 
                 if (!string.IsNullOrEmpty(friendlyMessage))
                 {
@@ -347,7 +368,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     progressRecord.CurrentOperation = message;
                 }
 
-                WriteVerbose($"Import status: {statusDescription} (StatusCode={statusCode})");
+                WriteVerbose($"Import status: {statusDescription} (StatusCode={statusCode}, Progress={progress}%)");
 
                 if (statusCode == 30) // Succeeded
                 {
@@ -355,7 +376,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     progressRecord.RecordType = ProgressRecordType.Completed;
                     WriteProgress(progressRecord);
                     WriteVerbose("Import completed successfully.");
-                    
+
                     // Output the import job ID
                     var result = new PSObject();
                     result.Properties.Add(new PSNoteProperty("ImportJobId", importJobId));
@@ -368,7 +389,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     progressRecord.RecordType = ProgressRecordType.Completed;
                     WriteProgress(progressRecord);
-                    var errorMessage = friendlyMessage ?? message ?? "Unknown error";
+                    var errorMessage = (friendlyMessage ?? "Unknown error") + " - " + message;
                     ThrowTerminatingError(new ErrorRecord(
                         new InvalidOperationException($"Solution import failed: {errorMessage}"),
                         "ImportFailed",
@@ -385,16 +406,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 else
                 {
-                    // In progress - update progress percentage based on status
-                    if (statusCode == 20) // InProgress
-                    {
-                        progressRecord.PercentComplete = 50;
-                    }
-                    else if (statusCode == 0 || statusCode == 10) // Waiting
-                    {
-                        progressRecord.PercentComplete = 10;
-                    }
-
+                    // In progress - progress is set from importjob above
                     WriteProgress(progressRecord);
                 }
 
@@ -409,7 +421,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 // Extract the solution unique name from customizations.xml inside the zip
                 string solutionUniqueName = ExtractSolutionUniqueName(solutionBytes);
-                
+
                 if (string.IsNullOrEmpty(solutionUniqueName))
                 {
                     WriteVerbose("Could not extract solution unique name from ZIP. Assuming solution doesn't exist.");
@@ -417,7 +429,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 WriteVerbose($"Checking if solution '{solutionUniqueName}' exists in target environment...");
-                
+
                 var query = new QueryExpression("solution")
                 {
                     ColumnSet = new ColumnSet("uniquename"),
@@ -432,10 +444,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
 
                 var solutions = Connection.RetrieveMultiple(query);
-                
+
                 bool exists = solutions.Entities.Count > 0;
                 WriteVerbose($"Solution '{solutionUniqueName}' {(exists ? "exists" : "does not exist")} in target environment.");
-                
+
                 return exists;
             }
             catch (Exception ex)
@@ -454,7 +466,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
                 {
                     // Find the solution.xml file in the solution
-                    var solutionXmlEntry = archive.Entries.FirstOrDefault(e => 
+                    var solutionXmlEntry = archive.Entries.FirstOrDefault(e =>
                         e.FullName.Equals("solution.xml", StringComparison.OrdinalIgnoreCase));
 
                     if (solutionXmlEntry != null)
@@ -468,7 +480,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             // Extract the UniqueName from the solution XML
                             var uniqueNameElement = xdoc.Descendants()
                                 .FirstOrDefault(e => e.Name.LocalName == "UniqueName");
-                            
+
                             if (uniqueNameElement != null)
                             {
                                 var uniqueName = uniqueNameElement.Value;
@@ -489,29 +501,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void ValidateSolutionComponents(byte[] solutionBytes)
         {
-            try
+            WriteVerbose("Validating solution components...");
+
+            // Extract connection references and environment variables from the solution
+            var solutionComponents = ExtractSolutionComponents(solutionBytes);
+
+            // Validate connection references if not skipped
+            if (!SkipConnectionReferenceValidation.IsPresent)
             {
-                WriteVerbose("Validating solution components...");
-
-                // Extract connection references and environment variables from the solution
-                var solutionComponents = ExtractSolutionComponents(solutionBytes);
-
-                // Validate connection references if not skipped
-                if (!SkipConnectionReferenceValidation.IsPresent)
-                {
-                    ValidateConnectionReferences(solutionComponents.ConnectionReferences);
-                }
-
-                // Validate environment variables if not skipped
-                if (!SkipEnvironmentVariableValidation.IsPresent)
-                {
-                    ValidateEnvironmentVariables(solutionComponents.EnvironmentVariables);
-                }
+                ValidateConnectionReferences(solutionComponents.ConnectionReferences);
             }
-            catch (Exception ex)
+
+            // Validate environment variables if not skipped
+            if (!SkipEnvironmentVariableValidation.IsPresent)
             {
-                WriteVerbose($"Error during solution component validation: {ex.Message}");
-                // If we can't parse the solution, we'll let the import proceed and let Dataverse handle any issues
+                ValidateEnvironmentVariables(solutionComponents.EnvironmentVariables);
             }
         }
 
@@ -526,7 +530,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
                 {
                     // Find the customizations.xml file in the solution
-                    var customizationsEntry = archive.Entries.FirstOrDefault(e => 
+                    var customizationsEntry = archive.Entries.FirstOrDefault(e =>
                         e.FullName.Equals("customizations.xml", StringComparison.OrdinalIgnoreCase));
 
                     if (customizationsEntry != null)
@@ -541,7 +545,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             // Connection references are stored in the solution XML with specific schema
                             var connRefElements = xdoc.Descendants()
                                 .Where(e => e.Name.LocalName == "connectionreference");
-                            
+
                             foreach (var connRef in connRefElements)
                             {
                                 var logicalName = connRef.Attribute("connectionreferencelogicalname")?.Value;
@@ -551,21 +555,38 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                     WriteVerbose($"Found connection reference in solution: {logicalName}");
                                 }
                             }
+                        }
+                    }
 
-                            // Extract environment variables
-                            // Environment variables are stored with their schema names
-                            var envVarElements = xdoc.Descendants()
-                                .Where(e => e.Name.LocalName == "environmentvariabledefinition");
-                            
-                            foreach (var envVar in envVarElements)
+                    // Extract environment variables from separate files
+                    var envVarEntries = archive.Entries.Where(e =>
+                        e.FullName.Contains("environmentvariabledefinitions/") &&
+                        e.FullName.EndsWith("environmentvariabledefinition.xml", StringComparison.OrdinalIgnoreCase));
+
+                    foreach (var entry in envVarEntries)
+                    {
+                        try
+                        {
+                            using (var stream = entry.Open())
+                            using (var reader = new StreamReader(stream))
                             {
-                                var schemaName = envVar.Element(XName.Get("schemaname", envVar.Name.NamespaceName))?.Value;
+                                var xmlContent = reader.ReadToEnd();
+                                var xdoc = XDocument.Parse(xmlContent);
+
+                                // Get the schemaname from the root element attribute
+                                var root = xdoc.Root;
+                                var schemaName = root?.Attribute("schemaname")?.Value;
+
                                 if (!string.IsNullOrEmpty(schemaName))
                                 {
                                     environmentVariables.Add(schemaName);
                                     WriteVerbose($"Found environment variable in solution: {schemaName}");
                                 }
                             }
+                        }
+                        catch (Exception ex)
+                        {
+                            WriteVerbose($"Error parsing environment variable file {entry.FullName}: {ex.Message}");
                         }
                     }
                 }
@@ -599,7 +620,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     // Check if it exists in the target environment with a value
                     bool existsInTarget = CheckConnectionReferenceExistsInTarget(connRefName);
-                    
+
                     if (!existsInTarget)
                     {
                         missingConnectionRefs.Add(connRefName);
@@ -656,7 +677,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     // Check if it exists in the target environment with a value
                     bool existsInTarget = CheckEnvironmentVariableExistsInTarget(envVarName);
-                    
+
                     if (!existsInTarget)
                     {
                         missingEnvVars.Add(envVarName);
@@ -694,147 +715,122 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private bool CheckConnectionReferenceExistsInTarget(string connectionRefLogicalName)
         {
-            try
+            var query = new QueryExpression("connectionreference")
             {
-                var query = new QueryExpression("connectionreference")
+                ColumnSet = new ColumnSet("connectionreferencelogicalname", "connectionid"),
+                Criteria = new FilterExpression
                 {
-                    ColumnSet = new ColumnSet("connectionreferencelogicalname", "connectionid"),
-                    Criteria = new FilterExpression
-                    {
-                        Conditions =
+                    Conditions =
                         {
                             new ConditionExpression("connectionreferencelogicalname", ConditionOperator.Equal, connectionRefLogicalName)
                         }
-                    },
-                    TopCount = 1
-                };
+                },
+                TopCount = 1
+            };
 
-                var results = Connection.RetrieveMultiple(query);
-                
-                if (results.Entities.Count > 0)
-                {
-                    var connRef = results.Entities[0];
-                    var connectionId = connRef.GetAttributeValue<Guid?>("connectionid");
-                    // Connection reference exists and has a value set
-                    return connectionId.HasValue && connectionId.Value != Guid.Empty;
-                }
+            var results = Connection.RetrieveMultiple(query);
 
-                return false;
-            }
-            catch (Exception ex)
+            if (results.Entities.Count > 0)
             {
-                WriteVerbose($"Error checking connection reference '{connectionRefLogicalName}': {ex.Message}");
-                // If we can't query, assume it doesn't exist
-                return false;
+                var connRef = results.Entities[0];
+                var connectionId = connRef.GetAttributeValue<string>("connectionid");
+                // Connection reference exists and has a value set
+                return !string.IsNullOrEmpty(connectionId);
             }
+
+            return false;
         }
 
         private bool CheckEnvironmentVariableExistsInTarget(string envVarSchemaName)
         {
-            try
+            // Query for environment variable definition
+            var defQuery = new QueryExpression("environmentvariabledefinition")
             {
-                // Query for environment variable definition
-                var defQuery = new QueryExpression("environmentvariabledefinition")
+                ColumnSet = new ColumnSet("environmentvariabledefinitionid", "schemaname"),
+                Criteria = new FilterExpression
                 {
-                    ColumnSet = new ColumnSet("environmentvariabledefinitionid", "schemaname"),
-                    Criteria = new FilterExpression
-                    {
-                        Conditions =
+                    Conditions =
                         {
                             new ConditionExpression("schemaname", ConditionOperator.Equal, envVarSchemaName)
                         }
+                },
+                TopCount = 1
+            };
+
+            var defResults = Connection.RetrieveMultiple(defQuery);
+
+            if (defResults.Entities.Count > 0)
+            {
+                var envVarDef = defResults.Entities[0];
+                var envVarDefId = envVarDef.Id;
+
+                // Check if there's a value set for this environment variable
+                var valueQuery = new QueryExpression("environmentvariablevalue")
+                {
+                    ColumnSet = new ColumnSet("value"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                            {
+                                new ConditionExpression("environmentvariabledefinitionid", ConditionOperator.Equal, envVarDefId)
+                            }
                     },
                     TopCount = 1
                 };
 
-                var defResults = Connection.RetrieveMultiple(defQuery);
-                
-                if (defResults.Entities.Count > 0)
+                var valueResults = Connection.RetrieveMultiple(valueQuery);
+
+                if (valueResults.Entities.Count > 0)
                 {
-                    var envVarDef = defResults.Entities[0];
-                    var envVarDefId = envVarDef.Id;
-
-                    // Check if there's a value set for this environment variable
-                    var valueQuery = new QueryExpression("environmentvariablevalue")
-                    {
-                        ColumnSet = new ColumnSet("value"),
-                        Criteria = new FilterExpression
-                        {
-                            Conditions =
-                            {
-                                new ConditionExpression("environmentvariabledefinitionid", ConditionOperator.Equal, envVarDefId)
-                            }
-                        },
-                        TopCount = 1
-                    };
-
-                    var valueResults = Connection.RetrieveMultiple(valueQuery);
-                    
-                    if (valueResults.Entities.Count > 0)
-                    {
-                        var envVarValue = valueResults.Entities[0];
-                        var value = envVarValue.GetAttributeValue<string>("value");
-                        // Environment variable exists and has a value set
-                        return !string.IsNullOrEmpty(value);
-                    }
+                    var envVarValue = valueResults.Entities[0];
+                    var value = envVarValue.GetAttributeValue<string>("value");
+                    // Environment variable exists and has a value set
+                    return !string.IsNullOrEmpty(value);
                 }
+            }
 
-                return false;
-            }
-            catch (Exception ex)
-            {
-                WriteVerbose($"Error checking environment variable '{envVarSchemaName}': {ex.Message}");
-                // If we can't query, assume it doesn't exist
-                return false;
-            }
+            return false;
         }
 
         private Dictionary<string, Guid> GetExistingEnvironmentVariableValueIds(List<string> schemaNames)
         {
             var result = new Dictionary<string, Guid>();
-            
+
             if (schemaNames == null || schemaNames.Count == 0)
             {
                 return result;
             }
 
-            try
+            WriteVerbose($"Querying for existing environment variable values for {schemaNames.Count} schema name(s)...");
+
+            // Query for environment variable values by schema name
+            var query = new QueryExpression("environmentvariablevalue")
             {
-                WriteVerbose($"Querying for existing environment variable values for {schemaNames.Count} schema name(s)...");
-                
-                // Query for environment variable values by schema name
-                var query = new QueryExpression("environmentvariablevalue")
+                ColumnSet = new ColumnSet("environmentvariablevalueid", "schemaname"),
+                Criteria = new FilterExpression
                 {
-                    ColumnSet = new ColumnSet("environmentvariablevalueid", "schemaname"),
-                    Criteria = new FilterExpression
-                    {
-                        Conditions =
+                    Conditions =
                         {
                             new ConditionExpression("schemaname", ConditionOperator.In, schemaNames.ToArray())
                         }
-                    }
-                };
-
-                var results = Connection.RetrieveMultiple(query);
-                
-                foreach (var entity in results.Entities)
-                {
-                    if (entity.Contains("schemaname"))
-                    {
-                        var schemaName = entity.GetAttributeValue<string>("schemaname");
-                        result[schemaName] = entity.Id;
-                        WriteVerbose($"  Found existing value for '{schemaName}': {entity.Id}");
-                    }
                 }
+            };
 
-                WriteVerbose($"Found {result.Count} existing environment variable value(s).");
-                return result;
-            }
-            catch (Exception ex)
+            var results = Connection.RetrieveMultiple(query);
+
+            foreach (var entity in results.Entities)
             {
-                WriteVerbose($"Error querying for existing environment variable values: {ex.Message}");
-                return result;
+                if (entity.Contains("schemaname"))
+                {
+                    var schemaName = entity.GetAttributeValue<string>("schemaname");
+                    result[schemaName] = entity.Id;
+                    WriteVerbose($"  Found existing value for '{schemaName}': {entity.Id}");
+                }
             }
+
+            WriteVerbose($"Found {result.Count} existing environment variable value(s).");
+            return result;
+
         }
 
         private string GetStatusDescription(int statusCode)

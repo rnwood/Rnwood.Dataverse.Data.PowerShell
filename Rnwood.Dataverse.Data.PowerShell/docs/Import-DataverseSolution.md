@@ -368,7 +368,7 @@ Accept wildcard characters: False
 ```
 
 ### -TimeoutSeconds
-Timeout in seconds for the import operation. Default is 1800 (30 minutes).
+Timeout in seconds for the import operation. Default is 7200 (2 hours).
 
 ```yaml
 Type: Int32
@@ -377,7 +377,7 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: 1800
+Default value: 7200
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

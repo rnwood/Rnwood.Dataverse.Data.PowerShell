@@ -184,98 +184,6 @@ Gets a connection to MYORG using client certificate authentication with an unenc
 
 ## PARAMETERS
 
-### -AccessToken
-Script block that returns an access token string. Called whenever a new access token is needed.
-
-```yaml
-Type: ScriptBlock
-Parameter Sets: Authenticate with access token script block
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CertificatePassword
-Password for the client certificate file. If not provided, the certificate is assumed to be unencrypted.
-
-```yaml
-Type: String
-Parameter Sets: Authenticate with client certificate
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CertificatePath
-Path to the client certificate file (.pfx or .p12) for authentication.
-
-```yaml
-Type: String
-Parameter Sets: Authenticate with client certificate
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CertificateStoreLocation
-Certificate store location to search for the certificate. Default is CurrentUser. Valid values: CurrentUser, LocalMachine.
-
-```yaml
-Type: StoreLocation
-Parameter Sets: Authenticate with client certificate
-Aliases:
-Accepted values: CurrentUser, LocalMachine
-
-Required: False
-Position: Named
-Default value: CurrentUser
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CertificateStoreName
-Certificate store name to search for the certificate. Default is My (Personal). Valid values include: My, Root, CA, Trust, Disallowed, etc.
-
-```yaml
-Type: StoreName
-Parameter Sets: Authenticate with client certificate
-Aliases:
-Accepted values: AddressBook, AuthRoot, CertificateAuthority, Disallowed, My, Root, TrustedPeople, TrustedPublisher
-
-Required: False
-Position: Named
-Default value: My
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CertificateThumbprint
-Thumbprint of the certificate in the certificate store. Used to load certificate from the Windows certificate store instead of a file.
-
-```yaml
-Type: String
-Parameter Sets: Authenticate with client certificate
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -ClientId
 Client ID to use for authentication. By default the MS provided ID for PAC CLI (`9cee029c-6210-4654-90bb-17e6e9d36617`) is used to make it easy to get started.
 
@@ -559,6 +467,96 @@ See standard PS documentation.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AccessToken
+Script block that returns an access token string. Called whenever a new access token is needed.
+
+```yaml
+Type: ScriptBlock
+Parameter Sets: Authenticate with access token script block
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificatePassword
+Password for the client certificate file. If not provided, the certificate is assumed to be unencrypted.
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with client certificate
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificatePath
+Path to the client certificate file (.pfx or .p12) for authentication.
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with client certificate
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificateStoreLocation
+Certificate store location to search for the certificate. Default is CurrentUser. Valid values: CurrentUser, LocalMachine.
+
+```yaml
+Type: StoreLocation
+Parameter Sets: Authenticate with client certificate
+Aliases:
+
+Required: False
+Position: Named
+Default value: CurrentUser
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificateStoreName
+Certificate store name to search for the certificate. Default is My (Personal). Valid values include: My, Root, CA, Trust, Disallowed, etc.
+
+```yaml
+Type: StoreName
+Parameter Sets: Authenticate with client certificate
+Aliases:
+
+Required: False
+Position: Named
+Default value: My
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificateThumbprint
+Thumbprint of the certificate in the certificate store. Used to load certificate from the Windows certificate store instead of a file.
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with client certificate
+Aliases:
 
 Required: False
 Position: Named
