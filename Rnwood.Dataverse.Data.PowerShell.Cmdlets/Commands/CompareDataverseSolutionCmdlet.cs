@@ -56,6 +56,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(ParameterSetName = "BytesToEnvironment", HelpMessage = "Compare environment to file instead of file to environment.")]
         public SwitchParameter ReverseComparison { get; set; }
 
+        // Private fields to store solution file bytes for subcomponent extraction
+        private byte[] _sourceSolutionBytes;
+        private byte[] _targetSolutionBytes;
+
         /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
@@ -92,6 +96,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Solution file size: {sourceSolutionBytes.Length} bytes");
 
+            // Store the source bytes for subcomponent extraction
+            _sourceSolutionBytes = sourceSolutionBytes;
+
             // Extract solution info and components from source file
             var (sourceSolutionName, sourceComponents) = ExtractSolutionComponents(sourceSolutionBytes);
             WriteVerbose($"Extracted source solution: {sourceSolutionName} with {sourceComponents.Count} root components");
@@ -116,6 +123,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteVerbose($"Loading target solution file from: {targetFilePath}");
                 var targetSolutionBytes = File.ReadAllBytes(targetFilePath);
                 WriteVerbose($"Target solution file size: {targetSolutionBytes.Length} bytes");
+
+                // Store the target bytes for subcomponent extraction
+                _targetSolutionBytes = targetSolutionBytes;
 
                 (targetSolutionName, targetComponents) = ExtractSolutionComponents(targetSolutionBytes);
                 WriteVerbose($"Extracted target solution: {targetSolutionName} with {targetComponents.Count} root components");
@@ -387,12 +397,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             var subcomponents = new List<SolutionComponentInfo>();
             
-            // Only query subcomponents for environment comparisons (when Connection is available)
+            // Try to get subcomponents from file first (if we have the ZIP data)
             if (Connection == null)
             {
-                // For file-to-file comparison, we cannot enumerate subcomponents
-                // They would need to be explicitly listed in the solution file
-                WriteVerbose($"Skipping subcomponent enumeration for component {parentComponent.ObjectId} (file-to-file comparison)");
+                // For file-to-file comparison, try to extract subcomponents from the customizations.xml
+                var fileSubcomponents = GetSubcomponentsFromFile(parentComponent, isSource);
+                if (fileSubcomponents.Count > 0)
+                {
+                    return fileSubcomponents;
+                }
+                
+                WriteVerbose($"No subcomponents found in file for component {parentComponent.ObjectId} (file-to-file comparison)");
                 return subcomponents;
             }
             
@@ -602,6 +617,179 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             catch (Exception ex)
             {
                 WriteWarning($"Failed to retrieve entity subcomponents for {entityId}: {ex.Message}");
+            }
+            
+            return subcomponents;
+        }
+
+        private List<SolutionComponentInfo> GetSubcomponentsFromFile(SolutionComponentInfo parentComponent, bool isSource)
+        {
+            var subcomponents = new List<SolutionComponentInfo>();
+            
+            // Select the appropriate solution bytes based on whether this is source or target
+            var solutionBytes = isSource ? _sourceSolutionBytes : _targetSolutionBytes;
+            
+            if (solutionBytes == null)
+            {
+                return subcomponents;
+            }
+            
+            try
+            {
+                using (var memoryStream = new MemoryStream(solutionBytes))
+                using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
+                {
+                    var customizationsEntry = archive.Entries.FirstOrDefault(e =>
+                        e.FullName.Equals("customizations.xml", StringComparison.OrdinalIgnoreCase));
+                    
+                    if (customizationsEntry != null)
+                    {
+                        using (var stream = customizationsEntry.Open())
+                        using (var reader = new StreamReader(stream))
+                        {
+                            var xmlContent = reader.ReadToEnd();
+                            var xdoc = XDocument.Parse(xmlContent);
+                            
+                            // For entity components (type 1), find the entity element with matching MetadataId
+                            if (parentComponent.ComponentType == 1)
+                            {
+                                subcomponents.AddRange(ExtractEntitySubcomponentsFromXml(xdoc, parentComponent.ObjectId));
+                            }
+                            // Add more component types as needed
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteWarning($"Failed to extract subcomponents from file for {parentComponent.ComponentType}:{parentComponent.ObjectId}: {ex.Message}");
+            }
+            
+            return subcomponents;
+        }
+
+        private List<SolutionComponentInfo> ExtractEntitySubcomponentsFromXml(XDocument xdoc, Guid entityId)
+        {
+            var subcomponents = new List<SolutionComponentInfo>();
+            
+            try
+            {
+                // Find the entity element with matching MetadataId
+                var entities = xdoc.Descendants()
+                    .Where(e => e.Name.LocalName == "Entity");
+                
+                XElement targetEntity = null;
+                foreach (var entity in entities)
+                {
+                    var metadataId = entity.Element(XName.Get("EntityInfo", entity.Name.NamespaceName))
+                        ?.Element(XName.Get("entity", entity.Name.NamespaceName))
+                        ?.Element(XName.Get("MetadataId", entity.Name.NamespaceName))
+                        ?.Value;
+                    
+                    if (metadataId != null && Guid.TryParse(metadataId, out var parsedId) && parsedId == entityId)
+                    {
+                        targetEntity = entity;
+                        break;
+                    }
+                }
+                
+                if (targetEntity == null)
+                {
+                    WriteVerbose($"Entity with MetadataId {entityId} not found in customizations.xml");
+                    return subcomponents;
+                }
+                
+                WriteVerbose($"Found entity element for {entityId} in customizations.xml");
+                
+                // Extract attributes
+                var attributes = targetEntity.Descendants()
+                    .Where(e => e.Name.LocalName == "attribute");
+                
+                foreach (var attribute in attributes)
+                {
+                    var attrMetadataId = attribute.Element(XName.Get("MetadataId", attribute.Name.NamespaceName))?.Value;
+                    if (attrMetadataId != null && Guid.TryParse(attrMetadataId, out var attrId))
+                    {
+                        subcomponents.Add(new SolutionComponentInfo
+                        {
+                            ComponentType = 2, // Attribute
+                            ObjectId = attrId,
+                            RootComponentBehavior = 0,
+                            IsSubcomponent = true,
+                            ParentComponentType = 1,
+                            ParentObjectId = entityId
+                        });
+                    }
+                }
+                
+                // Extract saved queries (views)
+                var savedQueries = targetEntity.Descendants()
+                    .Where(e => e.Name.LocalName == "savedquery");
+                
+                foreach (var savedQuery in savedQueries)
+                {
+                    var savedQueryId = savedQuery.Element(XName.Get("savedqueryid", savedQuery.Name.NamespaceName))?.Value;
+                    if (savedQueryId != null && Guid.TryParse(savedQueryId, out var queryId))
+                    {
+                        subcomponents.Add(new SolutionComponentInfo
+                        {
+                            ComponentType = 26, // Saved Query / View
+                            ObjectId = queryId,
+                            RootComponentBehavior = 0,
+                            IsSubcomponent = true,
+                            ParentComponentType = 1,
+                            ParentObjectId = entityId
+                        });
+                    }
+                }
+                
+                // Extract forms
+                var forms = targetEntity.Descendants()
+                    .Where(e => e.Name.LocalName == "systemform");
+                
+                foreach (var form in forms)
+                {
+                    var formId = form.Element(XName.Get("formid", form.Name.NamespaceName))?.Value;
+                    if (formId != null && Guid.TryParse(formId, out var fId))
+                    {
+                        subcomponents.Add(new SolutionComponentInfo
+                        {
+                            ComponentType = 60, // System Form
+                            ObjectId = fId,
+                            RootComponentBehavior = 0,
+                            IsSubcomponent = true,
+                            ParentComponentType = 1,
+                            ParentObjectId = entityId
+                        });
+                    }
+                }
+                
+                // Extract relationships (EntityRelationships collection)
+                var relationships = targetEntity.Descendants()
+                    .Where(e => e.Name.LocalName == "EntityRelationship");
+                
+                foreach (var relationship in relationships)
+                {
+                    var relMetadataId = relationship.Element(XName.Get("MetadataId", relationship.Name.NamespaceName))?.Value;
+                    if (relMetadataId != null && Guid.TryParse(relMetadataId, out var relId))
+                    {
+                        subcomponents.Add(new SolutionComponentInfo
+                        {
+                            ComponentType = 10, // Entity Relationship
+                            ObjectId = relId,
+                            RootComponentBehavior = 0,
+                            IsSubcomponent = true,
+                            ParentComponentType = 1,
+                            ParentObjectId = entityId
+                        });
+                    }
+                }
+                
+                WriteVerbose($"Extracted {subcomponents.Count} subcomponents from XML for entity {entityId}");
+            }
+            catch (Exception ex)
+            {
+                WriteWarning($"Failed to parse entity subcomponents from XML for {entityId}: {ex.Message}");
             }
             
             return subcomponents;

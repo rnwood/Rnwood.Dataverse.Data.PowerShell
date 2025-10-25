@@ -217,24 +217,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Byte[]
-You can pipe solution file bytes to this cmdlet.
-
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
-The cmdlet outputs a PSObject for each component with the following properties:
-- **SolutionName**: The unique name of the solution
-- **ComponentType**: The numeric component type code
-- **ComponentTypeName**: The friendly name of the component type (e.g., "Entity", "Web Resource", "Workflow")
-- **ObjectId**: The GUID of the component
-- **Status**: The status of the component - "Added", "Removed", "Modified", "BehaviorIncluded", or "BehaviorExcluded"
-- **SourceBehavior**: The behavior in the source (e.g., "Include Subcomponents", "Include As Shell")
-- **TargetBehavior**: The behavior in the target
-- **IsSubcomponent**: Boolean indicating if this is a subcomponent of another component
-- **ParentComponentType**: (If IsSubcomponent) The numeric type of the parent component
-- **ParentComponentTypeName**: (If IsSubcomponent) The friendly name of the parent component type
-- **ParentObjectId**: (If IsSubcomponent) The GUID of the parent component
-
 ## NOTES
 - **Status values**:
   - **Added**: Component exists in source but not in target
