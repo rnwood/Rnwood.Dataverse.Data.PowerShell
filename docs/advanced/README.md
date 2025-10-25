@@ -1,3 +1,16 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [Advanced Topics](#advanced-topics)
+  - [Contents](#contents)
+  - [Topics](#topics)
+    - [Performance Optimization](#performance-optimization)
+    - [Solution Management](#solution-management)
+  - [See Also](#see-also)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Advanced Topics
 
 <!-- TOC -->
