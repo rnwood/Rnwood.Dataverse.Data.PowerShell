@@ -28,7 +28,9 @@ using System.Threading.Tasks;
 using AuthenticationResult = Microsoft.Identity.Client.AuthenticationResult;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
-
+using System.IO;
+using System.Text.Json;
+using Rnwood.Dataverse.Data.PowerShell.Commands.PacProfileParsing;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -63,6 +65,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		private const string PARAMSET_LISTNAMED = "List saved named connections";
 		private const string PARAMSET_DELETENAMED = "Delete a saved named connection";
 		private const string PARAMSET_CLEARALL = "Clear all saved connections";
+		private const string PARAMSET_FROMPAC = "Load connection from PAC CLI profile";
 
 		/// <summary>
 		/// Gets or sets a value indicating whether to get the current default connection.
@@ -119,7 +122,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Gets or sets the entity metadata for creating a mock connection.
 		/// </summary>
-		[Parameter(Mandatory =true, ParameterSetName =PARAMSET_MOCK, HelpMessage = "Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.")] 
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_MOCK, HelpMessage = "Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.")]
 		public EntityMetadata[] Mock { get; set; }
 
 		/// <summary>
@@ -246,10 +249,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public ScriptBlock AccessToken { get; set; }
 
 		/// <summary>
+		/// Gets or sets a value indicating whether to load connection from PAC CLI profile.
+		/// </summary>
+		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_FROMPAC, HelpMessage = "Load connection from a Power Platform CLI (PAC) authentication profile.")]
+		public SwitchParameter FromPac { get; set; }
+
+		/// <summary>
+		/// Gets or sets the PAC CLI profile name or index to use.
+		/// </summary>
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_FROMPAC, HelpMessage = "Name or index of the PAC CLI profile to use. If not specified, uses the current/active profile.")]
+		public string Profile { get; set; }
+
+		/// <summary>
 		/// Gets or sets the timeout for authentication operations in seconds.
 		/// </summary>
 		[Parameter(Mandatory = false, HelpMessage = "Timeout for authentication operations. Defaults to 5 minutes.")]
-		public uint Timeout { get; set; } = 5*60;
+		public uint Timeout { get; set; } = 5 * 60;
 
 		// Cancellation token source that is cancelled when the user hits Ctrl+C (StopProcessing)
 		private CancellationTokenSource _userCancellationCts;
@@ -425,8 +440,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			{
 				base.ProcessRecord();
 
-				
-
 				ServiceClient result;
 
 				switch (ParameterSetName)
@@ -434,13 +447,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					case PARAMSET_MOCK:
 
 						IXrmFakedContext xrmFakeContext = MiddlewareBuilder
-                        .New()
-                        .AddCrud()
+						.New()
+						.AddCrud()
 						.AddFakeMessageExecutors(Assembly.GetAssembly(typeof(FakeXrmEasy.FakeMessageExecutors.RetrieveEntityRequestExecutor)))
 						.UseMessages()
-                        .UseCrud()
-                        .SetLicense(FakeXrmEasyLicense.RPL_1_5)
-                        .Build();
+						.UseCrud()
+						.SetLicense(FakeXrmEasyLicense.RPL_1_5)
+						.Build();
 						xrmFakeContext.InitializeMetadata(Mock);
 
 						// Wrap the fake service with a thread-safe proxy since FakeXrmEasy is not thread-safe
@@ -712,7 +725,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					case PARAMSET_DEFAULTAZURECREDENTIAL:
 						{
 							var credential = new Azure.Identity.DefaultAzureCredential();
-							
+
 							// If URL is not provided, discover and select environment
 							if (Url == null)
 							{
@@ -724,7 +737,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
 								Url = new Uri(discoveryUrl);
 							}
-							
+
 							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
 
 							// Save connection metadata if a name was provided
@@ -755,7 +768,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							{
 								credential = new ManagedIdentityCredential();
 							}
-							
+
 							// If URL is not provided, discover and select environment
 							if (Url == null)
 							{
@@ -767,7 +780,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
 								Url = new Uri(discoveryUrl);
 							}
-							
+
 							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
 
 							// Save connection metadata if a name was provided
@@ -791,6 +804,51 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					case PARAMSET_ACCESSTOKEN:
 						result = new ServiceClient(Url, url => GetTokenWithScriptBlock());
 						break;
+
+					case PARAMSET_FROMPAC:
+						{
+							string environmentUrlString;
+							try
+							{
+								environmentUrlString = PacProfileParser.GetEnvironmentUrl(Profile);
+							}
+							catch (Exception ex)
+							{
+								ThrowTerminatingError(new ErrorRecord(ex, "PacProfileError", ErrorCategory.InvalidData, null));
+								return;
+							}
+
+							Uri environmentUrl;
+							if (!Uri.TryCreate(environmentUrlString, UriKind.Absolute, out environmentUrl))
+							{
+								ThrowTerminatingError(new ErrorRecord(
+									new InvalidOperationException($"Invalid environment URL in PAC CLI profile: {environmentUrlString}"),
+									"PacProfileInvalidUrl",
+									ErrorCategory.InvalidData,
+									environmentUrlString));
+								return;
+							}
+
+							WriteVerbose($"Environment URL: {environmentUrl}");
+
+							// Use MSAL with the same client ID that PAC CLI uses
+							var pacClientId = new Guid("04b07795-8ddb-461a-bbee-02f9e1bf7b46"); // PAC CLI's default client ID
+
+							var publicClient = PublicClientApplicationBuilder
+								.Create(pacClientId.ToString())
+								.WithRedirectUri("http://localhost")
+								.Build();
+
+							// PAC CLI stores tokens in the same MSAL cache location, so this should find cached tokens
+							var store = new ConnectionStore();
+							store.RegisterCache(publicClient);
+
+							// Create ServiceClient with token provider that uses MSAL
+							result = new ServiceClient(environmentUrl, url => GetTokenFromMsal(publicClient, environmentUrl));
+
+							WriteVerbose($"Connected to Dataverse using PAC CLI profile");
+							break;
+						}
 
 					default:
 						throw new NotImplementedException(ParameterSetName);
@@ -927,7 +985,7 @@ Url + "/api/data/v9.2/");
 			else if (!string.IsNullOrEmpty(CertificatePath))
 			{
 				string resolvedPath = GetUnresolvedProviderPathFromPSPath(CertificatePath);
-				
+
 				if (!System.IO.File.Exists(resolvedPath))
 				{
 					throw new System.IO.FileNotFoundException($"Certificate file not found: {resolvedPath}");
@@ -957,7 +1015,7 @@ Url + "/api/data/v9.2/");
 			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
 			{
 				AuthenticationResult authResult = null;
-				
+
 				// Try to get token silently from cache first
 				if (!string.IsNullOrEmpty(Username))
 				{
@@ -1088,6 +1146,39 @@ Url + "/api/data/v9.2/");
 			}
 		}
 
+		private async Task<string> GetTokenFromMsal(IPublicClientApplication app, Uri environmentUrl)
+		{
+			Uri scope = new Uri(environmentUrl, "/.default");
+			string[] scopes = new[] { scope.ToString() };
+
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
+			{
+				// Try to get token silently from cache (PAC CLI should have cached it)
+				try
+				{
+					var accounts = await app.GetAccountsAsync();
+					if (accounts.Any())
+					{
+						var authResult = await app.AcquireTokenSilent(scopes, accounts.First()).ExecuteAsync(cts.Token);
+						return authResult.AccessToken;
+					}
+				}
+				catch (MsalUiRequiredException)
+				{
+					// Token cache miss or expired, need to acquire new token interactively
+					WriteVerbose("Cached token not found or expired, acquiring new token interactively...");
+				}
+				catch (MsalServiceException ex)
+				{
+					WriteVerbose($"Service error during silent acquisition: {ex.Message}");
+				}
+
+				// If silent acquisition failed, acquire new token interactively
+				var result = await app.AcquireTokenInteractive(scopes).ExecuteAsync(cts.Token);
+				return result.AccessToken;
+			}
+		}
+
 		private async Task<string> DiscoverAndSelectEnvironment(IPublicClientApplication app)
 		{
 			// Authenticate interactively to get access token for discovery
@@ -1166,11 +1257,10 @@ Url + "/api/data/v9.2/");
 				var selectedOrg = orgList[selection - 1];
 				var url = selectedOrg.Endpoints[Microsoft.Xrm.Sdk.Discovery.EndpointType.WebApplication];
 
-				Host.UI.WriteLine($"Selected environment: {selectedOrg.FriendlyName} ({url})");
+				Host.UI.WriteLine($"Selected environment: {selectedOrg.FriendlyName} ({selectedOrg.UniqueName})");
 
 				return url;
 			}
 		}
 	}
-
 }

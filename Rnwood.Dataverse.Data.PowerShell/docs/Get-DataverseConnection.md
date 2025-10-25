@@ -110,6 +110,12 @@ Get-DataverseConnection [-SetAsDefault] -Url <Uri> -AccessToken <ScriptBlock> [-
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### Load connection from PAC CLI profile
+```
+Get-DataverseConnection [-SetAsDefault] [-FromPac] [-Profile <String>] [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ## DESCRIPTION
 
 This cmdlet establishes a connection to a Microsoft Dataverse environment which can then be used with other cmdlets in this module.
@@ -127,6 +133,7 @@ Multiple authentication methods are supported:
 - DefaultAzureCredential (automatic credential discovery for Azure environments)
 - ManagedIdentityCredential (for Azure managed identity authentication)
 - Connection string (for advanced scenarios)
+- PAC CLI profile (leverages existing Power Platform CLI authentication)
 - Mock connection (for testing)
 
 ## EXAMPLES
@@ -271,114 +278,21 @@ PS C:\> Get-DataverseConnection -ClearAllConnections
 
 Clears all saved named connections and cached authentication tokens. This removes all connection metadata and MSAL token cache files.
 
+### Example 21: Use PAC CLI profile
+```powershell
+PS C:\> $c = Get-DataverseConnection -FromPac
+```
+
+Connects to Dataverse using the current Power Platform CLI (PAC) authentication profile. This leverages the authentication you've already established with `pac auth create` and will use the currently selected environment (set via `pac org select`).
+
+### Example 22: Use specific PAC CLI profile by name or index
+```powershell
+PS C:\> $c = Get-DataverseConnection -FromPac -Profile "MyDevProfile"
+```
+
+Connects to Dataverse using a specific named PAC CLI profile. The profile name must match one of the profiles created with `pac auth create --name <profilename>`. Alternatively, you can specify the index of the profile (e.g., "0" for the first profile).
+
 ## PARAMETERS
-
-### -AccessToken
-Script block that returns an access token string. Called whenever a new access token is needed.
-
-```yaml
-Type: ScriptBlock
-Parameter Sets: Authenticate with access token script block
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CertificatePassword
-Password for the client certificate file. If not provided, the certificate is assumed to be unencrypted.
-
-```yaml
-Type: String
-Parameter Sets: Authenticate with client certificate
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CertificatePath
-Path to the client certificate file (.pfx or .p12) for authentication.
-
-```yaml
-Type: String
-Parameter Sets: Authenticate with client certificate
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CertificateStoreLocation
-Certificate store location to search for the certificate. Default is CurrentUser. Valid values: CurrentUser, LocalMachine.
-
-```yaml
-Type: StoreLocation
-Parameter Sets: Authenticate with client certificate
-Aliases:
-Accepted values: CurrentUser, LocalMachine
-
-Required: False
-Position: Named
-Default value: CurrentUser
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CertificateStoreName
-Certificate store name to search for the certificate. Default is My (Personal). Valid values include: My, Root, CA, Trust, Disallowed, etc.
-
-```yaml
-Type: StoreName
-Parameter Sets: Authenticate with client certificate
-Aliases:
-Accepted values: AddressBook, AuthRoot, CertificateAuthority, Disallowed, My, Root, TrustedPeople, TrustedPublisher
-
-Required: False
-Position: Named
-Default value: My
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CertificateThumbprint
-Thumbprint of the certificate in the certificate store. Used to load certificate from the Windows certificate store instead of a file.
-
-```yaml
-Type: String
-Parameter Sets: Authenticate with client certificate
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ClearAllConnections
-Clears all saved named connections and cached tokens.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Clear all saved connections
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### -ClientId
 Client ID to use for authentication. By default the MS provided ID for PAC CLI (`9cee029c-6210-4654-90bb-17e6e9d36617`) is used to make it easy to get started.
@@ -452,21 +366,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -DeleteConnection
-Deletes a saved named connection. Use with -Name to specify which connection to delete.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Delete a saved named connection
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -DeviceCode
 Triggers device code authentication where you will be given a URL to visit and a code to complete authentication in web browser.
 
@@ -503,21 +402,6 @@ Triggers interactive authentication, where browser will be opened for user to in
 ```yaml
 Type: SwitchParameter
 Parameter Sets: Authenticate interactively
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ListConnections
-Lists all saved named connections.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: List saved named connections
 Aliases:
 
 Required: True
@@ -572,33 +456,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Name
-Name to save this connection under for later retrieval. Allows you to persist and reuse connections.
-
-```yaml
-Type: String
-Parameter Sets: Authenticate with username and password, Authenticate with client secret, Authenticate with client certificate, Authenticate interactively, Authenticate using the device code flow, Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-```yaml
-Type: String
-Parameter Sets: Load a saved named connection, Delete a saved named connection
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Password
 Password to authenticate with.
 
@@ -620,21 +477,6 @@ ScriptBlock to intercept and modify requests. The ScriptBlock receives the Organ
 ```yaml
 Type: ScriptBlock
 Parameter Sets: Return a mock connection
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -SaveCredentials
-WARNING: Saves the client secret with the connection. This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Authenticate with username and password, Authenticate with client secret, Authenticate with client certificate
 Aliases:
 
 Required: False
@@ -735,6 +577,213 @@ See standard PS documentation.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AccessToken
+Script block that returns an access token string. Called whenever a new access token is needed.
+
+```yaml
+Type: ScriptBlock
+Parameter Sets: Authenticate with access token script block
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificatePassword
+Password for the client certificate file. If not provided, the certificate is assumed to be unencrypted.
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with client certificate
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificatePath
+Path to the client certificate file (.pfx or .p12) for authentication.
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with client certificate
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificateStoreLocation
+Certificate store location to search for the certificate. Default is CurrentUser. Valid values: CurrentUser, LocalMachine.
+
+```yaml
+Type: StoreLocation
+Parameter Sets: Authenticate with client certificate
+Aliases:
+
+Required: False
+Position: Named
+Default value: CurrentUser
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificateStoreName
+Certificate store name to search for the certificate. Default is My (Personal). Valid values include: My, Root, CA, Trust, Disallowed, etc.
+
+```yaml
+Type: StoreName
+Parameter Sets: Authenticate with client certificate
+Aliases:
+
+Required: False
+Position: Named
+Default value: My
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CertificateThumbprint
+Thumbprint of the certificate in the certificate store. Used to load certificate from the Windows certificate store instead of a file.
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with client certificate
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ClearAllConnections
+Clears all saved named connections and cached tokens.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Clear all saved connections
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DeleteConnection
+Deletes a saved named connection. Use with -Name to specify which connection to delete.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Delete a saved named connection
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FromPac
+Load connection from a Power Platform CLI (PAC) authentication profile. This uses the authentication profiles created with `pac auth create` and leverages the cached tokens from PAC CLI. The environment URL is determined from the profile's selected organization (set via `pac org select`).
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Load connection from PAC CLI profile
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ListConnections
+Lists all saved named connections.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: List saved named connections
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+Name to save this connection under for later retrieval. Allows you to persist and reuse connections.
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with username and password, Authenticate with client secret, Authenticate with client certificate, Authenticate interactively, Authenticate using the device code flow, Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: Load a saved named connection, Delete a saved named connection
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SaveCredentials
+WARNING: Saves the client secret with the connection. This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Authenticate with username and password, Authenticate with client secret, Authenticate with client certificate
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Profile
+Name or index of the PAC CLI profile to use. If not specified, uses the current/active profile.
+
+```yaml
+Type: String
+Parameter Sets: Load connection from PAC CLI profile
+Aliases:
 
 Required: False
 Position: Named
