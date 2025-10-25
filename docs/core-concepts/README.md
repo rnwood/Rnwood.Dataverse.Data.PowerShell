@@ -1,0 +1,41 @@
+# Core Concepts
+
+<!-- TOC -->
+<!-- /TOC -->
+
+This section covers the core concepts and operations for working with Dataverse data using PowerShell.
+
+## Contents
+
+- **[Connection Management](connections.md)** - Default connections, named connections, and connection persistence
+- **[Querying Records](querying.md)** - Filtering, paging, sorting, linking tables, SQL queries, and specialized cmdlets
+- **[Creating and Updating Records](creating-updating.md)** - Create, update, upsert operations with type conversion and batching
+- **[Deleting Records](deleting.md)** - Delete operations with confirmation, batching, and SQL alternatives
+- **[Error Handling and Batch Operations](error-handling.md)** - Error handling, batch processing, and retry logic
+
+## Key Topics
+
+### Working with Records
+- Querying with filters, paging, and sorting
+- Column output and type conversions
+- Creating, updating, and upserting records
+- Deleting records safely
+- Batch operations for efficiency
+
+### Connection Features
+- Default connections for simplified scripting
+- Named connections for environment management
+- Secure credential storage
+- Multiple authentication methods
+
+### Performance and Reliability
+- Automatic paging for large result sets
+- Batching for bulk operations
+- Retry logic for transient failures
+- Error handling best practices
+
+## See Also
+
+- [Getting Started](../getting-started/) - Installation and quick start guides
+- [Advanced Topics](../advanced/) - Parallelization and solution management
+- [Cmdlet Reference](../../Rnwood.Dataverse.Data.PowerShell/docs/) - Full cmdlet documentation
