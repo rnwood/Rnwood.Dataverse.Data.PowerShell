@@ -16,9 +16,35 @@ using Microsoft.Xrm.Sdk.Query;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
+    /// Specifies the import mode for solution imports.
+    /// </summary>
+    public enum ImportMode
+    {
+        /// <summary>
+        /// Automatically determine the best import method based on solution existence and managed status.
+        /// </summary>
+        Auto,
+
+        /// <summary>
+        /// Skip upgrade logic and perform regular import.
+        /// </summary>
+        NoUpgrade,
+
+        /// <summary>
+        /// Import the solution using Stage and Upgrade mode.
+        /// </summary>
+        StageAndUpgrade,
+
+        /// <summary>
+        /// Import the solution as a holding solution staged for upgrade.
+        /// </summary>
+        HoldingSolution
+    }
+
+    /// <summary>
     /// Imports a solution to Dataverse using an asynchronous job with progress reporting.
     /// </summary>
-    [Cmdlet(VerbsData.Import, "DataverseSolution", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium, DefaultParameterSetName = "FromFile")]
+    [Cmdlet(VerbsData.Import, "DataverseSolution", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     public class ImportDataverseSolutionCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
@@ -53,13 +79,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter SkipProductUpdateDependencies { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to import as a holding solution staged for upgrade.
+        /// Gets or sets the import mode.
         /// </summary>
-        [Parameter(HelpMessage = "Import the solution as a holding solution staged for upgrade. Automatically falls back to regular import if solution doesn't exist.")]
-        public SwitchParameter HoldingSolution { get; set; }
+        [Parameter(HelpMessage = "The import mode to use. Auto (default) automatically determines the best method based on solution existence and managed status.")]
+        public ImportMode Mode { get; set; } = ImportMode.Auto;
 
         /// <summary>
-        /// Gets or sets connection references as a hashtable.
+        /// Gets or sets the connection references.
         /// </summary>
         [Parameter(HelpMessage = "Hashtable of connection reference schema names to connection IDs (e.g., @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'}).")]
         public Hashtable ConnectionReferences { get; set; }
@@ -163,21 +189,63 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Validate solution components (connection references and environment variables)
             ValidateSolutionComponents(solutionBytes);
 
+            // Determine import mode based on Mode parameter
+            bool useNoUpgrade = Mode == ImportMode.NoUpgrade;
+            bool useHoldingSolution = Mode == ImportMode.HoldingSolution;
+            bool useStageAndUpgrade = Mode == ImportMode.Auto || Mode == ImportMode.StageAndUpgrade;
+
+            // Extract solution info
+            var (solutionUniqueName, isManaged) = ExtractSolutionInfo(solutionBytes);
+            WriteVerbose($"Source solution '{solutionUniqueName}' is {(isManaged ? "managed" : "unmanaged")}");
+
             // Check if this is an upgrade scenario and if the solution already exists
-            bool shouldFallbackToRegularImport = false;
-            if (HoldingSolution.IsPresent)
+            bool shouldUseStageAndUpgrade = false;
+            bool shouldUseHoldingSolution = false;
+            if (useHoldingSolution)
             {
                 // Extract solution unique name from the solution file (this is a simplified approach)
                 // In a real scenario, you might want to parse the solution XML
-                WriteVerbose("HoldingSolution specified - checking if solution already exists...");
+                WriteVerbose("HoldingSolution mode specified - checking if solution already exists...");
 
                 // Try to detect if solution exists by attempting to query for it
                 // We'll catch the exception if it doesn't exist and fallback
-                shouldFallbackToRegularImport = !DoesSolutionExist(solutionBytes);
-
-                if (shouldFallbackToRegularImport)
+                bool exists = DoesSolutionExist(solutionBytes);
+                if (exists)
+                {
+                    shouldUseHoldingSolution = true;
+                }
+                else
                 {
                     WriteWarning("Solution does not exist in the target environment. Falling back to regular import instead of upgrade.");
+                }
+            }
+            else if (useStageAndUpgrade)
+            {
+                if (Mode == ImportMode.Auto)
+                {
+                    WriteVerbose("Auto mode - checking if solution already exists and is managed...");
+                }
+                else
+                {
+                    WriteVerbose("StageAndUpgrade mode specified - checking if solution already exists...");
+                }
+
+                bool exists = DoesSolutionExist(solutionBytes);
+                if (exists && (Mode == ImportMode.StageAndUpgrade || isManaged))
+                {
+                    shouldUseStageAndUpgrade = true;
+                    WriteVerbose("Solution exists and source is managed - using StageAndUpgradeAsyncRequest");
+                }
+                else
+                {
+                    if (!exists)
+                    {
+                        WriteWarning("Solution does not exist in the target environment. Falling back to regular import instead of upgrade.");
+                    }
+                    else if (Mode == ImportMode.Auto && !isManaged)
+                    {
+                        WriteWarning("Source solution is unmanaged. Falling back to regular import instead of upgrade.");
+                    }
                 }
             }
 
@@ -242,30 +310,68 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Create the async import request
-            var importRequest = new ImportSolutionAsyncRequest
+            OrganizationRequest importRequest;
+            if (shouldUseStageAndUpgrade)
             {
-                CustomizationFile = solutionBytes,
-                OverwriteUnmanagedCustomizations = OverwriteUnmanagedCustomizations.IsPresent,
-                PublishWorkflows = PublishWorkflows.IsPresent,
-                SkipProductUpdateDependencies = SkipProductUpdateDependencies.IsPresent,
-                HoldingSolution = HoldingSolution.IsPresent && !shouldFallbackToRegularImport,
-                ConvertToManaged = ConvertToManaged.IsPresent,
-                SkipQueueRibbonJob = SkipQueueRibbonJob.IsPresent,
-                AsyncRibbonProcessing = AsyncRibbonProcessing.IsPresent,
-                ComponentParameters = componentParameters
-            };
+                var stageRequest = new StageAndUpgradeAsyncRequest
+                {
+                    CustomizationFile = solutionBytes,
+                    OverwriteUnmanagedCustomizations = OverwriteUnmanagedCustomizations.IsPresent,
+                    PublishWorkflows = PublishWorkflows.IsPresent,
+                    SkipProductUpdateDependencies = SkipProductUpdateDependencies.IsPresent,
+                    ConvertToManaged = ConvertToManaged.IsPresent,
+                    SkipQueueRibbonJob = SkipQueueRibbonJob.IsPresent,
+                    AsyncRibbonProcessing = AsyncRibbonProcessing.IsPresent,
+                    ComponentParameters = componentParameters
+                };
 
-            if (LayerDesiredOrder != null)
+                if (LayerDesiredOrder != null)
+                {
+                    stageRequest.LayerDesiredOrder = LayerDesiredOrder;
+                }
+
+                importRequest = stageRequest;
+                WriteVerbose("Using StageAndUpgradeAsyncRequest");
+            }
+            else
             {
-                importRequest.LayerDesiredOrder = LayerDesiredOrder;
+                var importSolutionRequest = new ImportSolutionAsyncRequest
+                {
+                    CustomizationFile = solutionBytes,
+                    OverwriteUnmanagedCustomizations = OverwriteUnmanagedCustomizations.IsPresent,
+                    PublishWorkflows = PublishWorkflows.IsPresent,
+                    SkipProductUpdateDependencies = SkipProductUpdateDependencies.IsPresent,
+                    HoldingSolution = shouldUseHoldingSolution,
+                    ConvertToManaged = ConvertToManaged.IsPresent,
+                    SkipQueueRibbonJob = SkipQueueRibbonJob.IsPresent,
+                    AsyncRibbonProcessing = AsyncRibbonProcessing.IsPresent,
+                    ComponentParameters = componentParameters
+                };
+
+                if (LayerDesiredOrder != null)
+                {
+                    importSolutionRequest.LayerDesiredOrder = LayerDesiredOrder;
+                }
+
+                importRequest = importSolutionRequest;
+                WriteVerbose($"Using ImportSolutionAsyncRequest (HoldingSolution={shouldUseHoldingSolution})");
             }
 
-            WriteVerbose($"Starting async import (HoldingSolution={importRequest.HoldingSolution}, OverwriteUnmanagedCustomizations={importRequest.OverwriteUnmanagedCustomizations})");
-
             // Execute the async import request
-            var importResponse = (ImportSolutionAsyncResponse)Connection.Execute(importRequest);
-            var importJobId = importResponse.ImportJobKey;
-            var asyncOperationId = importResponse.AsyncOperationId;
+            string importJobId;
+            Guid asyncOperationId;
+            if (importRequest is StageAndUpgradeAsyncRequest)
+            {
+                var response = (StageAndUpgradeAsyncResponse)Connection.Execute(importRequest);
+                importJobId = response.ImportJobKey;
+                asyncOperationId = response.AsyncOperationId;
+            }
+            else
+            {
+                var response = (ImportSolutionAsyncResponse)Connection.Execute(importRequest);
+                importJobId = response.ImportJobKey;
+                asyncOperationId = response.AsyncOperationId;
+            }
 
             WriteVerbose($"Import job started. ImportJobKey: {importJobId}, AsyncOperationId: {asyncOperationId}");
 
@@ -420,13 +526,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             try
             {
                 // Extract the solution unique name from customizations.xml inside the zip
-                string solutionUniqueName = ExtractSolutionUniqueName(solutionBytes);
-
-                if (string.IsNullOrEmpty(solutionUniqueName))
-                {
-                    WriteVerbose("Could not extract solution unique name from ZIP. Assuming solution doesn't exist.");
-                    return false;
-                }
+                var (solutionUniqueName, _) = ExtractSolutionInfo(solutionBytes);
 
                 WriteVerbose($"Checking if solution '{solutionUniqueName}' exists in target environment...");
 
@@ -458,10 +558,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private string ExtractSolutionUniqueName(byte[] solutionBytes)
+        private (string UniqueName, bool IsManaged) ExtractSolutionInfo(byte[] solutionBytes)
         {
-            try
-            {
                 using (var memoryStream = new MemoryStream(solutionBytes))
                 using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
                 {
@@ -477,26 +575,45 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             var xmlContent = reader.ReadToEnd();
                             var xdoc = XDocument.Parse(xmlContent);
 
-                            // Extract the UniqueName from the solution XML
-                            var uniqueNameElement = xdoc.Descendants()
-                                .FirstOrDefault(e => e.Name.LocalName == "UniqueName");
-
-                            if (uniqueNameElement != null)
+                            // Navigate to the SolutionManifest element
+                            var solutionManifest = xdoc.Root.Element("SolutionManifest");
+                            if (solutionManifest == null)
                             {
-                                var uniqueName = uniqueNameElement.Value;
-                                WriteVerbose($"Extracted solution unique name: {uniqueName}");
-                                return uniqueName;
+                                ThrowTerminatingError(new ErrorRecord(new Exception("SolutionManifest element not found in solution.xml"), "SolutionManifestNotFound", ErrorCategory.InvalidData, null));
+                                return (null, false);
                             }
+
+                            // Extract the UniqueName from the SolutionManifest
+                            var uniqueNameElement = solutionManifest.Element("UniqueName");
+
+                            string uniqueName = null;
+                            if (uniqueNameElement == null)
+                            {
+                                ThrowTerminatingError(new ErrorRecord(new Exception("UniqueName element not found in solution.xml"), "UniqueNameNotFound", ErrorCategory.InvalidData, null));
+                                return (null, false);
+                            }
+                            uniqueName = uniqueNameElement.Value;
+
+                            // Extract the Managed flag from the SolutionManifest
+                            var managedElement = solutionManifest.Element("Managed");
+
+                            bool isManaged = false;
+                            if (managedElement != null && !string.IsNullOrEmpty(managedElement.Value))
+                            {
+                                isManaged = managedElement.Value == "1";
+                                WriteVerbose($"Solution is {(isManaged ? "managed" : "unmanaged")}");
+                            }
+                            else
+                            {
+                                ThrowTerminatingError(new ErrorRecord(new Exception("Could not determine if solution is managed, assuming unmanaged"), "SolutionManagedStatusUnknown", ErrorCategory.InvalidData, null));
+                            }
+
+                            return (uniqueName, isManaged);
                         }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                WriteVerbose($"Error extracting solution unique name: {ex.Message}");
-            }
 
-            return null;
+            return (null, false);
         }
 
         private void ValidateSolutionComponents(byte[] solutionBytes)

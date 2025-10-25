@@ -61,8 +61,6 @@ Non features:
   - [Solution Management](#solution-management)
     - [Exporting solutions](#exporting-solutions)
     - [Importing solutions](#importing-solutions)
-    - [Connection references and environment variables](#connection-references-and-environment-variables)
-    - [Install vs Upgrade behaviour](#install-vs-upgrade-behaviour)
 - [Specialized Invoke-Dataverse* Cmdlets](#specialized-invoke-dataverse-cmdlets)
   - [How to Find and Use Specialized Cmdlets](#how-to-find-and-use-specialized-cmdlets)
   - [Usage Pattern](#usage-pattern)
@@ -1255,11 +1253,11 @@ When to avoid parallelism:
 
 ### Solution Management
 
-You can manage Dataverse solutions from this module. Prefer the high-level `Export-DataverseSolution` and `Import-DataverseSolution` cmdlets for common operations. For advanced control or very large solutions use the `Invoke-` variants (`Invoke-DataverseExportSolution`, `Invoke-DataverseExportSolutionAsync`, `Invoke-DataverseImportSolution`, `Invoke-DataverseImportSolutionAsync`) documented in the `docs/` folder.
+You can manage Dataverse solutions from this module. Prefer the high-level `Export-DataverseSolution` and `Import-DataverseSolution` cmdlets for common operations. For advanced control use the `Invoke-` variants (`Invoke-DataverseExportSolution`, `Invoke-DataverseExportSolutionAsync`, `Invoke-DataverseImportSolution`, `Invoke-DataverseImportSolutionAsync`) documented in the `docs/` folder.
 
 #### Exporting solutions
 
-- `Export-DataverseSolution` exports a solution and can save it to disk or return the raw bytes to the pipeline. It supports including solution settings and reports progress for long-running exports.
+- `Export-DataverseSolution` exports a solution and can save it to disk or output to the pipeline. It supports including solution settings and reports progress for long-running exports.
 
 Examples:
 
@@ -1274,78 +1272,79 @@ $b = Export-DataverseSolution -Connection $c -SolutionName "MySolution" -Managed
 
 #### Importing solutions
 
-- Use `Import-DataverseSolution` (preferred alias) or `Invoke-DataverseImportSolution` to import a solution file or bytes. See the full parameter reference: [Import-DataverseSolution](Rnwood.Dataverse.Data.PowerShell/docs/Import-DataverseSolution.md) and the SDK-style helper: [Invoke-DataverseImportSolution](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseImportSolution.md).
+- `Import-DataverseSolution` imports a solution file with intelligent by default logic. By default, it automatically determines the best import method:
+  - If the solution doesn't exist, performs a regular import
+  - If the solution exists and is managed, performs a stage-and-upgrade operation
+  - If the solution exists and is unmanaged, performs a regular import (upgrade)
+- Use `-Mode NoUpgrade` to force a regular import regardless of solution status
+- Use `-Mode StageAndUpgrade` to explicitly perform a stage-and-upgrade operation
+- Use `-Mode HoldingSolution` to import as a holding solution for upgrade
+- See the full parameter reference: [Import-DataverseSolution](Rnwood.Dataverse.Data.PowerShell/docs/Import-DataverseSolution.md).
+
+Examples:
+
+```powershell
+# Intelligent import (default behavior - automatically chooses best method)
+Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip"
+
+# Force regular import (no upgrade logic)
+Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -Mode NoUpgrade
+
+# Explicitly perform stage-and-upgrade
+Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -Mode StageAndUpgrade
+
+# Import as holding solution
+Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -Mode HoldingSolution
+
+# Import from bytes instead of file
+Import-DataverseSolution -Connection $c -SolutionBytes $bytes
+```
+
+
 
 Examples:
 
 ```powershell
 # Import and overwrite unmanaged customisations, then publish included workflows
-Invoke-DataverseImportSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -OverwriteUnmanagedCustomizations $true -PublishWorkflows $true
+Invoke-DataverseImportSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -OverwriteUnmanagedCustomizations -PublishWorkflows
 
-# Import from bytes
-$bytes = [System.IO.File]::ReadAllBytes("C:\Solutions\MySolution.zip")
-Invoke-DataverseImportSolution -Connection $c -CustomizationFile $bytes -OverwriteUnmanagedCustomizations $false
-
-# Import as a holding solution (staged upgrade)
+# Import as a holding solution for staged upgrade (unless the solution is not already present, when it will just be imported)
 Invoke-DataverseImportSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -HoldingSolution $true
 ```
 
-#### Connection references & environment variables
+##### Handling Connection References and Environment Variables
 
-Solutions may contain connection references (for example Power Automate connectors) which must be resolved in the target environment at import time. Common approaches:
+When importing solutions that contain connection references (for API connections) or environment variables (custom settings), you must provide values for these components unless they already exist in the target environment with values set. The cmdlet validates this by default to prevent unexpected behaviour of your solution after import if these values are missing.
 
-- Pre-configure connectors in the target environment so names/identifiers match the source.
-- Supply mapping parameters during import via `-SolutionParameters` / `-ComponentParameters` on `Invoke-DataverseImportSolution` when programmatic mapping is required.
-- Use CI/CD secrets or environment variables to store credentials and create the import `-Connection` at runtime (for example read `TARGET_URL`, `CLIENT_ID`, `CLIENT_SECRET` from the pipeline environment and call `Get-DataverseConnection`).
+**Connection References:**
+- You must supply the connection ID (GUID) for each connection reference schema name.
+- If not provided and not already configured in the environment, the import will fail.
 
-Example (conceptual):
+**Environment Variables:**
+- You must supply the value for each environment variable schema name.
+- If not provided and not already set in the environment, the import will fail.
 
-```powershell
-# Build connection from pipeline secrets
-$conn = Get-DataverseConnection -url $env:TARGET_URL -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET
-
-# Optionally build SolutionParameters (SDK type) and pass to import
-$sp = New-Object Microsoft.Crm.Sdk.Messages.SolutionParameters
-# populate $sp as required
-Invoke-DataverseImportSolution -Connection $conn -InFile "C:\Solutions\MySolution.zip" -SolutionParameters $sp
-```
-
-Always keep secrets in your CI/CD secret store (Azure DevOps variable groups, GitHub Actions secrets) rather than plaintext files.
-
-#### Install vs Upgrade behaviour
-
-When importing a solution the cmdlet determines whether to install (first-time import) or upgrade (existing solution present) by checking the `solution` table for the solution's unique name. Key points:
-
-- Detection: the cmdlet queries the platform for a solution with the same unique name. If none exists the import is treated as an install; if one exists it is treated as an upgrade/replace.
-- Overwrite behaviour: `-OverwriteUnmanagedCustomizations` controls whether unmanaged customisations layered on top of managed components are overwritten during an upgrade. When `false` unmanaged overlays are preserved where possible.
-- Staged upgrades: `-HoldingSolution` imports the package as a holding solution so the upgrade is staged and can be completed later; this is useful for multi-step or transactionally sensitive upgrades.
-- Advanced options: the cmdlet exposes flags such as `-SkipProductUpdateDependencies` and `-SkipQueueRibbonJob` to work around platform validation steps when necessary.
-
-How this differs from other tools:
-
-- Power Platform CLI / GUI: other tools (for example the Power Platform CLI or the Admin Center import flows) may expose different defaults or additional pre-flight validation. Some tools perform extra dependency checks or interactive prompts; the cmdlet is script-first and exposes explicit switches to control behaviour.
-- Solution Packager / Source Control workflows: tools that unpack solutions for source control (`Solution Packager`) operate at the filesystem level and do not perform installs — they prepare source. This cmdlet performs runtime imports against an environment.
-- Scriptability: compared with UI-driven imports, the cmdlet is fully scriptable and returns errors/verbose messages that are suitable for CI/CD; it does not prompt interactively unless PowerShell prompts are enabled (use `-WhatIf`/`-Confirm` as appropriate).
-
-Recommended scripted pattern:
-
-1. Query the environment for the target solution unique name.
-2. If absent: import normally (install).
-3. If present: import with `-OverwriteUnmanagedCustomizations` as needed or import as a holding solution and run a follow-up activation step.
-
-Conceptual example (non-pipeline):
+Examples:
 
 ```powershell
-# Check if solution exists
-$exists = Invoke-DataverseSql -Connection $c -Sql "SELECT solutionid FROM solution WHERE uniquename='MySolution'" -ReturnEntityReferenceAsGuid
-if ($exists) {
- Invoke-DataverseImportSolution -Connection $c -InFile $file -OverwriteUnmanagedCustomizations $true -PublishWorkflows $true
-} else {
- Invoke-DataverseImportSolution -Connection $c -InFile $file -PublishWorkflows $true
-}
+# Import with connection references and environment variables
+Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" `
+    -ConnectionReferences @{
+        'new_sharepointconnection' = '12345678-1234-1234-1234-123456789012'
+        'new_sqlconnection' = '87654321-4321-4321-4321-210987654321'
+    } `
+    -EnvironmentVariables @{
+        'new_apiurl' = 'https://api.production.example.com'
+        'new_apikey' = 'prod-key-12345'
+    }
+
+# Skip validation if you want to ignore for some reason
+Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" `
+    -SkipConnectionReferenceValidation -SkipEnvironmentVariableValidation
 ```
 
-For complex CI/CD scenarios use environment-specific preflight checks and capture import logs to decide if a staged approach (`-HoldingSolution`) is required.
-
+**Notes:**
+- Connection reference values must be valid connection IDs from the target environment which the user importing the solution has access to.
+- Environment variable values are strings that will be set during import.
 
 

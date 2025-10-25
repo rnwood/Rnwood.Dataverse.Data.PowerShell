@@ -12,10 +12,10 @@ Imports a solution to Dataverse using an asynchronous job with progress reportin
 
 ## SYNTAX
 
-### FromFile (Default)
+### FromFile
 ```
 Import-DataverseSolution [-InFile] <String> [-OverwriteUnmanagedCustomizations] [-PublishWorkflows]
- [-SkipProductUpdateDependencies] [-HoldingSolution] [-ConnectionReferences <Hashtable>]
+ [-SkipProductUpdateDependencies] [-Mode <ImportMode>] [-ConnectionReferences <Hashtable>]
  [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
  [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-PollingIntervalSeconds <Int32>]
  [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation] [-SkipEnvironmentVariableValidation]
@@ -25,7 +25,7 @@ Import-DataverseSolution [-InFile] <String> [-OverwriteUnmanagedCustomizations] 
 ### FromBytes
 ```
 Import-DataverseSolution -SolutionFile <Byte[]> [-OverwriteUnmanagedCustomizations] [-PublishWorkflows]
- [-SkipProductUpdateDependencies] [-HoldingSolution] [-ConnectionReferences <Hashtable>]
+ [-SkipProductUpdateDependencies] [-Mode <ImportMode>] [-ConnectionReferences <Hashtable>]
  [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
  [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-PollingIntervalSeconds <Int32>]
  [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation] [-SkipEnvironmentVariableValidation]
@@ -37,12 +37,18 @@ Import-DataverseSolution -SolutionFile <Byte[]> [-OverwriteUnmanagedCustomizatio
 This cmdlet imports a Dataverse solution using an asynchronous job and monitors the job progress, providing real-time progress updates.
 
 The cmdlet:
-1. Initiates an asynchronous solution import using ImportSolutionAsyncRequest
+1. Initiates an asynchronous solution import using ImportSolutionAsyncRequest or StageAndUpgradeAsyncRequest
 2. Monitors the async operation status by polling the asyncoperation table
 3. Reports progress using PowerShell's progress bar
 4. Outputs the import job ID when complete
 5. Supports setting connection references via a hashtable
-6. Automatically falls back to regular import if using -HoldingSolution on a solution that doesn't exist
+6. Automatically determines the appropriate import method based on the -Mode parameter
+
+**Import Modes:**
+- **Auto (default)**: Automatically determines the best import method based on solution existence and type. Uses StageAndUpgradeAsyncRequest if the solution exists and is managed, otherwise uses regular import.
+- **NoUpgrade**: Forces regular import using ImportSolutionAsyncRequest, bypassing any upgrade logic.
+- **StageAndUpgrade**: Explicitly requests stage and upgrade mode. Uses StageAndUpgradeAsyncRequest if the solution exists, otherwise falls back to regular import.
+- **HoldingSolution**: Imports the solution as a holding solution for upgrade. If the solution doesn't exist, automatically falls back to regular import.
 
 This is particularly useful for importing large solutions where the synchronous import would time out.
 
@@ -72,7 +78,7 @@ Imports the solution and sets connection references for two connections and envi
 
 ### Example 3: Import as holding solution (upgrade)
 ```powershell
-PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_v2.zip" -HoldingSolution
+PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_v2.zip" -Mode HoldingSolution
 ```
 
 Imports the solution as a holding solution for upgrade. If the solution doesn't already exist, it automatically falls back to a regular import.
@@ -105,6 +111,20 @@ PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -SkipConn
 ```
 
 Imports the solution and skips validation checks, useful when connection references and environment variables are already configured in the target environment.
+
+### Example 8: Force regular import (skip upgrade logic)
+```powershell
+PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -Mode NoUpgrade
+```
+
+Imports the solution using regular import, bypassing any upgrade logic. Useful for fresh deployments or when you want to ensure a clean import.
+
+### Example 9: Explicit stage and upgrade (when conditions are met)
+```powershell
+PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MyManagedSolution.zip" -Mode StageAndUpgrade
+```
+
+Explicitly requests stage and upgrade mode. The cmdlet will check if the solution exists and use StageAndUpgradeAsyncRequest if it does, otherwise falls back to regular import.
 
 ## PARAMETERS
 
@@ -198,21 +218,6 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -HoldingSolution
-Import the solution as a holding solution staged for upgrade. Automatically falls back to regular import if solution doesn't exist.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -412,6 +417,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Mode
+The import mode to use. Auto (default) automatically determines the best method based on solution existence and managed status.
+
+```yaml
+Type: ImportMode
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Auto
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -423,7 +443,15 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Object
 ## NOTES
 
-This cmdlet uses the ImportSolutionAsyncRequest API which imports the solution in the background. The cmdlet monitors the async operation and outputs the job details when complete.
+This cmdlet uses the ImportSolutionAsyncRequest or StageAndUpgradeAsyncRequest APIs which import the solution in the background. The cmdlet monitors the async operation and outputs the job details when complete.
+
+**Import Modes:**
+- **Auto (default)**: Intelligently chooses the import method based on solution existence and type. Uses StageAndUpgradeAsyncRequest if the solution exists and the source is managed, otherwise uses regular import.
+- **NoUpgrade**: Forces regular import using ImportSolutionAsyncRequest, bypassing any upgrade logic.
+- **StageAndUpgrade**: Explicitly requests stage and upgrade mode. Uses StageAndUpgradeAsyncRequest if the solution exists, otherwise falls back to regular import.
+- **HoldingSolution**: Imports as a holding solution for upgrade. If the solution doesn't exist, automatically falls back to regular import.
+
+This provides optimal upgrade behavior while avoiding issues with unmanaged solutions.
 
 For synchronous imports (useful for small solutions), use Invoke-DataverseImportSolution.
 

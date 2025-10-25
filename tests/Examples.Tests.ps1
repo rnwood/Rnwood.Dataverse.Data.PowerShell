@@ -841,7 +841,6 @@ Describe "Examples-Comparison Documentation Tests" {
             # Validates that with default batching, all records are attempted
             # This complements Example 12 by showing the batch behavior
             
-            $processedCount = 0
             $records = 1..5 | ForEach-Object {
                 $contact = New-Object Microsoft.Xrm.Sdk.Entity("contact")
                 $contact.Id = $contact["contactid"] = [Guid]::NewGuid()
@@ -1142,6 +1141,8 @@ Describe "Examples-Comparison Documentation Tests" {
             $cmd.Parameters.ContainsKey('OverwriteUnmanagedCustomizations') | Should -Be $true
             $cmd.Parameters.ContainsKey('PublishWorkflows') | Should -Be $true
             $cmd.Parameters.ContainsKey('HoldingSolution') | Should -Be $true
+            $cmd.Parameters.ContainsKey('StageAndUpgrade') | Should -Be $true
+            $cmd.Parameters.ContainsKey('NoUpgrade') | Should -Be $true
             $cmd.Parameters.ContainsKey('ConnectionReferences') | Should -Be $true
             $cmd.Parameters.ContainsKey('EnvironmentVariables') | Should -Be $true
             $cmd.Parameters.ContainsKey('SkipConnectionReferenceValidation') | Should -Be $true
