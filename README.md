@@ -107,6 +107,10 @@ Non features:
 
 # How to install
 
+**Requirements:**
+- PowerShell Desktop 5.1+ or PowerShell Core 7.4+
+- For PowerShell Core < 7.4, use an earlier version of this module
+
 This module is not signed (donation of funds for code signing certificate are welcome). So PowerShell must be configured to allow loading unsigned scripts that you install from remote sources (the Powershell gallery).
 
 ```powershell

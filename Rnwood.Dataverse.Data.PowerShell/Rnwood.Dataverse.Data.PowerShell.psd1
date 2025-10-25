@@ -25,6 +25,8 @@ CompatiblePSEditions = @("Core", "Desktop")
 # Description = ''
 
 # Minimum version of the Windows PowerShell engine required by this module
+# For Desktop edition: 5.1+
+# For Core edition: 7.4+ (requires .NET 8.0 runtime)
 PowerShellVersion = '5.1'
 
 # Name of the Windows PowerShell host required by this module
