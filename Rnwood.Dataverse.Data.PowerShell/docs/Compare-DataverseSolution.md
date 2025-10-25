@@ -14,19 +14,19 @@ Compares a solution file with the state of that solution in the target environme
 
 ### FileToEnvironment
 ```
-Compare-DataverseSolution [-SolutionFile] <String> -Connection <ServiceClient> [-ReverseComparison] 
+Compare-DataverseSolution -Connection <ServiceClient> [-SolutionFile] <String> [-ReverseComparison]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### BytesToEnvironment
+```
+Compare-DataverseSolution -Connection <ServiceClient> -SolutionBytes <Byte[]> [-ReverseComparison]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### FileToFile
 ```
 Compare-DataverseSolution [-SolutionFile] <String> [-TargetSolutionFile] <String>
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
-### BytesToEnvironment
-```
-Compare-DataverseSolution -SolutionBytes <Byte[]> -Connection <ServiceClient> [-ReverseComparison] 
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -110,10 +110,10 @@ If not provided, uses the default connection set via Get-DataverseConnection -Se
 
 ```yaml
 Type: ServiceClient
-Parameter Sets: (All)
+Parameter Sets: FileToEnvironment, BytesToEnvironment
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -201,20 +201,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Byte[]
-You can pipe solution file bytes to this cmdlet.
-
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
-The cmdlet outputs a PSObject for each component with the following properties:
-- **SolutionName**: The unique name of the solution
-- **ComponentType**: The numeric component type code
-- **ComponentTypeName**: The friendly name of the component type (e.g., "Entity", "Web Resource", "Workflow")
-- **ObjectId**: The GUID of the component
-- **Status**: The status of the component - "Added", "Removed", "Modified", "BehaviorIncluded", or "BehaviorExcluded"
-- **SourceBehavior**: The behavior in the source (e.g., "Include Subcomponents", "Include As Shell")
-- **TargetBehavior**: The behavior in the target
-
 ## NOTES
 - **Status values**:
   - **Added**: Component exists in source but not in target

@@ -7,6 +7,9 @@ using System.Management.Automation;
 using System.Xml.Linq;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
+using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Metadata.Query;
 using Microsoft.Xrm.Sdk.Query;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -286,24 +289,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private void CompareComponents(List<SolutionComponentInfo> sourceComponents, 
             List<SolutionComponentInfo> targetComponents, string solutionName)
         {
+            // Expand components to include subcomponents based on behavior
+            var expandedSourceComponents = ExpandComponentsWithSubcomponents(sourceComponents, isSource: true);
+            var expandedTargetComponents = ExpandComponentsWithSubcomponents(targetComponents, isSource: false);
+            
+            WriteVerbose($"Expanded source components: {sourceComponents.Count} root -> {expandedSourceComponents.Count} total");
+            WriteVerbose($"Expanded target components: {targetComponents.Count} root -> {expandedTargetComponents.Count} total");
+            
             // Create lookup dictionaries for efficient comparison
-            var sourceComponentDict = sourceComponents
+            var sourceComponentDict = expandedSourceComponents
                 .GroupBy(c => new { c.ComponentType, c.ObjectId })
                 .ToDictionary(g => g.Key, g => g.First());
 
-            var targetComponentDict = targetComponents
+            var targetComponentDict = expandedTargetComponents
                 .GroupBy(c => new { c.ComponentType, c.ObjectId })
                 .ToDictionary(g => g.Key, g => g.First());
 
             // Find added components (in source but not in target)
-            foreach (var sourceComponent in sourceComponents)
+            foreach (var sourceComponent in expandedSourceComponents)
             {
                 var key = new { sourceComponent.ComponentType, sourceComponent.ObjectId };
                 
                 if (!targetComponentDict.ContainsKey(key))
                 {
                     OutputComparisonResult(sourceComponent.ComponentType, sourceComponent.ObjectId, 
-                        sourceComponent.RootComponentBehavior, null, "Added", solutionName, isReversed: false);
+                        sourceComponent.RootComponentBehavior, null, "Added", solutionName, 
+                        isReversed: false, isSubcomponent: sourceComponent.IsSubcomponent, 
+                        parentComponentType: sourceComponent.ParentComponentType,
+                        parentObjectId: sourceComponent.ParentObjectId);
                 }
                 else
                 {
@@ -317,7 +330,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         
                         OutputComparisonResult(sourceComponent.ComponentType, sourceComponent.ObjectId,
                             sourceComponent.RootComponentBehavior, targetComponent.RootComponentBehavior, 
-                            status, solutionName, isReversed: false);
+                            status, solutionName, isReversed: false, isSubcomponent: sourceComponent.IsSubcomponent,
+                            parentComponentType: sourceComponent.ParentComponentType,
+                            parentObjectId: sourceComponent.ParentObjectId);
                     }
                     else
                     {
@@ -325,22 +340,271 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // (We can't detect actual changes without inspecting the component itself)
                         OutputComparisonResult(sourceComponent.ComponentType, sourceComponent.ObjectId,
                             sourceComponent.RootComponentBehavior, targetComponent.RootComponentBehavior, 
-                            "Modified", solutionName, isReversed: false);
+                            "Modified", solutionName, isReversed: false, isSubcomponent: sourceComponent.IsSubcomponent,
+                            parentComponentType: sourceComponent.ParentComponentType,
+                            parentObjectId: sourceComponent.ParentObjectId);
                     }
                 }
             }
 
             // Find removed components (in target but not in source)
-            foreach (var targetComponent in targetComponents)
+            foreach (var targetComponent in expandedTargetComponents)
             {
                 var key = new { targetComponent.ComponentType, targetComponent.ObjectId };
                 
                 if (!sourceComponentDict.ContainsKey(key))
                 {
                     OutputComparisonResult(targetComponent.ComponentType, targetComponent.ObjectId,
-                        null, targetComponent.RootComponentBehavior, "Removed", solutionName, isReversed: false);
+                        null, targetComponent.RootComponentBehavior, "Removed", solutionName, 
+                        isReversed: false, isSubcomponent: targetComponent.IsSubcomponent,
+                        parentComponentType: targetComponent.ParentComponentType,
+                        parentObjectId: targetComponent.ParentObjectId);
                 }
             }
+        }
+
+        private List<SolutionComponentInfo> ExpandComponentsWithSubcomponents(List<SolutionComponentInfo> components, bool isSource)
+        {
+            var expandedComponents = new List<SolutionComponentInfo>();
+            
+            foreach (var component in components)
+            {
+                // Always add the root component itself
+                expandedComponents.Add(component);
+                
+                // If behavior is 0 (Include Subcomponents), enumerate and add subcomponents
+                if (component.RootComponentBehavior == 0)
+                {
+                    var subcomponents = GetSubcomponents(component, isSource);
+                    expandedComponents.AddRange(subcomponents);
+                }
+            }
+            
+            return expandedComponents;
+        }
+
+        private List<SolutionComponentInfo> GetSubcomponents(SolutionComponentInfo parentComponent, bool isSource)
+        {
+            var subcomponents = new List<SolutionComponentInfo>();
+            
+            // Only query subcomponents for environment comparisons (when Connection is available)
+            if (Connection == null)
+            {
+                // For file-to-file comparison, we cannot enumerate subcomponents
+                // They would need to be explicitly listed in the solution file
+                WriteVerbose($"Skipping subcomponent enumeration for component {parentComponent.ObjectId} (file-to-file comparison)");
+                return subcomponents;
+            }
+            
+            try
+            {
+                // Handle different component types
+                switch (parentComponent.ComponentType)
+                {
+                    case 1: // Entity
+                        subcomponents.AddRange(GetEntitySubcomponents(parentComponent.ObjectId, isSource));
+                        break;
+                    // Add more component types as needed
+                    default:
+                        WriteVerbose($"No subcomponent enumeration implemented for component type {parentComponent.ComponentType}");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteWarning($"Failed to enumerate subcomponents for {parentComponent.ComponentType}:{parentComponent.ObjectId}: {ex.Message}");
+            }
+            
+            return subcomponents;
+        }
+
+        private List<SolutionComponentInfo> GetEntitySubcomponents(Guid entityId, bool isSource)
+        {
+            var subcomponents = new List<SolutionComponentInfo>();
+            
+            try
+            {
+                // First, get the entity logical name from the entity metadata ID
+                var metadataQuery = new Microsoft.Xrm.Sdk.Messages.RetrieveMetadataChangesRequest
+                {
+                    Query = new Microsoft.Xrm.Sdk.Metadata.Query.EntityQueryExpression
+                    {
+                        Criteria = new Microsoft.Xrm.Sdk.Metadata.Query.MetadataFilterExpression(Microsoft.Xrm.Sdk.Query.LogicalOperator.And)
+                        {
+                            Conditions =
+                            {
+                                new Microsoft.Xrm.Sdk.Metadata.Query.MetadataConditionExpression("MetadataId", Microsoft.Xrm.Sdk.Metadata.Query.MetadataConditionOperator.Equals, entityId)
+                            }
+                        },
+                        Properties = new Microsoft.Xrm.Sdk.Metadata.Query.MetadataPropertiesExpression
+                        {
+                            AllProperties = true
+                        },
+                        AttributeQuery = new Microsoft.Xrm.Sdk.Metadata.Query.AttributeQueryExpression
+                        {
+                            Properties = new Microsoft.Xrm.Sdk.Metadata.Query.MetadataPropertiesExpression { AllProperties = true }
+                        },
+                        RelationshipQuery = new Microsoft.Xrm.Sdk.Metadata.Query.RelationshipQueryExpression
+                        {
+                            Properties = new Microsoft.Xrm.Sdk.Metadata.Query.MetadataPropertiesExpression { AllProperties = true }
+                        }
+                    }
+                };
+                
+                var metadataResponse = (Microsoft.Xrm.Sdk.Messages.RetrieveMetadataChangesResponse)Connection.Execute(metadataQuery);
+                
+                if (metadataResponse.EntityMetadata == null || metadataResponse.EntityMetadata.Count == 0)
+                {
+                    WriteWarning($"Entity with MetadataId {entityId} not found");
+                    return subcomponents;
+                }
+                
+                var entityMetadata = metadataResponse.EntityMetadata[0];
+                
+                WriteVerbose($"Enumerating subcomponents for entity: {entityMetadata.LogicalName}");
+                
+                // Add attributes (component type 2)
+                if (entityMetadata.Attributes != null)
+                {
+                    foreach (var attribute in entityMetadata.Attributes)
+                    {
+                        if (attribute.MetadataId.HasValue)
+                        {
+                            subcomponents.Add(new SolutionComponentInfo
+                            {
+                                ComponentType = 2, // Attribute
+                                ObjectId = attribute.MetadataId.Value,
+                                RootComponentBehavior = 0,
+                                IsSubcomponent = true,
+                                ParentComponentType = 1, // Entity
+                                ParentObjectId = entityId
+                            });
+                        }
+                    }
+                }
+                
+                // Add relationships (component type 10 - One To Many Relationships)
+                if (entityMetadata.OneToManyRelationships != null)
+                {
+                    foreach (var relationship in entityMetadata.OneToManyRelationships)
+                    {
+                        if (relationship.MetadataId.HasValue)
+                        {
+                            subcomponents.Add(new SolutionComponentInfo
+                            {
+                                ComponentType = 10, // Entity Relationship
+                                ObjectId = relationship.MetadataId.Value,
+                                RootComponentBehavior = 0,
+                                IsSubcomponent = true,
+                                ParentComponentType = 1,
+                                ParentObjectId = entityId
+                            });
+                        }
+                    }
+                }
+                
+                // Add Many To One relationships
+                if (entityMetadata.ManyToOneRelationships != null)
+                {
+                    foreach (var relationship in entityMetadata.ManyToOneRelationships)
+                    {
+                        if (relationship.MetadataId.HasValue)
+                        {
+                            subcomponents.Add(new SolutionComponentInfo
+                            {
+                                ComponentType = 10, // Entity Relationship
+                                ObjectId = relationship.MetadataId.Value,
+                                RootComponentBehavior = 0,
+                                IsSubcomponent = true,
+                                ParentComponentType = 1,
+                                ParentObjectId = entityId
+                            });
+                        }
+                    }
+                }
+                
+                // Add Many To Many relationships
+                if (entityMetadata.ManyToManyRelationships != null)
+                {
+                    foreach (var relationship in entityMetadata.ManyToManyRelationships)
+                    {
+                        if (relationship.MetadataId.HasValue)
+                        {
+                            subcomponents.Add(new SolutionComponentInfo
+                            {
+                                ComponentType = 10, // Entity Relationship
+                                ObjectId = relationship.MetadataId.Value,
+                                RootComponentBehavior = 0,
+                                IsSubcomponent = true,
+                                ParentComponentType = 1,
+                                ParentObjectId = entityId
+                            });
+                        }
+                    }
+                }
+                
+                // Query for forms (component type 60 - System Form)
+                var formQuery = new QueryExpression("systemform")
+                {
+                    ColumnSet = new ColumnSet("formid"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("objecttypecode", ConditionOperator.Equal, entityMetadata.LogicalName)
+                        }
+                    }
+                };
+                
+                var forms = Connection.RetrieveMultiple(formQuery);
+                foreach (var form in forms.Entities)
+                {
+                    subcomponents.Add(new SolutionComponentInfo
+                    {
+                        ComponentType = 60, // System Form
+                        ObjectId = form.Id,
+                        RootComponentBehavior = 0,
+                        IsSubcomponent = true,
+                        ParentComponentType = 1,
+                        ParentObjectId = entityId
+                    });
+                }
+                
+                // Query for views (component type 26 - Saved Query)
+                var viewQuery = new QueryExpression("savedquery")
+                {
+                    ColumnSet = new ColumnSet("savedqueryid"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("returnedtypecode", ConditionOperator.Equal, entityMetadata.LogicalName)
+                        }
+                    }
+                };
+                
+                var views = Connection.RetrieveMultiple(viewQuery);
+                foreach (var view in views.Entities)
+                {
+                    subcomponents.Add(new SolutionComponentInfo
+                    {
+                        ComponentType = 26, // Saved Query / View
+                        ObjectId = view.Id,
+                        RootComponentBehavior = 0,
+                        IsSubcomponent = true,
+                        ParentComponentType = 1,
+                        ParentObjectId = entityId
+                    });
+                }
+                
+                WriteVerbose($"Found {subcomponents.Count} subcomponents for entity {entityMetadata.LogicalName}");
+            }
+            catch (Exception ex)
+            {
+                WriteWarning($"Failed to retrieve entity subcomponents for {entityId}: {ex.Message}");
+            }
+            
+            return subcomponents;
         }
 
         private string DetermineBehaviorChangeStatus(int sourceBehavior, int targetBehavior)
@@ -364,7 +628,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         private void OutputComparisonResult(int componentType, Guid objectId, 
-            int? sourceBehavior, int? targetBehavior, string status, string solutionName, bool isReversed)
+            int? sourceBehavior, int? targetBehavior, string status, string solutionName, bool isReversed,
+            bool isSubcomponent = false, int? parentComponentType = null, Guid? parentObjectId = null)
         {
             var result = new PSObject();
             result.Properties.Add(new PSNoteProperty("SolutionName", solutionName));
@@ -374,6 +639,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             result.Properties.Add(new PSNoteProperty("Status", status));
             result.Properties.Add(new PSNoteProperty("SourceBehavior", sourceBehavior.HasValue ? GetBehaviorName(sourceBehavior.Value) : null));
             result.Properties.Add(new PSNoteProperty("TargetBehavior", targetBehavior.HasValue ? GetBehaviorName(targetBehavior.Value) : null));
+            result.Properties.Add(new PSNoteProperty("IsSubcomponent", isSubcomponent));
+            
+            if (isSubcomponent && parentComponentType.HasValue && parentObjectId.HasValue)
+            {
+                result.Properties.Add(new PSNoteProperty("ParentComponentType", parentComponentType.Value));
+                result.Properties.Add(new PSNoteProperty("ParentComponentTypeName", GetComponentTypeName(parentComponentType.Value)));
+                result.Properties.Add(new PSNoteProperty("ParentObjectId", parentObjectId.Value));
+            }
             
             WriteObject(result);
         }
@@ -492,6 +765,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             public Guid ObjectId { get; set; }
             public int ComponentType { get; set; }
             public int RootComponentBehavior { get; set; }
+            public bool IsSubcomponent { get; set; }
+            public int? ParentComponentType { get; set; }
+            public Guid? ParentObjectId { get; set; }
         }
     }
 }
