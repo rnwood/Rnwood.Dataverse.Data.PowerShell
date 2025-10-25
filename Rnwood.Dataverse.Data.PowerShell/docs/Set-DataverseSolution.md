@@ -65,13 +65,13 @@ Creates a new solution with the specified properties.
 
 ## PARAMETERS
 
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
-Type: ServiceClient
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
+Aliases: cf
 
 Required: False
 Position: Named
@@ -80,13 +80,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
-Type: SwitchParameter
+Type: ServiceClient
 Parameter Sets: (All)
-Aliases: cf
+Aliases:
 
 Required: False
 Position: Named
@@ -205,7 +205,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
+### System.String
 ## OUTPUTS
 
 ### System.Object

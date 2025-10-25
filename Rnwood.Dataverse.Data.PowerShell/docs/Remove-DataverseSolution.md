@@ -190,7 +190,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
+### System.String
 ## OUTPUTS
 
 ### System.Object

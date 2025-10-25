@@ -59,8 +59,11 @@ Non features:
   - [Retry Logic](#retry-logic)
   - [Parallelising work for best performance](#parallelising-work-for-best-performance)
   - [Solution Management](#solution-management)
+    - [Parsing solution files](#parsing-solution-files)
     - [Exporting solutions](#exporting-solutions)
     - [Listing solutions](#listing-solutions)
+    - [Creating and updating solutions](#creating-and-updating-solutions)
+    - [Publishing customizations](#publishing-customizations)
     - [Importing solutions](#importing-solutions)
     - [Uninstalling/removing solutions](#uninstallingremoving-solutions)
 - [Specialized Invoke-Dataverse* Cmdlets](#specialized-invoke-dataverse-cmdlets)
@@ -1343,7 +1346,32 @@ When to avoid parallelism:
 
 ### Solution Management
 
-You can manage Dataverse solutions from this module. Prefer the high-level `Export-DataverseSolution`, `Import-DataverseSolution`, and `Remove-DataverseSolution` cmdlets for common operations. For advanced control use the `Invoke-` variants (`Invoke-DataverseExportSolution`, `Invoke-DataverseExportSolutionAsync`, `Invoke-DataverseImportSolution`, `Invoke-DataverseImportSolutionAsync`) documented in the `docs/` folder.
+You can manage Dataverse solutions from this module. The module provides cmdlets for:
+- Exporting solutions (`Export-DataverseSolution`)
+- Importing solutions (`Import-DataverseSolution`)
+- Listing installed solutions (`Get-DataverseSolution`)
+- Parsing solution files (`Get-DataverseSolutionFile`)
+- Creating/updating solutions (`Set-DataverseSolution`)
+- Removing solutions (`Remove-DataverseSolution`)
+- Publishing customizations (`Publish-DataverseCustomizations`)
+
+For advanced control, use the `Invoke-` variants documented in the `docs/` folder.
+
+#### Parsing solution files
+
+- `Get-DataverseSolutionFile` parses a solution ZIP file and extracts metadata without requiring a Dataverse connection.
+- Useful for inspecting solution files before importing or for automation scripts.
+- See the full parameter reference: [Get-DataverseSolutionFile](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSolutionFile.md).
+
+Examples:
+
+```powershell
+# Parse a solution file and display metadata
+$info = Get-DataverseSolutionFile -Path "C:\Solutions\MySolution_1_0_0_0.zip"
+Write-Host "Solution: $($info.Name) v$($info.Version)"
+Write-Host "Publisher: $($info.PublisherName)"
+Write-Host "Managed: $($info.IsManaged)"
+```
 
 #### Exporting solutions
 
@@ -1362,7 +1390,9 @@ $b = Export-DataverseSolution -Connection $c -SolutionName "MySolution" -Managed
 
 #### Listing solutions
 
-You can list solutions in a Dataverse environment using the `Get-DataverseSolution` cmdlet. This cmdlet retrieves information about installed solutions, including their unique names, display names, versions, and other metadata.
+- `Get-DataverseSolution` retrieves information about installed solutions in a Dataverse environment.
+- Supports filtering by name, managed status, and excluding system solutions.
+- See the full parameter reference: [Get-DataverseSolution](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSolution.md).
 
 Examples:
 
@@ -1378,6 +1408,41 @@ Get-DataverseSolution -Connection $c -Unmanaged
 
 # Get details for a specific solution
 Get-DataverseSolution -Connection $c -UniqueName "MySolution"
+```
+
+#### Creating and updating solutions
+
+- `Set-DataverseSolution` creates a new solution if it doesn't exist, or updates an existing solution.
+- Supports updating friendly name, description, version (unmanaged only), and publisher.
+- See the full parameter reference: [Set-DataverseSolution](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSolution.md).
+
+Examples:
+
+```powershell
+# Create a new solution
+Set-DataverseSolution -Connection $c -UniqueName "MySolution" `
+    -Name "My Solution" -Description "My custom solution" `
+    -Version "1.0.0.0" -PublisherUniqueName "mycompany"
+
+# Update solution properties
+Set-DataverseSolution -Connection $c -UniqueName "MySolution" `
+    -Description "Updated description" -Version "1.1.0.0"
+```
+
+#### Publishing customizations
+
+- `Publish-DataverseCustomizations` publishes customizations to make them available to users.
+- Can publish all customizations or specific entity customizations.
+- See the full parameter reference: [Publish-DataverseCustomizations](Rnwood.Dataverse.Data.PowerShell/docs/Publish-DataverseCustomizations.md).
+
+Examples:
+
+```powershell
+# Publish all customizations
+Publish-DataverseCustomizations -Connection $c
+
+# Publish customizations for a specific entity
+Publish-DataverseCustomizations -Connection $c -EntityName "contact"
 ```
 
 #### Importing solutions
