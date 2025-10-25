@@ -35,8 +35,15 @@ The Compare-DataverseSolution cmdlet compares solution files and environments to
 - Compare a solution file with the same solution in a Dataverse environment
 - Compare two solution files directly
 - Reverse the comparison direction (environment to file)
+- Enumerate and compare subcomponents for components with full inclusion behavior
 
 The cmdlet outputs detailed comparison results showing whether components have been added, removed, modified, or had their behavior changed.
+
+**Subcomponent Support:**
+When a component has behavior 0 (Include Subcomponents), the cmdlet automatically enumerates and compares all subcomponents:
+- **Entity subcomponents**: Attributes, Relationships, Forms, Views
+- Subcomponent changes are tracked with parent component information
+- Only available for environment comparisons (requires Connection)
 
 Component behavior statuses:
 - **Added**: Component exists in source but not in target
@@ -46,7 +53,7 @@ Component behavior statuses:
 - **BehaviorExcluded**: Component behavior changed to exclude data (e.g., Full → Shell)
 
 Rootcomponentbehavior values:
-- 0 = Include Subcomponents (Full component)
+- 0 = Include Subcomponents (Full component with all subcomponents enumerated)
 - 1 = Do Not Include Subcomponents
 - 2 = Include As Shell (Shell only, no subcomponents)
 
@@ -92,7 +99,16 @@ PS C:\> $results | Where-Object { $_.Status -like "Behavior*" } | Format-Table
 
 This example compares two solution versions and shows only components where the behavior has changed (BehaviorIncluded or BehaviorExcluded).
 
-### Example 6: Export comparison results to CSV
+### Example 6: View subcomponents of entities
+```powershell
+PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
+PS C:\> $results = Compare-DataverseSolution -Connection $conn -SolutionFile "C:\Solutions\MySolution.zip"
+PS C:\> $results | Where-Object IsSubcomponent -eq $true | Format-Table ComponentTypeName, Status, ParentComponentTypeName
+```
+
+This example shows only subcomponents (attributes, views, forms, etc.) and their parent component types.
+
+### Example 7: Export comparison results to CSV
 ```powershell
 PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
 PS C:\> $results = Compare-DataverseSolution -Connection $conn -SolutionFile "C:\Solutions\MySolution.zip"
@@ -201,9 +217,24 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Byte[]
+You can pipe solution file bytes to this cmdlet.
+
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
+The cmdlet outputs a PSObject for each component with the following properties:
+- **SolutionName**: The unique name of the solution
+- **ComponentType**: The numeric component type code
+- **ComponentTypeName**: The friendly name of the component type (e.g., "Entity", "Web Resource", "Workflow")
+- **ObjectId**: The GUID of the component
+- **Status**: The status of the component - "Added", "Removed", "Modified", "BehaviorIncluded", or "BehaviorExcluded"
+- **SourceBehavior**: The behavior in the source (e.g., "Include Subcomponents", "Include As Shell")
+- **TargetBehavior**: The behavior in the target
+- **IsSubcomponent**: Boolean indicating if this is a subcomponent of another component
+- **ParentComponentType**: (If IsSubcomponent) The numeric type of the parent component
+- **ParentComponentTypeName**: (If IsSubcomponent) The friendly name of the parent component type
+- **ParentObjectId**: (If IsSubcomponent) The GUID of the parent component
+
 ## NOTES
 - **Status values**:
   - **Added**: Component exists in source but not in target
@@ -211,6 +242,12 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
   - **Modified**: Component exists in both with same behavior
   - **BehaviorIncluded**: Behavior changed to include more data (e.g., Shell → Full)
   - **BehaviorExcluded**: Behavior changed to exclude data (e.g., Full → Shell)
+  
+- **Subcomponent enumeration**:
+  - When a component has behavior 0 (Include Subcomponents), all subcomponents are automatically enumerated
+  - Entity subcomponents include: Attributes (type 2), Relationships (type 10), Forms (type 60), Views (type 26)
+  - Subcomponent enumeration requires a Connection (environment comparison)
+  - File-to-file comparisons do not enumerate subcomponents
   
 - If the solution does not exist in the target environment, all components will be marked as "Added"
 - Components that exist in both locations with the same behavior are marked as "Modified" (deep content inspection is not performed)
