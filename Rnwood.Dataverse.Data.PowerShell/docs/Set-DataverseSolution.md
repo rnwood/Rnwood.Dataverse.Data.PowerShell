@@ -14,7 +14,7 @@ Updates properties of a solution in Dataverse.
 
 ```
 Set-DataverseSolution [-UniqueName] <String> [-Name <String>] [-Description <String>] [-Version <String>]
- [-Connection <ServiceClient>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -62,26 +62,26 @@ Attempts to update a managed solution, but only description updates are allowed.
 
 ## PARAMETERS
 
-### -UniqueName
-The unique name of the solution to update.
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
-Type: String
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
+Aliases: cf
 
-Required: True
-Position: 0
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Name
-The new friendly name for the solution. Only applicable to unmanaged solutions.
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
-Type: String
+Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
@@ -107,8 +107,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Version
-The new version for the solution (e.g., '1.0.0.0'). Only applicable to unmanaged solutions.
+### -Name
+The new friendly name for the solution. Only applicable to unmanaged solutions.
 
 ```yaml
 Type: String
@@ -122,28 +122,28 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+### -UniqueName
+The unique name of the solution to update.
 
 ```yaml
-Type: ServiceClient
+Type: String
 Parameter Sets: (All)
 Aliases:
 
-Required: False
-Position: Named
+Required: True
+Position: 0
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -Version
+The new version for the solution (e.g., '1.0.0.0'). Only applicable to unmanaged solutions.
 
 ```yaml
-Type: SwitchParameter
+Type: String
 Parameter Sets: (All)
-Aliases: cf
+Aliases:
 
 Required: False
 Position: Named
@@ -167,21 +167,30 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### None
-
-This cmdlet does not accept pipeline input.
-
 ## OUTPUTS
 
-### System.String
-
-Returns a success message when the update completes.
-
+### System.Object
 ## NOTES
 
 - Managed solutions can only have their description updated.

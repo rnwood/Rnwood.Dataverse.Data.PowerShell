@@ -14,7 +14,7 @@ Retrieves solution information from a Dataverse environment.
 
 ```
 Get-DataverseSolution [[-UniqueName] <String>] [-Managed] [-Unmanaged] [-ExcludeSystemSolutions]
- [-Connection <ServiceClient>] [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -90,41 +90,11 @@ Retrieves a solution and checks if it needs to be upgraded.
 
 ## PARAMETERS
 
-### -UniqueName
-The unique name of the solution to retrieve. If not specified, all solutions are returned.
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 0
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Managed
-Filter to return only managed solutions.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Unmanaged
-Filter to return only unmanaged solutions.
-
-```yaml
-Type: SwitchParameter
+Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
@@ -150,13 +120,58 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+### -Managed
+Filter to return only managed solutions.
 
 ```yaml
-Type: ServiceClient
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UniqueName
+The unique name of the solution to retrieve. If not specified, all solutions are returned.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Unmanaged
+Filter to return only unmanaged solutions.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
 
 Required: False
 Position: Named
@@ -171,15 +186,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
-
-This cmdlet does not accept pipeline input.
-
 ## OUTPUTS
 
 ### Rnwood.Dataverse.Data.PowerShell.SolutionInfo
-
-This cmdlet returns one or more SolutionInfo objects with solution metadata.
-
 ## NOTES
 
 This cmdlet requires an active connection to a Dataverse environment.

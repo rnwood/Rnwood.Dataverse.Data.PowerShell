@@ -14,12 +14,12 @@ Parses a Dataverse solution file and returns metadata information.
 
 ### FromFile
 ```
-Get-DataverseSolutionFile [-Path] <String> [<CommonParameters>]
+Get-DataverseSolutionFile [-Path] <String> [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### FromBytes
 ```
-Get-DataverseSolutionFile -SolutionFile <Byte[]> [<CommonParameters>]
+Get-DataverseSolutionFile -SolutionFile <Byte[]> [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -108,29 +108,30 @@ Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### System.Byte[]
-
-You can pipe solution file bytes to this cmdlet.
-
 ## OUTPUTS
 
 ### Rnwood.Dataverse.Data.PowerShell.SolutionInfo
-
-This cmdlet returns a SolutionInfo object with the following properties:
-- UniqueName (String): The unique name of the solution
-- Name (String): The friendly name of the solution
-- Version (Version): The version of the solution
-- IsManaged (Boolean): Whether the solution is managed
-- Description (String): The solution description
-- PublisherName (String): The publisher's friendly name
-- PublisherUniqueName (String): The publisher's unique name
-- PublisherPrefix (String): The publisher's customization prefix
-
 ## NOTES
 
 This cmdlet does not require a connection to Dataverse as it only parses the local solution file.

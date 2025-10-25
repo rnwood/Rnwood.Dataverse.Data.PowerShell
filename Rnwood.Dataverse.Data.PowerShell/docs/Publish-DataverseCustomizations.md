@@ -13,8 +13,8 @@ Publishes customizations in Dataverse.
 ## SYNTAX
 
 ```
-Publish-DataverseCustomizations [[-EntityName] <String>] [-Connection <ServiceClient>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Publish-DataverseCustomizations [[-EntityName] <String>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -66,16 +66,16 @@ Adds a new field and publishes the changes to make them available.
 
 ## PARAMETERS
 
-### -EntityName
-The logical name of the entity to publish. If not specified, all customizations are published.
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
-Type: String
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
+Aliases: cf
 
 Required: False
-Position: 0
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -96,16 +96,16 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -EntityName
+The logical name of the entity to publish. If not specified, all customizations are published.
 
 ```yaml
-Type: SwitchParameter
+Type: String
 Parameter Sets: (All)
-Aliases: cf
+Aliases:
 
 Required: False
-Position: Named
+Position: 0
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -126,21 +126,30 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### None
-
-This cmdlet does not accept pipeline input.
-
 ## OUTPUTS
 
-### System.String
-
-Returns a success message when publishing completes.
-
+### System.Object
 ## NOTES
 
 - Publishing can take some time depending on the number of customizations being published.
