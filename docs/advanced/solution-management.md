@@ -10,6 +10,9 @@
       - [Publishing customizations](#publishing-customizations)
       - [Importing solutions](#importing-solutions)
       - [Analyzing Solution Components](#analyzing-solution-components)
+        - [Get-DataverseSolutionComponent](#get-dataversesolutioncomponent)
+        - [Get-DataverseSolutionFileComponent](#get-dataversesolutionfilecomponent)
+        - [Compare-DataverseSolutionComponents](#compare-dataversesolutioncomponents)
       - [Uninstalling/removing solutions](#uninstallingremoving-solutions)
         - [Handling Connection References and Environment Variables](#handling-connection-references-and-environment-variables)
 
