@@ -217,21 +217,6 @@ Combines parallel processing with large batch sizes for maximum throughput when 
 
 ## PARAMETERS
 
-### -AllowMultipleMatches
-If specified, allows deletion of multiple records when MatchOn criteria matches more than one record. Without this switch, an error is raised if MatchOn finds multiple matches.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -BatchSize
 Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable.
 
@@ -372,28 +357,6 @@ Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
-### -MatchOn
-List of list of column names that identify records to delete based on the values of those columns in the InputObject. The first list that returns a match is used. If AllowMultipleMatches is not specified, an error will be raised if more than one record matches.
-
-For example:
-- `@("emailaddress1")` - Match on email address alone
-- `@("firstname", "lastname")` - Match on both first and last name together
-- `@("emailaddress1"), @("firstname", "lastname")` - Try email first, fall back to name if no email match
-
-Either -Id or -MatchOn must be specified.
-
-```yaml
-Type: String[][]
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Retries
 Number of times to retry each batch item on failure. Default is 0 (no retries). Each retry uses exponential backoff based on the `-InitialRetryDelay` parameter.
 
@@ -405,21 +368,6 @@ Aliases:
 Required: False
 Position: Named
 Default value: 0
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -RetrievalBatchSize
-Controls the maximum number of records to resolve in a single query when using MatchOn. Default is 500. Specify 1 to resolve one record at a time.
-
-```yaml
-Type: UInt32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -462,6 +410,58 @@ See standard PS docs.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AllowMultipleMatches
+If specified, allows deletion of multiple records when MatchOn criteria matches more than one record. Without this switch, an error is raised if MatchOn finds multiple matches.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -MatchOn
+List of list of column names that identify records to delete based on the values of those columns in the InputObject. The first list that returns a match is used. If AllowMultipleMatches is not specified, an error will be raised if more than one record matches.
+
+For example:
+- `@("emailaddress1")` - Match on email address alone
+- `@("firstname", "lastname")` - Match on both first and last name together
+- `@("emailaddress1"), @("firstname", "lastname")` - Try email first, fall back to name if no email match
+
+Either -Id or -MatchOn must be specified.
+
+```yaml
+Type: String[][]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RetrievalBatchSize
+Controls the maximum number of records to resolve in a single query when using MatchOn. Default is 500. Specify 1 to resolve one record at a time.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named

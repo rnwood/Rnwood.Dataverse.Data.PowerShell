@@ -852,9 +852,10 @@ Describe "Examples-Comparison Documentation Tests" {
             # All records should be attempted (default BatchSize = 100)
             { $records | Set-DataverseRecord -Connection $script:conn -CreateOnly -ErrorAction SilentlyContinue } | Should -Not -Throw
             
-            # With mock provider, all should succeed
-            # In real scenario with errors, all would be attempted due to ContinueOnError = true
-            $true | Should -Be $true
+            # Verify records were created by retrieving one
+            $retrieved = Get-DataverseRecord -Connection $script:conn -TableName contact -FilterValues @{"firstname"="BatchTest0"}
+            $retrieved | Should -Not -BeNull
+            $retrieved.firstname | Should -Be "BatchTest0"
         }
         
         It "Can access error details from TargetObject in batch errors" {
@@ -873,7 +874,7 @@ Describe "Examples-Comparison Documentation Tests" {
             # (With mock provider, typically no errors, but structure is validated)
             if ($errors.Count -gt 0) {
                 $errors[0].TargetObject | Should -Not -BeNull
-                # The TargetObject should be usable to identify which record failed
+                # The TargetObject should contain the input object
                 $errors[0].TargetObject.GetType().Name | Should -Match "Entity|PSObject|PSCustomObject"
             }
             
@@ -1143,6 +1144,7 @@ Describe "Examples-Comparison Documentation Tests" {
             $cmd.Parameters.ContainsKey('Mode') | Should -Be $true
             $cmd.Parameters.ContainsKey('ConnectionReferences') | Should -Be $true
             $cmd.Parameters.ContainsKey('EnvironmentVariables') | Should -Be $true
+            $cmd.Parameters.ContainsKey('UseUpdateIfAdditive') | Should -Be $true
             $cmd.Parameters.ContainsKey('SkipConnectionReferenceValidation') | Should -Be $true
             $cmd.Parameters.ContainsKey('SkipEnvironmentVariableValidation') | Should -Be $true
             $cmd.Parameters.ContainsKey('PollingIntervalSeconds') | Should -Be $true

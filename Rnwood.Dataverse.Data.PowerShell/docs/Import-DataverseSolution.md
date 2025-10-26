@@ -17,9 +17,10 @@ Imports a solution to Dataverse using an asynchronous job with progress reportin
 Import-DataverseSolution [-InFile] <String> [-OverwriteUnmanagedCustomizations] [-PublishWorkflows]
  [-SkipProductUpdateDependencies] [-Mode <ImportMode>] [-ConnectionReferences <Hashtable>]
  [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
- [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-PollingIntervalSeconds <Int32>]
- [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation] [-SkipEnvironmentVariableValidation]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfAdditive]
+ [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation]
+ [-SkipEnvironmentVariableValidation] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### FromBytes
@@ -27,9 +28,10 @@ Import-DataverseSolution [-InFile] <String> [-OverwriteUnmanagedCustomizations] 
 Import-DataverseSolution -SolutionFile <Byte[]> [-OverwriteUnmanagedCustomizations] [-PublishWorkflows]
  [-SkipProductUpdateDependencies] [-Mode <ImportMode>] [-ConnectionReferences <Hashtable>]
  [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
- [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-PollingIntervalSeconds <Int32>]
- [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation] [-SkipEnvironmentVariableValidation]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfAdditive]
+ [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation]
+ [-SkipEnvironmentVariableValidation] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -424,7 +426,22 @@ See standard PS docs.
 ```yaml
 Type: ActionPreference
 Parameter Sets: (All)
-Aliases: proga
+Aliases: proga"
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UseUpdateIfAdditive
+Use update if additive mode (experimental and incomplete). Only valid with Auto (default) mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items in 'TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status, uses simple install mode (no stage and upgrade). Use Compare-DataverseSolutionComponents to see what the comparison would show before using this switch.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named
@@ -439,7 +456,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Byte[]
-
 ## OUTPUTS
 
 ### System.Object
@@ -476,6 +492,9 @@ Use `-SkipEnvironmentVariableValidation` to bypass validation of environment var
 **Upgrade Scenarios:**
 When using -HoldingSolution to import a solution as an upgrade, the cmdlet extracts the solution's unique name from the solution.xml file within the ZIP and queries the target environment to check if it already exists. If it doesn't exist, the cmdlet automatically falls back to a regular import. This prevents errors when deploying to new environments.
 
+**UseUpdateIfAdditive Mode:**
+The -UseUpdateIfAdditive switch (experimental) performs a component comparison between the solution file and the target environment when the solution already exists. If the comparison shows only additive changes (no components removed or behavior changes that would remove data), it uses the simpler ImportSolutionAsyncRequest instead of StageAndUpgradeAsyncRequest for better performance. This switch is only valid when using the default Auto mode. Use Compare-DataverseSolutionComponents to preview what the comparison would show before using this switch.
+
 Progress is reported using PowerShell's progress API and shows:
 - Current status (Waiting, In progress, etc.)
 - Percentage complete
@@ -491,5 +510,6 @@ See also:
 
 [Get-DataverseConnection]()
 [Export-DataverseSolution]()
+[Compare-DataverseSolutionComponents]()
 [Invoke-DataverseImportSolution]()
 [Invoke-DataverseImportSolutionAsync]()

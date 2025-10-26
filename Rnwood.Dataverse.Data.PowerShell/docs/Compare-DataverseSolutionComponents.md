@@ -230,11 +230,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Byte[]
-
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
-
 ## NOTES
 - **Status values**:
   - **Added**: Component exists in source but not in target
@@ -249,11 +247,14 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
   - **File-to-file comparisons**: Subcomponents extracted from customizations.xml in solution ZIP
   - **Environment comparisons**: Subcomponents queried from environment metadata
   - Works for both comparison modes - no Connection required for file-to-file
-  
-- If the solution does not exist in the target environment, all components will be marked as "Added"
-- Components that exist in both locations with the same behavior are marked as "Modified" (deep content inspection is not performed)
-- The cmdlet can compare file-to-environment, file-to-file, or environment-to-file (with -ReverseComparison)
-- Connection parameter is only required for environment comparisons, not for file-to-file comparisons
+  - If the solution does not exist in the target environment, all components will be marked as "Added"
+  - Components that exist in both locations with the same behavior are marked as "Modified" (deep content inspection is not performed)
+  - The cmdlet can compare file-to-environment, file-to-file, or environment-to-file (with -ReverseComparison)
+  - Connection parameter is only required for environment comparisons, not for file-to-file comparisons
+
+- **Integration with Import-DataverseSolution**:
+  - This cmdlet is used internally by `Import-DataverseSolution -UseUpdateIfAdditive` to determine if a solution update can use the simpler import mode
+  - The -UseUpdateIfAdditive switch compares components and uses simple import if no components are removed or have less inclusive behavior changes
 
 ## RELATED LINKS
 

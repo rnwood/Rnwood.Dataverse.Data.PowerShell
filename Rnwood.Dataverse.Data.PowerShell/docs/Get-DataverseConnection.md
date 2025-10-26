@@ -297,21 +297,6 @@ Connects to Dataverse using a specific named PAC CLI profile. The profile name m
 
 ## PARAMETERS
 
-### -AccessToken
-Script block that returns an access token string. Called whenever a new access token is needed.
-
-```yaml
-Type: ScriptBlock
-Parameter Sets: Authenticate with access token script block
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -ClientId
 Client ID to use for authentication. By default the MS provided ID for PAC CLI (`9cee029c-6210-4654-90bb-17e6e9d36617`) is used to make it easy to get started.
 
@@ -597,6 +582,21 @@ Parameter Sets: (All)
 Aliases: proga
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AccessToken
+Script block that returns an access token string. Called whenever a new access token is needed.
+
+```yaml
+Type: ScriptBlock
+Parameter Sets: Authenticate with access token script block
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
