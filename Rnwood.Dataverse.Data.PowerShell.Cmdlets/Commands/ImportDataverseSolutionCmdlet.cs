@@ -297,7 +297,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var targetComponents = SolutionComponentExtractor.ExtractEnvironmentComponents(Connection, solutionId);
 
                     // Compare components
-                    var comparisonResults = SolutionComponentExtractor.CompareSolutionComponents(Connection, this, sourceComponents, targetComponents, solutionBytes);
+                    var comparisonResults = SolutionComponentExtractor.CompareSolutionComponents(Connection, this, sourceComponents, targetComponents, solutionBytes, solutionId);
 
                     // Count problematic statuses
                     int targetOnlyCount = comparisonResults.Count(r => r.Status == SolutionComponentStatus.InTargetOnly);
@@ -317,7 +317,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // List the problematic components
                         foreach (var result in comparisonResults.Where(r => r.Status == SolutionComponentStatus.InTargetOnly || r.Status == SolutionComponentStatus.InSourceAndTarget_BehaviourLessInclusiveInSource))
                         {
-                            string componentName = result.SourceComponent?.LogicalName ?? result.TargetComponent?.LogicalName ?? "Unknown";
+                            string componentName = result.SourceComponent?.UniqueName ?? result.TargetComponent?.UniqueName ?? "Unknown";
                             int componentType = result.SourceComponent?.ComponentType ?? result.TargetComponent?.ComponentType ?? 0;
                             WriteVerbose($"  Removed component: Type {componentType} '{componentName}' - {result.Status}");
                         }

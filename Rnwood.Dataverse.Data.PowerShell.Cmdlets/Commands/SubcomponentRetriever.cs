@@ -4,6 +4,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Management.Automation;
+using System.Net.Http;
+using System.Text.Json;
 using System.Xml.Linq;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
@@ -22,17 +24,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private readonly ServiceClient _connection;
         private readonly PSCmdlet _cmdlet;
         private readonly byte[] _solutionFileBytes;
-      private readonly Guid? _solutionId;
+        private readonly Guid? _solutionId;
 
-    /// <summary>
+        /// <summary>
         /// Initializes a new instance of the SubcomponentRetriever class for environment-based retrieval with solution context.
         /// </summary>
-      public SubcomponentRetriever(ServiceClient connection, PSCmdlet cmdlet, Guid? solutionId)
+        public SubcomponentRetriever(ServiceClient connection, PSCmdlet cmdlet, Guid? solutionId)
         {
-   _connection = connection;
-    _cmdlet = cmdlet;
-        _solutionFileBytes = null;
-    _solutionId = solutionId;
+            _connection = connection;
+            _cmdlet = cmdlet;
+            _solutionFileBytes = null;
+            _solutionId = solutionId;
         }
 
         /// <summary>
@@ -40,11 +42,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         public SubcomponentRetriever(ServiceClient connection, PSCmdlet cmdlet, byte[] solutionFileBytes, Guid? solutionId)
         {
-_connection = connection;
-       _cmdlet = cmdlet;
+            _connection = connection;
+            _cmdlet = cmdlet;
             _solutionFileBytes = solutionFileBytes;
-        _solutionId = solutionId;
-      }
+            _solutionId = solutionId;
+        }
 
         /// <summary>
         /// Retrieves subcomponents for the given parent component.
@@ -59,7 +61,7 @@ _connection = connection;
                 return subcomponents;
             }
 
-            var parentIdentifier = parentComponent.LogicalName ?? parentComponent.ObjectId?.ToString() ?? "Unknown";
+            var parentIdentifier = parentComponent.UniqueName ?? parentComponent.ObjectId?.ToString() ?? "Unknown";
             _cmdlet.WriteVerbose($"Retrieving subcomponents for entity: {parentIdentifier}");
 
             // If we have solution file bytes, try to extract from file first
@@ -72,262 +74,157 @@ _connection = connection;
                 }
             }
 
-            // Otherwise, retrieve from environment based on behavior
-            if (parentComponent.RootComponentBehavior != 0)
-            {
-                _cmdlet.WriteVerbose($"Parent behavior is {parentComponent.RootComponentBehavior} (not 'Include Subcomponents'), querying solutioncomponent table");
-                return GetSubcomponentsFromSolutionTable(parentComponent);
-            }
-
-            // Default behavior: retrieve all attributes from metadata
-            return GetAllAttributesFromMetadata(parentComponent);
+            // Try to retrieve from msdyn_solutioncomponentsummary via REST API first
+            return GetSubcomponentsFromMsdynSummary(parentComponent);
         }
 
-        private List<SolutionComponent> GetAllAttributesFromMetadata(SolutionComponent parentComponent)
+        /// <summary>
+        /// Gets subcomponents from msdyn_solutioncomponentsummary using REST API for the given parent component.
+        /// </summary>
+        private List<SolutionComponent> GetSubcomponentsFromMsdynSummary(SolutionComponent parentComponent)
         {
             var subcomponents = new List<SolutionComponent>();
-
-            var metadataQuery = new RetrieveMetadataChangesRequest
-            {
-                Query = new EntityQueryExpression
-                {
-                    Criteria = new MetadataFilterExpression(LogicalOperator.And)
-                    {
-                        Conditions =
-  {
-    new MetadataConditionExpression("LogicalName", MetadataConditionOperator.Equals, parentComponent.LogicalName)
-       }
-                    },
-                    Properties = new MetadataPropertiesExpression { AllProperties = true },
-                    AttributeQuery = new AttributeQueryExpression
-                    {
-                        Properties = new MetadataPropertiesExpression { AllProperties = true }
-                    }
-                }
-            };
-
-            var metadataResponse = (RetrieveMetadataChangesResponse)_connection.Execute(metadataQuery);
-
-            if (metadataResponse.EntityMetadata != null && metadataResponse.EntityMetadata.Count > 0)
-            {
-                var entityMetadata = metadataResponse.EntityMetadata[0];
-
-                // Add attributes with logical names
-                if (entityMetadata.Attributes != null)
-                {
-                    foreach (var attribute in entityMetadata.Attributes)
-                    {
-                        if (attribute.MetadataId.HasValue)
-                        {
-                            subcomponents.Add(new SolutionComponent
-                            {
-                                LogicalName = attribute.LogicalName,
-                                MetadataId = attribute.MetadataId.Value,
-                                ComponentType = 2, // Attribute
-                                RootComponentBehavior = 0,
-                                IsSubcomponent = true,
-                                ParentComponentType = 1,
-                                ParentObjectId = parentComponent.LogicalName
-                            });
-                        }
-                    }
-                }
-            }
-
-            return subcomponents;
-        }
-
-        private List<SolutionComponent> GetSubcomponentsFromSolutionTable(SolutionComponent parentComponent)
-        {
-            var subcomponents = new List<SolutionComponent>();
-
-      // For entities, we need to use the LogicalName to query
-         string entityLogicalName = parentComponent.LogicalName;
-            if (string.IsNullOrEmpty(entityLogicalName))
- {
-    _cmdlet.WriteVerbose($"Parent entity component has no LogicalName and cannot be resolved");
-        return subcomponents;
-   }
-
-            // Get the entity's metadata ID from the logical name
-    Guid parentObjectId = GetEntityMetadataId(entityLogicalName);
-    if (parentObjectId == Guid.Empty)
-   {
-              _cmdlet.WriteVerbose($"Could not resolve metadata ID for entity {entityLogicalName}");
-            return subcomponents;
-    }
-
-         // Get the parent component's solutioncomponentid from the solutioncomponent table
-  // We need to find the parent component record first to get its solutioncomponentid
-       var parentComponentQuery = new QueryExpression("solutioncomponent")
-            {
-   ColumnSet = new ColumnSet("solutioncomponentid"),
-    Criteria = new FilterExpression
-      {
-         Conditions =
-    {
-     new ConditionExpression("objectid", ConditionOperator.Equal, parentObjectId),
-      new ConditionExpression("componenttype", ConditionOperator.Equal, parentComponent.ComponentType)
-        }
-             }
- };
-
-          // Add solutionid filter if available
-            if (_solutionId.HasValue)
-         {
-     parentComponentQuery.Criteria.AddCondition("solutionid", ConditionOperator.Equal, _solutionId.Value);
-            }
-
-            var parentResults = _connection.RetrieveMultiple(parentComponentQuery);
-
-            if (parentResults.Entities.Count == 0)
-            {
-    _cmdlet.WriteVerbose($"Parent component not found in solutioncomponent table{(_solutionId.HasValue ? $" for solution {_solutionId.Value}" : "")}");
-           return subcomponents;
-            }
-
-       var parentSolutionComponentId = parentResults.Entities[0].GetAttributeValue<Guid>("solutioncomponentid");
-      _cmdlet.WriteVerbose($"Found parent component {entityLogicalName} with solutioncomponentid {parentSolutionComponentId}");
-
-            // Query solutioncomponent table for components that have this parent's solutioncomponentid
-     var componentQuery = new QueryExpression("solutioncomponent")
-      {
-    ColumnSet = new ColumnSet("objectid", "componenttype", "rootcomponentbehavior"),
-      Criteria = new FilterExpression
-      {
-     Conditions =
-         {
-       new ConditionExpression("rootsolutioncomponentid", ConditionOperator.Equal, parentSolutionComponentId)
-        }
-  }
-            };
-
-      // Add solutionid filter if available
-     if (_solutionId.HasValue)
-            {
-     componentQuery.Criteria.AddCondition("solutionid", ConditionOperator.Equal, _solutionId.Value);
-        }
-
-            var results = _connection.RetrieveMultiple(componentQuery);
-    _cmdlet.WriteVerbose($"Found {results.Entities.Count} child components for parent {entityLogicalName}");
-
-  foreach (var entity in results.Entities)
-            {
-       var objectId = entity.GetAttributeValue<Guid>("objectid");
-var componentType = entity.GetAttributeValue<OptionSetValue>("componenttype")?.Value ?? 0;
-
-      string logicalName = null;
-        // For attributes (type 2), try to get the logical name
-      if (componentType == 2 // Attribute
-    )
-  {
-  logicalName = GetAttributeLogicalName(entityLogicalName, objectId);
-    }
-
-  var componentBehavior = entity.Contains("rootcomponentbehavior")
-             ? entity.GetAttributeValue<OptionSetValue>("rootcomponentbehavior")?.Value ?? 0
-         : 0;
-
-  subcomponents.Add(new SolutionComponent
-          {
-    ComponentType = componentType,
-        LogicalName = logicalName,
-    ObjectId = objectId,
-   MetadataId = objectId,
-           RootComponentBehavior = componentBehavior,
-    IsSubcomponent = true,
-            ParentComponentType = 1,
-              ParentObjectId = entityLogicalName
-        });
-            }
-
-          _cmdlet.WriteVerbose($"Extracted {subcomponents.Count} child components from solutioncomponent table for entity {entityLogicalName}");
-  return subcomponents;
-        }
-
-        private Guid GetEntityMetadataId(string entityLogicalName)
-        {
-            var metadataQuery = new RetrieveMetadataChangesRequest
-            {
-                Query = new EntityQueryExpression
-                {
-                    Criteria = new MetadataFilterExpression(LogicalOperator.And)
-                    {
-                        Conditions =
-           {
-   new MetadataConditionExpression("LogicalName", MetadataConditionOperator.Equals, entityLogicalName)
-     }
-                    },
-                    Properties = new MetadataPropertiesExpression { PropertyNames = { "MetadataId" } }
-                }
-            };
 
             try
             {
-                var metadataResponse = (RetrieveMetadataChangesResponse)_connection.Execute(metadataQuery);
-                if (metadataResponse.EntityMetadata != null && metadataResponse.EntityMetadata.Count > 0)
+                var parentIdentifier = parentComponent.UniqueName ?? parentComponent.ObjectId?.ToString() ?? "Unknown";
+                _cmdlet.WriteVerbose($"Querying msdyn_solutioncomponentsummary for subcomponents of {parentIdentifier}");
+
+                var subcomponentTypes = new[] { 2, 10, 14, 22, 26, 59, 60, 10192, 29};
+
+                foreach (var componentTypeFilter in subcomponentTypes)
                 {
-                    var metadataId = metadataResponse.EntityMetadata[0].MetadataId;
-                    if (metadataId.HasValue)
+                    // Use REST API to query msdyn_solutioncomponentsummary for child components
+                    var filter = $"msdyn_primaryentityname eq '{parentComponent.UniqueName}' and msdyn_componenttype eq {componentTypeFilter}";
+                    if (_solutionId.HasValue)
                     {
-                        return metadataId.Value;
+                        filter += $" and msdyn_solutionid eq {_solutionId:B}";
+                    }
+
+                    var select = "msdyn_objectid,msdyn_componenttype,msdyn_uniquename,msdyn_primaryentityname,msdyn_componenttypename,msdyn_schemaname";
+                    var queryString = $"$filter={Uri.EscapeDataString(filter)}&$select={select}";
+
+                    var response = _connection.ExecuteWebRequest(HttpMethod.Get, $"msdyn_solutioncomponentsummaries?{queryString}", null, null);
+
+                    response.EnsureSuccessStatusCode();
+
+                    var jsonResponse = response.Content.ReadAsStringAsync().Result;
+                    using (var doc = JsonDocument.Parse(jsonResponse))
+                    {
+                        var root = doc.RootElement;
+                        if (root.TryGetProperty("value", out var valueArray))
+                        {
+                            foreach (var item in valueArray.EnumerateArray())
+                            {
+                                var objectId = Guid.Parse(item.GetProperty("msdyn_objectid").GetString());
+                                var componentType = item.GetProperty("msdyn_componenttype").GetInt32();
+
+                                var schemaName = item.TryGetProperty("msdyn_schemaname", out var sn) ? sn.GetString() : null;
+                                var uniqueName = item.TryGetProperty("msdyn_uniquename", out var un) ? un.GetString() : null;
+                                var componentTypeName = item.TryGetProperty("msdyn_componenttypename", out var ctn) ? ctn.GetString() : null;
+
+                                // Use msdyn_uniquename if available, otherwise use msdyn_primaryentityname
+                                string logicalName = schemaName ?? uniqueName;
+
+                                subcomponents.Add(new SolutionComponent
+                                {
+                                    UniqueName = logicalName,
+                                    ObjectId = objectId,
+                                    MetadataId = objectId,
+                                    ComponentType = componentType,
+                                    ComponentTypeName = componentTypeName,
+                                    RootComponentBehavior = 0, // Will be updated from solutioncomponent query
+                                    IsSubcomponent = true,
+                                    ParentComponentType = parentComponent.ComponentType,
+                                    ParentTableName = parentComponent.UniqueName
+                                });
+                            }
+                        }
+                    }
+                }
+
+                // Query solutioncomponent table to get rootcomponentbehavior for each subcomponent
+                if (subcomponents.Count > 0 && _solutionId.HasValue)
+                {
+                    var solutionComponentQuery = new QueryExpression("solutioncomponent")
+                    {
+                        ColumnSet = new ColumnSet("objectid", "rootcomponentbehavior"),
+                        Criteria = new FilterExpression
+                        {
+                            Conditions =
+                            {
+                                new ConditionExpression("solutionid", ConditionOperator.Equal, _solutionId.Value)
+                            }
+                        }
+                    };
+
+                    var solutionComponents = _connection.RetrieveMultiple(solutionComponentQuery);
+
+                    // Create a lookup dictionary for quick matching by objectid
+                    var behaviorLookup = solutionComponents.Entities
+                        .Where(e => e.Contains("rootcomponentbehavior"))
+                        .ToDictionary(
+                            e => e.GetAttributeValue<Guid>("objectid"),
+                            e => e.GetAttributeValue<OptionSetValue>("rootcomponentbehavior")?.Value ?? 0
+                        );
+
+                    // Update subcomponents with behavior information
+                    foreach (var subcomponent in subcomponents)
+                    {
+                        if (subcomponent.ObjectId.HasValue && behaviorLookup.TryGetValue(subcomponent.ObjectId.Value, out var behavior))
+                        {
+                            subcomponent.RootComponentBehavior = behavior;
+                        }
+                    }
+                }
+
+                _cmdlet.WriteVerbose($"Found {subcomponents.Count} subcomponents from msdyn_solutioncomponentsummary");
+
+                // Retrieve displaystringkey for component type 22 (Display String)
+                var displayStringIds = subcomponents.Where(sc => sc.ComponentType == 22).Select(sc => sc.ObjectId.Value).ToList();
+                if (displayStringIds.Any())
+                {
+                    var idsFilter = string.Join(" or ", displayStringIds.Select(id => $"displaystringid eq {id:B}"));
+                    var queryString = $"$filter={Uri.EscapeDataString(idsFilter)}&$select=displaystringid,displaystringkey";
+
+                    var response = _connection.ExecuteWebRequest(HttpMethod.Get, $"displaystrings?{queryString}", null, null);
+
+                    response.EnsureSuccessStatusCode();
+
+                    var jsonResponse = response.Content.ReadAsStringAsync().Result;
+                    using (var doc = JsonDocument.Parse(jsonResponse))
+                    {
+                        var root = doc.RootElement;
+                        if (root.TryGetProperty("value", out var valueArray))
+                        {
+                            foreach (var item in valueArray.EnumerateArray())
+                            {
+                                var displaystringid = Guid.Parse(item.GetProperty("displaystringid").GetString());
+                                var displaystringkey = item.GetProperty("displaystringkey").GetString();
+
+                                var subcomponent = subcomponents.FirstOrDefault(sc => sc.ObjectId == displaystringid && sc.ComponentType == 22);
+                                if (subcomponent != null)
+                                {
+                                    subcomponent.UniqueName = displaystringkey;
+                                }
+                            }
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                _cmdlet.WriteVerbose($"Error retrieving metadata ID for entity {entityLogicalName}: {ex.Message}");
+                throw new InvalidOperationException($"Error querying msdyn_solutioncomponentsummary: {ex.Message}", ex);
             }
 
-            return Guid.Empty;
-        }
-
-        private string GetAttributeLogicalName(string entityLogicalName, Guid attributeMetadataId)
-        {
-            var metadataQuery = new RetrieveMetadataChangesRequest
-            {
-                Query = new EntityQueryExpression
-                {
-                    Criteria = new MetadataFilterExpression(LogicalOperator.And)
-                    {
-                        Conditions =
-     {
-           new MetadataConditionExpression("LogicalName", MetadataConditionOperator.Equals, entityLogicalName)
-              }
-                    },
-                    Properties = new MetadataPropertiesExpression { PropertyNames = { "Attributes" } },
-                    AttributeQuery = new AttributeQueryExpression
-                    {
-                        Criteria = new MetadataFilterExpression(LogicalOperator.And)
-                        {
-                            Conditions =
-   {
-            new MetadataConditionExpression("MetadataId", MetadataConditionOperator.Equals, attributeMetadataId)
-    }
-                        },
-                        Properties = new MetadataPropertiesExpression { PropertyNames = { "LogicalName" } }
-                    }
-                }
-            };
-
-            var metadataResponse = (RetrieveMetadataChangesResponse)_connection.Execute(metadataQuery);
-            if (metadataResponse.EntityMetadata != null && metadataResponse.EntityMetadata.Count > 0)
-            {
-                var entity = metadataResponse.EntityMetadata[0];
-                if (entity.Attributes != null && entity.Attributes.Length > 0)
-                {
-                    return entity.Attributes[0].LogicalName;
-                }
-            }
-
-            return null;
+            return subcomponents;
         }
 
         private List<SolutionComponent> ExtractSubcomponentsFromFile(SolutionComponent parentComponent)
         {
             var subcomponents = new List<SolutionComponent>();
 
-            if (_solutionFileBytes == null || parentComponent.ComponentType != 1 || string.IsNullOrEmpty(parentComponent.LogicalName))
+            if (_solutionFileBytes == null || parentComponent.ComponentType != 1 || string.IsNullOrEmpty(parentComponent.UniqueName))
             {
                 return subcomponents;
             }
@@ -336,7 +233,7 @@ var componentType = entity.GetAttributeValue<OptionSetValue>("componenttype")?.V
             using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
             {
                 var customizationsEntry = archive.Entries.FirstOrDefault(e =>
-                        e.FullName.Equals("customizations.xml", StringComparison.OrdinalIgnoreCase));
+                         e.FullName.Equals("customizations.xml", StringComparison.OrdinalIgnoreCase));
 
                 if (customizationsEntry != null)
                 {
@@ -345,7 +242,7 @@ var componentType = entity.GetAttributeValue<OptionSetValue>("componenttype")?.V
                     {
                         var xmlContent = reader.ReadToEnd();
                         var xdoc = XDocument.Parse(xmlContent);
-                        subcomponents.AddRange(ExtractEntitySubcomponentsFromXml(xdoc, parentComponent.LogicalName));
+                        subcomponents.AddRange(ExtractEntitySubcomponentsFromXml(xdoc, parentComponent.UniqueName));
                     }
                 }
 
@@ -363,16 +260,16 @@ var componentType = entity.GetAttributeValue<OptionSetValue>("componenttype")?.V
                         var uniquename = appaction.Attribute("uniquename")?.Value;
 
                         var parts = uniquename.Split('!');
-                        if (parts.Length >= 2 && parts[1].Equals(parentComponent.LogicalName, StringComparison.OrdinalIgnoreCase))
+                        if (parts.Length >= 2 && parts[1].Equals(parentComponent.UniqueName, StringComparison.OrdinalIgnoreCase))
                         {
                             subcomponents.Add(new SolutionComponent
                             {
                                 ComponentType = 10192,
-                                LogicalName = uniquename,
+                                UniqueName = uniquename,
                                 RootComponentBehavior = 0,
                                 IsSubcomponent = true,
                                 ParentComponentType = 1,
-                                ParentObjectId = parentComponent.LogicalName
+                                ParentTableName = parentComponent.UniqueName
                             });
                         }
                     }
@@ -416,33 +313,28 @@ var componentType = entity.GetAttributeValue<OptionSetValue>("componenttype")?.V
                 subcomponents.Add(new SolutionComponent
                 {
                     ComponentType = 2, // Attribute
-                    LogicalName = attribute.Element("Name")?.Value,
+                    UniqueName = attribute.Element("Name")?.Value,
                     RootComponentBehavior = 0,
                     IsSubcomponent = true,
                     ParentComponentType = 1,
-                    ParentObjectId = entityName
+                    ParentTableName = entityName
                 });
             }
 
             // Extract messages
-            var messages = targetEntity?.Elements("Strings") ?? Enumerable.Empty<XElement>();
+            var messages = targetEntity.Element("Strings")?.Elements("Strings") ?? Enumerable.Empty<XElement>();
 
             foreach (var message in messages)
             {
-                var resourceKey = message.Attribute("ResourceKey")?.Value;
-                if (!string.IsNullOrEmpty(resourceKey))
+                subcomponents.Add(new SolutionComponent
                 {
-                    var logicalName = $"{entityName}.{resourceKey}";
-                    subcomponents.Add(new SolutionComponent
-                    {
-                        ComponentType = 22, // Display String
-                        LogicalName = logicalName,
-                        RootComponentBehavior = 0,
-                        IsSubcomponent = true,
-                        ParentComponentType = 1,
-                        ParentObjectId = entityName
-                    });
-                }
+                    ComponentType = 22, // Display String
+                    UniqueName = message.Attribute("ResourceKey")?.Value,
+                    RootComponentBehavior = 0,
+                    IsSubcomponent = true,
+                    ParentComponentType = 1,
+                    ParentTableName = entityName
+                });
             }
 
             // Extract relationships
@@ -457,11 +349,26 @@ var componentType = entity.GetAttributeValue<OptionSetValue>("componenttype")?.V
                     subcomponents.Add(new SolutionComponent
                     {
                         ComponentType = 10, // EntityRelationship
-                        LogicalName = name,
+                        UniqueName = name,
                         RootComponentBehavior = 0,
                         IsSubcomponent = true,
                         ParentComponentType = 1,
-                        ParentObjectId = entityName
+                        ParentTableName = entityName
+                    });
+                }
+
+                var referencedEntity = rel.Element("ReferencedEntityName")?.Value;
+                if (referencedEntity != referencingEntity &&  referencedEntity?.Equals(entityName, StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    var name = rel.Attribute("Name")?.Value;
+                    subcomponents.Add(new SolutionComponent
+                    {
+                        ComponentType = 10, // EntityRelationship
+                        UniqueName = name,
+                        RootComponentBehavior = 0,
+                        IsSubcomponent = true,
+                        ParentComponentType = 1,
+                        ParentTableName = entityName
                     });
                 }
             }
@@ -475,11 +382,11 @@ var componentType = entity.GetAttributeValue<OptionSetValue>("componenttype")?.V
                 subcomponents.Add(new SolutionComponent
                 {
                     ComponentType = 14, // EntityKey
-                    LogicalName = logicalName,
+                    UniqueName = logicalName,
                     RootComponentBehavior = 0,
                     IsSubcomponent = true,
                     ParentComponentType = 1,
-                    ParentObjectId = entityName
+                    ParentTableName = entityName
                 });
             }
 
@@ -495,7 +402,7 @@ var componentType = entity.GetAttributeValue<OptionSetValue>("componenttype")?.V
                     RootComponentBehavior = 0,
                     IsSubcomponent = true,
                     ParentComponentType = 1,
-                    ParentObjectId = entityName
+                    ParentTableName = entityName
                 });
             }
 
@@ -512,7 +419,7 @@ var componentType = entity.GetAttributeValue<OptionSetValue>("componenttype")?.V
                     RootComponentBehavior = 0,
                     IsSubcomponent = true,
                     ParentComponentType = 1,
-                    ParentObjectId = entityName
+                    ParentTableName = entityName
                 });
             }
 
@@ -529,7 +436,7 @@ var componentType = entity.GetAttributeValue<OptionSetValue>("componenttype")?.V
                     RootComponentBehavior = 0,
                     IsSubcomponent = true,
                     ParentComponentType = 1,
-                    ParentObjectId = entityName
+                    ParentTableName = entityName
                 });
             }
 
