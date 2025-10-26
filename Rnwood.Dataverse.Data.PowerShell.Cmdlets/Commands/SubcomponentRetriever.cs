@@ -104,43 +104,65 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var select = "msdyn_objectid,msdyn_componenttype,msdyn_uniquename,msdyn_primaryentityname,msdyn_componenttypename,msdyn_schemaname";
                     var queryString = $"$filter={Uri.EscapeDataString(filter)}&$select={select}";
 
-                    var response = _connection.ExecuteWebRequest(HttpMethod.Get, $"msdyn_solutioncomponentsummaries?{queryString}", null, null);
-
-                    response.EnsureSuccessStatusCode();
-
-                    var jsonResponse = response.Content.ReadAsStringAsync().Result;
-                    using (var doc = JsonDocument.Parse(jsonResponse))
+                    string nextLink = null;
+                    do
                     {
-                        var root = doc.RootElement;
-                        if (root.TryGetProperty("value", out var valueArray))
+                        var uri = nextLink ?? $"msdyn_solutioncomponentsummaries?{queryString}";
+                        var response = _connection.ExecuteWebRequest(HttpMethod.Get, uri, null, null);
+
+                        response.EnsureSuccessStatusCode();
+
+                        var jsonResponse = response.Content.ReadAsStringAsync().Result;
+                        using (var doc = JsonDocument.Parse(jsonResponse))
                         {
-                            foreach (var item in valueArray.EnumerateArray())
+                            var root = doc.RootElement;
+                            if (root.TryGetProperty("value", out var valueArray))
                             {
-                                var objectId = Guid.Parse(item.GetProperty("msdyn_objectid").GetString());
-                                var componentType = item.GetProperty("msdyn_componenttype").GetInt32();
-
-                                var schemaName = item.TryGetProperty("msdyn_schemaname", out var sn) ? sn.GetString() : null;
-                                var uniqueName = item.TryGetProperty("msdyn_uniquename", out var un) ? un.GetString() : null;
-                                var componentTypeName = item.TryGetProperty("msdyn_componenttypename", out var ctn) ? ctn.GetString() : null;
-
-                                // Use msdyn_uniquename if available, otherwise use msdyn_primaryentityname
-                                string logicalName = schemaName ?? uniqueName;
-
-                                subcomponents.Add(new SolutionComponent
+                                foreach (var item in valueArray.EnumerateArray())
                                 {
-                                    UniqueName = logicalName,
-                                    ObjectId = objectId,
-                                    MetadataId = objectId,
-                                    ComponentType = componentType,
-                                    ComponentTypeName = componentTypeName,
-                                    RootComponentBehavior = 0, // Will be updated from solutioncomponent query
-                                    IsSubcomponent = true,
-                                    ParentComponentType = parentComponent.ComponentType,
-                                    ParentTableName = parentComponent.UniqueName
-                                });
+                                    var objectId = Guid.Parse(item.GetProperty("msdyn_objectid").GetString());
+                                    var componentType = item.GetProperty("msdyn_componenttype").GetInt32();
+
+                                    var schemaName = item.TryGetProperty("msdyn_schemaname", out var sn) ? sn.GetString() : null;
+                                    var uniqueName = item.TryGetProperty("msdyn_uniquename", out var un) ? un.GetString() : null;
+                                    var componentTypeName = item.TryGetProperty("msdyn_componenttypename", out var ctn) ? ctn.GetString() : null;
+
+                                    // Use msdyn_uniquename if available, otherwise use msdyn_primaryentityname
+                                    string logicalName = schemaName ?? uniqueName;
+
+                                    subcomponents.Add(new SolutionComponent
+                                    {
+                                        UniqueName = logicalName,
+                                        ObjectId = objectId,
+                                        MetadataId = objectId,
+                                        ComponentType = componentType,
+                                        ComponentTypeName = componentTypeName,
+                                        RootComponentBehavior = 0, // Will be updated from solutioncomponent query
+                                        IsSubcomponent = true,
+                                        ParentComponentType = parentComponent.ComponentType,
+                                        ParentTableName = parentComponent.UniqueName
+                                    });
+                                }
+                            }
+
+                            nextLink = root.TryGetProperty("@odata.nextLink", out var nl) ? nl.GetString() : null;
+                            if (nextLink != null)
+                            {
+                                // Extract the query part after the entity set
+                                var uriObj = new Uri(nextLink);
+                                var pathAndQuery = uriObj.PathAndQuery;
+                                var index = pathAndQuery.IndexOf("msdyn_solutioncomponentsummaries");
+                                if (index >= 0)
+                                {
+                                    nextLink = pathAndQuery.Substring(index);
+                                }
+                                else
+                                {
+                                    nextLink = null; // Fallback
+                                }
                             }
                         }
-                    }
+                    } while (nextLink != null);
                 }
 
                 // Query solutioncomponent table to get rootcomponentbehavior for each subcomponent
@@ -158,10 +180,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
                     };
 
-                    var solutionComponents = _connection.RetrieveMultiple(solutionComponentQuery);
+                    var allSolutionComponents = new List<Entity>();
+                    EntityCollection result;
+                    do
+                    {
+                        result = _connection.RetrieveMultiple(solutionComponentQuery);
+                        allSolutionComponents.AddRange(result.Entities);
+                        if (result.MoreRecords)
+                        {
+                            solutionComponentQuery.PageInfo.PageNumber++;
+                            solutionComponentQuery.PageInfo.PagingCookie = result.PagingCookie;
+                        }
+                    } while (result.MoreRecords);
 
                     // Create a lookup dictionary for quick matching by objectid
-                    var behaviorLookup = solutionComponents.Entities
+                    var behaviorLookup = allSolutionComponents
                         .Where(e => e.Contains("rootcomponentbehavior"))
                         .ToDictionary(
                             e => e.GetAttributeValue<Guid>("objectid"),
@@ -187,29 +220,51 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var idsFilter = string.Join(" or ", displayStringIds.Select(id => $"displaystringid eq {id:B}"));
                     var queryString = $"$filter={Uri.EscapeDataString(idsFilter)}&$select=displaystringid,displaystringkey";
 
-                    var response = _connection.ExecuteWebRequest(HttpMethod.Get, $"displaystrings?{queryString}", null, null);
-
-                    response.EnsureSuccessStatusCode();
-
-                    var jsonResponse = response.Content.ReadAsStringAsync().Result;
-                    using (var doc = JsonDocument.Parse(jsonResponse))
+                    string nextLink = null;
+                    do
                     {
-                        var root = doc.RootElement;
-                        if (root.TryGetProperty("value", out var valueArray))
-                        {
-                            foreach (var item in valueArray.EnumerateArray())
-                            {
-                                var displaystringid = Guid.Parse(item.GetProperty("displaystringid").GetString());
-                                var displaystringkey = item.GetProperty("displaystringkey").GetString();
+                        var uri = nextLink ?? $"displaystrings?{queryString}";
+                        var response = _connection.ExecuteWebRequest(HttpMethod.Get, uri, null, null);
 
-                                var subcomponent = subcomponents.FirstOrDefault(sc => sc.ObjectId == displaystringid && sc.ComponentType == 22);
-                                if (subcomponent != null)
+                        response.EnsureSuccessStatusCode();
+
+                        var jsonResponse = response.Content.ReadAsStringAsync().Result;
+                        using (var doc = JsonDocument.Parse(jsonResponse))
+                        {
+                            var root = doc.RootElement;
+                            if (root.TryGetProperty("value", out var valueArray))
+                            {
+                                foreach (var item in valueArray.EnumerateArray())
                                 {
-                                    subcomponent.UniqueName = displaystringkey;
+                                    var displaystringid = Guid.Parse(item.GetProperty("displaystringid").GetString());
+                                    var displaystringkey = item.GetProperty("displaystringkey").GetString();
+
+                                    var subcomponent = subcomponents.FirstOrDefault(sc => sc.ObjectId == displaystringid && sc.ComponentType == 22);
+                                    if (subcomponent != null)
+                                    {
+                                        subcomponent.UniqueName = displaystringkey;
+                                    }
+                                }
+                            }
+
+                            nextLink = root.TryGetProperty("@odata.nextLink", out var nl) ? nl.GetString() : null;
+                            if (nextLink != null)
+                            {
+                                // Extract the query part after the entity set
+                                var uriObj = new Uri(nextLink);
+                                var pathAndQuery = uriObj.PathAndQuery;
+                                var index = pathAndQuery.IndexOf("displaystrings");
+                                if (index >= 0)
+                                {
+                                    nextLink = pathAndQuery.Substring(index);
+                                }
+                                else
+                                {
+                                    nextLink = null; // Fallback
                                 }
                             }
                         }
-                    }
+                    } while (nextLink != null);
                 }
             }
             catch (Exception ex)

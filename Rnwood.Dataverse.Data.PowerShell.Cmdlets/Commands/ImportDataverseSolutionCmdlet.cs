@@ -1010,9 +1010,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             };
 
-            var results = Connection.RetrieveMultiple(query);
+            var allResults = new List<Entity>();
+            EntityCollection ec;
+            do
+            {
+                ec = Connection.RetrieveMultiple(query);
+                allResults.AddRange(ec.Entities);
+                if (ec.MoreRecords)
+                {
+                    query.PageInfo.PageNumber++;
+                    query.PageInfo.PagingCookie = ec.PagingCookie;
+                }
+            } while (ec.MoreRecords);
 
-            foreach (var entity in results.Entities)
+            foreach (var entity in allResults)
             {
                 if (entity.Contains("schemaname"))
                 {
