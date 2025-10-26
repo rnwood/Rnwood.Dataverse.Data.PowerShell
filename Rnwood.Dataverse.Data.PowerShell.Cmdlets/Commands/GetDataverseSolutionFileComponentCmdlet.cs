@@ -93,7 +93,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     var componentIdentifier = component.LogicalName ?? component.ObjectId?.ToString() ?? "Unknown";
                     WriteVerbose($"Retrieving subcomponents for {GetComponentTypeName(component.ComponentType)}: {componentIdentifier}");
-                    var subcomponents = ExtractSubcomponentsFromXml(solutionBytes, component);
+                    var subcomponents = ExtractSubcomponents(solutionBytes, component);
                     foreach (var subcomponent in subcomponents)
                     {
                         OutputComponentAsObject(subcomponent);
@@ -230,69 +230,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             WriteObject(result);
         }
 
-        private List<SolutionComponent> ExtractSubcomponentsFromXml(byte[] solutionBytes, SolutionComponent parentComponent)
+        private List<SolutionComponent> ExtractSubcomponents(byte[] solutionBytes, SolutionComponent parentComponent)
         {
-            var subcomponents = new List<SolutionComponent>();
-
-            if (parentComponent.ComponentType != 1) // Only entities have subcomponents
-            {
-                return subcomponents;
-            }
-
-            using (var memoryStream = new MemoryStream(solutionBytes))
-            using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
-            {
-                var customizationsEntry = archive.Entries.FirstOrDefault(e =>
-        e.FullName.Equals("customizations.xml", StringComparison.OrdinalIgnoreCase));
-
-                if (customizationsEntry != null)
-                {
-                    using (var stream = customizationsEntry.Open())
-                    using (var reader = new StreamReader(stream))
-                    {
-                        var xmlContent = reader.ReadToEnd();
-                        var xdoc = XDocument.Parse(xmlContent);
-
-                        // Find the entity element with matching name
-                        var entities = xdoc.Root.Element("Entities").Elements("Entity");
-
-                        XElement targetEntity = null;
-                        foreach (var entity in entities)
-                        {
-                            var nameElement = entity.Elements().FirstOrDefault(e => e.Name.LocalName == "Name");
-                            if (nameElement?.Value.Equals(parentComponent.LogicalName, StringComparison.OrdinalIgnoreCase) == true)
-                            {
-                                targetEntity = entity;
-                                break;
-                            }
-                        }
-
-                        if (targetEntity != null)
-                        {
-                            // Extract attributes
-                            var attributes = targetEntity.Element("EntityInfo")?.Element("entity").Element("attributes")?.Elements("attribute") ?? Enumerable.Empty<XElement>();
-
-                            foreach (var attribute in attributes)
-                            {
-                                subcomponents.Add(new SolutionComponent
-                                {
-                                    LogicalName = attribute.Element("Name")?.Value,
-                                    ComponentType = 2, // Attribute
-                                    RootComponentBehavior = 0,
-                                    IsSubcomponent = true,
-                                    ParentComponentType = 1,
-                                    ParentObjectId = parentComponent.LogicalName
-                                });
-                            }
-
-                            var componentIdentifier = parentComponent.LogicalName ?? "Unknown";
-                            WriteVerbose($"Found {subcomponents.Count} attributes for entity {componentIdentifier}");
-                        }
-                    }
-                }
-            }
-
-            return subcomponents;
+            // Use SubcomponentRetriever to handle XML extraction from solution file
+            var retriever = new SubcomponentRetriever(Connection, this, solutionBytes, null);
+            return retriever.GetSubcomponents(parentComponent);
         }
     }
 }

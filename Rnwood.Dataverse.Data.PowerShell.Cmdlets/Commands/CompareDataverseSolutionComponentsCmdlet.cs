@@ -148,15 +148,15 @@ new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionNam
             }
 
             // Compare components
-            CompareComponents(sourceComponents, targetComponents, targetSolutionName);
+            CompareComponents(sourceComponents, targetComponents, targetSolutionName, solutionId);
         }
 
         private void CompareComponents(List<SolutionComponent> sourceComponents,
-   List<SolutionComponent> targetComponents, string solutionName)
+   List<SolutionComponent> targetComponents, string solutionName, Guid? targetSolutionId)
         {
             // Expand components to include subcomponents based on behavior
-            var expandedSourceComponents = ExpandComponentsWithSubcomponents(sourceComponents, isSource: true);
-            var expandedTargetComponents = ExpandComponentsWithSubcomponents(targetComponents, isSource: false);
+            var expandedSourceComponents = ExpandComponentsWithSubcomponents(sourceComponents, isSource: true, solutionId: null);
+            var expandedTargetComponents = ExpandComponentsWithSubcomponents(targetComponents, isSource: false, solutionId: targetSolutionId);
 
             WriteVerbose($"Expanded source components: {sourceComponents.Count} root -> {expandedSourceComponents.Count} total");
             WriteVerbose($"Expanded target components: {targetComponents.Count} root -> {expandedTargetComponents.Count} total");
@@ -245,7 +245,7 @@ new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionNam
             return component.ObjectId?.ToString() ?? Guid.Empty.ToString();
         }
 
-        private List<SolutionComponentInfo> ExpandComponentsWithSubcomponents(List<SolutionComponent> components, bool isSource)
+        private List<SolutionComponentInfo> ExpandComponentsWithSubcomponents(List<SolutionComponent> components, bool isSource, Guid? solutionId)
         {
             var expandedComponents = new List<SolutionComponentInfo>();
 
@@ -261,19 +261,27 @@ new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionNam
                     RootComponentBehavior = component.RootComponentBehavior
                 });
 
-                var subcomponents = GetSubcomponents(component, isSource);
+                var subcomponents = GetSubcomponents(component, isSource, solutionId);
                 expandedComponents.AddRange(subcomponents);
             }
 
             return expandedComponents;
         }
 
-        private List<SolutionComponentInfo> GetSubcomponents(SolutionComponent parentComponent, bool isSource)
+        private List<SolutionComponentInfo> GetSubcomponents(SolutionComponent parentComponent, bool isSource, Guid? solutionId)
         {
             var subcomponents = new List<SolutionComponentInfo>();
 
             // Use SubcomponentRetriever for retrieval
-            var retriever = new SubcomponentRetriever(Connection, this, isSource ? _sourceSolutionBytes : null);
+            SubcomponentRetriever retriever;
+            if (isSource)
+            {
+                retriever = new SubcomponentRetriever(Connection, this, _sourceSolutionBytes, solutionId);
+            }
+            else
+            {
+                retriever = new SubcomponentRetriever(Connection, this, solutionId);
+            }
             var retrievedSubcomponents = retriever.GetSubcomponents(parentComponent);
 
             // Convert back to SolutionComponentInfo

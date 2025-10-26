@@ -426,7 +426,7 @@ See standard PS docs.
 ```yaml
 Type: ActionPreference
 Parameter Sets: (All)
-Aliases: proga"
+Aliases: proga
 
 Required: False
 Position: Named

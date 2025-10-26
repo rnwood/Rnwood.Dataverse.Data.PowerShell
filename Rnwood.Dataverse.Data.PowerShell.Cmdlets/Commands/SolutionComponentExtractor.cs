@@ -16,7 +16,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
     /// Represents a solution component for comparison or analysis.
-  /// </summary>
+    /// </summary>
     public class SolutionComponent
     {
         /// <summary>
@@ -31,191 +31,191 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         /// <summary>
         /// Gets or sets the component's metadata ID (GUID).
-  /// </summary>
+        /// </summary>
         public Guid? MetadataId { get; set; }
 
         /// <summary>
-/// Gets or sets the component type.
-  /// </summary>
-      public int ComponentType { get; set; }
+        /// Gets or sets the component type.
+        /// </summary>
+        public int ComponentType { get; set; }
 
         /// <summary>
- /// Gets or sets the root component behavior (0=Include, 1=Do Not Include, 2=Shell).
+        /// Gets or sets the root component behavior (0=Include, 1=Do Not Include, 2=Shell).
         /// </summary>
-   public int RootComponentBehavior { get; set; }
+        public int RootComponentBehavior { get; set; }
 
         /// <summary>
         /// Gets or sets whether this is a subcomponent.
         /// </summary>
         public bool IsSubcomponent { get; set; }
 
-   /// <summary>
-/// Gets or sets the parent component type (for subcomponents).
+        /// <summary>
+        /// Gets or sets the parent component type (for subcomponents).
         /// </summary>
-  public int? ParentComponentType { get; set; }
+        public int? ParentComponentType { get; set; }
 
-  /// <summary>
-      /// Gets or sets the parent component's logical name or object ID (for subcomponents).
+        /// <summary>
+        /// Gets or sets the parent component's logical name or object ID (for subcomponents).
         /// </summary>
-    public string ParentObjectId { get; set; }
-  }
+        public string ParentObjectId { get; set; }
+    }
 
     /// <summary>
- /// Utility class for extracting solution components from solution files and environments.
+    /// Utility class for extracting solution components from solution files and environments.
     /// </summary>
-  public static class SolutionComponentExtractor
+    public static class SolutionComponentExtractor
     {
         /// <summary>
         /// Extracts components from a solution file's solution.xml.
-  /// </summary>
+        /// </summary>
         public static (string UniqueName, List<SolutionComponent> Components) ExtractSolutionFileComponents(byte[] solutionBytes)
         {
             var components = new List<SolutionComponent>();
-      string uniqueName = null;
+            string uniqueName = null;
             XDocument customizationsXdoc = null;
 
-         using (var memoryStream = new MemoryStream(solutionBytes))
+            using (var memoryStream = new MemoryStream(solutionBytes))
             using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
-     {
-      // Load customizations.xml for later use
-        var customizationsEntry = archive.Entries.FirstOrDefault(e =>
-       e.FullName.Equals("customizations.xml", StringComparison.OrdinalIgnoreCase));
+            {
+                // Load customizations.xml for later use
+                var customizationsEntry = archive.Entries.FirstOrDefault(e =>
+               e.FullName.Equals("customizations.xml", StringComparison.OrdinalIgnoreCase));
 
                 if (customizationsEntry != null)
-      {
-     using (var stream = customizationsEntry.Open())
-             using (var reader = new StreamReader(stream))
-              {
-       var xmlContent = reader.ReadToEnd();
-           customizationsXdoc = XDocument.Parse(xmlContent);
-            }
-  }
-
-    // Get the solution unique name and root components from solution.xml
-    var solutionXmlEntry = archive.Entries.FirstOrDefault(e =>
-    e.FullName.Equals("solution.xml", StringComparison.OrdinalIgnoreCase));
-
-         if (solutionXmlEntry != null)
-     {
-      using (var stream = solutionXmlEntry.Open())
-   using (var reader = new StreamReader(stream))
-                  {
-                var xmlContent = reader.ReadToEnd();
-     var xdoc = XDocument.Parse(xmlContent);
-    var solutionManifest = xdoc.Root?.Element("SolutionManifest");
-     uniqueName = solutionManifest?.Element("UniqueName")?.Value;
-
-  // Parse root components from solution.xml
-       var rootComponents = solutionManifest?.Element("RootComponents");
-      if (rootComponents != null && customizationsXdoc != null)
-      {
-        foreach (var rootComponent in rootComponents.Elements())
-       {
-   if (rootComponent.Name.LocalName == "RootComponent")
-     {
-           var idAttr = rootComponent.Attribute("id");
-          var schemaNameAttr = rootComponent.Attribute("schemaName");
- var typeAttr = rootComponent.Attribute("type");
-      var behaviorAttr = rootComponent.Attribute("behavior");
-
-         string componentId = null;
-    Guid? componentMetadataId = null;
-    int? componentType = null;
-
-     if (idAttr != null)
-     {
-   componentId = idAttr.Value;
-    if (Guid.TryParse(componentId, out var parsedGuid))
-  {
-    componentMetadataId = parsedGuid;
-          }
-  }
-         else if (schemaNameAttr != null && typeAttr != null)
-       {
-           componentType = int.Parse(typeAttr.Value);
-  if (componentType == 1) // Entity
-  {
-        componentId = schemaNameAttr.Value;
-     componentMetadataId = FindEntityMetadataIdBySchemaName(customizationsXdoc, schemaNameAttr.Value);
-         }
-    }
-
-   if (!string.IsNullOrEmpty(componentId) && typeAttr != null)
- {
-        var component = new SolutionComponent
-      {
-      LogicalName = componentType == 1 ? componentId : null, // Entity
-   ObjectId = componentMetadataId,
-      MetadataId = componentMetadataId,
- ComponentType = int.Parse(typeAttr.Value),
-     RootComponentBehavior = behaviorAttr != null
-       ? int.Parse(behaviorAttr.Value)
-       : 0
-    };
-  components.Add(component);
-  }
-   }
-         }
-           }
+                {
+                    using (var stream = customizationsEntry.Open())
+                    using (var reader = new StreamReader(stream))
+                    {
+                        var xmlContent = reader.ReadToEnd();
+                        customizationsXdoc = XDocument.Parse(xmlContent);
                     }
-  }
-          }
+                }
 
-    return (uniqueName, components);
-    }
+                // Get the solution unique name and root components from solution.xml
+                var solutionXmlEntry = archive.Entries.FirstOrDefault(e =>
+                e.FullName.Equals("solution.xml", StringComparison.OrdinalIgnoreCase));
+
+                if (solutionXmlEntry != null)
+                {
+                    using (var stream = solutionXmlEntry.Open())
+                    using (var reader = new StreamReader(stream))
+                    {
+                        var xmlContent = reader.ReadToEnd();
+                        var xdoc = XDocument.Parse(xmlContent);
+                        var solutionManifest = xdoc.Root?.Element("SolutionManifest");
+                        uniqueName = solutionManifest?.Element("UniqueName")?.Value;
+
+                        // Parse root components from solution.xml
+                        var rootComponents = solutionManifest?.Element("RootComponents");
+                        if (rootComponents != null && customizationsXdoc != null)
+                        {
+                            foreach (var rootComponent in rootComponents.Elements())
+                            {
+                                if (rootComponent.Name.LocalName == "RootComponent")
+                                {
+                                    var idAttr = rootComponent.Attribute("id");
+                                    var schemaNameAttr = rootComponent.Attribute("schemaName");
+                                    var typeAttr = rootComponent.Attribute("type");
+                                    var behaviorAttr = rootComponent.Attribute("behavior");
+
+                                    string componentId = null;
+                                    Guid? componentMetadataId = null;
+                                    int? componentType = null;
+
+                                    if (idAttr != null)
+                                    {
+                                        componentId = idAttr.Value;
+                                        if (Guid.TryParse(componentId, out var parsedGuid))
+                                        {
+                                            componentMetadataId = parsedGuid;
+                                        }
+                                    }
+                                    else if (schemaNameAttr != null && typeAttr != null)
+                                    {
+                                        componentType = int.Parse(typeAttr.Value);
+                                        if (componentType == 1) // Entity
+                                        {
+                                            componentId = schemaNameAttr.Value;
+                                            componentMetadataId = FindEntityMetadataIdBySchemaName(customizationsXdoc, schemaNameAttr.Value);
+                                        }
+                                    }
+
+                                    if (!string.IsNullOrEmpty(componentId) && typeAttr != null)
+                                    {
+                                        var component = new SolutionComponent
+                                        {
+                                            LogicalName = componentType == 1 ? componentId : null, // Entity
+                                            ObjectId = componentMetadataId,
+                                            MetadataId = componentMetadataId,
+                                            ComponentType = int.Parse(typeAttr.Value),
+                                            RootComponentBehavior = behaviorAttr != null
+                                       ? int.Parse(behaviorAttr.Value)
+                                       : 0
+                                        };
+                                        components.Add(component);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return (uniqueName, components);
+        }
 
         /// <summary>
         /// Extracts components from a solution in the environment using the solutioncomponent table.
         /// </summary>
         public static List<SolutionComponent> ExtractEnvironmentComponents(ServiceClient connection, Guid solutionId)
         {
-         var components = new List<SolutionComponent>();
+            var components = new List<SolutionComponent>();
 
-     var query = new QueryExpression("solutioncomponent")
-    {
-         ColumnSet = new ColumnSet("objectid", "componenttype", "rootcomponentbehavior"),
-    Criteria = new FilterExpression
-    {
-         Conditions =
+            var query = new QueryExpression("solutioncomponent")
+            {
+                ColumnSet = new ColumnSet("objectid", "componenttype", "rootcomponentbehavior"),
+                Criteria = new FilterExpression
+                {
+                    Conditions =
             {
            new ConditionExpression("solutionid", ConditionOperator.Equal, solutionId),
          new ConditionExpression("rootcomponentbehavior", ConditionOperator.NotNull)
      }
-      }
+                }
             };
 
             var results = connection.RetrieveMultiple(query);
 
-        foreach (var entity in results.Entities)
+            foreach (var entity in results.Entities)
             {
-  var objectid = entity.GetAttributeValue<Guid>("objectid");
-    var componentType = entity.GetAttributeValue<OptionSetValue>("componenttype").Value;
+                var objectid = entity.GetAttributeValue<Guid>("objectid");
+                var componentType = entity.GetAttributeValue<OptionSetValue>("componenttype").Value;
 
-    string logicalName = null;
-       Guid? metadataId;
+                string logicalName = null;
+                Guid? metadataId;
 
-     if (componentType == 1) // Entity
-      {
-  logicalName = GetEntityLogicalName(connection, objectid);
-     metadataId = objectid;
-       }
-   else
-  {
-   metadataId = objectid;
-      }
+                if (componentType == 1) // Entity
+                {
+                    logicalName = GetEntityLogicalName(connection, objectid);
+                    metadataId = objectid;
+                }
+                else
+                {
+                    metadataId = objectid;
+                }
 
-            var component = new SolutionComponent
-    {
-LogicalName = logicalName,
-    ObjectId = objectid,
-    MetadataId = metadataId,
-ComponentType = componentType,
-    RootComponentBehavior = entity.Contains("rootcomponentbehavior")
-  ? entity.GetAttributeValue<OptionSetValue>("rootcomponentbehavior").Value
- : 0
-     };
-        components.Add(component);
-     }
+                var component = new SolutionComponent
+                {
+                    LogicalName = logicalName,
+                    ObjectId = objectid,
+                    MetadataId = metadataId,
+                    ComponentType = componentType,
+                    RootComponentBehavior = entity.Contains("rootcomponentbehavior")
+      ? entity.GetAttributeValue<OptionSetValue>("rootcomponentbehavior").Value
+     : 0
+                };
+                components.Add(component);
+            }
 
             return components;
         }
@@ -224,78 +224,80 @@ ComponentType = componentType,
         /// Finds an entity's metadata ID by its schema name in customizations.xml.
         /// </summary>
         private static Guid? FindEntityMetadataIdBySchemaName(XDocument xdoc, string schemaName)
-    {
-       var entities = xdoc.Descendants()
-          .Where(e => e.Name.LocalName == "Entity");
+        {
+            var entities = xdoc.Descendants()
+               .Where(e => e.Name.LocalName == "Entity");
 
             foreach (var entity in entities)
-       {
-             var nameElement = entity.Elements().FirstOrDefault(e => e.Name.LocalName == "Name");
-     var name = nameElement?.Value;
+            {
+                var nameElement = entity.Elements().FirstOrDefault(e => e.Name.LocalName == "Name");
+                var name = nameElement?.Value;
 
-           if (string.Equals(name, schemaName, StringComparison.OrdinalIgnoreCase))
-          {
-        var metadataId = entity.Descendants()
-        .FirstOrDefault(e => e.Name.LocalName == "MetadataId")
-?.Value;
+                if (string.Equals(name, schemaName, StringComparison.OrdinalIgnoreCase))
+                {
+                    var metadataId = entity.Descendants()
+                    .FirstOrDefault(e => e.Name.LocalName == "MetadataId")
+            ?.Value;
 
-           if (metadataId != null && Guid.TryParse(metadataId, out var parsedId))
-       {
-     return parsedId;
-  }
+                    if (metadataId != null && Guid.TryParse(metadataId, out var parsedId))
+                    {
+                        return parsedId;
+                    }
 
-              return null;
-  }
+                    return null;
+                }
             }
 
-    return null;
+            return null;
         }
 
-    /// <summary>
-   /// Gets an entity's logical name from its metadata ID.
+        /// <summary>
+        /// Gets an entity's logical name from its metadata ID.
         /// </summary>
         private static string GetEntityLogicalName(ServiceClient connection, Guid metadataId)
-  {
-     var metadataQuery = new RetrieveMetadataChangesRequest
- {
-          Query = new EntityQueryExpression
-         {
- Criteria = new MetadataFilterExpression(LogicalOperator.And)
-       {
-            Conditions =
+        {
+            var metadataQuery = new RetrieveMetadataChangesRequest
+            {
+                Query = new EntityQueryExpression
+                {
+                    Criteria = new MetadataFilterExpression(LogicalOperator.And)
+                    {
+                        Conditions =
       {
               new MetadataConditionExpression("MetadataId", MetadataConditionOperator.Equals, metadataId)
      }
-     },
-    Properties = new MetadataPropertiesExpression { PropertyNames = { "LogicalName" } }
-           }
-       };
+                    },
+                    Properties = new MetadataPropertiesExpression { PropertyNames = { "LogicalName" } }
+                }
+            };
 
             var metadataResponse = (RetrieveMetadataChangesResponse)connection.Execute(metadataQuery);
 
-         if (metadataResponse.EntityMetadata.Count > 0)
-    {
-              return metadataResponse.EntityMetadata[0].LogicalName;
-    }
+            if (metadataResponse.EntityMetadata.Count > 0)
+            {
+                return metadataResponse.EntityMetadata[0].LogicalName;
+            }
 
-     return null;
-     }
+            return null;
+        }
 
         /// <summary>
         /// Compares solution components between source and target and returns the comparison results.
         /// </summary>
         public static List<SolutionComponentComparisonResult> CompareSolutionComponents(
-            ServiceClient connection, 
-            PSCmdlet cmdlet, 
-            List<SolutionComponent> sourceComponents, 
-            List<SolutionComponent> targetComponents, 
-            byte[] sourceSolutionBytes = null)
+            ServiceClient connection,
+       PSCmdlet cmdlet,
+    List<SolutionComponent> sourceComponents,
+     List<SolutionComponent> targetComponents,
+   byte[] sourceSolutionBytes = null,
+ Guid? sourceSolutionId = null,
+          Guid? targetSolutionId = null)
         {
             var results = new List<SolutionComponentComparisonResult>();
 
             // Expand components to include subcomponents based on behavior
-            var expandedSourceComponents = ExpandComponentsWithSubcomponents(sourceComponents, connection, cmdlet, sourceSolutionBytes, isSource: true);
-            var expandedTargetComponents = ExpandComponentsWithSubcomponents(targetComponents, connection, cmdlet, null, isSource: false);
+            var expandedSourceComponents = ExpandComponentsWithSubcomponents(sourceComponents, connection, cmdlet, sourceSolutionBytes, isSource: true, solutionId: sourceSolutionId);
+            var expandedTargetComponents = ExpandComponentsWithSubcomponents(targetComponents, connection, cmdlet, null, isSource: false, solutionId: targetSolutionId);
 
             cmdlet.WriteVerbose($"Expanded source components: {sourceComponents.Count} root -> {expandedSourceComponents.Count} total");
             cmdlet.WriteVerbose($"Expanded target components: {targetComponents.Count} root -> {expandedTargetComponents.Count} total");
@@ -376,52 +378,61 @@ ComponentType = componentType,
             return results;
         }
 
-        private static List<SolutionComponentInfo> ExpandComponentsWithSubcomponents(List<SolutionComponent> components, ServiceClient connection, PSCmdlet cmdlet, byte[] sourceSolutionBytes, bool isSource)
+        private static List<SolutionComponentInfo> ExpandComponentsWithSubcomponents(List<SolutionComponent> components, ServiceClient connection, PSCmdlet cmdlet, byte[] sourceSolutionBytes, bool isSource, Guid? solutionId = null)
         {
             var expandedComponents = new List<SolutionComponentInfo>();
 
             foreach (var component in components)
-            {
-                // Always add the root component itself
-                expandedComponents.Add(new SolutionComponentInfo
-                {
-                    LogicalName = component.LogicalName,
-                    ObjectId = component.ObjectId,
-                    MetadataId = component.MetadataId,
-                    ComponentType = component.ComponentType,
-                    RootComponentBehavior = component.RootComponentBehavior
-                });
+     {
+      // Always add the root component itself
+     expandedComponents.Add(new SolutionComponentInfo
+    {
+            LogicalName = component.LogicalName,
+   ObjectId = component.ObjectId,
+          MetadataId = component.MetadataId,
+      ComponentType = component.ComponentType,
+         RootComponentBehavior = component.RootComponentBehavior
+    });
 
-                var subcomponents = GetSubcomponents(component, connection, cmdlet, sourceSolutionBytes, isSource);
-                expandedComponents.AddRange(subcomponents);
-            }
+         var subcomponents = GetSubcomponents(component, connection, cmdlet, sourceSolutionBytes, isSource, solutionId: solutionId);
+        expandedComponents.AddRange(subcomponents);
+        }
 
             return expandedComponents;
         }
 
-        private static List<SolutionComponentInfo> GetSubcomponents(SolutionComponent parentComponent, ServiceClient connection, PSCmdlet cmdlet, byte[] sourceSolutionBytes, bool isSource)
+  private static List<SolutionComponentInfo> GetSubcomponents(SolutionComponent parentComponent, ServiceClient connection, PSCmdlet cmdlet, byte[] sourceSolutionBytes, bool isSource, Guid? solutionId = null)
         {
             var subcomponents = new List<SolutionComponentInfo>();
 
-            // Use SubcomponentRetriever for retrieval
-            var retriever = new SubcomponentRetriever(connection, cmdlet, isSource ? sourceSolutionBytes : null);
+         // Use SubcomponentRetriever for retrieval
+        SubcomponentRetriever retriever;
+            if (isSource && sourceSolutionBytes != null)
+            {
+        retriever = new SubcomponentRetriever(connection, cmdlet, sourceSolutionBytes, solutionId);
+   }
+       else
+        {
+   retriever = new SubcomponentRetriever(connection, cmdlet, solutionId);
+  }
+
             var retrievedSubcomponents = retriever.GetSubcomponents(parentComponent);
 
             // Convert back to SolutionComponentInfo
             foreach (var subcomponent in retrievedSubcomponents)
             {
-                subcomponents.Add(new SolutionComponentInfo
-                {
-                    LogicalName = subcomponent.LogicalName,
-                    ObjectId = subcomponent.ObjectId,
-                    MetadataId = subcomponent.MetadataId,
-                    ComponentType = subcomponent.ComponentType,
-                    RootComponentBehavior = subcomponent.RootComponentBehavior,
-                    IsSubcomponent = subcomponent.IsSubcomponent,
-                    ParentComponentType = subcomponent.ParentComponentType,
-                    ParentObjectId = subcomponent.ParentObjectId
-                });
-            }
+       subcomponents.Add(new SolutionComponentInfo
+         {
+      LogicalName = subcomponent.LogicalName,
+          ObjectId = subcomponent.ObjectId,
+      MetadataId = subcomponent.MetadataId,
+  ComponentType = subcomponent.ComponentType,
+        RootComponentBehavior = subcomponent.RootComponentBehavior,
+  IsSubcomponent = subcomponent.IsSubcomponent,
+    ParentComponentType = subcomponent.ParentComponentType,
+     ParentObjectId = subcomponent.ParentObjectId
+         });
+   }
 
             return subcomponents;
         }

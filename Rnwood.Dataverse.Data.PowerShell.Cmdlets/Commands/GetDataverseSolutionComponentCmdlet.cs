@@ -37,6 +37,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = false, HelpMessage = "Include subcomponents (attributes, relationships, forms, views, etc.) for each root component.")]
         public SwitchParameter IncludeSubcomponents { get; set; }
 
+        private Guid _resolvedSolutionId;
+
         /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
@@ -80,8 +82,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 resolvedSolutionId = SolutionId;
             }
 
+            _resolvedSolutionId = resolvedSolutionId;
+
             // Extract components from the environment
-            var components = SolutionComponentExtractor.ExtractEnvironmentComponents(Connection, resolvedSolutionId);
+            var components = SolutionComponentExtractor.ExtractEnvironmentComponents(Connection, _resolvedSolutionId);
 
             WriteVerbose($"Found {components.Count} root components in the solution.");
 
@@ -234,7 +238,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private List<SolutionComponent> GetSubcomponentsForComponent(SolutionComponent parentComponent)
         {
-            var retriever = new SubcomponentRetriever(Connection, this);
+            var retriever = new SubcomponentRetriever(Connection, this, _resolvedSolutionId);
             return retriever.GetSubcomponents(parentComponent);
         }
     }
