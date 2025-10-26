@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="XrmToolBoxPackage" Version="1.2024.9.23" />
-    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.3" />
+    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.10" />
     <PackageReference Include="ConEmu.Control.WinForms" Version="1.3.8" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3537.50" />
   </ItemGroup>
