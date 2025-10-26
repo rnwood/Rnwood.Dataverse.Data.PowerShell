@@ -9,6 +9,7 @@
       - [Creating and updating solutions](#creating-and-updating-solutions)
       - [Publishing customizations](#publishing-customizations)
       - [Importing solutions](#importing-solutions)
+      - [Analyzing Solution Components](#analyzing-solution-components)
       - [Uninstalling/removing solutions](#uninstallingremoving-solutions)
         - [Handling Connection References and Environment Variables](#handling-connection-references-and-environment-variables)
 
@@ -23,6 +24,7 @@
     - [Creating and updating solutions](#creating-and-updating-solutions)
     - [Publishing customizations](#publishing-customizations)
     - [Importing solutions](#importing-solutions)
+    - [Analyzing Solution Components](#analyzing-solution-components)
     - [Uninstalling/removing solutions](#uninstallingremoving-solutions)
       - [Handling Connection References and Environment Variables](#handling-connection-references-and-environment-variables)
 <!-- /TOC -->
@@ -136,6 +138,56 @@ Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -M
 # Import from bytes instead of file
 Import-DataverseSolution -Connection $c -SolutionBytes $bytes
 ```
+
+#### Analyzing Solution Components
+
+> [!NOTE]
+> The following cmdlets are experimental and incomplete.
+
+The module provides experimental cmdlets for analyzing solution components:
+
+##### Get-DataverseSolutionComponent
+
+Retrieves components from a solution in a Dataverse environment:
+
+```powershell
+# Get components by solution name
+Get-DataverseSolutionComponent -Connection $c -SolutionName "MySolution"
+
+# Include subcomponents
+Get-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" -IncludeSubcomponents
+```
+
+##### Get-DataverseSolutionFileComponent
+
+Extracts components from a solution file:
+
+```powershell
+# Extract from file
+Get-DataverseSolutionFileComponent -SolutionFile "MySolution.zip"
+
+# Extract from bytes
+$bytes = [System.IO.File]::ReadAllBytes("MySolution.zip")
+$bytes | Get-DataverseSolutionFileComponent
+```
+
+##### Compare-DataverseSolutionComponents
+
+Compares solution components between files and environments:
+
+```powershell
+# Compare file with environment
+Compare-DataverseSolutionComponents -Connection $c -SolutionFile "MySolution.zip"
+
+# Compare two files
+Compare-DataverseSolutionComponents -SolutionFile "v1.zip" -TargetSolutionFile "v2.zip"
+
+# Reverse comparison
+Compare-DataverseSolutionComponents -Connection $c -SolutionFile "MySolution.zip" -ReverseComparison
+```
+
+These cmdlets help understand what components are included in solutions, their behavior settings, and differences between versions or environments.
+
 #### Uninstalling/removing solutions
 - `Remove-DataverseSolution` removes (uninstalls) a solution from a Dataverse environment using the asynchronous uninstall process. The operation is asynchronous and the cmdlet monitors the uninstall progress.
 - When removing a solution:

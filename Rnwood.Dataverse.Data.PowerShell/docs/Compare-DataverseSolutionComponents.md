@@ -5,9 +5,6 @@ online version:
 schema: 2.0.0
 ---
 
-> [!NOTE]
-> This cmdlet is experimental and incomplete.
-
 # Compare-DataverseSolutionComponents
 
 ## SYNOPSIS
@@ -257,6 +254,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## RELATED LINKS
 
+[Get-DataverseSolutionComponent](Get-DataverseSolutionComponent.md)
+[Get-DataverseSolutionFileComponent](Get-DataverseSolutionFileComponent.md)
 [Export-DataverseSolution](Export-DataverseSolution.md)
 [Import-DataverseSolution](Import-DataverseSolution.md)
 [Get-DataverseConnection](Get-DataverseConnection.md)
