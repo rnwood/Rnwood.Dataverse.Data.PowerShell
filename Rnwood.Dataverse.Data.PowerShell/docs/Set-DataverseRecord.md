@@ -694,6 +694,31 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -MaxDegreeOfParallelism
+Maximum number of parallel set operations. Default is 1 (parallel processing disabled).
+When set to a value greater than 1, records are processed in parallel using multiple connections.
+
+Each worker thread processes records concurrently with its own cloned connection to Dataverse.
+Parallel processing can be combined with batching (`-BatchSize` > 1) for even better performance.
+Progress, errors, and verbose output are all handled thread-safely.
+
+Example: Process 1000 records with 4 workers and batches of 100:
+
+
+$records | Set-DataverseRecord -Connection $conn -TableName contact -CreateOnly -MaxDegreeOfParallelism 4 -BatchSize 100
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 1
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -NoCreate
 If specified then no records will be created even if no existing records matching the ID and or MatchOn fields is found.
 
@@ -873,31 +898,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -MaxDegreeOfParallelism
-Maximum number of parallel set operations. Default is 1 (parallel processing disabled).
-When set to a value greater than 1, records are processed in parallel using multiple connections.
-
-Each worker thread processes records concurrently with its own cloned connection to Dataverse.
-Parallel processing can be combined with batching (`-BatchSize` > 1) for even better performance.
-Progress, errors, and verbose output are all handled thread-safely.
-
-Example: Process 1000 records with 4 workers and batches of 100:
-
-
-$records | Set-DataverseRecord -Connection $conn -TableName contact -CreateOnly -MaxDegreeOfParallelism 4 -BatchSize 100
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: 1
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -906,7 +906,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Management.Automation.PSObject
 ### System.String
 ### System.Guid
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Object
