@@ -1,7 +1,9 @@
+if (-not $script:donesetup) {
 
-BeforeAll {
 
-    if ($env:TESTMODULEPATH) {
+
+BeforeDiscovery {
+        if ($env:TESTMODULEPATH) {
         $source = $env:TESTMODULEPATH
     }
     else {
@@ -13,6 +15,11 @@ BeforeAll {
     copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Data.PowerShell
     $env:PSModulePath = $tempmodulefolder;
     $env:ChildProcessPSModulePath = $tempmodulefolder
+}
+        $script:donesetup = $true
+}
+
+BeforeAll {
 
 
     $metadata = $null;
