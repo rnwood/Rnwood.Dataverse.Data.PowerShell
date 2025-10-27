@@ -47,7 +47,7 @@ Invoke-Pester -Output Detailed -Path tests
 - **ALL tests MUST pass** before committing changes
 - Run tests using the Testing Sequence above after building
 - For documentation changes with code examples:
-  - Add tests in `tests/Examples.Tests.ps1` that validate the example patterns
+  - Add tests in `tests/Cmdletname-maybeasuffix.ps1` that validate the example patterns
   - Test both the verbose and simplified syntax variants where applicable
   - Tests should use the mock provider with FakeXrmEasy
   - If an entity is not in `tests/contact.xml`, either:
@@ -115,9 +115,7 @@ Invoke-Pester -Output Detailed -Path tests
   - `BuildHelp` - Runs updatehelp.ps1 then buildhelp.ps1 (DependsOnTargets="BuildCmdlets", inputs/outputs for incremental build)
 
 ### Test Files
-- `tests/Module.Tests.ps1` - Tests module loads correctly, SDK assemblies resolve, works with pre-loaded assemblies
-- `tests/Get-DataverseRecord.Tests.ps1` - Tests QueryExpression, FetchXML, filters, column selection, mock connection
-- `tests/Common.ps1` - Shared setup: copies module to temp, sets PSModulePath, getMockConnection() using FakeXrmEasy with contact.xml metadata
+- `tests/All.Tests..ps1` - Shared setup: copies module to temp, sets PSModulePath, getMockConnection() using FakeXrmEasy with contact.xml metadata then includes all test files
 - `tests/contact.xml` - 2.2MB serialized EntityMetadata for 'contact' entity (used by DataContractSerializer in tests)
 - `tests/updatemetadata.ps1` - Script to regenerate contact.xml from real environment
 - `e2e-tests/Module.Tests.ps1` - Connects to real Dataverse with client secret, queries systemuser table, runs SQL
