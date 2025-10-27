@@ -94,8 +94,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
             var components = new List<SolutionComponent>();
 
             // Use REST API to query msdyn_solutioncomponentsummary (virtual table)
-            var filter = $"msdyn_solutionid eq {_solutionId:D}";
-            var select = "msdyn_objectid,msdyn_componenttype,msdyn_uniquename,msdyn_primaryentityname,msdyn_componenttypename,msdyn_name,msdyn_schemaname,msdyn_isdefault,msdyn_iscustom,msdyn_hasactivecustomization";
+            var filter = $"msdyn_solutionid eq {_solutionId:D} and msdyn_ismanaged eq 'True'";
+            var select = "msdyn_objectid,msdyn_componenttype,msdyn_uniquename,msdyn_primaryentityname,msdyn_componenttypename,msdyn_name,msdyn_schemaname,msdyn_isdefault,msdyn_iscustom,msdyn_hasactivecustomization,msdyn_ismanaged";
             var queryString = $"$filter={Uri.EscapeDataString(filter)}&$select={select}";
 
             string nextLink = null;
@@ -254,13 +254,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
             foreach (var componentTypeFilter in subcomponentTypes)
             {
                 // Use REST API to query msdyn_solutioncomponentsummary for child components
-                var filter = $"msdyn_primaryentityname eq '{parentComponent.UniqueName}' and msdyn_componenttype eq {componentTypeFilter}";
+                var filter = $"msdyn_primaryentityname eq '{parentComponent.UniqueName}' and msdyn_componenttype eq {componentTypeFilter} and msdyn_ismanaged eq 'True'";
                 if (_solutionId != Guid.Empty)
                 {
                     filter += $" and msdyn_solutionid eq {_solutionId:B}";
                 }
 
-                var select = "msdyn_objectid,msdyn_componenttype,msdyn_uniquename,msdyn_primaryentityname,msdyn_componenttypename,msdyn_schemaname,msdyn_isdefault,msdyn_iscustom,msdyn_hasactivecustomization";
+                var select = "msdyn_objectid,msdyn_componenttype,msdyn_uniquename,msdyn_primaryentityname,msdyn_componenttypename,msdyn_schemaname,msdyn_isdefault,msdyn_iscustom,msdyn_hasactivecustomization,msdyn_ismanaged";
                 var queryString = $"$filter={Uri.EscapeDataString(filter)}&$select={select}";
 
                 string nextLink = null;
@@ -288,6 +288,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                                 var isDefault = item.TryGetProperty("msdyn_isdefault", out var d) && d.ValueKind != JsonValueKind.Null ? d.GetBoolean() : (bool?)null;
                                 var isCustom = item.TryGetProperty("msdyn_iscustom", out var c) && (c.ValueKind == JsonValueKind.True || c.ValueKind == JsonValueKind.False) ? c.GetBoolean() : (bool?)null;
                                 var isCustomized = item.TryGetProperty("msdyn_hasactivecustomization", out var cz) && (cz.ValueKind == JsonValueKind.True || cz.ValueKind == JsonValueKind.False) ? cz.GetBoolean() : (bool?)null;
+                                var isManaged = item.TryGetProperty("msdyn_ismanaged", out var m) && (m.ValueKind == JsonValueKind.True || m.ValueKind == JsonValueKind.False) ? m.GetBoolean() : (bool?)null;
 
                                 // Use msdyn_uniquename if available, otherwise use msdyn_schemaname
                                 string logicalName = schemaName ?? uniqueName;
@@ -302,9 +303,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                                     IsSubcomponent = true,
                                     ParentComponentType = parentComponent.ComponentType,
                                     ParentTableName = parentComponent.UniqueName,
+                                    ParentIsCustom = parentComponent.IsCustom,
+                                    ParentIsCustomized = parentComponent.IsCustomized,
+                                    ParentIsDefault = parentComponent.IsDefault,
+                                    ParentIsManaged = parentComponent.IsManaged,
                                     IsDefault = isDefault,
                                     IsCustom = isCustom,
-                                    IsCustomized = isCustomized
+                                    IsCustomized = isCustomized,
+                                    IsManaged = isManaged
                                 });
                             }
                         }

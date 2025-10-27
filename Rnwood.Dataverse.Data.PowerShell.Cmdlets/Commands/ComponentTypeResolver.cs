@@ -22,7 +22,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <returns>The display name for the component type.</returns>
         public static string GetComponentTypeName(ServiceClient connection, SolutionComponent component)
         {
-            return component.ComponentTypeName ?? GetComponentTypeNameFallback(component.ComponentType);
+            return !string.IsNullOrEmpty(component.ComponentTypeName) ? component.ComponentTypeName : GetComponentTypeNameFallback(component.ComponentType);
         }
 
         /// <summary>

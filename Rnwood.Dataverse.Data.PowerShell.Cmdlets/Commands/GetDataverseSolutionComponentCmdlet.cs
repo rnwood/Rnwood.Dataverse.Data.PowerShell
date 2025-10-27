@@ -106,12 +106,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             result.Properties.Add(new PSNoteProperty("Behavior", GetBehaviorName(component.RootComponentBehavior ?? 0)));
             result.Properties.Add(new PSNoteProperty("IsSubcomponent", component.IsSubcomponent));
             result.Properties.Add(new PSNoteProperty("IsDefault", component.IsDefault));
+            result.Properties.Add(new PSNoteProperty("IsCustom", component.IsDefault));
+            result.Properties.Add(new PSNoteProperty("IsCustomized", component.IsCustomized));
+            result.Properties.Add(new PSNoteProperty("IsManaged", component.IsManaged));
 
             if (component.IsSubcomponent)
             {
                 result.Properties.Add(new PSNoteProperty("ParentComponentType", component.ParentComponentType));
                 result.Properties.Add(new PSNoteProperty("ParentComponentTypeName", ComponentTypeResolver.GetComponentTypeName(Connection, new SolutionComponent { ComponentType = component.ParentComponentType.GetValueOrDefault() })));
                 result.Properties.Add(new PSNoteProperty("ParentTableName", component.ParentTableName));
+                result.Properties.Add(new PSNoteProperty("ParentIsDefault", component.ParentIsDefault));
+                result.Properties.Add(new PSNoteProperty("ParentIsCustom", component.ParentIsCustom));
+                result.Properties.Add(new PSNoteProperty("ParentIsCustomized", component.ParentIsCustomized));
+                result.Properties.Add(new PSNoteProperty("ParentIsManaged", component.ParentIsManaged));
             }
 
             WriteObject(result);

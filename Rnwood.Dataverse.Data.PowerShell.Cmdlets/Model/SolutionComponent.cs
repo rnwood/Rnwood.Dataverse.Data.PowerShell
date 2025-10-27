@@ -53,5 +53,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
    public bool? IsCustom { get; set; }
 
     public bool? IsCustomized { get; set; }
+        public bool? ParentIsCustom { get; set; }
+        public bool? ParentIsCustomized { get; set; }
+        public bool? ParentIsDefault { get; set; }
+        public bool? IsManaged { get; set; }
+        public bool? ParentIsManaged { get; set; }
     }
 }
