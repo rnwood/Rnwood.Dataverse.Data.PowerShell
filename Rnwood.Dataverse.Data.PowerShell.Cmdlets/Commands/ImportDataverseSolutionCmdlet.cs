@@ -12,6 +12,7 @@ using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Rnwood.Dataverse.Data.PowerShell.Commands.Model;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -177,7 +178,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     return;
                 }
 
-                WriteVerbose($"Loading solution file from: {filePath}");
+                WriteVerbose($"{filePath}");
                 solutionBytes = File.ReadAllBytes(filePath);
             }
             else
@@ -240,7 +241,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 if (Mode == ImportMode.Auto)
                 {
-                    WriteVerbose("Auto mode - checking if solution already exists and is managed...");
+                    WriteVerbose("Auto mode - checking if solution already EXISTS and is managed...");
                 }
                 else
                 {
@@ -273,7 +274,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteVerbose("UseUpdateIfAdditive specified - comparing solution components...");
 
                 // Extract source components
-                var (sourceSolutionName, sourceComponents) = SolutionComponentExtractor.ExtractSolutionFileComponents(solutionBytes);
+                string sourceSolutionName = ExtractSolutionName(solutionBytes);
+                var sourceExtractor = new FileComponentExtractor(Connection, this, solutionBytes);
+                var sourceComponents = sourceExtractor.GetComponents(includeSubcomponents: false);
                 WriteVerbose($"Extracted source solution: {sourceSolutionName} with {sourceComponents.Count} root components");
 
                 // Query target environment for solution id
@@ -294,10 +297,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (solutions.Entities.Count > 0)
                 {
                     var solutionId = solutions.Entities[0].Id;
-                    var targetComponents = SolutionComponentExtractor.ExtractEnvironmentComponents(Connection, solutionId);
+               
 
                     // Compare components
-                    var comparisonResults = SolutionComponentExtractor.CompareSolutionComponents(Connection, this, sourceComponents, targetComponents, solutionBytes, solutionId);
+                    var sourceExtractor2 = new FileComponentExtractor(Connection, this, solutionBytes);
+                    var targetExtractor = new EnvironmentComponentExtractor(Connection, this, solutionId);
+                    var comparer = new SolutionComponentComparer(sourceExtractor2, targetExtractor, this);
+                    var comparisonResults = comparer.CompareComponents();
 
                     // Count problematic statuses
                     int targetOnlyCount = comparisonResults.Count(r => r.Status == SolutionComponentStatus.InTargetOnly);
@@ -1061,6 +1067,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 default:
                     return $"Unknown status ({statusCode})";
             }
+        }
+
+        private string ExtractSolutionName(byte[] solutionBytes)
+        {
+            using (var memoryStream = new MemoryStream(solutionBytes))
+            using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
+            {
+                var solutionXmlEntry = archive.Entries.FirstOrDefault(e =>
+                   e.FullName.Equals("solution.xml", StringComparison.OrdinalIgnoreCase));
+
+                if (solutionXmlEntry != null)
+                {
+                    using (var stream = solutionXmlEntry.Open())
+                    using (var reader = new StreamReader(stream))
+                    {
+                        var xmlContent = reader.ReadToEnd();
+                        var xdoc = XDocument.Parse(xmlContent);
+                        var solutionManifest = xdoc.Root?.Element("SolutionManifest");
+                        return solutionManifest?.Element("UniqueName")?.Value;
+                    }
+                }
+            }
+            return null;
         }
     }
 }

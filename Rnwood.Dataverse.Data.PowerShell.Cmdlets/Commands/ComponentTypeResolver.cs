@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
+using Rnwood.Dataverse.Data.PowerShell.Commands.Model;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {

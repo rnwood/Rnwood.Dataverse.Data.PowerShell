@@ -6,6 +6,9 @@ using System.Management.Automation;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Rnwood.Dataverse.Data.PowerShell.Commands.Model;
+using System.IO.Compression;
+using System.Xml.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -93,9 +96,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Store the source bytes for subcomponent extraction
             _sourceSolutionBytes = sourceSolutionBytes;
 
-            // Extract solution info and components from source file using SolutionComponentExtractor
-            var (sourceSolutionName, sourceComponents) = SolutionComponentExtractor.ExtractSolutionFileComponents(sourceSolutionBytes);
-            WriteVerbose($"Extracted source solution: {sourceSolutionName} with {sourceComponents.Count} root components");
+            // Extract solution info and components from source file
+            string sourceSolutionName = ExtractSolutionName(sourceSolutionBytes);
+            var sourceExtractor = new FileComponentExtractor(Connection, this, sourceSolutionBytes);
 
             // Query target environment for the solution
             var solutionQuery = new QueryExpression("solution")
@@ -112,245 +115,16 @@ new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionNam
             };
 
             var solutions = Connection.RetrieveMultiple(solutionQuery);
-            if (solutions.Entities.Count == 0)
-            {
-                WriteWarning($"Solution '{sourceSolutionName}' not found in target environment. All components will be marked as 'Added'.");
-
-                // Output all source components as Added
-                foreach (var component in sourceComponents)
-                {
-                    OutputComparisonResult(new SolutionComponentInfo
-                    {
-                        LogicalName = component.UniqueName,
-                        ObjectId = component.ObjectId,
-                        ComponentType = component.ComponentType,
-                        RootComponentBehavior = component.RootComponentBehavior
-                    }, null, SolutionComponentStatus.InSourceOnly, sourceSolutionName, isReversed: ReverseComparison.IsPresent);
-                }
-                return;
-            }
 
             var solutionId = solutions.Entities[0].Id;
             WriteVerbose($"Found solution in target environment: {solutionId}");
 
-            // Query target environment for solution components using SolutionComponentExtractor
-            var targetComponents = SolutionComponentExtractor.ExtractEnvironmentComponents(Connection, solutionId);
-            var targetSolutionName = sourceSolutionName;
-            WriteVerbose($"Found {targetComponents.Count} components in target environment");
-
-            // Apply reverse comparison if requested
-            if (ReverseComparison.IsPresent)
-            {
-                WriteVerbose("Reversing comparison direction");
-                var temp = sourceComponents;
-                sourceComponents = targetComponents;
-                targetComponents = temp;
-            }
 
             // Compare components
-            CompareComponents(sourceComponents, targetComponents, targetSolutionName, solutionId);
+            CompareComponents(sourceSolutionName, solutionId);
         }
 
-        private void CompareComponents(List<SolutionComponent> sourceComponents,
-   List<SolutionComponent> targetComponents, string solutionName, Guid? targetSolutionId)
-        {
-            // Expand components to include subcomponents based on behavior
-            var expandedSourceComponents = ExpandComponentsWithSubcomponents(sourceComponents, isSource: true, solutionId: null);
-            var expandedTargetComponents = ExpandComponentsWithSubcomponents(targetComponents, isSource: false, solutionId: targetSolutionId);
-
-            WriteVerbose($"Expanded source components: {sourceComponents.Count} root -> {expandedSourceComponents.Count} total");
-            WriteVerbose($"Expanded target components: {targetComponents.Count} root -> {expandedTargetComponents.Count} total");
-
-            // Sort components for consistent verbose output
-            expandedSourceComponents = expandedSourceComponents.OrderBy(c => c.ComponentType).ThenBy(c => GetComponentKey(c)).ToList();
-            expandedTargetComponents = expandedTargetComponents.OrderBy(c => c.ComponentType).ThenBy(c => GetComponentKey(c)).ToList();
-
-            // Output verbose list of source components
-            foreach (var comp in expandedSourceComponents)
-            {
-                var compKey = GetComponentKey(comp);
-                var dummyComponent = new SolutionComponent { ComponentType = comp.ComponentType, UniqueName = comp.LogicalName };
-                WriteVerbose($"Source component: {ComponentTypeResolver.GetComponentTypeName(Connection, dummyComponent)} ({comp.ComponentType}) - {compKey}");
-            }
-
-            // Output verbose list of target components
-            foreach (var comp in expandedTargetComponents)
-            {
-                var compKey = GetComponentKey(comp);
-                var dummyComponent = new SolutionComponent { ComponentType = comp.ComponentType, UniqueName = comp.LogicalName };
-                WriteVerbose($"Target component: {ComponentTypeResolver.GetComponentTypeName(Connection, dummyComponent)} ({comp.ComponentType}) - {compKey}");
-            }
-
-            // Create lookup dictionaries for efficient comparison (compare by logical name first, then object ID)
-            var sourceComponentDict = expandedSourceComponents
- .GroupBy(c => new { c.ComponentType, Key = GetComponentKey(c) })
-    .ToDictionary(g => g.Key, g => g.First());
-
-            var targetComponentDict = expandedTargetComponents
-       .GroupBy(c => new { c.ComponentType, Key = GetComponentKey(c) })
-            .ToDictionary(g => g.Key, g => g.First());
-
-            // Find added components (in source but not in target)
-            foreach (var sourceComponent in expandedSourceComponents)
-            {
-                var key = new { sourceComponent.ComponentType, Key = GetComponentKey(sourceComponent) };
-
-                if (!targetComponentDict.ContainsKey(key))
-                {
-                    OutputComparisonResult(sourceComponent, null, SolutionComponentStatus.InSourceOnly, solutionName, isReversed: false);
-                }
-                else
-                {
-                    var targetComponent = targetComponentDict[key];
-
-                    // Check if behavior changed
-                    if (sourceComponent.RootComponentBehavior != targetComponent.RootComponentBehavior)
-                    {
-                        // Determine if this is an inclusion or exclusion based on behavior change
-                        SolutionComponentStatus status = DetermineBehaviorChangeStatus(sourceComponent.RootComponentBehavior ?? 0, targetComponent.RootComponentBehavior ?? 0);
-
-                        OutputComparisonResult(sourceComponent, targetComponent, status, solutionName, isReversed: false);
-                    }
-                    else
-                    {
-                        // Component exists in both with same behavior - assume modified
-                        // (We can't detect actual changes without inspecting the component itself)
-                        OutputComparisonResult(sourceComponent, targetComponent, SolutionComponentStatus.InSourceAndTarget, solutionName, isReversed: false);
-                    }
-                }
-            }
-
-            // Find removed components (in target but not in source)
-            foreach (var targetComponent in expandedTargetComponents)
-            {
-                var key = new { targetComponent.ComponentType, Key = GetComponentKey(targetComponent) };
-
-                if (!sourceComponentDict.ContainsKey(key))
-                {
-                    OutputComparisonResult(null, targetComponent, SolutionComponentStatus.InTargetOnly, solutionName, isReversed: false);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets a comparison key for a component, preferring LogicalName if available, otherwise ObjectId.
-        /// </summary>
-        private string GetComponentKey(SolutionComponentInfo component)
-        {
-            // Prefer logical name (case-insensitive for comparison)
-            if (!string.IsNullOrEmpty(component.LogicalName))
-            {
-                string key = component.LogicalName;
-                if (!string.IsNullOrEmpty(component.ParentTableName))
-                {
-                    key = $"{component.ParentTableName}.{key}";
-                }
-                return key.ToLowerInvariant();
-            }
-
-            // Fall back to ObjectId as string
-            return component.ObjectId?.ToString() ?? Guid.Empty.ToString();
-        }
-
-        /// <summary>
-        /// Gets the display identifier for a component, including parent table name if available.
-        /// </summary>
-        private string GetDisplayIdentifier(SolutionComponentInfo component)
-        {
-            if (component == null) return null;
-
-            if (!string.IsNullOrEmpty(component.LogicalName))
-            {
-                string id = component.LogicalName;
-                if (!string.IsNullOrEmpty(component.ParentTableName))
-                {
-                    id = $"{component.ParentTableName}.{id}";
-                }
-                return id;
-            }
-
-            return component.ObjectId?.ToString();
-        }
-
-        private List<SolutionComponentInfo> ExpandComponentsWithSubcomponents(List<SolutionComponent> components, bool isSource, Guid? solutionId)
-        {
-            var expandedComponents = new List<SolutionComponentInfo>();
-
-            foreach (var component in components)
-            {
-                // Always add the root component itself
-                expandedComponents.Add(new SolutionComponentInfo
-                {
-                    LogicalName = component.UniqueName,
-                    ObjectId = component.ObjectId,
-                    MetadataId = component.MetadataId,
-                    ComponentType = component.ComponentType,
-                    RootComponentBehavior = component.RootComponentBehavior
-                });
-
-                var subcomponents = GetSubcomponents(component, isSource, solutionId);
-                expandedComponents.AddRange(subcomponents);
-            }
-
-            return expandedComponents;
-        }
-
-        private List<SolutionComponentInfo> GetSubcomponents(SolutionComponent parentComponent, bool isSource, Guid? solutionId)
-        {
-            var subcomponents = new List<SolutionComponentInfo>();
-
-            // Use SubcomponentRetriever for retrieval
-            SubcomponentRetriever retriever;
-            if (isSource)
-            {
-                retriever = new SubcomponentRetriever(Connection, this, _sourceSolutionBytes, solutionId);
-            }
-            else
-            {
-                retriever = new SubcomponentRetriever(Connection, this, solutionId);
-            }
-            var retrievedSubcomponents = retriever.GetSubcomponents(parentComponent);
-
-            // Convert back to SolutionComponentInfo
-            foreach (var subcomponent in retrievedSubcomponents)
-            {
-                subcomponents.Add(new SolutionComponentInfo
-                {
-                    LogicalName = subcomponent.UniqueName,
-                    ObjectId = subcomponent.ObjectId,
-                    MetadataId = subcomponent.MetadataId,
-                    ComponentType = subcomponent.ComponentType,
-                    RootComponentBehavior = subcomponent.RootComponentBehavior,
-                    IsSubcomponent = subcomponent.IsSubcomponent,
-                    ParentComponentType = subcomponent.ParentComponentType,
-                    ParentTableName = subcomponent.ParentTableName
-                });
-            }
-
-            return subcomponents;
-        }
-
-        private SolutionComponentStatus DetermineBehaviorChangeStatus(int sourceBehavior, int targetBehavior)
-        {
-            // Behavior levels: 0 (Full/Include Subcomponents) > 1 (Do Not Include Subcomponents) > 2 (Shell)
-            // Going from higher number to lower number = including more data (BehaviorIncluded)
-            // Going from lower number to higher number = excluding data (BehaviorExcluded)
-
-            if (sourceBehavior < targetBehavior)
-            {
-                // e.g., 0 (Full) -> 2 (Shell): excluding/removing data
-                return SolutionComponentStatus.InSourceAndTarget_BehaviourLessInclusiveInSource;
-            }
-            else if (sourceBehavior > targetBehavior)
-            {
-                // e.g., 2 (Shell) -> 0 (Full): including more data
-                return SolutionComponentStatus.InSourceAndTarget_BehaviourMoreInclusiveInSource;
-            }
-
-            return SolutionComponentStatus.InSourceAndTarget;
-        }
-
-        private void OutputComparisonResult(SolutionComponentInfo sourceComponent, SolutionComponentInfo targetComponent,
+        private void OutputComparisonResult(SolutionComponent sourceComponent, SolutionComponent targetComponent,
        SolutionComponentStatus status, string solutionName, bool isReversed)
         {
             var result = new PSObject();
@@ -360,7 +134,7 @@ new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionNam
             var dummyComponent = new SolutionComponent
             {
                 ComponentType = componentType,
-                UniqueName = sourceComponent?.LogicalName ?? targetComponent?.LogicalName
+                UniqueName = sourceComponent?.UniqueName ?? targetComponent?.UniqueName
             };
             result.Properties.Add(new PSNoteProperty("ComponentType", componentType));
             result.Properties.Add(new PSNoteProperty("ComponentTypeName", ComponentTypeResolver.GetComponentTypeName(Connection, dummyComponent)));
@@ -370,8 +144,8 @@ new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionNam
             result.Properties.Add(new PSNoteProperty("DisplayIdentifier", displayIdentifier));
 
             // Add source and target ObjectIds
-            result.Properties.Add(new PSNoteProperty("SourceObjectId", sourceComponent?.ObjectId));
-            result.Properties.Add(new PSNoteProperty("TargetObjectId", targetComponent?.ObjectId));
+            result.Properties.Add(new PSNoteProperty("SourceObjectId", (object)sourceComponent?.ObjectId));
+            result.Properties.Add(new PSNoteProperty("TargetObjectId", (object)targetComponent?.ObjectId));
 
             result.Properties.Add(new PSNoteProperty("Status", status.ToString()));
             result.Properties.Add(new PSNoteProperty("SourceBehavior", sourceComponent?.RootComponentBehavior.HasValue ?? false ? GetBehaviorName(sourceComponent.RootComponentBehavior.Value) : null));
@@ -401,25 +175,64 @@ new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionNam
             }
         }
 
-        private class SolutionComponentInfo
+        private string ExtractSolutionName(byte[] solutionBytes)
         {
-            public string LogicalName { get; set; }
-            public Guid? ObjectId { get; set; }
-            public Guid? MetadataId { get; set; }
-            public int ComponentType { get; set; }
-            public int? RootComponentBehavior { get; set; }
-            public bool IsSubcomponent { get; set; }
-            public int? ParentComponentType { get; set; }
-            public string ParentTableName { get; set; }
+            using (var memoryStream = new MemoryStream(solutionBytes))
+            using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
+            {
+                var solutionXmlEntry = archive.Entries.FirstOrDefault(e =>
+                   e.FullName.Equals("solution.xml", StringComparison.OrdinalIgnoreCase));
+
+                if (solutionXmlEntry != null)
+                {
+                    using (var stream = solutionXmlEntry.Open())
+                    using (var reader = new StreamReader(stream))
+                    {
+                        var xmlContent = reader.ReadToEnd();
+                        var xdoc = XDocument.Parse(xmlContent);
+                        var solutionManifest = xdoc.Root?.Element("SolutionManifest");
+                        return solutionManifest?.Element("UniqueName")?.Value;
+                    }
+                }
+            }
+            return null;
         }
 
-        private enum SolutionComponentStatus
+        private void CompareComponents(string solutionName, Guid? targetSolutionId)
         {
-            InSourceOnly,
-            InTargetOnly,
-            InSourceAndTarget,
-            InSourceAndTarget_BehaviourMoreInclusiveInSource,
-            InSourceAndTarget_BehaviourLessInclusiveInSource
+            // Create extractors
+            IComponentExtractor sourceExtractor = new FileComponentExtractor(Connection, this, _sourceSolutionBytes);
+            IComponentExtractor targetExtractor = new EnvironmentComponentExtractor(Connection, this, targetSolutionId.Value);
+
+            // Compare components
+            var comparer = new SolutionComponentComparer(sourceExtractor, targetExtractor, this);
+            var comparisonResults = comparer.CompareComponents();
+
+            // Output results
+            foreach (var result in comparisonResults)
+            {
+                OutputComparisonResult(result.SourceComponent, result.TargetComponent, result.Status, solutionName, isReversed: false);
+            }
+        }
+
+        /// <summary>
+        /// Gets the display identifier for a component, including parent table name if available.
+        /// </summary>
+        private string GetDisplayIdentifier(SolutionComponent component)
+        {
+            if (component == null) return null;
+
+            if (!string.IsNullOrEmpty(component.UniqueName))
+            {
+                string id = component.UniqueName;
+                if (!string.IsNullOrEmpty(component.ParentTableName))
+                {
+                    id = $"{component.ParentTableName}.{id}";
+                }
+                return id;
+            }
+
+            return component.ObjectId?.ToString();
         }
     }
 }

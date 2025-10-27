@@ -7,6 +7,7 @@ using System.Management.Automation;
 using System.Xml.Linq;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
+using Rnwood.Dataverse.Data.PowerShell.Commands.Model;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -69,37 +70,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             WriteVerbose($"Solution file size: {solutionBytes.Length} bytes");
 
             // Extract components from the solution file
-            var (solutionName, components) = SolutionComponentExtractor.ExtractSolutionFileComponents(solutionBytes);
+            var extractor = new FileComponentExtractor(Connection, this, solutionBytes);
+            var components = extractor.GetComponents(IncludeSubcomponents.IsPresent);
 
-            if (string.IsNullOrEmpty(solutionName))
-            {
-                ThrowTerminatingError(new ErrorRecord(
-                new InvalidOperationException("Could not extract solution unique name from solution file."),
-               "InvalidSolutionFile",
-             ErrorCategory.InvalidData,
-                    null));
-                return;
-            }
-
-            WriteVerbose($"Solution: {solutionName}");
-            WriteVerbose($"Found {components.Count} root components in the solution file.");
+            WriteVerbose($"Found {components.Count} components in the solution file.");
 
             // Output components
             foreach (var component in components)
             {
                 OutputComponentAsObject(component);
-
-                // If IncludeSubcomponents is specified, retrieve and output subcomponents
-                if (IncludeSubcomponents.IsPresent && component.ComponentType == 1)
-                {
-                    var componentIdentifier = component.UniqueName ?? component.ObjectId?.ToString() ?? "Unknown";
-                    WriteVerbose($"Retrieving subcomponents for {ComponentTypeResolver.GetComponentTypeName(Connection, component)}: {componentIdentifier}");
-                    var subcomponents = ExtractSubcomponents(solutionBytes, component);
-                    foreach (var subcomponent in subcomponents)
-                    {
-                        OutputComponentAsObject(subcomponent);
-                    }
-                }
             }
         }
 
@@ -122,7 +101,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             result.Properties.Add(new PSNoteProperty("ComponentType", component.ComponentType));
             result.Properties.Add(new PSNoteProperty("ComponentTypeName", ComponentTypeResolver.GetComponentTypeName(Connection, component)));
             result.Properties.Add(new PSNoteProperty("Behavior", GetBehaviorName(component.RootComponentBehavior ?? 0)));
-            result.Properties.Add(new PSNoteProperty("MetadataId", component.MetadataId));
             result.Properties.Add(new PSNoteProperty("IsSubcomponent", component.IsSubcomponent));
 
             if (component.IsSubcomponent)
@@ -133,13 +111,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             WriteObject(result);
-        }
-
-        private List<SolutionComponent> ExtractSubcomponents(byte[] solutionBytes, SolutionComponent parentComponent)
-        {
-            // Use SubcomponentRetriever to handle XML extraction from solution file
-            var retriever = new SubcomponentRetriever(Connection, this, solutionBytes, null);
-            return retriever.GetSubcomponents(parentComponent);
         }
     }
 }

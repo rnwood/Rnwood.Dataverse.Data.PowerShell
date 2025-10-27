@@ -7,6 +7,7 @@ using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Metadata.Query;
 using Microsoft.Xrm.Sdk.Query;
+using Rnwood.Dataverse.Data.PowerShell.Commands.Model;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -37,8 +38,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = false, HelpMessage = "Include subcomponents (attributes, relationships, forms, views, etc.) for each root component.")]
         public SwitchParameter IncludeSubcomponents { get; set; }
 
-        private Guid _resolvedSolutionId;
-
         /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
@@ -46,65 +45,43 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            // Resolve solution ID if only name is provided
-            Guid resolvedSolutionId;
+            Guid solutionid;
+
             if (ParameterSetName == "ByUniqueName")
             {
-                var solutionQuery = new QueryExpression("solution")
+                var query = new QueryExpression("solution")
                 {
-                    ColumnSet = new ColumnSet("solutionid", "uniquename"),
+                    ColumnSet = new ColumnSet("solutionid"),
                     Criteria = new FilterExpression
                     {
                         Conditions =
-              {
-          new ConditionExpression("uniquename", ConditionOperator.Equal, SolutionName)
-              }
-                    },
-                    TopCount = 1
+                        {
+                            new ConditionExpression("uniquename", ConditionOperator.Equal, SolutionName)
+                        }
+                    }
                 };
-
-                var solutions = Connection.RetrieveMultiple(solutionQuery);
-                if (solutions.Entities.Count == 0)
+                var result = Connection.RetrieveMultiple(query);
+                if (result.Entities.Count == 0)
                 {
-                    ThrowTerminatingError(new ErrorRecord(
-                        new InvalidOperationException($"Solution '{SolutionName}' not found in the environment."),
-                        "SolutionNotFound",
-                                ErrorCategory.ObjectNotFound,
-                        SolutionName));
-                    return;
+                    ThrowTerminatingError(new ErrorRecord(new Exception($"Solution '{SolutionName}' not found."), "SolutionNotFound", ErrorCategory.ObjectNotFound, SolutionName));
                 }
-
-                resolvedSolutionId = solutions.Entities[0].Id;
-                WriteVerbose($"Found solution '{SolutionName}' with ID: {resolvedSolutionId}");
+                solutionid = result.Entities[0].GetAttributeValue<Guid>("solutionid");
             }
             else
             {
-                resolvedSolutionId = SolutionId;
+                solutionid = SolutionId;
             }
 
-            _resolvedSolutionId = resolvedSolutionId;
-
             // Extract components from the environment
-            var components = SolutionComponentExtractor.ExtractEnvironmentComponents(Connection, _resolvedSolutionId);
+            var extractor = new EnvironmentComponentExtractor(Connection, this, solutionid);
+            var components = extractor.GetComponents(IncludeSubcomponents.IsPresent);
 
-            WriteVerbose($"Found {components.Count} root components in the solution.");
+            WriteVerbose($"Found {components.Count} components in the solution.");
 
             // Output components
             foreach (var component in components)
             {
                 OutputComponentAsObject(component);
-
-                // If IncludeSubcomponents is specified, retrieve and output subcomponents
-                if (IncludeSubcomponents.IsPresent && component.ComponentType == 1)
-                {
-                    var componentIdentifier = ComponentTypeResolver.GetComponentIdentifier(component, Connection);
-                    WriteVerbose($"Retrieving subcomponents for {ComponentTypeResolver.GetComponentTypeName(Connection, component)}: {componentIdentifier}");
-                    var subcomponents = GetSubcomponentsForComponent(component);
-                    foreach (var subcomponent in subcomponents)
-                    {
-                        OutputComponentAsObject(subcomponent);
-                    }
-                }
             }
         }
 
@@ -127,8 +104,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             result.Properties.Add(new PSNoteProperty("ComponentType", component.ComponentType));
             result.Properties.Add(new PSNoteProperty("ComponentTypeName", ComponentTypeResolver.GetComponentTypeName(Connection, component)));
             result.Properties.Add(new PSNoteProperty("Behavior", GetBehaviorName(component.RootComponentBehavior ?? 0)));
-            result.Properties.Add(new PSNoteProperty("MetadataId", component.MetadataId));
             result.Properties.Add(new PSNoteProperty("IsSubcomponent", component.IsSubcomponent));
+            result.Properties.Add(new PSNoteProperty("IsDefault", component.IsDefault));
 
             if (component.IsSubcomponent)
             {
@@ -138,12 +115,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             WriteObject(result);
-        }
-
-        private List<SolutionComponent> GetSubcomponentsForComponent(SolutionComponent parentComponent)
-        {
-            var retriever = new SubcomponentRetriever(Connection, this, _resolvedSolutionId);
-            return retriever.GetSubcomponents(parentComponent);
         }
     }
 }
