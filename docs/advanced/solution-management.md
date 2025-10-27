@@ -9,6 +9,10 @@
       - [Creating and updating solutions](#creating-and-updating-solutions)
       - [Publishing customizations](#publishing-customizations)
       - [Importing solutions](#importing-solutions)
+      - [Analyzing Solution Components](#analyzing-solution-components)
+        - [Get-DataverseSolutionComponent](#get-dataversesolutioncomponent)
+        - [Get-DataverseSolutionFileComponent](#get-dataversesolutionfilecomponent)
+        - [Compare-DataverseSolutionComponents](#compare-dataversesolutioncomponents)
       - [Uninstalling/removing solutions](#uninstallingremoving-solutions)
         - [Handling Connection References and Environment Variables](#handling-connection-references-and-environment-variables)
 
@@ -23,6 +27,7 @@
     - [Creating and updating solutions](#creating-and-updating-solutions)
     - [Publishing customizations](#publishing-customizations)
     - [Importing solutions](#importing-solutions)
+    - [Analyzing Solution Components](#analyzing-solution-components)
     - [Uninstalling/removing solutions](#uninstallingremoving-solutions)
       - [Handling Connection References and Environment Variables](#handling-connection-references-and-environment-variables)
 <!-- /TOC -->
@@ -115,6 +120,7 @@ Publish-DataverseCustomizations -Connection $c -EntityName "contact"
   - If the solution doesn't exist, performs a regular import
   - If the solution exists and is managed, performs a stage-and-upgrade operation
   - If the solution exists and is unmanaged, performs a regular import (upgrade)
+  - Use `-UseUpdateIfAdditive` (experimental) to perform component comparison and use simple import mode if only additive changes are detected. This boosts import performance when nothing has been removed (full upgrader is needed to remove things). Only valid with Auto (default) mode.
 - Use `-Mode NoUpgrade` to force a regular import regardless of solution status
 - Use `-Mode StageAndUpgrade` to explicitly perform a stage-and-upgrade operation
 - Use `-Mode HoldingSolution` to import as a holding solution for upgrade
@@ -136,6 +142,56 @@ Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -M
 # Import from bytes instead of file
 Import-DataverseSolution -Connection $c -SolutionBytes $bytes
 ```
+
+#### Analyzing Solution Components
+
+> [!NOTE]
+> The following cmdlets are experimental and incomplete.
+
+The module provides experimental cmdlets for analyzing solution components:
+
+##### Get-DataverseSolutionComponent
+
+Retrieves components from a solution in a Dataverse environment:
+
+```powershell
+# Get components by solution name
+Get-DataverseSolutionComponent -Connection $c -SolutionName "MySolution"
+
+# Include subcomponents
+Get-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" -IncludeSubcomponents
+```
+
+##### Get-DataverseSolutionFileComponent
+
+Extracts components from a solution file:
+
+```powershell
+# Extract from file
+Get-DataverseSolutionFileComponent -SolutionFile "MySolution.zip"
+
+# Extract from bytes
+$bytes = [System.IO.File]::ReadAllBytes("MySolution.zip")
+$bytes | Get-DataverseSolutionFileComponent
+```
+
+##### Compare-DataverseSolutionComponents
+
+Compares solution components between files and environments:
+
+```powershell
+# Compare file with environment
+Compare-DataverseSolutionComponents -Connection $c -SolutionFile "MySolution.zip"
+
+# Compare two files
+Compare-DataverseSolutionComponents -SolutionFile "v1.zip" -TargetSolutionFile "v2.zip"
+
+# Reverse comparison
+Compare-DataverseSolutionComponents -Connection $c -SolutionFile "MySolution.zip" -ReverseComparison
+```
+
+These cmdlets help understand what components are included in solutions, their behavior settings, and differences between versions or environments.
+
 #### Uninstalling/removing solutions
 - `Remove-DataverseSolution` removes (uninstalls) a solution from a Dataverse environment using the asynchronous uninstall process. The operation is asynchronous and the cmdlet monitors the uninstall progress.
 - When removing a solution:

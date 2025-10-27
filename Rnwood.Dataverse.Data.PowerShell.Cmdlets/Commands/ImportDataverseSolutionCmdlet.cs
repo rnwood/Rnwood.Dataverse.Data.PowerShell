@@ -12,6 +12,7 @@ using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Rnwood.Dataverse.Data.PowerShell.Commands.Model;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -121,6 +122,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter AsyncRibbonProcessing { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to use update if additive mode (experimental and incomplete).
+        /// </summary>
+        [Parameter(HelpMessage = "Use update if additive mode (experimental and incomplete). Only valid with Auto (default) mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items removed ('TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status), uses simple install mode (no stage and upgrade) for best performance.")]
+        public SwitchParameter UseUpdateIfAdditive { get; set; }
+
+        /// <summary>
         /// Gets or sets the polling interval in seconds for checking job status. Default is 5 seconds.
         /// </summary>
         [Parameter(HelpMessage = "Polling interval in seconds for checking job status. Default is 5.")]
@@ -171,7 +178,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     return;
                 }
 
-                WriteVerbose($"Loading solution file from: {filePath}");
+                WriteVerbose($"{filePath}");
                 solutionBytes = File.ReadAllBytes(filePath);
             }
             else
@@ -189,6 +196,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Validate solution components (connection references and environment variables)
             ValidateSolutionComponents(solutionBytes);
 
+            // Validate parameter combinations
+            if (UseUpdateIfAdditive.IsPresent && Mode != ImportMode.Auto)
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new InvalidOperationException("-UseUpdateIfAdditive is only valid with Auto (default) mode."),
+                    "InvalidParameterCombination",
+                    ErrorCategory.InvalidArgument,
+                    null));
+            }
+
             // Determine import mode based on Mode parameter
             bool useNoUpgrade = Mode == ImportMode.NoUpgrade;
             bool useHoldingSolution = Mode == ImportMode.HoldingSolution;
@@ -201,6 +218,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Check if this is an upgrade scenario and if the solution already exists
             bool shouldUseStageAndUpgrade = false;
             bool shouldUseHoldingSolution = false;
+            bool solutionExists = DoesSolutionExist(solutionBytes);
+
             if (useHoldingSolution)
             {
                 // Extract solution unique name from the solution file (this is a simplified approach)
@@ -209,8 +228,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 // Try to detect if solution exists by attempting to query for it
                 // We'll catch the exception if it doesn't exist and fallback
-                bool exists = DoesSolutionExist(solutionBytes);
-                if (exists)
+                if (solutionExists)
                 {
                     shouldUseHoldingSolution = true;
                 }
@@ -223,28 +241,93 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 if (Mode == ImportMode.Auto)
                 {
-                    WriteVerbose("Auto mode - checking if solution already exists and is managed...");
+                    WriteVerbose("Auto mode - checking if solution already EXISTS and is managed...");
                 }
                 else
                 {
                     WriteVerbose("StageAndUpgrade mode specified - checking if solution already exists...");
                 }
 
-                bool exists = DoesSolutionExist(solutionBytes);
-                if (exists && (Mode == ImportMode.StageAndUpgrade || isManaged))
+                if (solutionExists && (Mode == ImportMode.StageAndUpgrade || isManaged))
                 {
                     shouldUseStageAndUpgrade = true;
                     WriteVerbose("Solution exists and source is managed - using StageAndUpgradeAsyncRequest");
                 }
                 else
                 {
-                    if (!exists)
+                    if (!solutionExists)
                     {
                         WriteWarning("Solution does not exist in the target environment. Falling back to regular import instead of upgrade.");
                     }
                     else if (Mode == ImportMode.Auto && !isManaged)
                     {
                         WriteWarning("Source solution is unmanaged. Falling back to regular import instead of upgrade.");
+                    }
+                }
+            }
+
+            // Handle UseUpdateIfAdditive logic
+            if (UseUpdateIfAdditive.IsPresent && solutionExists)
+            {
+                WriteWarning("UseUpdateIfAdditive is experimental and incomplete. Behavior may be incorrect and may change in future versions.");
+
+                WriteVerbose("UseUpdateIfAdditive specified - comparing solution components...");
+
+                // Extract source components
+                string sourceSolutionName = ExtractSolutionName(solutionBytes);
+                var sourceExtractor = new FileComponentExtractor(Connection, this, solutionBytes);
+                var sourceComponents = sourceExtractor.GetComponents(includeSubcomponents: false);
+                WriteVerbose($"Extracted source solution: {sourceSolutionName} with {sourceComponents.Count} root components");
+
+                // Query target environment for solution id
+                var solutionQuery = new QueryExpression("solution")
+                {
+                    ColumnSet = new ColumnSet("solutionid"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionName)
+                        }
+                    },
+                    TopCount = 1
+                };
+
+                var solutions = Connection.RetrieveMultiple(solutionQuery);
+                if (solutions.Entities.Count > 0)
+                {
+                    var solutionId = solutions.Entities[0].Id;
+               
+
+                    // Compare components
+                    var sourceExtractor2 = new FileComponentExtractor(Connection, this, solutionBytes);
+                    var targetExtractor = new EnvironmentComponentExtractor(Connection, this, solutionId);
+                    var comparer = new SolutionComponentComparer(sourceExtractor2, targetExtractor, this);
+                    var comparisonResults = comparer.CompareComponents();
+
+                    // Count problematic statuses
+                    int targetOnlyCount = comparisonResults.Count(r => r.Status == SolutionComponentStatus.InTargetOnly);
+                    int lessInclusiveCount = comparisonResults.Count(r => r.Status == SolutionComponentStatus.InSourceAndTarget_BehaviourLessInclusiveInSource);
+
+                    WriteVerbose($"Comparison results: {targetOnlyCount} TargetOnly, {lessInclusiveCount} LessInclusiveInSource");
+
+                    if (targetOnlyCount == 0 && lessInclusiveCount == 0)
+                    {
+                        WriteVerbose("No removed components found - using simple install mode (no stage and upgrade)");
+                        shouldUseStageAndUpgrade = false;
+                        shouldUseHoldingSolution = false;
+                    }
+                    else
+                    {
+                        WriteVerbose("Removed components found - proceeding with full upgrade logic to ensure they are removed correctly.");
+                        // List the problematic components
+                        foreach (var result in comparisonResults.Where(r => r.Status == SolutionComponentStatus.InTargetOnly || r.Status == SolutionComponentStatus.InSourceAndTarget_BehaviourLessInclusiveInSource))
+                        {
+                            string componentName = result.SourceComponent?.UniqueName ?? result.TargetComponent?.UniqueName ?? "Unknown";
+                            int componentType = result.SourceComponent?.ComponentType ?? result.TargetComponent?.ComponentType ?? 0;
+                            WriteVerbose($"  Removed component: Type {componentType} '{componentName}' - {result.Status}");
+                        }
+                        // Keep the existing logic for shouldUseStageAndUpgrade
                     }
                 }
             }
@@ -933,9 +1016,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             };
 
-            var results = Connection.RetrieveMultiple(query);
+            var allResults = new List<Entity>();
+            EntityCollection ec;
+            do
+            {
+                ec = Connection.RetrieveMultiple(query);
+                allResults.AddRange(ec.Entities);
+                if (ec.MoreRecords)
+                {
+                    query.PageInfo.PageNumber++;
+                    query.PageInfo.PagingCookie = ec.PagingCookie;
+                }
+            } while (ec.MoreRecords);
 
-            foreach (var entity in results.Entities)
+            foreach (var entity in allResults)
             {
                 if (entity.Contains("schemaname"))
                 {
@@ -973,6 +1067,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 default:
                     return $"Unknown status ({statusCode})";
             }
+        }
+
+        private string ExtractSolutionName(byte[] solutionBytes)
+        {
+            using (var memoryStream = new MemoryStream(solutionBytes))
+            using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
+            {
+                var solutionXmlEntry = archive.Entries.FirstOrDefault(e =>
+                   e.FullName.Equals("solution.xml", StringComparison.OrdinalIgnoreCase));
+
+                if (solutionXmlEntry != null)
+                {
+                    using (var stream = solutionXmlEntry.Open())
+                    using (var reader = new StreamReader(stream))
+                    {
+                        var xmlContent = reader.ReadToEnd();
+                        var xdoc = XDocument.Parse(xmlContent);
+                        var solutionManifest = xdoc.Root?.Element("SolutionManifest");
+                        return solutionManifest?.Element("UniqueName")?.Value;
+                    }
+                }
+            }
+            return null;
         }
     }
 }

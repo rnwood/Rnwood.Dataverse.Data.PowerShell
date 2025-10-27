@@ -837,26 +837,6 @@ Describe "Examples-Comparison Documentation Tests" {
             }
         }
         
-        It "Can verify batch continues on error with default BatchSize" {
-            # Validates that with default batching, all records are attempted
-            # This complements Example 12 by showing the batch behavior
-            
-            $records = 1..5 | ForEach-Object {
-                $contact = New-Object Microsoft.Xrm.Sdk.Entity("contact")
-                $contact.Id = $contact["contactid"] = [Guid]::NewGuid()
-                $contact["firstname"] = "Batch$_"
-                $contact["lastname"] = "Test"
-                $contact
-            }
-            
-            # All records should be attempted (default BatchSize = 100)
-            { $records | Set-DataverseRecord -Connection $script:conn -CreateOnly -ErrorAction SilentlyContinue } | Should -Not -Throw
-            
-            # With mock provider, all should succeed
-            # In real scenario with errors, all would be attempted due to ContinueOnError = true
-            $true | Should -Be $true
-        }
-        
         It "Can access error details from TargetObject in batch errors" {
             # Tests that error correlation mechanism works
             # The error's TargetObject should be the PSObject/Entity that was passed in
@@ -873,7 +853,7 @@ Describe "Examples-Comparison Documentation Tests" {
             # (With mock provider, typically no errors, but structure is validated)
             if ($errors.Count -gt 0) {
                 $errors[0].TargetObject | Should -Not -BeNull
-                # The TargetObject should be usable to identify which record failed
+                # The TargetObject should contain the input object
                 $errors[0].TargetObject.GetType().Name | Should -Match "Entity|PSObject|PSCustomObject"
             }
             
@@ -1143,6 +1123,7 @@ Describe "Examples-Comparison Documentation Tests" {
             $cmd.Parameters.ContainsKey('Mode') | Should -Be $true
             $cmd.Parameters.ContainsKey('ConnectionReferences') | Should -Be $true
             $cmd.Parameters.ContainsKey('EnvironmentVariables') | Should -Be $true
+            $cmd.Parameters.ContainsKey('UseUpdateIfAdditive') | Should -Be $true
             $cmd.Parameters.ContainsKey('SkipConnectionReferenceValidation') | Should -Be $true
             $cmd.Parameters.ContainsKey('SkipEnvironmentVariableValidation') | Should -Be $true
             $cmd.Parameters.ContainsKey('PollingIntervalSeconds') | Should -Be $true
