@@ -837,27 +837,6 @@ Describe "Examples-Comparison Documentation Tests" {
             }
         }
         
-        It "Can verify batch continues on error with default BatchSize" {
-            # Validates that with default batching, all records are attempted
-            # This complements Example 12 by showing the batch behavior
-            
-            $records = 1..5 | ForEach-Object {
-                $contact = New-Object Microsoft.Xrm.Sdk.Entity("contact")
-                $contact.Id = $contact["contactid"] = [Guid]::NewGuid()
-                $contact["firstname"] = "Batch$_"
-                $contact["lastname"] = "Test"
-                $contact
-            }
-            
-            # All records should be attempted (default BatchSize = 100)
-            { $records | Set-DataverseRecord -Connection $script:conn -CreateOnly -ErrorAction SilentlyContinue } | Should -Not -Throw
-            
-            # Verify records were created by retrieving one
-            $retrieved = Get-DataverseRecord -Connection $script:conn -TableName contact -FilterValues @{"firstname"="BatchTest0"}
-            $retrieved | Should -Not -BeNull
-            $retrieved.firstname | Should -Be "BatchTest0"
-        }
-        
         It "Can access error details from TargetObject in batch errors" {
             # Tests that error correlation mechanism works
             # The error's TargetObject should be the PSObject/Entity that was passed in

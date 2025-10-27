@@ -5,9 +5,6 @@ online version:
 schema: 2.0.0
 ---
 
-> [!NOTE]
-> This cmdlet is experimental and incomplete.
-
 # Compare-DataverseSolutionComponents
 
 ## SYNOPSIS

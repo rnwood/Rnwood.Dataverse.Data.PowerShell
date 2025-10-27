@@ -467,21 +467,6 @@ Updates ALL contacts with lastname "TestUser" by setting their email address. Th
 
 ## PARAMETERS
 
-### -AllowMultipleMatches
-If specified, allows updating of ALL matching records when MatchOn criteria matches more than one record. Without this switch, an error is raised if MatchOn finds multiple matches.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -BatchSize
 Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable.
 
@@ -869,6 +854,21 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AllowMultipleMatches
+If specified, allows updating of ALL matching records when MatchOn criteria matches more than one record. Without this switch, an error is raised if MatchOn finds multiple matches.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

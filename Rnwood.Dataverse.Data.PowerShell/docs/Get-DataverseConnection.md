@@ -297,21 +297,6 @@ Connects to Dataverse using a specific named PAC CLI profile. The profile name m
 
 ## PARAMETERS
 
-### -AccessToken
-Script block that returns an access token string. Called whenever a new access token is needed.
-
-```yaml
-Type: ScriptBlock
-Parameter Sets: Authenticate with access token script block
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -ClientId
 Client ID to use for authentication. By default the MS provided ID for PAC CLI (`9cee029c-6210-4654-90bb-17e6e9d36617`) is used to make it easy to get started.
 
@@ -603,6 +588,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -AccessToken
+Script block that returns an access token string. Called whenever a new access token is needed.
+
+```yaml
+Type: ScriptBlock
+Parameter Sets: Authenticate with access token script block
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -CertificatePassword
 Password for the client certificate file. If not provided, the certificate is assumed to be unencrypted.
 
@@ -708,21 +708,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -FromPac
-Load connection from a Power Platform CLI (PAC) authentication profile. This uses the authentication profiles created with `pac auth create` and leverages the cached tokens from PAC CLI. The environment URL is determined from the profile's selected organization (set via `pac org select`).
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Load connection from PAC CLI profile
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -ListConnections
 Lists all saved named connections.
 
@@ -774,6 +759,21 @@ Parameter Sets: Authenticate with username and password, Authenticate with clien
 Aliases:
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FromPac
+Load connection from a Power Platform CLI (PAC) authentication profile. This uses the authentication profiles created with `pac auth create` and leverages the cached tokens from PAC CLI. The environment URL is determined from the profile's selected organization (set via `pac org select`).
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Load connection from PAC CLI profile
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
