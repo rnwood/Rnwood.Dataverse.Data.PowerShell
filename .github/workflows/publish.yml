@@ -59,11 +59,15 @@ jobs:
 
           Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
           
-          # Run tests with CI-friendly output and parallelism
+          # Run tests with CI-friendly output
+          # -CI enables test results and proper exit codes for CI environments
+          # Pester 5.x runs tests in parallel by default
           $config = New-PesterConfiguration
           $config.Run.Path = 'tests'
           $config.Run.PassThru = $true
+          $config.Run.Exit = $true
           $config.Output.Verbosity = 'Normal'
+          $config.Output.CIFormat = 'GithubActions'
           $config.Should.ErrorAction = 'Continue'
           
           $result = Invoke-Pester -Configuration $config
@@ -92,11 +96,15 @@ jobs:
   
             Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
             
-            # Run tests with CI-friendly output and parallelism
+            # Run tests with CI-friendly output
+            # -CI enables test results and proper exit codes for CI environments
+            # Pester 5.x runs tests in parallel by default
             $config = New-PesterConfiguration
             $config.Run.Path = 'tests'
             $config.Run.PassThru = $true
+            $config.Run.Exit = $true
             $config.Output.Verbosity = 'Normal'
+            $config.Output.CIFormat = 'GithubActions'
             $config.Should.ErrorAction = 'Continue'
             
             $result = Invoke-Pester -Configuration $config

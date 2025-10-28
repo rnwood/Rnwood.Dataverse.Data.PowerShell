@@ -29,11 +29,14 @@ $env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/
 # 2. Install Pester if not present (first time only)
 Install-Module -Force -Scope CurrentUser Pester -MinimumVersion 5.0
 
-# 3. Run all tests with concise output and parallelism
+# 3. Run all tests with concise output
+# Pester 5.x runs tests in parallel by default for faster execution
 $config = New-PesterConfiguration
 $config.Run.Path = 'tests'
 $config.Run.PassThru = $true
+$config.Run.Exit = $true  # Enable proper exit codes for CI
 $config.Output.Verbosity = 'Normal'  # Shows only summary and failures
+$config.Output.CIFormat = 'GithubActions'  # Format errors for GitHub Actions
 $config.Should.ErrorAction = 'Continue'
 
 $result = Invoke-Pester -Configuration $config
