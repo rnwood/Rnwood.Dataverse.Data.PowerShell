@@ -1,70 +1,83 @@
-# Test Coverage Script
+# Coverage Scripts
 
-## Generate-TestCoverageReport.ps1
+## Run-TestsWithCoverage.ps1
 
-This script analyzes which cmdlets in the repository have test coverage by:
+Runs tests with code coverage instrumentation using coverlet. This provides line-level and branch-level coverage for C# cmdlet code.
 
-1. **Discovering cmdlets**: Scans all `*Cmdlet.cs` files in the `Rnwood.Dataverse.Data.PowerShell.Cmdlets/Commands` directory
-2. **Running tests**: Executes the Pester test suite
-3. **Matching tests to cmdlets**: Determines which cmdlets are covered by checking if test names/paths contain the cmdlet name
-4. **Generating reports**: Creates markdown and JSON reports showing coverage statistics
+### How It Works
+
+1. **Instrumentation**: Uses coverlet.console to instrument the cmdlets DLL
+2. **Test Execution**: Runs Pester tests with the instrumented assembly
+3. **Coverage Collection**: Coverlet tracks which lines and branches are executed
+4. **Report Generation**: Parses Cobertura XML to create per-cmdlet coverage report
 
 ### Usage
 
 ```powershell
-# Basic usage (runs tests and generates reports)
-./scripts/Generate-TestCoverageReport.ps1
+# Basic usage
+./scripts/Run-TestsWithCoverage.ps1
 
-# With custom paths
-./scripts/Generate-TestCoverageReport.ps1 `
-    -TestPath "tests" `
-    -CmdletsPath "Rnwood.Dataverse.Data.PowerShell.Cmdlets/Commands" `
-    -OutputMarkdown "coverage/report.md" `
-    -OutputJson "coverage/coverage.json"
+# With custom output directory
+./scripts/Run-TestsWithCoverage.ps1 -OutputDir "my-coverage"
 
 # With baseline comparison
-./scripts/Generate-TestCoverageReport.ps1 `
-    -BaselineJson "coverage/baseline-coverage.json"
+./scripts/Run-TestsWithCoverage.ps1 -BaselineCoverageFile "baseline.json"
 ```
 
-### Output
+### Requirements
 
-The script generates:
+- .NET SDK (for coverlet)
+- PowerShell 7+
+- Pester 5.0+
 
-1. **Markdown Report** (`coverage/test-coverage-report.md`):
-   - Summary statistics (cmdlet coverage %, test counts)
-   - Table of tested cmdlets with test counts and status
-   - Table of untested cmdlets
-   - Delta comparison with baseline (if provided)
+### Output Files
 
-2. **JSON Data** (`coverage/test-coverage.json`):
-   - Machine-readable coverage data
-   - Can be used as baseline for future comparisons
+- `coverage/coverage.cobertura.xml` - Cobertura format (standard for coverage tools)
+- `coverage/coverage.json` - JSON format
+- `coverage/coverage-report.md` - Markdown report with per-cmdlet breakdown
+- `coverage/coverage-data.json` - Simplified JSON for baseline comparison
+
+### Coverage Metrics
+
+- **Line Coverage**: Percentage of executable lines that were executed
+- **Branch Coverage**: Percentage of decision points (if/else, switch, etc.) that were executed
+- **Per-Cmdlet**: Coverage broken down by each cmdlet class
 
 ### CI Integration
 
-The script is integrated into the GitHub Actions workflow (`.github/workflows/publish.yml`) and runs automatically on pull requests:
+The script is integrated into `.github/workflows/publish.yml` and runs automatically on pull requests to:
+1. Build and test the PR with instrumentation
+2. Get baseline coverage from base branch
+3. Compare and show delta
+4. Post report as PR comment
 
-1. Builds and tests the PR branch
-2. Generates baseline coverage from the base branch (if possible)
-3. Compares PR coverage with baseline
-4. Posts results as a PR comment with delta indicators:
-   - 📈 Coverage increased
-   - 📉 Coverage decreased
-   - ➡️ Coverage unchanged
+### Exclusions
 
-### Coverage Calculation
+The following are excluded from coverage:
+- `[GeneratedCode]` attributed code
+- `[ExcludeFromCodeCoverage]` attributed code
+- FakeXrmEasy test framework code
+- Test assemblies
 
-**Cmdlet coverage** is calculated as:
+### Report Format
+
+```markdown
+# 📊 Code Coverage Report
+
+## Overall Coverage
+- **Line Coverage**: 45.2% (📈 +2.1% from base)
+- **Branch Coverage**: 38.5%
+- **Lines Covered**: 1234 / 2731
+
+## Coverage by Cmdlet
+| Cmdlet | Line Coverage | Branch Coverage | Lines |
+|--------|---------------|-----------------|-------|
+| ⚠️ `Get-DataverseRecord` | 65.3% | 52.1% | 234 / 358 |
+| ✅ `Set-DataverseRecord` | 82.4% | 71.2% | 412 / 500 |
+...
 ```
-Coverage % = (Cmdlets with tests / Total cmdlets) × 100
-```
 
-A cmdlet is considered "tested" if any test name or test file path contains the cmdlet name (e.g., tests for `Get-DataverseRecord` would be in `Get-DataverseRecord.ps1` or have test names containing "Get-DataverseRecord").
-
-### Notes
-
-- This measures **cmdlet-level coverage**, not line-level code coverage
-- All 383+ cmdlets are analyzed, including auto-generated SDK cmdlets
-- Tests may cover multiple cmdlets if they use several cmdlets in combination
-- The script does not require code instrumentation or additional tools beyond Pester
+Indicators:
+- ⚠️ Low coverage (<30%)
+- ⚡ Medium coverage (30-60%)
+- ✅ Good coverage (>60%)
