@@ -41,8 +41,10 @@ Describe 'Set-DataverseRecord - ownerid Assignment and Status Changes' {
             
             # Update with new owner
             $newOwnerId = [Guid]::NewGuid()
-            Set-DataverseRecord -Connection $connection -TableName contact -Id $record.Id `
-                -InputObject @{ ownerid = $newOwnerId }
+            @{ 
+                Id = $record.Id
+                ownerid = $newOwnerId
+            } | Set-DataverseRecord -Connection $connection -TableName contact
             
             # Verify record still exists and other fields unchanged
             $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
@@ -116,8 +118,10 @@ Describe 'Set-DataverseRecord - ownerid Assignment and Status Changes' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Update statuscode to inactive
-            Set-DataverseRecord -Connection $connection -TableName contact -Id $record.Id `
-                -InputObject @{ statuscode = 2 }  # Inactive
+            @{ 
+                Id = $record.Id
+                statuscode = 2  # Inactive
+            } | Set-DataverseRecord -Connection $connection -TableName contact
             
             # Verify record still exists and other fields unchanged
             $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
@@ -139,11 +143,11 @@ Describe 'Set-DataverseRecord - ownerid Assignment and Status Changes' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Update both statecode and statuscode
-            Set-DataverseRecord -Connection $connection -TableName contact -Id $record.Id `
-                -InputObject @{ 
-                    statecode = 1  # Inactive state
-                    statuscode = 2  # Inactive status
-                }
+            @{ 
+                Id = $record.Id
+                statecode = 1  # Inactive state
+                statuscode = 2  # Inactive status
+            } | Set-DataverseRecord -Connection $connection -TableName contact
             
             # Verify record still exists
             $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
@@ -165,12 +169,12 @@ Describe 'Set-DataverseRecord - ownerid Assignment and Status Changes' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Update regular fields and statuscode together
-            Set-DataverseRecord -Connection $connection -TableName contact -Id $record.Id `
-                -InputObject @{ 
-                    firstname = "Updated"
-                    emailaddress1 = "updated@example.com"
-                    statuscode = 2
-                }
+            @{ 
+                Id = $record.Id
+                firstname = "Updated"
+                emailaddress1 = "updated@example.com"
+                statuscode = 2
+            } | Set-DataverseRecord -Connection $connection -TableName contact
             
             # Verify all updates applied
             $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
