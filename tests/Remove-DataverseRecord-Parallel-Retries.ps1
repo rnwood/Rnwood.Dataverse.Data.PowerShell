@@ -1,8 +1,4 @@
-Describe "Remove-DataverseRecord parallel with retries" {
-
-    . $PSScriptRoot/Common.ps1
-
-    Context "Retries with parallelism enabled" {
+Describe "Remove-DataverseRecord parallel with retries" {    Context "Retries with parallelism enabled" {
         It "Retries failed delete operations in parallel mode with batching" {
             # Set up interceptor to fail first delete batch, succeed on retry
             $state = [PSCustomObject]@{ 
@@ -121,3 +117,4 @@ Describe "Remove-DataverseRecord parallel with retries" {
         }
     }
 }
+

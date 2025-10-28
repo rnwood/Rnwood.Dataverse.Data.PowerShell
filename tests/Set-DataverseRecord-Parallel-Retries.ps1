@@ -1,8 +1,4 @@
-Describe "Set-DataverseRecord parallel with retries" {
-
-    . $PSScriptRoot/Common.ps1
-
-    Context "Retries with parallelism enabled" {
+Describe "Set-DataverseRecord parallel with retries" {    Context "Retries with parallelism enabled" {
         It "Retries failed operations in parallel mode with batching" {
             # Set up interceptor to fail first attempt, succeed on retry
             $state = [PSCustomObject]@{ 
@@ -104,3 +100,4 @@ Describe "Set-DataverseRecord parallel with retries" {
         }
     }
 }
+

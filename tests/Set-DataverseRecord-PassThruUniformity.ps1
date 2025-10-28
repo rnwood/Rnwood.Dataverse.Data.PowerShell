@@ -1,8 +1,4 @@
-Describe 'Set-DataverseRecord -PassThru Uniformity' {
-
-    . $PSScriptRoot/Common.ps1
-
-    Context 'PassThru always returns PSObject' {
+Describe 'Set-DataverseRecord -PassThru Uniformity' {    Context 'PassThru always returns PSObject' {
         It "Returns PSObject when input is a hashtable" {
             $connection = getMockConnection
             
@@ -183,3 +179,4 @@ Describe 'Set-DataverseRecord -PassThru Uniformity' {
         }
     }
 }
+

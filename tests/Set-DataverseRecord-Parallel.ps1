@@ -1,8 +1,4 @@
-Describe "Set-DataverseRecord Parallel Processing" {
-   
-    . $PSScriptRoot/Common.ps1
-
-    Context "Parallel Processing" {
+Describe "Set-DataverseRecord Parallel Processing" {    Context "Parallel Processing" {
         It "Processes creates in parallel with MaxDegreeOfParallelism > 1" {
             $connection = getMockConnection
             
@@ -213,3 +209,4 @@ Describe "Set-DataverseRecord Parallel Processing" {
     }
 
 }
+

@@ -1,8 +1,4 @@
-Describe 'Set-DataverseRecord Multi-Request Completion' {
-
-    . $PSScriptRoot/Common.ps1
-
-    Context 'Multiple Requests Per Context' {
+Describe 'Set-DataverseRecord Multi-Request Completion' {    Context 'Multiple Requests Per Context' {
         It "Bug fix: ExecuteBatch now calls all completion handlers, not just the first" {
             # This test verifies the fix for the bug where ExecuteBatch only called
             # ResponseCompletion for the first request (i == 0) in a multi-request context.
@@ -110,3 +106,4 @@ Describe 'Set-DataverseRecord Multi-Request Completion' {
         }
     }
 }
+

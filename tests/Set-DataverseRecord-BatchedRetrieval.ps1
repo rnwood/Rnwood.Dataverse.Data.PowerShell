@@ -1,5 +1,3 @@
-. "$PSScriptRoot/Common.ps1"
-
 Describe "Set-DataverseRecord Batched Retrieval" {
     BeforeAll {
         $connection = getMockConnection
@@ -339,3 +337,4 @@ Describe "Set-DataverseRecord Batched Retrieval" {
         }
     }
 }
+

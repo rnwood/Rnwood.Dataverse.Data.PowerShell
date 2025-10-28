@@ -1,8 +1,4 @@
-Describe "Invoke-DataverseParallel" {
-
-    . $PSScriptRoot/Common.ps1
-
-    # NOTE: These tests use a mock connection that doesn't support cloning.
+Describe "Invoke-DataverseParallel" {    # NOTE: These tests use a mock connection that doesn't support cloning.
     # When cloning fails, the cmdlet falls back to sharing the same connection across runspaces.
     # This can cause race conditions in mock scenarios but works correctly with real connections.
     # E2E tests validate the full functionality with real connection cloning.
@@ -80,3 +76,4 @@ Describe "Invoke-DataverseParallel" {
     }
 
 }
+

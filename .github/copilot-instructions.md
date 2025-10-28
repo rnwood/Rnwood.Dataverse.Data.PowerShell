@@ -19,20 +19,101 @@ dotnet clean
 dotnet build 
 
 
-### Testing Sequence (Total time: ~15-30 seconds)
+### Testing Sequence
+
+**Quick CI-Friendly Test Run (Recommended for initial checks):**
 ```powershell
 # 1. Set module path to built output (REQUIRED)
-$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0")
+$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
 
-# 2. Install Pester if not present (first time only, takes 30+ seconds)
-Install-Module -Force Pester
+# 2. Install Pester if not present (first time only)
+Install-Module -Force -Scope CurrentUser Pester -MinimumVersion 5.0
 
-# 3. Run unit tests (takes 15-30 seconds)
+# 3. Run all tests with concise output
+# Pester 5.x runs tests in parallel by default for faster execution
+$config = New-PesterConfiguration
+$config.Run.Path = 'tests'
+$config.Run.PassThru = $true
+$config.Run.Exit = $true  # Enable proper exit codes for CI
+$config.Output.Verbosity = 'Normal'  # Shows only summary and failures
+$config.Output.CIFormat = 'GithubActions'  # Format errors for GitHub Actions
+$config.Should.ErrorAction = 'Continue'
+
+$result = Invoke-Pester -Configuration $config
+
+# Display summary
+Write-Host ""
+Write-Host "Test Summary:"
+Write-Host "  Total:   $($result.TotalCount)"
+Write-Host "  Passed:  $($result.PassedCount)"
+Write-Host "  Failed:  $($result.FailedCount)"
+Write-Host "  Skipped: $($result.SkippedCount)"
+
+# Show failed test details if any
+if ($result.FailedCount -gt 0) {
+    Write-Host ""
+    Write-Host "Failed Tests:"
+    foreach ($test in $result.Failed) {
+        Write-Host "  - $($test.ExpandedPath)"
+        Write-Host "    $($test.ErrorRecord.Exception.Message)"
+    }
+}
+```
+
+**Run Specific Tests with Full Output:**
+```powershell
+# Set module path first (REQUIRED)
+$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
+
+# Run specific test file with detailed output
+Invoke-Pester -Output Detailed -Path tests/Get-DataverseRecord.ps1
+
+# Or run a specific test by name pattern
+Invoke-Pester -Output Detailed -Path tests -FullNameFilter "*test name pattern*"
+```
+
+**Run Single Test with All.Tests.ps1 Setup:**
+```powershell
+# The All.Tests.ps1 file sets up the test environment and includes all test files
+# To run a single test WITH the setup, use dot-sourcing:
+
+$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
+
+# Method 1: Use Pester's filter to run specific tests from All.Tests.ps1
+Invoke-Pester -Output Detailed -Path tests/All.Tests.ps1 -FullNameFilter "*specific test name*"
+
+# Method 2: Manually set up and run (for debugging)
+pwsh -Command {
+    $env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
+    
+    # Source the setup from All.Tests.ps1 (lines 1-51 contain setup)
+    . tests/All.Tests.ps1
+    
+    # Now manually run specific test
+    # Example: Get-DataverseRecord tests
+    Describe "Your Test" {
+        It "Your specific test" {
+            $connection = getMockConnection
+            # Your test code here
+        }
+    }
+}
+```
+
+**Legacy Full Output (if needed):**
+```powershell
+# Run all tests with detailed output (slower, more verbose)
+$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
 Invoke-Pester -Output Detailed -Path tests
+```
 
+**E2E Tests:**
+```powershell
 # E2E tests require real Dataverse environment credentials
-# Set E2ETESTS_URL, E2ETESTS_CLIENTID, E2ETESTS_CLIENTSECRET environment variables
-# Invoke-Pester -Output Detailed -Path e2e-tests
+$env:E2ETESTS_URL = "https://yourorg.crm.dynamics.com"
+$env:E2ETESTS_CLIENTID = "your-client-id"
+$env:E2ETESTS_CLIENTSECRET = "your-client-secret"
+Invoke-Pester -Output Detailed -Path e2e-tests
 ```
 
 **TEST NOTES:**
@@ -47,7 +128,7 @@ Invoke-Pester -Output Detailed -Path tests
 - **ALL tests MUST pass** before committing changes
 - Run tests using the Testing Sequence above after building
 - For documentation changes with code examples:
-  - Add tests in `tests/Examples.Tests.ps1` that validate the example patterns
+  - Add tests in `tests/Cmdletname-maybeasuffix.ps1` that validate the example patterns
   - Test both the verbose and simplified syntax variants where applicable
   - Tests should use the mock provider with FakeXrmEasy
   - If an entity is not in `tests/contact.xml`, either:
@@ -115,9 +196,7 @@ Invoke-Pester -Output Detailed -Path tests
   - `BuildHelp` - Runs updatehelp.ps1 then buildhelp.ps1 (DependsOnTargets="BuildCmdlets", inputs/outputs for incremental build)
 
 ### Test Files
-- `tests/Module.Tests.ps1` - Tests module loads correctly, SDK assemblies resolve, works with pre-loaded assemblies
-- `tests/Get-DataverseRecord.Tests.ps1` - Tests QueryExpression, FetchXML, filters, column selection, mock connection
-- `tests/Common.ps1` - Shared setup: copies module to temp, sets PSModulePath, getMockConnection() using FakeXrmEasy with contact.xml metadata
+- `tests/All.Tests..ps1` - Shared setup: copies module to temp, sets PSModulePath, getMockConnection() using FakeXrmEasy with contact.xml metadata then includes all test files
 - `tests/contact.xml` - 2.2MB serialized EntityMetadata for 'contact' entity (used by DataContractSerializer in tests)
 - `tests/updatemetadata.ps1` - Script to regenerate contact.xml from real environment
 - `e2e-tests/Module.Tests.ps1` - Connects to real Dataverse with client secret, queries systemuser table, runs SQL
