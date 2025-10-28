@@ -258,3 +258,6 @@ help.stamp
 updatehelp.stamp
 # Fallback: ignore any other generated .stamp files
 *.stamp
+
+# Coverage reports
+coverage/

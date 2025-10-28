@@ -36,26 +36,40 @@ $allCmdlets = @{}
 foreach ($file in $cmdletFiles) {
     $content = Get-Content $file.FullName -Raw
     
-    # Extract cmdlet attribute to get verb and noun
-    # [Cmdlet(VerbsCommon.Get, "DataverseConnection")]
-    if ($content -match '\[Cmdlet\([^\)]+,\s*"([^"]+)"\)') {
-        $noun = $matches[1]
+    # Extract cmdlet attribute - handles two patterns:
+    # 1. [Cmdlet(VerbsCommon.Get, "DataverseConnection")]
+    # 2. [Cmdlet("Invoke", "DataverseAddAppComponents")]
+    
+    # Try pattern with string literals for both verb and noun
+    if ($content -match '\[Cmdlet\("(\w+)",\s*"([^"]+)"') {
+        $verb = $matches[1]
+        $noun = $matches[2]
+        $cmdletName = "$verb-$noun"
         
-        # Extract verb from the VerbsXxx.Verb pattern or string literal
-        $verbPattern = 'Cmdlet\((Verbs\w+\.(\w+)|"(\w+)")'
-        if ($content -match $verbPattern) {
-            $verb = if ($matches[2]) { $matches[2] } else { $matches[3] }
-            $cmdletName = "$verb-$noun"
-            
-            $allCmdlets[$cmdletName] = @{
-                ClassName = $file.BaseName
-                FilePath = $file.FullName
-                Verb = $verb
-                Noun = $noun
-                Tests = @()
-                TestCount = 0
-                HasTests = $false
-            }
+        $allCmdlets[$cmdletName] = @{
+            ClassName = $file.BaseName
+            FilePath = $file.FullName
+            Verb = $verb
+            Noun = $noun
+            Tests = @()
+            TestCount = 0
+            HasTests = $false
+        }
+    }
+    # Try pattern with VerbsXxx.Verb enum
+    elseif ($content -match 'Cmdlet\(Verbs\w+\.(\w+),\s*"([^"]+)"\)') {
+        $verb = $matches[1]
+        $noun = $matches[2]
+        $cmdletName = "$verb-$noun"
+        
+        $allCmdlets[$cmdletName] = @{
+            ClassName = $file.BaseName
+            FilePath = $file.FullName
+            Verb = $verb
+            Noun = $noun
+            Tests = @()
+            TestCount = 0
+            HasTests = $false
         }
     }
 }
