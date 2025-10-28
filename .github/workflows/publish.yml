@@ -67,7 +67,7 @@ jobs:
           
           # Save the coverage script from PR branch (in case it doesn't exist on base)
           $coverageScript = Get-Content scripts/Generate-TestCoverageReport.ps1 -Raw
-          $tempScriptPath = [System.IO.Path]::GetTempFileName() + ".ps1"
+          $tempScriptPath = Join-Path $env:RUNNER_TEMP "coverage-script-$env:GITHUB_RUN_ID.ps1"
           $coverageScript | Set-Content -Path $tempScriptPath
           
           # Checkout base branch
@@ -82,6 +82,7 @@ jobs:
           
           # Generate baseline coverage using saved script
           $env:TESTMODULEPATH = (Resolve-Path "out/Rnwood.Dataverse.Data.PowerShell")
+          New-Item -ItemType Directory -Force -Path "coverage" | Out-Null
           pwsh -File $tempScriptPath -OutputJson coverage/baseline-coverage.json
           
           # Clean up temp script
