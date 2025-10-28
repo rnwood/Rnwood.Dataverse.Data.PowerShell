@@ -1,10 +1,10 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-    Runs tests with code coverage by building with coverlet.msbuild instrumentation
+    Runs tests with code coverage using coverlet.console instrumentation
 .DESCRIPTION
-    Builds the cmdlets project with coverlet.msbuild instrumentation, then runs tests
-    to collect coverage. This approach ensures the instrumented DLL is what gets loaded.
+    Uses coverlet.console to instrument the cmdlets assembly in the location where
+    tests will load it from. This ensures coverage is tracked correctly.
 #>
 
 param(
@@ -20,37 +20,16 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "=== Running Tests with Code Coverage (coverlet.msbuild) ===" -ForegroundColor Cyan
+Write-Host "=== Running Tests with Code Coverage (coverlet.console) ===" -ForegroundColor Cyan
 
 # Create output directory
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 
-# Add coverlet.msbuild to the cmdlets project temporarily
-Write-Host "Adding coverlet.msbuild package..." -ForegroundColor Yellow
-$cmdletsProject = "Rnwood.Dataverse.Data.PowerShell.Cmdlets/Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj"
-dotnet add $cmdletsProject package coverlet.msbuild --version 6.0.2
+# Build the project first (without instrumentation)
+Write-Host "Building project..." -ForegroundColor Yellow
+dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Failed to add coverlet.msbuild package"
-    exit 1
-}
-
-# Build with coverage instrumentation
-Write-Host "Building with code coverage instrumentation..." -ForegroundColor Yellow
-$coverageFile = (Resolve-Path $OutputDir).Path + "/coverage.cobertura.xml"
-$buildArgs = @(
-    "build",
-    "Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj",
-    "-c", "Release",
-    "/p:CollectCoverage=true",
-    "/p:CoverletOutputFormat=cobertura",
-    "/p:CoverletOutput=$coverageFile",
-    "/p:ExcludeByAttribute=GeneratedCode%2cExcludeFromCodeCoverage",
-    "/p:Exclude=[FakeXrmEasy*]*%2c[*Tests*]*"
-)
-
-dotnet @buildArgs
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Build with coverage failed"
+    Write-Error "Build failed"
     exit 1
 }
 
@@ -65,42 +44,96 @@ Copy-Item -Recurse Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0 o
 $env:TESTMODULEPATH = (Resolve-Path "out/Rnwood.Dataverse.Data.PowerShell").Path
 Write-Host "Module path: $env:TESTMODULEPATH" -ForegroundColor Green
 
+# Install coverlet.console if needed
+Write-Host "Installing coverlet.console..." -ForegroundColor Yellow
+dotnet tool install --global coverlet.console --version 6.0.2 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 1) {
+    Write-Warning "coverlet.console installation returned exit code $LASTEXITCODE"
+}
+
+# Path to the cmdlets assembly to instrument
+# We instrument the one in the 'out' directory which tests will copy from
+$cmdletsAssembly = Join-Path $env:TESTMODULEPATH "cmdlets/net8.0/Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll"
+if (-not (Test-Path $cmdletsAssembly)) {
+    throw "Cmdlets assembly not found at: $cmdletsAssembly"
+}
+Write-Host "Assembly to instrument: $cmdletsAssembly" -ForegroundColor Green
+
 # Install Pester if needed
 Write-Host "Ensuring Pester is installed..." -ForegroundColor Yellow
 Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99 -ErrorAction SilentlyContinue
 
-# Run tests (coverage data is collected automatically via instrumented DLL)
-Write-Host ""
-Write-Host "Running tests..." -ForegroundColor Cyan
+# Create test runner script that will be executed by coverlet
+$testRunnerScript = Join-Path $OutputDir "run-tests.ps1"
+@"
+`$ErrorActionPreference = 'Stop'
+`$env:TESTMODULEPATH = '$env:TESTMODULEPATH'
 
-$config = New-PesterConfiguration
-$config.Run.Path = $TestPath
-$config.Run.PassThru = $true
-$config.Run.Exit = $false
-$config.Output.Verbosity = 'Normal'
-$config.Should.ErrorAction = 'Continue'
+Write-Host "Test Runner: Running Pester tests..." -ForegroundColor Cyan
 
-$result = Invoke-Pester -Configuration $config
+`$config = New-PesterConfiguration
+`$config.Run.Path = '$TestPath'
+`$config.Run.PassThru = `$true
+`$config.Run.Exit = `$false
+`$config.Output.Verbosity = 'Normal'
+`$config.Should.ErrorAction = 'Continue'
+
+`$result = Invoke-Pester -Configuration `$config
 
 Write-Host ""
 Write-Host "Test Results:" -ForegroundColor Cyan
-Write-Host "  Total:   $($result.TotalCount)" -ForegroundColor White
-Write-Host "  Passed:  $($result.PassedCount)" -ForegroundColor Green
-Write-Host "  Failed:  $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { "Red" } else { "Green" })
+Write-Host "  Total:   `$(`$result.TotalCount)" -ForegroundColor White
+Write-Host "  Passed:  `$(`$result.PassedCount)" -ForegroundColor Green
+Write-Host "  Failed:  `$(`$result.FailedCount)" -ForegroundColor `$(if (`$result.FailedCount -gt 0) { "Red" } else { "Green" })
 
-$testExitCode = if ($result.FailedCount -gt 0) { 1 } else { 0 }
+if (`$result.FailedCount -gt 0) {
+    Write-Host ""
+    Write-Host "Failed Tests:" -ForegroundColor Red
+    foreach (`$test in `$result.Failed) {
+        Write-Host "  - `$(`$test.ExpandedPath)" -ForegroundColor Red
+    }
+    exit 1
+}
+exit 0
+"@ | Set-Content -Path $testRunnerScript
+
+# Run coverlet to instrument and collect coverage
+Write-Host ""
+Write-Host "Running tests with coverlet instrumentation..." -ForegroundColor Cyan
+$coverageOutput = Join-Path (Resolve-Path $OutputDir).Path "coverage"
+$pwshPath = (Get-Command pwsh).Source
+
+$coverletArgs = @(
+    $cmdletsAssembly,
+    "--target", $pwshPath,
+    "--targetargs", "-NoProfile -File `"$testRunnerScript`"",
+    "--format", "cobertura",
+    "--format", "json",
+    "--output", $coverageOutput,
+    "--exclude", "[FakeXrmEasy*]*",
+    "--exclude", "[*Tests*]*",
+    "--exclude-by-attribute", "GeneratedCode",
+    "--exclude-by-attribute", "ExcludeFromCodeCoverage"
+)
+
+Write-Host "Coverlet command: coverlet $(($coverletArgs | ForEach-Object { if ($_ -match '\s') { "`"$_`"" } else { $_ } }) -join ' ')" -ForegroundColor Gray
+& coverlet @coverletArgs
+$testExitCode = $LASTEXITCODE
 
 # Check for coverage file
-$coberturaFile = "$OutputDir/coverage.cobertura.xml"
+$coberturaFile = "$coverageOutput.cobertura.xml"
 if (-not (Test-Path $coberturaFile)) {
     Write-Warning "Coverage file not found at expected location: $coberturaFile"
     Write-Host "Searching for coverage files..." -ForegroundColor Yellow
-    $foundCoverage = Get-ChildItem -Path . -Filter "coverage.cobertura.xml" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    $foundCoverage = Get-ChildItem -Path $OutputDir -Filter "*.cobertura.xml" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $foundCoverage) {
+        $foundCoverage = Get-ChildItem -Path . -Filter "*.cobertura.xml" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    }
     if ($foundCoverage) {
         Write-Host "Found coverage file at: $($foundCoverage.FullName)" -ForegroundColor Green
         Copy-Item $foundCoverage.FullName $coberturaFile
     } else {
-        Write-Error "No coverage file generated"
+        Write-Error "No coverage file generated - coverlet may have failed to instrument the assembly"
         exit 1
     }
 }

@@ -2,16 +2,18 @@
 
 ## Run-TestsWithCoverage.ps1
 
-Runs tests with code coverage by building with coverlet.msbuild instrumentation. This ensures the instrumented DLL is what gets loaded during tests.
+Runs tests with code coverage using coverlet.console to instrument the cmdlets DLL. This provides line-level and branch-level coverage for C# cmdlet code.
 
 ### How It Works
 
-1. **Build with Instrumentation**: Uses coverlet.msbuild to build the cmdlets project with coverage instrumentation baked into the DLL
-2. **Test Execution**: Runs Pester tests which load and execute the instrumented DLL
-3. **Coverage Collection**: Coverlet automatically tracks which lines and branches are executed
-4. **Report Generation**: Parses Cobertura XML to create per-cmdlet coverage report
+1. **Build**: Builds the project without instrumentation
+2. **Copy**: Copies the built module to the `out` directory
+3. **Instrument**: Uses coverlet.console to instrument the cmdlets DLL in the `out` directory
+4. **Test Execution**: Runs Pester tests which load the instrumented DLL
+5. **Coverage Collection**: Coverlet tracks which lines and branches are executed
+6. **Report Generation**: Parses Cobertura XML to create per-cmdlet coverage report
 
-This approach solves the issue where tests copy the module to a temporary directory - since the DLL itself is instrumented, coverage is tracked regardless of where it's copied.
+The key insight is that tests copy the module to a temp directory, so we instrument the DLL in the `out` directory before tests run. When tests copy from `out` to temp, they copy the instrumented DLL.
 
 ### Usage
 
@@ -28,13 +30,15 @@ This approach solves the issue where tests copy the module to a temporary direct
 
 ### Requirements
 
-- .NET SDK (for coverlet.msbuild)
+- .NET SDK
 - PowerShell 7+
 - Pester 5.0+
+- coverlet.console (auto-installed)
 
 ### Output Files
 
 - `coverage/coverage.cobertura.xml` - Cobertura format (standard for coverage tools)
+- `coverage/coverage.json` - JSON format
 - `coverage/coverage-report.md` - Markdown report with per-cmdlet breakdown
 - `coverage/coverage-data.json` - Simplified JSON for baseline comparison
 
@@ -47,11 +51,12 @@ This approach solves the issue where tests copy the module to a temporary direct
 ### CI Integration
 
 The script is integrated into `.github/workflows/publish.yml` and runs automatically on pull requests to:
-1. Build with instrumentation using coverlet.msbuild
-2. Run tests (coverage tracked automatically)
-3. Get baseline coverage from base branch
-4. Compare and show delta
-5. Post report as PR comment
+1. Build the project
+2. Instrument the cmdlets DLL with coverlet.console
+3. Run tests (coverage tracked automatically)
+4. Get baseline coverage from base branch
+5. Compare and show delta
+6. Post report as PR comment
 
 ### Exclusions
 
