@@ -30,19 +30,10 @@ jobs:
         with:
           Version: latest
       
-      - name: Build
-        shell: pwsh
-        run: |
-          dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj
-          if (Test-Path out/Rnwood.Dataverse.Data.PowerShell) {
-            Remove-Item -Force -Recurse out/Rnwood.Dataverse.Data.PowerShell
-          }
-          Copy-Item -Recurse Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
-      
       - name: Run Tests with Coverage
         shell: pwsh
         run: |
-          $env:TESTMODULEPATH = (Resolve-Path "out/Rnwood.Dataverse.Data.PowerShell").Path
+          # The script handles building with instrumentation
           pwsh -File scripts/Run-TestsWithCoverage.ps1
       
       - name: Get Baseline Coverage
@@ -60,15 +51,7 @@ jobs:
           # Checkout base branch
           git checkout origin/${{ github.base_ref }}
           
-          # Build base
-          dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj
-          if (Test-Path out/Rnwood.Dataverse.Data.PowerShell) {
-            Remove-Item -Force -Recurse out/Rnwood.Dataverse.Data.PowerShell
-          }
-          Copy-Item -Recurse Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
-          
-          # Run coverage with saved script
-          $env:TESTMODULEPATH = (Resolve-Path "out/Rnwood.Dataverse.Data.PowerShell").Path
+          # Run coverage on base (script handles building with instrumentation)
           New-Item -ItemType Directory -Force -Path coverage-baseline | Out-Null
           pwsh -File $tempScript -OutputDir coverage-baseline
           
@@ -79,20 +62,12 @@ jobs:
           
           # Return to PR
           git checkout -
-          
-          # Rebuild PR
-          dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj
-          if (Test-Path out/Rnwood.Dataverse.Data.PowerShell) {
-            Remove-Item -Force -Recurse out/Rnwood.Dataverse.Data.PowerShell
-          }
-          Copy-Item -Recurse Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
       
       - name: Generate Report with Delta
         if: steps.baseline.outcome == 'success'
         shell: pwsh
         run: |
           Write-Host "Regenerating coverage report with baseline comparison..."
-          $env:TESTMODULEPATH = (Resolve-Path "out/Rnwood.Dataverse.Data.PowerShell").Path
           pwsh -File scripts/Run-TestsWithCoverage.ps1 -BaselineCoverageFile coverage/baseline-coverage.json
       
       - name: Comment PR
