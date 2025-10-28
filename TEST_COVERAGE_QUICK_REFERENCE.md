@@ -149,15 +149,16 @@ dotnet build
 export TESTMODULEPATH=$(pwd)/Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0
 
 # Run all tests (PowerShell 7+)
+# IMPORTANT: Must use All.Tests.ps1 as entry point
 pwsh -Command "
   \$config = New-PesterConfiguration
-  \$config.Run.Path = 'tests'
+  \$config.Run.Path = 'tests/All.Tests.ps1'
   \$config.Output.Verbosity = 'Normal'
   Invoke-Pester -Configuration \$config
 "
 
-# Run specific test file
-pwsh -Command "Invoke-Pester -Path tests/YourTest.ps1 -Output Detailed"
+# Note: Individual test files cannot be run directly
+# They depend on setup from All.Tests.ps1 (getMockConnection, etc.)
 ```
 
 ---

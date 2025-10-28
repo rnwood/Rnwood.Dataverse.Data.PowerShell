@@ -63,7 +63,7 @@ jobs:
           # -CI enables test results and proper exit codes for CI environments
           # Pester 5.x runs tests in parallel by default
           $config = New-PesterConfiguration
-          $config.Run.Path = 'tests'
+          $config.Run.Path = 'tests/All.Tests.ps1'
           $config.Run.PassThru = $true
           $config.Run.Exit = $true
           $config.Output.Verbosity = 'Normal'
@@ -100,7 +100,7 @@ jobs:
             # -CI enables test results and proper exit codes for CI environments
             # Pester 5.x runs tests in parallel by default
             $config = New-PesterConfiguration
-            $config.Run.Path = 'tests'
+            $config.Run.Path = 'tests/All.Tests.ps1'
             $config.Run.PassThru = $true
             $config.Run.Exit = $true
             $config.Output.Verbosity = 'Normal'

@@ -109,9 +109,11 @@ dotnet build
 # Set module path
 export TESTMODULEPATH=$(pwd)/Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0
 
-# Run all tests
-pwsh -Command "Invoke-Pester -Path tests -Output Normal"
+# Run all tests (must use All.Tests.ps1 as entry point)
+pwsh -Command "Invoke-Pester -Path tests/All.Tests.ps1 -Output Normal"
 ```
+
+**Note:** Tests must be run through `tests/All.Tests.ps1` which provides necessary setup (getMockConnection, module loading, metadata). Individual test files cannot be run directly.
 
 ## Support and Contributing
 
