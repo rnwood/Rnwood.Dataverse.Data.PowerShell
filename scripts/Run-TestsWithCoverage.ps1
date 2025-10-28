@@ -3,8 +3,8 @@
 .SYNOPSIS
     Runs tests with code coverage using coverlet.console instrumentation
 .DESCRIPTION
-    Uses coverlet.console to instrument the cmdlets assembly in the location where
-    tests will load it from. This ensures coverage is tracked correctly.
+    Uses coverlet.console to instrument the cmdlets assembly and run tests
+    with a modified test setup that doesn't copy the module (to preserve instrumentation).
 #>
 
 param(
@@ -52,7 +52,6 @@ if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 1) {
 }
 
 # Path to the cmdlets assembly to instrument
-# We instrument the one in the 'out' directory which tests will copy from
 $cmdletsAssembly = Join-Path $env:TESTMODULEPATH "cmdlets/net8.0/Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll"
 if (-not (Test-Path $cmdletsAssembly)) {
     throw "Cmdlets assembly not found at: $cmdletsAssembly"
@@ -63,21 +62,36 @@ Write-Host "Assembly to instrument: $cmdletsAssembly" -ForegroundColor Green
 Write-Host "Ensuring Pester is installed..." -ForegroundColor Yellow
 Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99 -ErrorAction SilentlyContinue
 
-# Create test runner script that will be executed by coverlet
-$testRunnerScript = Join-Path $OutputDir "run-tests.ps1"
+# Create a modified test runner that runs tests in-place without copying
+# This is critical for coverlet to track coverage properly
+$testRunnerScript = Join-Path $OutputDir "run-tests-no-copy.ps1"
 @"
 `$ErrorActionPreference = 'Stop'
-`$env:TESTMODULEPATH = '$env:TESTMODULEPATH'
 
-Write-Host "Test Runner: Running Pester tests..." -ForegroundColor Cyan
+Write-Host "Test Runner: Running tests WITHOUT module copy (for coverage)..." -ForegroundColor Cyan
 
+# Set module path directly without copying
+`$env:PSModulePath = (Split-Path '$env:TESTMODULEPATH') + ";" + `$env:PSModulePath
+`$env:ChildProcessPSModulePath = (Split-Path '$env:TESTMODULEPATH')
+
+Write-Host "Module will be loaded from: $env:TESTMODULEPATH" -ForegroundColor Gray
+
+# Import module
+Import-Module Rnwood.Dataverse.Data.PowerShell -Force
+
+# Load helper functions from All.Tests.ps1 (without the copy logic)
+. '$TestPath/All.Tests.ps1'
+
+# Configure Pester to run all test files except All.Tests.ps1
 `$config = New-PesterConfiguration
 `$config.Run.Path = '$TestPath'
+`$config.Run.ExcludePath = '**/All.Tests.ps1'
 `$config.Run.PassThru = `$true
 `$config.Run.Exit = `$false
 `$config.Output.Verbosity = 'Normal'
 `$config.Should.ErrorAction = 'Continue'
 
+Write-Host "Running Pester tests..." -ForegroundColor Cyan
 `$result = Invoke-Pester -Configuration `$config
 
 Write-Host ""
@@ -86,14 +100,8 @@ Write-Host "  Total:   `$(`$result.TotalCount)" -ForegroundColor White
 Write-Host "  Passed:  `$(`$result.PassedCount)" -ForegroundColor Green
 Write-Host "  Failed:  `$(`$result.FailedCount)" -ForegroundColor `$(if (`$result.FailedCount -gt 0) { "Red" } else { "Green" })
 
-if (`$result.FailedCount -gt 0) {
-    Write-Host ""
-    Write-Host "Failed Tests:" -ForegroundColor Red
-    foreach (`$test in `$result.Failed) {
-        Write-Host "  - `$(`$test.ExpandedPath)" -ForegroundColor Red
-    }
-    exit 1
-}
+# Don't fail on test failures during coverage collection
+# We want the coverage data even if some tests fail
 exit 0
 "@ | Set-Content -Path $testRunnerScript
 
@@ -116,24 +124,34 @@ $coverletArgs = @(
     "--exclude-by-attribute", "ExcludeFromCodeCoverage"
 )
 
-Write-Host "Coverlet command: coverlet $(($coverletArgs | ForEach-Object { if ($_ -match '\s') { "`"$_`"" } else { $_ } }) -join ' ')" -ForegroundColor Gray
+Write-Host "Running: coverlet ..." -ForegroundColor Gray
 & coverlet @coverletArgs
-$testExitCode = $LASTEXITCODE
+$coverletExitCode = $LASTEXITCODE
+
+Write-Host ""
+Write-Host "Coverlet exit code: $coverletExitCode" -ForegroundColor $(if ($coverletExitCode -eq 0) { "Green" } else { "Yellow" })
 
 # Check for coverage file
 $coberturaFile = "$coverageOutput.cobertura.xml"
 if (-not (Test-Path $coberturaFile)) {
     Write-Warning "Coverage file not found at expected location: $coberturaFile"
-    Write-Host "Searching for coverage files..." -ForegroundColor Yellow
+    Write-Host "Searching for coverage files in output directory..." -ForegroundColor Yellow
+    Get-ChildItem -Path $OutputDir -Filter "*.xml" -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
+        Write-Host "  Found: $($_.FullName)" -ForegroundColor Gray
+    }
     $foundCoverage = Get-ChildItem -Path $OutputDir -Filter "*.cobertura.xml" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
     if (-not $foundCoverage) {
+        Write-Host "Searching in entire workspace..." -ForegroundColor Yellow
         $foundCoverage = Get-ChildItem -Path . -Filter "*.cobertura.xml" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($foundCoverage) {
+            Write-Host "  Found: $($foundCoverage.FullName)" -ForegroundColor Gray
+        }
     }
     if ($foundCoverage) {
-        Write-Host "Found coverage file at: $($foundCoverage.FullName)" -ForegroundColor Green
+        Write-Host "Copying found coverage file to expected location..." -ForegroundColor Green
         Copy-Item $foundCoverage.FullName $coberturaFile
     } else {
-        Write-Error "No coverage file generated - coverlet may have failed to instrument the assembly"
+        Write-Error "No coverage file generated - coverlet may have failed to instrument the assembly or tests may have failed to load the instrumented DLL"
         exit 1
     }
 }
