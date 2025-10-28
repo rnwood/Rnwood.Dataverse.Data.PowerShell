@@ -65,6 +65,11 @@ jobs:
           Write-Host "PR branch: $prBranch"
           Write-Host "Base branch: $baseBranch"
           
+          # Save the coverage script from PR branch (in case it doesn't exist on base)
+          $coverageScript = Get-Content scripts/Generate-TestCoverageReport.ps1 -Raw
+          $tempScriptPath = [System.IO.Path]::GetTempFileName() + ".ps1"
+          $coverageScript | Set-Content -Path $tempScriptPath
+          
           # Checkout base branch
           git checkout "origin/$baseBranch"
           
@@ -75,9 +80,12 @@ jobs:
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
           
-          # Generate baseline coverage
+          # Generate baseline coverage using saved script
           $env:TESTMODULEPATH = (Resolve-Path "out/Rnwood.Dataverse.Data.PowerShell")
-          pwsh -File scripts/Generate-TestCoverageReport.ps1 -OutputJson coverage/baseline-coverage.json
+          pwsh -File $tempScriptPath -OutputJson coverage/baseline-coverage.json
+          
+          # Clean up temp script
+          Remove-Item $tempScriptPath -ErrorAction SilentlyContinue
           
           # Return to PR branch
           git checkout -
