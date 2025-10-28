@@ -58,8 +58,30 @@ jobs:
           $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
 
           Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
-          Invoke-Pester -output detailed -path tests
-          if ($LASTEXITCODE -ne 0) {
+          
+          # Run tests with CI-friendly output and parallelism
+          $config = New-PesterConfiguration
+          $config.Run.Path = 'tests'
+          $config.Run.PassThru = $true
+          $config.Output.Verbosity = 'Normal'
+          $config.Should.ErrorAction = 'Continue'
+          
+          $result = Invoke-Pester -Configuration $config
+          
+          Write-Host ""
+          Write-Host "Test Summary:" -ForegroundColor Cyan
+          Write-Host "  Total:   $($result.TotalCount)" -ForegroundColor White
+          Write-Host "  Passed:  $($result.PassedCount)" -ForegroundColor Green
+          Write-Host "  Failed:  $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { "Red" } else { "Green" })
+          Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
+          
+          if ($result.FailedCount -gt 0) {
+            Write-Host ""
+            Write-Host "Failed Tests:" -ForegroundColor Red
+            foreach ($test in $result.Failed) {
+              Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
+              Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+            }
             throw "Tests failed"
           }
       - if:  ${{ matrix.powershell_version == '5' }}
@@ -69,8 +91,30 @@ jobs:
             $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
   
             Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
-            Invoke-Pester -output detailed -path tests
-            if ($LASTEXITCODE -ne 0) {
+            
+            # Run tests with CI-friendly output and parallelism
+            $config = New-PesterConfiguration
+            $config.Run.Path = 'tests'
+            $config.Run.PassThru = $true
+            $config.Output.Verbosity = 'Normal'
+            $config.Should.ErrorAction = 'Continue'
+            
+            $result = Invoke-Pester -Configuration $config
+            
+            Write-Host ""
+            Write-Host "Test Summary:" -ForegroundColor Cyan
+            Write-Host "  Total:   $($result.TotalCount)" -ForegroundColor White
+            Write-Host "  Passed:  $($result.PassedCount)" -ForegroundColor Green
+            Write-Host "  Failed:  $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { "Red" } else { "Green" })
+            Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
+            
+            if ($result.FailedCount -gt 0) {
+              Write-Host ""
+              Write-Host "Failed Tests:" -ForegroundColor Red
+              foreach ($test in $result.Failed) {
+                Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
+                Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+              }
               throw "Tests failed"
             }
       - if: ${{ matrix.powershell_version != '5' }}

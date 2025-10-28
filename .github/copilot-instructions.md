@@ -19,20 +19,98 @@ dotnet clean
 dotnet build 
 
 
-### Testing Sequence (Total time: ~15-30 seconds)
+### Testing Sequence
+
+**Quick CI-Friendly Test Run (Recommended for initial checks):**
 ```powershell
 # 1. Set module path to built output (REQUIRED)
-$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0")
+$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
 
-# 2. Install Pester if not present (first time only, takes 30+ seconds)
-Install-Module -Force Pester
+# 2. Install Pester if not present (first time only)
+Install-Module -Force -Scope CurrentUser Pester -MinimumVersion 5.0
 
-# 3. Run unit tests (takes 15-30 seconds)
+# 3. Run all tests with concise output and parallelism
+$config = New-PesterConfiguration
+$config.Run.Path = 'tests'
+$config.Run.PassThru = $true
+$config.Output.Verbosity = 'Normal'  # Shows only summary and failures
+$config.Should.ErrorAction = 'Continue'
+
+$result = Invoke-Pester -Configuration $config
+
+# Display summary
+Write-Host ""
+Write-Host "Test Summary:"
+Write-Host "  Total:   $($result.TotalCount)"
+Write-Host "  Passed:  $($result.PassedCount)"
+Write-Host "  Failed:  $($result.FailedCount)"
+Write-Host "  Skipped: $($result.SkippedCount)"
+
+# Show failed test details if any
+if ($result.FailedCount -gt 0) {
+    Write-Host ""
+    Write-Host "Failed Tests:"
+    foreach ($test in $result.Failed) {
+        Write-Host "  - $($test.ExpandedPath)"
+        Write-Host "    $($test.ErrorRecord.Exception.Message)"
+    }
+}
+```
+
+**Run Specific Tests with Full Output:**
+```powershell
+# Set module path first (REQUIRED)
+$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
+
+# Run specific test file with detailed output
+Invoke-Pester -Output Detailed -Path tests/Get-DataverseRecord.ps1
+
+# Or run a specific test by name pattern
+Invoke-Pester -Output Detailed -Path tests -FullNameFilter "*test name pattern*"
+```
+
+**Run Single Test with All.Tests.ps1 Setup:**
+```powershell
+# The All.Tests.ps1 file sets up the test environment and includes all test files
+# To run a single test WITH the setup, use dot-sourcing:
+
+$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
+
+# Method 1: Use Pester's filter to run specific tests from All.Tests.ps1
+Invoke-Pester -Output Detailed -Path tests/All.Tests.ps1 -FullNameFilter "*specific test name*"
+
+# Method 2: Manually set up and run (for debugging)
+pwsh -Command {
+    $env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
+    
+    # Source the setup from All.Tests.ps1 (lines 1-51 contain setup)
+    . tests/All.Tests.ps1
+    
+    # Now manually run specific test
+    # Example: Get-DataverseRecord tests
+    Describe "Your Test" {
+        It "Your specific test" {
+            $connection = getMockConnection
+            # Your test code here
+        }
+    }
+}
+```
+
+**Legacy Full Output (if needed):**
+```powershell
+# Run all tests with detailed output (slower, more verbose)
+$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
 Invoke-Pester -Output Detailed -Path tests
+```
 
+**E2E Tests:**
+```powershell
 # E2E tests require real Dataverse environment credentials
-# Set E2ETESTS_URL, E2ETESTS_CLIENTID, E2ETESTS_CLIENTSECRET environment variables
-# Invoke-Pester -Output Detailed -Path e2e-tests
+$env:E2ETESTS_URL = "https://yourorg.crm.dynamics.com"
+$env:E2ETESTS_CLIENTID = "your-client-id"
+$env:E2ETESTS_CLIENTSECRET = "your-client-secret"
+Invoke-Pester -Output Detailed -Path e2e-tests
 ```
 
 **TEST NOTES:**
