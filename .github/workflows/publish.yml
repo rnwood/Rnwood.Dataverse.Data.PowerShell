@@ -140,7 +140,6 @@ jobs:
             coverage/coverage-data.json
   
   main:
-  main:
     strategy:
       matrix:
         include:
