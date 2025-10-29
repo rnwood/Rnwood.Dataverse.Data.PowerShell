@@ -244,7 +244,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                     }
                                     catch (System.ServiceModel.FaultException ex)
                                     {
-                                        if (workerContext.IfExists && ex.HResult == -2147220969)
+                                        // Check for "record not found" error code OR if message contains "Does Not Exist"
+                                        // Different versions of FakeXrmEasy may set HResult differently (sometimes 0, sometimes -2147220969)
+                                        if (workerContext.IfExists && (ex.HResult == -2147220969 || (ex.Message != null && ex.Message.Contains("Does Not Exist"))))
                                         {
                                             _verboseQueue.Enqueue(string.Format("Record {0}:{1} was not present", workerContext.TableName, workerContext.Id));
                                             success = true; // Not an error, record wasn't there

@@ -93,10 +93,33 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 
 The module also includes many specialized `Invoke-Dataverse*` cmdlets for specific platform operations. See the [cmdlet documentation](Rnwood.Dataverse.Data.PowerShell/docs/) for the full list.
 
+## Testing
+
+This module has comprehensive test coverage using Pester and FakeXrmEasy. To understand test coverage and identify gaps:
+
+- **[Test Coverage Gap Analysis](TEST_COVERAGE_GAP_ANALYSIS.md)** — Detailed analysis of all documented features and test coverage
+- **[Test Coverage Quick Reference](TEST_COVERAGE_QUICK_REFERENCE.md)** — At-a-glance summary and implementation guide
+
+To run tests:
+
+```bash
+# Build the module
+dotnet build
+
+# Set module path
+export TESTMODULEPATH=$(pwd)/Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0
+
+# Run all tests (must use All.Tests.ps1 as entry point)
+pwsh -Command "Invoke-Pester -Path tests/All.Tests.ps1 -Output Normal"
+```
+
+**Note:** Tests must be run through `tests/All.Tests.ps1` which provides necessary setup (getMockConnection, module loading, metadata). Individual test files cannot be run directly.
+
 ## Support and Contributing
 
 - Report issues: [GitHub Issues](https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell/issues)
 - View source: [GitHub Repository](https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell)
+- Test coverage reports: See [TEST_COVERAGE_GAP_ANALYSIS.md](TEST_COVERAGE_GAP_ANALYSIS.md)
 
 ## License
 
