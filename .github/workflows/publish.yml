@@ -88,21 +88,17 @@ jobs:
             Write-Host "Failed Tests:" -ForegroundColor Red
             
             # Save test failure details to file for PR comment
-            $failureReport = @"
-## ❌ Test Failures - ${{ matrix.os }} / PowerShell ${{ matrix.powershell_version }}
-
-**Total Tests:** $($result.TotalCount)  
-**Passed:** $($result.PassedCount)  
-**Failed:** $($result.FailedCount)  
-**Skipped:** $($result.SkippedCount)
-
-### Failed Tests:
-
-"@
+            $failureReport = "## ❌ Test Failures - ${{ matrix.os }} / PowerShell ${{ matrix.powershell_version }}`n`n"
+            $failureReport += "**Total Tests:** $($result.TotalCount)  `n"
+            $failureReport += "**Passed:** $($result.PassedCount)  `n"
+            $failureReport += "**Failed:** $($result.FailedCount)  `n"
+            $failureReport += "**Skipped:** $($result.SkippedCount)`n`n"
+            $failureReport += "### Failed Tests:`n`n"
+            
             foreach ($test in $result.Failed) {
               Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
               Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
-              $failureReport += "`n- **$($test.ExpandedPath)**`n  ``````n  $($test.ErrorRecord.Exception.Message)`n  ``````n"
+              $failureReport += "- **$($test.ExpandedPath)**`n  ``````n  $($test.ErrorRecord.Exception.Message)`n  ``````n"
             }
             
             $failureReport | Out-File -FilePath "test-failures-${{ matrix.os }}-${{ matrix.powershell_version }}.md" -Encoding utf8
@@ -142,21 +138,17 @@ jobs:
               Write-Host "Failed Tests:" -ForegroundColor Red
               
               # Save test failure details to file for PR comment
-              $failureReport = @"
-## ❌ Test Failures - ${{ matrix.os }} / PowerShell ${{ matrix.powershell_version }}
-
-**Total Tests:** $($result.TotalCount)  
-**Passed:** $($result.PassedCount)  
-**Failed:** $($result.FailedCount)  
-**Skipped:** $($result.SkippedCount)
-
-### Failed Tests:
-
-"@
+              $failureReport = "## ❌ Test Failures - ${{ matrix.os }} / PowerShell ${{ matrix.powershell_version }}`n`n"
+              $failureReport += "**Total Tests:** $($result.TotalCount)  `n"
+              $failureReport += "**Passed:** $($result.PassedCount)  `n"
+              $failureReport += "**Failed:** $($result.FailedCount)  `n"
+              $failureReport += "**Skipped:** $($result.SkippedCount)`n`n"
+              $failureReport += "### Failed Tests:`n`n"
+              
               foreach ($test in $result.Failed) {
                 Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
                 Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
-                $failureReport += "`n- **$($test.ExpandedPath)**`n  ``````n  $($test.ErrorRecord.Exception.Message)`n  ``````n"
+                $failureReport += "- **$($test.ExpandedPath)**`n  ``````n  $($test.ErrorRecord.Exception.Message)`n  ``````n"
               }
               
               $failureReport | Out-File -FilePath "test-failures-${{ matrix.os }}-${{ matrix.powershell_version }}.md" -Encoding utf8
