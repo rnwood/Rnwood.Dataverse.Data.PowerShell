@@ -119,9 +119,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         Connection.Execute(Request);
                         _writeVerbose(string.Format("Deleted record {0}:{1}", TableName, Id));
                     }
-                    catch (FaultException ex)
+                    catch (FaultException<OrganizationServiceFault> ex)
                     {
-                        if (IfExists && ex.HResult == -2147220969)
+                        if (IfExists && ex.Detail.ErrorCode == -2147220969)
                         {
                             _writeVerbose(string.Format("Record {0}:{1} was not present", TableName, Id));
                         }
