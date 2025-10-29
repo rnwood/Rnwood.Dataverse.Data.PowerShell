@@ -154,8 +154,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             /// <returns>True if the fault was handled and should not be reported as an error.</returns>
             public bool HandleFault(OrganizationServiceFault fault)
             {
-                // Handle specific error codes that should be ignored
-                if (IfExists && fault.ErrorCode == -2147220969)
+                // Check for "record not found" error code OR if message contains "Does Not Exist"
+                // Different versions of FakeXrmEasy may set ErrorCode differently (sometimes 0, sometimes -2147220969)
+                if (IfExists && (fault.ErrorCode == -2147220969 || (fault.Message != null && fault.Message.Contains("Does Not Exist"))))
                 {
                     _writeVerbose(string.Format("Record {0}:{1} was not present", TableName, Id));
                     return true;
