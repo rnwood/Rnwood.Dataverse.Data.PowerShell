@@ -57,6 +57,13 @@ jobs:
           Write-Host "Using PowerShell $($PSVersionTable.PSVersion)"    
           $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
 
+          # Ensure PSGallery is registered and trusted
+          if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+            Register-PSRepository -Default -InstallationPolicy Trusted
+          } else {
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          }
+          
           Install-Module -force Pester
           Invoke-Pester -output detailed -path tests
           if ($LASTEXITCODE -ne 0) {
@@ -68,6 +75,13 @@ jobs:
         run: |  
             $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
   
+            # Ensure PSGallery is registered and trusted
+            if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+              Register-PSRepository -Default -InstallationPolicy Trusted
+            } else {
+              Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+            }
+            
             Install-Module -force Pester
             Invoke-Pester -output detailed -path tests
             if ($LASTEXITCODE -ne 0) {
@@ -84,6 +98,13 @@ jobs:
           Write-Host "Using PowerShell $($PSVersionTable.PSVersion)"
           $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
 
+          # Ensure PSGallery is registered and trusted
+          if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+            Register-PSRepository -Default -InstallationPolicy Trusted
+          } else {
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          }
+          
           Install-Module -force Pester
           Invoke-Pester -output detailed -path e2e-tests
           if ($LASTEXITCODE -ne 0) {
@@ -99,6 +120,13 @@ jobs:
         run: |  
           $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
 
+          # Ensure PSGallery is registered and trusted
+          if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+            Register-PSRepository -Default -InstallationPolicy Trusted
+          } else {
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          }
+          
           Install-Module -force Pester
           Invoke-Pester -output detailed -path e2e-tests
           if ($LASTEXITCODE -ne 0) {
