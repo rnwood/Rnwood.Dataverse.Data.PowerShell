@@ -71,7 +71,7 @@ jobs:
           pwsh -File scripts/Run-TestsWithCoverage.ps1 -BaselineCoverageFile coverage/baseline-coverage.json
       
       - name: Comment PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
