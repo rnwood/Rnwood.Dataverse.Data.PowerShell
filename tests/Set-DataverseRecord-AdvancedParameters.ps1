@@ -164,8 +164,9 @@ Describe 'Set-DataverseRecord - Advanced Parameters' {
     }
 
     Context 'CallerId Parameter (Delegation)' {
-        It "Creates record with -CallerId for delegation" -Skip {
-            # Note: CallerId requires systemuser entity and may not work with mock
+        It "Creates record with -CallerId for delegation" {
+            # CallerId is just a Guid parameter that gets passed to the service
+            # Note: FakeXrmEasy requires BatchSize 1 for CreatedOnBehalfBy (CallerId)
             $connection = getMockConnection
             
             # Create record with CallerId (impersonate another user)
@@ -173,7 +174,7 @@ Describe 'Set-DataverseRecord - Advanced Parameters' {
             $record = @{
                 firstname = "Delegated"
                 lastname = "Create"
-            } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -CallerId $callerId -PassThru
+            } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -CallerId $callerId -BatchSize 1 -PassThru
             
             # Verify record was created
             $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
@@ -185,8 +186,8 @@ Describe 'Set-DataverseRecord - Advanced Parameters' {
             $allContacts | Should -HaveCount 1
         }
 
-        It "Updates record with -CallerId for delegation" -Skip {
-            # Note: CallerId requires systemuser entity
+        It "Updates record with -CallerId for delegation" {
+            # CallerId works with mock connection using BatchSize 1
             $connection = getMockConnection
             
             # Create initial record
@@ -195,10 +196,10 @@ Describe 'Set-DataverseRecord - Advanced Parameters' {
                 lastname = "User"
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # Update with CallerId
+            # Update with CallerId - requires BatchSize 1 with FakeXrmEasy
             $callerId = [Guid]::NewGuid()
             Set-DataverseRecord -Connection $connection -TableName contact -Id $record.Id `
-                -InputObject @{ firstname = "Updated" } -CallerId $callerId
+                -InputObject @{ firstname = "Updated" } -CallerId $callerId -BatchSize 1
             
             # Verify update
             $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
@@ -209,16 +210,16 @@ Describe 'Set-DataverseRecord - Advanced Parameters' {
             $allContacts | Should -HaveCount 1
         }
 
-        It "CallerId works with batch operations" -Skip {
-            # Note: CallerId with batching may have specific requirements
+        It "CallerId works with individual record operations (BatchSize 1)" {
+            # CallerId works with FakeXrmEasy when BatchSize is 1
             $connection = getMockConnection
             
-            # Batch create with CallerId
+            # Create records with CallerId individually (not batched)
             $callerId = [Guid]::NewGuid()
             $records = @(
-                @{ firstname = "Batch1"; lastname = "Delegate" }
-                @{ firstname = "Batch2"; lastname = "Delegate" }
-            ) | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -CallerId $callerId -PassThru
+                @{ firstname = "Individual1"; lastname = "Delegate" }
+                @{ firstname = "Individual2"; lastname = "Delegate" }
+            ) | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -CallerId $callerId -BatchSize 1 -PassThru
             
             # Verify records created
             $records | Should -HaveCount 2
