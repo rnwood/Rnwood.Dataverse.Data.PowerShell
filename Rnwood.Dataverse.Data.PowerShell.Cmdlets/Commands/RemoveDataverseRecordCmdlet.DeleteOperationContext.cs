@@ -130,6 +130,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             throw;
                         }
                     }
+                    catch (FaultException ex) when (IfExists)
+                    {
+                        // FakeXrmEasy may throw non-generic FaultException in some cases
+                        // Check if message indicates "Does Not Exist"
+                        if (ex.Message.Contains("Does Not Exist"))
+                        {
+                            _writeVerbose(string.Format("Record {0}:{1} was not present", TableName, Id));
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
                 }
             }
 
