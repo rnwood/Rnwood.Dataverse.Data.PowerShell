@@ -3,12 +3,15 @@ name: Build / publish
 on:
   push:
   pull_request:
-    types: [opened, reopened]
+    types: [opened, reopened, synchronize]
   release:
     types: [published]
 
 jobs:
   main:
+    permissions:
+      contents: read
+      pull-requests: write
     strategy:
       matrix:
         include:
@@ -52,6 +55,7 @@ jobs:
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
       - if: ${{ matrix.powershell_version != '5' }}
         name: Test - pwsh
+        id: test-pwsh
         shell: pwsh
         run: |
           Write-Host "Using PowerShell $($PSVersionTable.PSVersion)"    
@@ -82,14 +86,31 @@ jobs:
           if ($result.FailedCount -gt 0) {
             Write-Host ""
             Write-Host "Failed Tests:" -ForegroundColor Red
+            
+            # Save test failure details to file for PR comment
+            $failureReport = @"
+          ## ❌ Test Failures - ${{ matrix.os }} / PowerShell ${{ matrix.powershell_version }}
+          
+          **Total Tests:** $($result.TotalCount)  
+          **Passed:** $($result.PassedCount)  
+          **Failed:** $($result.FailedCount)  
+          **Skipped:** $($result.SkippedCount)
+          
+          ### Failed Tests:
+          
+          "@
             foreach ($test in $result.Failed) {
               Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
               Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+              $failureReport += "`n- **$($test.ExpandedPath)**`n  ``````````n  $($test.ErrorRecord.Exception.Message)`n  ``````````n"
             }
+            
+            $failureReport | Out-File -FilePath "test-failures-${{ matrix.os }}-${{ matrix.powershell_version }}.md" -Encoding utf8
             throw "Tests failed"
           }
       - if:  ${{ matrix.powershell_version == '5' }}
         name: Test - powershell
+        id: test-powershell
         shell: powershell
         run: |  
             $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
@@ -119,10 +140,26 @@ jobs:
             if ($result.FailedCount -gt 0) {
               Write-Host ""
               Write-Host "Failed Tests:" -ForegroundColor Red
+              
+              # Save test failure details to file for PR comment
+              $failureReport = @"
+          ## ❌ Test Failures - ${{ matrix.os }} / PowerShell ${{ matrix.powershell_version }}
+          
+          **Total Tests:** $($result.TotalCount)  
+          **Passed:** $($result.PassedCount)  
+          **Failed:** $($result.FailedCount)  
+          **Skipped:** $($result.SkippedCount)
+          
+          ### Failed Tests:
+          
+          "@
               foreach ($test in $result.Failed) {
                 Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
                 Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+                $failureReport += "`n- **$($test.ExpandedPath)**`n  ``````````n  $($test.ErrorRecord.Exception.Message)`n  ``````````n"
               }
+              
+              $failureReport | Out-File -FilePath "test-failures-${{ matrix.os }}-${{ matrix.powershell_version }}.md" -Encoding utf8
               throw "Tests failed"
             }
       - if: ${{ matrix.powershell_version != '5' }}
@@ -163,3 +200,49 @@ jobs:
         shell: pwsh
         run: |
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
+      
+      # Upload test failure reports as artifacts
+      - name: Upload test failure report
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failures-${{ matrix.os }}-${{ matrix.powershell_version }}
+          path: test-failures-*.md
+          if-no-files-found: ignore
+      
+      # Comment on PR with test failures
+      - name: Comment on PR with test failures
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Find failure report file
+            const files = fs.readdirSync('.');
+            const failureFile = files.find(f => f.startsWith('test-failures-'));
+            
+            if (!failureFile) {
+              console.log('No test failure report found');
+              return;
+            }
+            
+            const failureContent = fs.readFileSync(failureFile, 'utf8');
+            
+            // Create comment body with @copilot mention
+            const commentBody = `@copilot please investigate these test failures:
+
+            ${failureContent}
+
+            **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            **Commit:** ${{ github.sha }}
+            `;
+            
+            // Post comment to PR
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
