@@ -316,7 +316,7 @@ jobs:
       # Upload test failure reports as artifacts
       - name: Upload test failure report
         if: failure() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-failures-${{ matrix.os }}-${{ matrix.powershell_version }}
           path: test-failures-*.md
