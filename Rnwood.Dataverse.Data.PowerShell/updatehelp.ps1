@@ -9,7 +9,13 @@ $outdir=$OutDir.Trim('""')
 
 
 if (-not(get-installedmodule Platyps -MinimumVersion 0.14.1 -ErrorAction silentlycontinue)) {
-	install-module -scope CurrentUser PlatyPs -force
+	try {
+		install-module -scope CurrentUser PlatyPs -force -ErrorAction Stop
+	} catch {
+		write-host "Could not install PlatyPS module: $_"
+		write-host "Skipping help update (PlatyPS not available)"
+		exit 0
+	}
 }
 
 $modulepath = "$outdir/Rnwood.Dataverse.Data.PowerShell.psd1"
