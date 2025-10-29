@@ -163,67 +163,70 @@ Describe 'Set-DataverseRecord - Complex Type Conversions' {
     }
 
     Context 'Money Fields' {
-        It "Creates record with Money field" -Skip {
-            # Note: Money fields may not be available in contact entity metadata
-            # This test validates expected behavior
+        It "Creates record with Money field" {
+            # Contact entity has Money fields: annualincome, creditlimit, etc.
             $connection = getMockConnection
             
             # Create record with Money value
             $record = @{
                 firstname = "Money"
                 lastname = "Test"
-                # creditlimit = 50000.00
+                creditlimit = 50000.00
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify record created
             $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
             $result | Should -Not -BeNullOrEmpty
+            $result.firstname | Should -Be "Money"
+            $result.creditlimit | Should -Be 50000.00
             
             # Verify no side effects
             $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
             $allContacts | Should -HaveCount 1
         }
 
-        It "Updates Money field with new value" -Skip {
-            # Note: Money fields may not be available in contact entity
+        It "Updates Money field with new value" {
+            # Contact entity has Money fields available
             $connection = getMockConnection
             
-            # Create initial record
+            # Create initial record with Money field
             $record = @{
                 firstname = "Update"
                 lastname = "Money"
+                annualincome = 75000.00
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Update Money field
             Set-DataverseRecord -Connection $connection -TableName contact -Id $record.Id `
-                -InputObject @{ firstname = "Updated" }
+                -InputObject @{ annualincome = 85000.00 }
             
             # Verify update
             $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
-            $result.firstname | Should -Be "Updated"
+            $result.annualincome | Should -Be 85000.00
             
             # Verify no side effects
             $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
             $allContacts | Should -HaveCount 1
         }
 
-        It "Handles null Money values" -Skip {
-            # Note: Money fields may not be available in contact entity
+        It "Handles null Money values" {
+            # Contact entity has Money fields available
             $connection = getMockConnection
             
-            # Create record
+            # Create record with Money field
             $record = @{
                 firstname = "Null"
                 lastname = "Money"
+                creditlimit = 100000.00
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Set Money to null
             Set-DataverseRecord -Connection $connection -TableName contact -Id $record.Id `
-                -InputObject @{ lastname = "Updated" }
+                -InputObject @{ creditlimit = $null }
             
-            # Verify
+            # Verify Money field is null
             $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
-            $result.lastname | Should -Be "Updated"
+            $result.creditlimit | Should -BeNullOrEmpty
             
             # Verify no side effects
             $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
