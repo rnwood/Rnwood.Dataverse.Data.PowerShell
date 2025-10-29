@@ -88,6 +88,11 @@ jobs:
             Write-Host "Failed Tests:" -ForegroundColor Red
             
             # Save test failure details to file for PR comment
+            # Sanitize filename by replacing dots and spaces
+            $osName = "${{ matrix.os }}".Replace(' ', '-')
+            $psVersion = "${{ matrix.powershell_version }}".Replace('.', '-').Replace(' ', '-')
+            $fileName = "test-failures-$osName-ps$psVersion.md"
+            
             $failureReport = "## ❌ Test Failures - ${{ matrix.os }} / PowerShell ${{ matrix.powershell_version }}`n`n"
             $failureReport += "**Total Tests:** $($result.TotalCount)  `n"
             $failureReport += "**Passed:** $($result.PassedCount)  `n"
@@ -101,8 +106,12 @@ jobs:
               $failureReport += "- **$($test.ExpandedPath)**`n  ``````n  $($test.ErrorRecord.Exception.Message)`n  ``````n"
             }
             
-            $failureReport | Out-File -FilePath "test-failures-${{ matrix.os }}-${{ matrix.powershell_version }}.md" -Encoding utf8
-            throw "Tests failed"
+            # Write file and ensure it's flushed to disk
+            $failureReport | Out-File -FilePath $fileName -Encoding utf8 -Force
+            Write-Host "Created failure report: $fileName"
+            
+            # Use exit instead of throw to ensure file is preserved
+            exit 1
           }
       - if:  ${{ matrix.powershell_version == '5' }}
         name: Test - powershell
@@ -138,6 +147,11 @@ jobs:
               Write-Host "Failed Tests:" -ForegroundColor Red
               
               # Save test failure details to file for PR comment
+              # Sanitize filename by replacing dots and spaces
+              $osName = "${{ matrix.os }}".Replace(' ', '-')
+              $psVersion = "${{ matrix.powershell_version }}".Replace('.', '-').Replace(' ', '-')
+              $fileName = "test-failures-$osName-ps$psVersion.md"
+              
               $failureReport = "## ❌ Test Failures - ${{ matrix.os }} / PowerShell ${{ matrix.powershell_version }}`n`n"
               $failureReport += "**Total Tests:** $($result.TotalCount)  `n"
               $failureReport += "**Passed:** $($result.PassedCount)  `n"
@@ -151,8 +165,12 @@ jobs:
                 $failureReport += "- **$($test.ExpandedPath)**`n  ``````n  $($test.ErrorRecord.Exception.Message)`n  ``````n"
               }
               
-              $failureReport | Out-File -FilePath "test-failures-${{ matrix.os }}-${{ matrix.powershell_version }}.md" -Encoding utf8
-              throw "Tests failed"
+              # Write file and ensure it's flushed to disk
+              $failureReport | Out-File -FilePath $fileName -Encoding utf8 -Force
+              Write-Host "Created failure report: $fileName"
+              
+              # Use exit instead of throw to ensure file is preserved
+              exit 1
             }
       - if: ${{ matrix.powershell_version != '5' }}
         name: E2E Test - pwsh
