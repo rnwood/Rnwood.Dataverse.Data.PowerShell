@@ -108,19 +108,27 @@ Describe "Set-DataverseRecord Batched Retrieval" {
         }
     }
 
-    Context "Batched Retrieval with Intersect Entities (M:M)" {
-        It "Batches retrieval of intersect entity records" -Skip {
-            # Skipped: contactleads entity metadata not available in mock connection
-            # This scenario is covered by the implementation but cannot be tested with current mock setup
-            # Create M:M relationship records
-            $relationships = 1..5 | ForEach-Object {
-                $record = [Microsoft.Xrm.Sdk.Entity]::new("contactleads")
-                $record["contactid"] = [Guid]::NewGuid()
-                $record["leadid"] = [Guid]::NewGuid()
+    Context "Batched Retrieval with Contact Entity (Simulating M:M Pattern)" {
+        It "Batches retrieval of contact records with composite attribute pattern" {
+            # Modified from intersect entity test: using contact entity instead of contactleads
+            # This exercises the same batched retrieval code path
+            # Note: True intersect entity logic with IsIntersect=true and ManyToManyRelationships 
+            # cannot be fully tested without intersect entity metadata
+            
+            # Create contact records with multiple identifying attributes (simulates M:M pattern)
+            $contacts = 1..5 | ForEach-Object {
+                $record = [Microsoft.Xrm.Sdk.Entity]::new("contact")
+                $record.Id = $record["contactid"] = [Guid]::NewGuid()
+                $record["firstname"] = "BatchTest$_"
+                $record["emailaddress1"] = "batchtest$_@example.com"
                 $record
             }
 
-            { $relationships | Set-DataverseRecord -Connection $connection -TableName contactleads -RetrievalBatchSize 500 } | Should -Not -Throw
+            # First create the records
+            $contacts | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly
+
+            # Then update them using batched retrieval
+            { $contacts | Set-DataverseRecord -Connection $connection -RetrievalBatchSize 500 } | Should -Not -Throw
         }
     }
 
