@@ -27,8 +27,8 @@ Describe 'Remove-DataverseRecord - WhatIf and Confirm Support' {
                 @{ firstname = "Pipe2"; lastname = "WhatIf" }
             ) | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # Pipeline delete with WhatIf
-            $records | Remove-DataverseRecord -Connection $connection -WhatIf
+            # Pipeline delete with WhatIf - TableName is required when piping PSObjects
+            $records | Remove-DataverseRecord -Connection $connection -TableName contact -WhatIf
             
             # Verify NO records were deleted
             $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
@@ -45,8 +45,10 @@ Describe 'Remove-DataverseRecord - WhatIf and Confirm Support' {
                 @{ firstname = "Batch3"; lastname = "WhatIf" }
             ) | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
-            # Batch delete with WhatIf
-            $records.Id | Remove-DataverseRecord -Connection $connection -TableName contact -WhatIf
+            # Batch delete with WhatIf - iterate over IDs
+            $records.Id | ForEach-Object {
+                Remove-DataverseRecord -Connection $connection -TableName contact -Id $_ -WhatIf
+            }
             
             # Verify NO records were deleted
             $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
