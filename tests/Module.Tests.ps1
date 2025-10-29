@@ -1,6 +1,4 @@
 Describe "Module" {
-    . $PSScriptRoot/Common.ps1
-
     It "Given the module is installed, it is listed as available" {
         Get-Module -ListAvailable Rnwood.Dataverse.Data.PowerShell | Should -HaveCount 1
     }

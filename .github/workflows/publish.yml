@@ -65,7 +65,7 @@ jobs:
           }
           
           Install-Module -force Pester
-          Invoke-Pester -output detailed -path tests
+          Invoke-Pester -output detailed -path tests/All.Tests.ps1
           if ($LASTEXITCODE -ne 0) {
             throw "Tests failed"
           }
@@ -83,7 +83,7 @@ jobs:
             }
             
             Install-Module -force Pester
-            Invoke-Pester -output detailed -path tests
+            Invoke-Pester -output detailed -path tests/All.Tests.ps1
             if ($LASTEXITCODE -ne 0) {
               throw "Tests failed"
             }

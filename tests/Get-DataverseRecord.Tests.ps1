@@ -1,7 +1,4 @@
 Describe 'Get-DataverseRecord' {
-
-    . $PSScriptRoot/Common.ps1
-
     It "Converts to a PS object with properties using native PS types" {
         
         $connection = getMockConnection
