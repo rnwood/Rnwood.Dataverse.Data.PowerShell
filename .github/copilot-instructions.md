@@ -21,7 +21,12 @@ dotnet build
 
 ### Testing Sequence
 
-**Quick CI-Friendly Test Run (Recommended for initial checks):**
+**⚠️ CRITICAL: Always use filtered tests for development iteration**
+- Full test suite (396 tests) takes **5+ minutes** and may timeout
+- Use filtered tests for **~20-30 seconds** runtime
+- Only run full suite for final validation before commit
+
+**RECOMMENDED: Run Filtered Tests (Fast - 20-30 seconds):**
 ```powershell
 # 1. Set module path to built output (REQUIRED)
 $env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
@@ -29,15 +34,18 @@ $env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/
 # 2. Install Pester if not present (first time only)
 Install-Module -Force -Scope CurrentUser Pester -MinimumVersion 5.0
 
-# 3. Run all tests with concise output
-# Pester 5.x runs tests in parallel by default for faster execution
+# 3. Run specific test groups using filters
 $config = New-PesterConfiguration
-$config.Run.Path = 'tests'
+$config.Run.Path = 'tests/All.Tests.ps1'  # MUST use All.Tests.ps1 for proper setup
 $config.Run.PassThru = $true
-$config.Run.Exit = $true  # Enable proper exit codes for CI
-$config.Output.Verbosity = 'Normal'  # Shows only summary and failures
-$config.Output.CIFormat = 'GithubActions'  # Format errors for GitHub Actions
+$config.Output.Verbosity = 'Normal'  # Shows summary and failures
 $config.Should.ErrorAction = 'Continue'
+
+# Filter to specific test groups - examples:
+$config.Filter.FullName = '*Remove-DataverseRecord - IfExists Flag*'
+# $config.Filter.FullName = '*WhatIf*Confirm*'
+# $config.Filter.FullName = '*Set-DataverseRecord*NoUpdateColumns*'
+# $config.Filter.FullName = '*Get-DataverseRecord*FetchXml*'
 
 $result = Invoke-Pester -Configuration $config
 
@@ -57,54 +65,23 @@ if ($result.FailedCount -gt 0) {
         Write-Host "  - $($test.ExpandedPath)"
         Write-Host "    $($test.ErrorRecord.Exception.Message)"
     }
+    exit 1
 }
 ```
 
-**Run Specific Tests with Full Output:**
+**Full Test Suite (Slow - 5+ minutes, use sparingly):**
 ```powershell
 # Set module path first (REQUIRED)
 $env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
 
-# Run specific test file with detailed output
-Invoke-Pester -Output Detailed -Path tests/Get-DataverseRecord.ps1
+# Run ALL tests - takes 5+ minutes, use only for final validation
+$config = New-PesterConfiguration
+$config.Run.Path = 'tests/All.Tests.ps1'
+$config.Run.PassThru = $true
+$config.Output.Verbosity = 'Normal'
+$config.Should.ErrorAction = 'Continue'
 
-# Or run a specific test by name pattern
-Invoke-Pester -Output Detailed -Path tests -FullNameFilter "*test name pattern*"
-```
-
-**Run Single Test with All.Tests.ps1 Setup:**
-```powershell
-# The All.Tests.ps1 file sets up the test environment and includes all test files
-# To run a single test WITH the setup, use dot-sourcing:
-
-$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
-
-# Method 1: Use Pester's filter to run specific tests from All.Tests.ps1
-Invoke-Pester -Output Detailed -Path tests/All.Tests.ps1 -FullNameFilter "*specific test name*"
-
-# Method 2: Manually set up and run (for debugging)
-pwsh -Command {
-    $env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
-    
-    # Source the setup from All.Tests.ps1 (lines 1-51 contain setup)
-    . tests/All.Tests.ps1
-    
-    # Now manually run specific test
-    # Example: Get-DataverseRecord tests
-    Describe "Your Test" {
-        It "Your specific test" {
-            $connection = getMockConnection
-            # Your test code here
-        }
-    }
-}
-```
-
-**Legacy Full Output (if needed):**
-```powershell
-# Run all tests with detailed output (slower, more verbose)
-$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
-Invoke-Pester -Output Detailed -Path tests
+$result = Invoke-Pester -Configuration $config
 ```
 
 **E2E Tests:**
@@ -122,10 +99,13 @@ Invoke-Pester -Output Detailed -Path e2e-tests
 - `tests/contact.xml` contains serialized EntityMetadata for mock connection
 - Tests spawn child PowerShell processes to test module loading
 - ALWAYS set $env:TESTMODULEPATH before running tests
+- **⚠️ ALWAYS use tests/All.Tests.ps1 as entry point** - individual test files will fail without setup
+- **⚠️ Full test suite takes 5+ minutes** - use filtered tests during development
 
 **TESTING REQUIREMENTS FOR CODE CHANGES:**
 - **ALL code changes MUST include tests** that validate the new functionality
 - **ALL tests MUST pass** before committing changes
+- **Use filtered tests during development** to avoid timeouts (20-30 seconds vs 5+ minutes)
 - Run tests using the Testing Sequence above after building
 - For documentation changes with code examples:
   - Add tests in `tests/Cmdletname-maybeasuffix.ps1` that validate the example patterns
@@ -134,10 +114,21 @@ Invoke-Pester -Output Detailed -Path e2e-tests
   - If an entity is not in `tests/contact.xml`, either:
     - Create test data in the test itself using SDK Entity objects
     - Or document that the example is tested manually/in E2E tests
-- Expected test execution time: 15-60 seconds for unit tests
+- Expected test execution time: 20-30 seconds for filtered tests, 5+ minutes for full suite
 - Tests may fail if entities beyond 'contact' are queried without creating them first
 - **Document test results** in commits showing pass/fail counts
 - CI/CD pipeline will run all tests - ensure local tests pass first
+
+**COMMON TEST FILTERS:**
+```powershell
+# Filter examples for quick iteration:
+$config.Filter.FullName = '*Remove-DataverseRecord*'      # All Remove-DataverseRecord tests
+$config.Filter.FullName = '*IfExists*'                    # All IfExists flag tests
+$config.Filter.FullName = '*WhatIf*Confirm*'              # All WhatIf/Confirm tests
+$config.Filter.FullName = '*Set-DataverseRecord*NoUpdate*' # NoUpdate flag tests
+$config.Filter.FullName = '*FetchXml*'                    # FetchXml query tests
+$config.Filter.FullName = '*Get-DataverseRecord - Basic*' # Basic Get tests
+```
 
 ## Project Architecture & Key Files
 
