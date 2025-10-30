@@ -16,7 +16,7 @@ This module works in PowerShell Desktop and PowerShell Core, supporting Windows,
 - Multiple query methods with full support for automatic paging
 - Concise hashtable-based filters with grouped logical expressions (and/or/not/xor) and arbitrary nesting
 - Batching support for efficient bulk operations
-- **Comprehensive metadata CRUD operations** — Create, read, update, and delete entities, attributes, and option sets with full coverage of all attribute types
+- **Comprehensive metadata CRUD operations** — Create, read, update, and delete entities, attributes, option sets, and relationships with full coverage of all attribute types and relationship types (OneToMany, ManyToMany)
 - **Global metadata caching** — Optional shared cache for improved performance when working with metadata
 - Wide variety of auth options for interactive and unattended use
 - **XrmToolbox Plugin**: Embedded PowerShell console with automatic connection bridging. See [XrmToolbox Plugin README](Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/README.md)
@@ -99,11 +99,14 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 - [`Get-DataverseEntities`](docs/Metadata-CRUD-Examples.md) — list all entities with filtering
 - [`Get-DataverseAttribute`](docs/Metadata-CRUD-Examples.md) — retrieve attribute metadata
 - [`Get-DataverseOptionSet`](docs/Metadata-CRUD-Examples.md) — retrieve option set values
+- [`Get-DataverseRelationship`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRelationship.md) — retrieve relationship metadata
 - [`Set-DataverseEntityMetadata`](docs/Metadata-CRUD-Examples.md) — create or update entities
 - [`Set-DataverseAttribute`](docs/Metadata-CRUD-Examples.md) — create or update attributes (all types)
 - [`Set-DataverseOptionSet`](docs/Metadata-CRUD-Examples.md) — create or update global option sets
+- [`Set-DataverseRelationship`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRelationship.md) — create relationships (OneToMany, ManyToMany)
 - [`Remove-DataverseEntityMetadata`](docs/Metadata-CRUD-Examples.md) — delete entities
 - [`Remove-DataverseAttribute`](docs/Metadata-CRUD-Examples.md) — delete attributes
+- [`Remove-DataverseRelationship`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRelationship.md) — delete relationships
 
 ### Metadata Cache Management
 - `Clear-DataverseMetadataCache` — clear the metadata cache
