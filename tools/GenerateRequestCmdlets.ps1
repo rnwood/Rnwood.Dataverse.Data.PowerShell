@@ -1186,6 +1186,7 @@ $classSummary
                 } elseif ($paramTypeName -eq "Microsoft.Xrm.Sdk.EntityCollection") {
                     # For EntityCollection parameters - create a collection with test entities
                     $testParamSetup += "        `$entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection"
+                    $testParamSetup += "        `$entityCollection.EntityName = 'contact'  # Required by CreateMultiple/UpdateMultiple/UpsertMultiple"
                     $testParamSetup += "        `$testEntity = New-Object Microsoft.Xrm.Sdk.Entity('contact')"
                     if ($requestName -match "Update|Upsert") {
                         $testParamSetup += "        `$testEntity.Id = [Guid]::NewGuid()"
@@ -1214,6 +1215,15 @@ $classSummary
                     $testParamsDefault += "-$paramName `$test$paramName"
                 } elseif ($paramTypeName -match "ColumnSet") {
                     $testParamSetup += "        `$test$paramName = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet('firstname', 'lastname')"
+                    $testParamsDefault += "-$paramName `$test$paramName"
+                } elseif ($paramTypeName -eq "Microsoft.Xrm.Sdk.Relationship") {
+                    # For Relationship parameters - needed by Associate/Disassociate
+                    $testParamSetup += "        `$test$paramName = New-Object Microsoft.Xrm.Sdk.Relationship('contact_account')"
+                    $testParamsDefault += "-$paramName `$test$paramName"
+                } elseif ($paramTypeName -eq "Microsoft.Xrm.Sdk.Label") {
+                    # For Label parameters - needed by InsertOptionValue/InsertStatusValue
+                    $testParamSetup += "        `$test$paramName = New-Object Microsoft.Xrm.Sdk.Label"
+                    $testParamSetup += "        `$test$paramName.LocalizedLabels.Add((New-Object Microsoft.Xrm.Sdk.LocalizedLabel('Test Label', 1033)))"
                     $testParamsDefault += "-$paramName `$test$paramName"
                 } else {
                     # Skip complex types we can't easily mock
