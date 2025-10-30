@@ -13,9 +13,9 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Get-DataverseSitemapEntry [-SitemapName] <String> [-SitemapId <Guid>] [-EntryType <SitemapEntryType>]
- [-EntryId <String>] [-ParentAreaId <String>] [-ParentGroupId <String>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseSitemapEntry [-Sitemap <SitemapInfo>] [[-SitemapName] <String>] [-SitemapId <Guid>]
+ [-EntryType <SitemapEntryType>] [-EntryId <String>] [-ParentAreaId <String>] [-ParentGroupId <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -111,6 +111,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Sitemap
+Sitemap object from Get-DataverseSitemap.
+
+```yaml
+Type: SitemapInfo
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
 ### -SitemapId
 The ID of the sitemap to retrieve entries from.
 
@@ -132,9 +147,9 @@ The name of the sitemap to retrieve entries from.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases:
+Aliases: Name
 
-Required: True
+Required: False
 Position: 0
 Default value: None
 Accept pipeline input: True (ByPropertyName)
@@ -161,6 +176,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
+### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapInfo
 ### System.String
 ### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS

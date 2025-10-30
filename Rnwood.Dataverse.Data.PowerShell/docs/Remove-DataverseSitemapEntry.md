@@ -13,8 +13,9 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Remove-DataverseSitemapEntry [-SitemapName] <String> [-SitemapId <Guid>] -EntryType <SitemapEntryType>
- -EntryId <String> [-ParentAreaId <String>] [-ParentGroupId <String>] [-IfExists] [-Connection <ServiceClient>]
+Remove-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
+ [[-SitemapName] <String>] [-SitemapId <Guid>] [-EntryType <SitemapEntryType>] -EntryId <String>
+ [-ParentAreaId <String>] [-ParentGroupId <String>] [-IfExists] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -88,7 +89,7 @@ Parameter Sets: (All)
 Aliases:
 Accepted values: Area, Group, SubArea
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -107,6 +108,21 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputObject
+Entry object from Get-DataverseSitemapEntry.
+
+```yaml
+Type: SitemapEntryInfo
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
@@ -140,6 +156,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Sitemap
+Sitemap object from Get-DataverseSitemap.
+
+```yaml
+Type: SitemapInfo
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
 ### -SitemapId
 The ID of the sitemap containing the entry.
 
@@ -161,9 +192,9 @@ The name of the sitemap containing the entry.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases:
+Aliases: Name
 
-Required: True
+Required: False
 Position: 0
 Default value: None
 Accept pipeline input: True (ByPropertyName)
@@ -206,6 +237,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
+### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapEntryInfo
+### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapInfo
 ### System.String
 ### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
