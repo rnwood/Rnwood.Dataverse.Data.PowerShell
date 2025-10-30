@@ -106,8 +106,6 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 - [`Remove-DataverseAttribute`](docs/Metadata-CRUD-Examples.md) — delete attributes
 
 ### Metadata Cache Management
-- `Set-DataverseMetadataCache` — enable or disable the global metadata cache
-- `Get-DataverseMetadataCache` — get the current cache status
 - `Clear-DataverseMetadataCache` — clear the metadata cache
 
 The module also includes many specialized `Invoke-Dataverse*` cmdlets for specific platform operations. See the [cmdlet documentation](Rnwood.Dataverse.Data.PowerShell/docs/) for the full list.

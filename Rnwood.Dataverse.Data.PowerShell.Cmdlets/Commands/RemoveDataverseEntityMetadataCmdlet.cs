@@ -52,12 +52,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             WriteVerbose($"Entity '{EntityName}' deleted successfully");
 
             // Invalidate cache for this entity
-            if (MetadataCache.IsEnabled)
-            {
-                var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
-                MetadataCache.InvalidateEntity(connectionKey, EntityName);
-                WriteVerbose($"Invalidated metadata cache for entity '{EntityName}'");
-            }
+            var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
+            MetadataCache.InvalidateEntity(connectionKey, EntityName);
+            WriteVerbose($"Invalidated metadata cache for entity '{EntityName}'");
         }
     }
 }

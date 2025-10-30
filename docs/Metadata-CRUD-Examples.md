@@ -12,21 +12,11 @@ This document provides examples of using the new comprehensive metadata CRUD cmd
 
 ## Metadata Cache
 
-The module includes a global metadata cache that can significantly improve performance when working with metadata operations.
-
-### Enabling the Cache
-
-```powershell
-# Enable global metadata cache
-Set-DataverseMetadataCache $true
-
-# Check if cache is enabled
-$isEnabled = Get-DataverseMetadataCache
-```
+The module includes a global metadata cache that can significantly improve performance when working with metadata operations. The cache is automatically used when you specify the `-UseMetadataCache` parameter on Get cmdlets.
 
 ### Using the Cache
 
-Once enabled, use the `-UseMetadataCache` parameter on Get cmdlets to utilize the shared cache:
+Use the `-UseMetadataCache` parameter on Get cmdlets to utilize the shared cache:
 
 ```powershell
 # Use cache for entity metadata retrieval
@@ -38,6 +28,8 @@ $entities = Get-DataverseEntities -Connection $conn -UseMetadataCache
 # Use cache for attribute metadata
 $attributes = Get-DataverseAttribute -Connection $conn -EntityName contact -UseMetadataCache
 ```
+
+The cache is automatically populated when you use `-UseMetadataCache` parameter. No setup or enabling is required.
 
 ### Cache Invalidation
 
@@ -63,9 +55,6 @@ Clear-DataverseMetadataCache
 
 # Clear cache for a specific connection
 Clear-DataverseMetadataCache -Connection $conn
-
-# Disable caching
-Set-DataverseMetadataCache $false
 ```
 
 ### Performance Benefits
@@ -75,7 +64,7 @@ Using the metadata cache can significantly reduce API calls and improve performa
 - Working with multiple cmdlets that need the same metadata
 - Performing bulk operations that require metadata lookups
 
-**Note**: The cache is shared across all cmdlets in your PowerShell session, so once metadata is cached, all subsequent operations can benefit from it.
+**Note**: The cache is shared across all cmdlets in your PowerShell session. Simply add `-UseMetadataCache` to Get cmdlets to benefit from caching.
 
 ## Get Cmdlets (Read Operations)
 

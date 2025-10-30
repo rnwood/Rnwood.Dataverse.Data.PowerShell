@@ -541,16 +541,16 @@ Set-DataverseAttribute -Connection $conn `
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Enable global metadata cache for improved performance
-Set-DataverseMetadataCache $true
-
-# Check cache status
-$cacheEnabled = Get-DataverseMetadataCache
-
-# Use cached metadata
+# Use cached metadata by specifying -UseMetadataCache parameter
 $entities = Get-DataverseEntities -Connection $conn -UseMetadataCache
 
-# Clear cache (automatically invalidated on Set/Remove operations)
+# Cache is automatically populated when -UseMetadataCache is used
+$metadata = Get-DataverseEntityMetadata -Connection $conn -EntityName contact -UseMetadataCache
+
+# Cache is automatically invalidated on Set/Remove operations
+Set-DataverseAttribute -Connection $conn -EntityName new_project -AttributeName new_field -AttributeType String
+
+# Clear cache manually if needed
 Clear-DataverseMetadataCache
 
 # Clear cache for specific connection

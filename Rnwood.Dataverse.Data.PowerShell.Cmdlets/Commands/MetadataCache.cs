@@ -7,6 +7,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
     /// Global metadata cache shared across all cmdlets.
+    /// Cache is automatically used when -UseMetadataCache parameter is specified on Get cmdlets.
     /// </summary>
     public static class MetadataCache
     {
@@ -15,11 +16,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private static readonly ConcurrentDictionary<string, List<EntityMetadata>> _allEntitiesCache
             = new ConcurrentDictionary<string, List<EntityMetadata>>(StringComparer.OrdinalIgnoreCase);
-
-        /// <summary>
-        /// Gets or sets whether caching is enabled globally.
-        /// </summary>
-        public static bool IsEnabled { get; set; } = false;
 
         /// <summary>
         /// Gets the cache key for a connection.
@@ -39,10 +35,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public static bool TryGetEntityMetadata(string connectionKey, string entityName, out EntityMetadata metadata)
         {
             metadata = null;
-            if (!IsEnabled)
-            {
-                return false;
-            }
 
             if (_cache.TryGetValue(connectionKey, out var entityCache))
             {
@@ -57,11 +49,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         public static void AddEntityMetadata(string connectionKey, string entityName, EntityMetadata metadata)
         {
-            if (!IsEnabled)
-            {
-                return;
-            }
-
             var entityCache = _cache.GetOrAdd(connectionKey, _ => new ConcurrentDictionary<string, EntityMetadata>(StringComparer.OrdinalIgnoreCase));
             entityCache[entityName] = metadata;
         }
@@ -71,12 +58,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         public static bool TryGetAllEntities(string connectionKey, out List<EntityMetadata> allEntities)
         {
-            allEntities = null;
-            if (!IsEnabled)
-            {
-                return false;
-            }
-
             return _allEntitiesCache.TryGetValue(connectionKey, out allEntities);
         }
 
@@ -85,11 +66,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         public static void AddAllEntities(string connectionKey, List<EntityMetadata> allEntities)
         {
-            if (!IsEnabled)
-            {
-                return;
-            }
-
             _allEntitiesCache[connectionKey] = allEntities;
         }
 

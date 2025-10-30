@@ -63,7 +63,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             EntityMetadata[] entities;
 
             // Try cache first if enabled
-            if (UseMetadataCache && MetadataCache.IsEnabled)
+            if (UseMetadataCache)
             {
                 var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
                 if (MetadataCache.TryGetAllEntities(connectionKey, out var cachedEntities))
