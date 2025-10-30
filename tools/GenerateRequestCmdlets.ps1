@@ -1075,8 +1075,6 @@ $classSummary
         $testLines += "#     Changes to this file may cause incorrect behavior and will be lost if the code is regenerated."
         $testLines += "# </auto-generated>"
         $testLines += ""
-        $testLines += ". `$PSScriptRoot/../Common.ps1"
-        $testLines += ""
         $testLines += "Describe 'Invoke-Dataverse$cmdletName' -Tag 'SDK' {"
         $testLines += ""
         $testLines += "    BeforeAll {"
@@ -1174,6 +1172,28 @@ $classSummary
                         $testParamSetup += "        `$test${paramName}Id = [Guid]::Parse('87654321-4321-4321-4321-210987654321')"
                         $testParamSetup += "        `$test$paramName = [PSCustomObject]@{ Id = `$test${paramName}Id; TableName = 'contact' }"
                     }
+                    $testParamsDefault += "-$paramName `$test$paramName"
+                } elseif ($paramTypeName -eq "Microsoft.Xrm.Sdk.EntityCollection") {
+                    # For EntityCollection parameters - create a collection with test entities
+                    $testParamSetup += "        `$entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection"
+                    $testParamSetup += "        `$testEntity = New-Object Microsoft.Xrm.Sdk.Entity('contact')"
+                    if ($requestName -match "Update|Upsert") {
+                        $testParamSetup += "        `$testEntity.Id = [Guid]::NewGuid()"
+                        $testParamSetup += "        `$testEntity['firstname'] = 'UpdatedFirst'"
+                        $testParamSetup += "        `$testEntity['lastname'] = 'UpdatedLast'"
+                    } else {
+                        $testParamSetup += "        `$testEntity['firstname'] = 'TestFirst'"
+                        $testParamSetup += "        `$testEntity['lastname'] = 'TestLast'"
+                    }
+                    $testParamSetup += "        `$entityCollection.Entities.Add(`$testEntity)"
+                    $testParamSetup += "        `$test$paramName = `$entityCollection"
+                    $testParamsDefault += "-$paramName `$test$paramName"
+                } elseif ($paramTypeName -eq "Microsoft.Xrm.Sdk.EntityReferenceCollection") {
+                    # For EntityReferenceCollection parameters - create a collection with test entity references
+                    $testParamSetup += "        `$entityRefCollection = New-Object Microsoft.Xrm.Sdk.EntityReferenceCollection"
+                    $testParamSetup += "        `$entityRef = New-Object Microsoft.Xrm.Sdk.EntityReference('contact', [Guid]::NewGuid())"
+                    $testParamSetup += "        `$entityRefCollection.Add(`$entityRef)"
+                    $testParamSetup += "        `$test$paramName = `$entityRefCollection"
                     $testParamsDefault += "-$paramName `$test$paramName"
                 } elseif ($paramTypeName -eq "System.Byte[]") {
                     # Byte array - only in Default set, test data
