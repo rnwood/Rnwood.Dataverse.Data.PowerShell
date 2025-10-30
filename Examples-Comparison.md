@@ -2102,7 +2102,7 @@ $newId = Set-DataverseRecord -Connection $conn -TableName sitemap -Fields @{
 }
 ```
 
-### Example: Add Navigation Entry to Sitemap
+### Example: Add Navigation Entry to Sitemap (Using XML)
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
@@ -2137,6 +2137,116 @@ $group.AppendChild($subarea)
 
 # Update sitemap
 Set-DataverseSitemap -Connection $conn -Name "MySitemap" -Id $sitemap.Id -SitemapXml $xml.OuterXml
+```
+
+### Example: Work with Sitemap Entries (Using Entry Cmdlets)
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Get all entries from a sitemap
+$entries = Get-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap"
+
+# Get only Areas
+$areas = Get-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" -EntryType Area
+
+# Get a specific entry
+$salesArea = Get-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" -EntryId "SalesArea"
+
+# Get Groups within an Area
+$groups = Get-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" -EntryType Group -ParentAreaId "SalesArea"
+
+# Get SubAreas within a Group
+$subareas = Get-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" -EntryType SubArea -ParentAreaId "SalesArea" -ParentGroupId "CustomersGroup"
+```
+
+### Example: Add New Navigation Entry (Using Entry Cmdlet)
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Add a new Area
+Add-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
+    -EntryType Area -EntryId "ServiceArea" `
+    -Title "Service" -ResourceId "ServiceArea.Title" `
+    -Icon "/_imgs/area/service_24x24.gif"
+
+# Add a Group to the Area
+Add-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
+    -EntryType Group -EntryId "CasesGroup" `
+    -ParentAreaId "ServiceArea" `
+    -Title "Cases" -ResourceId "CasesGroup.Title"
+
+# Add a SubArea to the Group
+Add-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
+    -EntryType SubArea -EntryId "CasesSubarea" `
+    -ParentAreaId "ServiceArea" -ParentGroupId "CasesGroup" `
+    -Entity "incident" `
+    -Title "Cases" -ResourceId "CasesSubarea.Title"
+
+# Use pipeline to add entry
+Get-DataverseSitemap -Connection $conn -Name "MySitemap" | 
+    Add-DataverseSitemapEntry -EntryType Area -EntryId "MarketingArea" -Title "Marketing"
+```
+
+### Example: Update Navigation Entry
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Update entry properties
+Set-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
+    -EntryType Area -EntryId "SalesArea" `
+    -Title "Sales & Marketing" -Icon "/_imgs/area/sales_new.gif"
+
+# Update SubArea entity
+Set-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
+    -EntryType SubArea -EntryId "AccountsSubarea" `
+    -ParentAreaId "SalesArea" -ParentGroupId "CustomersGroup" `
+    -Entity "account" -Title "Customer Accounts"
+
+# Use pipeline to update
+Get-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" -EntryId "SalesArea" |
+    Set-DataverseSitemapEntry -Title "Sales Department"
+```
+
+### Example: Remove Navigation Entry
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Remove a SubArea
+Remove-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
+    -EntryType SubArea -EntryId "OldSubarea" `
+    -ParentAreaId "SalesArea" -ParentGroupId "CustomersGroup"
+
+# Remove an Area (and all its children)
+Remove-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
+    -EntryType Area -EntryId "ObsoleteArea"
+
+# Use pipeline to remove
+Get-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" -EntryId "TempArea" |
+    Remove-DataverseSitemapEntry -Confirm:$false
+```
+
+### Example: Complex Sitemap Reorganization
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Get all SubAreas from one Group
+$oldSubareas = Get-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
+    -EntryType SubArea -ParentAreaId "SalesArea" -ParentGroupId "OldGroup"
+
+# Process each and recreate in new group
+foreach ($subarea in $oldSubareas) {
+    # Add to new group
+    Add-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
+        -EntryType SubArea -EntryId "$($subarea.Id)_new" `
+        -ParentAreaId "SalesArea" -ParentGroupId "NewGroup" `
+        -Entity $subarea.Entity -Title $subarea.Title `
+        -Icon $subarea.Icon
+    
+    # Remove from old group
+    Remove-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
+        -EntryType SubArea -EntryId $subarea.Id `
+        -ParentAreaId "SalesArea" -ParentGroupId "OldGroup" -Confirm:$false
+}
 ```
 
 ## Key Differences and Advantages
@@ -2176,3 +2286,7 @@ Set-DataverseSitemap -Connection $conn -Name "MySitemap" -Id $sitemap.Id -Sitema
 - [Get-DataverseSitemap](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSitemap.md)
 - [Set-DataverseSitemap](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSitemap.md)
 - [Remove-DataverseSitemap](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseSitemap.md)
+- [Get-DataverseSitemapEntry](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSitemapEntry.md)
+- [Add-DataverseSitemapEntry](Rnwood.Dataverse.Data.PowerShell/docs/Add-DataverseSitemapEntry.md)
+- [Set-DataverseSitemapEntry](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSitemapEntry.md)
+- [Remove-DataverseSitemapEntry](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseSitemapEntry.md)
