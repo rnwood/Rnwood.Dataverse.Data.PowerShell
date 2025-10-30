@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -RelatedEntities
-Gets or sets the collection of entity references (references to records) to be disassociated. Required.
+Gets or sets the collection of entity references (references to records) to be associated. Required.
 
 ```yaml
 Type: EntityReferenceCollection
@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -Relationship
-Get or sets the name of the relationship to be used for the disassociation. Required.
+Get or sets the relationship name to be used for an association. Required.
 
 ```yaml
 Type: Relationship
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -Target
-Gets or sets the record from which the related records will be disassociated. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the target that is the record to which the related records are associated. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject

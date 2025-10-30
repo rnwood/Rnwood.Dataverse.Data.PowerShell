@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Requests
-Gets or sets the collection of message requests to execute.
+Gets or sets the collection of requests to execute.
 
 ```yaml
 Type: OrganizationRequestCollection

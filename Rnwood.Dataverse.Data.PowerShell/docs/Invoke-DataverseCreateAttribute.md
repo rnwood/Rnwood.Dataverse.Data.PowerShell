@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityName
-Gets or sets the name of the table for which you want to create an column. Required.
+Gets or sets the logical table name to check whether it can be the primary table in a one-to-many relationship. Required.
 
 ```yaml
 Type: String
