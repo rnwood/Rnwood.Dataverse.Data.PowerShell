@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Name
-Gets or sets the name of the global choice to delete. Required.
+For internal use only.
 
 ```yaml
 Type: String

@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name of the table that contains the column. Optional.
+Gets or sets the logical name for the entity. Required.
 
 ```yaml
 Type: String
@@ -108,7 +108,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the solution name associated with this option value. Optional.
+Gets or sets the unique name of the solution you are adding the solution component to. Required.
 
 ```yaml
 Type: String
@@ -123,7 +123,7 @@ Accept wildcard characters: False
 ```
 
 ### -Value
-Gets or sets the value of the option to delete. Required.
+For internal use only.
 
 ```yaml
 Type: Int32

@@ -5,7 +5,7 @@ if ($env:TESTMODULEPATH) {
     $source = $env:TESTMODULEPATH
 }
 else {
-    $source = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0/"
+    $source = (Resolve-Path "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0").Path
 }
 
 $tempmodulefolder = "$([IO.Path]::GetTempPath())/$([Guid]::NewGuid())"
@@ -50,9 +50,9 @@ function global:newPwsh([scriptblock] $scriptblock) {
     }
 }
 
-# Dynamically discover and include all test files
-# In this repository, test files use *.Tests.ps1 pattern
-$testFiles = Get-ChildItem -Path $PSScriptRoot -Filter "*.Tests.ps1" -Recurse | 
+# Dynamically discover and source all test files
+# Test files do NOT have .Tests in their name according to base branch
+$testFiles = Get-ChildItem -Path $PSScriptRoot -Include "*.Tests.ps1" -Recurse | 
     Where-Object { 
         $_.Name -ne "All.Tests.ps1"
     }

@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Query
-Gets or sets the query criteria for the retrieval. Required.
+Gets or sets the query to find the email activities to send.
 
 ```yaml
 Type: QueryBase

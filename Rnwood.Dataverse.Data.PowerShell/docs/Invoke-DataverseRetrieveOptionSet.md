@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -Name
-Gets or sets the name for the global choice to be retrieved. Optional.
+For internal use only.
 
 ```yaml
 Type: String

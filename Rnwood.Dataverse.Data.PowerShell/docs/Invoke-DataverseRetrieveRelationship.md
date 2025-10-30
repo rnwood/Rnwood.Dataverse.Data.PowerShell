@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -Name
-Gets or sets the schema name for the entity relationship to be retrieved. Optional.
+For internal use only.
 
 ```yaml
 Type: String

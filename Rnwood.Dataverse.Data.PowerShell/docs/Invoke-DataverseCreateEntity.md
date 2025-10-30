@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -Entity
-Gets or sets the metadata for the table that you want to create. Required.
+Gets an entity that contains the attributes relevant to the calculated rollup column.
 
 ```yaml
 Type: EntityMetadata
@@ -138,7 +138,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the name of the unmanaged solution to which you want to add this table. Optional.
+Gets or sets the unique name of the solution you are adding the solution component to. Required.
 
 ```yaml
 Type: String
