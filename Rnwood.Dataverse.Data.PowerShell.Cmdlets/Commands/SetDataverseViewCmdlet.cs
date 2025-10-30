@@ -15,9 +15,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     [OutputType(typeof(Guid))]
     public class SetDataverseViewCmdlet : OrganizationServiceCmdlet
     {
-        private const string PARAMSET_SIMPLE = "Simple";
-        private const string PARAMSET_FETCHXML = "FetchXml";
-
         /// <summary>
         /// Gets or sets the ID of the view to update. If not specified or if the view doesn't exist, a new view is created.
         /// </summary>
@@ -53,7 +50,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the columns to include in the view. Used for creating new views or replacing columns in existing views.
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Columns to include in the view. Can be an array of column names or hashtables with column configuration (name, width, etc.)")]
+        [Parameter(HelpMessage = "Columns to include in the view. Can be an array of column names or hashtables with column configuration (name, width, etc.)")]
         [ArgumentCompleter(typeof(ColumnNameArgumentCompleter))]
         public object[] Columns { get; set; }
 
@@ -80,14 +77,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets filter values for the view query.
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "One or more hashtables to filter records. Each hashtable's entries are combined with AND; multiple hashtables are combined with OR. Keys may be 'column' or 'column:Operator' (Operator is a ConditionOperator name). Values may be a literal, an array (treated as IN), $null (treated as ISNULL), or a nested hashtable with keys 'value' and 'operator'. Supports grouped filters using 'and', 'or', 'not', or 'xor' keys with nested hashtables for complex logical expressions.")]
+        [Parameter(HelpMessage = "One or more hashtables to filter records. Each hashtable's entries are combined with AND; multiple hashtables are combined with OR. Keys may be 'column' or 'column:Operator' (Operator is a ConditionOperator name). Values may be a literal, an array (treated as IN), $null (treated as ISNULL), or a nested hashtable with keys 'value' and 'operator'. Supports grouped filters using 'and', 'or', 'not', or 'xor' keys with nested hashtables for complex logical expressions.")]
         [ArgumentCompleter(typeof(FilterValuesArgumentCompleter))]
         public Hashtable[] FilterValues { get; set; }
 
         /// <summary>
         /// Gets or sets the FetchXml query for the view.
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_FETCHXML, HelpMessage = "FetchXml query to use for the view")]
+        [Parameter(HelpMessage = "FetchXml query to use for the view")]
         public string FetchXml { get; set; }
 
         /// <summary>
@@ -261,8 +258,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     string fetchXml = FetchXml;
                     string layoutXml = LayoutXml;
 
-                    // Build FetchXml from simple filter if needed
-                    if (ParameterSetName == PARAMSET_SIMPLE || (string.IsNullOrEmpty(fetchXml) && Columns != null))
+                    // Build FetchXml from simple filter if needed (when FetchXml not provided but Columns are)
+                    if (string.IsNullOrEmpty(fetchXml) && Columns != null)
                     {
                         fetchXml = BuildFetchXmlFromSimpleFilter();
                     }
