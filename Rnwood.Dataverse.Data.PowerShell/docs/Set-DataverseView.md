@@ -12,21 +12,12 @@ schema: 2.0.0
 
 ## SYNTAX
 
-### Simple
 ```
 Set-DataverseView [-Id <Guid>] [-Name <String>] [-TableName <String>] [-SystemView] [-Description <String>]
  [-Columns <Object[]>] [-AddColumns <Object[]>] [-RemoveColumns <String[]>] [-UpdateColumns <Hashtable[]>]
- [-FilterValues <Hashtable[]>] [-LayoutXml <String>] [-IsDefault] [-QueryType <Int32>] [-NoUpdate] [-NoCreate]
- [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
-```
-
-### FetchXml
-```
-Set-DataverseView [-Id <Guid>] [-Name <String>] [-TableName <String>] [-SystemView] [-Description <String>]
- [-AddColumns <Object[]>] [-RemoveColumns <String[]>] [-UpdateColumns <Hashtable[]>] [-FetchXml <String>]
- [-LayoutXml <String>] [-IsDefault] [-QueryType <Int32>] [-NoUpdate] [-NoCreate] [-PassThru]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-FilterValues <Hashtable[]>] [-FetchXml <String>] [-LayoutXml <String>] [-IsDefault] [-QueryType <Int32>]
+ [-NoUpdate] [-NoCreate] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -65,7 +56,7 @@ Can be an array of column names or hashtables with column configuration (name, w
 
 ```yaml
 Type: Object[]
-Parameter Sets: Simple
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -127,7 +118,7 @@ FetchXml query to use for the view
 
 ```yaml
 Type: String
-Parameter Sets: FetchXml
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -146,7 +137,7 @@ Supports grouped filters using 'and', 'or', 'not', or 'xor' keys with nested has
 
 ```yaml
 Type: Hashtable[]
-Parameter Sets: Simple
+Parameter Sets: (All)
 Aliases:
 
 Required: False

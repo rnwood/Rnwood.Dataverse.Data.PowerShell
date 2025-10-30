@@ -545,3 +545,180 @@ Describe "View Management Cmdlets" {
         }
     }
 }
+
+    Context "Get-DataverseView - Retrieval" {
+        It "Gets all views" {
+            $connection = getMockConnection
+            
+            # Create a few views first
+            $viewId1 = Set-DataverseView -PassThru -Connection $connection `
+                -Name "View 1" `
+                -TableName contact `
+                -Columns @("firstname")
+            
+            $viewId2 = Set-DataverseView -PassThru -Connection $connection `
+                -Name "View 2" `
+                -TableName contact `
+                -SystemView `
+                -Columns @("lastname")
+            
+            # Get all views
+            $views = Get-DataverseView -Connection $connection
+            
+            $views | Should -Not -BeNullOrEmpty
+            $views.Count | Should -BeGreaterThan 0
+        }
+
+        It "Gets view by ID" {
+            $connection = getMockConnection
+            
+            # Create a view
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
+                -Name "Test View by ID" `
+                -TableName contact `
+                -Columns @("firstname", "lastname")
+            
+            # Get the view by ID
+            $view = Get-DataverseView -Connection $connection -Id $viewId
+            
+            $view | Should -Not -BeNullOrEmpty
+            $view.name | Should -Be "Test View by ID"
+        }
+
+        It "Gets view by name" {
+            $connection = getMockConnection
+            
+            # Create a view with a unique name
+            $uniqueName = "Unique View Name $(Get-Random)"
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
+                -Name $uniqueName `
+                -TableName contact `
+                -Columns @("firstname")
+            
+            # Get the view by name
+            $view = Get-DataverseView -Connection $connection -Name $uniqueName
+            
+            $view | Should -Not -BeNullOrEmpty
+            $view.name | Should -Be $uniqueName
+        }
+
+        It "Gets views by entity/table name" {
+            $connection = getMockConnection
+            
+            # Create views for contact entity
+            $viewId1 = Set-DataverseView -PassThru -Connection $connection `
+                -Name "Contact View 1" `
+                -TableName contact `
+                -Columns @("firstname")
+            
+            $viewId2 = Set-DataverseView -PassThru -Connection $connection `
+                -Name "Contact View 2" `
+                -TableName contact `
+                -Columns @("lastname")
+            
+            # Get all views for contact entity
+            $views = Get-DataverseView -Connection $connection -TableName contact
+            
+            $views | Should -Not -BeNullOrEmpty
+            $views.Count | Should -BeGreaterThan 0
+            # All returned views should be for contact entity
+            $views | ForEach-Object { $_.returnedtypecode | Should -Be "contact" }
+        }
+
+        It "Gets only system views" {
+            $connection = getMockConnection
+            
+            # Create a system view
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
+                -Name "System View Test" `
+                -TableName contact `
+                -SystemView `
+                -Columns @("firstname")
+            
+            # Get only system views
+            $views = Get-DataverseView -Connection $connection -SystemView
+            
+            $views | Should -Not -BeNullOrEmpty
+            # All returned views should be system views
+            $views | ForEach-Object { $_.ViewType | Should -Be "System" }
+        }
+
+        It "Gets only personal views" {
+            $connection = getMockConnection
+            
+            # Create a personal view
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
+                -Name "Personal View Test" `
+                -TableName contact `
+                -Columns @("firstname")
+            
+            # Get only personal views
+            $views = Get-DataverseView -Connection $connection -PersonalView
+            
+            $views | Should -Not -BeNullOrEmpty
+            # All returned views should be personal views
+            $views | ForEach-Object { $_.ViewType | Should -Be "Personal" }
+        }
+
+        It "Gets views by query type" {
+            $connection = getMockConnection
+            
+            # Create a view with specific query type (Advanced Find = 2)
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
+                -Name "Advanced Find View" `
+                -TableName contact `
+                -QueryType 2 `
+                -Columns @("firstname")
+            
+            # Get views by query type
+            $views = Get-DataverseView -Connection $connection -QueryType 2
+            
+            $views | Should -Not -BeNullOrEmpty
+            # All returned views should have query type 2
+            $views | ForEach-Object { $_.querytype | Should -Be 2 }
+        }
+
+        It "Gets views with wildcard name" {
+            $connection = getMockConnection
+            
+            # Create views with similar names
+            $viewId1 = Set-DataverseView -PassThru -Connection $connection `
+                -Name "Test View Alpha" `
+                -TableName contact `
+                -Columns @("firstname")
+            
+            $viewId2 = Set-DataverseView -PassThru -Connection $connection `
+                -Name "Test View Beta" `
+                -TableName contact `
+                -Columns @("lastname")
+            
+            # Get views using wildcard
+            $views = Get-DataverseView -Connection $connection -Name "Test View*"
+            
+            $views | Should -Not -BeNullOrEmpty
+            $views.Count | Should -BeGreaterThan 0
+            # All returned views should match the pattern
+            $views | ForEach-Object { $_.name | Should -BeLike "Test View*" }
+        }
+
+        It "Combines filters for entity and system view" {
+            $connection = getMockConnection
+            
+            # Create a system view for contact
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
+                -Name "Contact System View" `
+                -TableName contact `
+                -SystemView `
+                -Columns @("firstname", "lastname")
+            
+            # Get system views for contact entity
+            $views = Get-DataverseView -Connection $connection -TableName contact -SystemView
+            
+            $views | Should -Not -BeNullOrEmpty
+            # All returned views should be system views for contact
+            $views | ForEach-Object { 
+                $_.ViewType | Should -Be "System"
+                $_.returnedtypecode | Should -Be "contact"
+            }
+        }
+    }
