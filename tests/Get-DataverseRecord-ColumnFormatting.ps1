@@ -62,7 +62,7 @@ Describe 'Get-DataverseRecord - Column Formatting' {
     }
 
     Context 'Column Format with :Raw and :Display Suffixes' {
-        It "Returns raw values when column has :Raw suffix" -Skip {
+        It "Returns raw values when column has :Raw suffix" {
             # Note: :Raw/:Display suffix syntax may not be supported by the cmdlet
             # This test validates expected behavior but may need cmdlet enhancement
             $connection = getMockConnection
@@ -89,7 +89,7 @@ Describe 'Get-DataverseRecord - Column Formatting' {
             $allContacts | Should -HaveCount 1
         }
 
-        It "Returns display values when column has :Display suffix" -Skip {
+        It "Returns display values when column has :Display suffix" {
             # Note: :Raw/:Display suffix syntax may not be supported by the cmdlet
             $connection = getMockConnection
             
@@ -115,7 +115,7 @@ Describe 'Get-DataverseRecord - Column Formatting' {
             $allContacts | Should -HaveCount 1
         }
 
-        It "Handles multiple columns with different format suffixes" -Skip {
+        It "Handles multiple columns with different format suffixes" {
             # Note: :Raw/:Display suffix syntax may not be supported by the cmdlet
             $connection = getMockConnection
             
