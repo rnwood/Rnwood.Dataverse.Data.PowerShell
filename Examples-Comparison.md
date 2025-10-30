@@ -2164,19 +2164,19 @@ $subareas = Get-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap"
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
 # Add a new Area
-Add-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
+Set-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
     -EntryType Area -EntryId "ServiceArea" `
     -Title "Service" -ResourceId "ServiceArea.Title" `
     -Icon "/_imgs/area/service_24x24.gif"
 
 # Add a Group to the Area
-Add-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
+Set-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
     -EntryType Group -EntryId "CasesGroup" `
     -ParentAreaId "ServiceArea" `
     -Title "Cases" -ResourceId "CasesGroup.Title"
 
 # Add a SubArea to the Group
-Add-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
+Set-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
     -EntryType SubArea -EntryId "CasesSubarea" `
     -ParentAreaId "ServiceArea" -ParentGroupId "CasesGroup" `
     -Entity "incident" `
@@ -2184,7 +2184,7 @@ Add-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
 
 # Use pipeline to add entry
 Get-DataverseSitemap -Connection $conn -Name "MySitemap" | 
-    Add-DataverseSitemapEntry -EntryType Area -EntryId "MarketingArea" -Title "Marketing"
+    Set-DataverseSitemapEntry -EntryType Area -EntryId "MarketingArea" -Title "Marketing"
 ```
 
 ### Example: Update Navigation Entry
@@ -2236,7 +2236,7 @@ $oldSubareas = Get-DataverseSitemapEntry -Connection $conn -SitemapName "MySitem
 # Process each and recreate in new group
 foreach ($subarea in $oldSubareas) {
     # Add to new group
-    Add-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
+    Set-DataverseSitemapEntry -Connection $conn -SitemapName "MySitemap" `
         -EntryType SubArea -EntryId "$($subarea.Id)_new" `
         -ParentAreaId "SalesArea" -ParentGroupId "NewGroup" `
         -Entity $subarea.Entity -Title $subarea.Title `
@@ -2287,6 +2287,5 @@ foreach ($subarea in $oldSubareas) {
 - [Set-DataverseSitemap](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSitemap.md)
 - [Remove-DataverseSitemap](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseSitemap.md)
 - [Get-DataverseSitemapEntry](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSitemapEntry.md)
-- [Add-DataverseSitemapEntry](Rnwood.Dataverse.Data.PowerShell/docs/Add-DataverseSitemapEntry.md)
 - [Set-DataverseSitemapEntry](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSitemapEntry.md)
 - [Remove-DataverseSitemapEntry](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseSitemapEntry.md)
