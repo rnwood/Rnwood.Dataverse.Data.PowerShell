@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -QueueItemId
-Gets or sets the ID of the queue item to remove from the queue. Required.The property corresponds to the attribute, which is the primary key for the entity.
+Gets or sets the
 
 ```yaml
 Type: Guid

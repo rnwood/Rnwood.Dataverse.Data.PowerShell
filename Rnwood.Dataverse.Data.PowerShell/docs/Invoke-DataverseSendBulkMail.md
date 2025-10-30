@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -Query
-Gets or sets the query to retrieve the recipients for the email messages.
+Gets or sets the query representing the metadata to return.
 
 ```yaml
 Type: QueryBase
@@ -108,7 +108,7 @@ Accept wildcard characters: False
 ```
 
 ### -Sender
-Gets or sets the sender of the email messages. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the sender of the email messages. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject
@@ -123,7 +123,7 @@ Accept wildcard characters: False
 ```
 
 ### -TemplateId
-Gets or sets the ID of the email template to use.
+Sets the ID of the template (email template) that is used for the email notification.
 
 ```yaml
 Type: Guid

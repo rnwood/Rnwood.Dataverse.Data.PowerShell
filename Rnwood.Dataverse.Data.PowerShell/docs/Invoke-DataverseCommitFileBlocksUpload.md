@@ -33,7 +33,7 @@ PS C:\> Invoke-DataverseCommitFileBlocksUpload -Connection <ServiceClient> -File
 ## PARAMETERS
 
 ### -BlockList
-Gets or sets the IDs of the uploaded data blocks, in the correct sequence, that will result in the final data file when the data blocks are combined.
+Gets or sets the IDs of the uploaded data blocks, in the correct sequence, that will result in the final annotation when the data blocks are combined.
 
 ```yaml
 Type: String[]

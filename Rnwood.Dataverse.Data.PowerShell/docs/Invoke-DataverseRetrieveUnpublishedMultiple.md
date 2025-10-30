@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Query
-Gets or sets the query criteria defining the records to retrieve.Required.
+Gets or sets the query representing the metadata to return.
 
 ```yaml
 Type: QueryBase

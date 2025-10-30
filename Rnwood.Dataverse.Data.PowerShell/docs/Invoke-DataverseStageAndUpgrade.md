@@ -107,7 +107,7 @@ Accept wildcard characters: False
 ```
 
 ### -ConvertToManaged
-Gets or sets whether to convert any matching unmanaged customizations into your managed solution. Obsolete.
+Obsolete. The system will convert unmanaged solution components to managed when you import a managed solution.
 
 ```yaml
 Type: Boolean
@@ -137,7 +137,7 @@ Accept wildcard characters: False
 ```
 
 ### -ImportJobId
-Gets or sets the ID of the import job that will be created to perform this import. Required.
+The ID of the Import Job.
 
 ```yaml
 Type: Guid
@@ -242,7 +242,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionParameters
-Gets or sets additional solution parameters.
+Gets or sets additional parameters for the solution.
 
 ```yaml
 Type: SolutionParameters

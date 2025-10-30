@@ -1,7 +1,4 @@
 Describe 'Default Connection' {
-
-    . $PSScriptRoot/Common.ps1
-
     It "SetAsDefault switch stores connection as default" {
         $connection = getMockConnection
         

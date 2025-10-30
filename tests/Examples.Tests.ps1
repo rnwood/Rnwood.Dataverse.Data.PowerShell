@@ -1,5 +1,3 @@
-. $PSScriptRoot/Common.ps1
-
 Describe "Examples-Comparison Documentation Tests" {
 
     BeforeAll {

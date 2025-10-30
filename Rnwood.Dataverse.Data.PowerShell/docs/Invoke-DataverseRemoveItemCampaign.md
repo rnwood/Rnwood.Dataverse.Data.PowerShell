@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityId
-Gets or sets the ID of the item to be removed from the campaign. Required.
+Gets the of the newly created table.
 
 ```yaml
 Type: Guid

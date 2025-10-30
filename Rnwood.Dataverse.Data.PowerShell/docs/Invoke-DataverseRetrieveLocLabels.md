@@ -33,7 +33,7 @@ PS C:\> Invoke-DataverseRetrieveLocLabels -Connection <ServiceClient> -EntityMon
 ## PARAMETERS
 
 ### -AttributeName
-Gets or sets the name of the attribute for which to retrieve the localized labels. Required.
+Gets or sets the AttributeName for the request.
 
 ```yaml
 Type: String
@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityMoniker
-Gets or sets the entity. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the record that is the source for initializing. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject

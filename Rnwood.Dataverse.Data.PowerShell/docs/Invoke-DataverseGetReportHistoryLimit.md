@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -ReportId
-Gets or sets the ID of the report. Required.
+Gets or sets the ID of the report to download.
 
 ```yaml
 Type: Guid

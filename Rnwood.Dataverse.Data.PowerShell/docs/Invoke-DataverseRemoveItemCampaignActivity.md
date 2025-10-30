@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -ItemId
-Gets or sets the ID of the item to be removed from the campaign activity. Required.
+Gets or sets the ID of the item to be added to the campaign activity. Required.
 
 ```yaml
 Type: Guid

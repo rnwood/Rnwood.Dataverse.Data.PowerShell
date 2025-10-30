@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -MemberIds
-Gets or sets an array of IDs for the users you want to add to the team. Required.
+Gets or sets an array of IDs of the members that you want to add to the list. Required.
 
 ```yaml
 Type: Guid[]

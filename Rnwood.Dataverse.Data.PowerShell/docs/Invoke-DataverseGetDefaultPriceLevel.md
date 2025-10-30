@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseGetDefaultPriceLevel -Connection <ServiceClient> -Entity
 ## PARAMETERS
 
 ### -ColumnSet
-For internal use only.
+Gets or sets the collection of columns for which non-null values are returned from a query. Required.
 
 ```yaml
 Type: ColumnSet
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityName
-For internal use only.
+Gets or sets the logical name of the entity.
 
 ```yaml
 Type: String

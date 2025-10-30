@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -columnNumber
-Gets or sets a column number in the CSV, XML Spreadsheet 2003 (.xml), or text source file for which the distinct values are returned. Required.
+Gets or sets a column number value to identify an attribute from the Audit.AttributeMask column Optional.
 
 ```yaml
 Type: Int32

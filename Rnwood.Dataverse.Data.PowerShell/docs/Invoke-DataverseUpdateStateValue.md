@@ -94,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -Description
-For internal use only.
+Gets or sets a description for the option. Optional.
 
 ```yaml
 Type: Label
@@ -109,7 +109,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name for the entity. Required.
+Gets or sets the logical name of the table that contains the column. Required.
 
 ```yaml
 Type: String
@@ -169,7 +169,7 @@ Accept wildcard characters: False
 ```
 
 ### -Value
-For internal use only.
+Gets or sets the value of the option to delete. Required.
 
 ```yaml
 Type: Int32

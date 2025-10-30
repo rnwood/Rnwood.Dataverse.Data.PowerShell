@@ -32,7 +32,7 @@ PS C:\> Invoke-DataverseGenerateSalesOrderFromOpportunity -Connection <ServiceCl
 ## PARAMETERS
 
 ### -ColumnSet
-Gets or sets the collection of attributes to retrieve from the resulting sales order (order). Required.
+Gets or sets the collection of columns for which non-null values are returned from a query. Required.
 
 ```yaml
 Type: ColumnSet
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -OpportunityId
-Gets or sets the ID of the opportunity to be used as the basis for the new sales order (order). Required.
+Gets or sets the ID of the opportunity. Required.
 
 ```yaml
 Type: Guid

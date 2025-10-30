@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -DisplayName
-Display name of the Discovery Server
+Gets or sets the display name for the attribute.
 
 ```yaml
 Type: String
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -VersionNumber
-Gets or sets the version number of the patch.
+Specifies to display the string as a version number. Value = 6.
 
 ```yaml
 Type: String

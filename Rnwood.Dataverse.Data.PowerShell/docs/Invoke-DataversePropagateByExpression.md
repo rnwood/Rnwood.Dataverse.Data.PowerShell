@@ -36,7 +36,7 @@ PS C:\> Invoke-DataversePropagateByExpression -Connection <ServiceClient> -Query
 ## PARAMETERS
 
 ### -Activity
-Gets or sets the activity to be distributed. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
+Gets or sets the activity to be distributed. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
 
 ```yaml
 Type: PSObject
@@ -51,7 +51,7 @@ Accept wildcard characters: False
 ```
 
 ### -ActivityIgnoreProperties
-Gets or sets the activity to be distributed. Required. Properties to ignore when converting Activity PSObject to Entity.
+Gets or sets the activity to be distributed. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Properties to ignore when converting Activity PSObject to Entity.
 
 ```yaml
 Type: String[]
@@ -66,7 +66,7 @@ Accept wildcard characters: False
 ```
 
 ### -ActivityLookupColumns
-Gets or sets the activity to be distributed. Required. Hashtable specifying lookup columns for entity reference conversions in Activity.
+Gets or sets the activity to be distributed. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Hashtable specifying lookup columns for entity reference conversions in Activity.
 
 ```yaml
 Type: Hashtable
@@ -81,7 +81,7 @@ Accept wildcard characters: False
 ```
 
 ### -ActivityTableName
-Gets or sets the activity to be distributed. Required. The logical name of the table/entity type for the Activity parameter.
+Gets or sets the activity to be distributed. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. The logical name of the table/entity type for the Activity parameter.
 
 ```yaml
 Type: String
@@ -141,7 +141,7 @@ Accept wildcard characters: False
 ```
 
 ### -FriendlyName
-Gets or sets the user-identifiable name for the campaign. Required.
+Gets or sets the friendly name of the organization.
 
 ```yaml
 Type: String
@@ -156,7 +156,7 @@ Accept wildcard characters: False
 ```
 
 ### -Owner
-Gets or sets the owner for the activity. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the owner for the activity. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject
@@ -171,7 +171,7 @@ Accept wildcard characters: False
 ```
 
 ### -OwnershipOptions
-Gets or sets the ownership options for propagation. Required.
+Gets or sets the propagation ownership options. Required.
 
 ```yaml
 Type: PropagationOwnershipOptions
@@ -202,7 +202,7 @@ Accept wildcard characters: False
 ```
 
 ### -QueryExpression
-Gets or sets the query criteria to select accounts, contacts, or leads for which activities are created. Required.
+Gets or sets the query criteria to find knowledge articles with specified text. Required.
 
 ```yaml
 Type: QueryBase
@@ -217,7 +217,7 @@ Accept wildcard characters: False
 ```
 
 ### -QueueId
-Gets or sets the ID of the queue to which the created activities are added. Optional.
+Gets or sets the ID of the queue. Required
 
 ```yaml
 Type: Guid
@@ -247,7 +247,7 @@ Accept wildcard characters: False
 ```
 
 ### -TemplateId
-Gets or sets the ID of the email template. Required.
+Sets the ID of the template (email template) that is used for the email notification.
 
 ```yaml
 Type: Guid

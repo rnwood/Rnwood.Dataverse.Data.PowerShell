@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -PrivilegeNames
-Gets or set an array of privileges names that needs to be retrieved.
+Gets or sets the PrivilegeNames for the request.
 
 ```yaml
 Type: String[]
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -UserId
-Gets or sets the systemuserid of the user to retrieve the privileges for. Required.
+Gets or sets the Microsoft Dynamics 365 system user ID of the client.
 
 ```yaml
 Type: Guid

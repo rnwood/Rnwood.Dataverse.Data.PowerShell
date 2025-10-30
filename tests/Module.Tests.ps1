@@ -1,6 +1,4 @@
 Describe "Module" {
-    . $PSScriptRoot/Common.ps1
-
     It "Given the module is installed, it is listed as available" {
         Get-Module -ListAvailable Rnwood.Dataverse.Data.PowerShell | Should -HaveCount 1
     }
@@ -69,8 +67,6 @@ Describe "Module" {
     }
 
     It "Get-DataverseConnection supports optional URL for environment selection" {
-        . $PSScriptRoot/Common.ps1
-        
         # Import module if not already loaded
         if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
             Import-Module Rnwood.Dataverse.Data.PowerShell

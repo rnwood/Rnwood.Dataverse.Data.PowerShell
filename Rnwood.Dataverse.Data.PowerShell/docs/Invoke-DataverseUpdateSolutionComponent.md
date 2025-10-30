@@ -33,7 +33,7 @@ PS C:\> Invoke-DataverseUpdateSolutionComponent -Connection <ServiceClient> -Com
 ## PARAMETERS
 
 ### -ComponentId
-Gets or sets the unique identifier of the component to update.
+Gets or sets the ID of the solution component. Required.
 
 ```yaml
 Type: Guid
@@ -48,7 +48,7 @@ Accept wildcard characters: False
 ```
 
 ### -ComponentType
-Gets or sets the type of component to be updated.
+Gets or sets the value that represents the solution component that you are adding. Required.
 
 ```yaml
 Type: Int32
@@ -108,7 +108,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the unique name of the solution where the component should exist.
+Gets or sets the name of the unmanaged solution to which you want to add this column. Optional.
 
 ```yaml
 Type: String

@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -ContractId
-Gets or sets the ID of the contract to be copied. Required.
+Gets or sets the ID of the contract. Required.
 
 ```yaml
 Type: Guid

@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -UserId
-Gets or sets the user to retrieve privileges for.
+Gets or sets the Microsoft Dynamics 365 system user ID of the client.
 
 ```yaml
 Type: Guid

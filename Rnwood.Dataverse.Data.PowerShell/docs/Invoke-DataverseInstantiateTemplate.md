@@ -92,7 +92,7 @@ Accept wildcard characters: False
 ```
 
 ### -TemplateId
-Gets or sets the ID of the template. Required.
+Sets the ID of the template (email template) that is used for the email notification.
 
 ```yaml
 Type: Guid

@@ -79,7 +79,7 @@ Accept wildcard characters: False
 ```
 
 ### -EndDate
-Gets or sets the end date and time of the posts that you want to retrieve. Optional.
+Gets or sets the end date and time. Required.
 
 ```yaml
 Type: DateTime
@@ -109,7 +109,7 @@ Accept wildcard characters: False
 ```
 
 ### -PageNumber
-Gets or sets, for retrieval, a specific page of posts that is designated by its page number. Required.
+Gets or sets the page number in the source file. Required.
 
 ```yaml
 Type: Int32
@@ -124,7 +124,7 @@ Accept wildcard characters: False
 ```
 
 ### -PageSize
-Gets or sets, for retrieval, the number of posts per page. Required.
+Number of records to request per page. Default is 1000.
 
 ```yaml
 Type: Int32
@@ -154,7 +154,7 @@ Accept wildcard characters: False
 ```
 
 ### -Source
-Gets or sets a value that specifies the source of the post. Optional.
+For internal use only. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: OptionSetValue
@@ -169,7 +169,7 @@ Accept wildcard characters: False
 ```
 
 ### -StartDate
-Gets or sets the start date and time of the posts that you want to retrieve. Optional.
+Gets or sets the start date of the range in UTC.
 
 ```yaml
 Type: DateTime
@@ -184,7 +184,7 @@ Accept wildcard characters: False
 ```
 
 ### -Type
-Reserved for future use.
+Gets or sets a value that specifies the change type.
 
 ```yaml
 Type: OptionSetValue
