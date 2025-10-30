@@ -34,7 +34,7 @@ try {
                 try { Remove-Item -Path $targetFile -Force -ErrorAction Stop; $removed++ } catch { Write-Warning ([string]::Format('Failed to remove {0}: {1}', $targetFile, $_.Exception.Message)) }
             }
             # Also remove corresponding test file
-            $testFile = Join-Path $testSdkDirectory "InvokeDataverse${shortName}.Tests.ps1"
+            $testFile = Join-Path $testSdkDirectory "Invoke-Dataverse${shortName}.ps1"
             if (Test-Path $testFile) {
                 try { Remove-Item -Path $testFile -Force -ErrorAction Stop; $testDeletedCount++ } catch { Write-Warning ([string]::Format('Failed to remove {0}: {1}', $testFile, $_.Exception.Message)) }
             }
@@ -55,7 +55,7 @@ try {
             }
         }
         # Remove all existing test files
-        $existingTestFiles = Get-ChildItem -Path $testSdkDirectory -File -Include '*.Tests.ps1' -Recurse -ErrorAction SilentlyContinue
+        $existingTestFiles = Get-ChildItem -Path $testSdkDirectory -File -Include '*.ps1' -Recurse -ErrorAction SilentlyContinue
         if ($existingTestFiles -and $existingTestFiles.Count -gt 0) {
             Write-Host "Removing $($existingTestFiles.Count) existing test files from $testSdkDirectory"
             foreach ($file in $existingTestFiles) {
@@ -1061,7 +1061,7 @@ $classSummary
     
     # --- Generate test file for this cmdlet ---
     try {
-        $testFileName = "Invoke-Dataverse$cmdletName.Tests.ps1"
+        $testFileName = "Invoke-Dataverse$cmdletName.ps1"
         $testPath = Join-Path $testSdkDirectory $testFileName
         
         # Determine if this cmdlet has parameter sets (specifically FromFile)

@@ -52,7 +52,7 @@ function global:newPwsh([scriptblock] $scriptblock) {
 
 # Dynamically discover and source all test files
 # Test files do NOT have .Tests in their name according to base branch
-$testFiles = Get-ChildItem -Path $PSScriptRoot -Include "*.Tests.ps1" -Recurse | 
+$testFiles = Get-ChildItem -Path $PSScriptRoot -Include "*.ps1" -Recurse | 
     Where-Object { 
         $_.Name -ne "All.Tests.ps1"
     }
