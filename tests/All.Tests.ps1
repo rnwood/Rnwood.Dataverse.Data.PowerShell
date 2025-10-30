@@ -20,7 +20,7 @@ Import-Module Rnwood.Dataverse.Data.PowerShell -Force
 # Helper functions in global scope so all tests can access them
 $script:metadata = $null
 
-function global:getMockConnection() {
+function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null) {
     if (-not $script:metadata) {
         if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
             Import-Module Rnwood.Dataverse.Data.PowerShell
@@ -37,7 +37,7 @@ function global:getMockConnection() {
         }
     }
    
-    $mockService = Get-DataverseConnection -url https://fake.crm.dynamics.com/ -mock $script:metadata
+    $mockService = Get-DataverseConnection -url https://fake.crm.dynamics.com/ -mock $script:metadata -RequestInterceptor $RequestInterceptor
     return $mockService
 }
 

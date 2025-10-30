@@ -75,6 +75,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public EntityMetadata[] Mock { get; set; }
 
 		/// <summary>
+		/// Gets or sets the ScriptBlock to intercept requests for testing purposes.
+		/// </summary>
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_MOCK, HelpMessage = "ScriptBlock to intercept and modify requests. The ScriptBlock receives the OrganizationRequest and can throw exceptions or return modified responses.")]
+		public ScriptBlock RequestInterceptor { get; set; }
+
+		/// <summary>
 		/// Gets or sets the client ID to use for authentication.
 		/// </summary>
 		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
@@ -245,8 +251,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         .Build();
 						xrmFakeContext.InitializeMetadata(Mock);
 
+						// Get the fake service from FakeXrmEasy
+						var fakeService = xrmFakeContext.GetOrganizationService();
+						IOrganizationService orgService = new ThreadSafeOrganizationServiceProxy(fakeService);
+
+						// If RequestInterceptor is provided, wrap with script block interceptor
+						if (RequestInterceptor != null)
+						{
+							orgService = new MockOrganizationServiceWithScriptBlock(orgService, RequestInterceptor);
+						}
+
 						ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
-						result = (ServiceClient)contructor.Invoke(new object[] { xrmFakeContext.GetOrganizationService(), new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9, 2), A.Fake<ILogger>() });
+						result = (ServiceClient)contructor.Invoke(new object[] { orgService, new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9, 2), A.Fake<ILogger>() });
 						break;
 
 					case PARAMSET_CONNECTIONSTRING:
