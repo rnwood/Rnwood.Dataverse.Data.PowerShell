@@ -2,6 +2,81 @@
 
 This document provides examples of using the new comprehensive metadata CRUD cmdlets.
 
+## Table of Contents
+
+- [Metadata Cache](#metadata-cache)
+- [Get Cmdlets (Read Operations)](#get-cmdlets-read-operations)
+- [Set Cmdlets (Create/Update Operations)](#set-cmdlets-createupdate-operations)
+- [Remove Cmdlets (Delete Operations)](#remove-cmdlets-delete-operations)
+- [Advanced Scenarios](#advanced-scenarios)
+
+## Metadata Cache
+
+The module includes a global metadata cache that can significantly improve performance when working with metadata operations.
+
+### Enabling the Cache
+
+```powershell
+# Enable global metadata cache
+Set-DataverseMetadataCache $true
+
+# Check if cache is enabled
+$isEnabled = Get-DataverseMetadataCache
+```
+
+### Using the Cache
+
+Once enabled, use the `-UseMetadataCache` parameter on Get cmdlets to utilize the shared cache:
+
+```powershell
+# Use cache for entity metadata retrieval
+$metadata = Get-DataverseEntityMetadata -Connection $conn -EntityName contact -UseMetadataCache
+
+# Use cache for listing entities
+$entities = Get-DataverseEntities -Connection $conn -UseMetadataCache
+
+# Use cache for attribute metadata
+$attributes = Get-DataverseAttribute -Connection $conn -EntityName contact -UseMetadataCache
+```
+
+### Cache Invalidation
+
+The cache is automatically invalidated when you make changes using Set or Remove cmdlets:
+
+```powershell
+# This will automatically invalidate the cache for the 'new_project' entity
+Set-DataverseAttribute -Connection $conn `
+    -EntityName new_project `
+    -AttributeName new_field `
+    -AttributeType String `
+    -DisplayName "New Field"
+
+# Next retrieval will fetch fresh data
+$metadata = Get-DataverseEntityMetadata -Connection $conn -EntityName new_project -UseMetadataCache
+```
+
+### Clearing the Cache
+
+```powershell
+# Clear all cached metadata
+Clear-DataverseMetadataCache
+
+# Clear cache for a specific connection
+Clear-DataverseMetadataCache -Connection $conn
+
+# Disable caching
+Set-DataverseMetadataCache $false
+```
+
+### Performance Benefits
+
+Using the metadata cache can significantly reduce API calls and improve performance when:
+- Repeatedly accessing the same metadata
+- Working with multiple cmdlets that need the same metadata
+- Performing bulk operations that require metadata lookups
+
+**Note**: The cache is shared across all cmdlets in your PowerShell session, so once metadata is cached, all subsequent operations can benefit from it.
+
 ## Get Cmdlets (Read Operations)
 
 ### Get-DataverseEntityMetadata

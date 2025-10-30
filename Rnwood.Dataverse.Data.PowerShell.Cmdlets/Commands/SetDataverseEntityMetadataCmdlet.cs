@@ -254,6 +254,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Entity created successfully with MetadataId: {response.EntityId}");
 
+            // Invalidate cache for this entity
+            InvalidateEntityCache();
+
             if (PassThru)
             {
                 // Retrieve and return the created entity
@@ -337,6 +340,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Entity updated successfully");
 
+            // Invalidate cache for this entity
+            InvalidateEntityCache();
+
             if (PassThru)
             {
                 // Retrieve and return the updated entity
@@ -350,6 +356,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
                 var result = ConvertEntityMetadataToPSObject(retrieveResponse.EntityMetadata);
                 WriteObject(result);
+            }
+        }
+
+        private void InvalidateEntityCache()
+        {
+            if (MetadataCache.IsEnabled)
+            {
+                var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
+                MetadataCache.InvalidateEntity(connectionKey, EntityName);
+                WriteVerbose($"Invalidated metadata cache for entity '{EntityName}'");
             }
         }
 

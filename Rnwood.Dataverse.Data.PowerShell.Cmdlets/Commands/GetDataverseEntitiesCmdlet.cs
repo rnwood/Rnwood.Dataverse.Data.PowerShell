@@ -46,6 +46,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter IncludeDetails { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to use the shared metadata cache.
+        /// </summary>
+        [Parameter(HelpMessage = "Use the shared global metadata cache for improved performance")]
+        public SwitchParameter UseMetadataCache { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet.
         /// </summary>
         protected override void ProcessRecord()
@@ -54,18 +60,51 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             EntityFilters filters = IncludeDetails ? EntityFilters.Entity : EntityFilters.Entity;
 
-            var request = new RetrieveAllEntitiesRequest
+            EntityMetadata[] entities;
+
+            // Try cache first if enabled
+            if (UseMetadataCache && MetadataCache.IsEnabled)
             {
-                EntityFilters = filters,
-                RetrieveAsIfPublished = false
-            };
+                var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
+                if (MetadataCache.TryGetAllEntities(connectionKey, out var cachedEntities))
+                {
+                    WriteVerbose($"Retrieved {cachedEntities.Count} entities from cache");
+                    entities = cachedEntities.ToArray();
+                }
+                else
+                {
+                    var request = new RetrieveAllEntitiesRequest
+                    {
+                        EntityFilters = filters,
+                        RetrieveAsIfPublished = false
+                    };
 
-            WriteVerbose($"Retrieving all entities from Dataverse");
+                    WriteVerbose($"Retrieving all entities from Dataverse");
 
-            var response = (RetrieveAllEntitiesResponse)Connection.Execute(request);
-            var entities = response.EntityMetadata;
+                    var response = (RetrieveAllEntitiesResponse)Connection.Execute(request);
+                    entities = response.EntityMetadata;
 
-            WriteVerbose($"Retrieved {entities.Length} entities");
+                    WriteVerbose($"Retrieved {entities.Length} entities");
+
+                    // Cache the results
+                    MetadataCache.AddAllEntities(connectionKey, entities.ToList());
+                }
+            }
+            else
+            {
+                var request = new RetrieveAllEntitiesRequest
+                {
+                    EntityFilters = filters,
+                    RetrieveAsIfPublished = false
+                };
+
+                WriteVerbose($"Retrieving all entities from Dataverse");
+
+                var response = (RetrieveAllEntitiesResponse)Connection.Execute(request);
+                entities = response.EntityMetadata;
+
+                WriteVerbose($"Retrieved {entities.Length} entities");
+            }
 
             // Apply filters
             IEnumerable<EntityMetadata> filteredEntities = entities;

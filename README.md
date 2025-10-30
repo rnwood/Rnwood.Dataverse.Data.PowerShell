@@ -16,6 +16,8 @@ This module works in PowerShell Desktop and PowerShell Core, supporting Windows,
 - Multiple query methods with full support for automatic paging
 - Concise hashtable-based filters with grouped logical expressions (and/or/not/xor) and arbitrary nesting
 - Batching support for efficient bulk operations
+- **Comprehensive metadata CRUD operations** — Create, read, update, and delete entities, attributes, and option sets with full coverage of all attribute types
+- **Global metadata caching** — Optional shared cache for improved performance when working with metadata
 - Wide variety of auth options for interactive and unattended use
 - **XrmToolbox Plugin**: Embedded PowerShell console with automatic connection bridging. See [XrmToolbox Plugin README](Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/README.md)
 - Retry logic with configurable retry counts and exponential backoff
@@ -84,12 +86,29 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 
 ## Main Cmdlets
 
+### Data Operations
 - [`Get-DataverseConnection`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseConnection.md) — create or retrieve a connection
 - [`Get-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) — query and retrieve records
 - [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) — create, update or upsert records
 - [`Remove-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) — delete records
 - [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) — execute arbitrary SDK requests
 - [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) — run SQL queries against Dataverse
+
+### Metadata Operations
+- [`Get-DataverseEntityMetadata`](docs/Metadata-CRUD-Examples.md) — retrieve entity metadata
+- [`Get-DataverseEntities`](docs/Metadata-CRUD-Examples.md) — list all entities with filtering
+- [`Get-DataverseAttribute`](docs/Metadata-CRUD-Examples.md) — retrieve attribute metadata
+- [`Get-DataverseOptionSet`](docs/Metadata-CRUD-Examples.md) — retrieve option set values
+- [`Set-DataverseEntityMetadata`](docs/Metadata-CRUD-Examples.md) — create or update entities
+- [`Set-DataverseAttribute`](docs/Metadata-CRUD-Examples.md) — create or update attributes (all types)
+- [`Set-DataverseOptionSet`](docs/Metadata-CRUD-Examples.md) — create or update global option sets
+- [`Remove-DataverseEntityMetadata`](docs/Metadata-CRUD-Examples.md) — delete entities
+- [`Remove-DataverseAttribute`](docs/Metadata-CRUD-Examples.md) — delete attributes
+
+### Metadata Cache Management
+- `Set-DataverseMetadataCache` — enable or disable the global metadata cache
+- `Get-DataverseMetadataCache` — get the current cache status
+- `Clear-DataverseMetadataCache` — clear the metadata cache
 
 The module also includes many specialized `Invoke-Dataverse*` cmdlets for specific platform operations. See the [cmdlet documentation](Rnwood.Dataverse.Data.PowerShell/docs/) for the full list.
 

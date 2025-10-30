@@ -401,13 +401,163 @@ $accountMetadata = $metadata | Where-Object {$_.LogicalName -eq "account"}
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Using SQL queries against metadata
+# Direct entity metadata retrieval
+$accountMetadata = Get-DataverseEntityMetadata -Connection $conn -EntityName account
+
+# With attributes included
+$accountMetadata = Get-DataverseEntityMetadata -Connection $conn -EntityName account -IncludeAttributes
+
+# Or use SQL queries against metadata
 $entityInfo = Invoke-DataverseSql -Connection $conn -Sql @"
 SELECT name, displayname, primaryidattribute, primarynameattribute
 FROM metadata.entity
 WHERE name = 'account'
 "@
 ```
+
+### Example: List All Entities
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$metadata = Get-CrmEntityAllMetadata -conn $conn -EntityFilters Entity
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# List all entities
+$entities = Get-DataverseEntities -Connection $conn
+
+# List only custom entities with details
+$customEntities = Get-DataverseEntities -Connection $conn -OnlyCustom -IncludeDetails
+
+# List all with metadata caching for performance
+$entities = Get-DataverseEntities -Connection $conn -UseMetadataCache
+```
+
+### Example: Get Attribute Metadata
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Required complex SDK calls
+$request = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveAttributeRequest
+$request.EntityLogicalName = "contact"
+$request.LogicalName = "firstname"
+$response = $conn.Execute($request)
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Get single attribute
+$attribute = Get-DataverseAttribute -Connection $conn -EntityName contact -AttributeName firstname
+
+# Get all attributes for an entity
+$attributes = Get-DataverseAttribute -Connection $conn -EntityName contact
+
+# With metadata caching
+$attribute = Get-DataverseAttribute -Connection $conn -EntityName contact -AttributeName firstname -UseMetadataCache
+```
+
+### Example: Get Option Set Values
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex SDK calls required
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Get option set from entity attribute
+$options = Get-DataverseOptionSet -Connection $conn -EntityName contact -AttributeName preferredcontactmethodcode
+
+# Get global option set
+$options = Get-DataverseOptionSet -Connection $conn -Name my_globaloptions
+
+# List all global option sets
+$allOptions = Get-DataverseOptionSet -Connection $conn
+```
+
+### Example: Create a Custom Entity
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Requires complex SDK object creation
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+Set-DataverseEntityMetadata -Connection $conn `
+    -EntityName new_project `
+    -SchemaName new_Project `
+    -DisplayName "Project" `
+    -DisplayCollectionName "Projects" `
+    -OwnershipType UserOwned `
+    -PrimaryAttributeSchemaName new_name `
+    -HasActivities
+```
+
+### Example: Create Custom Attributes
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Requires complex SDK object creation
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Create string attribute
+Set-DataverseAttribute -Connection $conn `
+    -EntityName new_project `
+    -AttributeName new_description `
+    -SchemaName new_Description `
+    -AttributeType String `
+    -MaxLength 500 `
+    -DisplayName "Description"
+
+# Create picklist attribute with options
+Set-DataverseAttribute -Connection $conn `
+    -EntityName new_project `
+    -AttributeName new_priority `
+    -SchemaName new_Priority `
+    -AttributeType Picklist `
+    -DisplayName "Priority" `
+    -Options @(
+        @{Value=1; Label='Low'}
+        @{Value=2; Label='Medium'}
+        @{Value=3; Label='High'}
+    )
+
+# Create datetime attribute
+Set-DataverseAttribute -Connection $conn `
+    -EntityName new_project `
+    -AttributeName new_duedate `
+    -SchemaName new_DueDate `
+    -AttributeType DateTime `
+    -DateTimeFormat DateOnly `
+    -DateTimeBehavior UserLocal `
+    -DisplayName "Due Date"
+```
+
+### Example: Metadata Cache Management
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Enable global metadata cache for improved performance
+Set-DataverseMetadataCache $true
+
+# Check cache status
+$cacheEnabled = Get-DataverseMetadataCache
+
+# Use cached metadata
+$entities = Get-DataverseEntities -Connection $conn -UseMetadataCache
+
+# Clear cache (automatically invalidated on Set/Remove operations)
+Clear-DataverseMetadataCache
+
+# Clear cache for specific connection
+Clear-DataverseMetadataCache -Connection $conn
+```
+
+See [Metadata CRUD Examples](docs/Metadata-CRUD-Examples.md) for comprehensive metadata operation examples.
 
 ## SQL Queries
 

@@ -43,6 +43,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter IncludePrivileges { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to use the shared metadata cache.
+        /// </summary>
+        [Parameter(HelpMessage = "Use the shared global metadata cache for improved performance")]
+        public SwitchParameter UseMetadataCache { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet.
         /// </summary>
         protected override void ProcessRecord()
@@ -80,18 +86,51 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 filters |= EntityFilters.Privileges;
             }
 
-            var request = new RetrieveAllEntitiesRequest
+            EntityMetadata[] entities;
+
+            // Try cache first if enabled
+            if (UseMetadataCache && MetadataCache.IsEnabled)
             {
-                EntityFilters = filters,
-                RetrieveAsIfPublished = false
-            };
+                var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
+                if (MetadataCache.TryGetAllEntities(connectionKey, out var cachedEntities))
+                {
+                    WriteVerbose($"Retrieved {cachedEntities.Count} entities from cache");
+                    entities = cachedEntities.ToArray();
+                }
+                else
+                {
+                    var request = new RetrieveAllEntitiesRequest
+                    {
+                        EntityFilters = filters,
+                        RetrieveAsIfPublished = false
+                    };
 
-            WriteVerbose($"Retrieving all entity metadata with filters: {filters}");
+                    WriteVerbose($"Retrieving all entity metadata with filters: {filters}");
 
-            var response = (RetrieveAllEntitiesResponse)Connection.Execute(request);
-            var entities = response.EntityMetadata;
+                    var response = (RetrieveAllEntitiesResponse)Connection.Execute(request);
+                    entities = response.EntityMetadata;
 
-            WriteVerbose($"Retrieved {entities.Length} entities");
+                    WriteVerbose($"Retrieved {entities.Length} entities");
+
+                    // Cache the results
+                    MetadataCache.AddAllEntities(connectionKey, entities.ToList());
+                }
+            }
+            else
+            {
+                var request = new RetrieveAllEntitiesRequest
+                {
+                    EntityFilters = filters,
+                    RetrieveAsIfPublished = false
+                };
+
+                WriteVerbose($"Retrieving all entity metadata with filters: {filters}");
+
+                var response = (RetrieveAllEntitiesResponse)Connection.Execute(request);
+                entities = response.EntityMetadata;
+
+                WriteVerbose($"Retrieved {entities.Length} entities");
+            }
 
             var results = entities
                 .OrderBy(e => e.LogicalName, StringComparer.OrdinalIgnoreCase)
@@ -120,17 +159,48 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 filters |= EntityFilters.Privileges;
             }
 
-            var request = new RetrieveEntityRequest
+            EntityMetadata entityMetadata;
+
+            // Try cache first if enabled
+            if (UseMetadataCache && MetadataCache.IsEnabled)
             {
-                LogicalName = entityName,
-                EntityFilters = filters,
-                RetrieveAsIfPublished = false
-            };
+                var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
+                if (MetadataCache.TryGetEntityMetadata(connectionKey, entityName, out entityMetadata))
+                {
+                    WriteVerbose($"Retrieved entity metadata for '{entityName}' from cache");
+                }
+                else
+                {
+                    var request = new RetrieveEntityRequest
+                    {
+                        LogicalName = entityName,
+                        EntityFilters = filters,
+                        RetrieveAsIfPublished = false
+                    };
 
-            WriteVerbose($"Retrieving entity metadata for '{entityName}' with filters: {filters}");
+                    WriteVerbose($"Retrieving entity metadata for '{entityName}' with filters: {filters}");
 
-            var response = (RetrieveEntityResponse)Connection.Execute(request);
-            var entityMetadata = response.EntityMetadata;
+                    var response = (RetrieveEntityResponse)Connection.Execute(request);
+                    entityMetadata = response.EntityMetadata;
+
+                    // Cache the result
+                    MetadataCache.AddEntityMetadata(connectionKey, entityName, entityMetadata);
+                }
+            }
+            else
+            {
+                var request = new RetrieveEntityRequest
+                {
+                    LogicalName = entityName,
+                    EntityFilters = filters,
+                    RetrieveAsIfPublished = false
+                };
+
+                WriteVerbose($"Retrieving entity metadata for '{entityName}' with filters: {filters}");
+
+                var response = (RetrieveEntityResponse)Connection.Execute(request);
+                entityMetadata = response.EntityMetadata;
+            }
 
             var result = ConvertEntityMetadataToPSObject(entityMetadata, IncludeAttributes, IncludeRelationships, IncludePrivileges);
 
