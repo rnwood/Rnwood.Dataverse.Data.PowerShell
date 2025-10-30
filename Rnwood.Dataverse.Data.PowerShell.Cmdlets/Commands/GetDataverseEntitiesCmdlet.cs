@@ -66,9 +66,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (UseMetadataCache)
             {
                 var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
-                if (MetadataCache.TryGetAllEntities(connectionKey, out var cachedEntities))
+                if (MetadataCache.TryGetAllEntities(connectionKey, filters, out var cachedEntities))
                 {
-                    WriteVerbose($"Retrieved {cachedEntities.Count} entities from cache");
+                    WriteVerbose($"Retrieved {cachedEntities.Count} entities from cache (filters: {filters})");
                     entities = cachedEntities.ToArray();
                 }
                 else
@@ -87,7 +87,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     WriteVerbose($"Retrieved {entities.Length} entities");
 
                     // Cache the results
-                    MetadataCache.AddAllEntities(connectionKey, entities.ToList());
+                    MetadataCache.AddAllEntities(connectionKey, filters, entities.ToList());
                 }
             }
             else

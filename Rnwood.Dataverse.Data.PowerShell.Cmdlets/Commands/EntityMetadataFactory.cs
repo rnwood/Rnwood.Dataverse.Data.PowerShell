@@ -63,7 +63,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			EntityMetadata result;
 
 			// Try shared cache first if enabled
-			if (UseSharedCache && MetadataCache.TryGetEntityMetadata(ConnectionKey, entityName, out result))
+			if (UseSharedCache && MetadataCache.TryGetEntityMetadata(ConnectionKey, entityName, EntityFilters.All, out result))
 			{
 				return result;
 			}
@@ -86,7 +86,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				// Add to shared cache if enabled
 				if (UseSharedCache)
 				{
-					MetadataCache.AddEntityMetadata(ConnectionKey, entityName, result);
+					MetadataCache.AddEntityMetadata(ConnectionKey, entityName, EntityFilters.All, result);
 				}
 			}
 			return result;
@@ -101,7 +101,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public IEnumerable<EntityMetadata> GetAllEntityMetadata()
 		{
 			// Try shared cache first if enabled
-			if (UseSharedCache && MetadataCache.TryGetAllEntities(ConnectionKey, out var cachedEntities))
+			if (UseSharedCache && MetadataCache.TryGetAllEntities(ConnectionKey, EntityFilters.Entity, out var cachedEntities))
 			{
 				return cachedEntities;
 			}
@@ -120,7 +120,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				// Add to shared cache if enabled
 				if (UseSharedCache)
 				{
-					MetadataCache.AddAllEntities(ConnectionKey, _allEntityMetadata);
+					MetadataCache.AddAllEntities(ConnectionKey, EntityFilters.Entity, _allEntityMetadata);
 				}
 			}
 
