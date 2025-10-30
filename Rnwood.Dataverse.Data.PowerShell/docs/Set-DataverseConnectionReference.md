@@ -75,7 +75,7 @@ Sets connection references before importing a solution, ensuring they are config
 
 ### Example 5: View previous connection ID
 ```powershell
-PS C:\> $result = Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharedconnectionref" -ConnectionId "new-connection-id"
+PS C:\> $result = Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharedconnectionref" -ConnectionId "12345678-1234-1234-1234-123456789abc"
 PS C:\> Write-Host "Changed from $($result.PreviousConnectionId) to $($result.ConnectionId)"
 ```
 
