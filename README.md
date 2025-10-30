@@ -84,12 +84,18 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 
 ## Main Cmdlets
 
+### Data Operations
 - [`Get-DataverseConnection`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseConnection.md) — create or retrieve a connection
 - [`Get-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) — query and retrieve records
 - [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) — create, update or upsert records
 - [`Remove-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) — delete records
 - [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) — execute arbitrary SDK requests
 - [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) — run SQL queries against Dataverse
+
+### Form Management
+- [`Get-DataverseForm`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseForm.md) — retrieve form definitions with optional FormXml parsing
+- [`Set-DataverseForm`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseForm.md) — create or update forms with FormXml support
+- [`Remove-DataverseForm`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseForm.md) — delete forms from entities
 
 The module also includes many specialized `Invoke-Dataverse*` cmdlets for specific platform operations. See the [cmdlet documentation](Rnwood.Dataverse.Data.PowerShell/docs/) for the full list.
 
