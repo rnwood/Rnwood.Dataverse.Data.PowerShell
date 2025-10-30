@@ -97,6 +97,22 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 - [`Set-DataverseForm`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseForm.md) — create or update forms with FormXml support
 - [`Remove-DataverseForm`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseForm.md) — delete forms from entities
 
+### Form Component Management
+**Tabs:**
+- [`Get-DataverseFormTab`] — retrieve tabs from forms
+- [`Set-DataverseFormTab`] — create or update form tabs
+- [`Remove-DataverseFormTab`] — delete tabs from forms
+
+**Sections:**
+- [`Get-DataverseFormSection`] — retrieve sections from form tabs
+- [`Set-DataverseFormSection`] — create or update form sections
+- [`Remove-DataverseFormSection`] — delete sections from forms
+
+**Controls:**
+- [`Get-DataverseFormControl`] — retrieve controls from form sections
+- [`Set-DataverseFormControl`] — create or update form controls (supports all standard control types)
+- [`Remove-DataverseFormControl`] — delete controls from forms
+
 The module also includes many specialized `Invoke-Dataverse*` cmdlets for specific platform operations. See the [cmdlet documentation](Rnwood.Dataverse.Data.PowerShell/docs/) for the full list.
 
 ## Testing
