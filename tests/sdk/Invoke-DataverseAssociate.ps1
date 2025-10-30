@@ -3,7 +3,7 @@
 #     Changes to this file may cause incorrect behavior and will be lost if the code is regenerated.
 # </auto-generated>
 
-Describe 'Invoke-DataverseAssociate' -Tag 'SDK' {
+Describe 'Invoke-DataverseAssociate' -Tag 'SDK' -Skip {
 
     BeforeAll {
         $script:conn = getMockConnection

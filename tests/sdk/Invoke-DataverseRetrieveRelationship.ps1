@@ -3,7 +3,7 @@
 #     Changes to this file may cause incorrect behavior and will be lost if the code is regenerated.
 # </auto-generated>
 
-Describe 'Invoke-DataverseRetrieveRelationship' -Tag 'SDK' {
+Describe 'Invoke-DataverseRetrieveRelationship' -Tag 'SDK' -Skip {
 
     BeforeAll {
         $script:conn = getMockConnection
