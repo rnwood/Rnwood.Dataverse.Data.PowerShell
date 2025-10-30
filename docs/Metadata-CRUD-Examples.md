@@ -304,10 +304,13 @@ $attributes = @(
 )
 
 foreach ($attr in $attributes) {
+    # Convert logical name to schema name (capitalize first letter after prefix)
+    $schemaName = $attr.Name -replace '^(new_)(\w)', { $_.Groups[1].Value + $_.Groups[2].Value.ToUpper() }
+    
     $params = @{
         EntityName = 'new_customentity'
         AttributeName = $attr.Name
-        SchemaName = $attr.Name -replace '^new_', 'new_' # Ensure proper case
+        SchemaName = $schemaName
         AttributeType = $attr.Type
         DisplayName = $attr.DisplayName
     }
@@ -330,10 +333,11 @@ $sourceAttributes = Get-DataverseAttribute -EntityName source_entity
 # Create similar attributes in target entity
 foreach ($attr in $sourceAttributes | Where-Object { $_.IsCustomAttribute -eq $true }) {
     $newName = $attr.LogicalName -replace '^source_', 'target_'
+    $newSchemaName = $attr.SchemaName -replace '^source_', 'target_'
     
     Set-DataverseAttribute -EntityName target_entity `
         -AttributeName $newName `
-        -SchemaName $attr.SchemaName -replace '^source_', 'target_' `
+        -SchemaName $newSchemaName `
         -AttributeType $attr.AttributeTypeName `
         -DisplayName $attr.DisplayName `
         -MaxLength $attr.MaxLength `
