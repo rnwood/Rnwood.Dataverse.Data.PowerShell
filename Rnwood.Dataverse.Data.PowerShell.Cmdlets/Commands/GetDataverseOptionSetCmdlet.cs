@@ -11,7 +11,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// Retrieves option set values for a choice field in Dataverse.
     /// </summary>
     [Cmdlet(VerbsCommon.Get, "DataverseOptionSet")]
-    [OutputType(typeof(PSObject))]
+    [OutputType(typeof(OptionSetMetadataBase))]
     public class GetDataverseOptionSetCmdlet : OrganizationServiceCmdlet
     {
         private const string PARAMSET_ENTITY_ATTRIBUTE = "EntityAttribute";
@@ -83,9 +83,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 else if (attributeMetadata is BooleanAttributeMetadata booleanAttr)
                 {
-                    // Handle Boolean as a special case
-                    var result = ConvertBooleanOptionSetToPSObject(booleanAttr.OptionSet);
-                    WriteObject(result);
+                    // Handle Boolean as a special case - return BooleanOptionSetMetadata
+                    WriteObject(booleanAttr.OptionSet);
                     return;
                 }
                 else
@@ -142,8 +141,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
-            var psObject = ConvertOptionSetToPSObject(optionSetMetadata);
-            WriteObject(psObject);
+            WriteObject(optionSetMetadata);
         }
 
         private void RetrieveAllGlobalOptionSets()
@@ -165,72 +163,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 .OfType<OptionSetMetadata>()
                 .Where(os => os.IsGlobal == true)
                 .OrderBy(os => os.Name, StringComparer.OrdinalIgnoreCase)
-                .Select(os => ConvertOptionSetToPSObject(os))
                 .ToArray();
 
             WriteObject(results, true);
-        }
-
-        private PSObject ConvertOptionSetToPSObject(OptionSetMetadata optionSet)
-        {
-            var result = new PSObject();
-            result.Properties.Add(new PSNoteProperty("Name", optionSet.Name));
-            result.Properties.Add(new PSNoteProperty("DisplayName", optionSet.DisplayName?.UserLocalizedLabel?.Label));
-            result.Properties.Add(new PSNoteProperty("Description", optionSet.Description?.UserLocalizedLabel?.Label));
-            result.Properties.Add(new PSNoteProperty("IsGlobal", optionSet.IsGlobal));
-            result.Properties.Add(new PSNoteProperty("IsCustomOptionSet", optionSet.IsCustomOptionSet));
-            result.Properties.Add(new PSNoteProperty("IsManaged", optionSet.IsManaged));
-            result.Properties.Add(new PSNoteProperty("MetadataId", optionSet.MetadataId));
-            result.Properties.Add(new PSNoteProperty("OptionSetType", optionSet.OptionSetType?.ToString()));
-            result.Properties.Add(new PSNoteProperty("IntroducedVersion", optionSet.IntroducedVersion));
-            result.Properties.Add(new PSNoteProperty("IsCustomizable", optionSet.IsCustomizable?.Value));
-
-            if (optionSet.Options != null)
-            {
-                var options = optionSet.Options
-                    .OrderBy(o => o.Value)
-                    .Select(o => new PSObject(new
-                    {
-                        Value = o.Value,
-                        Label = o.Label?.UserLocalizedLabel?.Label,
-                        Color = o.Color,
-                        Description = o.Description?.UserLocalizedLabel?.Label,
-                        IsManaged = o.IsManaged,
-                        ExternalValue = o.ExternalValue
-                    }))
-                    .ToArray();
-                result.Properties.Add(new PSNoteProperty("Options", options));
-            }
-
-            return result;
-        }
-
-        private PSObject ConvertBooleanOptionSetToPSObject(BooleanOptionSetMetadata booleanOptionSet)
-        {
-            if (booleanOptionSet == null) return null;
-
-            var result = new PSObject();
-            result.Properties.Add(new PSNoteProperty("Name", "Boolean"));
-            result.Properties.Add(new PSNoteProperty("OptionSetType", "Boolean"));
-            result.Properties.Add(new PSNoteProperty("IsGlobal", false));
-
-            var options = new PSObject[]
-            {
-                new PSObject(new
-                {
-                    Value = booleanOptionSet.TrueOption?.Value,
-                    Label = booleanOptionSet.TrueOption?.Label?.UserLocalizedLabel?.Label
-                }),
-                new PSObject(new
-                {
-                    Value = booleanOptionSet.FalseOption?.Value,
-                    Label = booleanOptionSet.FalseOption?.Label?.UserLocalizedLabel?.Label
-                })
-            };
-
-            result.Properties.Add(new PSNoteProperty("Options", options));
-
-            return result;
         }
     }
 }

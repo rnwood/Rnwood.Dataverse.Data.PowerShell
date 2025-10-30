@@ -102,7 +102,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### None
 ## OUTPUTS
 
-### System.Management.Automation.PSObject
+### Microsoft.Xrm.Sdk.Metadata.AttributeMetadata
 ## NOTES
 
 ## RELATED LINKS

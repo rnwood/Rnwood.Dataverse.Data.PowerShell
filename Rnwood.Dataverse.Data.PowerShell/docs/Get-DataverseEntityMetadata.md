@@ -148,7 +148,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.String
 ## OUTPUTS
 
-### System.Management.Automation.PSObject
+### Microsoft.Xrm.Sdk.Metadata.EntityMetadata
 ## NOTES
 
 ## RELATED LINKS

@@ -12,7 +12,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// Retrieves a list of all entities (tables) in Dataverse.
     /// </summary>
     [Cmdlet(VerbsCommon.Get, "DataverseEntities")]
-    [OutputType(typeof(PSObject[]))]
+    [OutputType(typeof(EntityMetadata[]))]
     public class GetDataverseEntitiesCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
@@ -133,50 +133,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteVerbose($"Filtered to {filteredEntities.Count()} customizable entities");
             }
 
-            // Convert to PSObjects
+            // Convert to array and sort
             var results = filteredEntities
                 .OrderBy(e => e.LogicalName, StringComparer.OrdinalIgnoreCase)
-                .Select(e => ConvertEntityMetadataToPSObject(e, IncludeDetails))
                 .ToArray();
 
             WriteObject(results, true);
-        }
-
-        private PSObject ConvertEntityMetadataToPSObject(EntityMetadata metadata, bool includeDetails)
-        {
-            var result = new PSObject();
-
-            result.Properties.Add(new PSNoteProperty("LogicalName", metadata.LogicalName));
-            result.Properties.Add(new PSNoteProperty("SchemaName", metadata.SchemaName));
-            result.Properties.Add(new PSNoteProperty("ObjectTypeCode", metadata.ObjectTypeCode));
-            result.Properties.Add(new PSNoteProperty("IsCustomEntity", metadata.IsCustomEntity));
-            result.Properties.Add(new PSNoteProperty("IsManaged", metadata.IsManaged));
-
-            if (includeDetails)
-            {
-                result.Properties.Add(new PSNoteProperty("EntitySetName", metadata.EntitySetName));
-                result.Properties.Add(new PSNoteProperty("DisplayName", metadata.DisplayName?.UserLocalizedLabel?.Label));
-                result.Properties.Add(new PSNoteProperty("DisplayCollectionName", metadata.DisplayCollectionName?.UserLocalizedLabel?.Label));
-                result.Properties.Add(new PSNoteProperty("Description", metadata.Description?.UserLocalizedLabel?.Label));
-                result.Properties.Add(new PSNoteProperty("PrimaryIdAttribute", metadata.PrimaryIdAttribute));
-                result.Properties.Add(new PSNoteProperty("PrimaryNameAttribute", metadata.PrimaryNameAttribute));
-                result.Properties.Add(new PSNoteProperty("PrimaryImageAttribute", metadata.PrimaryImageAttribute));
-                result.Properties.Add(new PSNoteProperty("IsCustomizable", metadata.IsCustomizable?.Value));
-                result.Properties.Add(new PSNoteProperty("IsActivity", metadata.IsActivity));
-                result.Properties.Add(new PSNoteProperty("IsActivityParty", metadata.IsActivityParty));
-                result.Properties.Add(new PSNoteProperty("IsValidForQueue", metadata.IsValidForQueue));
-                result.Properties.Add(new PSNoteProperty("IsConnectionsEnabled", metadata.IsConnectionsEnabled?.Value));
-                result.Properties.Add(new PSNoteProperty("IsDocumentManagementEnabled", metadata.IsDocumentManagementEnabled));
-                result.Properties.Add(new PSNoteProperty("IsMailMergeEnabled", metadata.IsMailMergeEnabled?.Value));
-                result.Properties.Add(new PSNoteProperty("IsAuditEnabled", metadata.IsAuditEnabled?.Value));
-                result.Properties.Add(new PSNoteProperty("IsBusinessProcessEnabled", metadata.IsBusinessProcessEnabled));
-                result.Properties.Add(new PSNoteProperty("OwnershipType", metadata.OwnershipType?.ToString()));
-                result.Properties.Add(new PSNoteProperty("IsLogicalEntity", metadata.IsLogicalEntity));
-                result.Properties.Add(new PSNoteProperty("IsIntersect", metadata.IsIntersect));
-                result.Properties.Add(new PSNoteProperty("MetadataId", metadata.MetadataId));
-            }
-
-            return result;
         }
     }
 }
