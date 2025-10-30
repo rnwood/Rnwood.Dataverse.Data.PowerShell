@@ -55,6 +55,8 @@ Complete reference documentation for all 390+ cmdlets.
 - [`Remove-DataverseRecord`](../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) - Delete records
 - [`Invoke-DataverseRequest`](../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) - Execute arbitrary SDK requests
 - [`Invoke-DataverseSql`](../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) - Run SQL queries
+- [`Set-DataverseEnvironmentVariable`](../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseEnvironmentVariable.md) - Set environment variable values
+- [`Set-DataverseConnectionReference`](../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseConnectionReference.md) - Set connection reference values
 
 ### Common Tasks
 - **First time setup**: [Installation Guide](getting-started/installation.md)

@@ -15,13 +15,13 @@ Sets connection reference values in Dataverse.
 ### Single (Default)
 ```
 Set-DataverseConnectionReference [-ConnectionReferenceLogicalName] <String> [-ConnectionId] <String>
- [-Connection <ServiceClient>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### Multiple
 ```
 Set-DataverseConnectionReference -ConnectionReferences <Hashtable> [-Connection <ServiceClient>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -83,45 +83,15 @@ Sets a connection reference and displays the previous and new connection IDs.
 
 ## PARAMETERS
 
-### -ConnectionReferenceLogicalName
-Logical name of the connection reference to set (for single parameter set).
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
-Type: String
-Parameter Sets: Single
-Aliases:
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
 
-Required: True
-Position: 0
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ConnectionId
-Connection ID (GUID) to set for the connection reference (for single parameter set).
-
-```yaml
-Type: String
-Parameter Sets: Single
-Aliases:
-
-Required: True
-Position: 1
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ConnectionReferences
-Hashtable of connection reference logical names to connection IDs (e.g., @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'}).
-
-```yaml
-Type: Hashtable
-Parameter Sets: Multiple
-Aliases:
-
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -143,6 +113,51 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ConnectionId
+Connection ID (GUID) to set for the connection reference (for single parameter set).
+
+```yaml
+Type: String
+Parameter Sets: Single
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ConnectionReferenceLogicalName
+Logical name of the connection reference to set (for single parameter set).
+
+```yaml
+Type: String
+Parameter Sets: Single
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ConnectionReferences
+Hashtable of connection reference logical names to connection IDs (e.g., @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'}).
+
+```yaml
+Type: Hashtable
+Parameter Sets: Multiple
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -WhatIf
 Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
@@ -158,13 +173,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: SwitchParameter
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases: cf
+Aliases: proga
 
 Required: False
 Position: Named
@@ -179,21 +194,15 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
-
 ## OUTPUTS
 
-### System.Management.Automation.PSObject
-Returns an object with the following properties:
-- ConnectionReferenceLogicalName: The logical name of the connection reference
-- ConnectionId: The new connection ID that was set
-- ConnectionReferenceId: The ID of the connection reference record
-- PreviousConnectionId: The previous connection ID (if any)
-
+### System.Object
 ## NOTES
 - The connection reference must already exist in Dataverse before you can set its value.
 - Connection IDs must be valid GUIDs that correspond to connection records in Dataverse.
 - This cmdlet follows the same conventions as the Import-DataverseSolution cmdlet's ConnectionReferences parameter.
 
 ## RELATED LINKS
+
 [Import-DataverseSolution](Import-DataverseSolution.md)
 [Set-DataverseEnvironmentVariable](Set-DataverseEnvironmentVariable.md)

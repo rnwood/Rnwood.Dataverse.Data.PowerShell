@@ -15,13 +15,13 @@ Sets environment variable values in Dataverse.
 ### Single (Default)
 ```
 Set-DataverseEnvironmentVariable [-SchemaName] <String> [-Value] <String> [-Connection <ServiceClient>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### Multiple
 ```
 Set-DataverseEnvironmentVariable -EnvironmentVariables <Hashtable> [-Connection <ServiceClient>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -75,6 +75,51 @@ Sets environment variables before importing a solution, ensuring they are config
 
 ## PARAMETERS
 
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+
+```yaml
+Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EnvironmentVariables
+Hashtable of environment variable schema names to values (e.g., @{'new_apiurl' = 'https://api.example.com'}).
+
+```yaml
+Type: Hashtable
+Parameter Sets: Multiple
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -SchemaName
 Schema name of the environment variable to set (for single parameter set).
 
@@ -105,36 +150,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -EnvironmentVariables
-Hashtable of environment variable schema names to values (e.g., @{'new_apiurl' = 'https://api.example.com'}).
-
-```yaml
-Type: Hashtable
-Parameter Sets: Multiple
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
-
-```yaml
-Type: ServiceClient
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -WhatIf
 Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
@@ -150,13 +165,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: SwitchParameter
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases: cf
+Aliases: proga
 
 Required: False
 Position: Named
@@ -171,16 +186,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
-
 ## OUTPUTS
 
-### System.Management.Automation.PSObject
-Returns an object with the following properties:
-- SchemaName: The schema name of the environment variable
-- Value: The value that was set
-- EnvironmentVariableValueId: The ID of the environment variable value record
-- Action: Either "Created" or "Updated" depending on whether a new value was created or an existing one was updated
-
+### System.Object
 ## NOTES
 - The environment variable definition must already exist in Dataverse before you can set its value.
 - If the environment variable value record doesn't exist, it will be created.
@@ -188,5 +196,6 @@ Returns an object with the following properties:
 - This cmdlet follows the same conventions as the Import-DataverseSolution cmdlet's EnvironmentVariables parameter.
 
 ## RELATED LINKS
+
 [Import-DataverseSolution](Import-DataverseSolution.md)
 [Set-DataverseConnectionReference](Set-DataverseConnectionReference.md)

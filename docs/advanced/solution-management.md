@@ -223,7 +223,7 @@ When importing solutions that contain connection references (for API connections
 - You must supply the value for each environment variable schema name.
 - If not provided and not already set in the environment, the import will fail.
 
-Examples:
+**Setting Values During Import:**
 
 ```powershell
 # Import with connection references and environment variables
@@ -241,8 +241,44 @@ Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" `
 Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" `
     -SkipConnectionReferenceValidation -SkipEnvironmentVariableValidation
 ```
+
+**Setting Values Independently:**
+
+You can also set connection references and environment variables independently of solution import using dedicated cmdlets:
+
+```powershell
+# Set a single environment variable
+Set-DataverseEnvironmentVariable -Connection $c `
+    -SchemaName "new_apiurl" `
+    -Value "https://api.production.example.com"
+
+# Set multiple environment variables at once
+Set-DataverseEnvironmentVariable -Connection $c -EnvironmentVariables @{
+    'new_apiurl' = 'https://api.production.example.com'
+    'new_apikey' = 'prod-key-12345'
+    'new_timeout' = '30'
+}
+
+# Set a single connection reference
+Set-DataverseConnectionReference -Connection $c `
+    -ConnectionReferenceLogicalName "new_sharepointconnection" `
+    -ConnectionId "12345678-1234-1234-1234-123456789012"
+
+# Set multiple connection references at once
+Set-DataverseConnectionReference -Connection $c -ConnectionReferences @{
+    'new_sharepointconnection' = '12345678-1234-1234-1234-123456789012'
+    'new_sqlconnection' = '87654321-4321-4321-4321-210987654321'
+}
+```
+
+See the full parameter references:
+- [Set-DataverseEnvironmentVariable](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseEnvironmentVariable.md)
+- [Set-DataverseConnectionReference](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseConnectionReference.md)
+
 **Notes:**
 - Connection reference values must be valid connection IDs from the target environment which the user importing the solution has access to.
 - Environment variable values are strings that will be set during import.
+- The dedicated cmdlets create new environment variable value records if they don't exist, or update existing ones.
+- Connection reference records must already exist in the environment (created by importing a solution that contains them).
 
 
