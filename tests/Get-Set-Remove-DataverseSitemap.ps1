@@ -41,10 +41,12 @@ Describe 'Set-DataverseSitemap' {
             $validXml = "<SiteMap><Area Id='Test'/></SiteMap>"
             
             # Valid XML should not throw during validation
-            # (it may fail later due to missing metadata, but validation should pass)
-            $xmlDoc = $null
-            { $xmlDoc = [xml]$validXml } | Should -Not -Throw
+            { [xml]$validXml } | Should -Not -Throw
+            
+            # Verify parsing works
+            $xmlDoc = [xml]$validXml
             $xmlDoc | Should -Not -BeNullOrEmpty
+            $xmlDoc.SiteMap | Should -Not -BeNullOrEmpty
         }
     }
 }
@@ -108,12 +110,12 @@ Describe 'Sitemap XML Manipulation' {
         }
 
         It "Can convert modified XML back to string" {
-            $sitemapXml = "<SiteMap/>"
+            $sitemapXml = "<SiteMap><Area Id='Initial'/></SiteMap>"
             $xml = [xml]$sitemapXml
             
             $newArea = $xml.CreateElement("Area")
             $newArea.SetAttribute("Id", "TestArea")
-            $xml.SiteMap.AppendChild($newArea) | Out-Null
+            $xml.DocumentElement.AppendChild($newArea) | Out-Null
             
             # Get modified XML as string
             $modifiedXml = $xml.OuterXml
@@ -121,6 +123,9 @@ Describe 'Sitemap XML Manipulation' {
             # Verify it's valid XML with our changes
             $modifiedXml | Should -Match "<Area"
             $modifiedXml | Should -Match "TestArea"
+            
+            # Verify we now have 2 areas
+            $xml.SiteMap.Area.Count | Should -Be 2
         }
     }
 }
