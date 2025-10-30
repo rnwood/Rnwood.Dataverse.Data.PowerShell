@@ -1,10 +1,10 @@
 Describe "View Management Cmdlets" {
-    Context "New-DataverseView - Basic Creation" {
+    Context "Set-DataverseView - Basic Creation" {
         It "Creates a personal view with simple filter" {
             $connection = getMockConnection
             
             # Create a personal view with simple column definitions
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Test Personal View" `
                 -TableName contact `
                 -Columns @("firstname", "lastname", "emailaddress1") `
@@ -18,7 +18,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create a system view with column configuration
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Test System View" `
                 -TableName contact `
                 -SystemView `
@@ -36,7 +36,7 @@ Describe "View Management Cmdlets" {
         It "Creates a view with description" {
             $connection = getMockConnection
             
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "View with Description" `
                 -TableName contact `
                 -Description "This is a test view" `
@@ -49,7 +49,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create view with OR filter
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Complex Filter View" `
                 -TableName contact `
                 -Columns @("firstname", "lastname") `
@@ -62,7 +62,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create view with AND/OR combinations
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Nested Filter View" `
                 -TableName contact `
                 -Columns @("firstname", "lastname", "emailaddress1") `
@@ -79,7 +79,7 @@ Describe "View Management Cmdlets" {
         It "Creates a view as default view" {
             $connection = getMockConnection
             
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Default View" `
                 -TableName contact `
                 -SystemView `
@@ -93,7 +93,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create an Advanced Find view (QueryType = 2)
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Advanced Find View" `
                 -TableName contact `
                 -QueryType 2 `
@@ -103,7 +103,7 @@ Describe "View Management Cmdlets" {
         }
     }
 
-    Context "New-DataverseView - FetchXml Creation" {
+    Context "Set-DataverseView - FetchXml Creation" {
         It "Creates a view with FetchXml" {
             $connection = getMockConnection
             
@@ -119,7 +119,7 @@ Describe "View Management Cmdlets" {
 </fetch>
 "@
             
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "FetchXml View" `
                 -TableName contact `
                 -FetchXml $fetchXml
@@ -148,7 +148,7 @@ Describe "View Management Cmdlets" {
 </grid>
 "@
             
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "FetchXml with Layout" `
                 -TableName contact `
                 -FetchXml $fetchXml `
@@ -158,12 +158,12 @@ Describe "View Management Cmdlets" {
         }
     }
 
-    Context "New-DataverseView - WhatIf Support" {
+    Context "Set-DataverseView - WhatIf Support" {
         It "Supports WhatIf without creating view" {
             $connection = getMockConnection
             
             # This should not create a view
-            $result = New-DataverseView -Connection $connection `
+            $result = Set-DataverseView -Connection $connection `
                 -Name "WhatIf Test" `
                 -TableName contact `
                 -Columns @("firstname") `
@@ -174,12 +174,12 @@ Describe "View Management Cmdlets" {
         }
     }
 
-    Context "Set-DataverseView - Column Management" {
+    Context "Column Management" {
         It "Adds columns to existing view" {
             $connection = getMockConnection
             
             # Create a view first
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Test View for Modification" `
                 -TableName contact `
                 -Columns @("firstname", "lastname")
@@ -197,7 +197,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create a view first
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Test View for Removal" `
                 -TableName contact `
                 -Columns @("firstname", "lastname", "emailaddress1")
@@ -215,7 +215,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create a view first
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Test View for Update" `
                 -TableName contact `
                 -Columns @(@{name="firstname"; width=100})
@@ -233,7 +233,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create a view first
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Test View for Column Config" `
                 -TableName contact `
                 -Columns @("firstname")
@@ -251,12 +251,12 @@ Describe "View Management Cmdlets" {
         }
     }
 
-    Context "Set-DataverseView - Filter Management" {
+    Context "Filter Management" {
         It "Updates filters in view" {
             $connection = getMockConnection
             
             # Create a view first
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Test View for Filter Update" `
                 -TableName contact `
                 -Columns @("firstname", "lastname") `
@@ -275,7 +275,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create a view first
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Test View for FetchXml Update" `
                 -TableName contact `
                 -Columns @("firstname")
@@ -303,12 +303,12 @@ Describe "View Management Cmdlets" {
         }
     }
 
-    Context "Set-DataverseView - Metadata Updates" {
+    Context "Metadata Updates" {
         It "Updates view name" {
             $connection = getMockConnection
             
             # Create a view first
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Original Name" `
                 -TableName contact `
                 -Columns @("firstname")
@@ -326,7 +326,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create a view first
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Test View" `
                 -TableName contact `
                 -Columns @("firstname")
@@ -344,7 +344,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create a system view first
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Test System View" `
                 -TableName contact `
                 -SystemView `
@@ -366,7 +366,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create a view first
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "WhatIf Test View" `
                 -TableName contact `
                 -Columns @("firstname")
@@ -387,7 +387,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create a view first
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Test View to Remove" `
                 -TableName contact `
                 -Columns @("firstname")
@@ -403,7 +403,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create a system view first
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "System View to Remove" `
                 -TableName contact `
                 -SystemView `
@@ -420,12 +420,12 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create multiple views
-            $viewId1 = New-DataverseView -Connection $connection `
+            $viewId1 = Set-DataverseView -Connection $connection `
                 -Name "View 1" `
                 -TableName contact `
                 -Columns @("firstname")
             
-            $viewId2 = New-DataverseView -Connection $connection `
+            $viewId2 = Set-DataverseView -Connection $connection `
                 -Name "View 2" `
                 -TableName contact `
                 -Columns @("lastname")
@@ -469,7 +469,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create a view first
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "WhatIf Remove Test" `
                 -TableName contact `
                 -Columns @("firstname")
@@ -487,7 +487,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create a view
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Workflow Test View" `
                 -TableName contact `
                 -Columns @("firstname", "lastname") `
@@ -516,7 +516,7 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create with simple syntax
-            $viewId = New-DataverseView -Connection $connection `
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Simple to FetchXml" `
                 -TableName contact `
                 -Columns @("firstname") `

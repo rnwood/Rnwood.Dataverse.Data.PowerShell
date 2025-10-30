@@ -9,72 +9,91 @@ using System.Xml.Linq;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Modifies an existing view (savedquery or userquery) in Dataverse.
+    /// Creates or updates a view (savedquery or userquery) in Dataverse. If a view with the specified ID exists, it will be updated, otherwise a new view is created.
     /// </summary>
     [Cmdlet(VerbsCommon.Set, "DataverseView", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
+    [OutputType(typeof(Guid))]
     public class SetDataverseViewCmdlet : OrganizationServiceCmdlet
     {
+        private const string PARAMSET_SIMPLE = "Simple";
+        private const string PARAMSET_FETCHXML = "FetchXml";
+
         /// <summary>
-        /// Gets or sets the ID of the view to modify.
+        /// Gets or sets the ID of the view to update. If not specified or if the view doesn't exist, a new view is created.
         /// </summary>
-        [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the view to modify")]
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the view to update. If not specified or if the view doesn't exist, a new view is created.")]
         public Guid Id { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the view. Required when creating a new view.
+        /// </summary>
+        [Parameter(HelpMessage = "Name of the view. Required when creating a new view.")]
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets the logical name of the table (entity) this view is for. Required when creating a new view.
+        /// </summary>
+        [Parameter(HelpMessage = "Logical name of the table this view is for. Required when creating a new view.")]
+        [ArgumentCompleter(typeof(TableNameArgumentCompleter))]
+        [Alias("EntityName")]
+        public string TableName { get; set; }
 
         /// <summary>
         /// Gets or sets whether this is a system view (savedquery) or personal view (userquery). Default is personal view.
         /// </summary>
-        [Parameter(HelpMessage = "Modify a system view (savedquery) instead of a personal view (userquery)")]
+        [Parameter(HelpMessage = "Work with a system view (savedquery) instead of a personal view (userquery)")]
         public SwitchParameter SystemView { get; set; }
 
         /// <summary>
-        /// Gets or sets the new name of the view.
+        /// Gets or sets the description of the view.
         /// </summary>
-        [Parameter(HelpMessage = "New name for the view")]
-        public string Name { get; set; }
-
-        /// <summary>
-        /// Gets or sets the new description of the view.
-        /// </summary>
-        [Parameter(HelpMessage = "New description for the view")]
+        [Parameter(HelpMessage = "Description of the view")]
         public string Description { get; set; }
 
         /// <summary>
-        /// Gets or sets columns to add to the view.
+        /// Gets or sets the columns to include in the view. Used for creating new views or replacing columns in existing views.
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Columns to include in the view. Can be an array of column names or hashtables with column configuration (name, width, etc.)")]
+        [ArgumentCompleter(typeof(ColumnNameArgumentCompleter))]
+        public object[] Columns { get; set; }
+
+        /// <summary>
+        /// Gets or sets columns to add to an existing view.
         /// </summary>
         [Parameter(HelpMessage = "Columns to add to the view. Can be an array of column names or hashtables with column configuration (name, width, etc.)")]
         [ArgumentCompleter(typeof(ColumnNameArgumentCompleter))]
         public object[] AddColumns { get; set; }
 
         /// <summary>
-        /// Gets or sets columns to remove from the view.
+        /// Gets or sets columns to remove from an existing view.
         /// </summary>
         [Parameter(HelpMessage = "Columns to remove from the view")]
         [ArgumentCompleter(typeof(ColumnNameArgumentCompleter))]
         public string[] RemoveColumns { get; set; }
 
         /// <summary>
-        /// Gets or sets columns to update in the view.
+        /// Gets or sets columns to update in an existing view.
         /// </summary>
         [Parameter(HelpMessage = "Columns to update in the view. Hashtables with column configuration (name, width, etc.)")]
         public Hashtable[] UpdateColumns { get; set; }
 
         /// <summary>
-        /// Gets or sets filter values to add/replace in the view query.
+        /// Gets or sets filter values for the view query.
         /// </summary>
-        [Parameter(HelpMessage = "Filter values to add or replace in the view. One or more hashtables to filter records.")]
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "One or more hashtables to filter records. Each hashtable's entries are combined with AND; multiple hashtables are combined with OR. Keys may be 'column' or 'column:Operator' (Operator is a ConditionOperator name). Values may be a literal, an array (treated as IN), $null (treated as ISNULL), or a nested hashtable with keys 'value' and 'operator'. Supports grouped filters using 'and', 'or', 'not', or 'xor' keys with nested hashtables for complex logical expressions.")]
         [ArgumentCompleter(typeof(FilterValuesArgumentCompleter))]
         public Hashtable[] FilterValues { get; set; }
 
         /// <summary>
-        /// Gets or sets the FetchXml query to replace the view's query.
+        /// Gets or sets the FetchXml query for the view.
         /// </summary>
-        [Parameter(HelpMessage = "FetchXml query to replace the view's query")]
+        [Parameter(ParameterSetName = PARAMSET_FETCHXML, HelpMessage = "FetchXml query to use for the view")]
         public string FetchXml { get; set; }
 
         /// <summary>
-        /// Gets or sets the layout XML to replace the view's layout.
+        /// Gets or sets the layout XML for the view. If not specified, a default layout will be generated.
         /// </summary>
-        [Parameter(HelpMessage = "Layout XML to replace the view's layout")]
+        [Parameter(HelpMessage = "Layout XML for the view. If not specified when creating, a default layout will be generated from Columns")]
         public string LayoutXml { get; set; }
 
         /// <summary>
@@ -82,6 +101,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(HelpMessage = "Set this view as the default view for the table")]
         public SwitchParameter IsDefault { get; set; }
+
+        /// <summary>
+        /// Gets or sets the view type. Default is 1 (public view). Only used when creating a new view.
+        /// </summary>
+        [Parameter(HelpMessage = "View type: 0=OtherView, 1=PublicView, 2=AdvancedFind, 4=SubGrid, 8=Dashboard, 16=MobileClientView, 64=LookupView, 128=MainApplicationView, 256=QuickFindSearch, 512=Associated, 1024=CalendarView, 2048=InteractiveExperience. Default is 1 (PublicView)")]
+        public int QueryType { get; set; } = 1; // Default to PublicView
+
+        /// <summary>
+        /// If specified, existing views matching the ID will not be updated.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, existing views matching the ID will not be updated")]
+        public SwitchParameter NoUpdate { get; set; }
+
+        /// <summary>
+        /// If specified, then no view will be created even if no existing view matching the ID is found.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, then no view will be created even if no existing view matching the ID is found")]
+        public SwitchParameter NoCreate { get; set; }
+
+        /// <summary>
+        /// If specified, returns the ID of the created or updated view.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, returns the ID of the created or updated view")]
+        public SwitchParameter PassThru { get; set; }
 
         /// <summary>
         /// Processes each record in the pipeline.
@@ -93,73 +136,175 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             try
             {
                 string entityName = SystemView ? "savedquery" : "userquery";
+                Entity viewEntity = null;
+                bool isUpdate = false;
+                Guid viewId = Id;
 
-                if (ShouldProcess($"{(SystemView ? "System" : "Personal")} view with ID '{Id}'", "Modify"))
+                // Try to retrieve existing view if ID is provided
+                if (Id != Guid.Empty)
                 {
-                    // Retrieve existing view
-                    Entity viewEntity = Connection.Retrieve(entityName, Id, new ColumnSet(true));
-
-                    bool updated = false;
-
-                    // Update name if provided
-                    if (!string.IsNullOrEmpty(Name))
+                    try
                     {
+                        viewEntity = Connection.Retrieve(entityName, Id, new ColumnSet(true));
+                        isUpdate = true;
+                        WriteVerbose($"Found existing {(SystemView ? "system" : "personal")} view with ID: {Id}");
+                    }
+                    catch
+                    {
+                        WriteVerbose($"View with ID {Id} not found");
+                    }
+                }
+
+                if (isUpdate)
+                {
+                    // Update existing view
+                    if (NoUpdate)
+                    {
+                        WriteVerbose("NoUpdate flag specified, skipping update");
+                        if (PassThru)
+                        {
+                            WriteObject(viewId);
+                        }
+                        return;
+                    }
+
+                    if (ShouldProcess($"{(SystemView ? "System" : "Personal")} view with ID '{Id}'", "Update"))
+                    {
+                        bool updated = false;
+
+                        // Update name if provided
+                        if (!string.IsNullOrEmpty(Name))
+                        {
+                            viewEntity["name"] = Name;
+                            updated = true;
+                        }
+
+                        // Update description if provided
+                        if (!string.IsNullOrEmpty(Description))
+                        {
+                            viewEntity["description"] = Description;
+                            updated = true;
+                        }
+
+                        // Update FetchXml if provided directly
+                        if (!string.IsNullOrEmpty(FetchXml))
+                        {
+                            viewEntity["fetchxml"] = FetchXml;
+                            updated = true;
+                        }
+                        // Or build/modify FetchXml based on simple parameters
+                        else if (Columns != null || AddColumns != null || RemoveColumns != null || FilterValues != null)
+                        {
+                            string currentFetchXml = viewEntity.GetAttributeValue<string>("fetchxml");
+                            string modifiedFetchXml = ModifyFetchXml(currentFetchXml);
+                            viewEntity["fetchxml"] = modifiedFetchXml;
+                            updated = true;
+                        }
+
+                        // Update LayoutXml if provided directly
+                        if (!string.IsNullOrEmpty(LayoutXml))
+                        {
+                            viewEntity["layoutxml"] = LayoutXml;
+                            updated = true;
+                        }
+                        // Or modify LayoutXml based on column changes
+                        else if (Columns != null || AddColumns != null || RemoveColumns != null || UpdateColumns != null)
+                        {
+                            string currentLayoutXml = viewEntity.GetAttributeValue<string>("layoutxml");
+                            string modifiedLayoutXml = ModifyLayoutXml(currentLayoutXml);
+                            viewEntity["layoutxml"] = modifiedLayoutXml;
+                            updated = true;
+                        }
+
+                        // Update IsDefault if provided
+                        if (SystemView && IsDefault.IsPresent)
+                        {
+                            viewEntity["isdefault"] = IsDefault.ToBool();
+                            updated = true;
+                        }
+
+                        if (updated)
+                        {
+                            Connection.Update(viewEntity);
+                            WriteVerbose($"Updated {(SystemView ? "system" : "personal")} view with ID: {Id}");
+                        }
+                        else
+                        {
+                            WriteWarning("No modifications specified. View was not updated.");
+                        }
+
+                        if (PassThru)
+                        {
+                            WriteObject(viewId);
+                        }
+                    }
+                }
+                else
+                {
+                    // Create new view
+                    if (NoCreate)
+                    {
+                        WriteVerbose("NoCreate flag specified and view not found, skipping creation");
+                        return;
+                    }
+
+                    // Validate required parameters for creation
+                    if (string.IsNullOrEmpty(Name))
+                    {
+                        throw new ArgumentException("Name is required when creating a new view");
+                    }
+                    if (string.IsNullOrEmpty(TableName))
+                    {
+                        throw new ArgumentException("TableName is required when creating a new view");
+                    }
+
+                    string fetchXml = FetchXml;
+                    string layoutXml = LayoutXml;
+
+                    // Build FetchXml from simple filter if needed
+                    if (ParameterSetName == PARAMSET_SIMPLE || (string.IsNullOrEmpty(fetchXml) && Columns != null))
+                    {
+                        fetchXml = BuildFetchXmlFromSimpleFilter();
+                    }
+
+                    // Build layout XML if not provided
+                    if (string.IsNullOrEmpty(layoutXml))
+                    {
+                        layoutXml = BuildDefaultLayoutXml();
+                    }
+
+                    if (ShouldProcess($"{(SystemView ? "System" : "Personal")} view '{Name}' for table '{TableName}'", "Create"))
+                    {
+                        viewEntity = new Entity(entityName);
+                        
+                        if (Id != Guid.Empty)
+                        {
+                            viewEntity.Id = Id;
+                        }
+                        
                         viewEntity["name"] = Name;
-                        updated = true;
-                    }
+                        viewEntity["returnedtypecode"] = TableName;
+                        viewEntity["fetchxml"] = fetchXml;
+                        viewEntity["layoutxml"] = layoutXml;
+                        viewEntity["querytype"] = QueryType;
 
-                    // Update description if provided
-                    if (!string.IsNullOrEmpty(Description))
-                    {
-                        viewEntity["description"] = Description;
-                        updated = true;
-                    }
+                        if (!string.IsNullOrEmpty(Description))
+                        {
+                            viewEntity["description"] = Description;
+                        }
 
-                    // Update FetchXml if provided directly
-                    if (!string.IsNullOrEmpty(FetchXml))
-                    {
-                        viewEntity["fetchxml"] = FetchXml;
-                        updated = true;
-                    }
-                    // Or modify FetchXml based on simple parameters
-                    else if (AddColumns != null || RemoveColumns != null || FilterValues != null)
-                    {
-                        string currentFetchXml = viewEntity.GetAttributeValue<string>("fetchxml");
-                        string modifiedFetchXml = ModifyFetchXml(currentFetchXml);
-                        viewEntity["fetchxml"] = modifiedFetchXml;
-                        updated = true;
-                    }
+                        if (SystemView && IsDefault)
+                        {
+                            viewEntity["isdefault"] = true;
+                        }
 
-                    // Update LayoutXml if provided directly
-                    if (!string.IsNullOrEmpty(LayoutXml))
-                    {
-                        viewEntity["layoutxml"] = LayoutXml;
-                        updated = true;
-                    }
-                    // Or modify LayoutXml based on column changes
-                    else if (AddColumns != null || RemoveColumns != null || UpdateColumns != null)
-                    {
-                        string currentLayoutXml = viewEntity.GetAttributeValue<string>("layoutxml");
-                        string modifiedLayoutXml = ModifyLayoutXml(currentLayoutXml);
-                        viewEntity["layoutxml"] = modifiedLayoutXml;
-                        updated = true;
-                    }
-
-                    // Update IsDefault if provided
-                    if (SystemView && IsDefault.IsPresent)
-                    {
-                        viewEntity["isdefault"] = IsDefault.ToBool();
-                        updated = true;
-                    }
-
-                    if (updated)
-                    {
-                        Connection.Update(viewEntity);
-                        WriteVerbose($"Updated {(SystemView ? "system" : "personal")} view with ID: {Id}");
-                    }
-                    else
-                    {
-                        WriteWarning("No modifications specified. View was not updated.");
+                        viewId = Connection.Create(viewEntity);
+                        WriteVerbose($"Created {(SystemView ? "system" : "personal")} view with ID: {viewId}");
+                        
+                        if (PassThru)
+                        {
+                            WriteObject(viewId);
+                        }
                     }
                 }
             }
@@ -167,6 +312,56 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 WriteError(new ErrorRecord(ex, "SetDataverseViewError", ErrorCategory.InvalidOperation, null));
             }
+        }
+
+        private string BuildFetchXmlFromSimpleFilter()
+        {
+            XElement fetchElement = new XElement("fetch");
+            XElement entityElement = new XElement("entity", new XAttribute("name", TableName));
+
+            // Add columns
+            if (Columns != null && Columns.Length > 0)
+            {
+                foreach (object col in Columns)
+                {
+                    if (col is string columnName)
+                    {
+                        entityElement.Add(new XElement("attribute", new XAttribute("name", columnName)));
+                    }
+                    else if (col is Hashtable colConfig)
+                    {
+                        if (colConfig.ContainsKey("name") || colConfig.ContainsKey("Name"))
+                        {
+                            string colName = (colConfig["name"] ?? colConfig["Name"])?.ToString();
+                            if (!string.IsNullOrEmpty(colName))
+                            {
+                                entityElement.Add(new XElement("attribute", new XAttribute("name", colName)));
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                entityElement.Add(new XElement("all-attributes"));
+            }
+
+            // Add filters if provided
+            if (FilterValues != null && FilterValues.Length > 0)
+            {
+                QueryExpression query = new QueryExpression(TableName);
+                FilterHelpers.ProcessHashFilterValues(query.Criteria, FilterValues, false);
+                
+                // Convert filter expression to FetchXml filter element
+                XElement filterElement = ConvertFilterExpressionToFetchXml(query.Criteria);
+                if (filterElement != null && filterElement.HasElements)
+                {
+                    entityElement.Add(filterElement);
+                }
+            }
+
+            fetchElement.Add(entityElement);
+            return fetchElement.ToString();
         }
 
         private string ModifyFetchXml(string currentFetchXml)
@@ -177,6 +372,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (entityElement == null)
             {
                 throw new InvalidOperationException("Invalid FetchXml: No entity element found");
+            }
+
+            // Replace columns if Columns parameter is provided
+            if (Columns != null && Columns.Length > 0)
+            {
+                // Remove all existing attributes
+                entityElement.Elements("attribute").Remove();
+                entityElement.Elements("all-attributes").Remove();
+
+                // Add new columns
+                foreach (object col in Columns)
+                {
+                    string columnName = null;
+
+                    if (col is string colStr)
+                    {
+                        columnName = colStr;
+                    }
+                    else if (col is Hashtable colConfig)
+                    {
+                        columnName = (colConfig["name"] ?? colConfig["Name"])?.ToString();
+                    }
+
+                    if (!string.IsNullOrEmpty(columnName))
+                    {
+                        entityElement.Add(new XElement("attribute", new XAttribute("name", columnName)));
+                    }
+                }
             }
 
             // Add columns to FetchXml
@@ -243,6 +466,70 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return doc.ToString();
         }
 
+        private string BuildDefaultLayoutXml()
+        {
+            XNamespace ns = "http://schemas.microsoft.com/crm/2006/query";
+            XElement grid = new XElement(ns + "grid",
+                new XAttribute("name", "resultset"),
+                new XAttribute("object", TableName),
+                new XAttribute("jump", TableName + "id"),
+                new XAttribute("select", "1"),
+                new XAttribute("icon", "1"),
+                new XAttribute("preview", "1")
+            );
+
+            XElement row = new XElement(ns + "row",
+                new XAttribute("name", "result"),
+                new XAttribute("id", TableName + "id")
+            );
+
+            if (Columns != null && Columns.Length > 0)
+            {
+                int width = 100; // Default width
+                foreach (object col in Columns)
+                {
+                    string columnName = null;
+                    int columnWidth = width;
+
+                    if (col is string colStr)
+                    {
+                        columnName = colStr;
+                    }
+                    else if (col is Hashtable colConfig)
+                    {
+                        columnName = (colConfig["name"] ?? colConfig["Name"])?.ToString();
+                        if (colConfig.ContainsKey("width") || colConfig.ContainsKey("Width"))
+                        {
+                            object widthObj = colConfig["width"] ?? colConfig["Width"];
+                            if (widthObj != null && int.TryParse(widthObj.ToString(), out int parsedWidth))
+                            {
+                                columnWidth = parsedWidth;
+                            }
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(columnName))
+                    {
+                        row.Add(new XElement(ns + "cell",
+                            new XAttribute("name", columnName),
+                            new XAttribute("width", columnWidth)
+                        ));
+                    }
+                }
+            }
+            else
+            {
+                // If no columns specified, add a default column for the primary key
+                row.Add(new XElement(ns + "cell",
+                    new XAttribute("name", TableName + "id"),
+                    new XAttribute("width", 100)
+                ));
+            }
+
+            grid.Add(row);
+            return grid.ToString();
+        }
+
         private string ModifyLayoutXml(string currentLayoutXml)
         {
             XNamespace ns = "http://schemas.microsoft.com/crm/2006/query";
@@ -252,6 +539,45 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (row == null)
             {
                 throw new InvalidOperationException("Invalid LayoutXml: No row element found");
+            }
+
+            // Replace columns if Columns parameter is provided
+            if (Columns != null && Columns.Length > 0)
+            {
+                // Remove all existing cells
+                row.Elements(ns + "cell").Remove();
+
+                // Add new columns
+                foreach (object col in Columns)
+                {
+                    string columnName = null;
+                    int columnWidth = 100;
+
+                    if (col is string colStr)
+                    {
+                        columnName = colStr;
+                    }
+                    else if (col is Hashtable colConfig)
+                    {
+                        columnName = (colConfig["name"] ?? colConfig["Name"])?.ToString();
+                        if (colConfig.ContainsKey("width") || colConfig.ContainsKey("Width"))
+                        {
+                            object widthObj = colConfig["width"] ?? colConfig["Width"];
+                            if (widthObj != null && int.TryParse(widthObj.ToString(), out int parsedWidth))
+                            {
+                                columnWidth = parsedWidth;
+                            }
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(columnName))
+                    {
+                        row.Add(new XElement(ns + "cell",
+                            new XAttribute("name", columnName),
+                            new XAttribute("width", columnWidth)
+                        ));
+                    }
+                }
             }
 
             // Add columns to LayoutXml
