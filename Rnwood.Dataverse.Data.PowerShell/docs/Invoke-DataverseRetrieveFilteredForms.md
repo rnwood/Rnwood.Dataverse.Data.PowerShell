@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets the name of the entity the attribute belongs to.
+Gets or sets the logical name of the table that contains the column. Required.
 
 ```yaml
 Type: String
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -SystemUserId
-Gets or sets the ID of the user. Required.
+Gets or sets the ID of system user (user) to add to the auto created access team. Required.
 
 ```yaml
 Type: Guid

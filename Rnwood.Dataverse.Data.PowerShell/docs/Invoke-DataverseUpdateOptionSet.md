@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -OptionSet
-Gets or sets the metadata for the global choice. Required.
+Gets or sets the definition of the global choice. Required.
 
 ```yaml
 Type: OptionSetMetadataBase
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the name of a solution to associate the global choice with. Optional.
+Gets or sets the name of the unmanaged solution to which you want to add this column. Optional.
 
 ```yaml
 Type: String

@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -Targets
-Gets or sets the collection of entities representing records to update.
+Gets or sets the collection of entities representing records to create.
 
 ```yaml
 Type: EntityCollection

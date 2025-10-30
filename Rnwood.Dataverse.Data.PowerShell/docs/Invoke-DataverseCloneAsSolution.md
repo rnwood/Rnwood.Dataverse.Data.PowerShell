@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -ParentSolutionUniqueName
-Gets or sets the name of the parent solution.
+Gets or sets the unique name of the parent solution.
 
 ```yaml
 Type: String

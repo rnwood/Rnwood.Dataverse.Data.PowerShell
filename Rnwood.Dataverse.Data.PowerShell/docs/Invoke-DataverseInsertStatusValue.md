@@ -34,7 +34,7 @@ PS C:\> Invoke-DataverseInsertStatusValue -Connection <ServiceClient> -OptionSet
 ## PARAMETERS
 
 ### -AttributeLogicalName
-Gets or sets the logical name of the status column. Required.
+Gets or sets the logical name of the choice column from which to delete the option value. Optional.
 
 ```yaml
 Type: String
@@ -79,7 +79,7 @@ Accept wildcard characters: False
 ```
 
 ### -Description
-Gets or sets a description for the status option. Optional.
+Gets or sets a description for the option. Optional.
 
 ```yaml
 Type: Label
@@ -94,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name of the table that contains the status column. Required.
+Gets or sets the logical name of the table that contains the column. Required.
 
 ```yaml
 Type: String
@@ -109,7 +109,7 @@ Accept wildcard characters: False
 ```
 
 ### -Label
-Gets or sets the label for the new status option. Required.
+Gets or sets the label for the option. Required.
 
 ```yaml
 Type: Label
@@ -124,7 +124,7 @@ Accept wildcard characters: False
 ```
 
 ### -OptionSetName
-Reserved for future use. Optional.
+Gets or sets the name of the global choice that contains the value. Optional.
 
 ```yaml
 Type: String
@@ -139,7 +139,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the solution that this status option should be added to. Optional.
+Gets or sets the name of the unmanaged solution to which you want to add this column. Optional.
 
 ```yaml
 Type: String
@@ -154,7 +154,7 @@ Accept wildcard characters: False
 ```
 
 ### -StateCode
-Gets or sets the state code for the new status option. Required.
+Gets or sets the state of the knowledge articles to filter the search results. Required.
 
 ```yaml
 Type: Int32
@@ -169,7 +169,7 @@ Accept wildcard characters: False
 ```
 
 ### -Value
-Gets or sets the value for the new status option. Optional.
+Gets or sets the value of the option to delete. Required.
 
 ```yaml
 Type: Int32

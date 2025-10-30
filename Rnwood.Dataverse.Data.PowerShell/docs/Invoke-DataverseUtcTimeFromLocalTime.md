@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -TimeZoneCode
-Gets or sets the time zone code. Required.
+Gets or sets the Dataverse time zone code to be used for the conversion. Required only if is specified in parameter.
 
 ```yaml
 Type: Int32

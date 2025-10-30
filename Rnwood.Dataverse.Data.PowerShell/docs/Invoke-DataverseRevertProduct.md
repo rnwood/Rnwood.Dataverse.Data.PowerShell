@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Target
-Gets or sets the target product family, product, or bundle record for which you want to revert the changes done to its properties since it was last published. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the target, which is a recurring appointment master record to which the appointment is converted. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject

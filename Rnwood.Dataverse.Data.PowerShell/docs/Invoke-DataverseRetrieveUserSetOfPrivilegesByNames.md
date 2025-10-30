@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -PrivilegeNames
-Gets or set an array of privileges names that needs to be retrieved.
+Gets or sets the PrivilegeNames for the request.
 
 ```yaml
 Type: String[]

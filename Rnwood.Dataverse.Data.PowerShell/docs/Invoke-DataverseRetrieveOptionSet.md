@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -MetadataId
-Gets or sets the of the to be retrieved. Optional.
+The unique identifier for the attribute. Optional.
 
 ```yaml
 Type: Guid
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -Name
-Gets or sets the name for the global choice to be retrieved. Optional.
+List of names (primary attribute value) of records to retrieve.
 
 ```yaml
 Type: String

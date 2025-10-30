@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -PrivilegeIds
-Gets or sets an array of privileges Ids that needs to be retrieved. Required.
+Gets or sets the PrivilegeIds for the request.
 
 ```yaml
 Type: Guid[]

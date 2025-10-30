@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -ImportJobId
-Gets or sets the GUID of an import job. Required.
+The ID of the Import Job.
 
 ```yaml
 Type: Guid

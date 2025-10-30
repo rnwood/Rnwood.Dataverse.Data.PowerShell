@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -OpportunityId
-Gets or sets the ID of the opportunity to be used as the basis for the new invoice. Required.
+Gets or sets the ID of the opportunity. Required.
 
 ```yaml
 Type: Guid

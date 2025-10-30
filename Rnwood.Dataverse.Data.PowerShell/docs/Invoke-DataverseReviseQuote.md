@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -QuoteId
-Gets or sets the ID of the original quote. Required.
+Gets or sets the ID of the quote to convert. Required.
 
 ```yaml
 Type: Guid

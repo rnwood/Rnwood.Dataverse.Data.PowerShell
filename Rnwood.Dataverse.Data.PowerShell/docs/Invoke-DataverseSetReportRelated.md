@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -Entities
-Gets the collection of entities.
+Gets or sets an array of entity type codes for the related entities. Required.
 
 ```yaml
 Type: Int32[]
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -ReportId
-Gets or sets the ID of the report. Required.
+Gets or sets the ID of the report to download.
 
 ```yaml
 Type: Guid

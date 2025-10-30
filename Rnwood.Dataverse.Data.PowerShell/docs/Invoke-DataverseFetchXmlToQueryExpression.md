@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -FetchXml
-Gets or sets the query to convert.
+FetchXml to use
 
 ```yaml
 Type: String

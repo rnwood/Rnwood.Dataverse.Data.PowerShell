@@ -47,7 +47,7 @@ Accept wildcard characters: False
 ```
 
 ### -ComponentType
-Gets or sets the value that represents the solution component. Required.
+Gets or sets the value that represents the solution component that you are adding. Required.
 
 ```yaml
 Type: Int32

@@ -33,7 +33,7 @@ PS C:\> Invoke-DataverseUpdateAttribute -Connection <ServiceClient> -Attribute <
 ## PARAMETERS
 
 ### -Attribute
-Gets or sets the attribute metadata to be updated. Required.
+Gets or sets the definition of the column type that you want to create. Required.
 
 ```yaml
 Type: AttributeMetadata
@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityName
-Gets or sets the logical name of the entity to which the attribute belongs. Required.
+Gets or sets the logical name of the entity.
 
 ```yaml
 Type: String
@@ -108,7 +108,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the name of the solution to associate the entity with. Optional.
+Gets or sets the name of the unmanaged solution to which you want to add this column. Optional.
 
 ```yaml
 Type: String

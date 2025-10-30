@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -RoleId
-Gets or sets the ID of the role for which the privileges are to be retrieved.
+Gets or sets the ID of the role for which you want to add the privileges. Required.
 
 ```yaml
 Type: Guid

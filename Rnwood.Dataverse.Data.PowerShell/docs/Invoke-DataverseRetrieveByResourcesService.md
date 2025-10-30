@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -ResourceIds
-Gets or sets an array of IDs for the specified set of services.
+Gets or sets the IDs of the resources. Required.
 
 ```yaml
 Type: Guid[]

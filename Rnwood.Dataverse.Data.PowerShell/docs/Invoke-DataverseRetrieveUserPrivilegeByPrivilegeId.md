@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -PrivilegeId
-Gets or sets the ID of the privilege.
+Gets or sets the ID of the privilege that is to be removed from the existing role.
 
 ```yaml
 Type: Guid

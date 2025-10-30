@@ -64,7 +64,7 @@ Accept wildcard characters: False
 ```
 
 ### -OpportunityClose
-Gets or sets the opportunity close activity associated with this state change. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
+Gets or sets the opportunity close activity. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type.
 
 ```yaml
 Type: PSObject
@@ -79,7 +79,7 @@ Accept wildcard characters: False
 ```
 
 ### -OpportunityCloseIgnoreProperties
-Gets or sets the opportunity close activity associated with this state change. Required. Properties to ignore when converting OpportunityClose PSObject to Entity.
+Gets or sets the opportunity close activity. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Properties to ignore when converting OpportunityClose PSObject to Entity.
 
 ```yaml
 Type: String[]
@@ -94,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -OpportunityCloseLookupColumns
-Gets or sets the opportunity close activity associated with this state change. Required. Hashtable specifying lookup columns for entity reference conversions in OpportunityClose.
+Gets or sets the opportunity close activity. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Hashtable specifying lookup columns for entity reference conversions in OpportunityClose.
 
 ```yaml
 Type: Hashtable
@@ -109,7 +109,7 @@ Accept wildcard characters: False
 ```
 
 ### -OpportunityCloseTableName
-Gets or sets the opportunity close activity associated with this state change. Required. The logical name of the table/entity type for the OpportunityClose parameter.
+Gets or sets the opportunity close activity. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. The logical name of the table/entity type for the OpportunityClose parameter.
 
 ```yaml
 Type: String
@@ -124,7 +124,7 @@ Accept wildcard characters: False
 ```
 
 ### -Status
-Gets or sets a new status of the opportunity. Required.
+Gets or sets the status of the contract. Required.
 
 ```yaml
 Type: OptionSetValue

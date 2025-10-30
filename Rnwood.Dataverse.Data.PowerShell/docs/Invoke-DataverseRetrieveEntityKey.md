@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name of the table.
+Gets or sets the logical name of the table that contains the column. Required.
 
 ```yaml
 Type: String
@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -LogicalName
-Gets or sets the logical name of the key.
+Gets or sets the logical name of the column to delete. Required.
 
 ```yaml
 Type: String
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -MetadataId
-Gets or sets the metadata ID.
+The unique identifier for the attribute. Optional.
 
 ```yaml
 Type: Guid

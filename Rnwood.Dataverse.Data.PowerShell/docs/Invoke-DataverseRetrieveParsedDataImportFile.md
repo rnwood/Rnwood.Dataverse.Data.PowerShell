@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -ImportFileId
-Gets or sets the ID of the import file that is associated with the parse table. Required.
+Gets or sets in ID of the import file that is associated with the source file. Required.
 
 ```yaml
 Type: Guid
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -PagingInfo
-Gets or sets the paging information for the retrieved data. Required.
+Gets or sets the paging information. Optional.
 
 ```yaml
 Type: PagingInfo

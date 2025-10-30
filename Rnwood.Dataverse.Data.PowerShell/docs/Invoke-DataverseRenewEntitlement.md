@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -Status
-Gets or sets the value for the renewed Entitlement.
+Gets or sets the status of the contract. Required.
 
 ```yaml
 Type: Int32

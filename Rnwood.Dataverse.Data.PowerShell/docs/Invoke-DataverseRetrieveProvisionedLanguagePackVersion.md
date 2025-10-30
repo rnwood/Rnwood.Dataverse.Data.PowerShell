@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Language
-Gets or sets the Locale Id for the language. Required.
+Gets or sets the language to which the knowledge article is translated to. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: Int32
