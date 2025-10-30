@@ -21,6 +21,7 @@ This document provides examples of common Dataverse operations using `Rnwood.Dat
 - [Multi-Organization Operations](#multi-organization-operations)
 - [Duplicate Detection](#duplicate-detection)
 - [Business Process Flows](#business-process-flows)
+- [Form Management](#form-management)
 - [Ribbon Customizations](#ribbon-customizations)
 - [Views and Quick Find](#views-and-quick-find)
 - [Sitemap Management](#sitemap-management)
@@ -1580,6 +1581,177 @@ FROM processstage
 WHERE primaryentitytypecode = 'lead'
 ORDER BY stagename
 "@
+```
+
+## Form Management
+
+### Example: Get all forms for an entity
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Not directly supported - required direct SDK queries
+$query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression -ArgumentList "systemform"
+$query.ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet($true)
+$query.Criteria.AddCondition("objecttypecode", [Microsoft.Xrm.Sdk.Query.ConditionOperator]::Equal, "contact")
+$forms = Get-CrmRecords -conn $conn -Query $query
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using dedicated form cmdlet (simplest and recommended)
+$forms = Get-DataverseForm -Connection $conn -Entity 'contact'
+
+# Display form information
+$forms | Format-Table FormId, Name, Type, IsActive, IsDefault
+
+# Get only Main forms
+$mainForms = Get-DataverseForm -Connection $conn -Entity 'contact' -FormType 'Main'
+```
+
+### Example: Get a specific form with FormXml
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex SDK query required
+$formId = 'a1234567-89ab-cdef-0123-456789abcdef'
+$form = Get-CrmRecord -conn $conn -EntityLogicalName systemform -Id $formId -Fields formxml,name
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple and clean with dedicated cmdlet
+$formId = 'a1234567-89ab-cdef-0123-456789abcdef'
+$form = Get-DataverseForm -Connection $conn -Id $formId -IncludeFormXml
+
+# Parse FormXml structure
+$parsedForm = Get-DataverseForm -Connection $conn -Id $formId -ParseFormXml
+$parsedForm.ParsedForm.Tabs | ForEach-Object {
+    Write-Host "Tab: $($_.Name) - Expanded: $($_.Expanded)"
+    $_.Sections | ForEach-Object {
+        Write-Host "  Section: $($_.Name)"
+        $_.Controls | ForEach-Object {
+            Write-Host "    Control: $($_.DataField)"
+        }
+    }
+}
+```
+
+### Example: Create a new form
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Required manual SDK entity creation
+$form = New-Object Microsoft.Xrm.Sdk.Entity -ArgumentList "systemform"
+$form["name"] = "Custom Contact Form"
+$form["objecttypecode"] = "contact"
+$form["type"] = New-Object Microsoft.Xrm.Sdk.OptionSetValue -ArgumentList 2  # Main form
+$form["formxml"] = $formXmlContent
+$formId = Set-CrmRecord -conn $conn -CrmRecord $form
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Clean and simple with dedicated cmdlet
+$formId = Set-DataverseForm -Connection $conn `
+    -Entity 'contact' `
+    -Name 'Custom Contact Form' `
+    -FormType 'Main' `
+    -Description 'A custom form for contacts' `
+    -IsActive `
+    -PassThru
+
+# With custom FormXml
+$formXml = Get-Content -Path 'CustomForm.xml' -Raw
+$formId = Set-DataverseForm -Connection $conn `
+    -Entity 'contact' `
+    -Name 'Advanced Contact Form' `
+    -FormType 'Main' `
+    -FormXmlContent $formXml `
+    -Publish `
+    -PassThru
+```
+
+### Example: Update an existing form
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Manual SDK entity updates
+$formId = 'a1234567-89ab-cdef-0123-456789abcdef'
+$form = New-Object Microsoft.Xrm.Sdk.Entity -ArgumentList "systemform"
+$form.Id = $formId
+$form["name"] = "Updated Form Name"
+$form["description"] = "Updated description"
+Set-CrmRecord -conn $conn -CrmRecord $form
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple updates with dedicated cmdlet
+$formId = 'a1234567-89ab-cdef-0123-456789abcdef'
+Set-DataverseForm -Connection $conn `
+    -Id $formId `
+    -Name 'Updated Form Name' `
+    -Description 'Updated description' `
+    -IsDefault `
+    -Publish
+```
+
+### Example: Delete a form
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Manual SDK delete
+$formId = 'a1234567-89ab-cdef-0123-456789abcdef'
+Remove-CrmRecord -conn $conn -EntityLogicalName systemform -Id $formId
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Clean deletion with dedicated cmdlet
+$formId = 'a1234567-89ab-cdef-0123-456789abcdef'
+Remove-DataverseForm -Connection $conn -Id $formId -Publish
+
+# Delete by name
+Remove-DataverseForm -Connection $conn -Entity 'contact' -Name 'Old Form' -IfExists
+
+# WhatIf support for safety
+Remove-DataverseForm -Connection $conn -Id $formId -WhatIf
+```
+
+### Example: Export and import forms
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex manual process with SDK
+$forms = Get-CrmRecords -conn $conn -EntityLogicalName systemform -FilterAttribute objecttypecode -FilterOperator eq -FilterValue contact -Fields formxml,name
+foreach ($form in $forms.CrmRecords) {
+    $formXml = $form.formxml
+    [System.IO.File]::WriteAllText("C:\FormExports\$($form.name).xml", $formXml)
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple and clean with dedicated cmdlets
+# Export forms
+$forms = Get-DataverseForm -Connection $conn -Entity 'contact' -IncludeFormXml
+$forms | ForEach-Object {
+    $safeFileName = $_.Name -replace '[\\/:*?"<>|]', '_'
+    $_.FormXml | Out-File -FilePath "C:\FormExports\$safeFileName.xml"
+}
+
+# Import forms to another environment
+$targetConn = Get-DataverseConnection -Url "https://target.crm.dynamics.com" -Interactive
+Get-ChildItem "C:\FormExports\*.xml" | ForEach-Object {
+    $formXml = Get-Content $_.FullName -Raw
+    $formName = [System.IO.Path]::GetFileNameWithoutExtension($_.Name)
+    Set-DataverseForm -Connection $targetConn `
+        -Entity 'contact' `
+        -Name $formName `
+        -FormType 'Main' `
+        -FormXmlContent $formXml `
+        -Publish
+}
 ```
 
 ## Ribbon Customizations

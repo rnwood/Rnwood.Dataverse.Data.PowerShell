@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseForm
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves forms from a Dataverse environment.
 
 ## SYNTAX
 
@@ -31,16 +31,55 @@ Get-DataverseForm -Entity <String> -Name <String> [-IncludeFormXml] [-ParseFormX
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Get-DataverseForm cmdlet retrieves form definitions from a Dataverse environment. Forms can be retrieved by ID, by entity name (optionally filtered by form type), or by entity name and form name. The cmdlet returns simplified PSObject output with form properties, and can optionally include the raw FormXml or parse it into structured tab/section/control information.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Get all forms for an entity
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $conn = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
+PS C:\> Get-DataverseForm -Connection $conn -Entity 'contact'
 ```
 
-{{ Add example description here }}
+Retrieves all forms for the contact entity.
+
+### Example 2: Get a specific form by ID
+```powershell
+PS C:\> $formId = 'a1234567-89ab-cdef-0123-456789abcdef'
+PS C:\> Get-DataverseForm -Connection $conn -Id $formId
+```
+
+Retrieves a specific form by its ID.
+
+### Example 3: Get forms of a specific type
+```powershell
+PS C:\> Get-DataverseForm -Connection $conn -Entity 'account' -FormType 'Main'
+```
+
+Retrieves all main forms for the account entity.
+
+### Example 4: Get a form by entity and name
+```powershell
+PS C:\> Get-DataverseForm -Connection $conn -Entity 'contact' -Name 'Information'
+```
+
+Retrieves the contact form named "Information".
+
+### Example 5: Get form with FormXml
+```powershell
+PS C:\> $form = Get-DataverseForm -Connection $conn -Entity 'contact' -Name 'Information' -IncludeFormXml
+PS C:\> $form.FormXml
+```
+
+Retrieves a form and includes the raw FormXml content.
+
+### Example 6: Get form with parsed structure
+```powershell
+PS C:\> $form = Get-DataverseForm -Connection $conn -Entity 'contact' -Name 'Information' -ParseFormXml
+PS C:\> $form.ParsedForm.Tabs | ForEach-Object { $_.Name }
+```
+
+Retrieves a form and parses the FormXml into a structured object with tabs, sections, and controls.
 
 ## PARAMETERS
 

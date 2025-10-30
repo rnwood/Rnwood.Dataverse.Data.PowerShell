@@ -8,7 +8,7 @@ schema: 2.0.0
 # Set-DataverseForm
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Creates or updates a form in a Dataverse environment.
 
 ## SYNTAX
 
@@ -41,16 +41,48 @@ Set-DataverseForm -Entity <String> -Name <String> -FormType <String> -FormXmlCon
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Set-DataverseForm cmdlet creates or updates form definitions in a Dataverse environment. When creating a form, you must specify the entity, name, and form type. When updating, you specify the form ID. The cmdlet supports both simple property-based updates and complete FormXml replacement. Forms can be optionally published after creation/update.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Create a new main form
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $conn = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
+PS C:\> $formId = Set-DataverseForm -Connection $conn -Entity 'contact' -Name 'Custom Contact Form' -FormType 'Main' -PassThru
+PS C:\> Write-Host "Created form with ID: $formId"
 ```
 
-{{ Add example description here }}
+Creates a new main form for the contact entity with minimal configuration.
+
+### Example 2: Create a form with description
+```powershell
+PS C:\> Set-DataverseForm -Connection $conn -Entity 'account' -Name 'Account Quick Create' -FormType 'QuickCreate' -Description 'Quick create form for accounts' -IsActive
+```
+
+Creates a new quick create form with a description and marks it as active.
+
+### Example 3: Update an existing form
+```powershell
+PS C:\> $formId = 'a1234567-89ab-cdef-0123-456789abcdef'
+PS C:\> Set-DataverseForm -Connection $conn -Id $formId -Name 'Updated Form Name' -Description 'Updated description'
+```
+
+Updates the name and description of an existing form.
+
+### Example 4: Create a form with custom FormXml
+```powershell
+PS C:\> $formXml = Get-Content -Path 'CustomForm.xml' -Raw
+PS C:\> Set-DataverseForm -Connection $conn -Entity 'contact' -Name 'Advanced Form' -FormType 'Main' -FormXmlContent $formXml -Publish
+```
+
+Creates a new form using custom FormXml content and publishes it immediately.
+
+### Example 5: Update form and publish
+```powershell
+PS C:\> Set-DataverseForm -Connection $conn -Id $formId -IsDefault -Publish
+```
+
+Sets a form as the default form for its entity and publishes the changes.
 
 ## PARAMETERS
 

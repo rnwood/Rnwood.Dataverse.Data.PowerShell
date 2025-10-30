@@ -8,7 +8,7 @@ schema: 2.0.0
 # Remove-DataverseForm
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Removes/deletes a form from a Dataverse environment.
 
 ## SYNTAX
 
@@ -25,16 +25,46 @@ Remove-DataverseForm -Entity <String> -Name <String> [-Publish] [-IfExists] [-Co
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Remove-DataverseForm cmdlet deletes form definitions from a Dataverse environment. Forms can be deleted by ID or by entity name and form name. The cmdlet supports -WhatIf and -Confirm for safe deletion operations. Optionally, the entity can be published after form deletion to apply changes immediately.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Delete a form by ID
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $conn = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
+PS C:\> $formId = 'a1234567-89ab-cdef-0123-456789abcdef'
+PS C:\> Remove-DataverseForm -Connection $conn -Id $formId
 ```
 
-{{ Add example description here }}
+Deletes a form by its ID with confirmation prompt.
+
+### Example 2: Delete a form by entity and name
+```powershell
+PS C:\> Remove-DataverseForm -Connection $conn -Entity 'contact' -Name 'Old Contact Form' -Confirm:$false
+```
+
+Deletes a form by entity name and form name without confirmation.
+
+### Example 3: Delete form and publish
+```powershell
+PS C:\> Remove-DataverseForm -Connection $conn -Id $formId -Publish
+```
+
+Deletes a form and immediately publishes the entity to apply changes.
+
+### Example 4: Delete form if it exists
+```powershell
+PS C:\> Remove-DataverseForm -Connection $conn -Entity 'account' -Name 'Test Form' -IfExists -Confirm:$false
+```
+
+Attempts to delete a form but doesn't raise an error if the form doesn't exist.
+
+### Example 5: WhatIf simulation
+```powershell
+PS C:\> Remove-DataverseForm -Connection $conn -Id $formId -WhatIf
+```
+
+Shows what would happen if the form were deleted without actually deleting it.
 
 ## PARAMETERS
 

@@ -94,7 +94,7 @@ For more advanced scenarios including view management and app module management,
 
 ## Main Cmdlets
 
-### Record Management
+### Data Operations
 - [`Get-DataverseConnection`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseConnection.md) — create or retrieve a connection
 - [`Get-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) — query and retrieve records
 - [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) — create, update or upsert records
@@ -156,6 +156,11 @@ For more advanced scenarios including view management and app module management,
 
 ### Metadata Cache Management
 - `Clear-DataverseMetadataCache` — clear the metadata cache
+
+### Form Management
+- [`Get-DataverseForm`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseForm.md) — retrieve form definitions with optional FormXml parsing
+- [`Set-DataverseForm`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseForm.md) — create or update forms with FormXml support
+- [`Remove-DataverseForm`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseForm.md) — delete forms from entities
 
 ### Additional Operations
 For operations not covered by the cmdlets above, use [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) with SDK request objects to execute any Dataverse SDK operation directly.
