@@ -14,9 +14,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     [Cmdlet(VerbsCommon.Set, "DataverseView", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     public class SetDataverseViewCmdlet : OrganizationServiceCmdlet
     {
-        private const string PARAMSET_SIMPLE = "Simple";
-        private const string PARAMSET_FETCHXML = "FetchXml";
-
         /// <summary>
         /// Gets or sets the ID of the view to modify.
         /// </summary>
@@ -44,34 +41,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets columns to add to the view.
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Columns to add to the view. Can be an array of column names or hashtables with column configuration (name, width, etc.)")]
+        [Parameter(HelpMessage = "Columns to add to the view. Can be an array of column names or hashtables with column configuration (name, width, etc.)")]
         [ArgumentCompleter(typeof(ColumnNameArgumentCompleter))]
         public object[] AddColumns { get; set; }
 
         /// <summary>
         /// Gets or sets columns to remove from the view.
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Columns to remove from the view")]
+        [Parameter(HelpMessage = "Columns to remove from the view")]
         [ArgumentCompleter(typeof(ColumnNameArgumentCompleter))]
         public string[] RemoveColumns { get; set; }
 
         /// <summary>
         /// Gets or sets columns to update in the view.
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Columns to update in the view. Hashtables with column configuration (name, width, etc.)")]
+        [Parameter(HelpMessage = "Columns to update in the view. Hashtables with column configuration (name, width, etc.)")]
         public Hashtable[] UpdateColumns { get; set; }
 
         /// <summary>
         /// Gets or sets filter values to add/replace in the view query.
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Filter values to add or replace in the view. One or more hashtables to filter records.")]
+        [Parameter(HelpMessage = "Filter values to add or replace in the view. One or more hashtables to filter records.")]
         [ArgumentCompleter(typeof(FilterValuesArgumentCompleter))]
         public Hashtable[] FilterValues { get; set; }
 
         /// <summary>
         /// Gets or sets the FetchXml query to replace the view's query.
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_FETCHXML, HelpMessage = "FetchXml query to replace the view's query")]
+        [Parameter(HelpMessage = "FetchXml query to replace the view's query")]
         public string FetchXml { get; set; }
 
         /// <summary>
@@ -125,7 +122,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         updated = true;
                     }
                     // Or modify FetchXml based on simple parameters
-                    else if (ParameterSetName == PARAMSET_SIMPLE && (AddColumns != null || RemoveColumns != null || FilterValues != null))
+                    else if (AddColumns != null || RemoveColumns != null || FilterValues != null)
                     {
                         string currentFetchXml = viewEntity.GetAttributeValue<string>("fetchxml");
                         string modifiedFetchXml = ModifyFetchXml(currentFetchXml);
@@ -140,7 +137,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         updated = true;
                     }
                     // Or modify LayoutXml based on column changes
-                    else if (ParameterSetName == PARAMSET_SIMPLE && (AddColumns != null || RemoveColumns != null || UpdateColumns != null))
+                    else if (AddColumns != null || RemoveColumns != null || UpdateColumns != null)
                     {
                         string currentLayoutXml = viewEntity.GetAttributeValue<string>("layoutxml");
                         string modifiedLayoutXml = ModifyLayoutXml(currentLayoutXml);
