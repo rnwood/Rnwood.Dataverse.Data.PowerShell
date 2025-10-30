@@ -1754,6 +1754,165 @@ Get-ChildItem "C:\FormExports\*.xml" | ForEach-Object {
 }
 ```
 
+### Example: Manage form tabs
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex manual FormXml manipulation required
+$form = Get-CrmRecord -conn $conn -EntityLogicalName systemform -Id $formId -Fields formxml
+$xml = [xml]$form.formxml
+$tab = $xml.CreateElement("tab")
+$tab.SetAttribute("name", "newtab")
+# ... extensive XML manipulation ...
+Set-CrmRecord -conn $conn -CrmRecord @{systemformid=$formId; formxml=$xml.OuterXml}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple and intuitive with dedicated cmdlet
+# Add a new tab
+$tabId = Set-DataverseFormTab -Connection $conn `
+    -FormId $formId `
+    -Name 'CustomTab' `
+    -Label 'Custom Information' `
+    -Expanded `
+    -Publish `
+    -PassThru
+
+# Update existing tab
+Set-DataverseFormTab -Connection $conn `
+    -FormId $formId `
+    -TabId $tabId `
+    -Label 'Updated Label' `
+    -Visible:$false
+
+# Remove tab
+Remove-DataverseFormTab -Connection $conn -FormId $formId -TabName 'CustomTab' -Publish
+
+# Get all tabs
+$tabs = Get-DataverseFormTab -Connection $conn -FormId $formId
+$tabs | Format-Table Name, Expanded, Visible
+```
+
+### Example: Manage form sections
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Requires manual FormXml parsing and manipulation
+$form = Get-CrmRecord -conn $conn -EntityLogicalName systemform -Id $formId -Fields formxml
+$xml = [xml]$form.formxml
+# ... complex XPath and XML manipulation ...
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple section management
+# Add a new section to a tab
+$sectionId = Set-DataverseFormSection -Connection $conn `
+    -FormId $formId `
+    -TabName 'General' `
+    -Name 'custom_section' `
+    -Label 'Custom Fields' `
+    -Columns 2 `
+    -ShowLabel `
+    -Publish `
+    -PassThru
+
+# Update section properties
+Set-DataverseFormSection -Connection $conn `
+    -FormId $formId `
+    -TabName 'General' `
+    -SectionId $sectionId `
+    -Label 'Updated Section' `
+    -Columns 3
+
+# Remove section
+Remove-DataverseFormSection -Connection $conn `
+    -FormId $formId `
+    -SectionName 'custom_section' `
+    -Publish
+
+# Get all sections in a tab
+$sections = Get-DataverseFormSection -Connection $conn -FormId $formId -TabName 'General'
+$sections | Format-Table Name, ShowLabel, Columns
+```
+
+### Example: Manage form controls
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Very complex - requires understanding FormXml schema and manual manipulation
+$form = Get-CrmRecord -conn $conn -EntityLogicalName systemform -Id $formId -Fields formxml
+$xml = [xml]$form.formxml
+# ... extensive XML creation with class IDs, attributes, cells, rows ...
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Add standard controls with simple parameters
+# Add a text field
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -DataField 'emailaddress1' `
+    -Label 'Email Address' `
+    -ControlType 'Standard' `
+    -IsRequired `
+    -Publish
+
+# Add a lookup field
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -DataField 'parentcustomerid' `
+    -Label 'Parent Account' `
+    -ControlType 'Lookup'
+
+# Add a date/time picker
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -DataField 'createdon' `
+    -Label 'Created On' `
+    -ControlType 'DateTime' `
+    -Disabled
+
+# Add a subgrid with parameters
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'related_section' `
+    -DataField 'contacts_subgrid' `
+    -ControlType 'Subgrid' `
+    -Parameters @{
+        TargetEntityType = 'contact'
+        ViewId = '{00000000-0000-0000-0000-000000000000}'
+    }
+
+# Update control properties
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -ControlId 'emailaddress1' `
+    -DataField 'emailaddress1' `
+    -Label 'Primary Email' `
+    -Visible:$false
+
+# Remove control
+Remove-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -DataField 'emailaddress1' `
+    -Publish
+
+# Get all controls in a section
+$controls = Get-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section'
+$controls | Format-Table DataField, Disabled, Visible, IsRequired
+
+# Supported control types: Standard, Lookup, OptionSet, DateTime, Boolean, 
+# Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch, Notes
+```
+
 ## Ribbon Customizations
 
 ### Example: Export Application Ribbon

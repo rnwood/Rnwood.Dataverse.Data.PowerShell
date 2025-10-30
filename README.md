@@ -162,6 +162,22 @@ For more advanced scenarios including view management and app module management,
 - [`Set-DataverseForm`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseForm.md) — create or update forms with FormXml support
 - [`Remove-DataverseForm`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseForm.md) — delete forms from entities
 
+### Form Component Management
+**Tabs:**
+- [`Get-DataverseFormTab`] — retrieve tabs from forms
+- [`Set-DataverseFormTab`] — create or update form tabs
+- [`Remove-DataverseFormTab`] — delete tabs from forms
+
+**Sections:**
+- [`Get-DataverseFormSection`] — retrieve sections from form tabs
+- [`Set-DataverseFormSection`] — create or update form sections
+- [`Remove-DataverseFormSection`] — delete sections from forms
+
+**Controls:**
+- [`Get-DataverseFormControl`] — retrieve controls from form sections
+- [`Set-DataverseFormControl`] — create or update form controls (supports all standard control types)
+- [`Remove-DataverseFormControl`] — delete controls from forms
+
 ### Additional Operations
 For operations not covered by the cmdlets above, use [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) with SDK request objects to execute any Dataverse SDK operation directly.
 
