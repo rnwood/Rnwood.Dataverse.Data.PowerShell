@@ -14,10 +14,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     public class RemoveDataverseSitemapEntryCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
+        /// Gets or sets the entry object from pipeline.
+        /// </summary>
+        [Parameter(ValueFromPipeline = true, HelpMessage = "Entry object from Get-DataverseSitemapEntry.")]
+        public SitemapEntryInfo InputObject { get; set; }
+
+        /// <summary>
+        /// Gets or sets the sitemap object from pipeline.
+        /// </summary>
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Sitemap object from Get-DataverseSitemap.")]
+        public SitemapInfo Sitemap { get; set; }
+
+        /// <summary>
         /// Gets or sets the name of the sitemap containing the entry.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, ValueFromPipelineByPropertyName = true, HelpMessage = "The name of the sitemap containing the entry.")]
-        [ValidateNotNullOrEmpty]
+        [Parameter(Position = 0, ValueFromPipelineByPropertyName = true, HelpMessage = "The name of the sitemap containing the entry.")]
+        [Alias("Name")]
         public string SitemapName { get; set; }
 
         /// <summary>
@@ -29,8 +41,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the type of entry to remove.
         /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "The type of entry to remove (Area, Group, SubArea).")]
-        public SitemapEntryType EntryType { get; set; }
+        [Parameter(HelpMessage = "The type of entry to remove (Area, Group, SubArea).")]
+        public SitemapEntryType? EntryType { get; set; }
 
         /// <summary>
         /// Gets or sets the ID of the entry to remove.
@@ -65,12 +77,71 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            if (!ShouldProcess($"Sitemap '{SitemapName}'", $"Remove {EntryType} entry '{EntryId}'"))
+            // Get values from InputObject if provided
+            string sitemapName = SitemapName;
+            Guid? sitemapId = SitemapId;
+            SitemapEntryType? entryType = EntryType;
+            string entryId = EntryId;
+            string parentAreaId = ParentAreaId;
+            string parentGroupId = ParentGroupId;
+
+            if (InputObject != null)
+            {
+                if (!entryType.HasValue)
+                    entryType = InputObject.EntryType;
+                if (string.IsNullOrEmpty(entryId))
+                    entryId = InputObject.Id;
+                if (string.IsNullOrEmpty(parentAreaId))
+                    parentAreaId = InputObject.ParentAreaId;
+                if (string.IsNullOrEmpty(parentGroupId))
+                    parentGroupId = InputObject.ParentGroupId;
+            }
+
+            if (Sitemap != null)
+            {
+                if (string.IsNullOrEmpty(sitemapName))
+                    sitemapName = Sitemap.Name;
+                if (!sitemapId.HasValue || sitemapId.Value == Guid.Empty)
+                    sitemapId = Sitemap.Id;
+            }
+
+            // Validate required parameters
+            if (string.IsNullOrEmpty(sitemapName) && (!sitemapId.HasValue || sitemapId.Value == Guid.Empty))
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new ArgumentException("Either SitemapName, SitemapId, Sitemap, or InputObject must be provided."),
+                    "MissingSitemapIdentifier",
+                    ErrorCategory.InvalidArgument,
+                    null));
+                return;
+            }
+
+            if (!entryType.HasValue)
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new ArgumentException("EntryType is required. Provide it directly or via InputObject."),
+                    "MissingEntryType",
+                    ErrorCategory.InvalidArgument,
+                    null));
+                return;
+            }
+
+            if (string.IsNullOrEmpty(entryId))
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new ArgumentException("entryId is required. Provide it directly or via InputObject."),
+                    "MissingEntryId",
+                    ErrorCategory.InvalidArgument,
+                    null));
+                return;
+            }
+
+            if (!ShouldProcess($"Sitemap '{sitemapName ?? sitemapId.ToString()}'", $"Remove {entryType} entry '{entryId}'"))
             {
                 return;
             }
 
-            WriteVerbose($"Retrieving sitemap '{SitemapName}'...");
+            WriteVerbose($"Retrieving sitemap '{sitemapName ?? sitemapId.ToString()}'...");
 
             // Retrieve the sitemap
             var query = new QueryExpression("sitemap")
@@ -79,13 +150,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 TopCount = 1
             };
 
-            if (SitemapId.HasValue && SitemapId.Value != Guid.Empty)
+            if (sitemapId.HasValue && sitemapId.Value != Guid.Empty)
             {
-                query.Criteria.AddCondition("sitemapid", ConditionOperator.Equal, SitemapId.Value);
+                query.Criteria.AddCondition("sitemapid", ConditionOperator.Equal, sitemapId.Value);
             }
             else
             {
-                query.Criteria.AddCondition("sitemapname", ConditionOperator.Equal, SitemapName);
+                query.Criteria.AddCondition("sitemapname", ConditionOperator.Equal, sitemapName);
             }
 
             var sitemaps = Connection.RetrieveMultiple(query);
@@ -94,20 +165,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 if (IfExists.IsPresent)
                 {
-                    WriteVerbose($"Sitemap '{SitemapName}' not found. Skipping removal.");
+                    WriteVerbose($"Sitemap '{sitemapName}' not found. Skipping removal.");
                     return;
                 }
 
                 ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException($"Sitemap '{SitemapName}' not found."),
+                    new InvalidOperationException($"Sitemap '{sitemapName}' not found."),
                     "SitemapNotFound",
                     ErrorCategory.ObjectNotFound,
-                    SitemapName));
+                    sitemapName));
                 return;
             }
 
             var sitemap = sitemaps.Entities[0];
-            var sitemapId = sitemap.Id;
+            var retrievedSitemapId = sitemap.Id;
             var isManaged = sitemap.GetAttributeValue<bool>("ismanaged");
 
             if (isManaged)
@@ -116,7 +187,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     new InvalidOperationException("Cannot remove entries from a managed sitemap."),
                     "ManagedSitemapModificationNotAllowed",
                     ErrorCategory.InvalidOperation,
-                    SitemapName));
+                    sitemapName));
                 return;
             }
 
@@ -140,19 +211,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Find and remove the entry
             XElement entryElement = null;
-            switch (EntryType)
+            switch (entryType.Value)
             {
                 case SitemapEntryType.Area:
-                    entryElement = FindElement(doc.Root, "Area", EntryId);
+                    entryElement = FindElement(doc.Root, "Area", entryId);
                     break;
 
                 case SitemapEntryType.Group:
-                    if (!string.IsNullOrEmpty(ParentAreaId))
+                    if (!string.IsNullOrEmpty(parentAreaId))
                     {
-                        var area = FindElement(doc.Root, "Area", ParentAreaId);
+                        var area = FindElement(doc.Root, "Area", parentAreaId);
                         if (area != null)
                         {
-                            entryElement = FindElement(area, "Group", EntryId);
+                            entryElement = FindElement(area, "Group", entryId);
                         }
                     }
                     else
@@ -160,7 +231,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // Search all areas for the group
                         foreach (var area in doc.Root?.Elements("Area") ?? Enumerable.Empty<XElement>())
                         {
-                            entryElement = FindElement(area, "Group", EntryId);
+                            entryElement = FindElement(area, "Group", entryId);
                             if (entryElement != null)
                                 break;
                         }
@@ -168,15 +239,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     break;
 
                 case SitemapEntryType.SubArea:
-                    if (!string.IsNullOrEmpty(ParentAreaId) && !string.IsNullOrEmpty(ParentGroupId))
+                    if (!string.IsNullOrEmpty(parentAreaId) && !string.IsNullOrEmpty(parentGroupId))
                     {
-                        var area = FindElement(doc.Root, "Area", ParentAreaId);
+                        var area = FindElement(doc.Root, "Area", parentAreaId);
                         if (area != null)
                         {
-                            var group = FindElement(area, "Group", ParentGroupId);
+                            var group = FindElement(area, "Group", parentGroupId);
                             if (group != null)
                             {
-                                entryElement = FindElement(group, "SubArea", EntryId);
+                                entryElement = FindElement(group, "SubArea", entryId);
                             }
                         }
                     }
@@ -219,7 +290,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             WriteVerbose($"Removed {EntryType} entry '{EntryId}' from sitemap XML");
 
             // Update the sitemap
-            var updateEntity = new Entity("sitemap", sitemapId);
+            var updateEntity = new Entity("sitemap", retrievedSitemapId);
             updateEntity["sitemapxml"] = doc.ToString();
 
             WriteVerbose("Updating sitemap in Dataverse...");

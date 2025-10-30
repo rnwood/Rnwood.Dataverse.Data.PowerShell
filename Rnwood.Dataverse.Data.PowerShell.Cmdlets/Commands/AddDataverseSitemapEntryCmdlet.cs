@@ -15,10 +15,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     public class AddDataverseSitemapEntryCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
+        /// Gets or sets the sitemap object from pipeline.
+        /// </summary>
+        [Parameter(ValueFromPipeline = true, HelpMessage = "Sitemap object from Get-DataverseSitemap.")]
+        public SitemapInfo Sitemap { get; set; }
+
+        /// <summary>
         /// Gets or sets the name of the sitemap to add the entry to.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, ValueFromPipelineByPropertyName = true, HelpMessage = "The name of the sitemap to add the entry to.")]
-        [ValidateNotNullOrEmpty]
+        [Parameter(Position = 0, ValueFromPipelineByPropertyName = true, HelpMessage = "The name of the sitemap to add the entry to.")]
+        [Alias("Name")]
         public string SitemapName { get; set; }
 
         /// <summary>
@@ -113,6 +119,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
+            // Get sitemap name and ID from Sitemap object if provided
+            string sitemapName = SitemapName;
+            Guid? sitemapId = SitemapId;
+
+            if (Sitemap != null)
+            {
+                if (string.IsNullOrEmpty(sitemapName))
+                    sitemapName = Sitemap.Name;
+                if (!sitemapId.HasValue || sitemapId.Value == Guid.Empty)
+                    sitemapId = Sitemap.Id;
+            }
+
+            if (string.IsNullOrEmpty(sitemapName) && (!sitemapId.HasValue || sitemapId.Value == Guid.Empty))
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new ArgumentException("Either SitemapName, SitemapId, or a Sitemap object must be provided."),
+                    "MissingSitemapIdentifier",
+                    ErrorCategory.InvalidArgument,
+                    null));
+                return;
+            }
+
             // Validate parameters based on entry type
             if (EntryType == SitemapEntryType.Group || EntryType == SitemapEntryType.SubArea)
             {
@@ -137,12 +165,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
-            if (!ShouldProcess($"Sitemap '{SitemapName}'", $"Add {EntryType} entry '{EntryId}'"))
+            if (!ShouldProcess($"Sitemap '{sitemapName ?? sitemapId.ToString()}'", $"Add {EntryType} entry '{EntryId}'"))
             {
                 return;
             }
 
-            WriteVerbose($"Retrieving sitemap '{SitemapName}'...");
+            WriteVerbose($"Retrieving sitemap '{sitemapName ?? sitemapId.ToString()}'...");
 
             // Retrieve the sitemap
             var query = new QueryExpression("sitemap")
@@ -151,13 +179,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 TopCount = 1
             };
 
-            if (SitemapId.HasValue && SitemapId.Value != Guid.Empty)
+            if (sitemapId.HasValue && sitemapId.Value != Guid.Empty)
             {
-                query.Criteria.AddCondition("sitemapid", ConditionOperator.Equal, SitemapId.Value);
+                query.Criteria.AddCondition("sitemapid", ConditionOperator.Equal, sitemapId.Value);
             }
             else
             {
-                query.Criteria.AddCondition("sitemapname", ConditionOperator.Equal, SitemapName);
+                query.Criteria.AddCondition("sitemapname", ConditionOperator.Equal, sitemapName);
             }
 
             var sitemaps = Connection.RetrieveMultiple(query);
@@ -165,15 +193,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (sitemaps.Entities.Count == 0)
             {
                 ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException($"Sitemap '{SitemapName}' not found."),
+                    new InvalidOperationException($"Sitemap '{sitemapName ?? sitemapId.ToString()}' not found."),
                     "SitemapNotFound",
                     ErrorCategory.ObjectNotFound,
-                    SitemapName));
+                    sitemapName ?? sitemapId.ToString()));
                 return;
             }
 
             var sitemap = sitemaps.Entities[0];
-            var sitemapId = sitemap.Id;
+            var retrievedSitemapId = sitemap.Id;
             var isManaged = sitemap.GetAttributeValue<bool>("ismanaged");
 
             if (isManaged)
@@ -182,7 +210,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     new InvalidOperationException("Cannot add entries to a managed sitemap."),
                     "ManagedSitemapModificationNotAllowed",
                     ErrorCategory.InvalidOperation,
-                    SitemapName));
+                    sitemapName ?? sitemapId.ToString()));
                 return;
             }
 
@@ -280,14 +308,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Update the sitemap
-            var updateEntity = new Entity("sitemap", sitemapId);
+            var updateEntity = new Entity("sitemap", retrievedSitemapId);
             updateEntity["sitemapxml"] = doc.ToString();
 
             WriteVerbose("Updating sitemap in Dataverse...");
             Connection.Update(updateEntity);
 
             WriteVerbose($"{EntryType} entry '{EntryId}' added successfully.");
-            WriteObject($"{EntryType} entry '{EntryId}' added to sitemap '{SitemapName}' successfully.");
+            WriteObject($"{EntryType} entry '{EntryId}' added to sitemap '{sitemapName ?? sitemapId.ToString()}' successfully.");
 
             if (PassThru.IsPresent)
             {
