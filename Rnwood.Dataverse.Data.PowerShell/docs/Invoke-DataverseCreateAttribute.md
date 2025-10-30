@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityName
-Gets or sets the logical name of the entity.
+Gets or sets the name of the table for which you want to create an column. Required.
 
 ```yaml
 Type: String

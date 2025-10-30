@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the name of the unmanaged solution to which you want to add this column. Optional.
+Gets or sets the name of the unmanaged solution you want to add this global choice to. Optional.
 
 ```yaml
 Type: String

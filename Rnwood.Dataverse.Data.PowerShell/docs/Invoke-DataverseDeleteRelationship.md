@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Name
-List of names (primary attribute value) of records to retrieve.
+Gets or sets the name of the relationship to delete. Required.
 
 ```yaml
 Type: String

@@ -63,7 +63,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityFilters
-Gets or sets a filter to control how much data for each table is retrieved. Required.
+Gets or sets a filter to control how much data for the entity is retrieved.
 
 ```yaml
 Type: EntityFilters
@@ -79,7 +79,7 @@ Accept wildcard characters: False
 ```
 
 ### -LogicalName
-Gets or sets the logical name of the column to delete. Required.
+Gets or sets the logical name of the table to retrieve. Optional.
 
 ```yaml
 Type: String
@@ -94,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -MetadataId
-The unique identifier for the attribute. Optional.
+Gets or sets the unique identifier for the entity. Optional.
 
 ```yaml
 Type: Guid
@@ -109,7 +109,7 @@ Accept wildcard characters: False
 ```
 
 ### -RetrieveAsIfPublished
-Gets or sets whether to retrieve the metadata that has not been published. Required.
+Gets or sets whether to retrieve the table definition data that has not been published.
 
 ```yaml
 Type: Boolean

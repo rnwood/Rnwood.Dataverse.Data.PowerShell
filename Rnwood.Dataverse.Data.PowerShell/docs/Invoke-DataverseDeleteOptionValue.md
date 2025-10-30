@@ -78,7 +78,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name of the table that contains the column. Required.
+Gets or sets the logical name of the table that contains the column. Optional.
 
 ```yaml
 Type: String
@@ -108,7 +108,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the name of the unmanaged solution to which you want to add this column. Optional.
+Gets or sets the solution name associated with this option value. Optional.
 
 ```yaml
 Type: String

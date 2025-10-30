@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name of the table that contains the column. Required.
+Gets or sets the logical name of the table for the alternate key.
 
 ```yaml
 Type: String

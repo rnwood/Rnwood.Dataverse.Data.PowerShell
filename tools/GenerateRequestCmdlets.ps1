@@ -1163,6 +1163,16 @@ $classSummary
                     }
                     $testParamsDefault += "-$paramName `$test$paramName"
                     $testParamsDefault += "-${paramName}TableName 'contact'"
+                } elseif ($paramTypeName -match "^System\.Guid\[\]$") {
+                    # Guid array parameter
+                    $testParamSetup += "        `$test$paramName = @([Guid]::NewGuid(), [Guid]::NewGuid())"
+                    $testParamsDefault += "-$paramName `$test$paramName"
+                } elseif ($paramTypeName -match "^Microsoft\.Xrm\.Sdk\.EntityReference\[\]$") {
+                    # EntityReference array parameter
+                    $testParamSetup += "        `$entityRef1 = [PSCustomObject]@{ Id = [Guid]::NewGuid(); TableName = 'contact' }"
+                    $testParamSetup += "        `$entityRef2 = [PSCustomObject]@{ Id = [Guid]::NewGuid(); TableName = 'contact' }"
+                    $testParamSetup += "        `$test$paramName = @(`$entityRef1, `$entityRef2)"
+                    $testParamsDefault += "-$paramName `$test$paramName"
                 } elseif ($paramTypeName -eq "Microsoft.Xrm.Sdk.EntityReference") {
                     # Test PSObject to EntityReference conversion
                     if ($needsEntitySetup -and $paramName -eq "Target") {

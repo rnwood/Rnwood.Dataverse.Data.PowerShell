@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -MetadataId
-The unique identifier for the attribute. Optional.
+Gets or sets the of the to be retrieved. Optional.
 
 ```yaml
 Type: Guid
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -Name
-List of names (primary attribute value) of records to retrieve.
+Gets or sets the schema name for the entity relationship to be retrieved. Optional.
 
 ```yaml
 Type: String

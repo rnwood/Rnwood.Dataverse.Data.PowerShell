@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -Request
-Request to execute
+Gets or sets the request to execute asynchronously.
 
 ```yaml
 Type: OrganizationRequest

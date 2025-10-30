@@ -33,7 +33,7 @@ PS C:\> Invoke-DataverseRetrieveEntityChanges -Connection <ServiceClient> -Entit
 ## PARAMETERS
 
 ### -Columns
-List of columns to return in records (default is all). Each column name may be suffixed with :Raw or :Display to override the value type which will be output from the default
+Gets or sets the columns to retrieve.
 
 ```yaml
 Type: ColumnSet
@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityName
-Gets or sets the logical name of the entity.
+Gets or sets the table logical name.
 
 ```yaml
 Type: String
