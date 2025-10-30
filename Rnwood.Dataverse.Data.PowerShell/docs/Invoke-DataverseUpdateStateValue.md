@@ -94,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -Description
-For internal use only.
+Gets or sets the description label for the statecode option that is specified in the Value property. Optional.
 
 ```yaml
 Type: Label
@@ -109,7 +109,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name for the entity. Required.
+Gets or sets the name of the table that has this statecode attribute. Optional.
 
 ```yaml
 Type: String
@@ -169,7 +169,7 @@ Accept wildcard characters: False
 ```
 
 ### -Value
-For internal use only.
+Gets or sets the statecode attribute options to update. Required.
 
 ```yaml
 Type: Int32

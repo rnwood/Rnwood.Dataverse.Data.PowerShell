@@ -79,7 +79,7 @@ Accept wildcard characters: False
 ```
 
 ### -Description
-For internal use only.
+Gets or sets a description for the option. Optional.
 
 ```yaml
 Type: Label
@@ -94,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name for the entity. Required.
+Gets or sets the logical name of the table when updating the local choice in a picklist column. Optional.
 
 ```yaml
 Type: String
@@ -154,7 +154,7 @@ Accept wildcard characters: False
 ```
 
 ### -ParentValues
-Gets or sets the ParentValues for the request.
+For internal use only.
 
 ```yaml
 Type: Int32[]
@@ -169,7 +169,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the unique name of the solution you are adding the solution component to. Required.
+Gets or sets the name of the unmanaged solution that this global choice should be associated with. Optional.
 
 ```yaml
 Type: String
@@ -184,7 +184,7 @@ Accept wildcard characters: False
 ```
 
 ### -Value
-For internal use only.
+Gets or sets the value for the option. Required.
 
 ```yaml
 Type: Int32

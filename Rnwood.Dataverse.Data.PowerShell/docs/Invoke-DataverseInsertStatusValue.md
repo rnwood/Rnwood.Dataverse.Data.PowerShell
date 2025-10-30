@@ -79,7 +79,7 @@ Accept wildcard characters: False
 ```
 
 ### -Description
-For internal use only.
+Gets or sets a description for the status option. Optional.
 
 ```yaml
 Type: Label
@@ -94,7 +94,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name for the entity. Required.
+Gets or sets the logical name of the table that contains the status column. Required.
 
 ```yaml
 Type: String
@@ -139,7 +139,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the unique name of the solution you are adding the solution component to. Required.
+Gets or sets the solution that this status option should be added to. Optional.
 
 ```yaml
 Type: String
@@ -154,7 +154,7 @@ Accept wildcard characters: False
 ```
 
 ### -StateCode
-For internal use only.
+Gets or sets the state code for the new status option. Required.
 
 ```yaml
 Type: Int32
@@ -169,7 +169,7 @@ Accept wildcard characters: False
 ```
 
 ### -Value
-For internal use only.
+Gets or sets the value for the new status option. Optional.
 
 ```yaml
 Type: Int32

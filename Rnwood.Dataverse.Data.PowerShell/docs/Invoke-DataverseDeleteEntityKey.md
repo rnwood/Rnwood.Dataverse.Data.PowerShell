@@ -62,7 +62,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityLogicalName
-Gets or sets the logical name for the entity. Required.
+Gets or sets the logical name of the table.
 
 ```yaml
 Type: String
@@ -77,7 +77,7 @@ Accept wildcard characters: False
 ```
 
 ### -Name
-For internal use only.
+Gets or sets the key name.
 
 ```yaml
 Type: String

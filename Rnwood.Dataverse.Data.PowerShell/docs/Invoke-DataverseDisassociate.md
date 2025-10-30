@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -Target
-Gets or sets the target, which is a recurring appointment master record to which the appointment is converted. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+Gets or sets the record from which the related records will be disassociated. Required. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
 
 ```yaml
 Type: PSObject

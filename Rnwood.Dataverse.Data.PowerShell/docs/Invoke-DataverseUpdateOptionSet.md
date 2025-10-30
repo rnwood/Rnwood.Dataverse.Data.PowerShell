@@ -93,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionUniqueName
-Gets or sets the unique name of the solution you are adding the solution component to. Required.
+Gets or sets the name of a solution to associate the global choice with. Optional.
 
 ```yaml
 Type: String
