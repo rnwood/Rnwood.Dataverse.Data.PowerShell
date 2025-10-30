@@ -23,6 +23,7 @@ This document provides examples of common Dataverse operations using `Rnwood.Dat
 - [Business Process Flows](#business-process-flows)
 - [Ribbon Customizations](#ribbon-customizations)
 - [Views and Quick Find](#views-and-quick-find)
+- [Sitemap Management](#sitemap-management)
 
 ## Connection
 
@@ -361,20 +362,16 @@ $conn.ExecuteCrmOrganizationRequest($caseClose)
 ```powershell
 $caseid = "9EFFD829-8D95-E611-80F3-5065F38B3191"
 
-# Using Invoke-DataverseRequest (recommended)
+# Using specialized cmdlet (simplest)
 $resolution = @{
     subject = "closure subject"
     incidentid = $caseid
 }
 
-$request = New-Object Microsoft.Crm.Sdk.Messages.CloseIncidentRequest
-$request.IncidentResolution = New-Object Microsoft.Xrm.Sdk.Entity("incidentresolution")
-$request.IncidentResolution.Attributes["subject"] = "closure subject"
-$request.IncidentResolution.Attributes["incidentid"] = New-Object Microsoft.Xrm.Sdk.EntityReference("incident", $caseid)
-$request.IncidentResolution.Id = [guid]::NewGuid()
-$request.Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(-1)
-
-Invoke-DataverseRequest -Connection $conn -Request $request
+Invoke-DataverseCloseIncident -Connection $conn `
+    -IncidentResolution $resolution `
+    -IncidentResolutionTableName incidentresolution `
+    -Status (New-Object Microsoft.Xrm.Sdk.OptionSetValue(-1))
 ```
 
 ### Example: Execute WhoAmI Request
@@ -405,165 +402,13 @@ $accountMetadata = $metadata | Where-Object {$_.LogicalName -eq "account"}
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Using specific cmdlet (recommended)
-$accountMetadata = Get-DataverseEntityMetadata -Connection $conn -EntityName account
-
-# With attributes included
-$accountMetadata = Get-DataverseEntityMetadata -Connection $conn -EntityName account -IncludeAttributes
-
-# Or use SQL queries against metadata (for complex queries)
+# Using SQL queries against metadata
 $entityInfo = Invoke-DataverseSql -Connection $conn -Sql @"
 SELECT name, displayname, primaryidattribute, primarynameattribute
 FROM metadata.entity
 WHERE name = 'account'
 "@
 ```
-
-### Example: List All Entities
-
-**Microsoft.Xrm.Data.PowerShell:**
-```powershell
-$metadata = Get-CrmEntityAllMetadata -conn $conn -EntityFilters Entity
-```
-
-**Rnwood.Dataverse.Data.PowerShell:**
-```powershell
-# Using specific cmdlet (recommended)
-$entities = Get-DataverseEntityMetadata -Connection $conn
-
-# List only custom entities with details
-$customEntities = Get-DataverseEntityMetadata -Connection $conn -OnlyCustom -IncludeDetails
-
-# List all with metadata caching for performance
-$entities = Get-DataverseEntityMetadata -Connection $conn -UseMetadataCache
-```
-
-### Example: Get Attribute Metadata
-
-**Microsoft.Xrm.Data.PowerShell:**
-```powershell
-# Required complex SDK calls
-$request = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveAttributeRequest
-$request.EntityLogicalName = "contact"
-$request.LogicalName = "firstname"
-$response = $conn.Execute($request)
-```
-
-**Rnwood.Dataverse.Data.PowerShell:**
-```powershell
-# Using specific cmdlet (recommended)
-$attribute = Get-DataverseAttributeMetadata -Connection $conn -EntityName contact -AttributeName firstname
-
-# Get all attributes for an entity
-$attributes = Get-DataverseAttributeMetadata -Connection $conn -EntityName contact
-
-# With metadata caching
-$attribute = Get-DataverseAttributeMetadata -Connection $conn -EntityName contact -AttributeName firstname -UseMetadataCache
-```
-
-### Example: Get Option Set Values
-
-**Microsoft.Xrm.Data.PowerShell:**
-```powershell
-# Complex SDK calls required
-```
-
-**Rnwood.Dataverse.Data.PowerShell:**
-```powershell
-# Using specific cmdlet (recommended)
-$options = Get-DataverseOptionSetMetadata -Connection $conn -EntityName contact -AttributeName preferredcontactmethodcode
-
-# Get global option set
-$options = Get-DataverseOptionSetMetadata -Connection $conn -Name my_globaloptions
-
-# List all global option sets
-$allOptions = Get-DataverseOptionSetMetadata -Connection $conn
-```
-
-### Example: Create a Custom Entity
-
-**Microsoft.Xrm.Data.PowerShell:**
-```powershell
-# Requires complex SDK object creation
-```
-
-**Rnwood.Dataverse.Data.PowerShell:**
-```powershell
-# Using specific cmdlet (recommended)
-Set-DataverseEntityMetadata -Connection $conn `
-    -EntityName new_project `
-    -SchemaName new_Project `
-    -DisplayName "Project" `
-    -DisplayCollectionName "Projects" `
-    -OwnershipType UserOwned `
-    -PrimaryAttributeSchemaName new_name `
-    -HasActivities
-```
-
-### Example: Create Custom Attributes
-
-**Microsoft.Xrm.Data.PowerShell:**
-```powershell
-# Requires complex SDK object creation
-```
-
-**Rnwood.Dataverse.Data.PowerShell:**
-```powershell
-# Using specific cmdlet (recommended)
-# Create string attribute
-Set-DataverseAttributeMetadata -Connection $conn `
-    -EntityName new_project `
-    -AttributeName new_description `
-    -SchemaName new_Description `
-    -AttributeType String `
-    -MaxLength 500 `
-    -DisplayName "Description"
-
-# Create picklist attribute with options
-Set-DataverseAttributeMetadata -Connection $conn `
-    -EntityName new_project `
-    -AttributeName new_priority `
-    -SchemaName new_Priority `
-    -AttributeType Picklist `
-    -DisplayName "Priority" `
-    -Options @(
-        @{Value=1; Label='Low'}
-        @{Value=2; Label='Medium'}
-        @{Value=3; Label='High'}
-    )
-
-# Create datetime attribute
-Set-DataverseAttributeMetadata -Connection $conn `
-    -EntityName new_project `
-    -AttributeName new_duedate `
-    -SchemaName new_DueDate `
-    -AttributeType DateTime `
-    -DateTimeFormat DateOnly `
-    -DateTimeBehavior UserLocal `
-    -DisplayName "Due Date"
-```
-
-### Example: Metadata Cache Management
-
-**Rnwood.Dataverse.Data.PowerShell:**
-```powershell
-# Use cached metadata by specifying -UseMetadataCache parameter
-$entities = Get-DataverseEntityMetadata -Connection $conn -UseMetadataCache
-
-# Cache is automatically populated when -UseMetadataCache is used
-$metadata = Get-DataverseEntityMetadata -Connection $conn -EntityName contact -UseMetadataCache
-
-# Cache is automatically invalidated on Set/Remove operations
-Set-DataverseAttributeMetadata -Connection $conn -EntityName new_project -AttributeName new_field -AttributeType String
-
-# Clear cache manually if needed
-Clear-DataverseMetadataCache
-
-# Clear cache for specific connection
-Clear-DataverseMetadataCache -Connection $conn
-```
-
-See [Metadata CRUD Examples](docs/Metadata-CRUD-Examples.md) for comprehensive metadata operation examples.
 
 ## SQL Queries
 
@@ -656,8 +501,12 @@ if ($solutions.Count -eq 1) {
 ```powershell
 $solutionUniqueName = 'mysolution'
 
-# Using specialized cmdlet (recommended)
-Remove-DataverseSolution -Connection $conn -UniqueName $solutionUniqueName -Confirm:$false
+# Query for the solution
+$solution = Get-DataverseRecord -Connection $conn -TableName solution -Filter @{uniquename = $solutionUniqueName}
+
+if ($solution) {
+    Remove-DataverseRecord -Connection $conn -TableName solution -Id $solution.Id
+}
 ```
 
 ### Example: Export a Solution
@@ -672,8 +521,13 @@ Export-CrmSolution -conn $conn -SolutionName $solutionName -Managed $false -Expo
 ```powershell
 $solutionName = "MySolution"
 
-# Using specialized cmdlet (recommended)
-Export-DataverseSolution -Connection $conn -SolutionName $solutionName -OutFile "C:\Solutions\$solutionName.zip"
+# Using specialized cmdlet (simplest)
+$response = Invoke-DataverseExportSolution -Connection $conn `
+    -SolutionName $solutionName `
+    -Managed $false
+
+# Save the solution file
+[System.IO.File]::WriteAllBytes("C:\Solutions\$solutionName.zip", $response.ExportSolutionFile)
 ```
 
 ### Example: Import a Solution
@@ -685,8 +539,13 @@ Import-CrmSolution -conn $conn -SolutionFilePath "C:\Solutions\MySolution.zip"
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Using specialized cmdlet (recommended)
-Import-DataverseSolution -Connection $conn -InFile "C:\Solutions\MySolution.zip"
+$solutionBytes = [System.IO.File]::ReadAllBytes("C:\Solutions\MySolution.zip")
+
+# Using specialized cmdlet (simplest)
+Invoke-DataverseImportSolution -Connection $conn `
+    -CustomizationFile $solutionBytes `
+    -PublishWorkflows $true `
+    -OverwriteUnmanagedCustomizations $false
 ```
 
 ### Example: List All Solutions
@@ -699,30 +558,18 @@ $solutions.CrmRecords | Select-Object uniquename,friendlyname,version
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Using specialized cmdlet (recommended)
-$solutions = Get-DataverseSolution -Connection $conn
+# Using Get-DataverseRecord
+$solutions = Get-DataverseRecord -Connection $conn -TableName solution -Columns uniquename,friendlyname,version
+
 $solutions | Select-Object uniquename,friendlyname,version
 
-# Or using SQL for richer queries
-$solutions = Invoke-DataverseSql -Connection $conn -Sql @"
+# Or using SQL
+Invoke-DataverseSql -Connection $conn -Sql @"
 SELECT uniquename, friendlyname, version
 FROM solution
 WHERE ismanaged = 0
 ORDER BY friendlyname
 "@
-```
-
-### Example: Update Solution Properties
-
-**Microsoft.Xrm.Data.PowerShell:**
-```powershell
-# Requires complex SDK object creation and updates
-```
-
-**Rnwood.Dataverse.Data.PowerShell:**
-```powershell
-# Using specialized cmdlet (recommended)
-Set-DataverseSolution -Connection $conn -UniqueName "MySolution" -Description "Updated solution description"
 ```
 
 ## User and Team Operations
@@ -736,12 +583,10 @@ Add-CrmUserToTeam -TeamId $teamId -UserId $userId
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Using Invoke-DataverseRequest (recommended)
-$request = New-Object Microsoft.Crm.Sdk.Messages.AddMembersTeamRequest
-$request.TeamId = $teamId
-$request.MemberIds = @($userId)
-
-Invoke-DataverseRequest -Connection $conn -Request $request
+# Using specialized cmdlet (simplest)
+Invoke-DataverseAddMembersTeam -Connection $conn `
+    -TeamId $teamId `
+    -MemberIds @($userId)
 ```
 
 ### Example: Assign Security Role to User
@@ -920,7 +765,7 @@ $workflows = Get-CrmRecords -EntityLogicalName workflow `
 ```powershell
 # Using Get-DataverseRecord
 $workflows = Get-DataverseRecord -Connection $conn -TableName workflow `
-    -FilterValues @{type = 1} `
+    -Filter @{type = 1} `
     -Columns name,statecode,primaryentity
 
 # Or using SQL
@@ -1443,12 +1288,10 @@ $conn.ExecuteCrmOrganizationRequest($addMember)
 $marketingListId = "107E563B-7D21-40A5-AF6B-C8975E9C3860"
 $contactId = "C69F9B23-F3B2-403F-A1CF-C81FEF71126F"
 
-# Using Invoke-DataverseRequest (recommended)
-$request = New-Object Microsoft.Crm.Sdk.Messages.AddMemberListRequest
-$request.EntityId = $contactId
-$request.ListId = $marketingListId
-
-Invoke-DataverseRequest -Connection $conn -Request $request
+# Using specialized cmdlet (simplest)
+Invoke-DataverseAddMemberList -Connection $conn `
+    -EntityId $contactId `
+    -ListId $marketingListId
 ```
 
 ### Example: Remove Members from Marketing List
@@ -1464,12 +1307,10 @@ $conn.ExecuteCrmOrganizationRequest($removeMember)
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Using Invoke-DataverseRequest (recommended)
-$request = New-Object Microsoft.Crm.Sdk.Messages.RemoveMemberListRequest
-$request.EntityId = $contactId
-$request.ListId = $marketingListId
-
-Invoke-DataverseRequest -Connection $conn -Request $request
+# Using specialized cmdlet (simplest)
+Invoke-DataverseRemoveMemberList -Connection $conn `
+    -EntityId $contactId `
+    -ListId $marketingListId
 ```
 
 ### Example: Get All Members of a Marketing List
@@ -1622,11 +1463,8 @@ $conn.Execute($request)
 ```powershell
 $ruleId = "guid-here"
 
-# Using Invoke-DataverseRequest (recommended)
-$request = New-Object Microsoft.Crm.Sdk.Messages.PublishDuplicateRuleRequest
-$request.DuplicateRuleId = $ruleId
-
-Invoke-DataverseRequest -Connection $conn -Request $request
+# Using specialized cmdlet (simplest)
+Invoke-DataversePublishDuplicateRule -Connection $conn -DuplicateRuleId $ruleId
 ```
 
 ### Example: Unpublish Duplicate Detection Rule
@@ -1641,11 +1479,8 @@ $conn.Execute($request)
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Using Invoke-DataverseRequest (recommended)
-$request = New-Object Microsoft.Crm.Sdk.Messages.UnpublishDuplicateRuleRequest
-$request.DuplicateRuleId = $ruleId
-
-Invoke-DataverseRequest -Connection $conn -Request $request
+# Using specialized cmdlet (simplest)
+Invoke-DataverseUnpublishDuplicateRule -Connection $conn -DuplicateRuleId $ruleId
 ```
 
 ### Example: Run Duplicate Detection Job
@@ -1670,15 +1505,13 @@ $conn.Execute($request)
 $query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression("account")
 $query.ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet($true)
 
-# Using Invoke-DataverseRequest (recommended)
-$request = New-Object Microsoft.Crm.Sdk.Messages.BulkDetectDuplicatesRequest
-$request.Query = $query
-$request.JobName = "Detect Duplicate Accounts"
-$request.SendEmailNotification = $false
-$request.ToRecipients = @()
-$request.CCRecipients = @()
-
-Invoke-DataverseRequest -Connection $conn -Request $request
+# Using specialized cmdlet (simplest)
+Invoke-DataverseBulkDetectDuplicates -Connection $conn `
+    -Query $query `
+    -JobName "Detect Duplicate Accounts" `
+    -SendEmailNotification $false `
+    -ToRecipients @() `
+    -CCRecipients @()
 ```
 
 ## Business Process Flows
@@ -1763,9 +1596,8 @@ Export-CrmApplicationRibbonXml -conn $conn -RibbonFilePath $exportPath
 ```powershell
 $exportPath = "C:\RibbonExports"
 
-# Using Invoke-DataverseRequest (recommended)
-$request = New-Object Microsoft.Crm.Sdk.Messages.RetrieveApplicationRibbonRequest
-$response = Invoke-DataverseRequest -Connection $conn -Request $request
+# Using specialized cmdlet (simplest)
+$response = Invoke-DataverseRetrieveApplicationRibbon -Connection $conn
 
 # Save the ribbon XML
 $ribbonXml = $response.CompressedApplicationRibbonXml
@@ -1790,12 +1622,10 @@ $entities = @("account", "contact", "opportunity", "lead")
 $exportPath = "C:\RibbonExports"
 
 foreach($entity in $entities) {
-    # Using Invoke-DataverseRequest (recommended)
-    $request = New-Object Microsoft.Crm.Sdk.Messages.RetrieveEntityRibbonRequest
-    $request.EntityName = $entity
-    $request.RibbonLocationFilter = [Microsoft.Crm.Sdk.Messages.RibbonLocationFilters]::All
-    
-    $response = Invoke-DataverseRequest -Connection $conn -Request $request
+    # Using specialized cmdlet (simplest)
+    $response = Invoke-DataverseRetrieveEntityRibbon -Connection $conn `
+        -EntityName $entity `
+        -RibbonLocationFilter ([Microsoft.Crm.Sdk.Messages.RibbonLocationFilters]::All)
     
     # Save the ribbon XML
     $ribbonXml = $response.CompressedEntityXml
@@ -1856,23 +1686,28 @@ $results | Sort-Object Entity | Format-Table
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Using specific cmdlet (recommended)
-$quickFindViews = Get-DataverseView -Connection $conn -QueryType QuickFind
+# Get all QuickFind views using SQL
+$views = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT savedqueryid, name, fetchxml, returnedtypecode
+FROM savedquery
+WHERE querytype = 4
+ORDER BY returnedtypecode
+"@
 
 $results = @()
-foreach($view in $quickFindViews) {
-    $xml = [xml]$view.FetchXml
+foreach($view in $views) {
+    $xml = [xml]$view.fetchxml
     $filters = $xml.fetch.entity.filter.condition | Where-Object { $_.value -eq "{0}" }
     
     $results += [PSCustomObject]@{
-        Entity = $view.ReturnedTypeCode
-        ViewName = $view.Name
+        Entity = $view.returnedtypecode
+        ViewName = $view.name
         SearchFieldCount = $filters.Count
         SearchFields = ($filters.attribute -join ", ")
     }
 }
 
-$results | Sort-Object Entity | Format-Table
+$results | Format-Table
 ```
 
 ### Example: Get All Views for an Entity
@@ -1886,8 +1721,10 @@ $views = Get-CrmRecords -EntityLogicalName savedquery `
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Using specific cmdlet (recommended)
-$views = Get-DataverseView -Connection $conn -TableName account
+# Using Get-DataverseRecord
+$views = Get-DataverseRecord -Connection $conn -TableName savedquery `
+    -Filter @{returnedtypecode = "account"} `
+    -Columns name,querytype,isdefault
 
 # Or using SQL for richer queries
 $views = Invoke-DataverseSql -Connection $conn -Sql @"
@@ -1923,15 +1760,14 @@ $personalViews = Get-CrmRecords -EntityLogicalName userquery `
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Using specific cmdlet (recommended)
 $whoami = Get-DataverseWhoAmI -Connection $conn
-$personalViews = Get-DataverseView -Connection $conn -PersonalView -OwnerId $whoami.UserId
+$userId = $whoami.UserId
 
-# Or using SQL
+# Using SQL
 $personalViews = Invoke-DataverseSql -Connection $conn -Sql @"
 SELECT name, returnedtypecode, fetchxml
 FROM userquery
-WHERE ownerid = '$($whoami.UserId)'
+WHERE ownerid = '$userId'
 ORDER BY returnedtypecode, name
 "@
 
@@ -2004,6 +1840,305 @@ if ($view.Count -eq 1) {
 Remove-DataverseView -Connection $conn -Name "My Custom View" -Confirm:$false
 ```
 
+## Sitemap Management
+
+Sitemaps define the navigation structure for model-driven apps in Dataverse. They contain Area, Group, and SubArea elements that define the app's navigation hierarchy.
+
+### Example: Retrieve All Sitemaps
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# No specialized cmdlet - must use generic record query
+$sitemaps = Get-CrmRecords -EntityLogicalName sitemap -Fields sitemapname,sitemapxml,ismanaged
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using specialized cmdlet (simpler)
+$sitemaps = Get-DataverseSitemap -Connection $conn
+
+# Or using generic record cmdlet
+$sitemaps = Get-DataverseRecord -Connection $conn -TableName sitemap -Columns sitemapname,sitemapxml,ismanaged
+
+# Or using SQL
+$sitemaps = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT sitemapid, sitemapname, ismanaged, createdon, modifiedon
+FROM sitemap
+ORDER BY sitemapname
+"@
+```
+
+### Example: Get Sitemap for a Specific App
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Must use FetchXML with link to appmodule
+$fetchXml = @"
+<fetch>
+  <entity name='sitemap'>
+    <attribute name='sitemapname' />
+    <attribute name='sitemapxml' />
+    <link-entity name='appmodule' from='appmoduleid' to='sitemapid'>
+      <filter>
+        <condition attribute='uniquename' operator='eq' value='myapp' />
+      </filter>
+    </link-entity>
+  </entity>
+</fetch>
+"@
+$sitemap = Get-CrmRecordsByFetch -conn $conn -Fetch $fetchXml
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using specialized cmdlet with filtering (simplest)
+$sitemap = Get-DataverseSitemap -Connection $conn -AppUniqueName "myapp"
+
+# Or using SQL
+$sitemap = Invoke-DataverseSql -Connection $conn -Sql @"
+SELECT s.sitemapid, s.sitemapname, s.sitemapxml, a.uniquename as appuniquename
+FROM sitemap s
+INNER JOIN appmodule a ON s.sitemapid = a.appmoduleid
+WHERE a.uniquename = 'myapp'
+"@
+```
+
+### Example: Export Sitemap to File
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$sitemap = Get-CrmRecords -EntityLogicalName sitemap `
+    -FilterAttribute sitemapname -FilterOperator eq -FilterValue "MySitemap" `
+    -Fields sitemapxml
+
+$sitemap.CrmRecords[0].sitemapxml | Out-File -FilePath "MySitemap.xml"
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using specialized cmdlet
+$sitemap = Get-DataverseSitemap -Connection $conn -Name "MySitemap"
+$sitemap.SitemapXml | Out-File -FilePath "MySitemap.xml"
+
+# Or using generic cmdlet
+$sitemap = Get-DataverseRecord -Connection $conn -TableName sitemap `
+    -Filter @{sitemapname = "MySitemap"} -Columns sitemapxml
+
+$sitemap.sitemapxml | Out-File -FilePath "MySitemap.xml"
+```
+
+### Example: Create a New Sitemap
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$sitemapXml = @"
+<SiteMap>
+  <Area Id="Area1" ResourceId="Area1.Title">
+    <Group Id="Group1" ResourceId="Group1.Title">
+      <SubArea Id="SubArea1" ResourceId="SubArea1.Title" Entity="account" />
+    </Group>
+  </Area>
+</SiteMap>
+"@
+
+$entity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap")
+$entity.Attributes["sitemapname"] = "MySitemap"
+$entity.Attributes["sitemapxml"] = $sitemapXml
+$sitemapId = $conn.Create($entity)
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$sitemapXml = @"
+<SiteMap>
+  <Area Id="Area1" ResourceId="Area1.Title">
+    <Group Id="Group1" ResourceId="Group1.Title">
+      <SubArea Id="SubArea1" ResourceId="SubArea1.Title" Entity="account" />
+    </Group>
+  </Area>
+</SiteMap>
+"@
+
+# Using specialized cmdlet (simplest)
+$sitemapId = Set-DataverseSitemap -Connection $conn -Name "MySitemap" -SitemapXml $sitemapXml -PassThru
+
+# Or using generic cmdlet
+$sitemapId = Set-DataverseRecord -Connection $conn -TableName sitemap -Fields @{
+    sitemapname = "MySitemap"
+    sitemapxml = $sitemapXml
+}
+```
+
+### Example: Update an Existing Sitemap
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Query for the sitemap
+$sitemap = Get-CrmRecords -EntityLogicalName sitemap `
+    -FilterAttribute sitemapname -FilterOperator eq -FilterValue "MySitemap" `
+    -Fields sitemapid,sitemapxml
+
+$sitemapId = $sitemap.CrmRecords[0].sitemapid
+
+# Modify the XML
+$xml = [xml]$sitemap.CrmRecords[0].sitemapxml
+$newArea = $xml.CreateElement("Area")
+$newArea.SetAttribute("Id", "Area2")
+$xml.SiteMap.AppendChild($newArea)
+
+# Update
+$entity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", $sitemapId)
+$entity.Attributes["sitemapxml"] = $xml.OuterXml
+$conn.Update($entity)
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using specialized cmdlet (simplest)
+$sitemap = Get-DataverseSitemap -Connection $conn -Name "MySitemap"
+
+# Modify the XML
+$xml = [xml]$sitemap.SitemapXml
+$newArea = $xml.CreateElement("Area")
+$newArea.SetAttribute("Id", "Area2")
+$xml.SiteMap.AppendChild($newArea)
+
+# Update using specialized cmdlet
+Set-DataverseSitemap -Connection $conn -Name "MySitemap" -Id $sitemap.Id -SitemapXml $xml.OuterXml
+
+# Or using generic cmdlet
+Set-DataverseRecord -Connection $conn -TableName sitemap -Id $sitemap.Id -Fields @{
+    sitemapxml = $xml.OuterXml
+}
+```
+
+### Example: Import Sitemap from File
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$sitemapXml = Get-Content -Path "MySitemap.xml" -Raw
+
+$entity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap")
+$entity.Attributes["sitemapname"] = "ImportedSitemap"
+$entity.Attributes["sitemapxml"] = $sitemapXml
+$sitemapId = $conn.Create($entity)
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+$sitemapXml = Get-Content -Path "MySitemap.xml" -Raw
+
+# Using specialized cmdlet (simplest)
+$sitemapId = Set-DataverseSitemap -Connection $conn `
+    -Name "ImportedSitemap" `
+    -SitemapXml $sitemapXml `
+    -PassThru
+
+# Or using generic cmdlet
+$sitemapId = Set-DataverseRecord -Connection $conn -TableName sitemap -Fields @{
+    sitemapname = "ImportedSitemap"
+    sitemapxml = $sitemapXml
+}
+```
+
+### Example: Delete a Sitemap
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Query for the sitemap
+$sitemap = Get-CrmRecords -EntityLogicalName sitemap `
+    -FilterAttribute sitemapname -FilterOperator eq -FilterValue "MySitemap"
+
+if ($sitemap.CrmRecords.Count -gt 0) {
+    $sitemapId = $sitemap.CrmRecords[0].sitemapid
+    $conn.Delete("sitemap", $sitemapId)
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using specialized cmdlet (simplest)
+Remove-DataverseSitemap -Connection $conn -Name "MySitemap"
+
+# Or by ID
+Remove-DataverseSitemap -Connection $conn -Id $sitemapId
+
+# Or using generic cmdlet
+Remove-DataverseRecord -Connection $conn -TableName sitemap -MatchOn @(@("sitemapname")) -InputObject @{
+    sitemapname = "MySitemap"
+}
+```
+
+### Example: Clone a Sitemap
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+$source = Get-CrmRecords -EntityLogicalName sitemap `
+    -FilterAttribute sitemapname -FilterOperator eq -FilterValue "OriginalSitemap" `
+    -Fields sitemapxml
+
+$entity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap")
+$entity.Attributes["sitemapname"] = "ClonedSitemap"
+$entity.Attributes["sitemapxml"] = $source.CrmRecords[0].sitemapxml
+$newId = $conn.Create($entity)
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using specialized cmdlets (simplest)
+$source = Get-DataverseSitemap -Connection $conn -Name "OriginalSitemap"
+$newId = Set-DataverseSitemap -Connection $conn `
+    -Name "ClonedSitemap" `
+    -SitemapXml $source.SitemapXml `
+    -PassThru
+
+# Or using generic cmdlets
+$source = Get-DataverseRecord -Connection $conn -TableName sitemap `
+    -Filter @{sitemapname = "OriginalSitemap"} -Columns sitemapxml
+
+$newId = Set-DataverseRecord -Connection $conn -TableName sitemap -Fields @{
+    sitemapname = "ClonedSitemap"
+    sitemapxml = $source.sitemapxml
+}
+```
+
+### Example: Add Navigation Entry to Sitemap
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Retrieve sitemap
+$sitemap = Get-DataverseSitemap -Connection $conn -Name "MySitemap"
+
+# Parse and modify XML
+$xml = [xml]$sitemap.SitemapXml
+
+# Find or create area
+$area = $xml.SelectSingleNode("//Area[@Id='SalesArea']")
+if ($null -eq $area) {
+    $area = $xml.CreateElement("Area")
+    $area.SetAttribute("Id", "SalesArea")
+    $area.SetAttribute("ResourceId", "SalesArea.Title")
+    $xml.SiteMap.AppendChild($area)
+}
+
+# Add group
+$group = $xml.CreateElement("Group")
+$group.SetAttribute("Id", "CustomersGroup")
+$group.SetAttribute("ResourceId", "CustomersGroup.Title")
+$area.AppendChild($group)
+
+# Add subarea (navigation entry)
+$subarea = $xml.CreateElement("SubArea")
+$subarea.SetAttribute("Id", "AccountsSubarea")
+$subarea.SetAttribute("ResourceId", "AccountsSubarea.Title")
+$subarea.SetAttribute("Entity", "account")
+$subarea.SetAttribute("Icon", "/_imgs/area/sales_24x24.gif")
+$group.AppendChild($subarea)
+
+# Update sitemap
+Set-DataverseSitemap -Connection $conn -Name "MySitemap" -Id $sitemap.Id -SitemapXml $xml.OuterXml
+```
+
 ## Key Differences and Advantages
 
 ### Automatic Paging
@@ -2026,6 +2161,10 @@ Remove-DataverseView -Connection $conn -Name "My Custom View" -Confirm:$false
 **Microsoft.Xrm.Data.PowerShell** does not have SQL query support.  
 **Rnwood.Dataverse.Data.PowerShell** includes full SQL support via Sql4Cds.
 
+### Specialized Cmdlets
+**Microsoft.Xrm.Data.PowerShell** has limited specialized cmdlets.  
+**Rnwood.Dataverse.Data.PowerShell** provides specialized cmdlets for common operations like sitemap management, solution management, and more, making these tasks simpler and more intuitive.
+
 ## See Also
 
 - [Get-DataverseConnection](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseConnection.md)
@@ -2034,3 +2173,6 @@ Remove-DataverseView -Connection $conn -Name "My Custom View" -Confirm:$false
 - [Remove-DataverseRecord](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md)
 - [Invoke-DataverseRequest](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md)
 - [Invoke-DataverseSql](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md)
+- [Get-DataverseSitemap](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSitemap.md)
+- [Set-DataverseSitemap](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSitemap.md)
+- [Remove-DataverseSitemap](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseSitemap.md)
