@@ -346,8 +346,49 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.StopProcessing();
         }
 
+        /// <summary>
+        /// Strips :Raw or :Display suffixes from column names.
+        /// </summary>
+        private string[] StripColumnSuffixes(string[] columns)
+        {
+            if (columns == null) return null;
+            return columns.Select(c => c.Split(':')[0]).ToArray();
+        }
+
+        /// <summary>
+        /// Gets the value type suffix for a specific column name.
+        /// Returns null if no suffix, "Raw" if :Raw suffix, "Display" if :Display suffix.
+        /// </summary>
+        private string GetColumnSuffix(string columnName)
+        {
+            if (Columns == null || columnName == null) return null;
+            
+            var matchingColumn = Columns.FirstOrDefault(c => 
+                c.Split(':')[0].Equals(columnName, StringComparison.OrdinalIgnoreCase));
+            
+            if (matchingColumn == null) return null;
+            
+            var parts = matchingColumn.Split(':');
+            if (parts.Length > 1)
+            {
+                var suffix = parts[1].ToLowerInvariant();
+                if (suffix == "raw") return "Raw";
+                if (suffix == "display") return "Display";
+            }
+            
+            return null;
+        }
+
         private ValueType GetColumnValueType(AttributeMetadata attribute)
         {
+            // Check if there's an explicit suffix for this column
+            string suffix = GetColumnSuffix(attribute.LogicalName);
+            if (suffix != null)
+            {
+                return suffix == "Display" ? ValueType.Display : ValueType.Raw;
+            }
+
+            // Default behavior based on attribute type
             ValueType result;
 
             if (attribute.AttributeType.Value == AttributeTypeCode.Lookup || attribute.AttributeType.Value == AttributeTypeCode.Uniqueidentifier)
@@ -450,7 +491,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     var query = new QueryExpression(TableName)
                     {
-                        ColumnSet = Columns != null ? new ColumnSet(Columns.Concat(new[] { matchColumn }).Distinct().ToArray()) : new ColumnSet(true)
+                        ColumnSet = Columns != null ? new ColumnSet(StripColumnSuffixes(Columns).Concat(new[] { matchColumn }).Distinct().ToArray()) : new ColumnSet(true)
                     };
 
                     // When AllowMultipleMatches is off, limit to 2 records to detect multiple matches efficiently
@@ -499,7 +540,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     // Multi-column - use Or with And conditions
                     var query = new QueryExpression(TableName)
                     {
-                        ColumnSet = Columns != null ? new ColumnSet(Columns.Concat(matchOnColumnList).Distinct().ToArray()) : new ColumnSet(true)
+                        ColumnSet = Columns != null ? new ColumnSet(StripColumnSuffixes(Columns).Concat(matchOnColumnList).Distinct().ToArray()) : new ColumnSet(true)
                     };
 
                     // When AllowMultipleMatches is off, limit to 2 records to detect multiple matches efficiently
@@ -602,7 +643,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private QueryExpression GetSimpleQuery()
         {
             QueryExpression query = new QueryExpression(TableName);
-            query.ColumnSet = Columns != null && !Columns.Contains("calendarrules", StringComparer.OrdinalIgnoreCase) ? new ColumnSet(Columns) : new ColumnSet(!RecordCount);
+            query.ColumnSet = Columns != null && !Columns.Any(c => c.Split(':')[0].Equals("calendarrules", StringComparison.OrdinalIgnoreCase)) ? new ColumnSet(StripColumnSuffixes(Columns)) : new ColumnSet(!RecordCount);
             query.Criteria.FilterOperator = LogicalOperator.And;
 
             if (Id != null)
@@ -680,7 +721,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             foreach (string[] matchOnColumnList in MatchOn)
             {
                 QueryByAttribute candidateQuery = new QueryByAttribute(TableName);
-                candidateQuery.ColumnSet = Columns != null ? new ColumnSet(Columns) : new ColumnSet(true);
+                candidateQuery.ColumnSet = Columns != null ? new ColumnSet(StripColumnSuffixes(Columns)) : new ColumnSet(true);
 
                 if (!AllowMultipleMatches.IsPresent)
                 {
@@ -754,7 +795,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 // No matches found - return an empty query that will return no results
                 finalQuery = new QueryExpression(TableName);
-                finalQuery.ColumnSet = Columns != null ? new ColumnSet(Columns) : new ColumnSet(true);
+                finalQuery.ColumnSet = Columns != null ? new ColumnSet(StripColumnSuffixes(Columns)) : new ColumnSet(true);
                 finalQuery.Criteria.AddCondition(entityMetadata.PrimaryIdAttribute, ConditionOperator.Equal, Guid.Empty);
             }
 
