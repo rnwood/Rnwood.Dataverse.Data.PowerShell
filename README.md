@@ -75,6 +75,7 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 - [Querying Records](docs/core-concepts/querying.md) - Filtering, paging, sorting, linking, SQL queries
 - [Creating and Updating Records](docs/core-concepts/creating-updating.md) - Create, update, upsert operations
 - [Deleting Records](docs/core-concepts/deleting.md) - Delete operations and SQL alternatives
+- [Working with Metadata](docs/core-concepts/metadata.md) - Reading and managing schema (entities, attributes, relationships, option sets)
 - [Error Handling and Batch Operations](docs/core-concepts/error-handling.md) - Error handling and retry logic
 
 ### Advanced Topics
@@ -95,16 +96,16 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 - [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) — run SQL queries against Dataverse
 
 ### Metadata Operations
-- [`Get-DataverseEntityMetadata`](docs/Metadata-CRUD-Examples.md) — retrieve entity metadata
-- [`Get-DataverseAttributeMetadata`](docs/Metadata-CRUD-Examples.md) — retrieve attribute metadata
-- [`Get-DataverseOptionSetMetadata`](docs/Metadata-CRUD-Examples.md) — retrieve option set values
+- [`Get-DataverseEntityMetadata`](docs/core-concepts/metadata.md) — retrieve entity metadata
+- [`Get-DataverseAttributeMetadata`](docs/core-concepts/metadata.md) — retrieve attribute metadata
+- [`Get-DataverseOptionSetMetadata`](docs/core-concepts/metadata.md) — retrieve option set values
 - [`Get-DataverseRelationshipMetadata`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRelationshipMetadata.md) — retrieve relationship metadata
-- [`Set-DataverseEntityMetadata`](docs/Metadata-CRUD-Examples.md) — create or update entities
-- [`Set-DataverseAttributeMetadata`](docs/Metadata-CRUD-Examples.md) — create or update attributes (all types)
-- [`Set-DataverseOptionSetMetadata`](docs/Metadata-CRUD-Examples.md) — create or update global option sets
+- [`Set-DataverseEntityMetadata`](docs/core-concepts/metadata.md) — create or update entities
+- [`Set-DataverseAttributeMetadata`](docs/core-concepts/metadata.md) — create or update attributes (all types)
+- [`Set-DataverseOptionSetMetadata`](docs/core-concepts/metadata.md) — create or update global option sets
 - [`Set-DataverseRelationshipMetadata`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRelationshipMetadata.md) — create relationships (OneToMany, ManyToMany)
-- [`Remove-DataverseEntityMetadata`](docs/Metadata-CRUD-Examples.md) — delete entities
-- [`Remove-DataverseAttributeMetadata`](docs/Metadata-CRUD-Examples.md) — delete attributes
+- [`Remove-DataverseEntityMetadata`](docs/core-concepts/metadata.md) — delete entities
+- [`Remove-DataverseAttributeMetadata`](docs/core-concepts/metadata.md) — delete attributes
 - [`Remove-DataverseRelationshipMetadata`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRelationshipMetadata.md) — delete relationships
 
 ### Metadata Cache Management
