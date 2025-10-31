@@ -120,15 +120,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     Connection.Delete("webresource", webResourceId);
                     WriteVerbose($"Deleted web resource: {webResourceName} (ID: {webResourceId})");
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (IfExists)
                 {
-                    if (IfExists && ex.Message.Contains("does not exist"))
+                    // Check if it's a "does not exist" error by examining the exception type
+                    // FaultException<OrganizationServiceFault> with error code -2147220969 indicates record doesn't exist
+                    if (ex is System.ServiceModel.FaultException)
                     {
                         WriteVerbose($"Web resource not found: {webResourceName}");
                         return;
                     }
-
-                    WriteError(new ErrorRecord(ex, "DeleteFailed", ErrorCategory.OperationStopped, webResourceId));
+                    
+                    // Re-throw if it's a different error
+                    throw;
                 }
             }
         }

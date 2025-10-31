@@ -199,7 +199,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             var name = entity.GetAttributeValue<string>("name");
-            var fileName = name.Replace("/", "_").Replace("\\", "_");
+            
+            // Sanitize filename by removing invalid characters
+            var invalidChars = System.IO.Path.GetInvalidFileNameChars();
+            var fileName = new string(name.Select(c => invalidChars.Contains(c) ? '_' : c).ToArray());
+            
             var filePath = System.IO.Path.Combine(Folder, fileName);
 
             SaveWebResourceToFile(entity, filePath);

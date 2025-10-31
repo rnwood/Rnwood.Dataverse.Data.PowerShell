@@ -281,7 +281,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 var fileName = System.IO.Path.GetFileName(file);
                 var nameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(file);
-                var webResourceName = nameWithoutExtension.Replace(" ", "_").Replace("-", "_");
+                
+                // Sanitize the name to create a valid web resource name
+                // Replace invalid characters with underscores
+                var webResourceName = new string(nameWithoutExtension.Select(c => 
+                    char.IsLetterOrDigit(c) || c == '_' ? c : '_').ToArray());
 
                 ProcessFile(file, webResourceName);
             }
@@ -353,12 +357,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void PublishWebResource(Guid webResourceId)
         {
-            var publishXml = $@"
-                <importexportxml>
-                    <webresources>
-                        <webresource>{webResourceId}</webresource>
-                    </webresources>
-                </importexportxml>";
+            var publishXml = $"<importexportxml><webresources><webresource>{webResourceId}</webresource></webresources></importexportxml>";
 
             var request = new OrganizationRequest("PublishXml");
             request["ParameterXml"] = publishXml;
