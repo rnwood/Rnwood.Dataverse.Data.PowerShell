@@ -62,62 +62,9 @@ Set-DataverseRecord -Connection $c -TableName contact -Id $contactId -InputObjec
 
 # Delete a record
 Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
-
-# Manage views - create with simplified filter syntax
-Set-DataverseView -Connection $c -Name "Active Contacts" -TableName contact `
-    -Columns @("firstname", "lastname", "emailaddress1") `
-    -FilterValues @{ statecode = 0 } -PassThru
-
-# Retrieve views
-Get-DataverseView -Connection $c -TableName contact
-
-# Remove a view
-Remove-DataverseView -Connection $c -Id $viewId
 ```
 
-### View Management
-
-The module provides full view management capabilities for both system views (savedquery) and personal views (userquery):
-
-```powershell
-# Create a personal view with simple filters
-$viewId = Set-DataverseView -Connection $c -PassThru `
-    -Name "My Active Contacts" `
-    -TableName contact `
-    -Columns @("firstname", "lastname", "emailaddress1", "telephone1") `
-    -FilterValues @{ statecode = 0 }
-
-# Create a system view with complex filters
-Set-DataverseView -Connection $c -PassThru -SystemView `
-    -Name "High Value Opportunities" `
-    -TableName opportunity `
-    -Columns @("name", "estimatedvalue", "closeprobability") `
-    -FilterValues @{
-        and = @(
-            @{ statecode = 0 },
-            @{ estimatedvalue = @{ value = 100000; operator = 'GreaterThan' } }
-        )
-    }
-
-# Update a view - add columns
-Set-DataverseView -Connection $c -Id $viewId `
-    -AddColumns @(
-        @{ name = "address1_city"; width = 150 },
-        @{ name = "birthdate"; width = 100 }
-    )
-
-# Retrieve views
-Get-DataverseView -Connection $c -TableName contact              # All views for contact
-Get-DataverseView -Connection $c -SystemView                     # All system views
-Get-DataverseView -Connection $c -Name "Active*"                 # With wildcard search
-Get-DataverseView -Connection $c -Id $viewId                     # Specific view
-
-# Use FetchXML for advanced scenarios
-Set-DataverseView -Connection $c -Id $viewId -FetchXml $customFetchXml
-
-# Delete a view
-Remove-DataverseView -Connection $c -Id $viewId -Confirm:$false
-```
+For more advanced scenarios including view management, see the [documentation](#documentation) section below.
 
 ## Documentation
 
@@ -131,6 +78,7 @@ Remove-DataverseView -Connection $c -Id $viewId -Confirm:$false
 - [Querying Records](docs/core-concepts/querying.md) - Filtering, paging, sorting, linking, SQL queries
 - [Creating and Updating Records](docs/core-concepts/creating-updating.md) - Create, update, upsert operations
 - [Deleting Records](docs/core-concepts/deleting.md) - Delete operations and SQL alternatives
+- [View Management](docs/core-concepts/view-management.md) - Create, update, and manage system and personal views
 - [Working with Metadata](docs/core-concepts/metadata.md) - Reading and managing schema (entities, attributes, relationships, option sets)
 - [Error Handling and Batch Operations](docs/core-concepts/error-handling.md) - Error handling and retry logic
 - [Environment Variables and Connection References](docs/core-concepts/environment-variables-connection-references.md) - Managing configuration and connections
