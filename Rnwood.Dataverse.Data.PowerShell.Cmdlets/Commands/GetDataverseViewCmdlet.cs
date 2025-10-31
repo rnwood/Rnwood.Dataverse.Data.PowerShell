@@ -154,6 +154,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 // Add a friendly property to indicate view type
                 psObject.Properties.Add(new PSNoteProperty("ViewType", entityName == "savedquery" ? "System" : "Personal"));
+                
+                // Add normalized Id property for easier pipeline usage
+                string idAttributeName = entityName == "savedquery" ? "savedqueryid" : "userqueryid";
+                if (view.Attributes.ContainsKey(idAttributeName))
+                {
+                    psObject.Properties.Add(new PSNoteProperty("Id", view.Attributes[idAttributeName]));
+                }
 
                 WriteObject(psObject);
             }
