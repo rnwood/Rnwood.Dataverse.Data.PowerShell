@@ -117,7 +117,7 @@ Accept wildcard characters: False
 The root component behavior:
 - 0 = Include Subcomponents (default) - Includes all subcomponents
 - 1 = Do Not Include Subcomponents - Includes only the root component
-- 2 = Include As Shell - Includes the component shell only
+- 2 = Include As Shell - **Note:** This behavior is not fully supported by the underlying Dataverse API. The component will be added with "Do Not Include Subcomponents" behavior instead, and a warning will be displayed.
 
 ```yaml
 Type: Int32
@@ -310,6 +310,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - If the component doesn't exist, it is added with the specified behavior
 - If the component exists with the same behavior, no action is taken (idempotent)
 - The cmdlet supports -WhatIf to preview changes before making them
+- **Behavior 2 (Include As Shell) Limitation:** The Dataverse AddSolutionComponent API does not directly support setting behavior to "Include As Shell" (value 2). When this value is specified, the cmdlet will add the component with "Do Not Include Subcomponents" behavior and display a warning. To set "Include As Shell" behavior, you may need to use the Dataverse UI or make direct API calls.
 
 **Component Types Reference:**
 See Microsoft documentation for a complete list of solution component types:

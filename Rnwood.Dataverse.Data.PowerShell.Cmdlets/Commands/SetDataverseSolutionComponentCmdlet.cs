@@ -54,8 +54,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         /// <summary>
         /// Indicates whether the subcomponents should be included.
+        /// Note: This parameter is overridden by the Behavior parameter when specified.
         /// </summary>
-        [Parameter(HelpMessage = "Indicates whether the subcomponents should be included.")]
+        [Parameter(HelpMessage = "Indicates whether the subcomponents should be included. Note: This parameter is overridden by the Behavior parameter.")]
         public SwitchParameter DoNotIncludeSubcomponents { get; set; }
 
         /// <summary>
@@ -189,13 +190,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void AddComponent(Guid solutionId, Guid componentId, int componentType, int behavior)
         {
+            // Map behavior to DoNotIncludeSubcomponents
+            // Behavior 0 (Include Subcomponents) = DoNotIncludeSubcomponents false
+            // Behavior 1 (Do Not Include Subcomponents) = DoNotIncludeSubcomponents true
+            // Behavior 2 (Include As Shell) = Not directly supported by AddSolutionComponentRequest
+            
+            bool doNotIncludeSubcomponents = behavior == 1;
+            
+            // Note: Behavior 2 (Include As Shell) cannot be set via AddSolutionComponentRequest
+            // It requires post-processing via UpdateSolutionComponentRequest or direct SQL
+            if (behavior == 2)
+            {
+                WriteWarning("Behavior 2 (Include As Shell) is not fully supported by the AddSolutionComponent API. " +
+                           "The component will be added with 'Do Not Include Subcomponents' behavior. " +
+                           "To set 'Include As Shell' behavior, you may need to use the Dataverse UI or direct API calls.");
+                doNotIncludeSubcomponents = true;
+            }
+            
             var request = new AddSolutionComponentRequest
             {
                 SolutionUniqueName = SolutionName,
                 ComponentId = componentId,
                 ComponentType = componentType,
                 AddRequiredComponents = AddRequiredComponents.IsPresent,
-                DoNotIncludeSubcomponents = DoNotIncludeSubcomponents.IsPresent,
+                DoNotIncludeSubcomponents = doNotIncludeSubcomponents,
                 IncludedComponentSettingsValues = IncludedComponentSettingsValues
             };
 
