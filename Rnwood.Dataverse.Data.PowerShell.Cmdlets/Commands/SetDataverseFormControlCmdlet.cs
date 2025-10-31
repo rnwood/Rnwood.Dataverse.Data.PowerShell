@@ -109,6 +109,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public System.Collections.Hashtable Parameters { get; set; }
 
         /// <summary>
+        /// Gets or sets the zero-based index position where the control should be inserted in the section.
+        /// </summary>
+        [Parameter(ParameterSetName = "Create", HelpMessage = "Zero-based index position to insert the control")]
+        public int? Index { get; set; }
+
+        /// <summary>
+        /// Gets or sets the ID or data field name of the control before which to insert this control.
+        /// </summary>
+        [Parameter(ParameterSetName = "Create", HelpMessage = "ID or data field name of the control before which to insert")]
+        public string InsertBefore { get; set; }
+
+        /// <summary>
+        /// Gets or sets the ID or data field name of the control after which to insert this control.
+        /// </summary>
+        [Parameter(ParameterSetName = "Create", HelpMessage = "ID or data field name of the control after which to insert")]
+        public string InsertAfter { get; set; }
+
+        /// <summary>
         /// Gets or sets whether to return the control ID.
         /// </summary>
         [Parameter(HelpMessage = "Return the control ID")]
@@ -224,7 +242,85 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     control = new XElement("control");
                     cell = new XElement("cell", control);
                     XElement row = new XElement("row", cell);
-                    rowsElement.Add(row);
+                    
+                    // Handle positioning
+                    if (Index.HasValue)
+                    {
+                        // Insert at specific index (row-level)
+                        var rows = rowsElement.Elements("row").ToList();
+                        if (Index.Value >= 0 && Index.Value <= rows.Count)
+                        {
+                            if (Index.Value == rows.Count)
+                            {
+                                rowsElement.Add(row);
+                            }
+                            else
+                            {
+                                rows[Index.Value].AddBeforeSelf(row);
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Index {Index.Value} is out of range. Valid range is 0-{rows.Count}");
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(InsertBefore))
+                    {
+                        // Find reference control and insert before its row
+                        XElement referenceRow = null;
+                        foreach (var r in rowsElement.Elements("row"))
+                        {
+                            foreach (var c in r.Elements("cell"))
+                            {
+                                var ctrl = c.Elements("control").FirstOrDefault(ct => 
+                                    ct.Attribute("id")?.Value == InsertBefore || 
+                                    ct.Attribute("datafieldname")?.Value == InsertBefore);
+                                if (ctrl != null)
+                                {
+                                    referenceRow = r;
+                                    break;
+                                }
+                            }
+                            if (referenceRow != null) break;
+                        }
+                        
+                        if (referenceRow == null)
+                        {
+                            throw new InvalidOperationException($"Reference control '{InsertBefore}' not found");
+                        }
+                        referenceRow.AddBeforeSelf(row);
+                    }
+                    else if (!string.IsNullOrEmpty(InsertAfter))
+                    {
+                        // Find reference control and insert after its row
+                        XElement referenceRow = null;
+                        foreach (var r in rowsElement.Elements("row"))
+                        {
+                            foreach (var c in r.Elements("cell"))
+                            {
+                                var ctrl = c.Elements("control").FirstOrDefault(ct => 
+                                    ct.Attribute("id")?.Value == InsertAfter || 
+                                    ct.Attribute("datafieldname")?.Value == InsertAfter);
+                                if (ctrl != null)
+                                {
+                                    referenceRow = r;
+                                    break;
+                                }
+                            }
+                            if (referenceRow != null) break;
+                        }
+                        
+                        if (referenceRow == null)
+                        {
+                            throw new InvalidOperationException($"Reference control '{InsertAfter}' not found");
+                        }
+                        referenceRow.AddAfterSelf(row);
+                    }
+                    else
+                    {
+                        // Add at the end (default)
+                        rowsElement.Add(row);
+                    }
                 }
             }
 
