@@ -78,12 +78,15 @@ $step = Set-DataversePluginStep `
     -Stage 10 `
     -Mode 0 `
     -Rank 1 `
-    -FilteringAttributes "name,revenue,primarycontactid" `
+    -FilteringAttributes "name","revenue","primarycontactid" `
     -Description "Validates account data before creation" `
     -PassThru
 
 Write-Host "Plugin step registered with ID: $($step.Id)"
 ```
+
+> [!TIP]
+> The `-FilteringAttributes` parameter accepts an array of attribute names. Tab completion is available for each attribute name, making it easier to specify the correct attributes.
 
 ### 5. Register Step Image (Optional)
 
@@ -94,7 +97,7 @@ $preImage = Set-DataversePluginStepImage `
     -SdkMessageProcessingStepId $step.Id `
     -EntityAlias "PreImage" `
     -ImageType 0 `
-    -Attributes "name,revenue,primarycontactid" `
+    -Attributes "name","revenue","primarycontactid" `
     -MessagePropertyName "Target" `
     -PassThru
 
@@ -106,7 +109,7 @@ $postImage = Set-DataversePluginStepImage `
     -SdkMessageProcessingStepId $step.Id `
     -EntityAlias "PostImage" `
     -ImageType 1 `
-    -Attributes "name,revenue,primarycontactid" `
+    -Attributes "name","revenue","primarycontactid" `
     -MessagePropertyName "Target" `
     -PassThru
 

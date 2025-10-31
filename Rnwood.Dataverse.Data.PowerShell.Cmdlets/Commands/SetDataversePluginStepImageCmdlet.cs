@@ -42,10 +42,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string MessagePropertyName { get; set; } = "Target";
 
         /// <summary>
-        /// Gets or sets the attributes (comma-separated list of attribute logical names).
+        /// Gets or sets the attributes.
         /// </summary>
-        [Parameter(HelpMessage = "Attributes to include in the image (comma-separated list of attribute logical names). Leave empty for all attributes.")]
-        public string Attributes { get; set; }
+        [Parameter(HelpMessage = "Attributes to include in the image (array of attribute logical names). Leave empty for all attributes.")]
+        [ArgumentCompleter(typeof(ColumnNamesArgumentCompleter))]
+        public string[] Attributes { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the image.
@@ -77,9 +78,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             image["imagetype"] = new OptionSetValue(ImageType);
             image["messagepropertyname"] = MessagePropertyName;
 
-            if (!string.IsNullOrEmpty(Attributes))
+            if (Attributes != null && Attributes.Length > 0)
             {
-                image["attributes"] = Attributes;
+                image["attributes"] = string.Join(",", Attributes);
             }
 
             if (!string.IsNullOrEmpty(Name))
