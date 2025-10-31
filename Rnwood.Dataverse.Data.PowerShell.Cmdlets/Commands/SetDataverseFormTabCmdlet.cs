@@ -72,6 +72,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter VerticalLayout { get; set; }
 
         /// <summary>
+        /// Gets or sets the zero-based index position where the tab should be inserted.
+        /// </summary>
+        [Parameter(ParameterSetName = "Create", HelpMessage = "Zero-based index position to insert the tab")]
+        public int? Index { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name or ID of the tab before which to insert this tab.
+        /// </summary>
+        [Parameter(ParameterSetName = "Create", HelpMessage = "Name or ID of the tab before which to insert")]
+        public string InsertBefore { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name or ID of the tab after which to insert this tab.
+        /// </summary>
+        [Parameter(ParameterSetName = "Create", HelpMessage = "Name or ID of the tab after which to insert")]
+        public string InsertAfter { get; set; }
+
+        /// <summary>
         /// Gets or sets whether to return the tab ID.
         /// </summary>
         [Parameter(HelpMessage = "Return the tab ID")]
@@ -143,7 +161,57 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     // Create new tab
                     tabId = Guid.NewGuid().ToString("B");
                     tab = new XElement("tab");
-                    tabsElement.Add(tab);
+                    
+                    // Handle positioning
+                    if (Index.HasValue)
+                    {
+                        // Insert at specific index
+                        var tabs = tabsElement.Elements("tab").ToList();
+                        if (Index.Value >= 0 && Index.Value <= tabs.Count)
+                        {
+                            if (Index.Value == tabs.Count)
+                            {
+                                tabsElement.Add(tab);
+                            }
+                            else
+                            {
+                                tabs[Index.Value].AddBeforeSelf(tab);
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Index {Index.Value} is out of range. Valid range is 0-{tabs.Count}");
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(InsertBefore))
+                    {
+                        // Insert before specified tab
+                        var referenceTab = tabsElement.Elements("tab")
+                            .FirstOrDefault(t => t.Attribute("name")?.Value == InsertBefore || 
+                                                t.Attribute("id")?.Value == InsertBefore);
+                        if (referenceTab == null)
+                        {
+                            throw new InvalidOperationException($"Reference tab '{InsertBefore}' not found");
+                        }
+                        referenceTab.AddBeforeSelf(tab);
+                    }
+                    else if (!string.IsNullOrEmpty(InsertAfter))
+                    {
+                        // Insert after specified tab
+                        var referenceTab = tabsElement.Elements("tab")
+                            .FirstOrDefault(t => t.Attribute("name")?.Value == InsertAfter || 
+                                                t.Attribute("id")?.Value == InsertAfter);
+                        if (referenceTab == null)
+                        {
+                            throw new InvalidOperationException($"Reference tab '{InsertAfter}' not found");
+                        }
+                        referenceTab.AddAfterSelf(tab);
+                    }
+                    else
+                    {
+                        // Add at the end (default)
+                        tabsElement.Add(tab);
+                    }
                 }
             }
 

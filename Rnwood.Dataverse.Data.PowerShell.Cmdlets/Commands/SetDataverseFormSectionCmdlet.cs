@@ -85,6 +85,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public int? LabelWidth { get; set; }
 
         /// <summary>
+        /// Gets or sets the zero-based index position where the section should be inserted.
+        /// </summary>
+        [Parameter(ParameterSetName = "Create", HelpMessage = "Zero-based index position to insert the section")]
+        public int? Index { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name or ID of the section before which to insert this section.
+        /// </summary>
+        [Parameter(ParameterSetName = "Create", HelpMessage = "Name or ID of the section before which to insert")]
+        public string InsertBefore { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name or ID of the section after which to insert this section.
+        /// </summary>
+        [Parameter(ParameterSetName = "Create", HelpMessage = "Name or ID of the section after which to insert")]
+        public string InsertAfter { get; set; }
+
+        /// <summary>
         /// Gets or sets whether to return the section ID.
         /// </summary>
         [Parameter(HelpMessage = "Return the section ID")]
@@ -188,7 +206,57 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     // Create new section
                     sectionId = Guid.NewGuid().ToString("B");
                     section = new XElement("section");
-                    sectionsElement.Add(section);
+                    
+                    // Handle positioning
+                    if (Index.HasValue)
+                    {
+                        // Insert at specific index
+                        var sections = sectionsElement.Elements("section").ToList();
+                        if (Index.Value >= 0 && Index.Value <= sections.Count)
+                        {
+                            if (Index.Value == sections.Count)
+                            {
+                                sectionsElement.Add(section);
+                            }
+                            else
+                            {
+                                sections[Index.Value].AddBeforeSelf(section);
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Index {Index.Value} is out of range. Valid range is 0-{sections.Count}");
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(InsertBefore))
+                    {
+                        // Insert before specified section
+                        var referenceSection = sectionsElement.Elements("section")
+                            .FirstOrDefault(s => s.Attribute("name")?.Value == InsertBefore || 
+                                                s.Attribute("id")?.Value == InsertBefore);
+                        if (referenceSection == null)
+                        {
+                            throw new InvalidOperationException($"Reference section '{InsertBefore}' not found");
+                        }
+                        referenceSection.AddBeforeSelf(section);
+                    }
+                    else if (!string.IsNullOrEmpty(InsertAfter))
+                    {
+                        // Insert after specified section
+                        var referenceSection = sectionsElement.Elements("section")
+                            .FirstOrDefault(s => s.Attribute("name")?.Value == InsertAfter || 
+                                                s.Attribute("id")?.Value == InsertAfter);
+                        if (referenceSection == null)
+                        {
+                            throw new InvalidOperationException($"Reference section '{InsertAfter}' not found");
+                        }
+                        referenceSection.AddAfterSelf(section);
+                    }
+                    else
+                    {
+                        // Add at the end (default)
+                        sectionsElement.Add(section);
+                    }
                 }
             }
 
