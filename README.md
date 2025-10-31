@@ -9,6 +9,7 @@ This module works in PowerShell Desktop and PowerShell Core, supporting Windows,
 ## Features
 
 - Creating, updating, upserting and deleting records including M:M records
+- **View management**: Create, update, retrieve, and delete system and personal views with FetchXML or simplified filter syntax
 - Simple PowerShell objects for input and output instead of complex SDK Entity classes
 - Automatic data type conversion using metadata - use friendly labels for choices and names for lookups
 - Automatic lookup conversion - use record names instead of GUIDs (when unique)
@@ -61,6 +62,61 @@ Set-DataverseRecord -Connection $c -TableName contact -Id $contactId -InputObjec
 
 # Delete a record
 Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
+
+# Manage views - create with simplified filter syntax
+Set-DataverseView -Connection $c -Name "Active Contacts" -TableName contact `
+    -Columns @("firstname", "lastname", "emailaddress1") `
+    -FilterValues @{ statecode = 0 } -PassThru
+
+# Retrieve views
+Get-DataverseView -Connection $c -TableName contact
+
+# Remove a view
+Remove-DataverseView -Connection $c -Id $viewId
+```
+
+### View Management
+
+The module provides full view management capabilities for both system views (savedquery) and personal views (userquery):
+
+```powershell
+# Create a personal view with simple filters
+$viewId = Set-DataverseView -Connection $c -PassThru `
+    -Name "My Active Contacts" `
+    -TableName contact `
+    -Columns @("firstname", "lastname", "emailaddress1", "telephone1") `
+    -FilterValues @{ statecode = 0 }
+
+# Create a system view with complex filters
+Set-DataverseView -Connection $c -PassThru -SystemView `
+    -Name "High Value Opportunities" `
+    -TableName opportunity `
+    -Columns @("name", "estimatedvalue", "closeprobability") `
+    -FilterValues @{
+        and = @(
+            @{ statecode = 0 },
+            @{ estimatedvalue = @{ value = 100000; operator = 'GreaterThan' } }
+        )
+    }
+
+# Update a view - add columns
+Set-DataverseView -Connection $c -Id $viewId `
+    -AddColumns @(
+        @{ name = "address1_city"; width = 150 },
+        @{ name = "birthdate"; width = 100 }
+    )
+
+# Retrieve views
+Get-DataverseView -Connection $c -TableName contact              # All views for contact
+Get-DataverseView -Connection $c -SystemView                     # All system views
+Get-DataverseView -Connection $c -Name "Active*"                 # With wildcard search
+Get-DataverseView -Connection $c -Id $viewId                     # Specific view
+
+# Use FetchXML for advanced scenarios
+Set-DataverseView -Connection $c -Id $viewId -FetchXml $customFetchXml
+
+# Delete a view
+Remove-DataverseView -Connection $c -Id $viewId -Confirm:$false
 ```
 
 ## Documentation
@@ -88,11 +144,18 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 
 ## Main Cmdlets
 
-### Data Operations
+### Record Management
 - [`Get-DataverseConnection`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseConnection.md) — create or retrieve a connection
 - [`Get-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) — query and retrieve records
 - [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) — create, update or upsert records
 - [`Remove-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) — delete records
+
+### View Management
+- [`Get-DataverseView`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseView.md) — retrieve system and personal views
+- [`Set-DataverseView`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseView.md) — create or update views with FetchXML or simplified filters
+- [`Remove-DataverseView`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseView.md) — delete views
+
+### Advanced Operations
 - [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) — execute arbitrary SDK requests
 - [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) — run SQL queries against Dataverse
 
