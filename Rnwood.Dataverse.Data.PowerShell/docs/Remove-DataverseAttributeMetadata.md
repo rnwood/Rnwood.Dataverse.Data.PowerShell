@@ -5,23 +5,16 @@ online version:
 schema: 2.0.0
 ---
 
-# Get-DataverseOptionSet
+# Remove-DataverseAttributeMetadata
 
 ## SYNOPSIS
 {{ Fill in the Synopsis }}
 
 ## SYNTAX
 
-### EntityAttribute
 ```
-Get-DataverseOptionSet [-EntityName] <String> [-AttributeName] <String> [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
-### Global
-```
-Get-DataverseOptionSet [-Name <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Remove-DataverseAttributeMetadata [-EntityName] <String> [-AttributeName] <String> [-Force]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -39,15 +32,30 @@ PS C:\> {{ Add example code here }}
 ## PARAMETERS
 
 ### -AttributeName
-Logical name of the choice attribute (column)
+Logical name of the attribute (column) to delete
 
 ```yaml
 Type: String
-Parameter Sets: EntityAttribute
+Parameter Sets: (All)
 Aliases: ColumnName
 
 Required: True
 Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -75,7 +83,7 @@ Logical name of the entity (table)
 
 ```yaml
 Type: String
-Parameter Sets: EntityAttribute
+Parameter Sets: (All)
 Aliases: TableName
 
 Required: True
@@ -85,14 +93,29 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Name
-Name of the global option set.
-If not specified, returns all global option sets.
+### -Force
+Force deletion without confirmation
 
 ```yaml
-Type: String
-Parameter Sets: Global
+Type: SwitchParameter
+Parameter Sets: (All)
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
 
 Required: False
 Position: Named
@@ -121,10 +144,10 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
+### System.String
 ## OUTPUTS
 
-### Microsoft.Xrm.Sdk.Metadata.OptionSetMetadataBase
+### System.Object
 ## NOTES
 
 ## RELATED LINKS

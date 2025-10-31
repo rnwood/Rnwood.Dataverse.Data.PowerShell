@@ -8,7 +8,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// Deletes an attribute (column) from Dataverse.
     /// </summary>
     [Cmdlet(VerbsCommon.Remove, "DataverseAttribute", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
-    public class RemoveDataverseAttributeCmdlet : OrganizationServiceCmdlet
+    public class RemoveDataverseAttributeMetadataCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
         /// Gets or sets the logical name of the entity.

@@ -1,4 +1,4 @@
-Describe 'Set-DataverseAttribute' {
+Describe 'Set-DataverseAttributeMetadata' {
     Context 'String Attribute Creation' {
         It "Creates a new string attribute" {
             $connection = getMockConnection
@@ -6,7 +6,7 @@ Describe 'Set-DataverseAttribute' {
             # Note: This test may fail with FakeXrmEasy as CreateAttribute might not be fully supported
             # In a real environment, this would create the attribute
             try {
-                $result = Set-DataverseAttribute -Connection $connection `
+                $result = Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName contact `
                     -AttributeName new_testfield `
                     -SchemaName new_TestField `
@@ -28,14 +28,14 @@ Describe 'Set-DataverseAttribute' {
     }
 }
 
-Describe 'Remove-DataverseAttribute' {
+Describe 'Remove-DataverseAttributeMetadata' {
     Context 'Attribute Deletion' {
         It "Requires confirmation by default" {
             $connection = getMockConnection
             
             # This should prompt for confirmation
             # We use -WhatIf to avoid actual deletion
-            { Remove-DataverseAttribute -Connection $connection `
+            { Remove-DataverseAttributeMetadata -Connection $connection `
                 -EntityName contact `
                 -AttributeName firstname `
                 -WhatIf } | Should -Not -Throw
@@ -46,7 +46,7 @@ Describe 'Remove-DataverseAttribute' {
             
             # Note: This test may fail with FakeXrmEasy
             try {
-                Remove-DataverseAttribute -Connection $connection `
+                Remove-DataverseAttributeMetadata -Connection $connection `
                     -EntityName contact `
                     -AttributeName firstname `
                     -Force `
@@ -144,7 +144,7 @@ Describe 'Remove-DataverseEntityMetadata' {
     }
 }
 
-Describe 'Set-DataverseOptionSet' {
+Describe 'Set-DataverseOptionSetMetadata' {
     Context 'Global Option Set Creation' {
         It "Creates a new global option set" {
             $connection = getMockConnection
@@ -157,7 +157,7 @@ Describe 'Set-DataverseOptionSet' {
                     @{Value=3; Label='Option 3'}
                 )
                 
-                $result = Set-DataverseOptionSet -Connection $connection `
+                $result = Set-DataverseOptionSetMetadata -Connection $connection `
                     -Name new_testoptions `
                     -DisplayName "Test Options" `
                     -Description "Test option set" `
@@ -186,7 +186,7 @@ Describe 'Set-DataverseOptionSet' {
                     @{Value=2; Label='Updated Option 2'}
                 )
                 
-                $result = Set-DataverseOptionSet -Connection $connection `
+                $result = Set-DataverseOptionSetMetadata -Connection $connection `
                     -Name new_testoptions `
                     -DisplayName "Updated Test Options" `
                     -Options $options `

@@ -5,7 +5,7 @@ online version:
 schema: 2.0.0
 ---
 
-# Set-DataverseOptionSet
+# Get-DataverseAttributeMetadata
 
 ## SYNOPSIS
 {{ Fill in the Synopsis }}
@@ -13,9 +13,8 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Set-DataverseOptionSet [-Name] <String> [-DisplayName <String>] [-Description <String>] -Options <Hashtable[]>
- [-Force] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Get-DataverseAttributeMetadata [-EntityName] <String> [[-AttributeName] <String>] [-UseMetadataCache]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -32,16 +31,17 @@ PS C:\> {{ Add example code here }}
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -AttributeName
+Logical name of the attribute (column).
+If not specified, returns all attributes for the entity.
 
 ```yaml
-Type: SwitchParameter
+Type: String
 Parameter Sets: (All)
-Aliases: cf
+Aliases: ColumnName
 
 Required: False
-Position: Named
+Position: 1
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -64,58 +64,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Description
-Description of the option set
+### -EntityName
+Logical name of the entity (table)
 
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -DisplayName
-Display name of the option set
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Force
-Force update if the option set already exists
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Name
-Name of the global option set
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
+Aliases: TableName
 
 Required: True
 Position: 0
@@ -124,44 +79,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Options
-Array of hashtables defining options: @(@{Value=1; Label='Option 1'}, @{Value=2; Label='Option 2'})
-
-```yaml
-Type: Hashtable[]
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -PassThru
-Return the created or updated option set metadata
+### -UseMetadataCache
+Use the shared global metadata cache for improved performance
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
 
 Required: False
 Position: Named
@@ -193,7 +117,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### None
 ## OUTPUTS
 
-### System.Management.Automation.PSObject
+### Microsoft.Xrm.Sdk.Metadata.AttributeMetadata
 ## NOTES
 
 ## RELATED LINKS

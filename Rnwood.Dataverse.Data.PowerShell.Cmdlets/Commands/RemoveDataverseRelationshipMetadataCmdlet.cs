@@ -7,7 +7,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// Deletes a relationship from Dataverse.
     /// </summary>
     [Cmdlet(VerbsCommon.Remove, "DataverseRelationship", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
-    public class RemoveDataverseRelationshipCmdlet : OrganizationServiceCmdlet
+    public class RemoveDataverseRelationshipMetadataCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
         /// Gets or sets the schema name of the relationship to delete.

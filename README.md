@@ -96,17 +96,16 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 
 ### Metadata Operations
 - [`Get-DataverseEntityMetadata`](docs/Metadata-CRUD-Examples.md) — retrieve entity metadata
-- [`Get-DataverseEntities`](docs/Metadata-CRUD-Examples.md) — list all entities with filtering
-- [`Get-DataverseAttribute`](docs/Metadata-CRUD-Examples.md) — retrieve attribute metadata
-- [`Get-DataverseOptionSet`](docs/Metadata-CRUD-Examples.md) — retrieve option set values
-- [`Get-DataverseRelationship`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRelationship.md) — retrieve relationship metadata
+- [`Get-DataverseAttributeMetadata`](docs/Metadata-CRUD-Examples.md) — retrieve attribute metadata
+- [`Get-DataverseOptionSetMetadata`](docs/Metadata-CRUD-Examples.md) — retrieve option set values
+- [`Get-DataverseRelationshipMetadata`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRelationshipMetadata.md) — retrieve relationship metadata
 - [`Set-DataverseEntityMetadata`](docs/Metadata-CRUD-Examples.md) — create or update entities
-- [`Set-DataverseAttribute`](docs/Metadata-CRUD-Examples.md) — create or update attributes (all types)
-- [`Set-DataverseOptionSet`](docs/Metadata-CRUD-Examples.md) — create or update global option sets
-- [`Set-DataverseRelationship`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRelationship.md) — create relationships (OneToMany, ManyToMany)
+- [`Set-DataverseAttributeMetadata`](docs/Metadata-CRUD-Examples.md) — create or update attributes (all types)
+- [`Set-DataverseOptionSetMetadata`](docs/Metadata-CRUD-Examples.md) — create or update global option sets
+- [`Set-DataverseRelationshipMetadata`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRelationshipMetadata.md) — create relationships (OneToMany, ManyToMany)
 - [`Remove-DataverseEntityMetadata`](docs/Metadata-CRUD-Examples.md) — delete entities
-- [`Remove-DataverseAttribute`](docs/Metadata-CRUD-Examples.md) — delete attributes
-- [`Remove-DataverseRelationship`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRelationship.md) — delete relationships
+- [`Remove-DataverseAttributeMetadata`](docs/Metadata-CRUD-Examples.md) — delete attributes
+- [`Remove-DataverseRelationshipMetadata`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRelationshipMetadata.md) — delete relationships
 
 ### Metadata Cache Management
 - `Clear-DataverseMetadataCache` — clear the metadata cache

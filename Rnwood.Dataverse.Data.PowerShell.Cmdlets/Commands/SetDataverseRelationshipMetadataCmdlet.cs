@@ -12,7 +12,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// </summary>
     [Cmdlet(VerbsCommon.Set, "DataverseRelationship", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
     [OutputType(typeof(RelationshipMetadataBase))]
-    public class SetDataverseRelationshipCmdlet : OrganizationServiceCmdlet
+    public class SetDataverseRelationshipMetadataCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
         /// Gets or sets the schema name of the relationship.

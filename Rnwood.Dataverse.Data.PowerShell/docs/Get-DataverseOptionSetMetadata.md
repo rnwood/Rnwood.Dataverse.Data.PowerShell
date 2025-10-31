@@ -5,15 +5,22 @@ online version:
 schema: 2.0.0
 ---
 
-# Get-DataverseAttribute
+# Get-DataverseOptionSetMetadata
 
 ## SYNOPSIS
 {{ Fill in the Synopsis }}
 
 ## SYNTAX
 
+### EntityAttribute
 ```
-Get-DataverseAttribute [-EntityName] <String> [[-AttributeName] <String>] [-Connection <ServiceClient>]
+Get-DataverseOptionSetMetadata [-EntityName] <String> [-AttributeName] <String> [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### Global
+```
+Get-DataverseOptionSetMetadata [-Name <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -32,15 +39,14 @@ PS C:\> {{ Add example code here }}
 ## PARAMETERS
 
 ### -AttributeName
-Logical name of the attribute (column).
-If not specified, returns all attributes for the entity.
+Logical name of the choice attribute (column)
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: EntityAttribute
 Aliases: ColumnName
 
-Required: False
+Required: True
 Position: 1
 Default value: None
 Accept pipeline input: False
@@ -69,11 +75,27 @@ Logical name of the entity (table)
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: EntityAttribute
 Aliases: TableName
 
 Required: True
 Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+Name of the global option set.
+If not specified, returns all global option sets.
+
+```yaml
+Type: String
+Parameter Sets: Global
+Aliases:
+
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -102,7 +124,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### None
 ## OUTPUTS
 
-### Microsoft.Xrm.Sdk.Metadata.AttributeMetadata
+### Microsoft.Xrm.Sdk.Metadata.OptionSetMetadataBase
 ## NOTES
 
 ## RELATED LINKS

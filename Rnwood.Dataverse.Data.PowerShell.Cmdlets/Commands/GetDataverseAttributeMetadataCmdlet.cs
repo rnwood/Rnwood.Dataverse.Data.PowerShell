@@ -10,9 +10,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Retrieves metadata for a specific attribute (column) from Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "DataverseAttribute")]
+    [Cmdlet(VerbsCommon.Get, "DataverseAttributeMetadata")]
     [OutputType(typeof(AttributeMetadata))]
-    public class GetDataverseAttributeCmdlet : OrganizationServiceCmdlet
+    public class GetDataverseAttributeMetadataCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
         /// Gets or sets the logical name of the entity.
@@ -30,6 +30,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [ArgumentCompleter(typeof(ColumnNameArgumentCompleter))]
         [Alias("ColumnName")]
         public string AttributeName { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether to use the shared metadata cache.
+        /// </summary>
+        [Parameter(HelpMessage = "Use the shared global metadata cache for improved performance")]
+        public SwitchParameter UseMetadataCache { get; set; }
 
         /// <summary>
         /// Processes the cmdlet.
@@ -52,17 +58,41 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void RetrieveAllAttributes()
         {
-            var request = new RetrieveEntityRequest
+            EntityMetadata entityMetadata = null;
+
+            // Try cache first if enabled
+            if (UseMetadataCache)
             {
-                EntityFilters = EntityFilters.Attributes,
-                LogicalName = EntityName,
-                RetrieveAsIfPublished = false
-            };
+                var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
+                if (MetadataCache.TryGetEntityMetadata(connectionKey, EntityName, EntityFilters.Attributes, out var cachedEntity))
+                {
+                    WriteVerbose($"Retrieved entity '{EntityName}' from cache with {cachedEntity.Attributes?.Length ?? 0} attributes");
+                    entityMetadata = cachedEntity;
+                }
+            }
 
-            WriteVerbose($"Retrieving all attributes for entity '{EntityName}'");
+            // If not in cache, retrieve from server
+            if (entityMetadata == null)
+            {
+                var request = new RetrieveEntityRequest
+                {
+                    EntityFilters = EntityFilters.Attributes,
+                    LogicalName = EntityName,
+                    RetrieveAsIfPublished = false
+                };
 
-            var response = (RetrieveEntityResponse)Connection.Execute(request);
-            var entityMetadata = response.EntityMetadata;
+                WriteVerbose($"Retrieving all attributes for entity '{EntityName}'");
+
+                var response = (RetrieveEntityResponse)Connection.Execute(request);
+                entityMetadata = response.EntityMetadata;
+
+                // Cache the results if caching is enabled
+                if (UseMetadataCache)
+                {
+                    var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
+                    MetadataCache.AddEntityMetadata(connectionKey, EntityName, EntityFilters.Attributes, entityMetadata);
+                }
+            }
 
             if (entityMetadata.Attributes == null || entityMetadata.Attributes.Length == 0)
             {

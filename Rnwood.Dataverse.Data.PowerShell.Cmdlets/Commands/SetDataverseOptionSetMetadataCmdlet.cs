@@ -11,9 +11,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Creates or updates a global option set in Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "DataverseOptionSet", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
+    [Cmdlet(VerbsCommon.Set, "DataverseOptionSetMetadata", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
     [OutputType(typeof(PSObject))]
-    public class SetDataverseOptionSetCmdlet : OrganizationServiceCmdlet
+    public class SetDataverseOptionSetMetadataCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
         /// Gets or sets the name of the option set.

@@ -425,13 +425,13 @@ $metadata = Get-CrmEntityAllMetadata -conn $conn -EntityFilters Entity
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
 # List all entities
-$entities = Get-DataverseEntities -Connection $conn
+$entities = Get-DataverseEntityMetadata -Connection $conn
 
 # List only custom entities with details
-$customEntities = Get-DataverseEntities -Connection $conn -OnlyCustom -IncludeDetails
+$customEntities = Get-DataverseEntityMetadata -Connection $conn -OnlyCustom -IncludeDetails
 
 # List all with metadata caching for performance
-$entities = Get-DataverseEntities -Connection $conn -UseMetadataCache
+$entities = Get-DataverseEntityMetadata -Connection $conn -UseMetadataCache
 ```
 
 ### Example: Get Attribute Metadata
@@ -448,13 +448,13 @@ $response = $conn.Execute($request)
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
 # Get single attribute
-$attribute = Get-DataverseAttribute -Connection $conn -EntityName contact -AttributeName firstname
+$attribute = Get-DataverseAttributeMetadata -Connection $conn -EntityName contact -AttributeName firstname
 
 # Get all attributes for an entity
-$attributes = Get-DataverseAttribute -Connection $conn -EntityName contact
+$attributes = Get-DataverseAttributeMetadata -Connection $conn -EntityName contact
 
 # With metadata caching
-$attribute = Get-DataverseAttribute -Connection $conn -EntityName contact -AttributeName firstname -UseMetadataCache
+$attribute = Get-DataverseAttributeMetadata -Connection $conn -EntityName contact -AttributeName firstname -UseMetadataCache
 ```
 
 ### Example: Get Option Set Values
@@ -467,13 +467,13 @@ $attribute = Get-DataverseAttribute -Connection $conn -EntityName contact -Attri
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
 # Get option set from entity attribute
-$options = Get-DataverseOptionSet -Connection $conn -EntityName contact -AttributeName preferredcontactmethodcode
+$options = Get-DataverseOptionSetMetadata -Connection $conn -EntityName contact -AttributeName preferredcontactmethodcode
 
 # Get global option set
-$options = Get-DataverseOptionSet -Connection $conn -Name my_globaloptions
+$options = Get-DataverseOptionSetMetadata -Connection $conn -Name my_globaloptions
 
 # List all global option sets
-$allOptions = Get-DataverseOptionSet -Connection $conn
+$allOptions = Get-DataverseOptionSetMetadata -Connection $conn
 ```
 
 ### Example: Create a Custom Entity
@@ -505,7 +505,7 @@ Set-DataverseEntityMetadata -Connection $conn `
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
 # Create string attribute
-Set-DataverseAttribute -Connection $conn `
+Set-DataverseAttributeMetadata -Connection $conn `
     -EntityName new_project `
     -AttributeName new_description `
     -SchemaName new_Description `
@@ -514,7 +514,7 @@ Set-DataverseAttribute -Connection $conn `
     -DisplayName "Description"
 
 # Create picklist attribute with options
-Set-DataverseAttribute -Connection $conn `
+Set-DataverseAttributeMetadata -Connection $conn `
     -EntityName new_project `
     -AttributeName new_priority `
     -SchemaName new_Priority `
@@ -527,7 +527,7 @@ Set-DataverseAttribute -Connection $conn `
     )
 
 # Create datetime attribute
-Set-DataverseAttribute -Connection $conn `
+Set-DataverseAttributeMetadata -Connection $conn `
     -EntityName new_project `
     -AttributeName new_duedate `
     -SchemaName new_DueDate `
@@ -542,13 +542,13 @@ Set-DataverseAttribute -Connection $conn `
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
 # Use cached metadata by specifying -UseMetadataCache parameter
-$entities = Get-DataverseEntities -Connection $conn -UseMetadataCache
+$entities = Get-DataverseEntityMetadata -Connection $conn -UseMetadataCache
 
 # Cache is automatically populated when -UseMetadataCache is used
 $metadata = Get-DataverseEntityMetadata -Connection $conn -EntityName contact -UseMetadataCache
 
 # Cache is automatically invalidated on Set/Remove operations
-Set-DataverseAttribute -Connection $conn -EntityName new_project -AttributeName new_field -AttributeType String
+Set-DataverseAttributeMetadata -Connection $conn -EntityName new_project -AttributeName new_field -AttributeType String
 
 # Clear cache manually if needed
 Clear-DataverseMetadataCache

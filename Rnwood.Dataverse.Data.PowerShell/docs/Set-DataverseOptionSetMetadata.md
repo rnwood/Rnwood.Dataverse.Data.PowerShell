@@ -5,7 +5,7 @@ online version:
 schema: 2.0.0
 ---
 
-# Get-DataverseEntities
+# Set-DataverseOptionSetMetadata
 
 ## SYNOPSIS
 {{ Fill in the Synopsis }}
@@ -13,8 +13,9 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Get-DataverseEntities [-OnlyCustom] [-OnlyManaged] [-OnlyUnmanaged] [-OnlyCustomizable] [-IncludeDetails]
- [-UseMetadataCache] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Set-DataverseOptionSetMetadata [-Name] <String> [-DisplayName <String>] [-Description <String>]
+ -Options <Hashtable[]> [-Force] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,6 +31,21 @@ PS C:\> {{ Add example code here }}
 {{ Add example description here }}
 
 ## PARAMETERS
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
@@ -48,8 +64,38 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -IncludeDetails
-Include detailed entity information (DisplayName, Description, etc.)
+### -Description
+Description of the option set
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisplayName
+Display name of the option set
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Force
+Force update if the option set already exists
 
 ```yaml
 Type: SwitchParameter
@@ -63,8 +109,38 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -OnlyCustom
-Return only custom entities
+### -Name
+Name of the global option set
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Options
+Array of hashtables defining options: @(@{Value=1; Label='Option 1'}, @{Value=2; Label='Option 2'})
+
+```yaml
+Type: Hashtable[]
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+Return the created or updated option set metadata
 
 ```yaml
 Type: SwitchParameter
@@ -78,58 +154,14 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -OnlyCustomizable
-Return only customizable entities
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -OnlyManaged
-Return only managed entities
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -OnlyUnmanaged
-Return only unmanaged entities
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -UseMetadataCache
-Use the shared global metadata cache for improved performance
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
+Aliases: wi
 
 Required: False
 Position: Named
@@ -161,7 +193,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### None
 ## OUTPUTS
 
-### Microsoft.Xrm.Sdk.Metadata.EntityMetadata[]
+### System.Management.Automation.PSObject
 ## NOTES
 
 ## RELATED LINKS

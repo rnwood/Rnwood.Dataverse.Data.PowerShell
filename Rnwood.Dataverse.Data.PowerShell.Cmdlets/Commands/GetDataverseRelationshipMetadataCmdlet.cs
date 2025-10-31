@@ -12,7 +12,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// </summary>
     [Cmdlet(VerbsCommon.Get, "DataverseRelationship")]
     [OutputType(typeof(RelationshipMetadataBase))]
-    public class GetDataverseRelationshipCmdlet : OrganizationServiceCmdlet
+    public class GetDataverseRelationshipMetadataCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
         /// Gets or sets the logical name of the entity.

@@ -10,9 +10,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Retrieves option set values for a choice field in Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "DataverseOptionSet")]
+    [Cmdlet(VerbsCommon.Get, "DataverseOptionSetMetadata")]
     [OutputType(typeof(OptionSetMetadataBase))]
-    public class GetDataverseOptionSetCmdlet : OrganizationServiceCmdlet
+    public class GetDataverseOptionSetMetadataCmdlet : OrganizationServiceCmdlet
     {
         private const string PARAMSET_ENTITY_ATTRIBUTE = "EntityAttribute";
         private const string PARAMSET_GLOBAL = "Global";

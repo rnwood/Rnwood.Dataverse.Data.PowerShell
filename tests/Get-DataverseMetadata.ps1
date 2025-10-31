@@ -78,13 +78,13 @@ Describe 'Get-DataverseEntityMetadata' {
     }
 }
 
-Describe 'Get-DataverseEntities' {
+Describe 'Get-DataverseEntityMetadata' {
     Context 'Entity List Retrieval' {
         It "Returns list of all entities" {
             $connection = getMockConnection
             
             # Get all entities
-            $results = Get-DataverseEntities -Connection $connection
+            $results = Get-DataverseEntityMetadata -Connection $connection
             
             # Verify results
             $results | Should -Not -BeNullOrEmpty
@@ -100,7 +100,7 @@ Describe 'Get-DataverseEntities' {
             $connection = getMockConnection
             
             # Get entities with details
-            $results = Get-DataverseEntities -Connection $connection -IncludeDetails
+            $results = Get-DataverseEntityMetadata -Connection $connection -IncludeDetails
             
             # Verify details are included
             $results | Should -Not -BeNullOrEmpty
@@ -114,7 +114,7 @@ Describe 'Get-DataverseEntities' {
             $connection = getMockConnection
             
             # Get only custom entities
-            $results = Get-DataverseEntities -Connection $connection -OnlyCustom
+            $results = Get-DataverseEntityMetadata -Connection $connection -OnlyCustom
             
             # Verify all results are custom
             if ($results) {
@@ -129,7 +129,7 @@ Describe 'Get-DataverseEntities' {
             Set-DataverseConnectionAsDefault -Connection $connection
             
             # Call without explicit connection
-            $results = Get-DataverseEntities
+            $results = Get-DataverseEntityMetadata
             
             # Verify results
             $results | Should -Not -BeNullOrEmpty
@@ -137,13 +137,13 @@ Describe 'Get-DataverseEntities' {
     }
 }
 
-Describe 'Get-DataverseAttribute' {
+Describe 'Get-DataverseAttributeMetadata' {
     Context 'Single Attribute Retrieval' {
         It "Returns metadata for a specific attribute" {
             $connection = getMockConnection
             
             # Get attribute metadata
-            $result = Get-DataverseAttribute -Connection $connection -EntityName contact -AttributeName firstname
+            $result = Get-DataverseAttributeMetadata -Connection $connection -EntityName contact -AttributeName firstname
             
             # Verify result structure
             $result | Should -Not -BeNullOrEmpty
@@ -157,7 +157,7 @@ Describe 'Get-DataverseAttribute' {
             $connection = getMockConnection
             
             # Get string attribute
-            $result = Get-DataverseAttribute -Connection $connection -EntityName contact -AttributeName firstname
+            $result = Get-DataverseAttributeMetadata -Connection $connection -EntityName contact -AttributeName firstname
             
             # Verify string-specific properties
             $result.MaxLength | Should -Not -BeNullOrEmpty
@@ -168,7 +168,7 @@ Describe 'Get-DataverseAttribute' {
             Set-DataverseConnectionAsDefault -Connection $connection
             
             # Call without explicit connection
-            $result = Get-DataverseAttribute -EntityName contact -AttributeName firstname
+            $result = Get-DataverseAttributeMetadata -EntityName contact -AttributeName firstname
             
             # Verify result
             $result | Should -Not -BeNullOrEmpty
@@ -181,7 +181,7 @@ Describe 'Get-DataverseAttribute' {
             $connection = getMockConnection
             
             # Get all attributes for entity
-            $results = Get-DataverseAttribute -Connection $connection -EntityName contact
+            $results = Get-DataverseAttributeMetadata -Connection $connection -EntityName contact
             
             # Verify results
             $results | Should -Not -BeNullOrEmpty
@@ -196,25 +196,29 @@ Describe 'Get-DataverseAttribute' {
             $connection = getMockConnection
             
             # Get all attributes
-            $results = Get-DataverseAttribute -Connection $connection -EntityName contact
+            $results = Get-DataverseAttributeMetadata -Connection $connection -EntityName contact
             
             # Verify sorting
             $results | Should -Not -BeNullOrEmpty
             $logicalNames = $results | ForEach-Object { $_.LogicalName }
             $sortedNames = $logicalNames | Sort-Object
-            $logicalNames | Should -Be $sortedNames
+            
+            # Compare element by element to verify sorting
+            for ($i = 0; $i -lt $logicalNames.Count; $i++) {
+                $logicalNames[$i] | Should -Be $sortedNames[$i]
+            }
         }
     }
 }
 
-Describe 'Get-DataverseOptionSet' {
+Describe 'Get-DataverseOptionSetMetadata' {
     Context 'Entity Attribute Option Set' {
         It "Returns option set for a choice attribute" {
             $connection = getMockConnection
             
             # Get option set for a choice field
             # Note: Using gendercode as it's a standard choice field on contact
-            $result = Get-DataverseOptionSet -Connection $connection -EntityName contact -AttributeName gendercode
+            $result = Get-DataverseOptionSetMetadata -Connection $connection -EntityName contact -AttributeName gendercode
             
             # Verify result structure
             $result | Should -Not -BeNullOrEmpty
@@ -232,7 +236,7 @@ Describe 'Get-DataverseOptionSet' {
             Set-DataverseConnectionAsDefault -Connection $connection
             
             # Call without explicit connection
-            $result = Get-DataverseOptionSet -EntityName contact -AttributeName gendercode
+            $result = Get-DataverseOptionSetMetadata -EntityName contact -AttributeName gendercode
             
             # Verify result
             $result | Should -Not -BeNullOrEmpty
@@ -243,7 +247,7 @@ Describe 'Get-DataverseOptionSet' {
             $connection = getMockConnection
             
             # Try to get option set for a string field
-            { Get-DataverseOptionSet -Connection $connection -EntityName contact -AttributeName firstname -ErrorAction Stop } |
+            { Get-DataverseOptionSetMetadata -Connection $connection -EntityName contact -AttributeName firstname -ErrorAction Stop } |
                 Should -Throw
         }
     }

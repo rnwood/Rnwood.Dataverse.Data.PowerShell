@@ -13,7 +13,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// </summary>
     [Cmdlet(VerbsCommon.Set, "DataverseAttribute", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
     [OutputType(typeof(PSObject))]
-    public class SetDataverseAttributeCmdlet : OrganizationServiceCmdlet
+    public class SetDataverseAttributeMetadataCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
         /// Gets or sets the logical name of the entity.

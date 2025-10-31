@@ -23,10 +23,10 @@ Use the `-UseMetadataCache` parameter on Get cmdlets to utilize the shared cache
 $metadata = Get-DataverseEntityMetadata -Connection $conn -EntityName contact -UseMetadataCache
 
 # Use cache for listing entities
-$entities = Get-DataverseEntities -Connection $conn -UseMetadataCache
+$entities = Get-DataverseEntityMetadata -Connection $conn -UseMetadataCache
 
 # Use cache for attribute metadata
-$attributes = Get-DataverseAttribute -Connection $conn -EntityName contact -UseMetadataCache
+$attributes = Get-DataverseAttributeMetadata -Connection $conn -EntityName contact -UseMetadataCache
 ```
 
 The cache is automatically populated when you use `-UseMetadataCache` parameter. No setup or enabling is required.
@@ -37,7 +37,7 @@ The cache is automatically invalidated when you make changes using Set or Remove
 
 ```powershell
 # This will automatically invalidate the cache for the 'new_project' entity
-Set-DataverseAttribute -Connection $conn `
+Set-DataverseAttributeMetadata -Connection $conn `
     -EntityName new_project `
     -AttributeName new_field `
     -AttributeType String `
@@ -91,69 +91,69 @@ Get-DataverseEntityMetadata
 Get-DataverseEntityMetadata -IncludeAttributes
 ```
 
-### Get-DataverseEntities
+### Get-DataverseEntityMetadata
 Lists all entities with filtering options.
 
 ```powershell
 # List all entities (basic info)
-Get-DataverseEntities
+Get-DataverseEntityMetadata
 
 # List with detailed information
-Get-DataverseEntities -IncludeDetails
+Get-DataverseEntityMetadata -IncludeDetails
 
 # Filter to only custom entities
-Get-DataverseEntities -OnlyCustom -IncludeDetails
+Get-DataverseEntityMetadata -OnlyCustom -IncludeDetails
 
 # Filter to only managed entities
-Get-DataverseEntities -OnlyManaged
+Get-DataverseEntityMetadata -OnlyManaged
 
 # Filter to only customizable entities
-Get-DataverseEntities -OnlyCustomizable
+Get-DataverseEntityMetadata -OnlyCustomizable
 ```
 
-### Get-DataverseAttribute
+### Get-DataverseAttributeMetadata
 Retrieves attribute/column metadata.
 
 ```powershell
 # Get metadata for a specific attribute
-Get-DataverseAttribute -EntityName contact -AttributeName firstname
+Get-DataverseAttributeMetadata -EntityName contact -AttributeName firstname
 
 # Get all attributes for an entity
-Get-DataverseAttribute -EntityName contact
+Get-DataverseAttributeMetadata -EntityName contact
 
 # Pipeline example - get all string attributes
-Get-DataverseAttribute -EntityName contact | Where-Object { $_.AttributeType -eq 'String' }
+Get-DataverseAttributeMetadata -EntityName contact | Where-Object { $_.AttributeType -eq 'String' }
 
 # Get attributes with max length info
-Get-DataverseAttribute -EntityName contact | Where-Object { $_.MaxLength } | Select-Object LogicalName, MaxLength
+Get-DataverseAttributeMetadata -EntityName contact | Where-Object { $_.MaxLength } | Select-Object LogicalName, MaxLength
 ```
 
-### Get-DataverseOptionSet
+### Get-DataverseOptionSetMetadata
 Retrieves option set values for choice fields.
 
 ```powershell
 # Get option set for an entity attribute
-Get-DataverseOptionSet -EntityName contact -AttributeName gendercode
+Get-DataverseOptionSetMetadata -EntityName contact -AttributeName gendercode
 
 # Get a global option set by name
-Get-DataverseOptionSet -Name my_globaloptions
+Get-DataverseOptionSetMetadata -Name my_globaloptions
 
 # List all global option sets
-Get-DataverseOptionSet
+Get-DataverseOptionSetMetadata
 
 # Get options and display them
-$optionSet = Get-DataverseOptionSet -EntityName contact -AttributeName preferredcontactmethodcode
+$optionSet = Get-DataverseOptionSetMetadata -EntityName contact -AttributeName preferredcontactmethodcode
 $optionSet.Options | Format-Table Value, Label
 ```
 
 ## Set Cmdlets (Create/Update Operations)
 
-### Set-DataverseAttribute
+### Set-DataverseAttributeMetadata
 Creates or updates attributes with comprehensive type support.
 
 ```powershell
 # Create a new string attribute
-Set-DataverseAttribute -EntityName new_customentity `
+Set-DataverseAttributeMetadata -EntityName new_customentity `
     -AttributeName new_description `
     -SchemaName new_Description `
     -AttributeType String `
@@ -164,7 +164,7 @@ Set-DataverseAttribute -EntityName new_customentity `
     -IsSearchable
 
 # Create an integer attribute with range
-Set-DataverseAttribute -EntityName new_customentity `
+Set-DataverseAttributeMetadata -EntityName new_customentity `
     -AttributeName new_quantity `
     -SchemaName new_Quantity `
     -AttributeType Integer `
@@ -174,7 +174,7 @@ Set-DataverseAttribute -EntityName new_customentity `
     -RequiredLevel ApplicationRequired
 
 # Create a decimal attribute with precision
-Set-DataverseAttribute -EntityName new_customentity `
+Set-DataverseAttributeMetadata -EntityName new_customentity `
     -AttributeName new_amount `
     -SchemaName new_Amount `
     -AttributeType Decimal `
@@ -184,7 +184,7 @@ Set-DataverseAttribute -EntityName new_customentity `
     -MaxValue 999999.99
 
 # Create a datetime attribute
-Set-DataverseAttribute -EntityName new_customentity `
+Set-DataverseAttributeMetadata -EntityName new_customentity `
     -AttributeName new_duedate `
     -SchemaName new_DueDate `
     -AttributeType DateTime `
@@ -193,7 +193,7 @@ Set-DataverseAttribute -EntityName new_customentity `
     -DateTimeBehavior UserLocal
 
 # Create a boolean attribute
-Set-DataverseAttribute -EntityName new_customentity `
+Set-DataverseAttributeMetadata -EntityName new_customentity `
     -AttributeName new_isactive `
     -SchemaName new_IsActive `
     -AttributeType Boolean `
@@ -209,7 +209,7 @@ $options = @(
     @{Value=3; Label='High'}
 )
 
-Set-DataverseAttribute -EntityName new_customentity `
+Set-DataverseAttributeMetadata -EntityName new_customentity `
     -AttributeName new_priority `
     -SchemaName new_Priority `
     -AttributeType Picklist `
@@ -223,7 +223,7 @@ $options = @(
     @{Value=3; Label='In Person'}
 )
 
-Set-DataverseAttribute -EntityName new_customentity `
+Set-DataverseAttributeMetadata -EntityName new_customentity `
     -AttributeName new_contactmethods `
     -SchemaName new_ContactMethods `
     -AttributeType MultiSelectPicklist `
@@ -231,7 +231,7 @@ Set-DataverseAttribute -EntityName new_customentity `
     -Options $options
 
 # Use an existing global option set
-Set-DataverseAttribute -EntityName new_customentity `
+Set-DataverseAttributeMetadata -EntityName new_customentity `
     -AttributeName new_category `
     -SchemaName new_Category `
     -AttributeType Picklist `
@@ -239,7 +239,7 @@ Set-DataverseAttribute -EntityName new_customentity `
     -OptionSetName my_globalcategories
 
 # Create a file attribute
-Set-DataverseAttribute -EntityName new_customentity `
+Set-DataverseAttributeMetadata -EntityName new_customentity `
     -AttributeName new_attachment `
     -SchemaName new_Attachment `
     -AttributeType File `
@@ -247,14 +247,14 @@ Set-DataverseAttribute -EntityName new_customentity `
     -MaxSizeInKB 10240
 
 # Update an existing attribute (display name and description)
-Set-DataverseAttribute -EntityName contact `
+Set-DataverseAttributeMetadata -EntityName contact `
     -AttributeName firstname `
     -DisplayName "First Name (Updated)" `
     -Description "Updated description" `
     -Force
 
 # Update with -PassThru to get the result
-$updatedAttr = Set-DataverseAttribute -EntityName contact `
+$updatedAttr = Set-DataverseAttributeMetadata -EntityName contact `
     -AttributeName firstname `
     -DisplayName "First Name" `
     -Force `
@@ -292,7 +292,7 @@ Set-DataverseEntityMetadata -EntityName new_project `
     -PassThru
 ```
 
-### Set-DataverseOptionSet
+### Set-DataverseOptionSetMetadata
 Creates or updates global option sets.
 
 ```powershell
@@ -304,7 +304,7 @@ $options = @(
     @{Value=400; Label='Platinum'; Description='Platinum tier'}
 )
 
-Set-DataverseOptionSet -Name new_customertier `
+Set-DataverseOptionSetMetadata -Name new_customertier `
     -DisplayName "Customer Tier" `
     -Description "Customer membership tiers" `
     -Options $options `
@@ -319,7 +319,7 @@ $updatedOptions = @(
     @{Value=500; Label='Diamond Level'} # New option
 )
 
-Set-DataverseOptionSet -Name new_customertier `
+Set-DataverseOptionSetMetadata -Name new_customertier `
     -DisplayName "Customer Tier (Updated)" `
     -Options $updatedOptions `
     -Force `
@@ -328,18 +328,18 @@ Set-DataverseOptionSet -Name new_customertier `
 
 ## Remove Cmdlets (Delete Operations)
 
-### Remove-DataverseAttribute
+### Remove-DataverseAttributeMetadata
 Deletes attributes from entities.
 
 ```powershell
 # Remove an attribute (will prompt for confirmation)
-Remove-DataverseAttribute -EntityName new_customentity -AttributeName new_oldfield
+Remove-DataverseAttributeMetadata -EntityName new_customentity -AttributeName new_oldfield
 
 # Remove with force (no confirmation)
-Remove-DataverseAttribute -EntityName new_customentity -AttributeName new_oldfield -Force
+Remove-DataverseAttributeMetadata -EntityName new_customentity -AttributeName new_oldfield -Force
 
 # Use WhatIf to see what would happen
-Remove-DataverseAttribute -EntityName new_customentity -AttributeName new_oldfield -WhatIf
+Remove-DataverseAttributeMetadata -EntityName new_customentity -AttributeName new_oldfield -WhatIf
 ```
 
 ### Remove-DataverseEntityMetadata
@@ -385,21 +385,21 @@ foreach ($attr in $attributes) {
     if ($attr.MaxValue) { $params.MaxValue = $attr.MaxValue }
     if ($attr.DateTimeFormat) { $params.DateTimeFormat = $attr.DateTimeFormat }
     
-    Set-DataverseAttribute @params -Confirm:$false
+    Set-DataverseAttributeMetadata @params -Confirm:$false
 }
 ```
 
 ### Clone Entity Structure
 ```powershell
 # Get all attributes from one entity
-$sourceAttributes = Get-DataverseAttribute -EntityName source_entity
+$sourceAttributes = Get-DataverseAttributeMetadata -EntityName source_entity
 
 # Create similar attributes in target entity
 foreach ($attr in $sourceAttributes | Where-Object { $_.IsCustomAttribute -eq $true }) {
     $newName = $attr.LogicalName -replace '^source_', 'target_'
     $newSchemaName = $attr.SchemaName -replace '^source_', 'target_'
     
-    Set-DataverseAttribute -EntityName target_entity `
+    Set-DataverseAttributeMetadata -EntityName target_entity `
         -AttributeName $newName `
         -SchemaName $newSchemaName `
         -AttributeType $attr.AttributeTypeName `
@@ -412,12 +412,12 @@ foreach ($attr in $sourceAttributes | Where-Object { $_.IsCustomAttribute -eq $t
 ### Audit Metadata Changes
 ```powershell
 # Get all entities and check audit status
-$entities = Get-DataverseEntities -IncludeDetails
+$entities = Get-DataverseEntityMetadata -IncludeDetails
 
 $auditStatus = $entities | Select-Object LogicalName, DisplayName, IsAuditEnabled
 
 # Enable audit for all custom entities
-$customEntities = Get-DataverseEntities -OnlyCustom
+$customEntities = Get-DataverseEntityMetadata -OnlyCustom
 
 foreach ($entity in $customEntities) {
     Set-DataverseEntityMetadata -EntityName $entity.LogicalName `
