@@ -430,8 +430,9 @@ Describe "View Management Cmdlets" {
                 -TableName contact `
                 -Columns @("lastname")
             
-            # Remove via pipeline
-            @(@{Id=$viewId1}, @{Id=$viewId2}) | Remove-DataverseView -Connection $connection -Confirm:$false
+            # Get the views and remove via pipeline (realistic scenario)
+            Get-DataverseView -Connection $connection -Name "View*" |
+                Remove-DataverseView -Connection $connection -Confirm:$false
             
             # Success if no error thrown
             $true | Should -Be $true
