@@ -11,6 +11,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
     /// Sets environment variable values in Dataverse. Can set a single environment variable or multiple environment variables at once.
+    /// Creates the environment variable definition if it doesn't exist.
     /// </summary>
     [Cmdlet(VerbsCommon.Set, "DataverseEnvironmentVariable", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium, DefaultParameterSetName = "Single")]
     public class SetDataverseEnvironmentVariableCmdlet : OrganizationServiceCmdlet
@@ -28,6 +29,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = true, Position = 1, ParameterSetName = "Single", HelpMessage = "Value to set for the environment variable.")]
         [AllowEmptyString]
         public string Value { get; set; }
+
+        /// <summary>
+        /// Gets or sets the display name for the environment variable definition (for single parameter set, used when creating).
+        /// </summary>
+        [Parameter(ParameterSetName = "Single", HelpMessage = "Display name for the environment variable definition (used when creating).")]
+        public string DisplayName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the description for the environment variable definition (for single parameter set, used when creating).
+        /// </summary>
+        [Parameter(ParameterSetName = "Single", HelpMessage = "Description for the environment variable definition (used when creating).")]
+        public string Description { get; set; }
 
         /// <summary>
         /// Gets or sets environment variable values as a hashtable (for multiple parameter set).
@@ -99,21 +112,37 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 var defResults = Connection.RetrieveMultiple(defQuery);
 
+                Guid envVarDefId;
+                string displayNameValue;
+
                 if (defResults.Entities.Count == 0)
                 {
-                    WriteError(new ErrorRecord(
-                        new InvalidOperationException($"Environment variable definition with schema name '{schemaName}' not found."),
-                        "EnvironmentVariableDefinitionNotFound",
-                        ErrorCategory.ObjectNotFound,
-                        schemaName));
-                    continue;
+                    WriteVerbose($"  Environment variable definition not found. Creating new definition for '{schemaName}'");
+
+                    // Create the environment variable definition
+                    var defEntity = new Entity("environmentvariabledefinition");
+                    defEntity["schemaname"] = schemaName;
+                    defEntity["displayname"] = !string.IsNullOrEmpty(DisplayName) ? DisplayName : schemaName;
+                    defEntity["type"] = new OptionSetValue(100000000); // String type
+                    
+                    if (!string.IsNullOrEmpty(Description))
+                    {
+                        defEntity["description"] = Description;
+                    }
+
+                    envVarDefId = Connection.Create(defEntity);
+                    displayNameValue = defEntity.GetAttributeValue<string>("displayname");
+                    WriteVerbose($"  Created environment variable definition with ID: {envVarDefId}");
+                }
+                else
+                {
+                    var envVarDef = defResults.Entities[0];
+                    envVarDefId = envVarDef.Id;
+                    displayNameValue = envVarDef.GetAttributeValue<string>("displayname");
+                    WriteVerbose($"  Found environment variable definition: '{displayNameValue}' (ID: {envVarDefId})");
                 }
 
-                var envVarDef = defResults.Entities[0];
-                var envVarDefId = envVarDef.Id;
-                var displayName = envVarDef.GetAttributeValue<string>("displayname");
-
-                WriteVerbose($"  Found environment variable definition: '{displayName}' (ID: {envVarDefId})");
+                var displayName = displayNameValue;
 
                 // Check if there's an existing value record
                 if (existingEnvVarValuesBySchemaName.TryGetValue(schemaName, out var existingValueId))

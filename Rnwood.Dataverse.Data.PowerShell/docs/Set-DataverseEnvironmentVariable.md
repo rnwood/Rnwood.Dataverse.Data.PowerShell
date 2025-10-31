@@ -14,8 +14,9 @@ Sets environment variable values in Dataverse.
 
 ### Single (Default)
 ```
-Set-DataverseEnvironmentVariable [-SchemaName] <String> [-Value] <String> [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataverseEnvironmentVariable [-SchemaName] <String> [-Value] <String> [-DisplayName <String>]
+ [-Description <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ### Multiple
@@ -96,6 +97,36 @@ DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or st
 ```yaml
 Type: ServiceClient
 Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Description
+Description for the environment variable definition (used when creating).
+
+```yaml
+Type: String
+Parameter Sets: Single
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisplayName
+Display name for the environment variable definition (used when creating).
+
+```yaml
+Type: String
+Parameter Sets: Single
 Aliases:
 
 Required: False
