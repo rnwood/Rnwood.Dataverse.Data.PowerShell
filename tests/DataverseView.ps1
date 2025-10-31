@@ -420,12 +420,12 @@ Describe "View Management Cmdlets" {
             $connection = getMockConnection
             
             # Create multiple views
-            $viewId1 = Set-DataverseView -Connection $connection `
+            $viewId1 = Set-DataverseView -PassThru -Connection $connection `
                 -Name "View 1" `
                 -TableName contact `
                 -Columns @("firstname")
             
-            $viewId2 = Set-DataverseView -Connection $connection `
+            $viewId2 = Set-DataverseView -PassThru -Connection $connection `
                 -Name "View 2" `
                 -TableName contact `
                 -Columns @("lastname")
@@ -447,7 +447,7 @@ Describe "View Management Cmdlets" {
             
             # This should not throw an error
             { 
-                Remove-DataverseView -Connection $connection -Id $nonExistentId -IfExists 
+                Remove-DataverseView -Connection $connection -Id $nonExistentId -IfExists -Confirm:$false
             } | Should -Not -Throw
         }
 
@@ -459,7 +459,7 @@ Describe "View Management Cmdlets" {
             
             # This should throw an error
             { 
-                Remove-DataverseView -Connection $connection -Id $nonExistentId -ErrorAction Stop
+                Remove-DataverseView -Connection $connection -Id $nonExistentId -ErrorAction Stop -Confirm:$false
             } | Should -Throw
         }
     }
