@@ -13,8 +13,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// Sets environment variable values in Dataverse. Can set a single environment variable or multiple environment variables at once.
     /// Creates the environment variable definition if it doesn't exist.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "DataverseEnvironmentVariable", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium, DefaultParameterSetName = "Single")]
-    public class SetDataverseEnvironmentVariableCmdlet : OrganizationServiceCmdlet
+    [Cmdlet(VerbsCommon.Set, "DataverseEnvironmentVariableDefinition", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium, DefaultParameterSetName = "Single")]
+    public class SetDataverseEnvironmentVariableDefinitionCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
         /// Gets or sets the schema name of the environment variable to set (for single parameter set).

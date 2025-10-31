@@ -11,9 +11,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Gets environment variable definitions and values from Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "DataverseEnvironmentVariable")]
+    [Cmdlet(VerbsCommon.Get, "DataverseEnvironmentVariableDefinition")]
     [OutputType(typeof(PSObject))]
-    public class GetDataverseEnvironmentVariableCmdlet : OrganizationServiceCmdlet
+    public class GetDataverseEnvironmentVariableDefinitionCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
         /// Gets or sets the schema name of the environment variable to retrieve.

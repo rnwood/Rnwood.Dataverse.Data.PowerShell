@@ -9,8 +9,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Removes environment variable definitions and values from Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "DataverseEnvironmentVariable", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
-    public class RemoveDataverseEnvironmentVariableCmdlet : OrganizationServiceCmdlet
+    [Cmdlet(VerbsCommon.Remove, "DataverseEnvironmentVariableDefinition", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
+    public class RemoveDataverseEnvironmentVariableDefinitionCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
         /// Gets or sets the schema name of the environment variable to remove.
