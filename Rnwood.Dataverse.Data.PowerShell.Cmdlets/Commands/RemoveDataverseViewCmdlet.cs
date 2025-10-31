@@ -35,33 +35,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            try
-            {
-                string entityName = SystemView ? "savedquery" : "userquery";
+            string entityName = SystemView ? "savedquery" : "userquery";
 
-                if (ShouldProcess($"{(SystemView ? "System" : "Personal")} view with ID '{Id}'", "Remove"))
+            if (ShouldProcess($"{(SystemView ? "System" : "Personal")} view with ID '{Id}'", "Remove"))
+            {
+                try
                 {
-                    try
+                    Connection.Delete(entityName, Id);
+                    WriteVerbose($"Removed {(SystemView ? "system" : "personal")} view with ID: {Id}");
+                }
+                catch (Exception ex)
+                {
+                    if (IfExists)
                     {
-                        Connection.Delete(entityName, Id);
-                        WriteVerbose($"Removed {(SystemView ? "system" : "personal")} view with ID: {Id}");
+                        WriteVerbose($"View with ID {Id} does not exist or could not be deleted: {ex.Message}");
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        if (IfExists)
-                        {
-                            WriteVerbose($"View with ID {Id} does not exist or could not be deleted: {ex.Message}");
-                        }
-                        else
-                        {
-                            throw;
-                        }
+                        WriteError(new ErrorRecord(ex, "RemoveDataverseViewError", ErrorCategory.InvalidOperation, Id));
+                        throw;
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                WriteError(new ErrorRecord(ex, "RemoveDataverseViewError", ErrorCategory.InvalidOperation, null));
             }
         }
     }
