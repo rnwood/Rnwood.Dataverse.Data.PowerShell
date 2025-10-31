@@ -1,3 +1,12 @@
+# Plugin Cmdlet Tests
+# Note: These tests require metadata for plugin entities (pluginassembly, pluginpackage, plugintype, 
+# sdkmessageprocessingstep, sdkmessageprocessingstepimage) which are not included in the contact.xml 
+# metadata used by the mock connection. These tests demonstrate the expected API but would need to be 
+# run against a real Dataverse environment for full validation.
+# 
+# The cmdlets follow the same patterns as other working cmdlets (Get-DataverseRecord, Set-DataverseRecord, 
+# Remove-DataverseRecord) and should work correctly with real connections.
+
 Describe 'Plugin Assembly Cmdlets' {
     It "Creates, retrieves, and removes a plugin assembly with file content" {
         $connection = getMockConnection
