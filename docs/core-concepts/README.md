@@ -26,6 +26,7 @@ This section covers the core concepts and operations for working with Dataverse 
 - **[Creating and Updating Records](creating-updating.md)** - Create, update, upsert operations with type conversion and batching
 - **[Deleting Records](deleting.md)** - Delete operations with confirmation, batching, and SQL alternatives
 - **[Error Handling and Batch Operations](error-handling.md)** - Error handling, batch processing, and retry logic
+- **[Environment Variables and Connection References](environment-variables-connection-references.md)** - Managing configuration values and connection references across environments
 
 ## Key Topics
 

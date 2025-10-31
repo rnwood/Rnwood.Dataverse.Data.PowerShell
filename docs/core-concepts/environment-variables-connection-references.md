@@ -1,0 +1,230 @@
+# Environment Variables and Connection References
+
+This guide explains how to work with environment variables and connection references in Dataverse using PowerShell.
+
+## Overview
+
+**Environment Variables** provide a way to store configuration values that can vary between environments (development, test, production) without modifying your solution. They are key-value pairs that can be referenced by Power Apps, Power Automate flows, and other Dataverse components.
+
+**Connection References** allow Power Platform components (especially Power Automate flows) to use connections without hard-coding connection details. This makes solutions portable across environments.
+
+## Environment Variables
+
+### Understanding Environment Variables
+
+Environment variables in Dataverse consist of two entities:
+- **Environment Variable Definition** (`environmentvariabledefinition`) - Defines the variable with its schema name, display name, type, and optional default value
+- **Environment Variable Value** (`environmentvariablevalue`) - Stores the actual value for the environment
+
+This separation allows solutions to carry the definition while each environment provides its own value.
+
+### Working with Environment Variable Definitions
+
+Use definition cmdlets when you need to manage the complete lifecycle of environment variables:
+
+```powershell
+# Create a new environment variable with definition and value
+Set-DataverseEnvironmentVariableDefinition -SchemaName "new_apiurl" `
+    -Value "https://api.production.example.com" `
+    -DisplayName "API URL" `
+    -Description "URL for the external API"
+
+# Query environment variables (returns definitions with their values)
+Get-DataverseEnvironmentVariableDefinition -SchemaName "new_api*"
+
+# Remove an environment variable completely
+Remove-DataverseEnvironmentVariableDefinition -SchemaName "new_apiurl"
+```
+
+### Working with Environment Variable Values
+
+Use value cmdlets when definitions are managed by solutions and you only need to set environment-specific values:
+
+```powershell
+# Set a value (definition must already exist)
+Set-DataverseEnvironmentVariableValue -SchemaName "new_apiurl" `
+    -Value "https://api.staging.example.com"
+
+# Set multiple values at once
+Set-DataverseEnvironmentVariableValue -EnvironmentVariableValues @{
+    'new_apiurl' = 'https://api.production.example.com'
+    'new_apikey' = 'prod-key-12345'
+    'new_timeout' = '30'
+}
+
+# Query only values
+Get-DataverseEnvironmentVariableValue -SchemaName "new_apiurl"
+
+# Remove value but keep definition
+Remove-DataverseEnvironmentVariableValue -SchemaName "new_apiurl"
+```
+
+### When to Use Which Cmdlet Set
+
+**Use Definition Cmdlets** when:
+- Creating new environment variables from scratch
+- You need to set display names and descriptions
+- Managing environment variables not part of a solution
+- You want to query both definition and value information together
+
+**Use Value Cmdlets** when:
+- Environment variable definitions are managed by a solution
+- Deploying solutions across multiple environments
+- You only need to set/update values for existing definitions
+- Automating environment-specific configuration
+
+### Common Workflows
+
+#### Deploying a Solution with Environment Variables
+
+```powershell
+# Import solution (definitions included)
+Import-DataverseSolution -InFile "MySolution.zip"
+
+# Set environment-specific values
+Set-DataverseEnvironmentVariableValue -EnvironmentVariableValues @{
+    'new_apiurl' = 'https://api.production.example.com'
+    'new_dbconnection' = 'Server=prod-sql;Database=ProdDB'
+    'new_batchsize' = '100'
+}
+```
+
+#### Creating Environment Variables Without Solutions
+
+```powershell
+# Create environment variables with full definitions
+Set-DataverseEnvironmentVariableDefinition -SchemaName "new_emailtemplate" `
+    -Value "Welcome" `
+    -DisplayName "Email Template Name" `
+    -Description "Name of the email template to use for welcome messages"
+
+Set-DataverseEnvironmentVariableDefinition -SchemaName "new_retrycount" `
+    -Value "3" `
+    -DisplayName "Retry Count" `
+    -Description "Number of times to retry failed operations"
+```
+
+#### Migrating Values Between Environments
+
+```powershell
+# Export from source environment
+$sourceConnection = Get-DataverseConnection -Url "https://source.crm.dynamics.com" -Interactive
+$values = Get-DataverseEnvironmentVariableValue -Connection $sourceConnection
+
+# Transform and import to target environment
+$targetConnection = Get-DataverseConnection -Url "https://target.crm.dynamics.com" -Interactive
+$valuesToSet = @{}
+foreach ($v in $values) {
+    # Apply environment-specific transformations if needed
+    $valuesToSet[$v.SchemaName] = $v.Value.Replace("source", "target")
+}
+Set-DataverseEnvironmentVariableValue -Connection $targetConnection -EnvironmentVariableValues $valuesToSet
+```
+
+## Connection References
+
+### Understanding Connection References
+
+Connection References (`connectionreference`) provide a layer of abstraction between Power Platform components and actual connections. Instead of components referencing a specific connection ID, they reference a connection reference by its logical name. Each environment then maps that reference to an appropriate connection.
+
+### Working with Connection References
+
+```powershell
+# Query connection references
+Get-DataverseConnectionReference
+
+# Query specific connection reference
+Get-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharepoint"
+
+# Set a connection reference to use a specific connection
+Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharepoint" `
+    -ConnectionId "12345678-1234-1234-1234-123456789012"
+
+# Set multiple connection references at once
+Set-DataverseConnectionReference -ConnectionReferences @{
+    'new_sharepoint' = '12345678-1234-1234-1234-123456789012'
+    'new_sql' = '87654321-4321-4321-4321-210987654321'
+}
+
+# Remove a connection reference
+Remove-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharepoint"
+```
+
+### Finding Connection IDs
+
+Connection references need valid connection IDs. To find available connections:
+
+```powershell
+# Query connections by name
+$conn = Get-DataverseRecord -TableName connection -Filter "name eq 'Production SharePoint'"
+Write-Host "Connection ID: $($conn.connectionid)"
+
+# List all connections
+Get-DataverseRecord -TableName connection -Columns connectionid, name, connectorid | 
+    Format-Table -AutoSize
+```
+
+### Common Workflows
+
+#### Deploying a Solution with Connection References
+
+```powershell
+# Import solution (connection references included)
+Import-DataverseSolution -InFile "MySolution.zip"
+
+# Set connection references to environment-specific connections
+Set-DataverseConnectionReference -ConnectionReferences @{
+    'new_sharepoint' = '12345678-1234-1234-1234-123456789012'
+    'new_sql' = '87654321-4321-4321-4321-210987654321'
+    'new_customapi' = '11111111-2222-3333-4444-555555555555'
+}
+```
+
+#### Setting Connection References During Solution Import
+
+```powershell
+# Set both environment variables and connection references during import
+Import-DataverseSolution -InFile "MySolution.zip" `
+    -EnvironmentVariables @{
+        'new_apiurl' = 'https://api.production.example.com'
+        'new_apikey' = 'prod-key-12345'
+    } `
+    -ConnectionReferences @{
+        'new_sharepoint' = '12345678-1234-1234-1234-123456789012'
+        'new_sql' = '87654321-4321-4321-4321-210987654321'
+    }
+```
+
+## Best Practices
+
+### Environment Variables
+
+1. **Use Descriptive Names**: Schema names should clearly indicate the purpose (e.g., `new_apiurl`, `new_maxretries`)
+2. **Set Display Names**: Always provide display names for better user experience in the maker portal
+3. **Use Default Values**: Set sensible defaults in the definition for development environments
+4. **Document with Descriptions**: Use the description field to explain the variable's purpose and expected format
+5. **Separate by Environment Type**: Use value cmdlets when deploying to different environment tiers
+
+### Connection References
+
+1. **Name by Function**: Use logical names that describe what the connection is for (e.g., `new_sharepoint_documents`, `new_sql_inventory`)
+2. **Validate Before Import**: Ensure connections exist in the target environment before importing solutions
+3. **Document Requirements**: Maintain a list of required connection references and their connector types
+4. **Test Connections**: After setting references, test the flows/apps to ensure connections work correctly
+5. **Use Service Accounts**: For production, use service accounts rather than user-specific connections
+
+### Automation Scripts
+
+1. **Use Configuration Files**: Store environment-specific values in JSON or CSV files
+2. **Implement Error Handling**: Check for missing definitions before setting values
+3. **Log Changes**: Keep audit trail of configuration changes across environments
+4. **Use WhatIf**: Test deployment scripts with -WhatIf before running for real
+5. **Version Control**: Keep configuration files in source control alongside solution files
+
+## See Also
+
+- [Solution Management](../advanced/solution-management.md) - Importing and exporting solutions
+- [Set-DataverseEnvironmentVariableDefinition](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseEnvironmentVariableDefinition.md)
+- [Set-DataverseEnvironmentVariableValue](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseEnvironmentVariableValue.md)
+- [Set-DataverseConnectionReference](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseConnectionReference.md)
+- [Import-DataverseSolution](../../Rnwood.Dataverse.Data.PowerShell/docs/Import-DataverseSolution.md)

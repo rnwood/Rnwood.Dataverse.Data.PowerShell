@@ -247,17 +247,24 @@ Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" `
 You can also set connection references and environment variables independently of solution import using dedicated cmdlets:
 
 ```powershell
-# Set a single environment variable
-Set-DataverseEnvironmentVariable -Connection $c `
+# Set environment variable value (definition must exist)
+Set-DataverseEnvironmentVariableValue -Connection $c `
     -SchemaName "new_apiurl" `
     -Value "https://api.production.example.com"
 
-# Set multiple environment variables at once
-Set-DataverseEnvironmentVariable -Connection $c -EnvironmentVariables @{
+# Set multiple environment variable values at once
+Set-DataverseEnvironmentVariableValue -Connection $c -EnvironmentVariableValues @{
     'new_apiurl' = 'https://api.production.example.com'
     'new_apikey' = 'prod-key-12345'
     'new_timeout' = '30'
 }
+
+# Create or update environment variable with definition
+Set-DataverseEnvironmentVariableDefinition -Connection $c `
+    -SchemaName "new_customsetting" `
+    -Value "customvalue" `
+    -DisplayName "Custom Setting" `
+    -Description "Custom configuration value"
 
 # Set a single connection reference
 Set-DataverseConnectionReference -Connection $c `
@@ -271,8 +278,10 @@ Set-DataverseConnectionReference -Connection $c -ConnectionReferences @{
 }
 ```
 
-See the full parameter references:
-- [Set-DataverseEnvironmentVariable](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseEnvironmentVariable.md)
+See the full documentation:
+- [Environment Variables and Connection References Guide](../core-concepts/environment-variables-connection-references.md)
+- [Set-DataverseEnvironmentVariableDefinition](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseEnvironmentVariableDefinition.md)
+- [Set-DataverseEnvironmentVariableValue](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseEnvironmentVariableValue.md)
 - [Set-DataverseConnectionReference](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseConnectionReference.md)
 
 **Notes:**

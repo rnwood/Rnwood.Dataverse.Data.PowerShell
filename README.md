@@ -74,6 +74,7 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 - [Creating and Updating Records](docs/core-concepts/creating-updating.md) - Create, update, upsert operations
 - [Deleting Records](docs/core-concepts/deleting.md) - Delete operations and SQL alternatives
 - [Error Handling and Batch Operations](docs/core-concepts/error-handling.md) - Error handling and retry logic
+- [Environment Variables and Connection References](docs/core-concepts/environment-variables-connection-references.md) - Managing configuration and connections
 
 ### Advanced Topics
 - [Parallelization](docs/advanced/parallelization.md) - Parallel processing for best performance
@@ -90,8 +91,19 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 - [`Remove-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) — delete records
 - [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) — execute arbitrary SDK requests
 - [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) — run SQL queries against Dataverse
-- [`Set-DataverseEnvironmentVariable`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseEnvironmentVariable.md) — set environment variable values
-- [`Set-DataverseConnectionReference`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseConnectionReference.md) — set connection reference values
+
+### Environment Variables
+- [`Get-DataverseEnvironmentVariableDefinition`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseEnvironmentVariableDefinition.md) — query environment variable definitions with values
+- [`Set-DataverseEnvironmentVariableDefinition`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseEnvironmentVariableDefinition.md) — create or update environment variable definitions and values
+- [`Remove-DataverseEnvironmentVariableDefinition`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseEnvironmentVariableDefinition.md) — remove environment variable definitions
+- [`Get-DataverseEnvironmentVariableValue`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseEnvironmentVariableValue.md) — query environment variable values
+- [`Set-DataverseEnvironmentVariableValue`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseEnvironmentVariableValue.md) — set environment variable values
+- [`Remove-DataverseEnvironmentVariableValue`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseEnvironmentVariableValue.md) — remove environment variable values
+
+### Connection References
+- [`Get-DataverseConnectionReference`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseConnectionReference.md) — query connection references
+- [`Set-DataverseConnectionReference`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseConnectionReference.md) — update connection reference values
+- [`Remove-DataverseConnectionReference`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseConnectionReference.md) — remove connection references
 
 The module also includes many specialized `Invoke-Dataverse*` cmdlets for specific platform operations. See the [cmdlet documentation](Rnwood.Dataverse.Data.PowerShell/docs/) for the full list.
 
