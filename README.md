@@ -59,6 +59,16 @@ Set-DataverseRecord -Connection $c -TableName contact -Id $contactId -InputObjec
 
 # Delete a record
 Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
+
+# Manage web resources
+# Upload a JavaScript file
+Set-DataverseWebResource -Connection $c -Name "new_myscript" -Path "./script.js" -DisplayName "My Script"
+
+# Download a web resource
+Get-DataverseWebResource -Connection $c -Name "new_myscript" -Path "./downloaded-script.js"
+
+# Upload all files from a folder
+Set-DataverseWebResource -Connection $c -Folder "./webresources" -PublisherPrefix "new"
 ```
 
 ## Documentation
@@ -88,6 +98,9 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 - [`Get-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) — query and retrieve records
 - [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) — create, update or upsert records
 - [`Remove-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) — delete records
+- [`Get-DataverseWebResource`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseWebResource.md) — retrieve web resources with file support
+- [`Set-DataverseWebResource`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseWebResource.md) — create or update web resources from files or folders
+- [`Remove-DataverseWebResource`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseWebResource.md) — delete web resources
 - [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) — execute arbitrary SDK requests
 - [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) — run SQL queries against Dataverse
 
