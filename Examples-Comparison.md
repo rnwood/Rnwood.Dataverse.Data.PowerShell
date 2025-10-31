@@ -1792,6 +1792,25 @@ Remove-DataverseFormTab -Connection $conn -FormId $formId -TabName 'CustomTab' -
 # Get all tabs
 $tabs = Get-DataverseFormTab -Connection $conn -FormId $formId
 $tabs | Format-Table Name, Expanded, Visible
+
+# Position tabs using Index, InsertBefore, or InsertAfter
+Set-DataverseFormTab -Connection $conn `
+    -FormId $formId `
+    -Name 'FirstTab' `
+    -Label 'First Tab' `
+    -Index 0  # Insert at beginning
+
+Set-DataverseFormTab -Connection $conn `
+    -FormId $formId `
+    -Name 'MiddleTab' `
+    -Label 'Middle Tab' `
+    -InsertBefore 'GeneralTab'  # Insert before specific tab
+
+Set-DataverseFormTab -Connection $conn `
+    -FormId $formId `
+    -Name 'AfterTab' `
+    -Label 'After Tab' `
+    -InsertAfter 'GeneralTab'  # Insert after specific tab
 ```
 
 ### Example: Manage form sections
@@ -1835,6 +1854,21 @@ Remove-DataverseFormSection -Connection $conn `
 # Get all sections in a tab
 $sections = Get-DataverseFormSection -Connection $conn -FormId $formId -TabName 'General'
 $sections | Format-Table Name, ShowLabel, Columns
+
+# Position sections using Index, InsertBefore, or InsertAfter
+Set-DataverseFormSection -Connection $conn `
+    -FormId $formId `
+    -TabName 'General' `
+    -Name 'top_section' `
+    -Label 'Top Section' `
+    -Index 0  # Insert at beginning
+
+Set-DataverseFormSection -Connection $conn `
+    -FormId $formId `
+    -TabName 'General' `
+    -Name 'middle_section' `
+    -Label 'Middle Section' `
+    -InsertAfter 'general_section'  # Insert after specific section
 ```
 
 ### Example: Manage form controls
@@ -1908,6 +1942,28 @@ $controls = Get-DataverseFormControl -Connection $conn `
     -FormId $formId `
     -SectionName 'general_section'
 $controls | Format-Table DataField, Disabled, Visible, IsRequired
+
+# Position controls using Index, InsertBefore, or InsertAfter
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -DataField 'firstname' `
+    -Label 'First Name' `
+    -Index 0  # Insert at beginning
+
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -DataField 'lastname' `
+    -Label 'Last Name' `
+    -InsertAfter 'firstname'  # Insert after firstname
+
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -DataField 'emailaddress1' `
+    -Label 'Email' `
+    -InsertBefore 'telephone1'  # Insert before phone
 
 # Supported control types: Standard, Lookup, OptionSet, DateTime, Boolean, 
 # Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch, Notes
