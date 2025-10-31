@@ -14,7 +14,7 @@ Creates or updates a plugin step image in a Dataverse environment.
 
 ```
 Set-DataversePluginStepImage [-Id <Guid>] -SdkMessageProcessingStepId <Guid> -EntityAlias <String>
- -ImageType <Int32> [-MessagePropertyName <String>] [-Attributes <String>] [-Name <String>] [-PassThru]
+ -ImageType <Int32> [-MessagePropertyName <String>] [-Attributes <String[]>] [-Name <String>] [-PassThru]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -23,20 +23,34 @@ Creates or updates plugin step images (pre-image or post-image) with attribute f
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Create a pre-image with specific attributes
 ```powershell
-PS C:\> Set-DataversePluginStepImage -Connection $connection -SdkMessageProcessingStepId $stepId -EntityAlias "PreImage" -ImageType 0 -Attributes "firstname,lastname"
+PS C:\> Set-DataversePluginStepImage -Connection $connection `
+    -SdkMessageProcessingStepId $stepId `
+    -EntityAlias "PreImage" `
+    -ImageType 0 `
+    -Attributes "firstname","lastname","emailaddress1"
 ```
 
 Creates a pre-image with specific attributes.
 
+### Example 2: Create a post-image with all attributes
+```powershell
+PS C:\> Set-DataversePluginStepImage -Connection $connection `
+    -SdkMessageProcessingStepId $stepId `
+    -EntityAlias "PostImage" `
+    -ImageType 1
+```
+
+Creates a post-image with all attributes (no -Attributes parameter means all attributes are included).
+
 ## PARAMETERS
 
 ### -Attributes
-Attributes to include in the image (comma-separated list of attribute logical names). Leave empty for all attributes.
+Attributes to include in the image (array of attribute logical names). Leave empty for all attributes. Tab completion is available for attribute names.
 
 ```yaml
-Type: String
+Type: String[]
 Parameter Sets: (All)
 Aliases:
 

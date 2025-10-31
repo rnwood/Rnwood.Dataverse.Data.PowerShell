@@ -66,10 +66,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string Description { get; set; }
 
         /// <summary>
-        /// Gets or sets the filtering attributes (comma-separated list).
+        /// Gets or sets the filtering attributes.
         /// </summary>
-        [Parameter(HelpMessage = "Filtering attributes (comma-separated list of attribute logical names)")]
-        public string FilteringAttributes { get; set; }
+        [Parameter(HelpMessage = "Filtering attributes (array of attribute logical names)")]
+        [ArgumentCompleter(typeof(ColumnNamesArgumentCompleter))]
+        public string[] FilteringAttributes { get; set; }
 
         /// <summary>
         /// Gets or sets the configuration for the plugin step.
@@ -144,9 +145,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 step["description"] = Description;
             }
 
-            if (!string.IsNullOrEmpty(FilteringAttributes))
+            if (FilteringAttributes != null && FilteringAttributes.Length > 0)
             {
-                step["filteringattributes"] = FilteringAttributes;
+                step["filteringattributes"] = string.Join(",", FilteringAttributes);
             }
 
             if (!string.IsNullOrEmpty(Configuration))

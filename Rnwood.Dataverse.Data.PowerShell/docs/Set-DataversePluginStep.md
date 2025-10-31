@@ -15,7 +15,7 @@ Creates or updates a plugin step (SDK message processing step) in a Dataverse en
 ```
 Set-DataversePluginStep [-Id <Guid>] -Name <String> -PluginTypeId <Guid> -SdkMessageId <Guid>
  [-SdkMessageFilterId <Guid>] -Stage <Int32> -Mode <Int32> [-Rank <Int32>] [-Description <String>]
- [-FilteringAttributes <String>] [-Configuration <String>] [-SecureConfigurationId <Guid>]
+ [-FilteringAttributes <String[]>] [-Configuration <String>] [-SecureConfigurationId <Guid>]
  [-ImpersonatingUserId <Guid>] [-StateCode <Int32>] [-StatusCode <Int32>] [-SupportedDeployment <Int32>]
  [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
  [<CommonParameters>]
@@ -26,12 +26,22 @@ Creates or updates plugin steps with comprehensive configuration including stage
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Create a plugin step with filtering attributes
 ```powershell
-PS C:\> Set-DataversePluginStep -Connection $connection -Name "MyStep" -PluginTypeId $typeId -SdkMessageId $messageId -Stage 20 -Mode 0
+PS C:\> Set-DataversePluginStep -Connection $connection -Name "MyStep" -PluginTypeId $typeId `
+    -SdkMessageId $messageId -Stage 20 -Mode 0 `
+    -FilteringAttributes "name","revenue","primarycontactid"
 ```
 
-Creates a synchronous pre-operation plugin step.
+Creates a synchronous pre-operation plugin step with filtering attributes.
+
+### Example 2: Create a plugin step without filtering
+```powershell
+PS C:\> Set-DataversePluginStep -Connection $connection -Name "MyStep" -PluginTypeId $typeId `
+    -SdkMessageId $messageId -Stage 20 -Mode 0
+```
+
+Creates a synchronous pre-operation plugin step without filtering attributes.
 
 ## PARAMETERS
 
@@ -99,7 +109,7 @@ Accept wildcard characters: False
 Filtering attributes (comma-separated list of attribute logical names)
 
 ```yaml
-Type: String
+Type: String[]
 Parameter Sets: (All)
 Aliases:
 
