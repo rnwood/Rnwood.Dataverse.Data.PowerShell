@@ -1,3 +1,48 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [View Management](#view-management)
+  - [Overview](#overview)
+  - [Key Features](#key-features)
+  - [Creating Views](#creating-views)
+    - [Basic View Creation](#basic-view-creation)
+    - [System Views](#system-views)
+    - [Complex Filters](#complex-filters)
+    - [Column Configuration](#column-configuration)
+    - [Using FetchXML](#using-fetchxml)
+  - [Updating Views](#updating-views)
+    - [Update with Upsert Pattern](#update-with-upsert-pattern)
+    - [Add Columns](#add-columns)
+    - [Remove Columns](#remove-columns)
+    - [Update Column Properties](#update-column-properties)
+    - [Update Filters](#update-filters)
+    - [Combined Updates](#combined-updates)
+  - [Retrieving Views](#retrieving-views)
+    - [Get All Views](#get-all-views)
+    - [Get by Table](#get-by-table)
+    - [Get by ID](#get-by-id)
+    - [Get by Name](#get-by-name)
+    - [Filter by Type](#filter-by-type)
+    - [Filter by Query Type](#filter-by-query-type)
+  - [Deleting Views](#deleting-views)
+    - [Delete by ID](#delete-by-id)
+    - [Delete with Confirmation](#delete-with-confirmation)
+    - [Delete if Exists](#delete-if-exists)
+    - [Delete System Views](#delete-system-views)
+    - [Delete Multiple Views](#delete-multiple-views)
+  - [Control Flags](#control-flags)
+    - [NoCreate and NoUpdate](#nocreate-and-noupdate)
+    - [PassThru](#passthru)
+  - [Best Practices](#best-practices)
+  - [Common Scenarios](#common-scenarios)
+    - [Clone a View](#clone-a-view)
+    - [Create Views for Multiple Tables](#create-views-for-multiple-tables)
+    - [Audit View Configuration](#audit-view-configuration)
+  - [See Also](#see-also)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # View Management
 
 Dataverse views define how records are displayed in model-driven apps and other interfaces. This module provides cmdlets to create, update, retrieve, and delete both system views (savedquery) and personal views (userquery).
