@@ -110,7 +110,7 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 
 **Controls:**
 - [`Get-DataverseFormControl`] — retrieve controls from form sections
-- [`Set-DataverseFormControl`] — create or update form controls (supports all standard control types)
+- [`Set-DataverseFormControl`] — create or update form controls (supports all standard control types and raw XML)
 - [`Remove-DataverseFormControl`] — delete controls from forms
 
 The module also includes many specialized `Invoke-Dataverse*` cmdlets for specific platform operations. See the [cmdlet documentation](Rnwood.Dataverse.Data.PowerShell/docs/) for the full list.
