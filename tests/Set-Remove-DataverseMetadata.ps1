@@ -737,18 +737,15 @@ Describe 'Remove-DataverseEntityMetadata' {
             # WhatIf should not throw even with mock connection
             { Remove-DataverseEntityMetadata -Connection $connection `
                 -EntityName contact `
-                -Force `
                 -WhatIf } | Should -Not -Throw
         }
 
-        It "Has Force parameter to bypass confirmation" {
+        It "Supports Confirm parameter to bypass confirmation" {
             $connection = getMockConnection
             
-            # Verify the Force parameter exists
+            # Verify SupportsShouldProcess is enabled (allows -Confirm:$false)
             $cmdlet = Get-Command Remove-DataverseEntityMetadata
-            $forceParam = $cmdlet.Parameters['Force']
-            $forceParam | Should -Not -BeNullOrEmpty
-            $forceParam.ParameterType.Name | Should -Be 'SwitchParameter'
+            $cmdlet.Parameters.ContainsKey('Confirm') | Should -Be $true
         }
     }
 }

@@ -23,12 +23,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string EntityName { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to bypass confirmation.
-        /// </summary>
-        [Parameter(HelpMessage = "Bypass confirmation prompt")]
-        public SwitchParameter Force { get; set; }
-
-        /// <summary>
         /// Processes the cmdlet.
         /// </summary>
         protected override void ProcessRecord()
@@ -42,8 +36,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 target = $"{SchemaName} (involving {EntityName})";
             }
 
-            // Check ShouldProcess with Force handling
-            if (Force || ShouldProcess(target, "Delete relationship"))
+            // Check ShouldProcess
+            if (ShouldProcess(target, "Delete relationship"))
             {
                 DeleteRelationship();
 

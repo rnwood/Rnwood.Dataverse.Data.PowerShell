@@ -13,7 +13,7 @@ Deletes an entity (table) from Dataverse.
 ## SYNTAX
 
 ```
-Remove-DataverseEntityMetadata [-EntityName] <String> [-Force] [-Connection <ServiceClient>]
+Remove-DataverseEntityMetadata [-EntityName] <String> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -161,21 +161,6 @@ Required: True
 Position: 0
 Default value: None
 Accept pipeline input: True (ByPropertyName, ByValue)
-Accept wildcard characters: False
-```
-
-### -Force
-Force deletion without confirmation prompt. Use with caution as this bypasses the safety confirmation.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
 Accept wildcard characters: False
 ```
 

@@ -13,7 +13,7 @@ Deletes a relationship from Dataverse.
 ## SYNTAX
 
 ```
-Remove-DataverseRelationshipMetadata [-SchemaName] <String> [-EntityName <String>] [-Force]
+Remove-DataverseRelationshipMetadata [-SchemaName] <String> [-EntityName <String>]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -203,21 +203,6 @@ If not specified, the cmdlet will still delete the relationship but may not inva
 
 ```yaml
 Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Force
-Bypass confirmation prompt. Use with caution as this bypasses the safety confirmation for a destructive operation.
-
-```yaml
-Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 

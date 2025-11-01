@@ -27,19 +27,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string AttributeName { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to force deletion without confirmation.
-        /// </summary>
-        [Parameter(HelpMessage = "Force deletion without confirmation")]
-        public SwitchParameter Force { get; set; }
-
-        /// <summary>
         /// Processes the cmdlet.
         /// </summary>
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
 
-            if (!Force && !ShouldContinue($"Are you sure you want to delete attribute '{AttributeName}' from entity '{EntityName}'? This action cannot be undone.", "Confirm Deletion"))
+            if (!ShouldContinue($"Are you sure you want to delete attribute '{AttributeName}' from entity '{EntityName}'? This action cannot be undone.", "Confirm Deletion"))
             {
                 return;
             }
