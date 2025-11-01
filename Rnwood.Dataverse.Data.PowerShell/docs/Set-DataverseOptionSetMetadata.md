@@ -14,7 +14,7 @@ Creates or updates a global option set in Dataverse.
 
 ```
 Set-DataverseOptionSetMetadata [-Name] <String> [-DisplayName <String>] [-Description <String>]
- -Options <Hashtable[]> [-Force] [-PassThru] [-NoRemoveMissingOptions] [-Connection <ServiceClient>]
+ -Options <Hashtable[]> [-NoRemoveMissingOptions] [-PassThru] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -132,21 +132,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Force
-Force update even if the option set exists.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Name
 The name of the global option set.
 
@@ -251,5 +236,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### System.Management.Automation.PSObject
 ## NOTES
+
+This cmdlet provides programmatic access to Dataverse metadata. For comprehensive documentation and examples, see the metadata concept guide at docs/core-concepts/metadata.md
 
 ## RELATED LINKS

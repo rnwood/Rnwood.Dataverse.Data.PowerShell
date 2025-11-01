@@ -478,10 +478,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### Microsoft.Xrm.Sdk.Metadata.RelationshipMetadataBase
 ## NOTES
-- Most relationship properties are immutable after creation
-- For OneToMany relationships, you can update cascade behaviors and IsHierarchical after creation
-- For ManyToMany relationships, virtually all properties are immutable after creation
-- The metadata cache is automatically invalidated for both entities after creation or update
+
+This cmdlet provides programmatic access to Dataverse metadata. For comprehensive documentation and examples, see the metadata concept guide at docs/core-concepts/metadata.md
 
 ## RELATED LINKS
 

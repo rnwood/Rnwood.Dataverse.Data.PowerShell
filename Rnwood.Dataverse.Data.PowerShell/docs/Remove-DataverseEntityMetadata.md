@@ -215,73 +215,12 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.String
-You can pipe entity names to this cmdlet.
-
 ## OUTPUTS
 
-### None
-This cmdlet does not produce any output.
-
+### System.Object
 ## NOTES
 
-### Destructive Operation
-This cmdlet permanently deletes entities and all associated data. This operation:
-- **Cannot be undone** - There is no way to recover a deleted entity or its data
-- **Deletes all records** - All data in the entity is permanently removed
-- **Removes relationships** - All relationships to/from the entity are deleted
-- **Deletes customizations** - All forms, views, charts, business rules are removed
-- **Requires high privileges** - System Administrator or System Customizer role required
-
-### What Gets Deleted
-When you delete an entity, the following are permanently removed:
-- Entity definition and all attributes (columns)
-- All records and their data
-- All One-to-Many and Many-to-Many relationships
-- All forms, views, and charts
-- All business rules and workflows
-- All security roles and permissions specific to the entity
-- All audit history for the entity
-
-### Managed Entities
-You cannot delete entities that are:
-- Part of managed solutions (must delete the solution instead)
-- System entities (e.g., account, contact, systemuser)
-- In use by other solutions or dependencies
-
-### Publishing
-After deleting an entity, customizations are automatically published. No additional publish step is required.
-
-### Metadata Cache
-The metadata cache is automatically invalidated after deletion to ensure subsequent operations don't try to access the deleted entity.
-
-### Best Practices
-- **Always use WhatIf first** to verify you're deleting the correct entity
-- **Export data before deletion** if you might need it later
-- **Check dependencies** using solution explorer before deletion
-- **Use confirmation prompts** (don't use -Force) unless in automated scripts
-- **Backup your environment** before bulk deletions
-- **Test in dev environment** before deleting in production
-
-### Alternatives to Deletion
-Consider these alternatives before deleting an entity:
-- **Deactivate records** instead of deleting the entity
-- **Hide from navigation** if you want to keep data but remove from UI
-- **Export to another environment** if you need to preserve the data
-- **Use managed solutions** for cleaner deployment lifecycle
-
-### Error Scenarios
-The cmdlet will fail if:
-- Entity doesn't exist (throws error)
-- Entity is part of a managed solution
-- Entity has dependencies that prevent deletion
-- User lacks sufficient privileges
-- Entity is a system entity
-
-### Related Cmdlets
-- `Get-DataverseEntityMetadata` - Retrieve entity information before deletion
-- `Set-DataverseEntityMetadata` - Create or update entities
-- `Remove-DataverseAttributeMetadata` - Delete individual attributes instead
-- `Remove-DataverseRelationshipMetadata` - Delete relationships
+This cmdlet provides programmatic access to Dataverse metadata. For comprehensive documentation and examples, see the metadata concept guide at docs/core-concepts/metadata.md
 
 ## RELATED LINKS
 

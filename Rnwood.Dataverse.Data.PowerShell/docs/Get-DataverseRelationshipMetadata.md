@@ -394,78 +394,12 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
-This cmdlet does not accept pipeline input.
-
 ## OUTPUTS
 
 ### Microsoft.Xrm.Sdk.Metadata.RelationshipMetadataBase
-Returns one or more relationship metadata objects.
-
-**Key Properties for OneToMany/ManyToOne Relationships:**
-- `SchemaName` - Unique name of the relationship
-- `RelationshipType` - "OneToMany" or "ManyToOne"
-- `ReferencedEntity` - Parent entity logical name
-- `ReferencingEntity` - Child entity logical name
-- `ReferencedAttribute` - Primary key attribute of parent entity
-- `ReferencingAttribute` - Lookup attribute name on child entity
-- `CascadeDelete` - Delete cascade behavior
-- `CascadeAssign` - Assign cascade behavior
-- `CascadeShare` - Share cascade behavior
-- `CascadeUnshare` - Unshare cascade behavior
-- `CascadeReparent` - Reparent cascade behavior
-- `CascadeMerge` - Merge cascade behavior
-- `IsHierarchical` - Whether this is a self-referencing hierarchy
-- `IsCustomRelationship` - Whether this is a custom relationship
-
-**Key Properties for ManyToMany Relationships:**
-- `SchemaName` - Unique name of the relationship
-- `RelationshipType` - "ManyToMany"
-- `Entity1LogicalName` - First entity logical name
-- `Entity2LogicalName` - Second entity logical name
-- `Entity1IntersectAttribute` - Attribute name in intersect table for entity 1
-- `Entity2IntersectAttribute` - Attribute name in intersect table for entity 2
-- `IntersectEntityName` - Name of the intersect table
-- `IsCustomRelationship` - Whether this is a custom relationship
-
 ## NOTES
 
-### Relationship Types
-- **OneToMany (1:N)**: Parent-child relationship with a lookup field on the child entity
-- **ManyToOne (N:1)**: Inverse of OneToMany - shows the parent relationship from child perspective
-- **ManyToMany (N:N)**: Association between two entities using an intersect table
-
-### Cascade Behaviors
-Cascade behaviors determine what happens to related records when operations are performed on the parent record:
-
-- **NoCascade**: No automatic action
-- **Cascade**: Related records are also affected
-- **Active**: Only active related records are affected
-- **UserOwned**: Only user-owned related records are affected
-- **RemoveLink**: Relationship link is removed (safe for most cases)
-- **Restrict**: Operation is prevented if related records exist
-
-### Performance Considerations
-- Retrieving all relationships can be slow in large organizations
-- Use specific entity names or relationship names when possible
-- Consider caching results for repeated queries
-
-### Security Requirements
-- Read access to relationship metadata (typically available to all users)
-- Some metadata properties may be restricted based on security roles
-
-### Common Use Cases
-- **Schema analysis** - Understand entity relationships and dependencies
-- **Data modeling** - Analyze relationship structure and cascade behaviors
-- **Migration planning** - Identify relationships that need to be recreated
-- **Impact analysis** - Understand what will be affected by entity changes
-- **Documentation** - Generate relationship documentation
-- **Validation** - Verify relationship configuration
-
-### Related Cmdlets
-- `Get-DataverseEntityMetadata` - Get entity metadata including relationships
-- `Get-DataverseAttributeMetadata` - Get attribute metadata for lookup fields
-- `Set-DataverseRelationshipMetadata` - Create or update relationships
-- `Remove-DataverseRelationshipMetadata` - Delete relationships
+This cmdlet provides programmatic access to Dataverse metadata. For comprehensive documentation and examples, see the metadata concept guide at docs/core-concepts/metadata.md
 
 ## RELATED LINKS
 

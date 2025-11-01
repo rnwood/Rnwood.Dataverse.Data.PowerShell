@@ -281,106 +281,12 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.String
-You can pipe relationship schema names to this cmdlet.
-
 ## OUTPUTS
 
-### None
-This cmdlet does not produce any output.
-
+### System.Object
 ## NOTES
 
-### Destructive Operation
-This cmdlet permanently deletes relationships and may delete data:
-- **Cannot be undone** - There is no way to recover a deleted relationship
-- **OneToMany**: May delete related records if cascade delete is configured
-- **ManyToMany**: Always deletes all association records in the intersect table
-- **Requires high privileges** - System Administrator or System Customizer role required
-
-### OneToMany (1:N) Relationships
-When you delete a 1:N relationship:
-- The relationship definition is removed
-- The lookup attribute on the referencing (child) entity is deleted
-- All data in the lookup field is lost
-- If cascade delete is set to "Cascade", all child records are also deleted
-- If cascade delete is set to "Restrict", deletion fails if child records exist
-- Navigation properties are removed from both entities
-
-### ManyToMany (N:N) Relationships
-When you delete an N:N relationship:
-- The relationship definition is removed
-- The intersect entity is deleted
-- **ALL association records are permanently deleted**
-- No records in the primary entities are deleted
-- Navigation properties are removed from both entities
-- Connection data is lost (cannot be recovered)
-
-### Cascade Delete Behavior
-For OneToMany relationships, check the cascade delete setting before deletion:
-- **Cascade**: Child records will be deleted automatically
-- **RemoveLink**: Only the lookup value is cleared (safe)
-- **Restrict**: Deletion fails if child records exist
-- **NoCascade**: Lookup value remains, creating orphaned references
-
-Use `Get-DataverseRelationshipMetadata` to check cascade settings before deletion.
-
-### Protected Relationships
-You cannot delete relationships that are:
-- Part of managed solutions (must delete the solution instead)
-- System relationships (e.g., account to contact)
-- Required by other components or solutions
-- Used by business processes
-
-### Publishing
-After deleting a relationship, you should publish customizations:
-```powershell
-Invoke-DataversePublishAllXml -Connection $connection
-```
-
-### Metadata Cache
-The metadata cache for involved entities is automatically invalidated after deletion when `-EntityName` is provided. For best results, specify the entity name parameter.
-
-### Best Practices
-- **Always use WhatIf first** to verify you're deleting the correct relationship
-- **Check cascade delete settings** for 1:N relationships
-- **Export association data** for N:N relationships before deletion if you might need it
-- **Check dependencies** in solution explorer before deletion
-- **Test in dev environment** before deleting in production
-- **Use confirmation prompts** (don't use -Force) unless in automated scripts
-- **Document why the relationship is being deleted** for future reference
-
-### Dependencies to Check Before Deletion
-Check if the relationship is used in:
-- Forms (related entity grids, subgrids)
-- Views (columns from related entities)
-- Business rules
-- Workflows and Power Automate flows
-- Plugin code
-- Reports using JOINs
-- Charts using related entity data
-- Security role permissions
-
-### Alternatives to Deletion
-Consider these alternatives before deleting a relationship:
-- **Hide the lookup field** from forms if you want to keep data but remove from UI
-- **Make the lookup read-only** to prevent new associations
-- **Clear association data first** then delete if you want time to backup
-- **Document the relationship** if it might be needed in the future
-
-### Error Scenarios
-The cmdlet will fail if:
-- Relationship doesn't exist (throws error)
-- Relationship is part of a managed solution
-- Relationship is system-required
-- User lacks sufficient privileges
-- Relationship has dependencies that prevent deletion
-- Cascade delete is "Restrict" and child records exist
-
-### Related Cmdlets
-- `Get-DataverseRelationshipMetadata` - Retrieve relationship information before deletion
-- `Set-DataverseRelationshipMetadata` - Create or update relationships
-- `Remove-DataverseAttributeMetadata` - Delete lookup attributes (which also deletes the relationship)
-- `Remove-DataverseEntityMetadata` - Delete entire entities
+This cmdlet provides programmatic access to Dataverse metadata. For comprehensive documentation and examples, see the metadata concept guide at docs/core-concepts/metadata.md
 
 ## RELATED LINKS
 

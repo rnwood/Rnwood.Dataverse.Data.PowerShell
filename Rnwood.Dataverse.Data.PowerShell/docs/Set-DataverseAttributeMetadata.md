@@ -18,9 +18,8 @@ Set-DataverseAttributeMetadata [-EntityName] <String> [-AttributeName] <String> 
  [-IsSearchable] [-IsSecured] [-IsAuditEnabled] [-MaxLength <Int32>] [-StringFormat <String>]
  [-MinValue <Object>] [-MaxValue <Object>] [-Precision <Int32>] [-DateTimeFormat <String>]
  [-DateTimeBehavior <String>] [-TrueLabel <String>] [-FalseLabel <String>] [-DefaultValue <Boolean>]
- [-OptionSetName <String>] [-Options <Hashtable[]>] [-Targets <String[]>] [-MaxSizeInKB <Int32>] [-Force]
- [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+ [-OptionSetName <String>] [-Options <Hashtable[]>] [-Targets <String[]>] [-MaxSizeInKB <Int32>] [-PassThru]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -539,21 +538,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Force
-**This parameter is defined but not currently used by the cmdlet.**
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -IsAuditEnabled
 Whether audit is enabled for this attribute. When enabled, changes to this field are tracked in the audit history.
 
@@ -892,53 +876,12 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
-This cmdlet does not accept pipeline input.
-
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
-When `-PassThru` is specified, returns a PSObject with the following properties:
-- **LogicalName**: Internal name of the attribute
-- **SchemaName**: Full schema name with prefix
-- **DisplayName**: User-friendly display name
-- **AttributeType**: Type of the attribute
-- **MetadataId**: Unique identifier of the attribute metadata
-
 ## NOTES
 
-### Immutable Properties
-The following properties **cannot be changed** after an attribute is created:
-- `AttributeType` - The type of attribute
-- `SchemaName` - The schema name
-- `StringFormat` - Format for string attributes
-- `DateTimeFormat` - Format for datetime attributes  
-- `DateTimeBehavior` - Behavior for datetime attributes
-- `TrueLabel`/`FalseLabel` - Labels for boolean attributes
-- `OptionSetName` - Option set for choice attributes
-- `Options` - Options for choice attributes
-- `IsSecured` - Field-level security setting
-
-### Metadata Cache
-After creating or updating an attribute, the metadata cache for the entity is automatically invalidated to ensure subsequent operations see the latest schema.
-
-### Publishing
-After making metadata changes, you may need to publish customizations for them to be visible in the UI:
-```powershell
-Invoke-DataversePublishAllXml -Connection $connection
-```
-
-### Limitations
-- **Lookup attributes**: Creating relationships requires additional configuration. Use `Set-DataverseRelationshipMetadata` instead.
-- **Calculated/Rollup fields**: Not supported by this cmdlet. Use the Dataverse UI or SDK directly.
-- **Formula columns**: Not supported by this cmdlet. Use Power Apps maker portal.
-
-### Related Cmdlets
-- `Get-DataverseEntityMetadata` - Retrieve entity and attribute metadata
-- `Set-DataverseOptionSetMetadata` - Create or update option set values
-- `Set-DataverseRelationshipMetadata` - Create relationships
-- `Remove-DataverseAttributeMetadata` - Delete attributes
-- `Invoke-DataverseCreateAttribute` - Lower-level SDK cmdlet for advanced scenarios
-- `Invoke-DataverseUpdateAttribute` - Lower-level SDK cmdlet for advanced scenarios
+This cmdlet provides programmatic access to Dataverse metadata. For comprehensive documentation and examples, see the metadata concept guide at docs/core-concepts/metadata.md
 
 ## RELATED LINKS
 

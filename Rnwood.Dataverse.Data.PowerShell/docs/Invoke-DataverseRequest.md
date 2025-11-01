@@ -122,6 +122,21 @@ Invokes a WhoAmI request with automatic retry on transient failures. Failed requ
 
 ## PARAMETERS
 
+### -BatchSize
+Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable.
+
+```yaml
+Type: UInt32
+Parameter Sets: Request, NameAndInputs
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Body
 Body of the REST API request. Can be a string (JSON) or a PSObject which will be converted to JSON.
 
@@ -132,6 +147,37 @@ Aliases:
 
 Required: False
 Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -BypassBusinessLogicExecution
+Specifies the types of business logic (for example plugins) to bypass
+
+```yaml
+Type: BusinessLogicTypes[]
+Parameter Sets: Request, NameAndInputs
+Aliases:
+Accepted values: CustomSync, CustomAsync
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -BypassBusinessLogicExecutionStepIds
+Specifies the IDs of plugin steps to bypass
+
+```yaml
+Type: Guid[]
+Parameter Sets: Request, NameAndInputs
+Aliases:
+
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -275,51 +321,6 @@ Aliases:
 Required: False
 Position: Named
 Default value: 0
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -BatchSize
-Controls the maximum number of requests sent to Dataverse in one batch (where possible) to improve throughput. Specify 1 to disable.
-
-```yaml
-Type: UInt32
-Parameter Sets: Request, NameAndInputs
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -BypassBusinessLogicExecution
-Specifies the types of business logic (for example plugins) to bypass
-
-```yaml
-Type: BusinessLogicTypes[]
-Parameter Sets: Request, NameAndInputs
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -BypassBusinessLogicExecutionStepIds
-Specifies the IDs of plugin steps to bypass
-
-```yaml
-Type: Guid[]
-Parameter Sets: Request, NameAndInputs
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

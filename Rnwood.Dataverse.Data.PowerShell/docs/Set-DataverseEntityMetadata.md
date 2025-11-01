@@ -16,7 +16,7 @@ Creates or updates an entity (table) in Dataverse.
 Set-DataverseEntityMetadata [-EntityName] <String> [-SchemaName <String>] [-DisplayName <String>]
  [-DisplayCollectionName <String>] [-Description <String>] [-OwnershipType <String>] [-HasActivities]
  [-HasNotes] [-IsAuditEnabled] [-ChangeTrackingEnabled] [-PrimaryAttributeSchemaName <String>]
- [-PrimaryAttributeDisplayName <String>] [-PrimaryAttributeMaxLength <Int32>] [-Force] [-PassThru]
+ [-PrimaryAttributeDisplayName <String>] [-PrimaryAttributeMaxLength <Int32>] [-PassThru]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -368,21 +368,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Force
-Force update without confirmation prompt. By default, creating or updating entities prompts for confirmation.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -HasActivities
 Whether the entity supports activities (tasks, phone calls, appointments, emails, etc.).
 
@@ -592,65 +577,12 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
-This cmdlet does not accept pipeline input.
-
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
-When `-PassThru` is specified, returns a PSObject with the following properties:
-- **LogicalName**: Internal name of the entity
-- **SchemaName**: Full schema name with prefix
-- **DisplayName**: User-friendly display name
-- **DisplayCollectionName**: Plural display name
-- **EntitySetName**: Name used in Web API
-- **MetadataId**: Unique identifier of the entity metadata
-- **OwnershipType**: Entity ownership type
-- **IsCustomEntity**: Whether this is a custom entity
-- **IsAuditEnabled**: Whether audit is enabled
-- **ChangeTrackingEnabled**: Whether change tracking is enabled
-
 ## NOTES
 
-### Immutable Properties
-The following properties **cannot be changed** after an entity is created:
-- `SchemaName` - The schema name with prefix
-- `OwnershipType` - User/Team/Organization ownership
-- `PrimaryAttributeSchemaName` - Primary attribute name
-- `HasActivities` - Activities support
-- `HasNotes` - Notes support
-
-### Publishing Required
-After creating or updating entities, you must publish customizations:
-```powershell
-Invoke-DataversePublishAllXml -Connection $connection
-```
-
-### Security Requirements
-- **System Administrator** or **System Customizer** security role required
-- Managed properties may prevent modifications in managed solutions
-
-### Metadata Cache
-The metadata cache is automatically invalidated after changes to ensure subsequent operations see the latest schema.
-
-### Best Practices
-- Use meaningful, descriptive names for entities and attributes
-- Follow your organization's naming conventions
-- Enable auditing for entities containing sensitive or regulated data
-- Enable change tracking for entities that need to sync with external systems
-- Consider enabling activities for entities that need timeline functionality
-
-### Limitations
-- Cannot change ownership type after creation
-- Cannot remove activities or notes support after enabling
-- Some properties may be locked by managed solutions
-- Entity deletion requires use of `Remove-DataverseEntityMetadata`
-
-### Related Cmdlets
-- `Get-DataverseEntityMetadata` - Retrieve entity metadata
-- `Set-DataverseAttributeMetadata` - Create or update attributes
-- `Remove-DataverseEntityMetadata` - Delete entities
-- `Invoke-DataversePublishAllXml` - Publish customizations
-- `Invoke-DataverseCreateEntity` - Lower-level SDK cmdlet for advanced scenarios
+This cmdlet provides programmatic access to Dataverse metadata. For comprehensive documentation and examples, see the metadata concept guide at docs/core-concepts/metadata.md
 
 ## RELATED LINKS
 
