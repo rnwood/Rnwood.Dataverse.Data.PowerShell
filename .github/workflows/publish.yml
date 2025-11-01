@@ -173,7 +173,7 @@ jobs:
             
             # Get commit count since last tag as build number
             $commitsSinceTag = git rev-list --count "${latestTag}..HEAD" 2>$null
-            if (-not $commitsSinceTag -or $commitsSinceTag -eq "") {
+            if ($null -eq $commitsSinceTag -or $commitsSinceTag -eq "") {
               $commitsSinceTag = git rev-list --count HEAD
             }
             
@@ -383,7 +383,7 @@ jobs:
               repo: context.repo.repo,
               tag_name: `v${version}`,
               name: `CI Build ${version}`,
-              body: `Automated CI build from commit ${context.sha}\n\n**This is a prerelease version for testing purposes.**\n\nCommit: ${context.sha}\nBranch: main`,
+              body: `Automated CI build from commit ${shortSha}\n\n**This is a prerelease version for testing purposes.**\n\nCommit: ${context.sha}\nBranch: main`,
               draft: false,
               prerelease: true,
               target_commitish: context.sha
