@@ -64,7 +64,8 @@ Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVers
 
 # Create a modified test runner that runs tests in-place without copying
 # This is critical for coverlet to track coverage properly
-$testRunnerScript = Join-Path $OutputDir "run-tests-no-copy.ps1"
+$testRunnerScript = Join-Path (Resolve-Path $OutputDir).Path "run-tests-no-copy.ps1"
+$absoluteTestPath = (Resolve-Path $TestPath).Path
 @"
 `$ErrorActionPreference = 'Stop'
 
@@ -99,7 +100,7 @@ function global:getMockConnection([ScriptBlock]`$RequestInterceptor = `$null) {
         # Define the DataContractSerializer
         `$serializer = New-Object System.Runtime.Serialization.DataContractSerializer([Microsoft.Xrm.Sdk.Metadata.EntityMetadata])
     
-        Get-Item '$TestPath/*.xml' | ForEach-Object {
+        Get-Item '$absoluteTestPath/*.xml' | ForEach-Object {
             `$stream = [IO.File]::OpenRead(`$_.FullName)
             `$script:metadata += `$serializer.ReadObject(`$stream)
             `$stream.Close()
@@ -122,7 +123,7 @@ function global:newPwsh([scriptblock] `$scriptblock) {
 Write-Host "Helper functions loaded" -ForegroundColor Gray
 
 # Dynamically discover and dot-source all test files (same as All.Tests.ps1)
-`$testFiles = Get-ChildItem -Path '$TestPath' -Filter "*.ps1" | 
+`$testFiles = Get-ChildItem -Path '$absoluteTestPath' -Filter "*.ps1" | 
     Where-Object { 
         `$_.Name -ne "All.Tests.ps1" -and 
         `$_.Name -notlike "*.Tests.ps1" -and
@@ -136,21 +137,7 @@ foreach (`$testFile in `$testFiles) {
     . `$testFile.FullName
 }
 
-# Configure Pester to run all the loaded tests
-`$config = New-PesterConfiguration
-`$config.Run.PassThru = `$true
-`$config.Run.Exit = `$false
-`$config.Output.Verbosity = 'Normal'
-`$config.Should.ErrorAction = 'Continue'
-
-Write-Host "Running Pester tests..." -ForegroundColor Cyan
-`$result = Invoke-Pester -Configuration `$config
-
-Write-Host ""
-Write-Host "Test Results:" -ForegroundColor Cyan
-Write-Host "  Total:   `$(`$result.TotalCount)" -ForegroundColor White
-Write-Host "  Passed:  `$(`$result.PassedCount)" -ForegroundColor Green
-Write-Host "  Failed:  `$(`$result.FailedCount)" -ForegroundColor `$(if (`$result.FailedCount -gt 0) { "Red" } else { "Green" })
+Write-Host "Tests executed via dot-sourcing. Exit code: `$LASTEXITCODE" -ForegroundColor Cyan
 
 # Don't fail on test failures during coverage collection
 # We want the coverage data even if some tests fail
@@ -170,15 +157,27 @@ $coverletArgs = @(
     "--format", "cobertura",
     "--format", "json",
     "--output", $coverageOutput,
+    "--include", "[Rnwood.Dataverse.Data.PowerShell.Cmdlets]*",
     "--exclude", "[FakeXrmEasy*]*",
     "--exclude", "[*Tests*]*",
     "--exclude-by-attribute", "GeneratedCode",
-    "--exclude-by-attribute", "ExcludeFromCodeCoverage"
+    "--exclude-by-attribute", "ExcludeFromCodeCoverage",
+    "--verbosity", "detailed"
 )
 
-Write-Host "Running: coverlet ..." -ForegroundColor Gray
-& coverlet @coverletArgs
-$coverletExitCode = $LASTEXITCODE
+Write-Host "Running: coverlet $cmdletsAssembly ..." -ForegroundColor Gray
+Write-Host "Target: $pwshPath" -ForegroundColor Gray
+Write-Host "Test script: $testRunnerScript" -ForegroundColor Gray
+
+# Run from a temp directory to avoid auto-exclusions based on current directory structure
+$originalDir = Get-Location
+try {
+    Set-Location -Path ([IO.Path]::GetTempPath())
+    & coverlet @coverletArgs
+    $coverletExitCode = $LASTEXITCODE
+} finally {
+    Set-Location -Path $originalDir
+}
 
 Write-Host ""
 Write-Host "Coverlet exit code: $coverletExitCode" -ForegroundColor $(if ($coverletExitCode -eq 0) { "Green" } else { "Yellow" })
