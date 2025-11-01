@@ -412,7 +412,7 @@ jobs:
         shell: pwsh
         run: |
           # Publish prerelease to PowerShell Gallery
-          Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose -AllowPrerelease
+          Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
       
       # Upload test failure reports as artifacts
       - name: Upload test failure report
