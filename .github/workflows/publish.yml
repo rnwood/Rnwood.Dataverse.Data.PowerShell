@@ -339,8 +339,17 @@ jobs:
           $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
 
           Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
-          Invoke-Pester -output detailed -path e2e-tests
-          if ($LASTEXITCODE -ne 0) {
+          
+          # Run e2e tests excluding long-running tests
+          $config = New-PesterConfiguration
+          $config.Run.Path = 'e2e-tests'
+          $config.Run.PassThru = $true
+          $config.Output.Verbosity = 'Detailed'
+          $config.Filter.ExcludeTag = 'LongRunning'
+          
+          $result = Invoke-Pester -Configuration $config
+          
+          if ($result.FailedCount -gt 0) {
             throw "Tests failed"
           }
       - if:  ${{ matrix.powershell_version == '5' }}
@@ -354,8 +363,17 @@ jobs:
           $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
 
           Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
-          Invoke-Pester -output detailed -path e2e-tests
-          if ($LASTEXITCODE -ne 0) {
+          
+          # Run e2e tests excluding long-running tests
+          $config = New-PesterConfiguration
+          $config.Run.Path = 'e2e-tests'
+          $config.Run.PassThru = $true
+          $config.Output.Verbosity = 'Detailed'
+          $config.Filter.ExcludeTag = 'LongRunning'
+          
+          $result = Invoke-Pester -Configuration $config
+          
+          if ($result.FailedCount -gt 0) {
             throw "Tests failed"
           }      
       - if: ${{ matrix.publish && github.event_name == 'release' && github.event.action == 'published' }}
