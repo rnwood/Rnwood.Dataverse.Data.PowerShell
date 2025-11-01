@@ -73,6 +73,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
 
+                // If no explicit connection was provided, try to use the default connection
+                if (connectionObj == null)
+                {
+                    connectionObj = DefaultConnectionManager.DefaultConnection;
+                }
+
                 if (string.IsNullOrEmpty(tableName) || connectionObj == null)
                 {
                     // We can't fetch metadata without a connection and a table name; return no suggestions.
