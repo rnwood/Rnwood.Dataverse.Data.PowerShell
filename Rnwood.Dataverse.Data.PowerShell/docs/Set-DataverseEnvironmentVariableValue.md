@@ -178,7 +178,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### None
 ## OUTPUTS
 
-### None
+### System.Object
 ## NOTES
 - The environment variable definition must already exist before using this cmdlet
 - If the definition doesn't exist, the cmdlet will return an error

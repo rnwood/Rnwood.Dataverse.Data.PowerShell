@@ -76,6 +76,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -DefaultValue
+Default value for the environment variable definition.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
 ### -Description
 Description for the environment variable definition.
 
@@ -121,6 +136,22 @@ Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 
+### -Type
+Type of the environment variable definition. Valid values are: String, Number, Boolean, JSON, Data Source, Secret. Default is String.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: String, Number, Boolean, JSON, Data Source, Secret
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
 ### -WhatIf
 Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
@@ -151,42 +182,12 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Type
-Type of the environment variable definition. Valid values are: String, Number, Boolean, JSON, Data Source, Secret. Default is String.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -DefaultValue
-Default value for the environment variable definition.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
-### None
+### System.String
 ## OUTPUTS
 
 ### System.Object

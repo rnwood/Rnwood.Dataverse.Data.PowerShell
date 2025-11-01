@@ -15,7 +15,7 @@ Creates or updates connection reference values in Dataverse.
 ### Single (Default)
 ```
 Set-DataverseConnectionReference [-ConnectionReferenceLogicalName] <String> [-ConnectionId] <String>
- [-ConnectorId <String>] [-DisplayName <String>] [-Description <String>] [-Connection <ServiceClient>]
+ [[-ConnectorId] <String>] [-DisplayName <String>] [-Description <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -176,31 +176,16 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -ConnectorId
+Connector ID (GUID) that defines the type of connection (for single parameter set). This identifies the connector/API that the connection reference is for. Required when creating new connection references, cannot be changed for existing ones.
 
 ```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
+Type: String
+Parameter Sets: Single
+Aliases:
 
 Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
+Position: 2
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -236,13 +221,28 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ConnectorId
-Connector ID (GUID) that defines the type of connection (for single parameter set). This identifies the connector/API that the connection reference is for. Required when creating new connection references, cannot be changed for existing ones.
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
-Type: String
-Parameter Sets: Single
-Aliases:
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
 
 Required: False
 Position: Named
