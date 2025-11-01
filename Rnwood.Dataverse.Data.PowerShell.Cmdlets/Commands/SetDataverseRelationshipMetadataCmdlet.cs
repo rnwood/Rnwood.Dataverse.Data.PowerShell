@@ -295,7 +295,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Creating ManyToMany relationship '{SchemaName}' between {ReferencedEntity} and {ReferencingEntity}");
 
-            var response = (CreateManyToManyResponse)Connection.Execute(request);
+            Connection.Execute(request);
 
             WriteVerbose($"ManyToMany relationship created successfully");
 

@@ -74,13 +74,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var relationship = response.RelationshipMetadata;
 
             // Filter by relationship type if specified
-            if (!string.IsNullOrWhiteSpace(RelationshipType))
+            if (!string.IsNullOrWhiteSpace(RelationshipType) && !MatchesRelationshipType(relationship, RelationshipType))
             {
-                if (!MatchesRelationshipType(relationship, RelationshipType))
-                {
-                    WriteWarning($"Relationship '{RelationshipName}' is not a {RelationshipType} relationship");
-                    return;
-                }
+                WriteWarning($"Relationship '{RelationshipName}' is not a {RelationshipType} relationship");
+                return;
             }
 
             WriteObject(relationship);

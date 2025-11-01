@@ -13,8 +13,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	public class EntityMetadataFactory
 	{
 		private IOrganizationService Connection;
-		private string ConnectionKey;
-		private bool UseSharedCache;
+		private readonly string ConnectionKey;
+		private readonly bool UseSharedCache;
 
 		/// <summary>
 		/// Initializes a new instance of the EntityMetadataFactory class.

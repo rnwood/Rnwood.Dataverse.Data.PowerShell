@@ -256,7 +256,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 var value = option["Value"] != null ? Convert.ToInt32(option["Value"]) : (int?)null;
                 var label = option["Label"] as string;
-                var color = option["Color"] as string;
                 var description = option["Description"] as string;
 
                 if (string.IsNullOrWhiteSpace(label) || !value.HasValue)
@@ -265,7 +264,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 // Check if option exists
-                var existingOption = existingOptionSet.Options.FirstOrDefault(o => o.Value == value.Value);
+                var existingOption = existingOptionSet.Options?.FirstOrDefault(o => o.Value == value.Value);
 
                 if (existingOption != null)
                 {
