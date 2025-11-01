@@ -25,6 +25,7 @@ This section covers the core concepts and operations for working with Dataverse 
 - **[Querying Records](querying.md)** - Filtering, paging, sorting, linking tables, SQL queries, and specialized cmdlets
 - **[Creating and Updating Records](creating-updating.md)** - Create, update, upsert operations with type conversion and batching
 - **[Deleting Records](deleting.md)** - Delete operations with confirmation, batching, and SQL alternatives
+- **[Working with Metadata](metadata.md)** - Reading and managing schema (entities, attributes, relationships, option sets)
 - **[Error Handling and Batch Operations](error-handling.md)** - Error handling, batch processing, and retry logic
 - **[Environment Variables and Connection References](environment-variables-connection-references.md)** - Managing configuration values and connection references across environments
 
@@ -36,6 +37,7 @@ This section covers the core concepts and operations for working with Dataverse 
 - Creating, updating, and upserting records
 - Deleting records safely
 - Batch operations for efficiency
+- Working with metadata (schema management)
 
 ### Connection Features
 - Default connections for simplified scripting

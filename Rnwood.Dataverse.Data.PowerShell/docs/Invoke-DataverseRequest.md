@@ -325,7 +325,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
-See standard PS docs.
+{{ Fill ProgressAction Description }}
 
 ```yaml
 Type: ActionPreference

@@ -1,91 +1,109 @@
 ---
-external help file: Set-DataverseRecordsFolder.psm1-help.xml
+external help file: Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll-Help.xml
 Module Name: Rnwood.Dataverse.Data.PowerShell
 online version:
 schema: 2.0.0
 ---
 
-# Set-DataverseRecordsFolder
+# Remove-DataverseAttribute
 
 ## SYNOPSIS
-Writes a list of Dataverse records to a folder of JSON files.
+{{ Fill in the Synopsis }}
 
 ## SYNTAX
 
 ```
-Set-DataverseRecordsFolder [-OutputPath] <String> [[-InputObject] <PSObject>] [-withdeletions]
- [[-idproperties] <String[]>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Remove-DataverseAttribute [-EntityName] <String> [-AttributeName] <String> [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Writes a list of Dataverse records to a folder where each file represents a single record. The files are named using the `Id` property.
+{{ Fill in the Description }}
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> Get-DataverseRecord -connection $connection -tablename contact | Set-DataverseRecordsFolder data/contacts
+PS C:\> {{ Add example code here }}
 ```
 
-Writes all contacts to the folder `data/contacts`.
+{{ Add example description here }}
 
 ## PARAMETERS
 
-### -OutputPath
-Path to write output to
+### -AttributeName
+Logical name of the attribute (column) to delete
 
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases:
+Aliases: ColumnName
 
 Required: True
 Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -InputObject
-Dataverse record(s) to write. Generally should be piped in from the pipeline.
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
+http://server.com/MyOrg/).
+If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
-Type: PSObject
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 2
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
-```
-
-### -withdeletions
-Output a list of deletions (records that were there last time, but are no longer present in the inputs) to `deletions` subfolder of output
-
-```yaml
-Type: SwitchParameter
+Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -idproperties
-Specifies the list of properties that will be used to generate a unique name for each file. By default this is "Id".
+### -EntityName
+Logical name of the entity (table)
 
 ```yaml
-Type: String[]
+Type: String
 Parameter Sets: (All)
-Aliases:
+Aliases: TableName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
 
 Required: False
-Position: 3
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -111,7 +129,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.Management.Automation.PSObject
+### System.String
 ## OUTPUTS
 
 ### System.Object

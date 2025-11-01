@@ -16,6 +16,8 @@ This module works in PowerShell Desktop and PowerShell Core, supporting Windows,
 - Multiple query methods with full support for automatic paging
 - Concise hashtable-based filters with grouped logical expressions (and/or/not/xor) and arbitrary nesting
 - Batching support for efficient bulk operations
+- **Comprehensive metadata CRUD operations** — Create, read, update, and delete entities, attributes, option sets, and relationships with full coverage of all attribute types and relationship types (OneToMany, ManyToMany)
+- **Global metadata caching** — Optional shared cache for improved performance when working with metadata
 - Wide variety of auth options for interactive and unattended use
 - **XrmToolbox Plugin**: Embedded PowerShell console with automatic connection bridging. See [XrmToolbox Plugin README](Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/README.md)
 - Retry logic with configurable retry counts and exponential backoff
@@ -73,6 +75,7 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 - [Querying Records](docs/core-concepts/querying.md) - Filtering, paging, sorting, linking, SQL queries
 - [Creating and Updating Records](docs/core-concepts/creating-updating.md) - Create, update, upsert operations
 - [Deleting Records](docs/core-concepts/deleting.md) - Delete operations and SQL alternatives
+- [Working with Metadata](docs/core-concepts/metadata.md) - Reading and managing schema (entities, attributes, relationships, option sets)
 - [Error Handling and Batch Operations](docs/core-concepts/error-handling.md) - Error handling and retry logic
 - [Environment Variables and Connection References](docs/core-concepts/environment-variables-connection-references.md) - Managing configuration and connections
 
@@ -85,6 +88,7 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 
 ## Main Cmdlets
 
+### Data Operations
 - [`Get-DataverseConnection`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseConnection.md) — create or retrieve a connection
 - [`Get-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) — query and retrieve records
 - [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) — create, update or upsert records
@@ -104,6 +108,22 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 - [`Get-DataverseConnectionReference`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseConnectionReference.md) — query connection references
 - [`Set-DataverseConnectionReference`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseConnectionReference.md) — create or update connection reference values
 - [`Remove-DataverseConnectionReference`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseConnectionReference.md) — remove connection references
+
+### Metadata Operations
+- [`Get-DataverseEntityMetadata`](docs/core-concepts/metadata.md) — retrieve entity metadata
+- [`Get-DataverseAttributeMetadata`](docs/core-concepts/metadata.md) — retrieve attribute metadata
+- [`Get-DataverseOptionSetMetadata`](docs/core-concepts/metadata.md) — retrieve option set values
+- [`Get-DataverseRelationshipMetadata`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRelationshipMetadata.md) — retrieve relationship metadata
+- [`Set-DataverseEntityMetadata`](docs/core-concepts/metadata.md) — create or update entities
+- [`Set-DataverseAttributeMetadata`](docs/core-concepts/metadata.md) — create or update attributes (all types)
+- [`Set-DataverseOptionSetMetadata`](docs/core-concepts/metadata.md) — create or update global option sets
+- [`Set-DataverseRelationshipMetadata`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRelationshipMetadata.md) — create relationships (OneToMany, ManyToMany)
+- [`Remove-DataverseEntityMetadata`](docs/core-concepts/metadata.md) — delete entities
+- [`Remove-DataverseAttributeMetadata`](docs/core-concepts/metadata.md) — delete attributes
+- [`Remove-DataverseRelationshipMetadata`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRelationshipMetadata.md) — delete relationships
+
+### Metadata Cache Management
+- `Clear-DataverseMetadataCache` — clear the metadata cache
 
 The module also includes many specialized `Invoke-Dataverse*` cmdlets for specific platform operations. See the [cmdlet documentation](Rnwood.Dataverse.Data.PowerShell/docs/) for the full list.
 

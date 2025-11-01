@@ -8,9 +8,7 @@ schema: 2.0.0
 # Invoke-DataverseCloneContract
 
 ## SYNOPSIS
-Contains the data that is needed to copy an existing contract and its line items.
-
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.CloneContractRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.CloneContractRequest?view=dataverse-sdk-latest)
+{{ Fill in the Synopsis }}
 
 ## SYNTAX
 
@@ -20,14 +18,16 @@ Invoke-DataverseCloneContract [-ContractId <Guid>] [-IncludeCanceledLines <Boole
 ```
 
 ## DESCRIPTION
-Contains the data that is needed to copy an existing contract and its line items.
+{{ Fill in the Description }}
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> Invoke-DataverseCloneContract -Connection <ServiceClient> -ContractId <Guid> -IncludeCanceledLines <Boolean>
+PS C:\> {{ Add example code here }}
 ```
+
+{{ Add example description here }}
 
 ## PARAMETERS
 
@@ -47,7 +47,9 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
+http://server.com/MyOrg/).
+If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient
@@ -62,7 +64,8 @@ Accept wildcard characters: False
 ```
 
 ### -ContractId
-Gets or sets the ID of the contract to be copied. Required.
+Gets or sets the ID of the contract to be copied.
+Required.
 
 ```yaml
 Type: Guid
@@ -77,7 +80,8 @@ Accept wildcard characters: False
 ```
 
 ### -IncludeCanceledLines
-Gets or sets a value that indicates whether the canceled line items of the originating contract are to be included in the copy (clone). Required.
+Gets or sets a value that indicates whether the canceled line items of the originating contract are to be included in the copy (clone).
+Required.
 
 ```yaml
 Type: Boolean
@@ -92,7 +96,8 @@ Accept wildcard characters: False
 ```
 
 ### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
 
 ```yaml
 Type: SwitchParameter

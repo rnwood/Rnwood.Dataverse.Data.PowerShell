@@ -781,7 +781,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
-See standard PS documentation.
+{{ Fill ProgressAction Description }}
 
 ```yaml
 Type: ActionPreference

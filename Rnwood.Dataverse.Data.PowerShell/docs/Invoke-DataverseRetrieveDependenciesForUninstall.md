@@ -5,31 +5,46 @@ online version:
 schema: 2.0.0
 ---
 
-# Invoke-DataverseRetrieveDependenciesForUninstall
+# Invoke-DataverseRetrieveDependenciesForDelete
 
 ## SYNOPSIS
-Contains the data that is needed to retrieve a list of the solution component dependencies that can prevent you from uninstalling a managed solution.
+Contains the data that is needed to retrieve a collection of dependency records that describe any solution components that would prevent a solution component from being deleted.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveDependenciesForUninstallRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveDependenciesForUninstallRequest?view=dataverse-sdk-latest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveDependenciesForDeleteRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveDependenciesForDeleteRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveDependenciesForUninstall [-SolutionUniqueName <String>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveDependenciesForDelete [-ObjectId <Guid>] [-ComponentType <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Contains the data that is needed to retrieve a list of the solution component dependencies that can prevent you from uninstalling a managed solution.
+Contains the data that is needed to retrieve a collection of dependency records that describe any solution components that would prevent a solution component from being deleted.
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> Invoke-DataverseRetrieveDependenciesForUninstall -Connection <ServiceClient> -SolutionUniqueName <String>
+PS C:\> Invoke-DataverseRetrieveDependenciesForDelete -Connection <ServiceClient> -ObjectId <Guid> -ComponentType <Int32>
 ```
 
 ## PARAMETERS
+
+### -ComponentType
+Gets or sets the value that represents the solution component that you are adding. Required.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -Confirm
 Prompts you for confirmation before running the cmdlet.
@@ -61,11 +76,11 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SolutionUniqueName
-Gets or sets the name of the unmanaged solution to which you want to add this column. Optional.
+### -ObjectId
+Gets or sets the ID of the record that the email is regarding. Required.
 
 ```yaml
-Type: String
+Type: Guid
 Parameter Sets: (All)
 Aliases:
 
