@@ -50,7 +50,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Build query for environment variable definitions
             var defQuery = new QueryExpression("environmentvariabledefinition")
             {
-                ColumnSet = new ColumnSet("environmentvariabledefinitionid", "schemaname", "displayname", "description", "type", "defaultvalue")
+                ColumnSet = new ColumnSet("environmentvariabledefinitionid", "schemaname", "displayname", "description", "type", "defaultvalue"),
+                PageInfo = new PagingInfo { PageNumber = 1, Count = 5000 }
             };
 
             var filter = new FilterExpression();

@@ -16,6 +16,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     [Cmdlet(VerbsCommon.Set, "DataverseEnvironmentVariableDefinition", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium, DefaultParameterSetName = "Single")]
     public class SetDataverseEnvironmentVariableDefinitionCmdlet : OrganizationServiceCmdlet
     {
+        // Environment variable type constant for String type
+        private const int EnvironmentVariableTypeString = 100000000;
+        
         private EntityMetadataFactory entityMetadataFactory;
         private DataverseEntityConverter entityConverter;
         /// <summary>
@@ -97,7 +100,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var defEntity = new Entity("environmentvariabledefinition");
                 defEntity["schemaname"] = SchemaName;
                 defEntity["displayname"] = !string.IsNullOrEmpty(DisplayName) ? DisplayName : SchemaName;
-                defEntity["type"] = string.IsNullOrEmpty(Type) ? new OptionSetValue(100000000) : ConvertTypeStringToOptionSetValue(Type); // Text type by default
+                defEntity["type"] = string.IsNullOrEmpty(Type) ? new OptionSetValue(EnvironmentVariableTypeString) : ConvertTypeStringToOptionSetValue(Type); // Text type by default
                 
                 if (!string.IsNullOrEmpty(Description))
                 {

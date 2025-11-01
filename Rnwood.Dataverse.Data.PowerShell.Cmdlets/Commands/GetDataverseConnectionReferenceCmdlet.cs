@@ -43,7 +43,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Build query for connection references
             var query = new QueryExpression("connectionreference")
             {
-                ColumnSet = new ColumnSet("connectionreferenceid", "connectionreferencelogicalname", "connectionreferencedisplayname", "connectionid", "connectorid", "description")
+                ColumnSet = new ColumnSet("connectionreferenceid", "connectionreferencelogicalname", "connectionreferencedisplayname", "connectionid", "connectorid", "description"),
+                PageInfo = new PagingInfo { PageNumber = 1, Count = 5000 }
             };
 
             var filter = new FilterExpression();

@@ -31,7 +31,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Build query for environment variable values
             var query = new QueryExpression("environmentvariablevalue")
             {
-                ColumnSet = new ColumnSet("environmentvariablevalueid", "schemaname", "value", "environmentvariabledefinitionid")
+                ColumnSet = new ColumnSet("environmentvariablevalueid", "schemaname", "value", "environmentvariabledefinitionid"),
+                PageInfo = new PagingInfo { PageNumber = 1, Count = 5000 }
             };
 
             if (!string.IsNullOrEmpty(SchemaName))

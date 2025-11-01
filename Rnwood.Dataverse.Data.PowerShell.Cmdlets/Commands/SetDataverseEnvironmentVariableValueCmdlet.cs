@@ -167,7 +167,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         new ConditionExpression("schemaname", ConditionOperator.In, schemaNames.ToArray())
                     }
-                }
+                },
+                PageInfo = new PagingInfo { PageNumber = 1, Count = 5000 }
             };
 
             var allResults = new List<Entity>();

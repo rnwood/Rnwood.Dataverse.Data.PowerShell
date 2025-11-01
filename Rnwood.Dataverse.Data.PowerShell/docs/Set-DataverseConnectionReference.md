@@ -274,4 +274,5 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 [Import-DataverseSolution](Import-DataverseSolution.md)
 [Get-DataverseConnectionReference](Get-DataverseConnectionReference.md)
 [Remove-DataverseConnectionReference](Remove-DataverseConnectionReference.md)
-[Set-DataverseEnvironmentVariable](Set-DataverseEnvironmentVariable.md)
+[Set-DataverseEnvironmentVariableDefinition](Set-DataverseEnvironmentVariableDefinition.md)
+[Set-DataverseEnvironmentVariableValue](Set-DataverseEnvironmentVariableValue.md)
