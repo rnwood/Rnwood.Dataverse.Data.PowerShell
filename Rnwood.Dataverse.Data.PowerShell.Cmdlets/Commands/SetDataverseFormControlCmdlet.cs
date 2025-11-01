@@ -38,8 +38,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the data field name (attribute) for the control.
         /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "Data field name (attribute) for the control")]
+        [Parameter(ParameterSetName = "Create", Mandatory = true, HelpMessage = "Data field name (attribute) for the control")]
+        [Parameter(ParameterSetName = "Update", Mandatory = true, HelpMessage = "Data field name (attribute) for the control")]
         public string DataField { get; set; }
+
+        /// <summary>
+        /// Gets or sets the raw XML for the control element.
+        /// </summary>
+        [Parameter(ParameterSetName = "RawXml", Mandatory = true, HelpMessage = "Raw XML for the control element")]
+        public string ControlXml { get; set; }
 
         /// <summary>
         /// Gets or sets the control type.
@@ -112,18 +119,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the zero-based index position where the control should be inserted in the section.
         /// </summary>
         [Parameter(ParameterSetName = "Create", HelpMessage = "Zero-based index position to insert the control")]
+        [Parameter(ParameterSetName = "RawXml", HelpMessage = "Zero-based index position to insert the control")]
         public int? Index { get; set; }
 
         /// <summary>
         /// Gets or sets the ID or data field name of the control before which to insert this control.
         /// </summary>
         [Parameter(ParameterSetName = "Create", HelpMessage = "ID or data field name of the control before which to insert")]
+        [Parameter(ParameterSetName = "RawXml", HelpMessage = "ID or data field name of the control before which to insert")]
         public string InsertBefore { get; set; }
 
         /// <summary>
         /// Gets or sets the ID or data field name of the control after which to insert this control.
         /// </summary>
         [Parameter(ParameterSetName = "Create", HelpMessage = "ID or data field name of the control after which to insert")]
+        [Parameter(ParameterSetName = "RawXml", HelpMessage = "ID or data field name of the control after which to insert")]
         public string InsertAfter { get; set; }
 
         /// <summary>
@@ -190,8 +200,128 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             XElement cell = null;
             string controlId = null;
             bool isUpdate = ParameterSetName == "Update";
+            bool isRawXml = ParameterSetName == "RawXml";
 
-            if (isUpdate)
+            if (isRawXml)
+            {
+                // Parse the raw XML
+                try
+                {
+                    control = XElement.Parse(ControlXml);
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Failed to parse ControlXml: {ex.Message}", ex);
+                }
+
+                // Extract control ID from the XML
+                controlId = control.Attribute("id")?.Value;
+                if (string.IsNullOrEmpty(controlId))
+                {
+                    throw new InvalidOperationException("ControlXml must have an 'id' attribute");
+                }
+
+                // Check if control with same ID already exists (for update)
+                foreach (var row in rowsElement.Elements("row"))
+                {
+                    foreach (var c in row.Elements("cell"))
+                    {
+                        var ctrl = c.Elements("control").FirstOrDefault(ct => ct.Attribute("id")?.Value == controlId);
+                        if (ctrl != null)
+                        {
+                            // Update existing control by replacing it
+                            ctrl.ReplaceWith(control);
+                            cell = c;
+                            isUpdate = true;
+                            break;
+                        }
+                    }
+                    if (cell != null) break;
+                }
+
+                if (!isUpdate)
+                {
+                    // Create new control with positioning
+                    cell = new XElement("cell", control);
+                    XElement row = new XElement("row", cell);
+                    
+                    // Handle positioning (same logic as before)
+                    if (Index.HasValue)
+                    {
+                        var rows = rowsElement.Elements("row").ToList();
+                        if (Index.Value >= 0 && Index.Value <= rows.Count)
+                        {
+                            if (Index.Value == rows.Count)
+                            {
+                                rowsElement.Add(row);
+                            }
+                            else
+                            {
+                                rows[Index.Value].AddBeforeSelf(row);
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Index {Index.Value} is out of range. Valid range is 0-{rows.Count}");
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(InsertBefore))
+                    {
+                        XElement referenceRow = null;
+                        foreach (var r in rowsElement.Elements("row"))
+                        {
+                            foreach (var c in r.Elements("cell"))
+                            {
+                                var ctrl = c.Elements("control").FirstOrDefault(ct => 
+                                    ct.Attribute("id")?.Value == InsertBefore || 
+                                    ct.Attribute("datafieldname")?.Value == InsertBefore);
+                                if (ctrl != null)
+                                {
+                                    referenceRow = r;
+                                    break;
+                                }
+                            }
+                            if (referenceRow != null) break;
+                        }
+                        
+                        if (referenceRow == null)
+                        {
+                            throw new InvalidOperationException($"Reference control '{InsertBefore}' not found");
+                        }
+                        referenceRow.AddBeforeSelf(row);
+                    }
+                    else if (!string.IsNullOrEmpty(InsertAfter))
+                    {
+                        XElement referenceRow = null;
+                        foreach (var r in rowsElement.Elements("row"))
+                        {
+                            foreach (var c in r.Elements("cell"))
+                            {
+                                var ctrl = c.Elements("control").FirstOrDefault(ct => 
+                                    ct.Attribute("id")?.Value == InsertAfter || 
+                                    ct.Attribute("datafieldname")?.Value == InsertAfter);
+                                if (ctrl != null)
+                                {
+                                    referenceRow = r;
+                                    break;
+                                }
+                            }
+                            if (referenceRow != null) break;
+                        }
+                        
+                        if (referenceRow == null)
+                        {
+                            throw new InvalidOperationException($"Reference control '{InsertAfter}' not found");
+                        }
+                        referenceRow.AddAfterSelf(row);
+                    }
+                    else
+                    {
+                        rowsElement.Add(row);
+                    }
+                }
+            }
+            else if (isUpdate)
             {
                 // Find existing control
                 foreach (var row in rowsElement.Elements("row"))
@@ -324,117 +454,121 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            // Update control attributes
-            control.SetAttributeValue("id", controlId);
-            control.SetAttributeValue("datafieldname", DataField);
-            
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(ControlType)))
+            // Update control attributes (only for non-RawXml parameter sets)
+            if (!isRawXml)
             {
-                control.SetAttributeValue("classid", GetClassId(ControlType));
-            }
-
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(Disabled)))
-            {
-                if (Disabled.IsPresent)
-                {
-                    control.SetAttributeValue("disabled", "true");
-                }
-                else
-                {
-                    control.SetAttributeValue("disabled", null);
-                }
-            }
-
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
-            {
-                if (!Visible.IsPresent)
-                {
-                    control.SetAttributeValue("visible", "false");
-                }
-                else
-                {
-                    control.SetAttributeValue("visible", null);
-                }
-            }
-
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(ShowLabel)))
-            {
-                if (!ShowLabel.IsPresent)
-                {
-                    control.SetAttributeValue("showlabel", "false");
-                }
-                else
-                {
-                    control.SetAttributeValue("showlabel", null);
-                }
-            }
-
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(IsRequired)))
-            {
-                if (IsRequired.IsPresent)
-                {
-                    control.SetAttributeValue("isrequired", "true");
-                }
-                else
-                {
-                    control.SetAttributeValue("isrequired", null);
-                }
-            }
-
-            // Update cell attributes
-            if (ColSpan.HasValue)
-            {
-                cell.SetAttributeValue("colspan", ColSpan.Value);
-            }
-
-            if (RowSpan.HasValue)
-            {
-                cell.SetAttributeValue("rowspan", RowSpan.Value);
-            }
-
-            // Update or add labels
-            if (!string.IsNullOrEmpty(Label))
-            {
-                XElement labelsElement = control.Element("labels");
-                if (labelsElement == null)
-                {
-                    labelsElement = new XElement("labels");
-                    control.Add(labelsElement);
-                }
-                else
-                {
-                    labelsElement.RemoveAll();
-                }
+                control.SetAttributeValue("id", controlId);
+                control.SetAttributeValue("datafieldname", DataField);
                 
-                labelsElement.Add(new XElement("label",
-                    new XAttribute("description", Label),
-                    new XAttribute("languagecode", LanguageCode)
-                ));
-            }
-
-            // Add parameters for special controls
-            if (Parameters != null && Parameters.Count > 0)
-            {
-                XElement paramsElement = control.Element("parameters");
-                if (paramsElement == null)
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(ControlType)))
                 {
-                    paramsElement = new XElement("parameters");
-                    control.Add(paramsElement);
-                }
-                else
-                {
-                    paramsElement.RemoveAll();
+                    control.SetAttributeValue("classid", GetClassId(ControlType));
                 }
 
-                foreach (System.Collections.DictionaryEntry param in Parameters)
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(Disabled)))
                 {
-                    paramsElement.Add(new XElement(param.Key.ToString(), param.Value?.ToString()));
+                    if (Disabled.IsPresent)
+                    {
+                        control.SetAttributeValue("disabled", "true");
+                    }
+                    else
+                    {
+                        control.SetAttributeValue("disabled", null);
+                    }
+                }
+
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
+                {
+                    if (!Visible.IsPresent)
+                    {
+                        control.SetAttributeValue("visible", "false");
+                    }
+                    else
+                    {
+                        control.SetAttributeValue("visible", null);
+                    }
+                }
+
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(ShowLabel)))
+                {
+                    if (!ShowLabel.IsPresent)
+                    {
+                        control.SetAttributeValue("showlabel", "false");
+                    }
+                    else
+                    {
+                        control.SetAttributeValue("showlabel", null);
+                    }
+                }
+
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(IsRequired)))
+                {
+                    if (IsRequired.IsPresent)
+                    {
+                        control.SetAttributeValue("isrequired", "true");
+                    }
+                    else
+                    {
+                        control.SetAttributeValue("isrequired", null);
+                    }
+                }
+
+                // Update cell attributes
+                if (ColSpan.HasValue)
+                {
+                    cell.SetAttributeValue("colspan", ColSpan.Value);
+                }
+
+                if (RowSpan.HasValue)
+                {
+                    cell.SetAttributeValue("rowspan", RowSpan.Value);
+                }
+
+                // Update or add labels
+                if (!string.IsNullOrEmpty(Label))
+                {
+                    XElement labelsElement = control.Element("labels");
+                    if (labelsElement == null)
+                    {
+                        labelsElement = new XElement("labels");
+                        control.Add(labelsElement);
+                    }
+                    else
+                    {
+                        labelsElement.RemoveAll();
+                    }
+                    
+                    labelsElement.Add(new XElement("label",
+                        new XAttribute("description", Label),
+                        new XAttribute("languagecode", LanguageCode)
+                    ));
+                }
+
+                // Add parameters for special controls
+                if (Parameters != null && Parameters.Count > 0)
+                {
+                    XElement paramsElement = control.Element("parameters");
+                    if (paramsElement == null)
+                    {
+                        paramsElement = new XElement("parameters");
+                        control.Add(paramsElement);
+                    }
+                    else
+                    {
+                        paramsElement.RemoveAll();
+                    }
+
+                    foreach (System.Collections.DictionaryEntry param in Parameters)
+                    {
+                        paramsElement.Add(new XElement(param.Key.ToString(), param.Value?.ToString()));
+                    }
                 }
             }
 
             // Confirm action
             string action = isUpdate ? "Update" : "Create";
-            if (!ShouldProcess($"form '{FormId}', section '{SectionName}'", $"{action} control '{DataField}'"))
+            string controlDescriptor = isRawXml ? $"control (from XML)" : $"control '{DataField}'";
+            if (!ShouldProcess($"form '{FormId}', section '{SectionName}'", $"{action} {controlDescriptor}"))
             {
                 return;
             }
@@ -444,7 +578,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             updateForm["formxml"] = doc.ToString();
             Connection.Update(updateForm);
 
-            WriteVerbose($"{action}d control '{DataField}' in section '{SectionName}' on form '{FormId}'");
+            WriteVerbose($"{action}d {controlDescriptor} in section '{SectionName}' on form '{FormId}'");
 
             // Publish if requested
             if (Publish.IsPresent)
