@@ -26,7 +26,11 @@ $entities = @(
     "userquery",
     "annotation",
     "incident",
-    "systemuserroles"
+    "systemuserroles",
+    "connection",
+    "connectionreference",
+    "environmentvariabledefinition",
+    "environmentvariablevalue"
 )
 
 Write-Host "Will generate metadata for $($entities.Count) entities:" -ForegroundColor Yellow
