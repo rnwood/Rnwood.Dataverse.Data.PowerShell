@@ -10,6 +10,8 @@
     - [Cmdlet Reference](#cmdlet-reference)
   - [Quick Reference](#quick-reference)
     - [Main Cmdlets](#main-cmdlets)
+    - [Environment Variables](#environment-variables)
+    - [Connection References](#connection-references)
     - [Common Tasks](#common-tasks)
   - [Additional Resources](#additional-resources)
 
