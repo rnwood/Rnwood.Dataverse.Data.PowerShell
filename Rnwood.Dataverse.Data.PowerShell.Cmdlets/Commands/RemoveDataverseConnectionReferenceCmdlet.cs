@@ -9,7 +9,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Removes connection references from Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "DataverseConnectionReference", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
+    [Cmdlet(VerbsCommon.Remove, "DataverseConnectionReference", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     public class RemoveDataverseConnectionReferenceCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>

@@ -7,23 +7,17 @@ using Microsoft.Xrm.Sdk.Query;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Removes environment variable definitions and values from Dataverse.
+    /// Removes environment variable definitions from Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "DataverseEnvironmentVariableDefinition", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
+    [Cmdlet(VerbsCommon.Remove, "DataverseEnvironmentVariableDefinition", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     public class RemoveDataverseEnvironmentVariableDefinitionCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
-        /// Gets or sets the schema name of the environment variable to remove.
+        /// Gets or sets the schema name of the environment variable definition to remove.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Schema name of the environment variable to remove.")]
+        [Parameter(Mandatory = true, Position = 0, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Schema name of the environment variable definition to remove.")]
         [ValidateNotNullOrEmpty]
         public string SchemaName { get; set; }
-
-        /// <summary>
-        /// Gets or sets whether to remove only the value (not the definition).
-        /// </summary>
-        [Parameter(HelpMessage = "If specified, removes only the environment variable value, not the definition.")]
-        public SwitchParameter ValueOnly { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -32,7 +26,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            WriteVerbose($"Looking for environment variable '{SchemaName}'");
+            WriteVerbose($"Looking for environment variable definition '{SchemaName}'");
 
             // Query for the environment variable definition
             var defQuery = new QueryExpression("environmentvariabledefinition")
@@ -66,6 +60,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Found environment variable definition: '{displayName}' (ID: {envVarDefId})");
 
+            if (!ShouldProcess($"Environment variable definition '{SchemaName}'", "Remove"))
+            {
+                return;
+            }
+
             // Query for existing value
             var valueQuery = new QueryExpression("environmentvariablevalue")
             {
@@ -82,48 +81,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             var valueResults = Connection.RetrieveMultiple(valueQuery);
 
-            if (ValueOnly.IsPresent)
+            // Remove value first if it exists
+            if (valueResults.Entities.Count > 0)
             {
-                // Remove only the value
-                if (valueResults.Entities.Count > 0)
-                {
-                    var valueId = valueResults.Entities[0].Id;
-                    
-                    if (!ShouldProcess($"Environment variable value for '{SchemaName}'", "Remove"))
-                    {
-                        return;
-                    }
-
-                    WriteVerbose($"Removing environment variable value (ID: {valueId})");
-                    Connection.Delete("environmentvariablevalue", valueId);
-                    WriteVerbose($"Successfully removed environment variable value for '{SchemaName}'");
-                }
-                else
-                {
-                    WriteWarning($"No value found for environment variable '{SchemaName}'");
-                }
+                var valueId = valueResults.Entities[0].Id;
+                WriteVerbose($"Removing environment variable value (ID: {valueId})");
+                Connection.Delete("environmentvariablevalue", valueId);
             }
-            else
-            {
-                // Remove both value and definition
-                if (!ShouldProcess($"Environment variable '{SchemaName}' (definition and value)", "Remove"))
-                {
-                    return;
-                }
 
-                // Remove value first if it exists
-                if (valueResults.Entities.Count > 0)
-                {
-                    var valueId = valueResults.Entities[0].Id;
-                    WriteVerbose($"Removing environment variable value (ID: {valueId})");
-                    Connection.Delete("environmentvariablevalue", valueId);
-                }
-
-                // Remove definition
-                WriteVerbose($"Removing environment variable definition (ID: {envVarDefId})");
-                Connection.Delete("environmentvariabledefinition", envVarDefId);
-                WriteVerbose($"Successfully removed environment variable '{SchemaName}'");
-            }
+            // Remove definition
+            WriteVerbose($"Removing environment variable definition (ID: {envVarDefId})");
+            Connection.Delete("environmentvariabledefinition", envVarDefId);
+            WriteVerbose($"Successfully removed environment variable definition '{SchemaName}'");
         }
     }
 }

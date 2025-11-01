@@ -93,8 +93,8 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 - [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) — run SQL queries against Dataverse
 
 ### Environment Variables
-- [`Get-DataverseEnvironmentVariableDefinition`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseEnvironmentVariableDefinition.md) — query environment variable definitions with values
-- [`Set-DataverseEnvironmentVariableDefinition`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseEnvironmentVariableDefinition.md) — create or update environment variable definitions and values
+- [`Get-DataverseEnvironmentVariableDefinition`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseEnvironmentVariableDefinition.md) — query environment variable definitions
+- [`Set-DataverseEnvironmentVariableDefinition`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseEnvironmentVariableDefinition.md) — create or update environment variable definitions
 - [`Remove-DataverseEnvironmentVariableDefinition`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseEnvironmentVariableDefinition.md) — remove environment variable definitions
 - [`Get-DataverseEnvironmentVariableValue`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseEnvironmentVariableValue.md) — query environment variable values
 - [`Set-DataverseEnvironmentVariableValue`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseEnvironmentVariableValue.md) — set environment variable values

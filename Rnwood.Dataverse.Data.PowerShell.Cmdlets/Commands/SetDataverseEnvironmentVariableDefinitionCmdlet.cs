@@ -6,48 +6,60 @@ using System.Management.Automation;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Sdk.Metadata;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Sets environment variable values in Dataverse. Can set a single environment variable or multiple environment variables at once.
-    /// Creates the environment variable definition if it doesn't exist.
+    /// Creates or updates environment variable definitions in Dataverse. The Type parameter accepts human-readable labels (String, Number, Boolean, JSON, Data Source, Secret).
     /// </summary>
     [Cmdlet(VerbsCommon.Set, "DataverseEnvironmentVariableDefinition", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium, DefaultParameterSetName = "Single")]
     public class SetDataverseEnvironmentVariableDefinitionCmdlet : OrganizationServiceCmdlet
     {
+        private EntityMetadataFactory entityMetadataFactory;
+        private DataverseEntityConverter entityConverter;
         /// <summary>
-        /// Gets or sets the schema name of the environment variable to set (for single parameter set).
+        /// Gets or sets the schema name of the environment variable definition to create or update.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "Single", HelpMessage = "Schema name of the environment variable to set.")]
+        [Parameter(Mandatory = true, Position = 0, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Schema name of the environment variable definition to create or update.")]
         [ValidateNotNullOrEmpty]
         public string SchemaName { get; set; }
 
         /// <summary>
-        /// Gets or sets the value to set for the environment variable (for single parameter set).
+        /// Gets or sets the display name for the environment variable definition.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 1, ParameterSetName = "Single", HelpMessage = "Value to set for the environment variable.")]
-        [AllowEmptyString]
-        public string Value { get; set; }
-
-        /// <summary>
-        /// Gets or sets the display name for the environment variable definition (for single parameter set, used when creating).
-        /// </summary>
-        [Parameter(ParameterSetName = "Single", HelpMessage = "Display name for the environment variable definition (used when creating).")]
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Display name for the environment variable definition.")]
         public string DisplayName { get; set; }
 
         /// <summary>
-        /// Gets or sets the description for the environment variable definition (for single parameter set, used when creating).
+        /// Gets or sets the description for the environment variable definition.
         /// </summary>
-        [Parameter(ParameterSetName = "Single", HelpMessage = "Description for the environment variable definition (used when creating).")]
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Description for the environment variable definition.")]
         public string Description { get; set; }
 
         /// <summary>
-        /// Gets or sets environment variable values as a hashtable (for multiple parameter set).
+        /// Gets or sets the type of the environment variable definition.
         /// </summary>
-        [Parameter(Mandatory = true, ParameterSetName = "Multiple", HelpMessage = "Hashtable of environment variable schema names to values (e.g., @{'new_apiurl' = 'https://api.example.com'}).")]
-        [ValidateNotNullOrEmpty]
-        public Hashtable EnvironmentVariables { get; set; }
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Type of the environment variable definition. Valid values are: String, Number, Boolean, JSON, Data Source, Secret. Default is String.")]
+        [ValidateSet("String", "Number", "Boolean", "JSON", "Data Source", "Secret")]
+        public string Type { get; set; }
+
+        /// <summary>
+        /// Gets or sets the default value for the environment variable definition.
+        /// </summary>
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Default value for the environment variable definition.")]
+        [AllowEmptyString]
+        public string DefaultValue { get; set; }
+
+        /// <summary>
+        /// Initializes the cmdlet and sets up required helpers.
+        /// </summary>
+        protected override void BeginProcessing()
+        {
+            base.BeginProcessing();
+            entityMetadataFactory = new EntityMetadataFactory(Connection);
+            entityConverter = new DataverseEntityConverter(Connection, entityMetadataFactory);
+        }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -56,190 +68,120 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            Dictionary<string, string> variablesToSet = new Dictionary<string, string>();
-
-            // Build the list of variables to set based on parameter set
-            if (ParameterSetName == "Single")
+            if (!ShouldProcess($"Environment variable definition '{SchemaName}'", "Set"))
             {
-                if (!ShouldProcess($"Environment variable '{SchemaName}'", "Set"))
-                {
-                    return;
-                }
-
-                variablesToSet[SchemaName] = Value;
-            }
-            else // Multiple
-            {
-                if (!ShouldProcess($"{EnvironmentVariables.Count} environment variable(s)", "Set"))
-                {
-                    return;
-                }
-
-                foreach (DictionaryEntry entry in EnvironmentVariables)
-                {
-                    var schemaName = entry.Key.ToString();
-                    var value = entry.Value?.ToString() ?? string.Empty;
-                    variablesToSet[schemaName] = value;
-                }
+                return;
             }
 
-            WriteVerbose($"Setting {variablesToSet.Count} environment variable(s)...");
-
-            // Query for existing environment variable values by schema name
-            var existingEnvVarValuesBySchemaName = GetExistingEnvironmentVariableValueIds(variablesToSet.Keys.ToList());
-
-            // Process each environment variable
-            foreach (var kvp in variablesToSet)
+            // Query for the environment variable definition by schema name
+            var defQuery = new QueryExpression("environmentvariabledefinition")
             {
-                var schemaName = kvp.Key;
-                var value = kvp.Value;
-
-                WriteVerbose($"Setting environment variable '{schemaName}' to value '{value}'");
-
-                // Query for the environment variable definition by schema name
-                var defQuery = new QueryExpression("environmentvariabledefinition")
+                ColumnSet = new ColumnSet("environmentvariabledefinitionid", "schemaname", "displayname", "description", "type", "defaultvalue"),
+                Criteria = new FilterExpression
                 {
-                    ColumnSet = new ColumnSet("environmentvariabledefinitionid", "schemaname", "displayname"),
-                    Criteria = new FilterExpression
+                    Conditions =
                     {
-                        Conditions =
-                        {
-                            new ConditionExpression("schemaname", ConditionOperator.Equal, schemaName)
-                        }
-                    },
-                    TopCount = 1
-                };
-
-                var defResults = Connection.RetrieveMultiple(defQuery);
-
-                Guid envVarDefId;
-                string displayNameValue;
-
-                if (defResults.Entities.Count == 0)
-                {
-                    WriteVerbose($"  Environment variable definition not found. Creating new definition for '{schemaName}'");
-
-                    // Create the environment variable definition
-                    var defEntity = new Entity("environmentvariabledefinition");
-                    defEntity["schemaname"] = schemaName;
-                    defEntity["displayname"] = !string.IsNullOrEmpty(DisplayName) ? DisplayName : schemaName;
-                    defEntity["type"] = new OptionSetValue(100000000); // String type
-                    
-                    if (!string.IsNullOrEmpty(Description))
-                    {
-                        defEntity["description"] = Description;
+                        new ConditionExpression("schemaname", ConditionOperator.Equal, SchemaName)
                     }
+                },
+                TopCount = 1
+            };
 
-                    envVarDefId = Connection.Create(defEntity);
-                    displayNameValue = defEntity.GetAttributeValue<string>("displayname");
-                    WriteVerbose($"  Created environment variable definition with ID: {envVarDefId}");
-                }
-                else
+            var defResults = Connection.RetrieveMultiple(defQuery);
+
+            if (defResults.Entities.Count == 0)
+            {
+                WriteVerbose($"  Environment variable definition not found. Creating new definition for '{SchemaName}'");
+
+                // Create the environment variable definition
+                var defEntity = new Entity("environmentvariabledefinition");
+                defEntity["schemaname"] = SchemaName;
+                defEntity["displayname"] = !string.IsNullOrEmpty(DisplayName) ? DisplayName : SchemaName;
+                defEntity["type"] = string.IsNullOrEmpty(Type) ? new OptionSetValue(100000000) : ConvertTypeStringToOptionSetValue(Type); // Text type by default
+                
+                if (!string.IsNullOrEmpty(Description))
                 {
-                    var envVarDef = defResults.Entities[0];
-                    envVarDefId = envVarDef.Id;
-                    displayNameValue = envVarDef.GetAttributeValue<string>("displayname");
-                    WriteVerbose($"  Found environment variable definition: '{displayNameValue}' (ID: {envVarDefId})");
+                    defEntity["description"] = Description;
                 }
 
-                var displayName = displayNameValue;
-
-                // Check if there's an existing value record
-                if (existingEnvVarValuesBySchemaName.TryGetValue(schemaName, out var existingValueId))
+                if (DefaultValue != null)
                 {
-                    WriteVerbose($"  Updating existing value record (ID: {existingValueId})");
+                    defEntity["defaultvalue"] = DefaultValue;
+                }
 
-                    // Update existing value record
-                    var updateEntity = new Entity("environmentvariablevalue", existingValueId);
-                    updateEntity["value"] = value;
+                var newDefId = Connection.Create(defEntity);
+                WriteVerbose($"  Created environment variable definition with ID: {newDefId}");
+            }
+            else
+            {
+                var envVarDef = defResults.Entities[0];
+                var envVarDefId = envVarDef.Id;
+                WriteVerbose($"  Found environment variable definition: '{envVarDef.GetAttributeValue<string>("displayname")}' (ID: {envVarDefId})");
 
+                // Update the definition if any properties have changed
+                var updateEntity = new Entity("environmentvariabledefinition", envVarDefId);
+                bool hasChanges = false;
+
+                if (!string.IsNullOrEmpty(DisplayName) && DisplayName != envVarDef.GetAttributeValue<string>("displayname"))
+                {
+                    updateEntity["displayname"] = DisplayName;
+                    hasChanges = true;
+                }
+
+                if (!string.IsNullOrEmpty(Description) && Description != envVarDef.GetAttributeValue<string>("description"))
+                {
+                    updateEntity["description"] = Description;
+                    hasChanges = true;
+                }
+
+                if (!string.IsNullOrEmpty(Type) && Type != GetTypeLabel(envVarDef.GetAttributeValue<OptionSetValue>("type")))
+                {
+                    updateEntity["type"] = ConvertTypeStringToOptionSetValue(Type);
+                    hasChanges = true;
+                }
+
+                if (DefaultValue != null && DefaultValue != envVarDef.GetAttributeValue<string>("defaultvalue"))
+                {
+                    updateEntity["defaultvalue"] = DefaultValue;
+                    hasChanges = true;
+                }
+
+                if (hasChanges)
+                {
                     Connection.Update(updateEntity);
-                    WriteVerbose($"  Successfully updated environment variable '{schemaName}'");
-
-                    // Output the result
-                    var result = new PSObject();
-                    result.Properties.Add(new PSNoteProperty("SchemaName", schemaName));
-                    result.Properties.Add(new PSNoteProperty("Value", value));
-                    result.Properties.Add(new PSNoteProperty("EnvironmentVariableValueId", existingValueId));
-                    result.Properties.Add(new PSNoteProperty("Action", "Updated"));
-                    WriteObject(result);
+                    WriteVerbose($"  Successfully updated environment variable definition '{SchemaName}'");
                 }
                 else
                 {
-                    WriteVerbose($"  Creating new value record");
-
-                    // Create new value record
-                    var createEntity = new Entity("environmentvariablevalue");
-                    createEntity["schemaname"] = schemaName;
-                    createEntity["value"] = value;
-                    createEntity["environmentvariabledefinitionid"] = new EntityReference("environmentvariabledefinition", envVarDefId);
-
-                    var newValueId = Connection.Create(createEntity);
-                    WriteVerbose($"  Successfully created environment variable value for '{schemaName}' (ID: {newValueId})");
-
-                    // Output the result
-                    var result = new PSObject();
-                    result.Properties.Add(new PSNoteProperty("SchemaName", schemaName));
-                    result.Properties.Add(new PSNoteProperty("Value", value));
-                    result.Properties.Add(new PSNoteProperty("EnvironmentVariableValueId", newValueId));
-                    result.Properties.Add(new PSNoteProperty("Action", "Created"));
-                    WriteObject(result);
+                    WriteVerbose($"  No changes needed for environment variable definition '{SchemaName}'");
                 }
             }
         }
 
         /// <summary>
-        /// Gets existing environment variable value IDs by schema name.
+        /// Gets the type label from an OptionSetValue.
         /// </summary>
-        private Dictionary<string, Guid> GetExistingEnvironmentVariableValueIds(List<string> schemaNames)
+        private string GetTypeLabel(OptionSetValue optionSetValue)
         {
-            var result = new Dictionary<string, Guid>();
-
-            if (schemaNames == null || schemaNames.Count == 0)
+            if (optionSetValue == null) return null;
+            var entityMetadata = entityMetadataFactory.GetMetadata("environmentvariabledefinition");
+            var typeAttribute = (EnumAttributeMetadata)entityMetadata.Attributes.FirstOrDefault(a => a.LogicalName == "type");
+            if (typeAttribute != null)
             {
-                return result;
+                var option = typeAttribute.OptionSet.Options.FirstOrDefault(o => o.Value == optionSetValue.Value);
+                return option?.Label.UserLocalizedLabel.Label;
             }
+            return optionSetValue.Value.ToString();
+        }
 
-            WriteVerbose($"Querying for existing environment variable values for {schemaNames.Count} schema name(s)...");
-
-            // Query for environment variable values by schema name
-            var query = new QueryExpression("environmentvariablevalue")
-            {
-                ColumnSet = new ColumnSet("environmentvariablevalueid", "schemaname"),
-                Criteria = new FilterExpression
-                {
-                    Conditions =
-                    {
-                        new ConditionExpression("schemaname", ConditionOperator.In, schemaNames.ToArray())
-                    }
-                }
-            };
-
-            var allResults = new List<Entity>();
-            EntityCollection ec;
-            do
-            {
-                ec = Connection.RetrieveMultiple(query);
-                allResults.AddRange(ec.Entities);
-                if (ec.MoreRecords)
-                {
-                    query.PageInfo.PageNumber++;
-                    query.PageInfo.PagingCookie = ec.PagingCookie;
-                }
-            } while (ec.MoreRecords);
-
-            foreach (var entity in allResults)
-            {
-                if (entity.Contains("schemaname"))
-                {
-                    var schemaName = entity.GetAttributeValue<string>("schemaname");
-                    result[schemaName] = entity.Id;
-                    WriteVerbose($"  Found existing value for '{schemaName}': {entity.Id}");
-                }
-            }
-
-            WriteVerbose($"Found {result.Count} existing environment variable value(s).");
-            return result;
+        /// <summary>
+        /// Converts a type string to an OptionSetValue.
+        /// </summary>
+        private OptionSetValue ConvertTypeStringToOptionSetValue(string typeString)
+        {
+            var entityMetadata = entityMetadataFactory.GetMetadata("environmentvariabledefinition");
+            var typeAttribute = entityMetadata.Attributes.FirstOrDefault(a => a.LogicalName == "type");
+            return (OptionSetValue)entityConverter.ConvertToDataverseValue(entityMetadata, "type", typeAttribute, typeString, new ConvertToDataverseEntityColumnOptions());
         }
     }
 }

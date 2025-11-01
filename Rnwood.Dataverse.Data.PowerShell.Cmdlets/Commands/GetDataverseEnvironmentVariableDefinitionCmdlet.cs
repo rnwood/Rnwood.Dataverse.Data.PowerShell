@@ -5,16 +5,19 @@ using System.Management.Automation;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Sdk.Metadata;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Gets environment variable definitions and values from Dataverse.
+    /// Gets environment variable definitions from Dataverse. The Type property in the output shows the human-readable label instead of the numeric value.
     /// </summary>
     [Cmdlet(VerbsCommon.Get, "DataverseEnvironmentVariableDefinition")]
     [OutputType(typeof(PSObject))]
     public class GetDataverseEnvironmentVariableDefinitionCmdlet : OrganizationServiceCmdlet
     {
+        private EntityMetadataFactory entityMetadataFactory;
+        private DataverseEntityConverter entityConverter;
         /// <summary>
         /// Gets or sets the schema name of the environment variable to retrieve.
         /// </summary>
@@ -26,6 +29,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(HelpMessage = "Display name filter for environment variables (supports wildcards).")]
         public string DisplayName { get; set; }
+
+        /// <summary>
+        /// Initializes the cmdlet and sets up required helpers.
+        /// </summary>
+        protected override void BeginProcessing()
+        {
+            base.BeginProcessing();
+            entityMetadataFactory = new EntityMetadataFactory(Connection);
+            entityConverter = new DataverseEntityConverter(Connection, entityMetadataFactory);
+        }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -88,45 +101,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Found {allDefinitions.Count} environment variable definition(s)");
 
-            if (allDefinitions.Count == 0)
-            {
-                return;
-            }
-
-            // Query for values for all found definitions
-            var definitionIds = allDefinitions.Select(d => d.Id).ToArray();
-            var valueQuery = new QueryExpression("environmentvariablevalue")
-            {
-                ColumnSet = new ColumnSet("environmentvariablevalueid", "schemaname", "value", "environmentvariabledefinitionid"),
-                Criteria = new FilterExpression
-                {
-                    Conditions =
-                    {
-                        new ConditionExpression("environmentvariabledefinitionid", ConditionOperator.In, definitionIds)
-                    }
-                }
-            };
-
-            var allValues = new List<Entity>();
-            do
-            {
-                ec = Connection.RetrieveMultiple(valueQuery);
-                allValues.AddRange(ec.Entities);
-                if (ec.MoreRecords)
-                {
-                    valueQuery.PageInfo.PageNumber++;
-                    valueQuery.PageInfo.PagingCookie = ec.PagingCookie;
-                }
-            } while (ec.MoreRecords);
-
-            WriteVerbose($"Found {allValues.Count} environment variable value(s)");
-
-            // Create a dictionary for quick lookup
-            var valuesByDefinitionId = allValues
-                .Where(v => v.Contains("environmentvariabledefinitionid"))
-                .GroupBy(v => v.GetAttributeValue<EntityReference>("environmentvariabledefinitionid").Id)
-                .ToDictionary(g => g.Key, g => g.First());
-
             // Output results
             foreach (var definition in allDefinitions)
             {
@@ -137,22 +111,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 result.Properties.Add(new PSNoteProperty("Description", definition.GetAttributeValue<string>("description")));
                 
                 var typeOption = definition.GetAttributeValue<OptionSetValue>("type");
-                result.Properties.Add(new PSNoteProperty("Type", typeOption?.Value));
+                result.Properties.Add(new PSNoteProperty("Type", GetTypeLabel(typeOption)));
                 result.Properties.Add(new PSNoteProperty("DefaultValue", definition.GetAttributeValue<string>("defaultvalue")));
-
-                if (valuesByDefinitionId.TryGetValue(definition.Id, out var valueRecord))
-                {
-                    result.Properties.Add(new PSNoteProperty("Value", valueRecord.GetAttributeValue<string>("value")));
-                    result.Properties.Add(new PSNoteProperty("EnvironmentVariableValueId", valueRecord.Id));
-                }
-                else
-                {
-                    result.Properties.Add(new PSNoteProperty("Value", null));
-                    result.Properties.Add(new PSNoteProperty("EnvironmentVariableValueId", null));
-                }
 
                 WriteObject(result);
             }
+        }
+
+        /// <summary>
+        /// Gets the type label from an OptionSetValue.
+        /// </summary>
+        private string GetTypeLabel(OptionSetValue optionSetValue)
+        {
+            if (optionSetValue == null) return null;
+            var entityMetadata = entityMetadataFactory.GetMetadata("environmentvariabledefinition");
+            var typeAttribute = (EnumAttributeMetadata)entityMetadata.Attributes.FirstOrDefault(a => a.LogicalName == "type");
+            if (typeAttribute != null)
+            {
+                var option = typeAttribute.OptionSet.Options.FirstOrDefault(o => o.Value == optionSetValue.Value);
+                return option?.Label.UserLocalizedLabel.Label;
+            }
+            return optionSetValue.Value.ToString();
         }
     }
 }

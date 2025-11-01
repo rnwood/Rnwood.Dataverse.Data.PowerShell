@@ -405,13 +405,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -UseUpdateIfAdditive
-Use update if additive mode (experimental and incomplete). Only valid with Auto (default) mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items in 'TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status, uses simple install mode (no stage and upgrade). Use Compare-DataverseSolutionComponents to see what the comparison would show before using this switch.
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
+Aliases: wi
 
 Required: False
 Position: Named
@@ -420,13 +420,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -UseUpdateIfAdditive
+Use update if additive mode (experimental and incomplete). Only valid with Auto (default) mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items in 'TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status, uses simple install mode (no stage and upgrade). Use Compare-DataverseSolutionComponents to see what the comparison would show before using this switch.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: wi
+Aliases:
 
 Required: False
 Position: Named

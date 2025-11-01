@@ -5,74 +5,44 @@ online version:
 schema: 2.0.0
 ---
 
-# Set-DataverseEnvironmentVariable
+# Set-DataverseEnvironmentVariableDefinition
 
 ## SYNOPSIS
-Sets environment variable values in Dataverse.
+Creates or updates environment variable definitions in Dataverse.
 
 ## SYNTAX
 
-### Single (Default)
 ```
-Set-DataverseEnvironmentVariable [-SchemaName] <String> [-Value] <String> [-DisplayName <String>]
- [-Description <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
-```
-
-### Multiple
-```
-Set-DataverseEnvironmentVariable -EnvironmentVariables <Hashtable> [-Connection <ServiceClient>]
+Set-DataverseEnvironmentVariableDefinition [-SchemaName] <String> [-DisplayName <String>]
+ [-Description <String>] [-Type <String>] [-DefaultValue <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Sets environment variable values in Dataverse. Can set a single environment variable or multiple environment variables at once. The cmdlet creates new environment variable value records if they don't exist, or updates existing ones.
-
-This cmdlet uses the same table and column names as the Import-DataverseSolution cmdlet for consistency:
-- Table: `environmentvariablevalue`
-- Columns: `schemaname`, `value`, `environmentvariablevalueid`
+Creates or updates environment variable definitions in Dataverse. If the definition doesn't exist, it will be created. If it exists, it will be updated with the provided properties.
 
 ## EXAMPLES
 
-### Example 1: Set a single environment variable
+### Example 1: Create a new environment variable definition
 ```powershell
-PS C:\> Set-DataverseEnvironmentVariable -SchemaName "new_apiurl" -Value "https://api.production.example.com"
+PS C:\> Set-DataverseEnvironmentVariableDefinition -SchemaName "new_apiurl" -DisplayName "API URL" -Description "The URL for the external API"
 ```
 
-Sets the environment variable 'new_apiurl' to the specified value.
+Creates a new environment variable definition with the specified schema name, display name, and description.
 
-### Example 2: Set multiple environment variables
+### Example 2: Update an existing environment variable definition
 ```powershell
-PS C:\> Set-DataverseEnvironmentVariable -EnvironmentVariables @{
-    'new_apiurl' = 'https://api.production.example.com'
-    'new_apikey' = 'prod-key-12345'
-    'new_timeout' = '30'
-}
+PS C:\> Set-DataverseEnvironmentVariableDefinition -SchemaName "new_apiurl" -Description "Updated description for the API URL"
 ```
 
-Sets multiple environment variables at once using a hashtable.
+Updates the description of an existing environment variable definition.
 
-### Example 3: Set environment variable with pipeline
+### Example 3: Create definition with specific type
 ```powershell
-PS C:\> @{
-    'new_apiurl' = 'https://api.staging.example.com'
-    'new_environment' = 'staging'
-} | ForEach-Object { Set-DataverseEnvironmentVariable -EnvironmentVariables $_ }
+PS C:\> Set-DataverseEnvironmentVariableDefinition -SchemaName "new_timeout" -DisplayName "Timeout" -Type "Number"
 ```
 
-Sets multiple environment variables by piping a hashtable.
-
-### Example 4: Use with solution import workflow
-```powershell
-PS C:\> # Set environment variables before importing solution
-PS C:\> Set-DataverseEnvironmentVariable -EnvironmentVariables @{
-    'new_apiurl' = 'https://api.example.com'
-    'new_feature_enabled' = 'true'
-}
-PS C:\> Import-DataverseSolution -InFile "solution.zip"
-```
-
-Sets environment variables before importing a solution, ensuring they are configured correctly.
+Creates an environment variable definition with a specific type (in this case, Number type).
 
 ## PARAMETERS
 
@@ -107,77 +77,47 @@ Accept wildcard characters: False
 ```
 
 ### -Description
-Description for the environment variable definition (used when creating).
+Description for the environment variable definition.
 
 ```yaml
 Type: String
-Parameter Sets: Single
+Parameter Sets: (All)
 Aliases:
 
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
 ### -DisplayName
-Display name for the environment variable definition (used when creating).
+Display name for the environment variable definition.
 
 ```yaml
 Type: String
-Parameter Sets: Single
+Parameter Sets: (All)
 Aliases:
 
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -EnvironmentVariables
-Hashtable of environment variable schema names to values (e.g., @{'new_apiurl' = 'https://api.example.com'}).
-
-```yaml
-Type: Hashtable
-Parameter Sets: Multiple
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
 ### -SchemaName
-Schema name of the environment variable to set (for single parameter set).
+Schema name of the environment variable definition to create or update.
 
 ```yaml
 Type: String
-Parameter Sets: Single
+Parameter Sets: (All)
 Aliases:
 
 Required: True
 Position: 0
 Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Value
-Value to set for the environment variable (for single parameter set). Can be an empty string.
-
-```yaml
-Type: String
-Parameter Sets: Single
-Aliases:
-
-Required: True
-Position: 1
-Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 
@@ -197,7 +137,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
-{{ Fill ProgressAction Description }}
+Determines how PowerShell responds to progress updates generated by a script, cmdlet, or provider, such as the progress bars that are displayed by the Write-Progress cmdlet.
 
 ```yaml
 Type: ActionPreference
@@ -211,6 +151,36 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Type
+Type of the environment variable definition. Valid values are: String, Number, Boolean, JSON, Data Source, Secret. Default is String.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -DefaultValue
+Default value for the environment variable definition.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -221,12 +191,10 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### System.Object
 ## NOTES
-- The environment variable definition must already exist in Dataverse before you can set its value.
-- If the environment variable value record doesn't exist, it will be created.
-- If the environment variable value record already exists, it will be updated.
-- This cmdlet follows the same conventions as the Import-DataverseSolution cmdlet's EnvironmentVariables parameter.
+- If the environment variable definition doesn't exist, it will be created with default type (String) if not specified.
+- If the environment variable definition exists, only the provided properties will be updated.
 
 ## RELATED LINKS
 
-[Import-DataverseSolution](Import-DataverseSolution.md)
-[Set-DataverseConnectionReference](Set-DataverseConnectionReference.md)
+[Get-DataverseEnvironmentVariableDefinition](Get-DataverseEnvironmentVariableDefinition.md)
+[Remove-DataverseEnvironmentVariableDefinition](Remove-DataverseEnvironmentVariableDefinition.md)

@@ -259,12 +259,16 @@ Set-DataverseEnvironmentVariableValue -Connection $c -EnvironmentVariableValues 
     'new_timeout' = '30'
 }
 
-# Create or update environment variable with definition
+# Create environment variable definition
 Set-DataverseEnvironmentVariableDefinition -Connection $c `
     -SchemaName "new_customsetting" `
-    -Value "customvalue" `
     -DisplayName "Custom Setting" `
     -Description "Custom configuration value"
+
+# Set the value separately
+Set-DataverseEnvironmentVariableValue -Connection $c `
+    -SchemaName "new_customsetting" `
+    -Value "customvalue"
 
 # Set a single connection reference
 Set-DataverseConnectionReference -Connection $c `

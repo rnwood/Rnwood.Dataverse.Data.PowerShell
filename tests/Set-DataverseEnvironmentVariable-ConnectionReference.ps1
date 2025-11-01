@@ -2,8 +2,8 @@
 # environmentvariabledefinition, environmentvariablevalue, or connectionreference entities.
 # These cmdlets should be tested manually or with E2E tests against a real Dataverse environment.
 
-Describe 'Set-DataverseEnvironmentVariable' {
-    Context 'Setting a single environment variable' {
+Describe 'Set-DataverseEnvironmentVariableValue' {
+    Context 'Setting a single environment variable value' {
         It "Creates a new environment variable value when none exists" -Skip {
             $connection = getMockConnection
             
@@ -16,13 +16,10 @@ Describe 'Set-DataverseEnvironmentVariable' {
             } | Set-DataverseRecord -Connection $connection -TableName environmentvariabledefinition -CreateOnly -PassThru
             
             # Set the environment variable value
-            $result = Set-DataverseEnvironmentVariable -Connection $connection -SchemaName "new_testvar" -Value "testvalue"
+            $result = Set-DataverseEnvironmentVariableValue -Connection $connection -SchemaName "new_testvar" -Value "testvalue"
             
-            # Verify the result
-            $result.SchemaName | Should -Be "new_testvar"
-            $result.Value | Should -Be "testvalue"
-            $result.Action | Should -Be "Created"
-            $result.EnvironmentVariableValueId | Should -Not -BeNullOrEmpty
+            # Verify no output is returned
+            $result | Should -BeNullOrEmpty
         }
 
         It "Updates an existing environment variable value" -Skip {
@@ -46,13 +43,10 @@ Describe 'Set-DataverseEnvironmentVariable' {
             } | Set-DataverseRecord -Connection $connection -TableName environmentvariablevalue -CreateOnly -PassThru
             
             # Update the environment variable value
-            $result = Set-DataverseEnvironmentVariable -Connection $connection -SchemaName "new_existingvar" -Value "newvalue"
+            $result = Set-DataverseEnvironmentVariableValue -Connection $connection -SchemaName "new_existingvar" -Value "newvalue"
             
-            # Verify the result
-            $result.SchemaName | Should -Be "new_existingvar"
-            $result.Value | Should -Be "newvalue"
-            $result.Action | Should -Be "Updated"
-            $result.EnvironmentVariableValueId | Should -Be $envVarValueId
+            # Verify no output is returned
+            $result | Should -BeNullOrEmpty
         }
 
         It "Throws error when environment variable definition does not exist" {
@@ -60,11 +54,11 @@ Describe 'Set-DataverseEnvironmentVariable' {
             $connection = getMockConnection
             
             # Should throw because entity metadata is not in mock, but this validates the cmdlet works
-            { Set-DataverseEnvironmentVariable -Connection $connection -SchemaName "new_nonexistent" -Value "value" -ErrorAction Stop } | Should -Throw
+            { Set-DataverseEnvironmentVariableValue -Connection $connection -SchemaName "new_nonexistent" -Value "value" -ErrorAction Stop } | Should -Throw
         }
     }
 
-    Context 'Setting multiple environment variables' {
+    Context 'Setting multiple environment variable values' {
         It "Creates and updates multiple environment variables" -Skip {
             $connection = getMockConnection
             
@@ -93,22 +87,13 @@ Describe 'Set-DataverseEnvironmentVariable' {
             } | Set-DataverseRecord -Connection $connection -TableName environmentvariablevalue -CreateOnly -PassThru
             
             # Set multiple environment variables
-            $results = Set-DataverseEnvironmentVariable -Connection $connection -EnvironmentVariables @{
+            $results = Set-DataverseEnvironmentVariableValue -Connection $connection -EnvironmentVariableValues @{
                 "new_var1" = "value1"
                 "new_var2" = "value2"
             }
             
-            # Verify the results
-            $results | Should -HaveCount 2
-            
-            $var1Result = $results | Where-Object { $_.SchemaName -eq "new_var1" }
-            $var1Result.Value | Should -Be "value1"
-            $var1Result.Action | Should -Be "Created"
-            
-            $var2Result = $results | Where-Object { $_.SchemaName -eq "new_var2" }
-            $var2Result.Value | Should -Be "value2"
-            $var2Result.Action | Should -Be "Updated"
-            $var2Result.EnvironmentVariableValueId | Should -Be $envVarValue2Id
+            # Verify no output is returned
+            $results | Should -BeNullOrEmpty
         }
 
         It "Handles empty string values" -Skip {
@@ -123,12 +108,10 @@ Describe 'Set-DataverseEnvironmentVariable' {
             } | Set-DataverseRecord -Connection $connection -TableName environmentvariabledefinition -CreateOnly -PassThru
             
             # Set the environment variable to empty string
-            $result = Set-DataverseEnvironmentVariable -Connection $connection -SchemaName "new_emptyvar" -Value ""
+            $result = Set-DataverseEnvironmentVariableValue -Connection $connection -SchemaName "new_emptyvar" -Value ""
             
-            # Verify the result
-            $result.SchemaName | Should -Be "new_emptyvar"
-            $result.Value | Should -Be ""
-            $result.Action | Should -Be "Created"
+            # Verify no output is returned
+            $result | Should -BeNullOrEmpty
         }
     }
 }

@@ -126,14 +126,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     Connection.Update(updateEntity);
                     WriteVerbose($"  Successfully updated environment variable value for '{schemaName}'");
-
-                    // Output the result
-                    var result = new PSObject();
-                    result.Properties.Add(new PSNoteProperty("SchemaName", schemaName));
-                    result.Properties.Add(new PSNoteProperty("Value", value));
-                    result.Properties.Add(new PSNoteProperty("EnvironmentVariableValueId", existingValueId));
-                    result.Properties.Add(new PSNoteProperty("Action", "Updated"));
-                    WriteObject(result);
                 }
                 else
                 {
@@ -147,14 +139,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     var newValueId = Connection.Create(createEntity);
                     WriteVerbose($"  Successfully created environment variable value for '{schemaName}' (ID: {newValueId})");
-
-                    // Output the result
-                    var result = new PSObject();
-                    result.Properties.Add(new PSNoteProperty("SchemaName", schemaName));
-                    result.Properties.Add(new PSNoteProperty("Value", value));
-                    result.Properties.Add(new PSNoteProperty("EnvironmentVariableValueId", newValueId));
-                    result.Properties.Add(new PSNoteProperty("Action", "Created"));
-                    WriteObject(result);
                 }
             }
         }

@@ -20,19 +20,23 @@ This separation allows solutions to carry the definition while each environment 
 
 ### Working with Environment Variable Definitions
 
-Use definition cmdlets when you need to manage the complete lifecycle of environment variables:
+Use definition cmdlets when you need to manage the structure and metadata of environment variables:
 
 ```powershell
-# Create a new environment variable with definition and value
+# Create a new environment variable definition
 Set-DataverseEnvironmentVariableDefinition -SchemaName "new_apiurl" `
-    -Value "https://api.production.example.com" `
     -DisplayName "API URL" `
-    -Description "URL for the external API"
+    -Description "URL for the external API" `
+    -Type "String"  # String type
 
-# Query environment variables (returns definitions with their values)
+# Query environment variable definitions
 Get-DataverseEnvironmentVariableDefinition -SchemaName "new_api*"
 
-# Remove an environment variable completely
+# Update an existing definition
+Set-DataverseEnvironmentVariableDefinition -SchemaName "new_apiurl" `
+    -Description "Updated description for the API URL"
+
+# Remove an environment variable definition
 Remove-DataverseEnvironmentVariableDefinition -SchemaName "new_apiurl"
 ```
 
@@ -62,15 +66,15 @@ Remove-DataverseEnvironmentVariableValue -SchemaName "new_apiurl"
 ### When to Use Which Cmdlet Set
 
 **Use Definition Cmdlets** when:
-- Creating new environment variables from scratch
-- You need to set display names and descriptions
-- Managing environment variables not part of a solution
-- You want to query both definition and value information together
+- Creating new environment variable definitions from scratch
+- You need to set or update display names, descriptions, or types
+- Managing the structure of environment variables
+- You want to query definition metadata only
 
 **Use Value Cmdlets** when:
-- Environment variable definitions are managed by a solution
-- Deploying solutions across multiple environments
-- You only need to set/update values for existing definitions
+- Environment variable definitions already exist (typically managed by solutions)
+- You only need to set or update the actual values
+- Deploying solutions across multiple environments with different values
 - Automating environment-specific configuration
 
 ### Common Workflows
@@ -92,16 +96,20 @@ Set-DataverseEnvironmentVariableValue -EnvironmentVariableValues @{
 #### Creating Environment Variables Without Solutions
 
 ```powershell
-# Create environment variables with full definitions
+# Create environment variable definitions
 Set-DataverseEnvironmentVariableDefinition -SchemaName "new_emailtemplate" `
-    -Value "Welcome" `
     -DisplayName "Email Template Name" `
-    -Description "Name of the email template to use for welcome messages"
+    -Description "Name of the email template to use for welcome messages" `
+    -Type "String"  # String type
 
 Set-DataverseEnvironmentVariableDefinition -SchemaName "new_retrycount" `
-    -Value "3" `
     -DisplayName "Retry Count" `
-    -Description "Number of times to retry failed operations"
+    -Description "Number of times to retry failed operations" `
+    -Type "Number"  # Integer type
+
+# Set the actual values separately
+Set-DataverseEnvironmentVariableValue -SchemaName "new_emailtemplate" -Value "Welcome"
+Set-DataverseEnvironmentVariableValue -SchemaName "new_retrycount" -Value "3"
 ```
 
 #### Migrating Values Between Environments
