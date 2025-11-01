@@ -185,13 +185,16 @@ jobs:
             
             # Add prerelease to PrivateData.PSData
             $content = get-content -raw -encoding UTF8 $manifestpath
-            if ($content -match "PrivateData\s*=\s*@\{") {
-              if ($content -match "PSData\s*=\s*@\{") {
-                # PSData section exists - add Prerelease field
-                $content = $content -replace "(PSData\s*=\s*@\{)", "`$1`n`t`tPrerelease = '$prereleaseString'"
-              } else {
-                # Add PSData section with Prerelease
-                $content = $content -replace "(PrivateData\s*=\s*@\{)", "`$1`n`tPSData = @{`n`t`tPrerelease = '$prereleaseString'`n`t}"
+            # Only add if Prerelease doesn't already exist
+            if ($content -notmatch "Prerelease\s*=") {
+              if ($content -match "PrivateData\s*=\s*@\{") {
+                if ($content -match "PSData\s*=\s*@\{") {
+                  # PSData section exists - add Prerelease field
+                  $content = $content -replace "(PSData\s*=\s*@\{)", "`$1`n`t`tPrerelease = '$prereleaseString'"
+                } else {
+                  # Add PSData section with Prerelease
+                  $content = $content -replace "(PrivateData\s*=\s*@\{)", "`$1`n`tPSData = @{`n`t`tPrerelease = '$prereleaseString'`n`t}"
+                }
               }
             }
             $content | set-content -encoding UTF8 $manifestpath
