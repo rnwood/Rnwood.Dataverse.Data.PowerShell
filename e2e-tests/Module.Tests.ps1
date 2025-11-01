@@ -1,3 +1,5 @@
+$ErrorActionPreference = "Stop"
+
 Describe "Module" {
 
     BeforeAll {
