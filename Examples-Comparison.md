@@ -1965,6 +1965,26 @@ Set-DataverseFormControl -Connection $conn `
     -Label 'Email' `
     -InsertBefore 'telephone1'  # Insert before phone
 
+# Use raw XML for advanced control customization
+$controlXml = @'
+<control id="customfield" datafieldname="new_customfield" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}">
+  <labels>
+    <label description="Custom Field" languagecode="1033" />
+  </labels>
+  <parameters>
+    <MaxLength>100</MaxLength>
+    <Format>Text</Format>
+  </parameters>
+</control>
+'@
+
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -ControlXml $controlXml `
+    -InsertAfter 'emailaddress1' `
+    -Publish
+
 # Supported control types: Standard, Lookup, OptionSet, DateTime, Boolean, 
 # Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch, Notes
 ```

@@ -175,7 +175,7 @@ For more advanced scenarios including view management and app module management,
 
 **Controls:**
 - [`Get-DataverseFormControl`] — retrieve controls from form sections
-- [`Set-DataverseFormControl`] — create or update form controls (supports all standard control types)
+- [`Set-DataverseFormControl`] — create or update form controls (supports all standard control types and raw XML)
 - [`Remove-DataverseFormControl`] — delete controls from forms
 
 ### Additional Operations
