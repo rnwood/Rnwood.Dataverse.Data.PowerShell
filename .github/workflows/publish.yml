@@ -116,7 +116,7 @@ jobs:
   
   main:
     permissions:
-      contents: read
+      contents: write  # Required for creating GitHub releases
       pull-requests: write
     strategy:
       matrix:
@@ -140,6 +140,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # Fetch all history for tags
       - if: ${{ matrix.powershell_version != '5' }}
         name: Install PowerShell ${{ matrix.powershell_version }}
         uses: PSModule/install-powershell@v1
@@ -148,10 +150,61 @@ jobs:
       - name: Build
         shell: pwsh
         run: |       
+          $manifestpath = "Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.psd1"
+          
           if ($env:GITHUB_REF -like "refs/tags/*") {
+            # Release build - use tag version
             $versionnumber = $env:GITHUB_REF -replace "refs/tags/", ""
-            $manifestpath = "Rnwood.Dataverse.Data.PowerShell//Rnwood.Dataverse.Data.PowerShell.psd1"
             (get-content -raw -encoding UTF8 $manifestpath ) -replace "ModuleVersion ?=.*", "ModuleVersion = `"$versionnumber`"" | set-content -encoding UTF8 $manifestpath
+            Write-Host "Release version: $versionnumber"
+          } elseif ($env:GITHUB_REF -eq "refs/heads/main") {
+            # CI build on main branch - auto-determine version with -ci suffix
+            $latestTag = git describe --tags --abbrev=0 2>$null
+            if (-not $latestTag) {
+              $latestTag = "0.0.0"
+            }
+            
+            # Parse version from tag
+            if ($latestTag -match '^v?(\d+\.\d+\.\d+)') {
+              $baseVersion = $matches[1]
+            } else {
+              $baseVersion = "0.0.0"
+            }
+            
+            # Get commit count since last tag as build number
+            $commitsSinceTag = git rev-list --count "${latestTag}..HEAD" 2>$null
+            if ($null -eq $commitsSinceTag -or $commitsSinceTag -eq "") {
+              $commitsSinceTag = git rev-list --count HEAD
+            }
+            
+            # Build CI version with prerelease suffix
+            $prereleaseString = "ci.$commitsSinceTag"
+            
+            # Update manifest with base version and prerelease in one operation
+            $content = get-content -raw -encoding UTF8 $manifestpath
+            
+            # Update ModuleVersion
+            $content = $content -replace "ModuleVersion ?=.*", "ModuleVersion = `"$baseVersion`""
+            
+            # Add prerelease to PrivateData.PSData if not already present
+            if ($content -notmatch "Prerelease\s*=") {
+              if ($content -match "PrivateData\s*=\s*@\{") {
+                if ($content -match "PSData\s*=\s*@\{") {
+                  # PSData section exists - add Prerelease field
+                  $content = $content -replace "(PSData\s*=\s*@\{)", "`$1`n`t`tPrerelease = '$prereleaseString'"
+                } else {
+                  # Add PSData section with Prerelease
+                  $content = $content -replace "(PrivateData\s*=\s*@\{)", "`$1`n`tPSData = @{`n`t`tPrerelease = '$prereleaseString'`n`t}"
+                }
+              }
+            }
+            
+            # Write updated content once
+            $content | set-content -encoding UTF8 $manifestpath
+            
+            Write-Host "CI version: $baseVersion-$prereleaseString"
+            # Save version for later steps
+            "$baseVersion-$prereleaseString" | Out-File -FilePath ci-version.txt -Encoding utf8
           }
 
           dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj
@@ -306,12 +359,60 @@ jobs:
             throw "Tests failed"
           }      
       - if: ${{ matrix.publish && github.event_name == 'release' && github.event.action == 'published' }}
-        name: Publish
+        name: Publish Release to PowerShell Gallery
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
         shell: pwsh
         run: |
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
+      
+      # CI Build Publishing (main branch only)
+      - if: ${{ matrix.publish && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        name: Create CI Build Artifact
+        shell: pwsh
+        run: |
+          # Create a zip file of the module
+          Compress-Archive -Path out/Rnwood.Dataverse.Data.PowerShell -DestinationPath Rnwood.Dataverse.Data.PowerShell-CI.zip -Force
+      
+      - if: ${{ matrix.publish && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        name: Create GitHub Release for CI Build
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const version = fs.readFileSync('ci-version.txt', 'utf8').trim();
+            const shortSha = context.sha.substring(0, 7);
+            
+            // Create prerelease
+            const release = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: `v${version}`,
+              name: `CI Build ${version}`,
+              body: `Automated CI build from commit ${shortSha}\n\n**This is a prerelease version for testing purposes.**\n\nCommit: ${context.sha}\nBranch: main`,
+              draft: false,
+              prerelease: true,
+              target_commitish: context.sha
+            });
+            
+            // Upload the zip artifact
+            const assetData = fs.readFileSync('Rnwood.Dataverse.Data.PowerShell-CI.zip');
+            await github.rest.repos.uploadReleaseAsset({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.data.id,
+              name: 'Rnwood.Dataverse.Data.PowerShell-CI.zip',
+              data: assetData
+            });
+      
+      - if: ${{ matrix.publish && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        name: Publish CI Build to PowerShell Gallery
+        env:
+          NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        shell: pwsh
+        run: |
+          # Publish prerelease to PowerShell Gallery
+          Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose -AllowPrerelease
       
       # Upload test failure reports as artifacts
       - name: Upload test failure report
