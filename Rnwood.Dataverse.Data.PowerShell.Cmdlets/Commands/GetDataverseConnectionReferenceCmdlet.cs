@@ -28,6 +28,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string DisplayName { get; set; }
 
         /// <summary>
+        /// Gets or sets the connector ID filter for connection references.
+        /// </summary>
+        [Parameter(HelpMessage = "Connector ID filter for connection references (supports wildcards).")]
+        public string ConnectorId { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -37,7 +43,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Build query for connection references
             var query = new QueryExpression("connectionreference")
             {
-                ColumnSet = new ColumnSet("connectionreferenceid", "connectionreferencelogicalname", "connectionreferencedisplayname", "connectionid", "description")
+                ColumnSet = new ColumnSet("connectionreferenceid", "connectionreferencelogicalname", "connectionreferencedisplayname", "connectionid", "connectorid", "description")
             };
 
             var filter = new FilterExpression();
@@ -63,6 +69,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 else
                 {
                     filter.AddCondition("connectionreferencedisplayname", ConditionOperator.Equal, DisplayName);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(ConnectorId))
+            {
+                if (ConnectorId.Contains("*") || ConnectorId.Contains("?"))
+                {
+                    filter.AddCondition("connectorid", ConditionOperator.Like, ConnectorId.Replace("*", "%").Replace("?", "_"));
+                }
+                else
+                {
+                    filter.AddCondition("connectorid", ConditionOperator.Equal, ConnectorId);
                 }
             }
 
@@ -96,6 +114,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 result.Properties.Add(new PSNoteProperty("ConnectionReferenceLogicalName", connRef.GetAttributeValue<string>("connectionreferencelogicalname")));
                 result.Properties.Add(new PSNoteProperty("ConnectionReferenceDisplayName", connRef.GetAttributeValue<string>("connectionreferencedisplayname")));
                 result.Properties.Add(new PSNoteProperty("ConnectionId", connRef.GetAttributeValue<string>("connectionid")));
+                result.Properties.Add(new PSNoteProperty("ConnectorId", connRef.GetAttributeValue<string>("connectorid")));
                 result.Properties.Add(new PSNoteProperty("Description", connRef.GetAttributeValue<string>("description")));
 
                 WriteObject(result);

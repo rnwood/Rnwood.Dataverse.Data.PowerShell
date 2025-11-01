@@ -144,11 +144,24 @@ Get-DataverseConnectionReference
 # Query specific connection reference
 Get-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharepoint"
 
-# Set a connection reference to use a specific connection
-Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharepoint" `
-    -ConnectionId "12345678-1234-1234-1234-123456789012"
+# Query connection references by display name (supports wildcards)
+Get-DataverseConnectionReference -DisplayName "Production*"
 
-# Set multiple connection references at once
+# Query connection references by connector ID
+Get-DataverseConnectionReference -ConnectorId "98765432-4321-4321-4321-210987654321"
+
+# Create a new connection reference
+Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharepoint" `
+    -ConnectionId "12345678-1234-1234-1234-123456789012" `
+    -ConnectorId "98765432-4321-4321-4321-210987654321" `
+    -DisplayName "Production SharePoint Site" `
+    -Description "Connection to the main SharePoint document library"
+
+# Update an existing connection reference
+Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharepoint" `
+    -ConnectionId "87654321-4321-4321-4321-210987654321"
+
+# Set multiple connection references at once (update only - references must already exist)
 Set-DataverseConnectionReference -ConnectionReferences @{
     'new_sharepoint' = '12345678-1234-1234-1234-123456789012'
     'new_sql' = '87654321-4321-4321-4321-210987654321'
@@ -157,6 +170,8 @@ Set-DataverseConnectionReference -ConnectionReferences @{
 # Remove a connection reference
 Remove-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharepoint"
 ```
+
+**Note**: The single parameter set (`-ConnectionReferenceLogicalName`) can create new connection references if they don't exist, while the multiple parameter set (`-ConnectionReferences`) only updates existing ones.
 
 ### Finding Connection IDs
 
@@ -203,6 +218,25 @@ Import-DataverseSolution -InFile "MySolution.zip" `
     }
 ```
 
+#### Creating Connection References Manually
+
+If you need to create connection references outside of solution deployment, use the single parameter set:
+
+```powershell
+# Create connection references with full metadata
+Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_azureblob" `
+    -ConnectionId "11111111-2222-3333-4444-555555555555" `
+    -ConnectorId "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" `
+    -DisplayName "Azure Blob Storage" `
+    -Description "Connection to Azure Blob Storage for file uploads"
+
+Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sendgrid" `
+    -ConnectionId "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" `
+    -ConnectorId "ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj" `
+    -DisplayName "SendGrid Email Service" `
+    -Description "SMTP connection for sending transactional emails"
+```
+
 ## Best Practices
 
 ### Environment Variables
@@ -220,6 +254,7 @@ Import-DataverseSolution -InFile "MySolution.zip" `
 3. **Document Requirements**: Maintain a list of required connection references and their connector types
 4. **Test Connections**: After setting references, test the flows/apps to ensure connections work correctly
 5. **Use Service Accounts**: For production, use service accounts rather than user-specific connections
+6. **Create vs Update**: Use the single parameter set to create new references (requires ConnectorId), use the multiple parameter set for bulk updates of existing references
 
 ### Automation Scripts
 

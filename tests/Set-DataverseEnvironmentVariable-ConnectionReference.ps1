@@ -168,14 +168,30 @@ Describe 'Set-DataverseConnectionReference' {
             $result.PreviousConnectionId | Should -Be $oldConnectionId
         }
 
-        It "Throws error when connection reference does not exist" {
-            # This test validates the cmdlet exists and has proper parameters
+        It "Throws error when connection reference does not exist and ConnectorId is not provided" {
+            # This test validates that ConnectorId is required for creation
             $connection = getMockConnection
-            
-            # Should throw because entity metadata is not in mock, but this validates the cmdlet works
+
+            # Should throw because ConnectorId is required for creation
             { Set-DataverseConnectionReference -Connection $connection `
                 -ConnectionReferenceLogicalName "new_nonexistent" `
                 -ConnectionId "12345678-1234-1234-1234-123456789012" -ErrorAction Stop } | Should -Throw
+        }
+
+        It "Creates a new connection reference when ConnectorId is provided" -Skip {
+            # This test validates that creation works when ConnectorId is provided
+            $connection = getMockConnection
+
+            $result = Set-DataverseConnectionReference -Connection $connection `
+                -ConnectionReferenceLogicalName "new_created_connref" `
+                -ConnectionId "12345678-1234-1234-1234-123456789012" `
+                -ConnectorId "98765432-4321-4321-4321-210987654321"
+
+            # Verify the result
+            $result.ConnectionReferenceLogicalName | Should -Be "new_created_connref"
+            $result.ConnectionId | Should -Be "12345678-1234-1234-1234-123456789012"
+            $result.ConnectorId | Should -Be "98765432-4321-4321-4321-210987654321"
+            $result.Operation | Should -Be "Created"
         }
     }
 

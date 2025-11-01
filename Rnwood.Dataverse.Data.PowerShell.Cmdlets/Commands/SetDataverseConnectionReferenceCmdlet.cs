@@ -30,6 +30,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string ConnectionId { get; set; }
 
         /// <summary>
+        /// Gets or sets the connector ID for the connection reference (for single parameter set).
+        /// </summary>
+        [Parameter(Position = 2, ParameterSetName = "Single", HelpMessage = "Connector ID (GUID) that defines the type of connection. Required when creating new connection references.")]
+        public string ConnectorId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the display name for the connection reference (for single parameter set).
+        /// </summary>
+        [Parameter(ParameterSetName = "Single", HelpMessage = "Display name for the connection reference.")]
+        public string DisplayName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the description for the connection reference (for single parameter set).
+        /// </summary>
+        [Parameter(ParameterSetName = "Single", HelpMessage = "Description for the connection reference.")]
+        public string Description { get; set; }
+
+        /// <summary>
         /// Gets or sets connection references as a hashtable (for multiple parameter set).
         /// </summary>
         [Parameter(Mandatory = true, ParameterSetName = "Multiple", HelpMessage = "Hashtable of connection reference logical names to connection IDs (e.g., @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'}).")]
@@ -43,7 +61,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            Dictionary<string, string> referencesToSet = new Dictionary<string, string>();
+            Dictionary<string, ConnectionReferenceInfo> referencesToSet = new Dictionary<string, ConnectionReferenceInfo>();
 
             // Build the list of references to set based on parameter set
             if (ParameterSetName == "Single")
@@ -53,7 +71,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     return;
                 }
 
-                referencesToSet[ConnectionReferenceLogicalName] = ConnectionId;
+                referencesToSet[ConnectionReferenceLogicalName] = new ConnectionReferenceInfo
+                {
+                    ConnectionId = ConnectionId,
+                    ConnectorId = ConnectorId,
+                    DisplayName = DisplayName,
+                    Description = Description
+                };
             }
             else // Multiple
             {
@@ -66,7 +90,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     var logicalName = entry.Key.ToString();
                     var connectionId = entry.Value.ToString();
-                    referencesToSet[logicalName] = connectionId;
+                    referencesToSet[logicalName] = new ConnectionReferenceInfo
+                    {
+                        ConnectionId = connectionId
+                    };
                 }
             }
 
@@ -76,14 +103,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             foreach (var kvp in referencesToSet)
             {
                 var logicalName = kvp.Key;
-                var connectionId = kvp.Value;
+                var info = kvp.Value;
 
-                WriteVerbose($"Setting connection reference '{logicalName}' to connection '{connectionId}'");
+                WriteVerbose($"Setting connection reference '{logicalName}' to connection '{info.ConnectionId}'");
 
                 // Query for the connection reference by logical name
                 var query = new QueryExpression("connectionreference")
                 {
-                    ColumnSet = new ColumnSet("connectionreferenceid", "connectionreferencelogicalname", "connectionreferencedisplayname", "connectionid"),
+                    ColumnSet = new ColumnSet("connectionreferenceid", "connectionreferencelogicalname", "connectionreferencedisplayname", "connectionid", "connectorid", "description"),
                     Criteria = new FilterExpression
                     {
                         Conditions =
@@ -98,37 +125,124 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (results.Entities.Count == 0)
                 {
-                    WriteError(new ErrorRecord(
-                        new InvalidOperationException($"Connection reference with logical name '{logicalName}' not found."),
-                        "ConnectionReferenceNotFound",
-                        ErrorCategory.ObjectNotFound,
-                        logicalName));
-                    continue;
+                    if (ParameterSetName == "Multiple")
+                    {
+                        WriteError(new ErrorRecord(
+                            new InvalidOperationException($"Connection reference with logical name '{logicalName}' not found."),
+                            "ConnectionReferenceNotFound",
+                            ErrorCategory.ObjectNotFound,
+                            logicalName));
+                        continue;
+                    }
+
+                    // Single parameter set: create new connection reference
+                    WriteVerbose($"  Connection reference not found. Creating new connection reference for '{logicalName}'");
+
+                    // Validate that ConnectorId is provided for creation
+                    if (string.IsNullOrEmpty(info.ConnectorId))
+                    {
+                        WriteError(new ErrorRecord(
+                            new InvalidOperationException($"ConnectorId is required when creating a new connection reference '{logicalName}'."),
+                            "ConnectorIdRequiredForCreation",
+                            ErrorCategory.InvalidArgument,
+                            logicalName));
+                        continue;
+                    }
+
+                    // Create the connection reference
+                    var connRefEntity = new Entity("connectionreference");
+                    connRefEntity["connectionreferencelogicalname"] = logicalName;
+                    connRefEntity["connectionid"] = info.ConnectionId;
+                    connRefEntity["connectorid"] = info.ConnectorId;
+                    
+                    if (!string.IsNullOrEmpty(info.DisplayName))
+                    {
+                        connRefEntity["connectionreferencedisplayname"] = info.DisplayName;
+                    }
+                    else
+                    {
+                        // Default display name to logical name if not provided
+                        connRefEntity["connectionreferencedisplayname"] = logicalName;
+                    }
+
+                    if (!string.IsNullOrEmpty(info.Description))
+                    {
+                        connRefEntity["description"] = info.Description;
+                    }
+
+                    var newConnRefId = Connection.Create(connRefEntity);
+                    WriteVerbose($"  Created connection reference with ID: {newConnRefId}");
+
                 }
+                else
+                {
+                    var connRef = results.Entities[0];
+                    var connRefId = connRef.Id;
+                    var currentDisplayName = connRef.GetAttributeValue<string>("connectionreferencedisplayname");
+                    var currentConnectionId = connRef.GetAttributeValue<string>("connectionid");
+                    var currentConnectorId = connRef.GetAttributeValue<string>("connectorid");
+                    var currentDescription = connRef.GetAttributeValue<string>("description");
 
-                var connRef = results.Entities[0];
-                var connRefId = connRef.Id;
-                var displayName = connRef.GetAttributeValue<string>("connectionreferencedisplayname");
-                var currentConnectionId = connRef.GetAttributeValue<string>("connectionid");
+                    WriteVerbose($"  Found connection reference: '{currentDisplayName}' (ID: {connRefId})");
+                    WriteVerbose($"  Current connection ID: {currentConnectionId ?? "(none)"}");
 
-                WriteVerbose($"  Found connection reference: '{displayName}' (ID: {connRefId})");
-                WriteVerbose($"  Current connection ID: {currentConnectionId ?? "(none)"}");
+                    // Update the connection reference
+                    var updateEntity = new Entity("connectionreference", connRefId);
+                    bool hasChanges = false;
 
-                // Update the connection reference
-                var updateEntity = new Entity("connectionreference", connRefId);
-                updateEntity["connectionid"] = connectionId;
+                    // Update connection ID
+                    if (info.ConnectionId != currentConnectionId)
+                    {
+                        updateEntity["connectionid"] = info.ConnectionId;
+                        hasChanges = true;
+                    }
 
-                Connection.Update(updateEntity);
-                WriteVerbose($"  Successfully updated connection reference '{logicalName}'");
+                    // Update connector ID if provided and different (only for single parameter set)
+                    if (ParameterSetName == "Single" && info.ConnectorId != null && info.ConnectorId != currentConnectorId)
+                    {
+                        WriteError(new ErrorRecord(
+                            new InvalidOperationException($"Cannot change ConnectorId of existing connection reference '{logicalName}'. Current: '{currentConnectorId}', Requested: '{info.ConnectorId}'."),
+                            "ConnectorIdCannotBeChanged",
+                            ErrorCategory.InvalidArgument,
+                            logicalName));
+                        continue;
+                    }
 
-                // Output the result
-                var result = new PSObject();
-                result.Properties.Add(new PSNoteProperty("ConnectionReferenceLogicalName", logicalName));
-                result.Properties.Add(new PSNoteProperty("ConnectionId", connectionId));
-                result.Properties.Add(new PSNoteProperty("ConnectionReferenceId", connRefId));
-                result.Properties.Add(new PSNoteProperty("PreviousConnectionId", currentConnectionId));
-                WriteObject(result);
+                    // Update display name if provided and different (only for single parameter set)
+                    if (ParameterSetName == "Single" && !string.IsNullOrEmpty(info.DisplayName) && info.DisplayName != currentDisplayName)
+                    {
+                        updateEntity["connectionreferencedisplayname"] = info.DisplayName;
+                        hasChanges = true;
+                    }
+
+                    // Update description if provided and different (only for single parameter set)
+                    if (ParameterSetName == "Single" && info.Description != null && info.Description != currentDescription)
+                    {
+                        updateEntity["description"] = info.Description;
+                        hasChanges = true;
+                    }
+
+                    if (hasChanges)
+                    {
+                        Connection.Update(updateEntity);
+                        WriteVerbose($"  Successfully updated connection reference '{logicalName}'");
+                    }
+                    else
+                    {
+                        WriteVerbose($"  No changes needed for connection reference '{logicalName}'");
+                    }
+
+
+                }
             }
+        }
+
+        private class ConnectionReferenceInfo
+        {
+            public string ConnectionId { get; set; }
+            public string ConnectorId { get; set; }
+            public string DisplayName { get; set; }
+            public string Description { get; set; }
         }
     }
 }

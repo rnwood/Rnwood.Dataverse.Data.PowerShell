@@ -270,12 +270,15 @@ Set-DataverseEnvironmentVariableValue -Connection $c `
     -SchemaName "new_customsetting" `
     -Value "customvalue"
 
-# Set a single connection reference
+# Set a single connection reference (creates if doesn't exist)
 Set-DataverseConnectionReference -Connection $c `
     -ConnectionReferenceLogicalName "new_sharepointconnection" `
-    -ConnectionId "12345678-1234-1234-1234-123456789012"
+    -ConnectionId "12345678-1234-1234-1234-123456789012" `
+    -ConnectorId "98765432-4321-4321-4321-210987654321" `
+    -DisplayName "SharePoint Connection" `
+    -Description "Connection to the main SharePoint site"
 
-# Set multiple connection references at once
+# Set multiple connection references at once (update only - must already exist)
 Set-DataverseConnectionReference -Connection $c -ConnectionReferences @{
     'new_sharepointconnection' = '12345678-1234-1234-1234-123456789012'
     'new_sqlconnection' = '87654321-4321-4321-4321-210987654321'
@@ -292,6 +295,6 @@ See the full documentation:
 - Connection reference values must be valid connection IDs from the target environment which the user importing the solution has access to.
 - Environment variable values are strings that will be set during import.
 - The dedicated cmdlets create new environment variable value records if they don't exist, or update existing ones.
-- Connection reference records must already exist in the environment (created by importing a solution that contains them).
+- Connection reference records can be created using the single parameter set of Set-DataverseConnectionReference, or must already exist when using the multiple parameter set.
 
 
