@@ -70,22 +70,74 @@ $testRunnerScript = Join-Path $OutputDir "run-tests-no-copy.ps1"
 
 Write-Host "Test Runner: Running tests WITHOUT module copy (for coverage)..." -ForegroundColor Cyan
 
-# Set module path directly without copying
-`$env:PSModulePath = (Split-Path '$env:TESTMODULEPATH') + ";" + `$env:PSModulePath
-`$env:ChildProcessPSModulePath = (Split-Path '$env:TESTMODULEPATH')
+# Set PSModulePath and env vars that tests expect
+`$tempmodulefolder = Split-Path '$env:TESTMODULEPATH'
+`$env:PSModulePath = `$tempmodulefolder + ";" + `$env:PSModulePath
+`$env:ChildProcessPSModulePath = `$tempmodulefolder
+
+# Override TESTMODULEPATH to skip the copy logic in All.Tests.ps1
+# We create a flag that will be checked by a modified All.Tests.ps1 wrapper
+`$env:COVERAGE_RUN = `$true
+`$env:COVERAGE_MODULE_PATH = '$env:TESTMODULEPATH'
 
 Write-Host "Module will be loaded from: $env:TESTMODULEPATH" -ForegroundColor Gray
+Write-Host "PSModulePath set to: `$tempmodulefolder" -ForegroundColor Gray
 
-# Import module
-Import-Module Rnwood.Dataverse.Data.PowerShell -Force
+# Import module using full path to the manifest (critical for coverlet instrumentation)
+Import-Module '$env:TESTMODULEPATH/Rnwood.Dataverse.Data.PowerShell.psd1' -Force
 
-# Load helper functions from All.Tests.ps1 (without the copy logic)
-. '$TestPath/All.Tests.ps1'
+# Define helper functions inline (same as All.Tests.ps1)
+`$script:metadata = `$null
 
-# Configure Pester to run all test files except All.Tests.ps1
+function global:getMockConnection([ScriptBlock]`$RequestInterceptor = `$null) {
+    if (-not `$script:metadata) {
+        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+        }
+        Add-Type -AssemblyName "System.Runtime.Serialization"
+
+        # Define the DataContractSerializer
+        `$serializer = New-Object System.Runtime.Serialization.DataContractSerializer([Microsoft.Xrm.Sdk.Metadata.EntityMetadata])
+    
+        Get-Item '$TestPath/*.xml' | ForEach-Object {
+            `$stream = [IO.File]::OpenRead(`$_.FullName)
+            `$script:metadata += `$serializer.ReadObject(`$stream)
+            `$stream.Close()
+        }
+    }
+   
+    `$mockService = Get-DataverseConnection -url https://fake.crm.dynamics.com/ -mock `$script:metadata -RequestInterceptor `$RequestInterceptor
+    return `$mockService
+}
+
+function global:newPwsh([scriptblock] `$scriptblock) {
+    if ([System.Environment]::OSVersion.Platform -eq "Unix") {
+        pwsh -noninteractive -noprofile -command `$scriptblock
+    }
+    else {
+        cmd /c pwsh -noninteractive -noprofile -command `$scriptblock
+    }
+}
+
+Write-Host "Helper functions loaded" -ForegroundColor Gray
+
+# Dynamically discover and dot-source all test files (same as All.Tests.ps1)
+`$testFiles = Get-ChildItem -Path '$TestPath' -Filter "*.ps1" | 
+    Where-Object { 
+        `$_.Name -ne "All.Tests.ps1" -and 
+        `$_.Name -notlike "*.Tests.ps1" -and
+        `$_.Name -notlike "generate-*.ps1" -and
+        `$_.Name -notlike "updatemetadata.ps1"
+    }
+
+Write-Host "Dot-sourcing `$(`$testFiles.Count) test files..." -ForegroundColor Gray
+foreach (`$testFile in `$testFiles) {
+    Write-Host "  Loading `$(`$testFile.Name)..." -ForegroundColor Gray
+    . `$testFile.FullName
+}
+
+# Configure Pester to run all the loaded tests
 `$config = New-PesterConfiguration
-`$config.Run.Path = '$TestPath'
-`$config.Run.ExcludePath = '**/All.Tests.ps1'
 `$config.Run.PassThru = `$true
 `$config.Run.Exit = `$false
 `$config.Output.Verbosity = 'Normal'
