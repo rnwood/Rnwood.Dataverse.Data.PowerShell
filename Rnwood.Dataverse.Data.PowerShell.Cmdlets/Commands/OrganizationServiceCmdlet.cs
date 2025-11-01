@@ -1,5 +1,7 @@
 ﻿using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
+using Microsoft.Xrm.Sdk.Query;
 
 using System;
 using System.Collections.Generic;
@@ -48,6 +50,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						null));
 				}
 			}
+		}
+
+		/// <summary>
+		/// Gets the base language code of the organization.
+		/// </summary>
+		/// <returns>The base language code.</returns>
+		protected int GetBaseLanguageCode()
+		{
+			// Retrieve the organization to get the base language code
+			var whoAmIRequest = new OrganizationRequest("WhoAmI");
+			var whoAmIResponse = Connection.Execute(whoAmIRequest);
+			var organizationId = (Guid)whoAmIResponse["OrganizationId"];
+
+			var retrieveRequest = new RetrieveRequest
+			{
+				Target = new EntityReference("organization", organizationId),
+				ColumnSet = new ColumnSet("languagecode")
+			};
+
+			var retrieveResponse = (RetrieveResponse)Connection.Execute(retrieveRequest);
+			var organization = retrieveResponse.Entity;
+
+			return (int)organization["languagecode"];
 		}
 	}
 }

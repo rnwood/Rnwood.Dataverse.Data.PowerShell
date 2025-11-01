@@ -6,7 +6,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Deletes an entity (table) from Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "DataverseEntityMetadata", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
+    [Cmdlet(VerbsCommon.Remove, "DataverseEntityMetadata", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     public class RemoveDataverseEntityMetadataCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>

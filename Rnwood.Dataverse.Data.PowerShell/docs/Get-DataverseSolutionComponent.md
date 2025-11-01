@@ -140,7 +140,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
-Standard PowerShell preference parameter that controls the display of progress information. This cmdlet does not emit progress directly but respects this parameter if passed.
+{{ Fill ProgressAction Description }}
 
 ```yaml
 Type: ActionPreference

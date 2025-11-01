@@ -5,16 +5,19 @@ using System;
 using System.Collections;
 using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
     /// Creates or updates an attribute (column) in Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "DataverseAttribute", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
+    [Cmdlet(VerbsCommon.Set, "DataverseAttributeMetadata", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     [OutputType(typeof(PSObject))]
     public class SetDataverseAttributeMetadataCmdlet : OrganizationServiceCmdlet
     {
+        private int _baseLanguageCode;
+
         /// <summary>
         /// Gets or sets the logical name of the entity.
         /// </summary>
@@ -176,12 +179,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public int? MaxSizeInKB { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to force update even if the attribute exists.
-        /// </summary>
-        [Parameter(HelpMessage = "Force update if the attribute already exists")]
-        public SwitchParameter Force { get; set; }
-
-        /// <summary>
         /// Gets or sets whether to return the created/updated attribute metadata.
         /// </summary>
         [Parameter(HelpMessage = "Return the created or updated attribute metadata")]
@@ -193,6 +190,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
+
+            _baseLanguageCode = GetBaseLanguageCode();
 
             // Check if attribute exists
             AttributeMetadata existingAttribute = null;
@@ -212,16 +211,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 attributeExists = true;
                 WriteVerbose($"Attribute '{AttributeName}' already exists on entity '{EntityName}'");
             }
-            catch (Exception)
+            catch (FaultException<OrganizationServiceFault> ex)
             {
-                WriteVerbose($"Attribute '{AttributeName}' does not exist on entity '{EntityName}' - will create");
-            }
-
-            if (attributeExists && !Force)
-            {
-                if (!ShouldContinue($"Attribute '{AttributeName}' already exists. Update it?", "Confirm Update"))
+                if (ex.HResult == -2146233088) // Object does not exist
                 {
-                    return;
+                    WriteVerbose($"Attribute '{AttributeName}' does not exist - will create");
+                }
+                else
+                {
+                    throw;
                 }
             }
 
@@ -363,12 +361,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (!string.IsNullOrWhiteSpace(DisplayName))
             {
-                attribute.DisplayName = new Label(new LocalizedLabel(DisplayName, 1033), new LocalizedLabel[0]);
+                attribute.DisplayName = new Label(DisplayName, _baseLanguageCode);
             }
 
             if (!string.IsNullOrWhiteSpace(Description))
             {
-                attribute.Description = new Label(new LocalizedLabel(Description, 1033), new LocalizedLabel[0]);
+                attribute.Description = new Label(Description, _baseLanguageCode);
             }
 
             if (!string.IsNullOrWhiteSpace(RequiredLevel))
@@ -537,8 +535,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             var attr = new BooleanAttributeMetadata();
 
-            var trueOption = new OptionMetadata(new Label(new LocalizedLabel(TrueLabel ?? "Yes", 1033), new LocalizedLabel[0]), 1);
-            var falseOption = new OptionMetadata(new Label(new LocalizedLabel(FalseLabel ?? "No", 1033), new LocalizedLabel[0]), 0);
+            var trueOption = new OptionMetadata(new Label(TrueLabel ?? "Yes", _baseLanguageCode), 1);
+            var falseOption = new OptionMetadata(new Label(FalseLabel ?? "No", _baseLanguageCode), 0);
 
             attr.OptionSet = new BooleanOptionSetMetadata(trueOption, falseOption);
 
@@ -583,8 +581,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
 
                     var optionMetadata = value.HasValue 
-                        ? new OptionMetadata(new Label(new LocalizedLabel(label, 1033), new LocalizedLabel[0]), value.Value)
-                        : new OptionMetadata(new Label(new LocalizedLabel(label, 1033), new LocalizedLabel[0]), null);
+                        ? new OptionMetadata(new Label(label, _baseLanguageCode), value.Value)
+                        : new OptionMetadata(new Label(label, _baseLanguageCode), null);
 
                     optionSet.Options.Add(optionMetadata);
                 }
@@ -636,8 +634,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
 
                     var optionMetadata = value.HasValue 
-                        ? new OptionMetadata(new Label(new LocalizedLabel(label, 1033), new LocalizedLabel[0]), value.Value)
-                        : new OptionMetadata(new Label(new LocalizedLabel(label, 1033), new LocalizedLabel[0]), null);
+                        ? new OptionMetadata(new Label(label, _baseLanguageCode), value.Value)
+                        : new OptionMetadata(new Label(label, _baseLanguageCode), null);
 
                     optionSet.Options.Add(optionMetadata);
                 }
@@ -701,6 +699,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void UpdateAttribute(AttributeMetadata existingAttribute)
         {
+            // Validate immutable properties first
+            ValidateImmutableAttributeProperties(existingAttribute);
+
             // Clone the existing attribute
             var attributeToUpdate = CloneAttributeForUpdate(existingAttribute);
 
@@ -709,14 +710,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Update display name
             if (!string.IsNullOrWhiteSpace(DisplayName))
             {
-                attributeToUpdate.DisplayName = new Label(new LocalizedLabel(DisplayName, 1033), new LocalizedLabel[0]);
+                attributeToUpdate.DisplayName = new Label(DisplayName, _baseLanguageCode);
                 hasChanges = true;
             }
 
             // Update description
             if (!string.IsNullOrWhiteSpace(Description))
             {
-                attributeToUpdate.Description = new Label(new LocalizedLabel(Description, 1033), new LocalizedLabel[0]);
+                attributeToUpdate.Description = new Label(Description, _baseLanguageCode);
                 hasChanges = true;
             }
 
@@ -748,6 +749,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (!hasChanges)
             {
                 WriteWarning("No changes specified for update");
+                
+                if (PassThru)
+                {
+                    var result = ConvertAttributeMetadataToPSObject(existingAttribute);
+                    WriteObject(result);
+                }
                 return;
             }
 
@@ -784,6 +791,155 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var retrieveResponse = (RetrieveAttributeResponse)Connection.Execute(retrieveRequest);
                 var result = ConvertAttributeMetadataToPSObject(retrieveResponse.AttributeMetadata);
                 WriteObject(result);
+            }
+        }
+
+        private void ValidateImmutableAttributeProperties(AttributeMetadata existingAttribute)
+        {
+            // Check if SchemaName was provided and is different (immutable)
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(SchemaName)) &&
+                !string.Equals(SchemaName, existingAttribute.SchemaName, StringComparison.OrdinalIgnoreCase))
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new InvalidOperationException($"Cannot change SchemaName from '{existingAttribute.SchemaName}' to '{SchemaName}'. This property is immutable after creation."),
+                    "ImmutableSchemaName",
+                    ErrorCategory.InvalidOperation,
+                    SchemaName));
+            }
+
+            // Check if AttributeType was provided and is different (immutable)
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(AttributeType)))
+            {
+                var existingTypeName = existingAttribute.AttributeType?.ToString() ?? existingAttribute.GetType().Name.Replace("AttributeMetadata", "");
+                if (!string.Equals(AttributeType, existingTypeName, StringComparison.OrdinalIgnoreCase))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot change AttributeType from '{existingTypeName}' to '{AttributeType}'. This property is immutable after creation."),
+                        "ImmutableAttributeType",
+                        ErrorCategory.InvalidOperation,
+                        AttributeType));
+                }
+            }
+
+            // Check if IsSecured was provided and is different (cannot be changed via UpdateAttribute)
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(IsSecured)) &&
+                IsSecured.ToBool() != (existingAttribute.IsSecured ?? false))
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new InvalidOperationException($"Cannot change IsSecured from '{existingAttribute.IsSecured ?? false}' to '{IsSecured.ToBool()}'. Field-level security settings must be configured separately through security profiles."),
+                    "ImmutableIsSecured",
+                    ErrorCategory.InvalidOperation,
+                    null));
+            }
+
+            // Validate type-specific immutable properties
+            if (existingAttribute is StringAttributeMetadata stringAttr)
+            {
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(StringFormat)))
+                {
+                    var currentFormat = stringAttr.Format?.ToString() ?? "Text";
+                    if (!string.Equals(StringFormat, currentFormat, StringComparison.OrdinalIgnoreCase))
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Cannot change StringFormat from '{currentFormat}' to '{StringFormat}'. This property is immutable after creation."),
+                            "ImmutableStringFormat",
+                            ErrorCategory.InvalidOperation,
+                            StringFormat));
+                    }
+                }
+            }
+            else if (existingAttribute is DateTimeAttributeMetadata dateTimeAttr)
+            {
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(DateTimeFormat)))
+                {
+                    var currentFormat = dateTimeAttr.Format?.ToString() ?? "DateAndTime";
+                    if (!string.Equals(DateTimeFormat, currentFormat, StringComparison.OrdinalIgnoreCase))
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Cannot change DateTimeFormat from '{currentFormat}' to '{DateTimeFormat}'. This property is immutable after creation."),
+                            "ImmutableDateTimeFormat",
+                            ErrorCategory.InvalidOperation,
+                            DateTimeFormat));
+                    }
+                }
+
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(DateTimeBehavior)))
+                {
+                    var currentBehavior = dateTimeAttr.DateTimeBehavior?.Value ?? "UserLocal";
+                    if (!string.Equals(DateTimeBehavior, currentBehavior, StringComparison.OrdinalIgnoreCase))
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Cannot change DateTimeBehavior from '{currentBehavior}' to '{DateTimeBehavior}'. This property is immutable after creation."),
+                            "ImmutableDateTimeBehavior",
+                            ErrorCategory.InvalidOperation,
+                            DateTimeBehavior));
+                    }
+                }
+            }
+            else if (existingAttribute is BooleanAttributeMetadata booleanAttr)
+            {
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(TrueLabel)))
+                {
+                    var existingTrueLabel = booleanAttr.OptionSet?.TrueOption?.Label?.UserLocalizedLabel?.Label ?? "Yes";
+                    if (!string.Equals(TrueLabel, existingTrueLabel, StringComparison.OrdinalIgnoreCase))
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Cannot change TrueLabel from '{existingTrueLabel}' to '{TrueLabel}'. To update option set labels, use Set-DataverseOptionSetMetadata."),
+                            "ImmutableBooleanLabels",
+                            ErrorCategory.InvalidOperation,
+                            null));
+                    }
+                }
+
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(FalseLabel)))
+                {
+                    var existingFalseLabel = booleanAttr.OptionSet?.FalseOption?.Label?.UserLocalizedLabel?.Label ?? "No";
+                    if (!string.Equals(FalseLabel, existingFalseLabel, StringComparison.OrdinalIgnoreCase))
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Cannot change FalseLabel from '{existingFalseLabel}' to '{FalseLabel}'. To update option set labels, use Set-DataverseOptionSetMetadata."),
+                            "ImmutableBooleanLabels",
+                            ErrorCategory.InvalidOperation,
+                            null));
+                    }
+                }
+
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(DefaultValue)) &&
+                    DefaultValue != booleanAttr.DefaultValue)
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot change DefaultValue from '{booleanAttr.DefaultValue}' to '{DefaultValue}'. This property is immutable for boolean attributes."),
+                        "ImmutableDefaultValue",
+                        ErrorCategory.InvalidOperation,
+                        null));
+                }
+            }
+            else
+            {
+                PicklistAttributeMetadata picklistAttr = existingAttribute as PicklistAttributeMetadata;
+                MultiSelectPicklistAttributeMetadata multiPicklistAttr = existingAttribute as MultiSelectPicklistAttributeMetadata;
+                if (picklistAttr != null || multiPicklistAttr != null)
+                {
+                    var optionSet = picklistAttr?.OptionSet ?? multiPicklistAttr?.OptionSet;
+                    if (MyInvocation.BoundParameters.ContainsKey(nameof(OptionSetName)) &&
+                        !string.Equals(OptionSetName, optionSet?.Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Cannot change OptionSetName from '{optionSet?.Name}' to '{OptionSetName}'. To update option set values, use Set-DataverseOptionSetMetadata."),
+                            "ImmutableOptionSetName",
+                            ErrorCategory.InvalidOperation,
+                            OptionSetName));
+                    }
+
+                    if (MyInvocation.BoundParameters.ContainsKey(nameof(Options)))
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Cannot change Options after creation. To update option set values, use Set-DataverseOptionSetMetadata."),
+                            "ImmutableOptions",
+                            ErrorCategory.InvalidOperation,
+                            null));
+                    }
+                }
             }
         }
 

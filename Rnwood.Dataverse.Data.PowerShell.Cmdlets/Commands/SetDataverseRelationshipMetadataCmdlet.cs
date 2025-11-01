@@ -4,16 +4,19 @@ using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
     /// Creates or updates a relationship in Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "DataverseRelationship", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
+    [Cmdlet(VerbsCommon.Set, "DataverseRelationshipMetadata", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     [OutputType(typeof(RelationshipMetadataBase))]
     public class SetDataverseRelationshipMetadataCmdlet : OrganizationServiceCmdlet
     {
+        private int _baseLanguageCode;
+
         /// <summary>
         /// Gets or sets the schema name of the relationship.
         /// </summary>
@@ -141,6 +144,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
+            _baseLanguageCode = GetBaseLanguageCode();
+
             // Check if relationship exists
             bool relationshipExists = CheckRelationshipExists(SchemaName);
 
@@ -148,9 +153,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 // For now, we'll just inform the user that update is not supported
                 // Full update support would require more complex logic
-                WriteWarning($"Relationship '{SchemaName}' already exists. Updating existing relationships is limited in Dataverse. Consider removing and recreating.");
+                WriteWarning($"Relationship '{SchemaName}' already exists");
                 
-                if (!ShouldProcess(SchemaName, "Update relationship (limited support)"))
+                if (!ShouldProcess(SchemaName, "Update relationship"))
                 {
                     return;
                 }
@@ -191,10 +196,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 Connection.Execute(request);
                 return true;
             }
-            catch (Exception ex)
+            catch (FaultException<OrganizationServiceFault> ex)
             {
-                WriteVerbose($"Relationship does not exist: {ex.Message}");
-                return false;
+                if (ex.HResult == -2146233088) // Object does not exist
+                {
+                    return false;
+                }
+                else
+                {
+                    throw;
+                }
             }
         }
 
@@ -222,8 +233,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 SchemaName = LookupAttributeSchemaName,
                 LogicalName = LookupAttributeSchemaName.ToLower(),
-                DisplayName = new Label(LookupAttributeDisplayName ?? LookupAttributeSchemaName, 1033),
-                Description = new Label(LookupAttributeDescription ?? string.Empty, 1033),
+                DisplayName = new Label(LookupAttributeDisplayName ?? LookupAttributeSchemaName, _baseLanguageCode),
+                Description = new Label(LookupAttributeDescription ?? string.Empty, _baseLanguageCode),
                 RequiredLevel = new AttributeRequiredLevelManagedProperty(ParseRequiredLevel(LookupAttributeRequiredLevel)),
                 IsValidForAdvancedFind = new BooleanManagedProperty(IsSearchable.IsPresent)
             };
@@ -304,19 +315,304 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void UpdateRelationship()
         {
-            // Relationship updates are very limited in Dataverse
-            // Most properties are immutable after creation
-            WriteWarning("Relationship update functionality is limited. Most relationship properties are immutable after creation.");
+            // Retrieve the existing relationship
+            var retrieveRequest = new RetrieveRelationshipRequest
+            {
+                Name = SchemaName
+            };
             
-            // For now, we just retrieve and display the relationship
+            var retrieveResponse = (RetrieveRelationshipResponse)Connection.Execute(retrieveRequest);
+            var existingRelationship = retrieveResponse.RelationshipMetadata;
+
+            WriteVerbose($"Retrieved existing relationship '{SchemaName}' of type {existingRelationship.RelationshipType}");
+
+            // Validate that immutable properties haven't been changed
+            ValidateImmutableProperties(existingRelationship);
+
+            // Clone the relationship for update
+            RelationshipMetadataBase relationshipToUpdate;
+            bool hasChanges = false;
+
+            if (existingRelationship is OneToManyRelationshipMetadata existingOneToMany)
+            {
+                var updatedOneToMany = new OneToManyRelationshipMetadata
+                {
+                    MetadataId = existingOneToMany.MetadataId,
+                    SchemaName = existingOneToMany.SchemaName,
+                    ReferencedEntity = existingOneToMany.ReferencedEntity,
+                    ReferencingEntity = existingOneToMany.ReferencingEntity,
+                    ReferencedAttribute = existingOneToMany.ReferencedAttribute,
+                    ReferencingAttribute = existingOneToMany.ReferencingAttribute,
+                    IsHierarchical = existingOneToMany.IsHierarchical,
+                    CascadeConfiguration = new CascadeConfiguration
+                    {
+                        Assign = existingOneToMany.CascadeConfiguration?.Assign ?? CascadeType.NoCascade,
+                        Share = existingOneToMany.CascadeConfiguration?.Share ?? CascadeType.NoCascade,
+                        Unshare = existingOneToMany.CascadeConfiguration?.Unshare ?? CascadeType.NoCascade,
+                        Reparent = existingOneToMany.CascadeConfiguration?.Reparent ?? CascadeType.NoCascade,
+                        Delete = existingOneToMany.CascadeConfiguration?.Delete ?? CascadeType.NoCascade,
+                        Merge = existingOneToMany.CascadeConfiguration?.Merge ?? CascadeType.NoCascade
+                    }
+                };
+
+                // Check if cascade behaviors were specified - if any were, update them
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(CascadeAssign)))
+                {
+                    updatedOneToMany.CascadeConfiguration.Assign = ParseCascadeType(CascadeAssign);
+                    hasChanges = true;
+                    WriteVerbose($"Updating CascadeAssign to {CascadeAssign}");
+                }
+                
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(CascadeShare)))
+                {
+                    updatedOneToMany.CascadeConfiguration.Share = ParseCascadeType(CascadeShare);
+                    hasChanges = true;
+                    WriteVerbose($"Updating CascadeShare to {CascadeShare}");
+                }
+                
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(CascadeUnshare)))
+                {
+                    updatedOneToMany.CascadeConfiguration.Unshare = ParseCascadeType(CascadeUnshare);
+                    hasChanges = true;
+                    WriteVerbose($"Updating CascadeUnshare to {CascadeUnshare}");
+                }
+                
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(CascadeReparent)))
+                {
+                    updatedOneToMany.CascadeConfiguration.Reparent = ParseCascadeType(CascadeReparent);
+                    hasChanges = true;
+                    WriteVerbose($"Updating CascadeReparent to {CascadeReparent}");
+                }
+                
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(CascadeDelete)))
+                {
+                    updatedOneToMany.CascadeConfiguration.Delete = ParseCascadeType(CascadeDelete);
+                    hasChanges = true;
+                    WriteVerbose($"Updating CascadeDelete to {CascadeDelete}");
+                }
+                
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(CascadeMerge)))
+                {
+                    updatedOneToMany.CascadeConfiguration.Merge = ParseCascadeType(CascadeMerge);
+                    hasChanges = true;
+                    WriteVerbose($"Updating CascadeMerge to {CascadeMerge}");
+                }
+
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(IsHierarchical)))
+                {
+                    updatedOneToMany.IsHierarchical = IsHierarchical.IsPresent;
+                    hasChanges = true;
+                    WriteVerbose($"Updating IsHierarchical to {IsHierarchical.IsPresent}");
+                }
+
+                relationshipToUpdate = updatedOneToMany;
+            }
+            else if (existingRelationship is ManyToManyRelationshipMetadata existingManyToMany)
+            {
+                // ManyToMany relationships have very limited updateable properties
+                var updatedManyToMany = new ManyToManyRelationshipMetadata
+                {
+                    MetadataId = existingManyToMany.MetadataId,
+                    SchemaName = existingManyToMany.SchemaName,
+                    Entity1LogicalName = existingManyToMany.Entity1LogicalName,
+                    Entity2LogicalName = existingManyToMany.Entity2LogicalName,
+                    IntersectEntityName = existingManyToMany.IntersectEntityName
+                };
+
+                relationshipToUpdate = updatedManyToMany;
+                
+                // ManyToMany relationships don't have many updateable properties
+                WriteWarning("ManyToMany relationships have very limited updateable properties. Most properties are immutable after creation.");
+            }
+            else
+            {
+                WriteError(new ErrorRecord(
+                    new NotSupportedException($"Unsupported relationship type: {existingRelationship.GetType().Name}"),
+                    "UnsupportedRelationshipType",
+                    ErrorCategory.InvalidOperation,
+                    existingRelationship));
+                return;
+            }
+
+            if (!hasChanges)
+            {
+                WriteWarning($"No changes specified for relationship '{SchemaName}'. Specify cascade behavior parameters to update the relationship.");
+                
+                if (PassThru)
+                {
+                    WriteObject(existingRelationship);
+                }
+                return;
+            }
+
+            var updateRequest = new UpdateRelationshipRequest
+            {
+                Relationship = relationshipToUpdate,
+                MergeLabels = true
+            };
+
+            WriteVerbose($"Updating relationship '{SchemaName}'");
+
+            Connection.Execute(updateRequest);
+
+            WriteVerbose($"Relationship updated successfully");
+
             if (PassThru)
             {
-                var retrieveRequest = new RetrieveRelationshipRequest
+                // Retrieve and return the updated relationship
+                var retrieveUpdatedRequest = new RetrieveRelationshipRequest
                 {
                     Name = SchemaName
                 };
-                var retrieveResponse = (RetrieveRelationshipResponse)Connection.Execute(retrieveRequest);
-                WriteObject(retrieveResponse.RelationshipMetadata);
+                var retrieveUpdatedResponse = (RetrieveRelationshipResponse)Connection.Execute(retrieveUpdatedRequest);
+                WriteObject(retrieveUpdatedResponse.RelationshipMetadata);
+            }
+        }
+
+        private void ValidateImmutableProperties(RelationshipMetadataBase existingRelationship)
+        {
+            // Check if relationship type matches
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(RelationshipType)))
+            {
+                var existingType = existingRelationship is OneToManyRelationshipMetadata ? "OneToMany" : "ManyToMany";
+                if (!string.Equals(RelationshipType, existingType, StringComparison.OrdinalIgnoreCase))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot change relationship type from {existingType} to {RelationshipType}. This property is immutable after creation."),
+                        "ImmutableRelationshipType",
+                        ErrorCategory.InvalidOperation,
+                        RelationshipType));
+                }
+            }
+
+            if (existingRelationship is OneToManyRelationshipMetadata oneToMany)
+            {
+                // Check ReferencedEntity
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(ReferencedEntity)) &&
+                    !string.Equals(ReferencedEntity, oneToMany.ReferencedEntity, StringComparison.OrdinalIgnoreCase))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot change ReferencedEntity from '{oneToMany.ReferencedEntity}' to '{ReferencedEntity}'. This property is immutable after creation."),
+                        "ImmutableReferencedEntity",
+                        ErrorCategory.InvalidOperation,
+                        ReferencedEntity));
+                }
+
+                // Check ReferencingEntity
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(ReferencingEntity)) &&
+                    !string.Equals(ReferencingEntity, oneToMany.ReferencingEntity, StringComparison.OrdinalIgnoreCase))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot change ReferencingEntity from '{oneToMany.ReferencingEntity}' to '{ReferencingEntity}'. This property is immutable after creation."),
+                        "ImmutableReferencingEntity",
+                        ErrorCategory.InvalidOperation,
+                        ReferencingEntity));
+                }
+
+                // Check lookup attribute properties (immutable after creation)
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(LookupAttributeSchemaName)))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot change LookupAttributeSchemaName when updating a relationship. The lookup attribute is immutable after creation."),
+                        "ImmutableLookupAttribute",
+                        ErrorCategory.InvalidOperation,
+                        LookupAttributeSchemaName));
+                }
+
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(LookupAttributeDisplayName)))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot change LookupAttributeDisplayName when updating a relationship. The lookup attribute is immutable after creation."),
+                        "ImmutableLookupAttribute",
+                        ErrorCategory.InvalidOperation,
+                        LookupAttributeDisplayName));
+                }
+
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(LookupAttributeDescription)))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot change LookupAttributeDescription when updating a relationship. The lookup attribute is immutable after creation."),
+                        "ImmutableLookupAttribute",
+                        ErrorCategory.InvalidOperation,
+                        LookupAttributeDescription));
+                }
+
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(LookupAttributeRequiredLevel)))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot change LookupAttributeRequiredLevel when updating a relationship. The lookup attribute is immutable after creation."),
+                        "ImmutableLookupAttribute",
+                        ErrorCategory.InvalidOperation,
+                        LookupAttributeRequiredLevel));
+                }
+
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(IsSearchable)))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot change IsSearchable when updating a relationship. The lookup attribute is immutable after creation."),
+                        "ImmutableLookupAttribute",
+                        ErrorCategory.InvalidOperation,
+                        null));
+                }
+            }
+            else if (existingRelationship is ManyToManyRelationshipMetadata manyToMany)
+            {
+                // Check Entity1
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(ReferencedEntity)) &&
+                    !string.Equals(ReferencedEntity, manyToMany.Entity1LogicalName, StringComparison.OrdinalIgnoreCase))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot change Entity1 (ReferencedEntity) from '{manyToMany.Entity1LogicalName}' to '{ReferencedEntity}'. This property is immutable after creation."),
+                        "ImmutableEntity1",
+                        ErrorCategory.InvalidOperation,
+                        ReferencedEntity));
+                }
+
+                // Check Entity2
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(ReferencingEntity)) &&
+                    !string.Equals(ReferencingEntity, manyToMany.Entity2LogicalName, StringComparison.OrdinalIgnoreCase))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot change Entity2 (ReferencingEntity) from '{manyToMany.Entity2LogicalName}' to '{ReferencingEntity}'. This property is immutable after creation."),
+                        "ImmutableEntity2",
+                        ErrorCategory.InvalidOperation,
+                        ReferencingEntity));
+                }
+
+                // Check IntersectEntityName
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(IntersectEntityName)) &&
+                    !string.Equals(IntersectEntityName, manyToMany.IntersectEntityName, StringComparison.OrdinalIgnoreCase))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot change IntersectEntityName from '{manyToMany.IntersectEntityName}' to '{IntersectEntityName}'. This property is immutable after creation."),
+                        "ImmutableIntersectEntityName",
+                        ErrorCategory.InvalidOperation,
+                        IntersectEntityName));
+                }
+
+                // Check if cascade behaviors are specified (not supported for ManyToMany)
+                var cascadeParams = new[] { nameof(CascadeAssign), nameof(CascadeShare), nameof(CascadeUnshare), 
+                                            nameof(CascadeReparent), nameof(CascadeDelete), nameof(CascadeMerge) };
+                foreach (var param in cascadeParams)
+                {
+                    if (MyInvocation.BoundParameters.ContainsKey(param))
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Cannot set {param} on ManyToMany relationships. Cascade behaviors are not applicable to this relationship type."),
+                            "UnsupportedCascadeBehavior",
+                            ErrorCategory.InvalidOperation,
+                            param));
+                    }
+                }
+
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(IsHierarchical)))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot set IsHierarchical on ManyToMany relationships. This property is only applicable to OneToMany relationships."),
+                        "UnsupportedIsHierarchical",
+                        ErrorCategory.InvalidOperation,
+                        null));
+                }
             }
         }
 

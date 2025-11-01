@@ -2,14 +2,16 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
+using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
     /// Creates or updates an entity (table) in Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "DataverseEntityMetadata", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
+    [Cmdlet(VerbsCommon.Set, "DataverseEntityMetadata", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     [OutputType(typeof(PSObject))]
     public class SetDataverseEntityMetadataCmdlet : OrganizationServiceCmdlet
     {
@@ -29,13 +31,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the display name of the entity.
         /// </summary>
-        [Parameter(HelpMessage = "Display name of the entity")]
+        [Parameter(HelpMessage = "Display name of the entity (required for create)")]
         public string DisplayName { get; set; }
 
         /// <summary>
         /// Gets or sets the display collection name of the entity.
         /// </summary>
-        [Parameter(HelpMessage = "Display collection name (plural) of the entity")]
+        [Parameter(HelpMessage = "Display collection name (plural) of the entity (required for create)")]
         public string DisplayCollectionName { get; set; }
 
         /// <summary>
@@ -94,12 +96,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public int? PrimaryAttributeMaxLength { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to force update even if the entity exists.
-        /// </summary>
-        [Parameter(HelpMessage = "Force update if the entity already exists")]
-        public SwitchParameter Force { get; set; }
-
-        /// <summary>
         /// Gets or sets whether to return the created/updated entity metadata.
         /// </summary>
         [Parameter(HelpMessage = "Return the created or updated entity metadata")]
@@ -130,16 +126,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 entityExists = true;
                 WriteVerbose($"Entity '{EntityName}' already exists");
             }
-            catch (Exception)
+            catch (FaultException<OrganizationServiceFault> ex)
             {
-                WriteVerbose($"Entity '{EntityName}' does not exist - will create");
-            }
-
-            if (entityExists && !Force)
-            {
-                if (!ShouldContinue($"Entity '{EntityName}' already exists. Update it?", "Confirm Update"))
+                if (ex.HResult == -2146233088) // Object does not exist
                 {
-                    return;
+                    WriteVerbose($"Entity '{EntityName}' does not exist - will create");
+                }
+                else
+                {
+                    throw;
                 }
             }
 
@@ -177,25 +172,42 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(DisplayName))
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new ArgumentException("DisplayName is required when creating a new entity"),
+                    "DisplayNameRequired",
+                    ErrorCategory.InvalidArgument,
+                    null));
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(DisplayCollectionName))
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new ArgumentException("DisplayCollectionName is required when creating a new entity"),
+                    "DisplayCollectionNameRequired",
+                    ErrorCategory.InvalidArgument,
+                    null));
+                return;
+            }
+
+            // Get the organization's base language code
+            int baseLanguageCode = GetBaseLanguageCode();
+
             var entity = new EntityMetadata
             {
                 SchemaName = SchemaName,
                 LogicalName = EntityName
             };
 
-            if (!string.IsNullOrWhiteSpace(DisplayName))
-            {
-                entity.DisplayName = new Label(new LocalizedLabel(DisplayName, 1033), new LocalizedLabel[0]);
-            }
+            entity.DisplayName = new Label(DisplayName, baseLanguageCode);
 
-            if (!string.IsNullOrWhiteSpace(DisplayCollectionName))
-            {
-                entity.DisplayCollectionName = new Label(new LocalizedLabel(DisplayCollectionName, 1033), new LocalizedLabel[0]);
-            }
+            entity.DisplayCollectionName = new Label(DisplayCollectionName, baseLanguageCode);
 
             if (!string.IsNullOrWhiteSpace(Description))
             {
-                entity.Description = new Label(new LocalizedLabel(Description, 1033), new LocalizedLabel[0]);
+                entity.Description = new Label(Description, baseLanguageCode);
             }
 
             if (!string.IsNullOrWhiteSpace(OwnershipType))
@@ -234,7 +246,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 LogicalName = PrimaryAttributeSchemaName.ToLowerInvariant(),
                 RequiredLevel = new AttributeRequiredLevelManagedProperty(AttributeRequiredLevel.None),
                 MaxLength = PrimaryAttributeMaxLength ?? 100,
-                DisplayName = new Label(new LocalizedLabel(PrimaryAttributeDisplayName ?? "Name", 1033), new LocalizedLabel[0])
+                DisplayName = new Label(PrimaryAttributeDisplayName ?? "Name", baseLanguageCode)
             };
 
             var request = new CreateEntityRequest
@@ -263,7 +275,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var retrieveRequest = new RetrieveEntityRequest
                 {
                     LogicalName = EntityName,
-                    EntityFilters = EntityFilters.Entity,
+                    EntityFilters = EntityFilters.Entity | EntityFilters.Attributes,
                     RetrieveAsIfPublished = false
                 };
 
@@ -275,6 +287,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void UpdateEntity(EntityMetadata existingEntity)
         {
+            // Validate immutable properties first
+            ValidateImmutableEntityProperties(existingEntity);
+
+            // Get the organization's base language code
+            int baseLanguageCode = GetBaseLanguageCode();
+
             var entityToUpdate = new EntityMetadata
             {
                 MetadataId = existingEntity.MetadataId,
@@ -286,21 +304,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Update display name
             if (!string.IsNullOrWhiteSpace(DisplayName))
             {
-                entityToUpdate.DisplayName = new Label(new LocalizedLabel(DisplayName, 1033), new LocalizedLabel[0]);
+                entityToUpdate.DisplayName = new Label(DisplayName, baseLanguageCode);
                 hasChanges = true;
             }
 
             // Update display collection name
             if (!string.IsNullOrWhiteSpace(DisplayCollectionName))
             {
-                entityToUpdate.DisplayCollectionName = new Label(new LocalizedLabel(DisplayCollectionName, 1033), new LocalizedLabel[0]);
+                entityToUpdate.DisplayCollectionName = new Label(DisplayCollectionName, baseLanguageCode);
                 hasChanges = true;
             }
 
             // Update description
             if (!string.IsNullOrWhiteSpace(Description))
             {
-                entityToUpdate.Description = new Label(new LocalizedLabel(Description, 1033), new LocalizedLabel[0]);
+                entityToUpdate.Description = new Label(Description, baseLanguageCode);
                 hasChanges = true;
             }
 
@@ -321,12 +339,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (!hasChanges)
             {
                 WriteWarning("No changes specified for update");
+                
+                if (PassThru)
+                {
+                    var result = ConvertEntityMetadataToPSObject(existingEntity);
+                    WriteObject(result);
+                }
                 return;
             }
 
             var request = new UpdateEntityRequest
             {
-                Entity = entityToUpdate
+                Entity = entityToUpdate,
+                MergeLabels = true
             };
 
             if (!ShouldProcess($"Entity '{EntityName}'", "Update entity metadata"))
@@ -349,13 +374,104 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var retrieveRequest = new RetrieveEntityRequest
                 {
                     LogicalName = EntityName,
-                    EntityFilters = EntityFilters.Entity,
+                    EntityFilters = EntityFilters.Entity | EntityFilters.Attributes,
                     RetrieveAsIfPublished = false
                 };
 
                 var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
                 var result = ConvertEntityMetadataToPSObject(retrieveResponse.EntityMetadata);
                 WriteObject(result);
+            }
+        }
+
+        private void ValidateImmutableEntityProperties(EntityMetadata existingEntity)
+        {
+            // Check if SchemaName was provided and is different (immutable)
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(SchemaName)) &&
+                !string.Equals(SchemaName, existingEntity.SchemaName, StringComparison.OrdinalIgnoreCase))
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new InvalidOperationException($"Cannot change SchemaName from '{existingEntity.SchemaName}' to '{SchemaName}'. This property is immutable after creation."),
+                    "ImmutableSchemaName",
+                    ErrorCategory.InvalidOperation,
+                    SchemaName));
+            }
+
+            // Check if OwnershipType was provided and is different (immutable)
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(OwnershipType)))
+            {
+                var existingOwnershipType = existingEntity.OwnershipType?.ToString() ?? "UserOwned";
+                if (!string.Equals(OwnershipType, existingOwnershipType, StringComparison.OrdinalIgnoreCase))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot change OwnershipType from '{existingOwnershipType}' to '{OwnershipType}'. This property is immutable after creation."),
+                        "ImmutableOwnershipType",
+                        ErrorCategory.InvalidOperation,
+                        OwnershipType));
+                }
+            }
+
+            // Check if HasActivities was provided and is different (immutable after creation)
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasActivities)) &&
+                HasActivities.ToBool() != existingEntity.HasActivities)
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new InvalidOperationException($"Cannot change HasActivities from '{existingEntity.HasActivities}' to '{HasActivities.ToBool()}'. This property is immutable after creation."),
+                    "ImmutableHasActivities",
+                    ErrorCategory.InvalidOperation,
+                    null));
+            }
+
+            // Check if HasNotes was provided and is different (immutable after creation)
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasNotes)) &&
+                HasNotes.ToBool() != existingEntity.HasNotes)
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new InvalidOperationException($"Cannot change HasNotes from '{existingEntity.HasNotes}' to '{HasNotes.ToBool()}'. This property is immutable after creation."),
+                    "ImmutableHasNotes",
+                    ErrorCategory.InvalidOperation,
+                    null));
+            }
+
+            // Check if primary attribute properties were provided and are different (immutable after creation)
+            var primaryAttribute = existingEntity.Attributes?.FirstOrDefault(a => a.LogicalName == existingEntity.PrimaryNameAttribute);
+            if (primaryAttribute != null)
+            {
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(PrimaryAttributeSchemaName)) &&
+                    !string.Equals(PrimaryAttributeSchemaName, primaryAttribute.SchemaName, StringComparison.OrdinalIgnoreCase))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Cannot change PrimaryAttributeSchemaName from '{primaryAttribute.SchemaName}' to '{PrimaryAttributeSchemaName}'. The primary attribute is immutable."),
+                        "ImmutablePrimaryAttribute",
+                        ErrorCategory.InvalidOperation,
+                        PrimaryAttributeSchemaName));
+                }
+
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(PrimaryAttributeDisplayName)))
+                {
+                    var existingDisplayName = primaryAttribute.DisplayName?.UserLocalizedLabel?.Label ?? "";
+                    if (!string.Equals(PrimaryAttributeDisplayName, existingDisplayName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Cannot change PrimaryAttributeDisplayName from '{existingDisplayName}' to '{PrimaryAttributeDisplayName}'. To update the primary attribute, use Set-DataverseAttributeMetadata."),
+                            "ImmutablePrimaryAttribute",
+                            ErrorCategory.InvalidOperation,
+                            PrimaryAttributeDisplayName));
+                    }
+                }
+
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(PrimaryAttributeMaxLength)))
+                {
+                    var existingMaxLength = (primaryAttribute as StringAttributeMetadata)?.MaxLength ?? 0;
+                    if (PrimaryAttributeMaxLength != existingMaxLength)
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Cannot change PrimaryAttributeMaxLength from '{existingMaxLength}' to '{PrimaryAttributeMaxLength}'. To update the primary attribute, use Set-DataverseAttributeMetadata."),
+                            "ImmutablePrimaryAttribute",
+                            ErrorCategory.InvalidOperation,
+                            PrimaryAttributeMaxLength));
+                    }
+                }
             }
         }
 

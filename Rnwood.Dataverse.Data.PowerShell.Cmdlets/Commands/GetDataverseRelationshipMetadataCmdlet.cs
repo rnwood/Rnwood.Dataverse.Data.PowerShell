@@ -10,7 +10,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Retrieves relationship metadata from Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "DataverseRelationship")]
+    [Cmdlet(VerbsCommon.Get, "DataverseRelationshipMetadata")]
     [OutputType(typeof(RelationshipMetadataBase))]
     public class GetDataverseRelationshipMetadataCmdlet : OrganizationServiceCmdlet
     {

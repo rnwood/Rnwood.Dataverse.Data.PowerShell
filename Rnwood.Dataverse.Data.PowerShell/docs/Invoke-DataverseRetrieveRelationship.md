@@ -5,31 +5,48 @@ online version:
 schema: 2.0.0
 ---
 
-# Invoke-DataverseRetrieveRelationship
+# Invoke-DataverseRetrieveRecordWall
 
 ## SYNOPSIS
-Contains the data that is needed to retrieve table relationship metadata.
+Contains the data that is needed to retrieve pages of posts, including comments for each post, for a specified record.
 
-[Microsoft Learn: Microsoft.Xrm.Sdk.Messages.RetrieveRelationshipRequest](https://learn.microsoft.com/dotnet/api/Microsoft.Xrm.Sdk.Messages.RetrieveRelationshipRequest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.RetrieveRecordWallRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.RetrieveRecordWallRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
 ```
-Invoke-DataverseRetrieveRelationship [-MetadataId <Guid>] [-Name <String>] [-RetrieveAsIfPublished <Boolean>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseRetrieveRecordWall [-Entity <PSObject>] [-PageNumber <Int32>] [-PageSize <Int32>]
+ [-CommentsPerPost <Int32>] [-StartDate <DateTime>] [-EndDate <DateTime>] [-Type <OptionSetValue>]
+ [-Source <OptionSetValue>] [-SortDirection <Boolean>] [-Keyword <String>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Contains the data that is needed to retrieve table relationship metadata.
+Contains the data that is needed to retrieve pages of posts, including comments for each post, for a specified record.
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> Invoke-DataverseRetrieveRelationship -Connection <ServiceClient> -MetadataId <Guid> -Name <String> -RetrieveAsIfPublished <Boolean>
+PS C:\> Invoke-DataverseRetrieveRecordWall -Connection <ServiceClient> -Entity <PSObject> -PageNumber <Int32> -PageSize <Int32> -CommentsPerPost <Int32> -StartDate <DateTime> -EndDate <DateTime> -Type <OptionSetValue> -Source <OptionSetValue> -SortDirection <Boolean> -Keyword <String>
 ```
 
 ## PARAMETERS
+
+### -CommentsPerPost
+Gets or sets, for retrieval, the number of comments per post. Required.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -Confirm
 Prompts you for confirmation before running the cmdlet.
@@ -61,11 +78,11 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -MetadataId
-The unique identifier for the attribute. Optional.
+### -EndDate
+Gets or sets the end date and time. Required.
 
 ```yaml
-Type: Guid
+Type: DateTime
 Parameter Sets: (All)
 Aliases:
 
@@ -76,8 +93,23 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Name
-List of names (primary attribute value) of records to retrieve.
+### -Entity
+Gets or sets the duplicate rule that you want updated. Required. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with properties that will be converted to Entity. Use corresponding TableName parameter to specify the entity type. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+
+```yaml
+Type: PSObject
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Keyword
+Gets or sets the Keyword for the request.
 
 ```yaml
 Type: String
@@ -91,11 +123,86 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -RetrieveAsIfPublished
-Gets or sets whether to retrieve the metadata that has not been published. Required.
+### -PageNumber
+Gets or sets the page number in the source file. Required.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PageSize
+Number of records to request per page. Default is 1000.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SortDirection
+Gets or sets the SortDirection for the request.
 
 ```yaml
 Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Source
+For internal use only. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name. Accepts PSObject with Id and TableName/EntityName/LogicalName properties, or a string containing the entity name for lookup by name.
+
+```yaml
+Type: OptionSetValue
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -StartDate
+Gets or sets the start date of the range in UTC.
+
+```yaml
+Type: DateTime
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Type
+Gets or sets a value that specifies the change type.
+
+```yaml
+Type: OptionSetValue
 Parameter Sets: (All)
 Aliases:
 

@@ -3,18 +3,22 @@ using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
     /// Creates or updates a global option set in Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "DataverseOptionSetMetadata", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
+    [Cmdlet(VerbsCommon.Set, "DataverseOptionSetMetadata", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     [OutputType(typeof(PSObject))]
     public class SetDataverseOptionSetMetadataCmdlet : OrganizationServiceCmdlet
     {
+        private int _baseLanguageCode;
+
         /// <summary>
         /// Gets or sets the name of the option set.
         /// </summary>
@@ -40,10 +44,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Hashtable[] Options { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to force update even if the option set exists.
+        /// Gets or sets whether to not remove existing options that are not provided.
         /// </summary>
-        [Parameter(HelpMessage = "Force update if the option set already exists")]
-        public SwitchParameter Force { get; set; }
+        [Parameter(HelpMessage = "Do not remove existing options that are not provided")]
+        public SwitchParameter NoRemoveMissingOptions { get; set; }
 
         /// <summary>
         /// Gets or sets whether to return the created/updated option set metadata.
@@ -57,6 +61,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
+
+            _baseLanguageCode = GetBaseLanguageCode();
 
             if (Options == null || Options.Length == 0)
             {
@@ -83,25 +89,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var retrieveResponse = (RetrieveOptionSetResponse)Connection.Execute(retrieveRequest);
                 existingOptionSet = retrieveResponse.OptionSetMetadata as OptionSetMetadata;
                 optionSetExists = existingOptionSet != null;
-                
+
                 if (optionSetExists)
                 {
                     WriteVerbose($"Global option set '{Name}' already exists");
                 }
             }
-            catch (Exception)
+            catch (FaultException<OrganizationServiceFault> ex)
             {
-                WriteVerbose($"Global option set '{Name}' does not exist - will create");
-            }
-
-            if (optionSetExists && !Force)
-            {
-                if (!ShouldContinue($"Global option set '{Name}' already exists. Update it?", "Confirm Update"))
+                if (ex.HResult == -2146233088) // Object does not exist
                 {
-                    return;
+                    WriteVerbose($"Global option set '{Name}' does not exist - will create");
+                }
+                else
+                {
+                    throw;
                 }
             }
 
+            catch (Exception)
+            {
+
+            }
+
+   
             if (optionSetExists)
             {
                 // Update existing option set
@@ -125,12 +136,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (!string.IsNullOrWhiteSpace(DisplayName))
             {
-                optionSet.DisplayName = new Label(new LocalizedLabel(DisplayName, 1033), new LocalizedLabel[0]);
+                optionSet.DisplayName = new Label(DisplayName, _baseLanguageCode);
             }
 
             if (!string.IsNullOrWhiteSpace(Description))
             {
-                optionSet.Description = new Label(new LocalizedLabel(Description, 1033), new LocalizedLabel[0]);
+                optionSet.Description = new Label(Description, _baseLanguageCode);
             }
 
             foreach (var option in Options)
@@ -146,8 +157,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 var optionMetadata = value.HasValue
-                    ? new OptionMetadata(new Label(new LocalizedLabel(label, 1033), new LocalizedLabel[0]), value.Value)
-                    : new OptionMetadata(new Label(new LocalizedLabel(label, 1033), new LocalizedLabel[0]), null);
+                    ? new OptionMetadata(new Label(label, _baseLanguageCode), value.Value)
+                    : new OptionMetadata(new Label(label, _baseLanguageCode), null);
 
                 if (!string.IsNullOrWhiteSpace(color))
                 {
@@ -156,7 +167,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (!string.IsNullOrWhiteSpace(description))
                 {
-                    optionMetadata.Description = new Label(new LocalizedLabel(description, 1033), new LocalizedLabel[0]);
+                    optionMetadata.Description = new Label(description, _baseLanguageCode);
                 }
 
                 optionSet.Options.Add(optionMetadata);
@@ -195,6 +206,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void UpdateOptionSet(OptionSetMetadata existingOptionSet)
         {
+            // Validate immutable properties first
+            ValidateImmutableProperties(existingOptionSet);
+
             bool hasChanges = false;
 
             // Update display name
@@ -205,12 +219,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     OptionSet = new OptionSetMetadata
                     {
                         Name = Name,
-                        DisplayName = new Label(new LocalizedLabel(DisplayName, 1033), new LocalizedLabel[0])
-                    }
+                        DisplayName = new Label(DisplayName, _baseLanguageCode)
+                    },
+                    MergeLabels = true
                 };
+
+                if (!ShouldProcess($"Global option set '{Name}'", "Update display name"))
+                {
+                    return;
+                }
 
                 Connection.Execute(updateDisplayNameRequest);
                 hasChanges = true;
+                WriteVerbose($"Updated display name to '{DisplayName}'");
             }
 
             // Update description
@@ -221,12 +242,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     OptionSet = new OptionSetMetadata
                     {
                         Name = Name,
-                        Description = new Label(new LocalizedLabel(Description, 1033), new LocalizedLabel[0])
-                    }
+                        Description = new Label(Description, _baseLanguageCode)
+                    },
+                    MergeLabels = true
                 };
+
+                if (!ShouldProcess($"Global option set '{Name}'", "Update description"))
+                {
+                    return;
+                }
 
                 Connection.Execute(updateDescriptionRequest);
                 hasChanges = true;
+                WriteVerbose($"Updated description");
             }
 
             // Update options - add new ones or update existing ones
@@ -252,22 +280,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         OptionSetName = Name,
                         Value = value.Value,
-                        Label = new Label(new LocalizedLabel(label, 1033), new LocalizedLabel[0])
+                        Label = new Label(label, _baseLanguageCode),
+                        MergeLabels = true
                     };
-
-                    if (!string.IsNullOrWhiteSpace(color))
-                    {
-                        updateOptionRequest.MergeLabels = true; // Preserve other labels
-                        // Note: Color update requires additional steps
-                    }
 
                     if (!string.IsNullOrWhiteSpace(description))
                     {
-                        updateOptionRequest.Description = new Label(new LocalizedLabel(description, 1033), new LocalizedLabel[0]);
+                        updateOptionRequest.Description = new Label(description, _baseLanguageCode);
+                    }
+
+                    if (!ShouldProcess($"Option value '{value.Value}' in global option set '{Name}'", "Update option"))
+                    {
+                        return;
                     }
 
                     Connection.Execute(updateOptionRequest);
                     hasChanges = true;
+                    WriteVerbose($"Updated option value {value.Value} with label '{label}'");
                 }
                 else
                 {
@@ -276,27 +305,66 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         OptionSetName = Name,
                         Value = value.Value,
-                        Label = new Label(new LocalizedLabel(label, 1033), new LocalizedLabel[0])
+                        Label = new Label(label, _baseLanguageCode)
                     };
 
                     if (!string.IsNullOrWhiteSpace(description))
                     {
-                        insertOptionRequest.Description = new Label(new LocalizedLabel(description, 1033), new LocalizedLabel[0]);
+                        insertOptionRequest.Description = new Label(description, _baseLanguageCode);
+                    }
+
+                    if (!ShouldProcess($"Global option set '{Name}'", $"Insert new option with value {value.Value}"))
+                    {
+                        return;
                     }
 
                     Connection.Execute(insertOptionRequest);
                     hasChanges = true;
+                    WriteVerbose($"Inserted new option value {value.Value} with label '{label}'");
+                }
+            }
+
+            // Remove options that are not provided
+            if (!NoRemoveMissingOptions.IsPresent)
+            {
+                var providedValues = new HashSet<int>();
+                foreach (var option in Options)
+                {
+                    var value = option["Value"] != null ? Convert.ToInt32(option["Value"]) : (int?)null;
+                    if (value.HasValue)
+                    {
+                        providedValues.Add(value.Value);
+                    }
+                }
+
+                foreach (var existingOption in existingOptionSet.Options.Where(o => o.Value.HasValue && !providedValues.Contains(o.Value.Value)))
+                {
+                    var deleteRequest = new DeleteOptionValueRequest
+                    {
+                        OptionSetName = Name,
+                        Value = existingOption.Value.Value
+                    };
+
+                    if (!ShouldProcess($"Option value '{existingOption.Value.Value}' in global option set '{Name}'", "Delete option"))
+                    {
+                        return;
+                    }
+
+                    Connection.Execute(deleteRequest);
+                    hasChanges = true;
+                    WriteVerbose($"Deleted option value {existingOption.Value.Value}");
                 }
             }
 
             if (!hasChanges)
             {
                 WriteWarning("No changes specified for update");
-                return;
-            }
-
-            if (!ShouldProcess($"Global option set '{Name}'", "Update option set"))
-            {
+                
+                if (PassThru)
+                {
+                    var result = ConvertOptionSetToPSObject(existingOptionSet);
+                    WriteObject(result);
+                }
                 return;
             }
 
@@ -317,6 +385,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
+        private void ValidateImmutableProperties(OptionSetMetadata existingOptionSet)
+        {
+            // Check if Name was provided and is different (immutable after creation)
+            // Note: Name is the key for retrieval, so it should always match, but check for consistency
+            if (!string.Equals(Name, existingOptionSet.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new InvalidOperationException($"Option set name mismatch. Retrieved '{existingOptionSet.Name}' but specified '{Name}'. Option set names are immutable."),
+                    "ImmutableOptionSetName",
+                    ErrorCategory.InvalidOperation,
+                    Name));
+            }
+
+        }
+        
         private PSObject ConvertOptionSetToPSObject(OptionSetMetadata optionSet)
         {
             var result = new PSObject();
