@@ -1,3 +1,4 @@
+$ErrorActionPreference = "Stop"
 
 Add-Type -AssemblyName "System.Runtime.Serialization"
 
