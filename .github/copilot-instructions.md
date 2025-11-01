@@ -243,6 +243,8 @@ Use conventional commit messages and be specific about the error or improvement.
 - Use `WriteVerbose()`, `WriteWarning()`, `WriteError()` for messages
 - Parameter names: PascalCase (e.g., TableName, MatchOn)
 - Multi-line lambda/LINQ: prefer explicit blocks for readability
+- Do not use try/catch unless handling specific exceptions (must check Hresult etc rather than blanket catch)
+- Do not try catch and handle it by only writing a warning, or skipping over - let it bubble up unless specific handling is needed
 
 ### PowerShell Scripts
 - Start with `$ErrorActionPreference = "Stop"`

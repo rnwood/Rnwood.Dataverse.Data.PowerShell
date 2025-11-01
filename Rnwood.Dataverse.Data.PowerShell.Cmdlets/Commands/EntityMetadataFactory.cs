@@ -13,14 +13,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	public class EntityMetadataFactory
 	{
 		private IOrganizationService Connection;
+		private readonly string ConnectionKey;
+		private readonly bool UseSharedCache;
 
 		/// <summary>
 		/// Initializes a new instance of the EntityMetadataFactory class.
 		/// </summary>
 		/// <param name="Connection">The organization service connection to use for metadata retrieval.</param>
-		public EntityMetadataFactory(IOrganizationService Connection)
+		/// <param name="useSharedCache">Whether to use the shared global cache.</param>
+		public EntityMetadataFactory(IOrganizationService Connection, bool useSharedCache = false)
 		{
 			this.Connection = Connection;
+			this.UseSharedCache = useSharedCache;
+
+			// Get connection key for caching
+			if (Connection is Microsoft.PowerPlatform.Dataverse.Client.ServiceClient serviceClient)
+			{
+				this.ConnectionKey = MetadataCache.GetConnectionKey(serviceClient);
+			}
+			else
+			{
+				this.ConnectionKey = "default";
+			}
 		}
 
 
@@ -48,6 +62,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			EntityMetadata result;
 
+			// Try shared cache first if enabled
+			if (UseSharedCache && MetadataCache.TryGetEntityMetadata(ConnectionKey, entityName, EntityFilters.All, out result))
+			{
+				return result;
+			}
+
+			// Try local cache
 			if (!_entities.TryGetValue(entityName, out result))
 			{
 
@@ -61,6 +82,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				RetrieveEntityResponse response = (RetrieveEntityResponse)this.Connection.Execute(request);
 				result = response.EntityMetadata;
 				_entities.Add(entityName, result);
+
+				// Add to shared cache if enabled
+				if (UseSharedCache)
+				{
+					MetadataCache.AddEntityMetadata(ConnectionKey, entityName, EntityFilters.All, result);
+				}
 			}
 			return result;
 		}
@@ -73,6 +100,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <returns>Collection of EntityMetadata objects.</returns>
 		public IEnumerable<EntityMetadata> GetAllEntityMetadata()
 		{
+			// Try shared cache first if enabled
+			if (UseSharedCache && MetadataCache.TryGetAllEntities(ConnectionKey, EntityFilters.Entity, out var cachedEntities))
+			{
+				return cachedEntities;
+			}
+
 			if (_allEntityMetadata == null)
 			{
 				var request = new RetrieveAllEntitiesRequest()
@@ -83,6 +116,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 				var response = (RetrieveAllEntitiesResponse)this.Connection.Execute(request);
 				_allEntityMetadata = response.EntityMetadata.Where(em => !string.IsNullOrWhiteSpace(em.LogicalName)).OrderBy(em => em.LogicalName).ToList();
+
+				// Add to shared cache if enabled
+				if (UseSharedCache)
+				{
+					MetadataCache.AddAllEntities(ConnectionKey, EntityFilters.Entity, _allEntityMetadata);
+				}
 			}
 
 			return _allEntityMetadata;

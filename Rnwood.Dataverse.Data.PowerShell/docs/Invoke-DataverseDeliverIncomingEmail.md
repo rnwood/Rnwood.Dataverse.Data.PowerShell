@@ -5,41 +5,56 @@ online version:
 schema: 2.0.0
 ---
 
-# Invoke-DataverseDeliverIncomingEmail
+# Invoke-DataverseDeliverImmediatePromoteEmail
 
 ## SYNOPSIS
-Contains the data that is needed to create an email activity record from an incoming email message (Track in CRM).
+Contains the data that is needed to deliver an email from an email client.
 
-[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DeliverIncomingEmailRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.DeliverIncomingEmailRequest?view=dataverse-sdk-latest)
+[Microsoft Learn: Microsoft.Crm.Sdk.Messages.DeliverImmediatePromoteEmailRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.DeliverImmediatePromoteEmailRequest?view=dataverse-sdk-latest)
 
 ## SYNTAX
 
 ```
-Invoke-DataverseDeliverIncomingEmail [-MessageId <String>] [-Subject <String>] [-From <String>] [-To <String>]
- [-Cc <String>] [-Bcc <String>] [-ReceivedOn <DateTime>] [-SubmittedBy <String>] [-Importance <String>]
- [-Body <String>] [-Attachments <EntityCollection>] [-ExtraProperties <PSObject>]
- [-ExtraPropertiesTableName <String>] [-ExtraPropertiesIgnoreProperties <String[]>]
- [-ExtraPropertiesLookupColumns <Hashtable>] [-ValidateBeforeCreate <Boolean>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseDeliverImmediatePromoteEmail [-EmailId <Guid>] [-MessageId <String>] [-Subject <String>]
+ [-From <String>] [-To <String>] [-Cc <String>] [-Bcc <String>] [-ReceivedOn <DateTime>]
+ [-SubmittedBy <String>] [-Importance <String>] [-Body <String>] [-AttachmentIds <String[]>] [-EWSUrl <String>]
+ [-AttachmentToken <String>] [-ExtraProperties <PSObject>] [-ExtraPropertiesTableName <String>]
+ [-ExtraPropertiesIgnoreProperties <String[]>] [-ExtraPropertiesLookupColumns <Hashtable>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Contains the data that is needed to create an email activity record from an incoming email message (Track in CRM).
+Contains the data that is needed to deliver an email from an email client.
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> Invoke-DataverseDeliverIncomingEmail -Connection <ServiceClient> -MessageId <String> -Subject <String> -From <String> -To <String> -Cc <String> -Bcc <String> -ReceivedOn <DateTime> -SubmittedBy <String> -Importance <String> -Body <String> -Attachments <EntityCollection> -ExtraProperties <PSObject> -ExtraPropertiesTableName <String> -ExtraPropertiesIgnoreProperties <String[]> -ExtraPropertiesLookupColumns <Hashtable> -ValidateBeforeCreate <Boolean>
+PS C:\> Invoke-DataverseDeliverImmediatePromoteEmail -Connection <ServiceClient> -EmailId <Guid> -MessageId <String> -Subject <String> -From <String> -To <String> -Cc <String> -Bcc <String> -ReceivedOn <DateTime> -SubmittedBy <String> -Importance <String> -Body <String> -AttachmentIds <String[]> -EWSUrl <String> -AttachmentToken <String> -ExtraProperties <PSObject> -ExtraPropertiesTableName <String> -ExtraPropertiesIgnoreProperties <String[]> -ExtraPropertiesLookupColumns <Hashtable>
 ```
 
 ## PARAMETERS
 
-### -Attachments
-Gets or sets a collection of activity mime attachment (email attachment) instances to attach to the email message. Required.
+### -AttachmentIds
+Gets or sets the AttachmentIds for the request.
 
 ```yaml
-Type: EntityCollection
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AttachmentToken
+Gets or sets the AttachmentToken for the request.
+
+```yaml
+Type: String
 Parameter Sets: (All)
 Aliases:
 
@@ -115,6 +130,36 @@ DataverseConnection instance obtained from Get-DataverseConnection cmdlet
 
 ```yaml
 Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EWSUrl
+Gets or sets the EWSUrl for the request.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EmailId
+The ID of the Email.
+
+```yaml
+Type: Guid
 Parameter Sets: (All)
 Aliases:
 
@@ -280,21 +325,6 @@ Gets or sets the addresses of the recipients of the email message.
 
 ```yaml
 Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ValidateBeforeCreate
-Gets or sets whether to validate before the create operation occurs.
-
-```yaml
-Type: Boolean
 Parameter Sets: (All)
 Aliases:
 
