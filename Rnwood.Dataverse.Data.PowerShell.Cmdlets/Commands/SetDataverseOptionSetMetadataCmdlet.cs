@@ -106,12 +106,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     throw;
                 }
             }
-
-            catch (Exception)
-            {
-
-            }
-
    
             if (optionSetExists)
             {
