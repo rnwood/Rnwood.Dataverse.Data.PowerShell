@@ -2,6 +2,20 @@
 
 This document provides examples of common Dataverse operations using `Rnwood.Dataverse.Data.PowerShell`, showing how to accomplish tasks that were done with `Microsoft.Xrm.Data.PowerShell`.
 
+> **⚠️ IMPORTANT NOTE**: Many examples in this document reference specialized `Invoke-Dataverse*` cmdlets (e.g., `Invoke-DataverseBulkDelete`, `Invoke-DataverseAssign`) that have been removed from this module. These operations should now be performed using `Invoke-DataverseRequest` with SDK request objects. For current examples and usage patterns, please refer to the [core documentation](docs/core-concepts/) instead.
+>
+> **Example migration**:
+> ```powershell
+> # Old (removed):
+> # Invoke-DataverseBulkDelete -Connection $c -Query $criteria ...
+>
+> # New (use Invoke-DataverseRequest):
+> $request = New-Object Microsoft.Crm.Sdk.Messages.BulkDeleteRequest
+> $request.QuerySet = @($criteria)
+> # ... set other required properties
+> $response = Invoke-DataverseRequest -Connection $c -Request $request
+> ```
+
 ## Table of Contents
 
 - [Connection](#connection)

@@ -306,7 +306,7 @@ Get-DataverseRecord -Connection $c -TableName contact -Columns firstname,lastnam
   -Criteria $filter -Links $link
 ```
 
-Example: build a QueryExpression object when you need programmatic construction of a complex query. QueryExpression objects are useful as inputs to specialized SDK request cmdlets that accept a `Query` parameter (for example bulk-detect / bulk-delete style requests). For simple retrievals prefer [`Get-DataverseRecord`](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) with `-Criteria`/`-Links` or `-FetchXml` which return friendly PSObjects and handle paging for you.
+Example: build a QueryExpression object when you need programmatic construction of a complex query. QueryExpression objects are useful as inputs to SDK requests that accept a `Query` parameter (for example bulk-detect / bulk-delete style requests). For simple retrievals prefer [`Get-DataverseRecord`](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) with `-Criteria`/`-Links` or `-FetchXml` which return friendly PSObjects and handle paging for you.
 
 ```powershell
 # Build a QueryExpression for advanced programmatic scenarios
@@ -314,13 +314,17 @@ $qe = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression('contact')
 $qe.ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet('firstname','lastname','emailaddress1')
 $qe.Criteria.AddCondition('lastname',[Microsoft.Xrm.Sdk.Query.ConditionOperator]::Equal,'Smith')
 
-# Pass $qe to a specialized request cmdlet that accepts a Query parameter when needed
-# (many Invoke-Dataverse* request cmdlets support a Query parameter for advanced workflows).
+# Pass $qe to SDK requests that accept a Query parameter when needed
+# Example: BulkDeleteRequest
+$request = New-Object Microsoft.Crm.Sdk.Messages.BulkDeleteRequest
+$request.QuerySet = @($qe)
+# ... set other required properties
+$response = Invoke-DataverseRequest -Connection $c -Request $request
 ```
 
 Notes:
 - [`Get-DataverseRecord`](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) returns friendly PSObjects and automatically pages results for you when using `-TableName`/`-Criteria`/`-Links` or `-FetchXml`.
-- When you use low-level SDK request cmdlets that accept a `Query` you may need to manage paging explicitly depending on the request semantics.
+- When you use low-level SDK requests that accept a `Query` you may need to manage paging explicitly depending on the request semantics.
 
 #### Advanced Filtering with FetchXML
 
@@ -365,7 +369,7 @@ $fetchXmlAgg = @"
 $results = Get-DataverseRecord -Connection $c -FetchXml $fetchXmlAgg
 # Each result contains aliased aggregate columns (e.g. 'totalvalue') and grouped keys (e.g. 'owner')
 ```
-Tip: if you prefer a QueryExpression object for programmatic manipulation you can convert FetchXML to a QueryExpression using the helper cmdlet and then pass that `QueryExpression` to specialized SDK request cmdlets that accept a `Query` parameter. For simple retrievals prefer [`Get-DataverseRecord`](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) `-FetchXml` which returns PSObjects and handles paging for you.
+Tip: if you prefer a QueryExpression object for programmatic manipulation you can convert FetchXML to a QueryExpression using the helper cmdlet and then pass that `QueryExpression` to SDK requests that accept a `Query` parameter. For simple retrievals prefer [`Get-DataverseRecord`](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) `-FetchXml` which returns PSObjects and handles paging for you.
 ### Querying with SQL
 As an alternative to hashtable filters, QueryExpression or FetchXML, many Dataverse environments can be queried using a SQL-like syntax via the module's [`Invoke-DataverseSql`](../../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) cmdlet (powered by the MarkMpn.Sql4Cds engine). `Invoke-DataverseSql` executes the SQL you supply and returns PowerShell objects (one per returned row) with properties named after the returned columns.
 Key behaviors and options:
@@ -395,56 +399,67 @@ See the `Invoke-DataverseSql` cmdlet documentation for full parameter details an
 When to prefer which approach:
 - Use the module's concise hashtable filters (`-FilterValues` / `-Criteria` / `-Links`) with [`Get-DataverseRecord`](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) for most interactive scripts — you get PSObjects, automatic paging and convenient conversion.
 - Use `-FetchXml` when you need aggregates, complex grouping, or you want to reuse FetchXML authored in other tools (Power Apps, Advanced Find).
-- Use `QueryExpression` when you need to construct queries programmatically with fine-grained SDK control (for example custom paging strategies, programmatic link-entity construction, or integration with other SDK requests). Pass the resulting `QueryExpression` to appropriate SDK request cmdlets that accept a `Query` parameter when needed.
+- Use `QueryExpression` when you need to construct queries programmatically with fine-grained SDK control (for example custom paging strategies, programmatic link-entity construction, or integration with other SDK requests). Pass the resulting `QueryExpression` to appropriate SDK requests when needed.
 
-#### Specialized Invoke-Dataverse* Cmdlets
+#### Using SDK Requests with Invoke-DataverseRequest
 
-The module includes many specialized `Invoke-Dataverse*` cmdlets that wrap specific Dataverse SDK requests. These cmdlets provide direct access to platform operations like bulk operations, metadata queries, and administrative tasks.
-
-##### How to Find and Use Specialized Cmdlets
-
-To see all available specialized cmdlets:
-```powershell
-Get-Command -Module Rnwood.Dataverse.Data.PowerShell -Name "Invoke-Dataverse*"
-```
-Common categories include:
-- **Bulk Operations**: [`Invoke-DataverseBulkDelete`](../../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseBulkDelete.md), [`Invoke-DataverseBulkDetectDuplicates`](../../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseBulkDetectDuplicates.md)
-- **Metadata**: [`Invoke-DataverseRetrieveEntity`](../../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRetrieveEntity.md), [`Invoke-DataverseRetrieveAllEntities`](../../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRetrieveAllEntities.md)
-- **Security**: [`Invoke-DataverseAddPrincipalToQueue`](../../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseAddPrincipalToQueue.md), [`Invoke-DataverseAssign`](../../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseAssign.md)
-- **Campaigns**: [`Invoke-DataverseAddItemCampaign`](../../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseAddItemCampaign.md), [`Invoke-DataverseAddMembersTeam`](../../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseAddMembersTeam.md)
-- **And many more...**
+For operations not covered by the core cmdlets, use [`Invoke-DataverseRequest`](../../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) with SDK request objects. This provides direct access to all Dataverse SDK operations like bulk operations, metadata queries, and administrative tasks.
 
 ##### Usage Pattern
 
-Most specialized cmdlets follow this pattern:
-1. Accept a `-Connection` parameter
-2. Take specific parameters for the operation
-3. Return structured results as PSObjects
-Example: Retrieve entity metadata
+1. Create an SDK request object using `New-Object`
+2. Set the required properties on the request
+3. Pass the request to `Invoke-DataverseRequest`
+4. Access the response properties
+
+**Example: Retrieve entity metadata**
 ```powershell
-$metadata = Invoke-DataverseRetrieveEntity -Connection $c -LogicalName contact
-$metadata.Attributes | Where-Object { $_.IsPrimaryId } | Select-Object LogicalName
+$request = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveEntityRequest
+$request.LogicalName = 'contact'
+$request.EntityFilters = [Microsoft.Xrm.Sdk.Metadata.EntityFilters]::Attributes
+
+$response = Invoke-DataverseRequest -Connection $c -Request $request
+$response.EntityMetadata.Attributes | Where-Object { $_.IsPrimaryId } | Select-Object LogicalName
 ```
-Example: Bulk delete records
+
+**Example: Bulk delete records**
 ```powershell
 # Define criteria for bulk delete
 $criteria = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression('contact')
 $criteria.Criteria.AddCondition('createdon', [Microsoft.Xrm.Sdk.Query.ConditionOperator]::LessThan, [datetime]::Parse('2024-01-01'))
-# Execute bulk delete
-$result = Invoke-DataverseBulkDelete -Connection $c -Query $criteria -JobName "OldContactsCleanup" -SendEmailNotification $false
+
+# Create and execute bulk delete request
+$request = New-Object Microsoft.Crm.Sdk.Messages.BulkDeleteRequest
+$request.QuerySet = @($criteria)
+$request.JobName = "OldContactsCleanup"
+$request.SendEmailNotification = $false
+$request.ToRecipients = @()
+$request.CCRecipients = @()
+$request.RecurrencePattern = ""
+$request.StartDateTime = [DateTime]::Now
+
+$response = Invoke-DataverseRequest -Connection $c -Request $request
+Write-Host "Bulk delete job created with ID: $($response.JobId)"
 ```
-##### When to Use Specialized Cmdlets
-Use specialized cmdlets when:
+
+##### When to Use SDK Requests
+
+Use `Invoke-DataverseRequest` when:
 - You need operations not covered by the core CRUD cmdlets ([`Get-DataverseRecord`](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md), [`Set-DataverseRecord`](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md), [`Remove-DataverseRecord`](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md))
 - Performing bulk operations that affect many records
 - Working with metadata, security, or administrative tasks
-- You have existing SDK code or FetchXML that you want to reuse
-For detailed documentation on each cmdlet, use `Get-Help` or refer to the docs folder.
+- You have existing SDK code that you want to reuse
+
+For a complete list of available SDK requests, see the [Microsoft Dataverse SDK documentation](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/org-service/overview).
 ### Getting total record count
-If you need to know how many records exist (for reporting or planning queries) use the dedicated SDK request cmdlet which is far more efficient than retrieving all records and counting them locally.
+If you need to know how many records exist (for reporting or planning queries), use the SDK `RetrieveTotalRecordCountRequest` with `Invoke-DataverseRequest`, which is far more efficient than retrieving all records and counting them locally.
+
 Example: retrieve total record counts for one or more entities (returns a response containing an EntityRecordCountCollection):
 ```powershell
-$response = Invoke-DataverseRetrieveTotalRecordCount -Connection $c -EntityNames contact,account
+$request = New-Object Microsoft.Crm.Sdk.Messages.RetrieveTotalRecordCountRequest
+$request.EntityNames = [System.Collections.Generic.List[string]]::new(@('contact', 'account'))
+
+$response = Invoke-DataverseRequest -Connection $c -Request $request
 
 # Enumerate results
 $response.EntityRecordCountCollection | ForEach-Object { "$($_.Key): $($_.Value)" }
@@ -464,9 +479,9 @@ Write-Host "Total contacts: $count"
 Notes:
 - The switch works with all supported query types (`-TableName`, `-FilterValues`, `-FetchXml`, etc.).
 - No record data is returned—only the count.
-- Unlike `Invoke-DataverseRetrieveTotalRecordCount`, this method pages through all matching records to get an exact, real-time count. This is less performant for large tables, but provides up-to-date results.
+- Unlike using `RetrieveTotalRecordCountRequest` with `Invoke-DataverseRequest`, this method pages through all matching records to get an exact, real-time count. This is less performant for large tables, but provides up-to-date results.
 - Use when you need the current count for reporting or planning queries.
-- For large tables, prefer `Invoke-DataverseRetrieveTotalRecordCount` for faster, approximate counts unless you require real-time accuracy.
+- For large tables, prefer `RetrieveTotalRecordCountRequest` for faster, approximate counts unless you require real-time accuracy.
 
 #### Using -VerboseRecordCount switch
 
