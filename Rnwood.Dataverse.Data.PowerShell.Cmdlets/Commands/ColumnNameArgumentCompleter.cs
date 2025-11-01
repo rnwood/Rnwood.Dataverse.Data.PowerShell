@@ -57,6 +57,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
 
+                // If no explicit connection was provided, try to use the default connection
+                if (connectionObj == null)
+                {
+                    connectionObj = DefaultConnectionManager.DefaultConnection;
+                }
+
                 if (connectionObj == null)
                 {
                     return Enumerable.Empty<CompletionResult>();
