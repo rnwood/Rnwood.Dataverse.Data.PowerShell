@@ -478,8 +478,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private void InvalidateEntityCache()
         {
             var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
-            MetadataCache.InvalidateEntity(connectionKey, EntityName);
-            WriteVerbose($"Invalidated metadata cache for entity '{EntityName}'");
+            if (connectionKey != null)
+            {
+                MetadataCache.InvalidateEntity(connectionKey, EntityName);
+                WriteVerbose($"Invalidated metadata cache for entity '{EntityName}'");
+            }
         }
 
         private PSObject ConvertEntityMetadataToPSObject(EntityMetadata metadata)

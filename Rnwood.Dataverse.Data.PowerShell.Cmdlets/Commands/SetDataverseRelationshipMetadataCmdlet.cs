@@ -174,14 +174,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Invalidate cache after modification
-            MetadataCache.InvalidateEntity(
-                MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient),
-                ReferencedEntity
-            );
-            MetadataCache.InvalidateEntity(
-                MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient),
-                ReferencingEntity
-            );
+            var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
+            if (connectionKey != null)
+            {
+                MetadataCache.InvalidateEntity(connectionKey, ReferencedEntity);
+                MetadataCache.InvalidateEntity(connectionKey, ReferencingEntity);
+            }
         }
 
         private bool CheckRelationshipExists(string schemaName)

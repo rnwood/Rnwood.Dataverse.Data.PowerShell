@@ -3,26 +3,21 @@ Describe 'Set-DataverseEntityMetadata' {
         It "Creates a new entity with required parameters" {
             $connection = getMockConnection
             
-            # Note: This test may fail with FakeXrmEasy
-            try {
-                $result = Set-DataverseEntityMetadata -Connection $connection `
-                    -EntityName new_customentity `
-                    -SchemaName new_CustomEntity `
-                    -DisplayName "Custom Entity" `
-                    -DisplayCollectionName "Custom Entities" `
-                    -PrimaryAttributeSchemaName new_name `
-                    -PrimaryAttributeDisplayName "Name" `
-                    -OwnershipType UserOwned `
-                    -PassThru `
-                    -Confirm:$false `
-                    -WhatIf
-                
-                # WhatIf should not create anything
-                $result | Should -BeNullOrEmpty
-            } catch {
-                # Expected to fail with mock framework
-                $_.Exception.Message | Should -Match "not.*supported|not.*implemented"
-            }
+            # Note: This test may fail with FakeXrmEasy - we just verify WhatIf works
+            $result = Set-DataverseEntityMetadata -Connection $connection `
+                -EntityName new_customentity `
+                -SchemaName new_CustomEntity `
+                -DisplayName "Custom Entity" `
+                -DisplayCollectionName "Custom Entities" `
+                -PrimaryAttributeSchemaName new_name `
+                -PrimaryAttributeDisplayName "Name" `
+                -OwnershipType UserOwned `
+                -PassThru `
+                -Confirm:$false `
+                -WhatIf
+            
+            # WhatIf should not create anything
+            $result | Should -BeNullOrEmpty
         }
     }
 
@@ -30,22 +25,17 @@ Describe 'Set-DataverseEntityMetadata' {
         It "Updates an existing entity" {
             $connection = getMockConnection
             
-            # Note: This test may fail with FakeXrmEasy
-            try {
-                $result = Set-DataverseEntityMetadata -Connection $connection `
-                    -EntityName contact `
-                    -DisplayName "Updated Contact" `
-                    -Description "Updated description" `
-                    -Force `
-                    -PassThru `
-                    -WhatIf
-                
-                # WhatIf should not update anything
-                $result | Should -BeNullOrEmpty
-            } catch {
-                # Expected to fail with mock framework
-                $_.Exception.Message | Should -Match "not.*supported|not.*implemented"
-            }
+            # Note: This test may fail with FakeXrmEasy - we just verify WhatIf works
+            $result = Set-DataverseEntityMetadata -Connection $connection `
+                -EntityName contact `
+                -DisplayName "Updated Contact" `
+                -Description "Updated description" `
+                -PassThru `
+                -Confirm:$false `
+                -WhatIf
+            
+            # WhatIf should not update anything
+            $result | Should -BeNullOrEmpty
         }
     }
 }
@@ -803,27 +793,22 @@ Describe 'Set-DataverseOptionSetMetadata' {
         It "Updates an existing global option set" {
             $connection = getMockConnection
             
-            # Note: This test may fail with FakeXrmEasy
-            try {
-                $options = @(
-                    @{Value=1; Label='Updated Option 1'}
-                    @{Value=2; Label='Updated Option 2'}
-                )
-                
-                $result = Set-DataverseOptionSetMetadata -Connection $connection `
-                    -Name new_testoptions `
-                    -DisplayName "Updated Test Options" `
-                    -Options $options `
-                    -Force `
-                    -PassThru `
-                    -WhatIf
-                
-                # WhatIf should not update anything
-                $result | Should -BeNullOrEmpty
-            } catch {
-                # Expected to fail with mock framework
-                $_.Exception.Message | Should -Match "not.*supported|not.*implemented"
-            }
+            # Note: This test may fail with FakeXrmEasy - we just verify WhatIf works
+            $options = @(
+                @{Value=1; Label='Updated Option 1'}
+                @{Value=2; Label='Updated Option 2'}
+            )
+            
+            $result = Set-DataverseOptionSetMetadata -Connection $connection `
+                -Name new_testoptions `
+                -DisplayName "Updated Test Options" `
+                -Options $options `
+                -PassThru `
+                -Confirm:$false `
+                -WhatIf
+            
+            # WhatIf should not update anything
+            $result | Should -BeNullOrEmpty
         }
     }
 }

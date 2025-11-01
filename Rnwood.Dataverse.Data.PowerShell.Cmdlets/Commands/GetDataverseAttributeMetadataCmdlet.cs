@@ -103,7 +103,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             WriteVerbose($"Retrieved {entityMetadata.Attributes.Length} attributes");
 
             var results = entityMetadata.Attributes
-                .OrderBy(a => a.LogicalName, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(a => a.LogicalName, StringComparer.Ordinal)
                 .ToArray();
 
             WriteObject(results, true);
