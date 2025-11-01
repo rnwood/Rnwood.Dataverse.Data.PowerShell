@@ -24,6 +24,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
+            if (!ShouldProcess($"Entity '{EntityName}'", "Delete entity and all its data"))
+            {
+                return;
+            }
+
             if (!ShouldContinue($"Are you sure you want to delete entity '{EntityName}'? This will delete all data and cannot be undone.", "Confirm Deletion"))
             {
                 return;
@@ -33,11 +38,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 LogicalName = EntityName
             };
-
-            if (!ShouldProcess($"Entity '{EntityName}'", "Delete entity and all its data"))
-            {
-                return;
-            }
 
             WriteVerbose($"Deleting entity '{EntityName}'");
 

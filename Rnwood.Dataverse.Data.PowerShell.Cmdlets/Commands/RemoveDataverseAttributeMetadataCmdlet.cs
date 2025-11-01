@@ -33,6 +33,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
+            if (!ShouldProcess($"Entity '{EntityName}'", $"Delete attribute '{AttributeName}'"))
+            {
+                return;
+            }
+
             if (!ShouldContinue($"Are you sure you want to delete attribute '{AttributeName}' from entity '{EntityName}'? This action cannot be undone.", "Confirm Deletion"))
             {
                 return;
@@ -43,11 +48,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 EntityLogicalName = EntityName,
                 LogicalName = AttributeName
             };
-
-            if (!ShouldProcess($"Entity '{EntityName}'", $"Delete attribute '{AttributeName}'"))
-            {
-                return;
-            }
 
             WriteVerbose($"Deleting attribute '{AttributeName}' from entity '{EntityName}'");
 
