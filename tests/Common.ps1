@@ -61,12 +61,12 @@ function global:LoadTestMetadata {
 
     $xmlFile = "$PSScriptRoot/$EntityName.xml"
     if (Test-Path $xmlFile) {
-        Write-Verbose "Loading metadata for entity: $EntityName..." -Verbose
+        Write-Verbose "Loading metadata for entity: $EntityName..."
         $stream = [IO.File]::OpenRead($xmlFile)
         $metadata = $serializer.ReadObject($stream)
         $stream.Close()
         $global:TestMetadataCache[$EntityName] = $metadata
-        Write-Verbose "Metadata loaded for entity: $EntityName" -Verbose
+        Write-Verbose "Metadata loaded for entity: $EntityName"
     }
     else {
         throw "Metadata file not found: $xmlFile - Entity '$EntityName' metadata must be available for testing. Available entities: $(Get-ChildItem $PSScriptRoot/*.xml | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_.Name) } | Join-String -Separator ', ')"
