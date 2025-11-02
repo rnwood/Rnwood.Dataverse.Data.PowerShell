@@ -91,21 +91,24 @@ jobs:
                   $baseVersion = $nextVersion
                 } else {
                   Write-Host "No PR description found, defaulting to patch bump"
-                  # Default to patch bump if no PR description
-                  if ($baseVersion -match '^(\d+)\.(\d+)\.(\d+)') {
-                    $major = [int]$matches[1]
-                    $minor = [int]$matches[2]
-                    $patch = [int]$matches[3] + 1
-                    $baseVersion = "$major.$minor.$patch"
-                  }
+                  # Use Get-NextVersion with empty messages (defaults to patch)
+                  $baseVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages @()
                 }
               }
             } else {
               # For main branch, analyze recent commits
               Write-Host "Main branch detected - analyzing recent commits"
               
-              # Get commits since last tag
-              $commitsSinceTag = git log "$latestTag..HEAD" --format="%s" 2>$null
+              # Validate that we have a valid tag before using it in git log
+              if ($latestTag -eq "0.0.0") {
+                Write-Host "No previous tag found, using all commits"
+                $commitsSinceTag = git log --format="%s" 2>$null
+              } else {
+                # Get commits since last tag with error handling
+                Write-Host "Getting commits since tag: $latestTag"
+                $commitsSinceTag = git log "$latestTag..HEAD" --format="%s" 2>$null
+              }
+              
               if ($commitsSinceTag) {
                 $commitMessages = $commitsSinceTag -split "`n" | Where-Object { $_ -match '\S' }
                 
@@ -118,13 +121,8 @@ jobs:
                 $baseVersion = $nextVersion
               } else {
                 Write-Host "No commits since last tag, defaulting to patch bump"
-                # Default to patch bump if no commits found
-                if ($baseVersion -match '^(\d+)\.(\d+)\.(\d+)') {
-                  $major = [int]$matches[1]
-                  $minor = [int]$matches[2]
-                  $patch = [int]$matches[3] + 1
-                  $baseVersion = "$major.$minor.$patch"
-                }
+                # Use Get-NextVersion with empty messages (defaults to patch)
+                $baseVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages @()
               }
             }
             

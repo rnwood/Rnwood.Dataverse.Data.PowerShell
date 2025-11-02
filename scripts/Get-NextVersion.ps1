@@ -39,6 +39,7 @@ param(
     [string]$BaseVersion,
     
     [Parameter(Mandatory = $true)]
+    [AllowEmptyCollection()]
     [string[]]$CommitMessages
 )
 
@@ -70,7 +71,8 @@ foreach ($message in $CommitMessages) {
     $normalizedMessage = $message -replace '^\s*[-*+]\s*', ''
     
     # Check for breaking changes (highest priority - major bump)
-    if ($normalizedMessage -match '^\w+(\(.+?\))?!:' -or $message -match '\bBREAKING[- ]CHANGE\b') {
+    # More explicit regex matching only valid conventional commit types
+    if ($normalizedMessage -match '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\(.+?\))?!:' -or $message -match '\bBREAKING[- ]CHANGE\b') {
         Write-Verbose "  -> Breaking change detected"
         $bumpLevel = "major"
         break  # Major is the highest, no need to check further
