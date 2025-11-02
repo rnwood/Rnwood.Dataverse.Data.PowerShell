@@ -3,23 +3,15 @@
 Describe 'Get-DataverseSolutionFile' {
 
     BeforeAll {
-        # Set module path
-        if ($env:TESTMODULEPATH) {
-            $source = $env:TESTMODULEPATH
+        # Ensure module is loaded (required for parallel job execution in CI)
+        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
+            Import-Module Rnwood.Dataverse.Data.PowerShell -ErrorAction Stop
         }
-        else {
-            $source = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0/"
-        }
-
-        $tempmodulefolder = "$([IO.Path]::GetTempPath())/$([Guid]::NewGuid())"
-        New-Item -ItemType Directory $tempmodulefolder | Out-Null
-        Copy-Item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Data.PowerShell
-        $env:PSModulePath = $tempmodulefolder
         
-        Import-Module Rnwood.Dataverse.Data.PowerShell -Force
-        
-        # Create a minimal test solution.xml content
-        $solutionXml = @"
+        # Helper function to create a test solution zip
+        function New-TestSolutionZip {
+            # Create a minimal test solution.xml content
+            $solutionXml = @"
 <?xml version="1.0" encoding="utf-8"?>
 <ImportExportXml version="9.2.24082.227" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <SolutionManifest>
@@ -43,38 +35,54 @@ Describe 'Get-DataverseSolutionFile' {
 </ImportExportXml>
 "@
 
-        # Create a minimal test solution zip file
-        $tempDir = [IO.Path]::GetTempPath()
-        $testSolutionPath = Join-Path $tempDir "TestSolution_$(New-Guid).zip"
+            # Create a minimal test solution zip file
+            $tempDir = [IO.Path]::GetTempPath()
+            $testSolutionPath = Join-Path $tempDir "TestSolution_$(New-Guid).zip"
+            
+            # Create zip with solution.xml
+            # Load required assemblies with explicit error handling for PS5 jobs
+            try {
+                [System.Reflection.Assembly]::Load("System.IO.Compression, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089") | Out-Null
+                [System.Reflection.Assembly]::Load("System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089") | Out-Null
+            } catch {
+                # Fallback for different .NET versions
+                Add-Type -AssemblyName System.IO.Compression
+                Add-Type -AssemblyName System.IO.Compression.FileSystem
+            }
+            
+            $stream = [System.IO.File]::Create($testSolutionPath)
+            $zip = New-Object System.IO.Compression.ZipArchive($stream, [System.IO.Compression.ZipArchiveMode]::Create)
+            $entry = $zip.CreateEntry("solution.xml")
+            $writer = New-Object System.IO.StreamWriter($entry.Open())
+            $writer.Write($solutionXml)
+            $writer.Flush()
+            $writer.Close()
+            $zip.Dispose()
+            $stream.Close()
+            $stream.Dispose()
+            
+            # Wait a moment to ensure file is fully written
+            Start-Sleep -Milliseconds 200
+            
+            return $testSolutionPath
+        }
         
-        # Create zip with solution.xml
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        
-        $stream = [System.IO.File]::Create($testSolutionPath)
-        $zip = New-Object System.IO.Compression.ZipArchive($stream, [System.IO.Compression.ZipArchiveMode]::Create)
-        $entry = $zip.CreateEntry("solution.xml")
-        $writer = New-Object System.IO.StreamWriter($entry.Open())
-        $writer.Write($solutionXml)
-        $writer.Flush()
-        $writer.Close()
-        $zip.Dispose()
-        $stream.Close()
-        $stream.Dispose()
-        
-        # Wait a moment to ensure file is fully written
-        Start-Sleep -Milliseconds 200
-        
-        Set-Variable -Name "TestSolutionPath" -Value $testSolutionPath -Scope Script
+        Set-Variable -Name "TestSolutionPaths" -Value @() -Scope Script
     }
 
     AfterAll {
-        if (Test-Path $Script:TestSolutionPath) {
-            Remove-Item $Script:TestSolutionPath -Force -ErrorAction SilentlyContinue
+        foreach ($path in $Script:TestSolutionPaths) {
+            if (Test-Path $path) {
+                Remove-Item $path -Force -ErrorAction SilentlyContinue
+            }
         }
     }
 
     It "Parses solution file and returns metadata" {
-        $result = Get-DataverseSolutionFile -Path $Script:TestSolutionPath
+        $testSolutionPath = New-TestSolutionZip
+        $Script:TestSolutionPaths += $testSolutionPath
+        
+        $result = Get-DataverseSolutionFile -Path $testSolutionPath
         
         $result | Should -Not -BeNullOrEmpty
         $result.UniqueName | Should -Be "TestSolution"
@@ -88,8 +96,11 @@ Describe 'Get-DataverseSolutionFile' {
     }
 
     It -Skip "Parses solution file from bytes" {
+        $testSolutionPath = New-TestSolutionZip
+        $Script:TestSolutionPaths += $testSolutionPath
+        
         Start-Sleep -Milliseconds 100  # Allow file to be fully released
-        $bytes = [System.IO.File]::ReadAllBytes($Script:TestSolutionPath)
+        $bytes = [System.IO.File]::ReadAllBytes($testSolutionPath)
         $result = $bytes | Get-DataverseSolutionFile
         
         $result | Should -Not -BeNullOrEmpty

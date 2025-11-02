@@ -148,7 +148,7 @@ jobs:
                   $config = New-PesterConfiguration
                   $config.Run.Path = $testFilePath
                   $config.Run.PassThru = $true
-                  $config.Output.Verbosity = 'None'  # Suppress individual file output to avoid clutter
+                  $config.Output.Verbosity = 'Minimal'  # Show minimal output with errors
                   $config.Should.ErrorAction = 'Continue'
                   
                   $result = Invoke-Pester -Configuration $config
@@ -232,7 +232,7 @@ jobs:
                     $config = New-PesterConfiguration
                     $config.Run.Path = $testFilePath
                     $config.Run.PassThru = $true
-                    $config.Output.Verbosity = 'None'  # Suppress individual file output to avoid clutter
+                    $config.Output.Verbosity = 'Minimal'  # Show minimal output with errors
                     $config.Should.ErrorAction = 'Continue'
                     
                     $result = Invoke-Pester -Configuration $config
