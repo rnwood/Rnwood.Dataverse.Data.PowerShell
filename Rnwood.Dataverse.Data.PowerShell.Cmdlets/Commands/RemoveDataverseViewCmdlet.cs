@@ -17,10 +17,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Guid Id { get; set; }
 
         /// <summary>
-        /// Gets or sets whether this is a system view (savedquery) or personal view (userquery). Default is personal view.
+        /// Gets or sets whether this is a system view (savedquery) or personal view (userquery). Default is system view.
         /// </summary>
-        [Parameter(HelpMessage = "Remove a system view (savedquery) instead of a personal view (userquery)")]
-        public SwitchParameter SystemView { get; set; }
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Remove a system view (savedquery) instead of a personal view (userquery)")]
+        [ValidateSet("System", "Personal")]
+        public string ViewType { get; set; } = "System";
 
         /// <summary>
         /// If specified, the cmdlet will not raise an error if the view does not exist.
@@ -35,14 +36,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            string entityName = SystemView ? "savedquery" : "userquery";
+            string entityName = ViewType == "System" ? "savedquery" : "userquery";
 
-            if (ShouldProcess($"{(SystemView ? "System" : "Personal")} view with ID '{Id}'", "Remove"))
+            if (ShouldProcess($"{ViewType} view with ID '{Id}'", "Remove"))
             {
                 try
                 {
                     Connection.Delete(entityName, Id);
-                    WriteVerbose($"Removed {(SystemView ? "system" : "personal")} view with ID: {Id}");
+                    WriteVerbose($"Removed {(ViewType == "System" ? "system" : "personal")} view with ID: {Id}");
                 }
                 catch (Exception ex)
                 {

@@ -8,35 +8,154 @@ schema: 2.0.0
 # Set-DataverseView
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Creates or updates Dataverse views (savedquery and userquery entities) with flexible column and filter configuration.
 
 ## SYNTAX
 
 ```
 Set-DataverseView [-Id <Guid>] [-Name <String>] [-TableName <String>] [-SystemView] [-Description <String>]
- [-Columns <Object[]>] [-AddColumns <Object[]>] [-RemoveColumns <String[]>] [-UpdateColumns <Hashtable[]>]
- [-FilterValues <Hashtable[]>] [-FetchXml <String>] [-LayoutXml <String>] [-IsDefault] [-QueryType <QueryType>]
- [-NoUpdate] [-NoCreate] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Columns <Object[]>] [-AddColumns <Object[]>] [-InsertBefore <String>] [-InsertAfter <String>]
+ [-RemoveColumns <String[]>] [-UpdateColumns <Hashtable[]>] [-FilterValues <Hashtable[]>] [-FetchXml <String>]
+ [-Links <DataverseLinkEntity[]>] [-LayoutXml <String>] [-IsDefault] [-QueryType <QueryType>] [-NoUpdate]
+ [-NoCreate] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Set-DataverseView cmdlet creates new views or updates existing ones using an upsert pattern. Views define how records are displayed in model-driven apps and other Dataverse interfaces.
+
+The cmdlet supports both simplified syntax (using Columns and FilterValues parameters) and advanced FetchXML-based configuration. Column configurations can be specified as simple strings or detailed hashtables with width and other properties.
+
+When updating existing views, you can add, remove, or update specific columns without affecting other view properties.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Create a basic personal view
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Set-DataverseView -Connection $c -PassThru `
+    -Name "My Active Contacts" `
+    -TableName contact `
+    -Columns @("firstname", "lastname", "emailaddress1", "telephone1") `
+    -FilterValues @{ statecode = 0 }
 ```
 
-{{ Add example description here }}
+Creates a personal view showing active contacts with specified columns.
+
+### Example 2: Create a system view with column widths
+```powershell
+PS C:\> Set-DataverseView -Connection $c -PassThru -SystemView `
+    -Name "All Active Contacts" `
+    -TableName contact `
+    -Columns @(
+        @{ name = "firstname"; width = 100 },
+        @{ name = "lastname"; width = 150 },
+        @{ name = "emailaddress1"; width = 250 },
+        @{ name = "telephone1"; width = 120 }
+    ) `
+    -FilterValues @{ statecode = 0 }
+```
+
+Creates a system view with specific column widths.
+
+### Example 3: Update an existing view
+```powershell
+PS C:\> Set-DataverseView -Connection $c -Id $viewId `
+    -Name "Updated Contact View" `
+    -Description "Shows active contacts with email"
+```
+
+Updates the name and description of an existing view.
+
+### Example 4: Add columns to a view
+```powershell
+PS C:\> Set-DataverseView -Connection $c -Id $viewId `
+    -AddColumns @(
+        @{ name = "address1_city"; width = 150 },
+        @{ name = "birthdate"; width = 100 }
+    )
+```
+
+Adds new columns to an existing view.
+
+### Example 5: Add columns at specific positions
+```powershell
+PS C:\> Set-DataverseView -Connection $c -Id $viewId `
+    -AddColumns @("mobilephone", "fax") `
+    -InsertAfter "telephone1"
+```
+
+Adds mobile phone and fax columns after the telephone1 column.
+
+### Example 6: Insert columns before a specific column
+```powershell
+PS C:\> Set-DataverseView -Connection $c -Id $viewId `
+    -AddColumns @("jobtitle") `
+    -InsertBefore "emailaddress1"
+```
+
+Inserts the job title column before the email address column.
+
+### Example 7: Clone a view using Columns from Get-DataverseView
+```powershell
+PS C:\> $originalView = Get-DataverseView -Connection $c -Id $originalViewId
+PS C:\> Set-DataverseView -Connection $c -PassThru `
+    -Name "$($originalView.name) (Copy)" `
+    -TableName $originalView.returnedtypecode `
+    -Columns $originalView.Columns `
+    -FetchXml $originalView.fetchxml
+```
+
+Retrieves a view and creates a copy using the Columns property returned by Get-DataverseView.
+
+### Example 8: Create view with complex filters
+```powershell
+PS C:\> Set-DataverseView -Connection $c -PassThru -SystemView `
+    -Name "High Value Opportunities" `
+    -TableName opportunity `
+    -Columns @("name", "estimatedvalue", "closeprobability", "actualclosedate") `
+    -FilterValues @{
+        and = @(
+            @{ statecode = 0 },
+            @{ or = @(
+                @{ estimatedvalue = @{ value = 100000; operator = 'GreaterThan' } },
+                @{ closeprobability = @{ value = 80; operator = 'GreaterThan' } }
+            )}
+        )
+    }
+```
+
+Creates a view with nested logical filter expressions.
+
+### Example 9: Use FetchXML for advanced queries
+```powershell
+PS C:\> $fetchXml = @"
+<fetch>
+  <entity name="contact">
+    <attribute name="firstname" />
+    <attribute name="lastname" />
+    <attribute name="emailaddress1" />
+    <filter type="and">
+      <condition attribute="statecode" operator="eq" value="0" />
+      <condition attribute="createdon" operator="last-x-days" value="30" />
+    </filter>
+  </entity>
+</fetch>
+"@
+
+PS C:\> Set-DataverseView -Connection $c -PassThru `
+    -Name "Recent Contacts" `
+    -TableName contact `
+    -FetchXml $fetchXml
+```
+
+Creates a view using FetchXML for complex query definitions.
 
 ## PARAMETERS
 
 ### -AddColumns
 Columns to add to the view.
 Can be an array of column names or hashtables with column configuration (name, width, etc.)
+Use InsertBefore or InsertAfter parameters to control the position where columns are inserted.
 
 ```yaml
 Type: Object[]
@@ -52,7 +171,10 @@ Accept wildcard characters: False
 
 ### -Columns
 Columns to include in the view.
-Can be an array of column names or hashtables with column configuration (name, width, etc.)
+Can be an array of column names (strings) or hashtables with column configuration.
+When using hashtables, supported properties include:
+- `name` (required): The logical name of the column
+- `width`: Display width in pixels (optional, defaults vary by column type)
 
 ```yaml
 Type: Object[]
@@ -256,8 +378,8 @@ Accept wildcard characters: False
 ```
 
 ### -QueryType
-View type. Valid values: OtherView, PublicView, AdvancedFind, SubGrid, Dashboard, MobileClientView, LookupView, MainApplicationView, QuickFindSearch, Associated, CalendarView, InteractiveExperience.
-Default is PublicView
+View type. Valid values: MainApplicationView, AdvancedSearch, SubGrid, QuickFindSearch, Reporting, OfflineFilters, LookupView, SMAppointmentBookView, MainApplicationViewWithoutSubject, SavedQueryTypeOther, InteractiveWorkflowView, OfflineTemplate, CustomDefinedView, ExportFieldTranslationsView, OutlookTemplate, AddressBookFilters, OutlookFilters, CopilotView.
+Default is AdvancedSearch
 
 ```yaml
 Type: QueryType
@@ -364,6 +486,55 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Links
+Link entities to apply to the view query. Accepts DataverseLinkEntity objects or simplified hashtable syntax
+
+```yaml
+Type: DataverseLinkEntity[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InsertAfter
+Column name to insert new columns after.
+Used with AddColumns parameter to specify the position where new columns should be inserted.
+Cannot be used together with InsertBefore.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InsertBefore
+Column name to insert new columns before.
+Used with AddColumns parameter to specify the position where new columns should be inserted.
+Cannot be used together with InsertAfter.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -375,4 +546,19 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Guid
 ## NOTES
 
+- Uses upsert pattern: creates new views if ID is not specified or view doesn't exist, updates existing views if ID matches.
+- The `Columns` parameter accepts the same format as returned by `Get-DataverseView`, enabling easy view cloning.
+- When updating existing views, only specified parameters are modified; other properties remain unchanged.
+- System views (savedquery) are accessible to all users; personal views (userquery) are user-specific.
+- Complex filters support nested logical expressions using 'and', 'or', 'not', and 'xor' keys.
+- The cmdlet supports WhatIf and Confirm for safe operation.
+
 ## RELATED LINKS
+
+[View Management Documentation](../../docs/core-concepts/view-management.md)
+
+[Get-DataverseView](Get-DataverseView.md)
+
+[Remove-DataverseView](Remove-DataverseView.md)
+
+[Querying Records](../../docs/core-concepts/querying.md)

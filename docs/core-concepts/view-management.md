@@ -150,6 +150,46 @@ Set-DataverseView -Connection $c -PassThru `
     -FetchXml $fetchXml
 ```
 
+### Using Link Entities
+
+Create views with related data using link entities:
+
+```powershell
+Set-DataverseView -Connection $c -PassThru `
+    -Name "Contacts with Accounts" `
+    -TableName contact `
+    -Columns @("firstname", "lastname", "emailaddress1", "account.name") `
+    -Links @(
+        New-DataverseLinkEntity -LinkToEntityName "account" `
+                               -LinkFromAttributeName "parentcustomerid" `
+                               -LinkToAttributeName "accountid" `
+                               -EntityAlias "account"
+    ) `
+    -FilterValues @{ statecode = 0 }
+```
+
+### Custom Layout XML
+
+For complete control over view layout, specify custom LayoutXML:
+
+```powershell
+$layoutXml = @"
+<grid name="resultset" object="contact" jump="contactid" select="1" icon="1" preview="1">
+  <row name="result" id="contactid">
+    <cell name="firstname" width="150" />
+    <cell name="lastname" width="150" />
+    <cell name="emailaddress1" width="200" />
+  </row>
+</grid>
+"@
+
+Set-DataverseView -Connection $c -PassThru `
+    -Name "Custom Layout View" `
+    -TableName contact `
+    -FetchXml $fetchXml `
+    -LayoutXml $layoutXml
+```
+
 ## Updating Views
 
 ### Update with Upsert Pattern
@@ -175,6 +215,20 @@ Set-DataverseView -Connection $c -Id $viewId `
     )
 ```
 
+Add columns at specific positions:
+
+```powershell
+# Insert before a specific column
+Set-DataverseView -Connection $c -Id $viewId `
+    -AddColumns @("jobtitle") `
+    -InsertBefore "emailaddress1"
+
+# Insert after a specific column
+Set-DataverseView -Connection $c -Id $viewId `
+    -AddColumns @("mobilephone", "fax") `
+    -InsertAfter "telephone1"
+```
+
 ### Remove Columns
 
 Remove columns from a view:
@@ -186,7 +240,7 @@ Set-DataverseView -Connection $c -Id $viewId `
 
 ### Update Column Properties
 
-Change column widths or order:
+Change column widths or other properties:
 
 ```powershell
 Set-DataverseView -Connection $c -Id $viewId `
@@ -283,7 +337,7 @@ Views have different types for different purposes:
 
 ```powershell
 # Get Advanced Find views
-Get-DataverseView -Connection $c -QueryType AdvancedFind
+Get-DataverseView -Connection $c -QueryType AdvancedSearch
 
 # Get Lookup views
 Get-DataverseView -Connection $c -QueryType LookupView
@@ -291,11 +345,22 @@ Get-DataverseView -Connection $c -QueryType LookupView
 
 Common query types:
 - `OtherView` — Other View
-- `PublicView` — Public View (default)
-- `AdvancedFind` — Advanced Find
+- `AdvancedSearch` — Advanced Search (default)
+- `AdvancedSearch` — Advanced Search (default)
 - `SubGrid` — Sub-Grid
 - `LookupView` — Lookup View
 - `MainApplicationView` — Main Application View
+
+### Get Raw XML
+
+Retrieve views with raw FetchXML and LayoutXML instead of parsed properties:
+
+```powershell
+$view = Get-DataverseView -Connection $c -Id $viewId -RawXml
+# $view.fetchxml contains the raw FetchXML
+# $view.layoutxml contains the raw LayoutXML
+# $view.Columns contains parsed column information from LayoutXML
+```
 
 ## Deleting Views
 
@@ -375,8 +440,11 @@ $originalView = Get-DataverseView -Connection $c -Id $originalViewId
 Set-DataverseView -Connection $c -PassThru `
     -Name "$($originalView.name) (Copy)" `
     -TableName $originalView.returnedtypecode `
+    -Columns $originalView.Columns `
     -FetchXml $originalView.fetchxml
 ```
+
+The `Columns` property returned by `Get-DataverseView` contains the column configuration in the same format accepted by `Set-DataverseView`, making it easy to clone or modify existing views.
 
 ### Create Views for Multiple Tables
 

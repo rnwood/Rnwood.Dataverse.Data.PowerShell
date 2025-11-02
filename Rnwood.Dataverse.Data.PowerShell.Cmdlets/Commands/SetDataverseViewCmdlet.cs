@@ -1,9 +1,11 @@
+using Microsoft.Crm.Sdk;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections;
 using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 using System.Xml.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -24,33 +26,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the name of the view. Required when creating a new view.
         /// </summary>
-        [Parameter(HelpMessage = "Name of the view. Required when creating a new view.")]
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Name of the view. Required when creating a new view.")]
         public string Name { get; set; }
 
         /// <summary>
         /// Gets or sets the logical name of the table (entity) this view is for. Required when creating a new view.
         /// </summary>
-        [Parameter(HelpMessage = "Logical name of the table this view is for. Required when creating a new view.")]
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of the table this view is for. Required when creating a new view.")]
         [ArgumentCompleter(typeof(TableNameArgumentCompleter))]
         [Alias("EntityName")]
         public string TableName { get; set; }
 
         /// <summary>
-        /// Gets or sets whether this is a system view (savedquery) or personal view (userquery). Default is personal view.
+        /// Gets or sets whether this is a system view (savedquery) or personal view (userquery). Default is system view.
         /// </summary>
-        [Parameter(HelpMessage = "Work with a system view (savedquery) instead of a personal view (userquery)")]
-        public SwitchParameter SystemView { get; set; }
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Work with a system view (savedquery) instead of a personal view (userquery)")]
+        [ValidateSet("System", "Personal")]
+        public string ViewType { get; set; } = "System";
 
         /// <summary>
         /// Gets or sets the description of the view.
         /// </summary>
-        [Parameter(HelpMessage = "Description of the view")]
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Description of the view")]
         public string Description { get; set; }
 
         /// <summary>
         /// Gets or sets the columns to include in the view. Used for creating new views or replacing columns in existing views.
         /// </summary>
-        [Parameter(HelpMessage = "Columns to include in the view. Can be an array of column names or hashtables with column configuration (name, width, etc.)")]
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Columns to include in the view. Can be an array of column names or hashtables with column configuration (name, width, etc.)")]
         [ArgumentCompleter(typeof(ColumnNameArgumentCompleter))]
         public object[] Columns { get; set; }
 
@@ -60,6 +63,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "Columns to add to the view. Can be an array of column names or hashtables with column configuration (name, width, etc.)")]
         [ArgumentCompleter(typeof(ColumnNameArgumentCompleter))]
         public object[] AddColumns { get; set; }
+
+        /// <summary>
+        /// Gets or sets the column name to insert new columns before. Used with AddColumns.
+        /// </summary>
+        [Parameter(HelpMessage = "Column name to insert new columns before. Used with AddColumns parameter.")]
+        [ArgumentCompleter(typeof(ColumnNameArgumentCompleter))]
+        public string InsertBefore { get; set; }
+
+        /// <summary>
+        /// Gets or sets the column name to insert new columns after. Used with AddColumns.
+        /// </summary>
+        [Parameter(HelpMessage = "Column name to insert new columns after. Used with AddColumns parameter.")]
+        [ArgumentCompleter(typeof(ColumnNameArgumentCompleter))]
+        public string InsertAfter { get; set; }
 
         /// <summary>
         /// Gets or sets columns to remove from an existing view.
@@ -77,8 +94,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets filter values for the view query.
         /// </summary>
-        [Parameter(HelpMessage = "One or more hashtables to filter records. Each hashtable's entries are combined with AND; multiple hashtables are combined with OR. Keys may be 'column' or 'column:Operator' (Operator is a ConditionOperator name). Values may be a literal, an array (treated as IN), $null (treated as ISNULL), or a nested hashtable with keys 'value' and 'operator'. Supports grouped filters using 'and', 'or', 'not', or 'xor' keys with nested hashtables for complex logical expressions.")]
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "One or more hashtables to filter records. Each hashtable's entries are combined with AND; multiple hashtables are combined with OR. Keys may be 'column' or 'column:Operator' (Operator is a ConditionOperator name). Values may be a literal, an array (treated as IN), $null (treated as ISNULL), or a nested hashtable with keys 'value' and 'operator'. Supports grouped filters using 'and', 'or', 'not', or 'xor' keys with nested hashtables for complex logical expressions.")]
         [ArgumentCompleter(typeof(FilterValuesArgumentCompleter))]
+        [Alias("Filters")]
         public Hashtable[] FilterValues { get; set; }
 
         /// <summary>
@@ -86,6 +104,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(HelpMessage = "FetchXml query to use for the view")]
         public string FetchXml { get; set; }
+
+        /// <summary>
+        /// Gets or sets link entities for the view query.
+        /// </summary>
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Link entities to apply to the view query. Accepts DataverseLinkEntity objects or simplified hashtable syntax")]
+        [ArgumentCompleter(typeof(LinksArgumentCompleter))]
+        public DataverseLinkEntity[] Links { get; set; }
 
         /// <summary>
         /// Gets or sets the layout XML for the view. If not specified, a default layout will be generated.
@@ -96,14 +121,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets whether this is the default view for the table.
         /// </summary>
-        [Parameter(HelpMessage = "Set this view as the default view for the table")]
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Set this view as the default view for the table")]
         public SwitchParameter IsDefault { get; set; }
 
         /// <summary>
-        /// Gets or sets the view type. Default is PublicView. Only used when creating a new view.
+        /// Gets or sets the view type. Default is PublicView.
         /// </summary>
-        [Parameter(HelpMessage = "View type. Default is PublicView")]
-        public QueryType QueryType { get; set; } = QueryType.PublicView; // Default to PublicView
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "View type. Default is PublicView")]
+        public QueryType? QueryType { get; set; } 
 
         /// <summary>
         /// If specified, existing views matching the ID will not be updated.
@@ -130,9 +155,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
+            // Validate parameter combinations
+            if (!string.IsNullOrEmpty(InsertBefore) && !string.IsNullOrEmpty(InsertAfter))
+            {
+                throw new ArgumentException("Cannot specify both InsertBefore and InsertAfter parameters. Choose one insertion position.");
+            }
+
+            if ((!string.IsNullOrEmpty(InsertBefore) || !string.IsNullOrEmpty(InsertAfter)) && (AddColumns == null || AddColumns.Length == 0))
+            {
+                throw new ArgumentException("InsertBefore and InsertAfter parameters can only be used with the AddColumns parameter.");
+            }
+
             try
             {
-                string entityName = SystemView ? "savedquery" : "userquery";
+                string entityName = ViewType == "System" ? "savedquery" : "userquery";
                 Entity viewEntity = null;
                 bool isUpdate = false;
                 Guid viewId = Id;
@@ -144,11 +180,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         viewEntity = Connection.Retrieve(entityName, Id, new ColumnSet(true));
                         isUpdate = true;
-                        WriteVerbose($"Found existing {(SystemView ? "system" : "personal")} view with ID: {Id}");
+                        WriteVerbose($"Found existing {(ViewType == "System" ? "system" : "personal")} view with ID: {Id}");
                     }
-                    catch
+                    catch (FaultException<OrganizationServiceFault> ex)
                     {
-                        WriteVerbose($"View with ID {Id} not found");
+                        if (ex.HResult == -2146233088) // Object does not exist
+                        {
+                            WriteVerbose($"View with ID {Id} not found");
+                        }
+                        else
+                        {
+                            throw;
+                        }
                     }
                 }
 
@@ -165,65 +208,102 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         return;
                     }
 
-                    if (ShouldProcess($"{(SystemView ? "System" : "Personal")} view with ID '{Id}'", "Update"))
+                    if (ShouldProcess($"{ViewType} view with ID '{Id}'", "Update"))
                     {
                         bool updated = false;
 
-                        // Update name if provided
+                        // Update name if provided and different
                         if (!string.IsNullOrEmpty(Name))
                         {
-                            viewEntity["name"] = Name;
-                            updated = true;
+                            string currentName = viewEntity.GetAttributeValue<string>("name");
+                            if (currentName != Name)
+                            {
+                                viewEntity["name"] = Name;
+                                updated = true;
+                            }
                         }
 
-                        // Update description if provided
+                        // Update description if provided and different
                         if (!string.IsNullOrEmpty(Description))
                         {
-                            viewEntity["description"] = Description;
-                            updated = true;
+                            string currentDescription = viewEntity.GetAttributeValue<string>("description");
+                            if (currentDescription != Description)
+                            {
+                                viewEntity["description"] = Description;
+                                updated = true;
+                            }
                         }
 
-                        // Update FetchXml if provided directly
+                        // Update FetchXml if provided directly and different
                         if (!string.IsNullOrEmpty(FetchXml))
                         {
-                            viewEntity["fetchxml"] = FetchXml;
-                            updated = true;
+                            string currentFetchXml = viewEntity.GetAttributeValue<string>("fetchxml");
+                            if (currentFetchXml != FetchXml)
+                            {
+                                viewEntity["fetchxml"] = FetchXml;
+                                updated = true;
+                            }
                         }
                         // Or build/modify FetchXml based on simple parameters
-                        else if (Columns != null || AddColumns != null || RemoveColumns != null || FilterValues != null)
+                        else if (Columns != null || AddColumns != null || RemoveColumns != null || FilterValues != null || Links != null)
                         {
                             string currentFetchXml = viewEntity.GetAttributeValue<string>("fetchxml");
                             string modifiedFetchXml = ModifyFetchXml(currentFetchXml);
-                            viewEntity["fetchxml"] = modifiedFetchXml;
-                            updated = true;
+                            if (currentFetchXml != modifiedFetchXml)
+                            {
+                                viewEntity["fetchxml"] = modifiedFetchXml;
+                                updated = true;
+                            }
                         }
 
-                        // Update LayoutXml if provided directly
+                        // Update LayoutXml if provided directly and different
                         if (!string.IsNullOrEmpty(LayoutXml))
                         {
-                            viewEntity["layoutxml"] = LayoutXml;
-                            updated = true;
+                            string currentLayoutXml = viewEntity.GetAttributeValue<string>("layoutxml");
+                            if (currentLayoutXml != LayoutXml)
+                            {
+                                viewEntity["layoutxml"] = LayoutXml;
+                                updated = true;
+                            }
                         }
                         // Or modify LayoutXml based on column changes
                         else if (Columns != null || AddColumns != null || RemoveColumns != null || UpdateColumns != null)
                         {
                             string currentLayoutXml = viewEntity.GetAttributeValue<string>("layoutxml");
                             string modifiedLayoutXml = ModifyLayoutXml(currentLayoutXml);
-                            viewEntity["layoutxml"] = modifiedLayoutXml;
-                            updated = true;
+                            if (currentLayoutXml != modifiedLayoutXml)
+                            {
+                                viewEntity["layoutxml"] = modifiedLayoutXml;
+                                updated = true;
+                            }
                         }
 
-                        // Update IsDefault if provided
-                        if (SystemView && IsDefault.IsPresent)
+                        // Update IsDefault if provided and different (only for system views)
+                        if (ViewType == "System" && IsDefault.IsPresent)
                         {
-                            viewEntity["isdefault"] = IsDefault.ToBool();
-                            updated = true;
+                            bool currentIsDefault = viewEntity.GetAttributeValue<bool>("isdefault");
+                            if (currentIsDefault != IsDefault.ToBool())
+                            {
+                                viewEntity["isdefault"] = IsDefault.ToBool();
+                                updated = true;
+                            }
+                        }
+
+                        // Update QueryType if provided and different
+                        if (QueryType.HasValue)
+                        {
+                            int currentQueryType = viewEntity.GetAttributeValue<int>("querytype");
+                            if (currentQueryType != (int)QueryType.Value)
+                            {
+                                viewEntity["querytype"] = (int)QueryType.Value;
+                                updated = true;
+                            }
                         }
 
                         if (updated)
                         {
                             Connection.Update(viewEntity);
-                            WriteVerbose($"Updated {(SystemView ? "system" : "personal")} view with ID: {Id}");
+                            WriteVerbose($"Updated {(ViewType == "System" ? "system" : "personal")} view with ID: {Id}");
                         }
                         else
                         {
@@ -258,8 +338,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     string fetchXml = FetchXml;
                     string layoutXml = LayoutXml;
 
-                    // Build FetchXml from simple filter if needed (when FetchXml not provided but Columns are)
-                    if (string.IsNullOrEmpty(fetchXml) && Columns != null)
+                    // Build FetchXml from simple parameters if not provided directly
+                    if (string.IsNullOrEmpty(fetchXml) && (Columns != null || FilterValues != null || Links != null))
                     {
                         fetchXml = BuildFetchXmlFromSimpleFilter();
                     }
@@ -270,7 +350,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         layoutXml = BuildDefaultLayoutXml();
                     }
 
-                    if (ShouldProcess($"{(SystemView ? "System" : "Personal")} view '{Name}' for table '{TableName}'", "Create"))
+                    if (ShouldProcess($"{ViewType} view '{Name}' for table '{TableName}'", "Create"))
                     {
                         viewEntity = new Entity(entityName);
                         
@@ -283,20 +363,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         viewEntity["returnedtypecode"] = TableName;
                         viewEntity["fetchxml"] = fetchXml;
                         viewEntity["layoutxml"] = layoutXml;
-                        viewEntity["querytype"] = (int)QueryType;
+                        viewEntity["querytype"] = (int)(QueryType ?? Commands.QueryType.AdvancedSearch);
 
                         if (!string.IsNullOrEmpty(Description))
                         {
                             viewEntity["description"] = Description;
                         }
 
-                        if (SystemView && IsDefault)
+                        if (ViewType == "System" && IsDefault)
                         {
                             viewEntity["isdefault"] = true;
                         }
 
                         viewId = Connection.Create(viewEntity);
-                        WriteVerbose($"Created {(SystemView ? "system" : "personal")} view with ID: {viewId}");
+                        WriteVerbose($"Created {(ViewType == "System" ? "system" : "personal")} view with ID: {viewId}");
                         
                         if (PassThru)
                         {
@@ -354,6 +434,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (filterElement != null && filterElement.HasElements)
                 {
                     entityElement.Add(filterElement);
+                }
+            }
+
+            // Add links if provided
+            if (Links != null && Links.Length > 0)
+            {
+                foreach (var link in Links)
+                {
+                    XElement linkElement = ConvertLinkEntityToFetchXml(link.LinkEntity);
+                    if (linkElement != null)
+                    {
+                        entityElement.Add(linkElement);
+                    }
                 }
             }
 
@@ -423,7 +516,40 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         if (existingAttribute == null)
                         {
-                            entityElement.Add(new XElement("attribute", new XAttribute("name", columnName)));
+                            var newAttribute = new XElement("attribute", new XAttribute("name", columnName));
+
+                            // Insert at specific position if InsertBefore or InsertAfter is specified
+                            if (!string.IsNullOrEmpty(InsertBefore))
+                            {
+                                var insertBeforeElement = entityElement.Elements("attribute")
+                                    .FirstOrDefault(a => a.Attribute("name")?.Value == InsertBefore);
+                                if (insertBeforeElement != null)
+                                {
+                                    insertBeforeElement.AddBeforeSelf(newAttribute);
+                                }
+                                else
+                                {
+                                    entityElement.Add(newAttribute);
+                                }
+                            }
+                            else if (!string.IsNullOrEmpty(InsertAfter))
+                            {
+                                var insertAfterElement = entityElement.Elements("attribute")
+                                    .FirstOrDefault(a => a.Attribute("name")?.Value == InsertAfter);
+                                if (insertAfterElement != null)
+                                {
+                                    insertAfterElement.AddAfterSelf(newAttribute);
+                                }
+                                else
+                                {
+                                    entityElement.Add(newAttribute);
+                                }
+                            }
+                            else
+                            {
+                                // Default behavior: append to end
+                                entityElement.Add(newAttribute);
+                            }
                         }
                     }
                 }
@@ -457,6 +583,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (filterElement != null && filterElement.HasElements)
                 {
                     entityElement.Add(filterElement);
+                }
+            }
+
+            // Add/replace links in FetchXml
+            if (Links != null && Links.Length > 0)
+            {
+                // Remove existing link entities
+                entityElement.Elements("link-entity").Remove();
+
+                // Add new link entities
+                foreach (var link in Links)
+                {
+                    XElement linkElement = ConvertLinkEntityToFetchXml(link.LinkEntity);
+                    if (linkElement != null)
+                    {
+                        entityElement.Add(linkElement);
+                    }
                 }
             }
 
@@ -530,12 +673,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private string ModifyLayoutXml(string currentLayoutXml)
         {
             XNamespace ns = "http://schemas.microsoft.com/crm/2006/query";
-            XDocument doc = XDocument.Parse(currentLayoutXml);
-            XElement row = doc.Descendants(ns + "row").FirstOrDefault();
+            XDocument doc;
+            XElement row;
+
+            try
+            {
+                doc = XDocument.Parse(currentLayoutXml);
+                row = doc.Descendants(ns + "row").FirstOrDefault();
+            }
+            catch (Exception)
+            {
+                // If parsing fails or no row element found, rebuild from scratch
+                return BuildDefaultLayoutXml();
+            }
 
             if (row == null)
             {
-                throw new InvalidOperationException("Invalid LayoutXml: No row element found");
+                // If no row element found, rebuild from scratch
+                return BuildDefaultLayoutXml();
             }
 
             // Replace columns if Columns parameter is provided
@@ -610,10 +765,42 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         if (existingCell == null)
                         {
-                            row.Add(new XElement(ns + "cell",
+                            var newCell = new XElement(ns + "cell",
                                 new XAttribute("name", columnName),
-                                new XAttribute("width", columnWidth)
-                            ));
+                                new XAttribute("width", columnWidth));
+
+                            // Insert at specific position if InsertBefore or InsertAfter is specified
+                            if (!string.IsNullOrEmpty(InsertBefore))
+                            {
+                                var insertBeforeCell = row.Elements(ns + "cell")
+                                    .FirstOrDefault(c => c.Attribute("name")?.Value == InsertBefore);
+                                if (insertBeforeCell != null)
+                                {
+                                    insertBeforeCell.AddBeforeSelf(newCell);
+                                }
+                                else
+                                {
+                                    row.Add(newCell);
+                                }
+                            }
+                            else if (!string.IsNullOrEmpty(InsertAfter))
+                            {
+                                var insertAfterCell = row.Elements(ns + "cell")
+                                    .FirstOrDefault(c => c.Attribute("name")?.Value == InsertAfter);
+                                if (insertAfterCell != null)
+                                {
+                                    insertAfterCell.AddAfterSelf(newCell);
+                                }
+                                else
+                                {
+                                    row.Add(newCell);
+                                }
+                            }
+                            else
+                            {
+                                // Default behavior: append to end
+                                row.Add(newCell);
+                            }
                         }
                     }
                 }
@@ -769,6 +956,46 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 case ConditionOperator.DoesNotEndWith: return "not-end-with";
                 default: return op.ToString().ToLower();
             }
+        }
+
+        private XElement ConvertLinkEntityToFetchXml(LinkEntity linkEntity)
+        {
+            XElement linkElement = new XElement("link-entity",
+                new XAttribute("name", linkEntity.LinkToEntityName),
+                new XAttribute("from", linkEntity.LinkFromAttributeName),
+                new XAttribute("to", linkEntity.LinkToAttributeName),
+                new XAttribute("link-type", linkEntity.JoinOperator == JoinOperator.LeftOuter ? "outer" : "inner")
+            );
+
+            if (!string.IsNullOrEmpty(linkEntity.EntityAlias))
+            {
+                linkElement.Add(new XAttribute("alias", linkEntity.EntityAlias));
+            }
+
+            // Add link criteria if present
+            if (linkEntity.LinkCriteria != null && (linkEntity.LinkCriteria.Conditions.Count > 0 || linkEntity.LinkCriteria.Filters.Count > 0))
+            {
+                XElement filterElement = ConvertFilterExpressionToFetchXml(linkEntity.LinkCriteria);
+                if (filterElement != null && filterElement.HasElements)
+                {
+                    linkElement.Add(filterElement);
+                }
+            }
+
+            // Add nested link entities recursively
+            if (linkEntity.LinkEntities != null)
+            {
+                foreach (var nestedLink in linkEntity.LinkEntities)
+                {
+                    XElement nestedLinkElement = ConvertLinkEntityToFetchXml(nestedLink);
+                    if (nestedLinkElement != null)
+                    {
+                        linkElement.Add(nestedLinkElement);
+                    }
+                }
+            }
+
+            return linkElement;
         }
     }
 }
