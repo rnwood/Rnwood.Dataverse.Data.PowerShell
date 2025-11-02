@@ -64,80 +64,41 @@ Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVers
 
 # Create a modified test runner that runs tests in-place without copying
 # This is critical for coverlet to track coverage properly
-$testRunnerScript = Join-Path (Resolve-Path $OutputDir).Path "run-tests-no-copy.ps1"
-$absoluteTestPath = (Resolve-Path $TestPath).Path
+$testRunnerScript = Join-Path $OutputDir "run-tests-no-copy.ps1"
 @"
 `$ErrorActionPreference = 'Stop'
 
 Write-Host "Test Runner: Running tests WITHOUT module copy (for coverage)..." -ForegroundColor Cyan
 
-# Set PSModulePath and env vars that tests expect
-`$tempmodulefolder = Split-Path '$env:TESTMODULEPATH'
-`$env:PSModulePath = `$tempmodulefolder + ";" + `$env:PSModulePath
-`$env:ChildProcessPSModulePath = `$tempmodulefolder
-
-# Override TESTMODULEPATH to skip the copy logic in All.Tests.ps1
-# We create a flag that will be checked by a modified All.Tests.ps1 wrapper
-`$env:COVERAGE_RUN = `$true
-`$env:COVERAGE_MODULE_PATH = '$env:TESTMODULEPATH'
+# Set module path directly without copying
+`$env:PSModulePath = (Split-Path '$env:TESTMODULEPATH') + ";" + `$env:PSModulePath
+`$env:ChildProcessPSModulePath = (Split-Path '$env:TESTMODULEPATH')
 
 Write-Host "Module will be loaded from: $env:TESTMODULEPATH" -ForegroundColor Gray
-Write-Host "PSModulePath set to: `$tempmodulefolder" -ForegroundColor Gray
 
-# Import module using full path to the manifest (critical for coverlet instrumentation)
-Import-Module '$env:TESTMODULEPATH/Rnwood.Dataverse.Data.PowerShell.psd1' -Force
+# Import module
+Import-Module Rnwood.Dataverse.Data.PowerShell -Force
 
-# Define helper functions inline (same as All.Tests.ps1)
-`$script:metadata = `$null
+# Load helper functions from All.Tests.ps1 (without the copy logic)
+. '$TestPath/All.Tests.ps1'
 
-function global:getMockConnection([ScriptBlock]`$RequestInterceptor = `$null) {
-    if (-not `$script:metadata) {
-        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
-            Import-Module Rnwood.Dataverse.Data.PowerShell
-        }
-        Add-Type -AssemblyName "System.Runtime.Serialization"
+# Configure Pester to run all test files except All.Tests.ps1
+`$config = New-PesterConfiguration
+`$config.Run.Path = '$TestPath'
+`$config.Run.ExcludePath = '**/All.Tests.ps1'
+`$config.Run.PassThru = `$true
+`$config.Run.Exit = `$false
+`$config.Output.Verbosity = 'Normal'
+`$config.Should.ErrorAction = 'Continue'
 
-        # Define the DataContractSerializer
-        `$serializer = New-Object System.Runtime.Serialization.DataContractSerializer([Microsoft.Xrm.Sdk.Metadata.EntityMetadata])
-    
-        Get-Item '$absoluteTestPath/*.xml' | ForEach-Object {
-            `$stream = [IO.File]::OpenRead(`$_.FullName)
-            `$script:metadata += `$serializer.ReadObject(`$stream)
-            `$stream.Close()
-        }
-    }
-   
-    `$mockService = Get-DataverseConnection -url https://fake.crm.dynamics.com/ -mock `$script:metadata -RequestInterceptor `$RequestInterceptor
-    return `$mockService
-}
+Write-Host "Running Pester tests..." -ForegroundColor Cyan
+`$result = Invoke-Pester -Configuration `$config
 
-function global:newPwsh([scriptblock] `$scriptblock) {
-    if ([System.Environment]::OSVersion.Platform -eq "Unix") {
-        pwsh -noninteractive -noprofile -command `$scriptblock
-    }
-    else {
-        cmd /c pwsh -noninteractive -noprofile -command `$scriptblock
-    }
-}
-
-Write-Host "Helper functions loaded" -ForegroundColor Gray
-
-# Dynamically discover and dot-source all test files (same as All.Tests.ps1)
-`$testFiles = Get-ChildItem -Path '$absoluteTestPath' -Filter "*.ps1" | 
-    Where-Object { 
-        `$_.Name -ne "All.Tests.ps1" -and 
-        `$_.Name -notlike "*.Tests.ps1" -and
-        `$_.Name -notlike "generate-*.ps1" -and
-        `$_.Name -notlike "updatemetadata.ps1"
-    }
-
-Write-Host "Dot-sourcing `$(`$testFiles.Count) test files..." -ForegroundColor Gray
-foreach (`$testFile in `$testFiles) {
-    Write-Host "  Loading `$(`$testFile.Name)..." -ForegroundColor Gray
-    . `$testFile.FullName
-}
-
-Write-Host "Tests executed via dot-sourcing. Exit code: `$LASTEXITCODE" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Test Results:" -ForegroundColor Cyan
+Write-Host "  Total:   `$(`$result.TotalCount)" -ForegroundColor White
+Write-Host "  Passed:  `$(`$result.PassedCount)" -ForegroundColor Green
+Write-Host "  Failed:  `$(`$result.FailedCount)" -ForegroundColor `$(if (`$result.FailedCount -gt 0) { "Red" } else { "Green" })
 
 # Don't fail on test failures during coverage collection
 # We want the coverage data even if some tests fail
@@ -157,27 +118,15 @@ $coverletArgs = @(
     "--format", "cobertura",
     "--format", "json",
     "--output", $coverageOutput,
-    "--include", "[Rnwood.Dataverse.Data.PowerShell.Cmdlets]*",
     "--exclude", "[FakeXrmEasy*]*",
     "--exclude", "[*Tests*]*",
     "--exclude-by-attribute", "GeneratedCode",
-    "--exclude-by-attribute", "ExcludeFromCodeCoverage",
-    "--verbosity", "detailed"
+    "--exclude-by-attribute", "ExcludeFromCodeCoverage"
 )
 
-Write-Host "Running: coverlet $cmdletsAssembly ..." -ForegroundColor Gray
-Write-Host "Target: $pwshPath" -ForegroundColor Gray
-Write-Host "Test script: $testRunnerScript" -ForegroundColor Gray
-
-# Run from a temp directory to avoid auto-exclusions based on current directory structure
-$originalDir = Get-Location
-try {
-    Set-Location -Path ([IO.Path]::GetTempPath())
-    & coverlet @coverletArgs
-    $coverletExitCode = $LASTEXITCODE
-} finally {
-    Set-Location -Path $originalDir
-}
+Write-Host "Running: coverlet ..." -ForegroundColor Gray
+& coverlet @coverletArgs
+$coverletExitCode = $LASTEXITCODE
 
 Write-Host ""
 Write-Host "Coverlet exit code: $coverletExitCode" -ForegroundColor $(if ($coverletExitCode -eq 0) { "Green" } else { "Yellow" })
