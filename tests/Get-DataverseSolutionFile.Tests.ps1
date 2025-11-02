@@ -3,21 +3,6 @@
 Describe 'Get-DataverseSolutionFile' {
 
     BeforeAll {
-        # Set module path
-        if ($env:TESTMODULEPATH) {
-            $source = $env:TESTMODULEPATH
-        }
-        else {
-            $source = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0/"
-        }
-
-        $tempmodulefolder = "$([IO.Path]::GetTempPath())/$([Guid]::NewGuid())"
-        New-Item -ItemType Directory $tempmodulefolder | Out-Null
-        Copy-Item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Data.PowerShell
-        $env:PSModulePath = $tempmodulefolder
-        
-        Import-Module Rnwood.Dataverse.Data.PowerShell -Force
-        
         # Create a minimal test solution.xml content
         $solutionXml = @"
 <?xml version="1.0" encoding="utf-8"?>
