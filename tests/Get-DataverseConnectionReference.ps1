@@ -107,7 +107,8 @@ Describe 'Get-DataverseConnectionReference' {
         $connRef1 | Set-DataverseRecord -Connection $connection -CreateOnly
         $connRef2 | Set-DataverseRecord -Connection $connection -CreateOnly
 
-        $results = Get-DataverseConnectionReference -Connection $connection -ConnectorId "12345678*"
+        # Wrap in @() to ensure it's an array even with a single result (PowerShell 5 compatibility)
+        $results = @(Get-DataverseConnectionReference -Connection $connection -ConnectorId "12345678*")
 
         $results | Should -Not -BeNullOrEmpty
         $results.Count | Should -Be 1
