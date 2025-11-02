@@ -93,12 +93,19 @@ Updated the Build step to:
 - **CI Builds**: Compare to last prerelease, include in GitHub prerelease
 - **Stable Releases**: Compare to last stable release, include in both GitHub and Gallery
 
+**PR Validation:**
+- **Build fails** if PR description does not contain valid conventional commit messages
+- Clear error message guides contributors to fix the issue
+- Only validates new PRs (not historic commits in the repository)
+- Enforces consistent versioning for all new contributions
+
 ### 4. PR Template (`.github/pull_request_template.md`)
 Created a template that:
 - Includes a dedicated "Conventional Commits" section
 - Provides clear examples of each commit type
 - Explains version bump rules
 - Ensures consistent formatting for parsing
+- **REQUIRED** for successful build
 
 **Template structure:**
 ```markdown
@@ -110,7 +117,37 @@ Created a template that:
 - docs: update documentation
 ```
 
-### 4. Documentation Updates
+### 5. PR Validation (`scripts/Test-ConventionalCommits.ps1`)
+A PowerShell script that:
+- Validates PR descriptions contain at least one conventional commit message
+- Provides clear error messages when validation fails
+- Lists all valid commit types and examples
+- Integrated into CI/CD workflow to fail builds for non-compliant PRs
+
+**Validation triggers:**
+- Empty or missing PR description → Build fails
+- No conventional commit messages found → Build fails
+- At least one valid conventional commit → Build passes
+
+**Error message example:**
+```
+ERROR: No conventional commit messages found in PR description
+
+PR descriptions MUST include at least one conventional commit message.
+
+Required format: <type>(<scope>): <description>
+
+Valid types:
+  - feat:     A new feature (minor version bump)
+  - fix:      A bug fix (patch version bump)
+  ...
+
+Examples:
+  - feat: add batch delete operation
+  - fix: resolve connection timeout
+```
+
+### 6. Documentation Updates
 
 #### CONTRIBUTING.md
 Comprehensive guide including:

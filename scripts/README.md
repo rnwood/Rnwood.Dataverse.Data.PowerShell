@@ -56,6 +56,38 @@ Tests the version calculation logic with various scenarios.
 ./scripts/Test-VersionLogic.ps1
 ```
 
+### Test-ConventionalCommits.ps1
+
+Validates that a PR description contains at least one valid conventional commit message.
+
+**Usage:**
+```powershell
+# Validate a PR description
+./scripts/Test-ConventionalCommits.ps1 -PRDescription "feat: add new feature"
+
+# Returns $true if valid, $false if invalid
+```
+
+**Features:**
+- Checks for at least one conventional commit in the description
+- Provides detailed error messages when validation fails
+- Lists all valid commit types and examples
+- Used by CI/CD workflow to enforce PR requirements
+
+**Validation Rules:**
+- PR description must not be empty
+- Must contain at least one line matching conventional commit format
+- Format: `<type>(<scope>): <description>` where type is one of: feat, fix, docs, style, refactor, perf, test, build, ci, chore
+
+### Test-PRValidation.ps1
+
+Tests the PR validation logic to ensure it correctly identifies valid and invalid PR descriptions.
+
+**Usage:**
+```powershell
+./scripts/Test-PRValidation.ps1
+```
+
 ## Coverage Scripts
 
 ## Run-TestsWithCoverage.ps1

@@ -98,22 +98,32 @@ jobs:
                 $event = Get-Content $eventPath -Raw | ConvertFrom-Json
                 $prBody = $event.pull_request.body
                 
-                if ($prBody) {
-                  Write-Host "PR Description:"
-                  Write-Host $prBody
-                  
-                  # Split PR body into lines for analysis
-                  $commitMessages = $prBody -split "`n" | Where-Object { $_ -match '\S' }
-                  
-                  # Use Get-NextVersion script to determine version bump
-                  $nextVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages $commitMessages
-                  Write-Host "Next version determined from PR description: $nextVersion"
-                  $baseVersion = $nextVersion
-                } else {
-                  Write-Host "No PR description found, defaulting to patch bump"
-                  # Use Get-NextVersion with empty messages (defaults to patch)
-                  $baseVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages @()
+                # Validate that PR description contains conventional commits
+                Write-Host ""
+                Write-Host "=== Validating PR Description ===" -ForegroundColor Cyan
+                $isValid = & ./scripts/Test-ConventionalCommits.ps1 -PRDescription $prBody
+                
+                if (-not $isValid) {
+                  Write-Host ""
+                  Write-Host "❌ BUILD FAILED: PR description does not contain valid conventional commit messages" -ForegroundColor Red
+                  Write-Host ""
+                  Write-Host "Please update your PR description to include at least one conventional commit message." -ForegroundColor Yellow
+                  Write-Host "Use the PR template which includes a 'Conventional Commits' section." -ForegroundColor Yellow
+                  Write-Host ""
+                  throw "PR description validation failed - missing conventional commit messages"
                 }
+                
+                Write-Host ""
+                Write-Host "PR Description:"
+                Write-Host $prBody
+                
+                # Split PR body into lines for analysis
+                $commitMessages = $prBody -split "`n" | Where-Object { $_ -match '\S' }
+                
+                # Use Get-NextVersion script to determine version bump
+                $nextVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages $commitMessages
+                Write-Host "Next version determined from PR description: $nextVersion"
+                $baseVersion = $nextVersion
               }
             } else {
               # For main branch, analyze recent commits
