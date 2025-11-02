@@ -158,7 +158,7 @@ jobs:
                       PassedCount = $result.PassedCount
                       FailedCount = $result.FailedCount
                       SkippedCount = $result.SkippedCount
-                      Duration = $result.Duration
+                      DurationSeconds = $result.Duration.TotalSeconds
                       Failed = $result.Failed
                   }
               } -ArgumentList $testFile, $env:TESTMODULEPATH
@@ -175,7 +175,7 @@ jobs:
           $totalPassed = ($results | Measure-Object -Property PassedCount -Sum).Sum
           $totalFailed = ($results | Measure-Object -Property FailedCount -Sum).Sum
           $totalSkipped = ($results | Measure-Object -Property SkippedCount -Sum).Sum
-          $totalDuration = ($results | Measure-Object -Property Duration -Sum).Sum
+          $totalDurationSeconds = ($results | Measure-Object -Property DurationSeconds -Sum).Sum
           
           Write-Host ""
           Write-Host "Parallel Test Execution Summary:" -ForegroundColor Cyan
@@ -183,7 +183,7 @@ jobs:
           Write-Host "  Passed:  $totalPassed" -ForegroundColor Green
           Write-Host "  Failed:  $totalFailed" -ForegroundColor $(if ($totalFailed -gt 0) { "Red" } else { "Green" })
           Write-Host "  Skipped: $totalSkipped" -ForegroundColor Yellow
-          Write-Host "  Duration: $($totalDuration.TotalSeconds)s" -ForegroundColor White
+          Write-Host "  Duration: $($totalDurationSeconds)s" -ForegroundColor White
           
           # Report failures if any
           if ($totalFailed -gt 0) {
@@ -242,7 +242,7 @@ jobs:
                         PassedCount = $result.PassedCount
                         FailedCount = $result.FailedCount
                         SkippedCount = $result.SkippedCount
-                        Duration = $result.Duration
+                        DurationSeconds = $result.Duration.TotalSeconds
                         Failed = $result.Failed
                     }
                 } -ArgumentList $testFile, $env:TESTMODULEPATH
@@ -259,7 +259,7 @@ jobs:
             $totalPassed = ($results | Measure-Object -Property PassedCount -Sum).Sum
             $totalFailed = ($results | Measure-Object -Property FailedCount -Sum).Sum
             $totalSkipped = ($results | Measure-Object -Property SkippedCount -Sum).Sum
-            $totalDuration = ($results | Measure-Object -Property Duration -Sum).Sum
+            $totalDurationSeconds = ($results | Measure-Object -Property DurationSeconds -Sum).Sum
             
             Write-Host ""
             Write-Host "Parallel Test Execution Summary:" -ForegroundColor Cyan
@@ -267,7 +267,7 @@ jobs:
             Write-Host "  Passed:  $totalPassed" -ForegroundColor Green
             Write-Host "  Failed:  $totalFailed" -ForegroundColor $(if ($totalFailed -gt 0) { "Red" } else { "Green" })
             Write-Host "  Skipped: $totalSkipped" -ForegroundColor Yellow
-            Write-Host "  Duration: $($totalDuration.TotalSeconds)s" -ForegroundColor White
+            Write-Host "  Duration: $($totalDurationSeconds)s" -ForegroundColor White
             
             # Report failures if any
             if ($totalFailed -gt 0) {
