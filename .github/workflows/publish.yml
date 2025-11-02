@@ -131,7 +131,7 @@ jobs:
           $config = New-PesterConfiguration
           $config.Run.Path = 'tests/All.Tests.ps1'
           $config.Run.PassThru = $true
-          $config.Output.Verbosity = 'Normal'
+          $config.Output.Verbosity = 'Detailed'
           $config.Output.CIFormat = 'GithubActions'
           $config.Should.ErrorAction = 'Continue'
           
@@ -189,7 +189,7 @@ jobs:
             $config = New-PesterConfiguration
             $config.Run.Path = 'tests/All.Tests.ps1'
             $config.Run.PassThru = $true
-            $config.Output.Verbosity = 'Normal'
+            $config.Output.Verbosity = 'Detailed'
             $config.Output.CIFormat = 'GithubActions'
             $config.Should.ErrorAction = 'Continue'
             
