@@ -13,12 +13,12 @@ Creates or updates Dataverse views (savedquery and userquery entities) with flex
 ## SYNTAX
 
 ```
-Set-DataverseView [-Id <Guid>] [-Name <String>] [-TableName <String>] [-SystemView] [-Description <String>]
- [-Columns <Object[]>] [-AddColumns <Object[]>] [-InsertBefore <String>] [-InsertAfter <String>]
- [-RemoveColumns <String[]>] [-UpdateColumns <Hashtable[]>] [-FilterValues <Hashtable[]>] [-FetchXml <String>]
- [-Links <DataverseLinkEntity[]>] [-LayoutXml <String>] [-IsDefault] [-QueryType <QueryType>] [-NoUpdate]
- [-NoCreate] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
+Set-DataverseView [-Id <Guid>] [-Name <String>] [-TableName <String>] [-ViewType <String>]
+ [-Description <String>] [-Columns <Object[]>] [-AddColumns <Object[]>] [-InsertBefore <String>]
+ [-InsertAfter <String>] [-RemoveColumns <String[]>] [-UpdateColumns <Hashtable[]>]
+ [-FilterValues <Hashtable[]>] [-FetchXml <String>] [-Links <DataverseLinkEntity[]>] [-LayoutXml <String>]
+ [-IsDefault] [-QueryType <QueryType>] [-NoUpdate] [-NoCreate] [-PassThru] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -184,7 +184,7 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
@@ -231,7 +231,7 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
@@ -260,12 +260,12 @@ Supports grouped filters using 'and', 'or', 'not', or 'xor' keys with nested has
 ```yaml
 Type: Hashtable[]
 Parameter Sets: (All)
-Aliases:
+Aliases: Filters
 
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
@@ -296,7 +296,7 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
@@ -328,7 +328,7 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
@@ -389,7 +389,7 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
@@ -398,21 +398,6 @@ Columns to remove from the view
 
 ```yaml
 Type: String[]
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -SystemView
-Work with a system view (savedquery) instead of a personal view (userquery)
-
-```yaml
-Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 
@@ -435,7 +420,7 @@ Aliases: EntityName
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
@@ -497,7 +482,7 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
@@ -532,6 +517,21 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ViewType
+Work with a system view (savedquery) instead of a personal view (userquery)
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 

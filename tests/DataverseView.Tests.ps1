@@ -1,8 +1,9 @@
+. $PSScriptRoot/Common.ps1
 
 Describe "View Management Cmdlets" {
     Context "Set-DataverseView - Basic Creation" {
         It "Creates a personal view with simple filter" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a personal view with simple column definitions
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -16,7 +17,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Creates a system view with hashtable column definitions" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a system view with column configuration
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -35,7 +36,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Creates a view with description" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "View with Description" `
@@ -47,7 +48,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Creates a view with complex filter" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create view with OR filter
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -60,7 +61,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Creates a view with nested filter groups" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create view with AND/OR combinations
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -78,7 +79,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Creates a view as default view" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Default View" `
@@ -91,7 +92,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Creates a view with specific QueryType" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create an Advanced Search view (QueryType = AdvancedSearch)
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -106,7 +107,7 @@ Describe "View Management Cmdlets" {
 
     Context "Set-DataverseView - FetchXml Creation" {
         It "Creates a view with FetchXml" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             $fetchXml = @"
 <fetch>
@@ -129,7 +130,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Creates a view with FetchXml and custom LayoutXml" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             $fetchXml = @"
 <fetch>
@@ -161,7 +162,7 @@ Describe "View Management Cmdlets" {
 
     Context "Set-DataverseView - WhatIf Support" {
         It "Supports WhatIf without creating view" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # This should not create a view
             $result = Set-DataverseView -Connection $connection `
@@ -177,7 +178,7 @@ Describe "View Management Cmdlets" {
 
     Context "Column Management" {
         It "Adds columns to existing view" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -195,7 +196,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Removes columns from existing view" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -213,7 +214,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Updates column properties" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -231,7 +232,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Adds columns with configuration" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -252,7 +253,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Adds columns before a specific column" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -271,7 +272,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Adds columns after a specific column" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -290,7 +291,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Throws error when both InsertBefore and InsertAfter are specified" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -309,7 +310,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Throws error when InsertBefore is used without AddColumns" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -328,7 +329,7 @@ Describe "View Management Cmdlets" {
 
     Context "Filter Management" {
         It "Updates filters in view" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -347,7 +348,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Replaces FetchXml in view" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -380,7 +381,7 @@ Describe "View Management Cmdlets" {
 
     Context "Metadata Updates" {
         It "Updates view name" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -398,7 +399,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Updates view description" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -416,7 +417,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Sets view as default" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a system view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -438,7 +439,7 @@ Describe "View Management Cmdlets" {
 
     Context "Set-DataverseView - WhatIf Support" {
         It "Supports WhatIf without modifying view" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -459,7 +460,7 @@ Describe "View Management Cmdlets" {
 
     Context "Remove-DataverseView - Basic Removal" {
         It "Removes a personal view" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -475,7 +476,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Removes a system view" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a system view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -492,7 +493,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Removes multiple views via pipeline" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create multiple views
             $viewId1 = Set-DataverseView -PassThru -Connection $connection `
@@ -516,7 +517,7 @@ Describe "View Management Cmdlets" {
 
     Context "Remove-DataverseView - IfExists Support" {
         It "Does not error when removing non-existent view with IfExists" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Try to remove a view that doesn't exist
             $nonExistentId = [Guid]::NewGuid()
@@ -528,7 +529,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Errors when removing non-existent view without IfExists" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Try to remove a view that doesn't exist
             $nonExistentId = [Guid]::NewGuid()
@@ -542,7 +543,7 @@ Describe "View Management Cmdlets" {
 
     Context "Remove-DataverseView - WhatIf Support" {
         It "Supports WhatIf without removing view" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view first
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -560,7 +561,7 @@ Describe "View Management Cmdlets" {
 
     Context "Integration Tests" {
         It "Creates, modifies, and removes a view in workflow" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -589,7 +590,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Creates view with simple syntax then updates with FetchXml" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create with simple syntax
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -624,7 +625,7 @@ Describe "View Management Cmdlets" {
 
     Context "Get-DataverseView - Retrieval" {
         It "Gets all views" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a few views first
             $viewId1 = Set-DataverseView -PassThru -Connection $connection `
@@ -646,7 +647,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Gets view by ID" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -662,7 +663,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Gets view by name" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view with a unique name
             $uniqueName = "Unique View Name $(Get-Random)"
@@ -679,7 +680,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Gets views by entity/table name" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create views for contact entity
             $viewId1 = Set-DataverseView -PassThru -Connection $connection `
@@ -702,7 +703,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Gets only system views" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a system view
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -720,7 +721,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Gets only personal views" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a personal view
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -737,7 +738,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Gets views by query type" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a view with specific query type (Advanced Find = 2)
             $viewId = Set-DataverseView -PassThru -Connection $connection `
@@ -755,7 +756,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Gets views with wildcard name" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create views with similar names
             $viewId1 = Set-DataverseView -PassThru -Connection $connection `
@@ -778,7 +779,7 @@ Describe "View Management Cmdlets" {
         }
 
         It "Combines filters for entity and system view" {
-            $connection = getMockConnection
+            $connection = getMockConnection @("savedquery", "userquery", "contact")
             
             # Create a system view for contact
             $viewId = Set-DataverseView -PassThru -Connection $connection `

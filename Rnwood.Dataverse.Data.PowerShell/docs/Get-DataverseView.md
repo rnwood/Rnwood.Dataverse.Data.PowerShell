@@ -13,7 +13,7 @@ Retrieves view information (savedquery or userquery) from a Dataverse environmen
 ## SYNTAX
 
 ```
-Get-DataverseView [[-Id] <Guid>] [-Name <String>] [-TableName <String>] [-SystemView] [-PersonalView]
+Get-DataverseView [[-Id] <Guid>] [-Name <String>] [-TableName <String>] [-ViewType <String>]
  [-QueryType <QueryType>] [-Raw] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [<CommonParameters>]
 ```
@@ -126,41 +126,11 @@ Accept pipeline input: False
 Accept wildcard characters: True
 ```
 
-### -PersonalView
-Retrieve personal views (userquery) instead of system views (savedquery)
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -QueryType
 View type to filter by. Valid values: MainApplicationView, AdvancedSearch, SubGrid, QuickFindSearch, Reporting, OfflineFilters, LookupView, SMAppointmentBookView, MainApplicationViewWithoutSubject, SavedQueryTypeOther, InteractiveWorkflowView, OfflineTemplate, CustomDefinedView, ExportFieldTranslationsView, OutlookTemplate, AddressBookFilters, OutlookFilters, CopilotView
 
 ```yaml
 Type: QueryType
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -SystemView
-Retrieve system views (savedquery) instead of personal views (userquery)
-
-```yaml
-Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 
@@ -213,6 +183,21 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ViewType
+Retrieve views of the specified type
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
