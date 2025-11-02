@@ -19,10 +19,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public int Retries { get; set; } = 0;
 
 		/// <summary>
-		/// Initial delay in seconds before first retry. Subsequent retries use exponential backoff. Default is 5s.
+		/// Initial delay in seconds before first retry. Subsequent retries use exponential backoff. Default is 1s.
 		/// </summary>
-		[Parameter(HelpMessage = "Initial delay in seconds before first retry. Subsequent retries use exponential backoff. Default is 5s.")]
-		public int InitialRetryDelay { get; set; } = 5;
+		[Parameter(HelpMessage = "Initial delay in seconds before first retry. Subsequent retries use exponential backoff. Default is 1s.")]
+		public int InitialRetryDelay { get; set; } = 1;
 
 		/// <summary>
 		/// Executes an organization request with retry logic.
