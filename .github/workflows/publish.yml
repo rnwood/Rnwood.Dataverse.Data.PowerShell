@@ -127,53 +127,78 @@ jobs:
           Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
           
           # Run tests with CI-friendly output
-          # Note: Tests may be slow due to child process spawning and mock setup overhead
           # Each test file now includes Common.ps1 for setup, allowing Pester to run them independently
-          $config = New-PesterConfiguration
-          $config.Run.Path = 'tests'
-          $config.Run.PassThru = $true
-          $config.Output.Verbosity = 'Detailed'
-          $config.Output.CIFormat = 'GithubActions'
-          $config.Should.ErrorAction = 'Continue'
+          # Run test files in parallel using Start-Job for maximum performance
           
-          $result = Invoke-Pester -Configuration $config
+          Write-Host "Discovering test files..."
+          $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
+          Write-Host "Found $($testFiles.Count) test files to run in parallel"
+          
+          # Start a job for each test file
+          $jobs = $testFiles | ForEach-Object {
+              $testFile = $_
+              Start-Job -ScriptBlock {
+                  param($testFilePath, $modulePath)
+                  
+                  $env:TESTMODULEPATH = $modulePath
+                  
+                  # Run each test file independently
+                  $config = New-PesterConfiguration
+                  $config.Run.Path = $testFilePath
+                  $config.Run.PassThru = $true
+                  $config.Output.Verbosity = 'None'  # Suppress individual file output to avoid clutter
+                  $config.Should.ErrorAction = 'Continue'
+                  
+                  $result = Invoke-Pester -Configuration $config
+                  
+                  # Return result with filename for aggregation
+                  [PSCustomObject]@{
+                      File = (Split-Path $testFilePath -Leaf)
+                      TotalCount = $result.TotalCount
+                      PassedCount = $result.PassedCount
+                      FailedCount = $result.FailedCount
+                      SkippedCount = $result.SkippedCount
+                      Duration = $result.Duration
+                      Failed = $result.Failed
+                  }
+              } -ArgumentList $testFile, $env:TESTMODULEPATH
+          }
+          
+          Write-Host "Running $($jobs.Count) test files in parallel..."
+          
+          # Wait for all jobs to complete and collect results
+          $results = $jobs | Wait-Job | Receive-Job
+          $jobs | Remove-Job
+          
+          # Aggregate results
+          $totalTests = ($results | Measure-Object -Property TotalCount -Sum).Sum
+          $totalPassed = ($results | Measure-Object -Property PassedCount -Sum).Sum
+          $totalFailed = ($results | Measure-Object -Property FailedCount -Sum).Sum
+          $totalSkipped = ($results | Measure-Object -Property SkippedCount -Sum).Sum
+          $totalDuration = ($results | Measure-Object -Property Duration -Sum).Sum
           
           Write-Host ""
-          Write-Host "Test Summary:" -ForegroundColor Cyan
-          Write-Host "  Total:   $($result.TotalCount)" -ForegroundColor White
-          Write-Host "  Passed:  $($result.PassedCount)" -ForegroundColor Green
-          Write-Host "  Failed:  $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { "Red" } else { "Green" })
-          Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
+          Write-Host "Parallel Test Execution Summary:" -ForegroundColor Cyan
+          Write-Host "  Total:   $totalTests" -ForegroundColor White
+          Write-Host "  Passed:  $totalPassed" -ForegroundColor Green
+          Write-Host "  Failed:  $totalFailed" -ForegroundColor $(if ($totalFailed -gt 0) { "Red" } else { "Green" })
+          Write-Host "  Skipped: $totalSkipped" -ForegroundColor Yellow
+          Write-Host "  Duration: $($totalDuration.TotalSeconds)s" -ForegroundColor White
           
-          if ($result.FailedCount -gt 0) {
-            Write-Host ""
-            Write-Host "Failed Tests:" -ForegroundColor Red
-            
-            # Save test failure details to file for PR comment
-            # Sanitize filename by replacing dots and spaces
-            $osName = "${{ matrix.os }}".Replace(' ', '-')
-            $psVersion = "${{ matrix.powershell_version }}".Replace('.', '-').Replace(' ', '-')
-            $fileName = "test-failures-$osName-ps$psVersion.md"
-            
-            $failureReport = "## ❌ Test Failures - ${{ matrix.os }} / PowerShell ${{ matrix.powershell_version }}`n`n"
-            $failureReport += "**Total Tests:** $($result.TotalCount)  `n"
-            $failureReport += "**Passed:** $($result.PassedCount)  `n"
-            $failureReport += "**Failed:** $($result.FailedCount)  `n"
-            $failureReport += "**Skipped:** $($result.SkippedCount)`n`n"
-            $failureReport += "### Failed Tests:`n`n"
-            
-            foreach ($test in $result.Failed) {
-              Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
-              Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
-              $failureReport += "- **$($test.ExpandedPath)**`n  ``````n  $($test.ErrorRecord.Exception.Message)`n  ``````n"
-            }
-            
-            # Write file and ensure it's flushed to disk
-            $failureReport | Out-File -FilePath $fileName -Encoding utf8 -Force
-            Write-Host "Created failure report: $fileName"
-            
-            # Use exit instead of throw to ensure file is preserved
-            exit 1
+          # Report failures if any
+          if ($totalFailed -gt 0) {
+              Write-Host ""
+              Write-Host "Failed Tests:" -ForegroundColor Red
+              foreach ($result in $results | Where-Object { $_.FailedCount -gt 0 }) {
+                  Write-Host "  File: $($result.File)" -ForegroundColor Yellow
+                  foreach ($test in $result.Failed) {
+                      Write-Host "    - $($test.ExpandedPath)" -ForegroundColor Red
+                      if ($test.ErrorRecord) {
+                          Write-Host "      $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+                      }
+                  }
+              }
+              exit 1
           }
       - if:  ${{ matrix.powershell_version == '5' }}
         name: Test - powershell
@@ -186,53 +211,78 @@ jobs:
             Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
             
             # Run tests with CI-friendly output
-            # Note: Tests may be slow due to child process spawning and mock setup overhead
             # Each test file now includes Common.ps1 for setup, allowing Pester to run them independently
-            $config = New-PesterConfiguration
-            $config.Run.Path = 'tests'
-            $config.Run.PassThru = $true
-            $config.Output.Verbosity = 'Detailed'
-            $config.Output.CIFormat = 'GithubActions'
-            $config.Should.ErrorAction = 'Continue'
+            # Run test files in parallel using Start-Job for maximum performance
             
-            $result = Invoke-Pester -Configuration $config
+            Write-Host "Discovering test files..."
+            $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
+            Write-Host "Found $($testFiles.Count) test files to run in parallel"
+            
+            # Start a job for each test file
+            $jobs = $testFiles | ForEach-Object {
+                $testFile = $_
+                Start-Job -ScriptBlock {
+                    param($testFilePath, $modulePath)
+                    
+                    $env:TESTMODULEPATH = $modulePath
+                    
+                    # Run each test file independently
+                    $config = New-PesterConfiguration
+                    $config.Run.Path = $testFilePath
+                    $config.Run.PassThru = $true
+                    $config.Output.Verbosity = 'None'  # Suppress individual file output to avoid clutter
+                    $config.Should.ErrorAction = 'Continue'
+                    
+                    $result = Invoke-Pester -Configuration $config
+                    
+                    # Return result with filename for aggregation
+                    [PSCustomObject]@{
+                        File = (Split-Path $testFilePath -Leaf)
+                        TotalCount = $result.TotalCount
+                        PassedCount = $result.PassedCount
+                        FailedCount = $result.FailedCount
+                        SkippedCount = $result.SkippedCount
+                        Duration = $result.Duration
+                        Failed = $result.Failed
+                    }
+                } -ArgumentList $testFile, $env:TESTMODULEPATH
+            }
+            
+            Write-Host "Running $($jobs.Count) test files in parallel..."
+            
+            # Wait for all jobs to complete and collect results
+            $results = $jobs | Wait-Job | Receive-Job
+            $jobs | Remove-Job
+            
+            # Aggregate results
+            $totalTests = ($results | Measure-Object -Property TotalCount -Sum).Sum
+            $totalPassed = ($results | Measure-Object -Property PassedCount -Sum).Sum
+            $totalFailed = ($results | Measure-Object -Property FailedCount -Sum).Sum
+            $totalSkipped = ($results | Measure-Object -Property SkippedCount -Sum).Sum
+            $totalDuration = ($results | Measure-Object -Property Duration -Sum).Sum
             
             Write-Host ""
-            Write-Host "Test Summary:" -ForegroundColor Cyan
-            Write-Host "  Total:   $($result.TotalCount)" -ForegroundColor White
-            Write-Host "  Passed:  $($result.PassedCount)" -ForegroundColor Green
-            Write-Host "  Failed:  $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { "Red" } else { "Green" })
-            Write-Host "  Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
+            Write-Host "Parallel Test Execution Summary:" -ForegroundColor Cyan
+            Write-Host "  Total:   $totalTests" -ForegroundColor White
+            Write-Host "  Passed:  $totalPassed" -ForegroundColor Green
+            Write-Host "  Failed:  $totalFailed" -ForegroundColor $(if ($totalFailed -gt 0) { "Red" } else { "Green" })
+            Write-Host "  Skipped: $totalSkipped" -ForegroundColor Yellow
+            Write-Host "  Duration: $($totalDuration.TotalSeconds)s" -ForegroundColor White
             
-            if ($result.FailedCount -gt 0) {
-              Write-Host ""
-              Write-Host "Failed Tests:" -ForegroundColor Red
-              
-              # Save test failure details to file for PR comment
-              # Sanitize filename by replacing dots and spaces
-              $osName = "${{ matrix.os }}".Replace(' ', '-')
-              $psVersion = "${{ matrix.powershell_version }}".Replace('.', '-').Replace(' ', '-')
-              $fileName = "test-failures-$osName-ps$psVersion.md"
-              
-              $failureReport = "## ❌ Test Failures - ${{ matrix.os }} / PowerShell ${{ matrix.powershell_version }}`n`n"
-              $failureReport += "**Total Tests:** $($result.TotalCount)  `n"
-              $failureReport += "**Passed:** $($result.PassedCount)  `n"
-              $failureReport += "**Failed:** $($result.FailedCount)  `n"
-              $failureReport += "**Skipped:** $($result.SkippedCount)`n`n"
-              $failureReport += "### Failed Tests:`n`n"
-              
-              foreach ($test in $result.Failed) {
-                Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
-                Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
-                $failureReport += "- **$($test.ExpandedPath)**`n  ``````n  $($test.ErrorRecord.Exception.Message)`n  ``````n"
-              }
-              
-              # Write file and ensure it's flushed to disk
-              $failureReport | Out-File -FilePath $fileName -Encoding utf8 -Force
-              Write-Host "Created failure report: $fileName"
-              
-              # Use exit instead of throw to ensure file is preserved
-              exit 1
+            # Report failures if any
+            if ($totalFailed -gt 0) {
+                Write-Host ""
+                Write-Host "Failed Tests:" -ForegroundColor Red
+                foreach ($result in $results | Where-Object { $_.FailedCount -gt 0 }) {
+                    Write-Host "  File: $($result.File)" -ForegroundColor Yellow
+                    foreach ($test in $result.Failed) {
+                        Write-Host "    - $($test.ExpandedPath)" -ForegroundColor Red
+                        if ($test.ErrorRecord) {
+                            Write-Host "      $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+                        }
+                    }
+                }
+                exit 1
             }
       - if: ${{ matrix.powershell_version != '5' }}
         name: E2E Test - pwsh
