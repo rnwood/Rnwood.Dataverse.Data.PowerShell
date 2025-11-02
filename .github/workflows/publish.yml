@@ -82,9 +82,10 @@ jobs:
               $commitsToday = 1
             }
             
-            # Build CI version with date-based prerelease suffix: ci<yyyyMMdd>.<buildNumber>
-            # where buildNumber is commit count today (or 1 for first build with no commits)
-            $prereleaseString = "ci$dateString.$commitsToday"
+            # Build CI version with date-based prerelease suffix: ci<yyyyMMdd><seqNum>
+            # where seqNum is zero-padded to 3 digits for SemVer 1.0 compliance (no dots allowed)
+            $seqNum = "{0:000}" -f [int]$commitsToday
+            $prereleaseString = "ci$dateString$seqNum"
             
             # Update manifest with base version and prerelease in one operation
             $content = get-content -raw -encoding UTF8 $manifestpath
