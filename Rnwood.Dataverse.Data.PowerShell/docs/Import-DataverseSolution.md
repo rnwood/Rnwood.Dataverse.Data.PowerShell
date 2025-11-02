@@ -19,9 +19,8 @@ Import-DataverseSolution [-InFile] <String> [-OverwriteUnmanagedCustomizations] 
  [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
  [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfAdditive]
  [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation]
- [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion] [-SkipIfLowerVersion] 
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion] [-SkipIfLowerVersion] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### FromBytes
@@ -31,9 +30,8 @@ Import-DataverseSolution -SolutionFile <Byte[]> [-OverwriteUnmanagedCustomizatio
  [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
  [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfAdditive]
  [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation]
- [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion] [-SkipIfLowerVersion]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion] [-SkipIfLowerVersion] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
