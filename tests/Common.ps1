@@ -24,24 +24,31 @@ if (-not $global:TestsInitialized) {
 }
 
 # Helper functions in global scope so all tests can access them
-# Use global variable for metadata so it's only loaded once across all test files
-if (-not $global:TestMetadata) {
-    $global:TestMetadata = @()
+# Use global variable for metadata cache - stores metadata by entity name
+if (-not $global:TestMetadataCache) {
+    $global:TestMetadataCache = @{}
 }
 
-function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null) {
-    # Load metadata if not already loaded
-    if ($global:TestMetadata.Count -eq 0) {
-        LoadTestMetadata
+function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [string[]]$Entities = @("contact")) {
+    # Load metadata for requested entities if not already loaded
+    $metadata = @()
+    foreach ($entityName in $Entities) {
+        if (-not $global:TestMetadataCache.ContainsKey($entityName)) {
+            LoadTestMetadata -EntityName $entityName
+        }
+        $metadata += $global:TestMetadataCache[$entityName]
     }
    
     # Create the connection (no caching for test isolation)
-    $mockService = Get-DataverseConnection -url https://fake.crm.dynamics.com/ -mock $global:TestMetadata -RequestInterceptor $RequestInterceptor
+    $mockService = Get-DataverseConnection -url https://fake.crm.dynamics.com/ -mock $metadata -RequestInterceptor $RequestInterceptor
     return $mockService
 }
 
 function global:LoadTestMetadata {
-    Write-Verbose "Loading metadata for the first time..." -Verbose
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$EntityName
+    )
     
     if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
         Import-Module Rnwood.Dataverse.Data.PowerShell
@@ -52,15 +59,18 @@ function global:LoadTestMetadata {
     # Define the DataContractSerializer
     $serializer = New-Object System.Runtime.Serialization.DataContractSerializer([Microsoft.Xrm.Sdk.Metadata.EntityMetadata])
 
-    Get-Item $PSScriptRoot/*.xml | ForEach-Object {
-        Write-Verbose "Loading $($_.Name)..." -Verbose
-        $stream = [IO.File]::OpenRead($_.FullName)
+    $xmlFile = "$PSScriptRoot/$EntityName.xml"
+    if (Test-Path $xmlFile) {
+        Write-Verbose "Loading metadata for entity: $EntityName..." -Verbose
+        $stream = [IO.File]::OpenRead($xmlFile)
         $metadata = $serializer.ReadObject($stream)
         $stream.Close()
-        $global:TestMetadata = $global:TestMetadata + @($metadata)
+        $global:TestMetadataCache[$EntityName] = $metadata
+        Write-Verbose "Metadata loaded for entity: $EntityName" -Verbose
     }
-    
-    Write-Verbose "Metadata loading completed - $($global:TestMetadata.Count) entities loaded" -Verbose
+    else {
+        throw "Metadata file not found: $xmlFile - Entity '$EntityName' metadata must be available for testing. Available entities: $(Get-ChildItem $PSScriptRoot/*.xml | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_.Name) } | Join-String -Separator ', ')"
+    }
 }
 
 function global:newPwsh([scriptblock] $scriptblock) {

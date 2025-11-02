@@ -2,7 +2,7 @@
 
 Describe 'Get-DataverseConnectionReference' {
     It "Returns connection references with expected properties" {
-        $connection = getMockConnection
+        $connection = getMockConnection -Entities @("connectionreference")
 
         # Create a test connection reference
         $connRefId = [Guid]::NewGuid()
@@ -39,7 +39,7 @@ Describe 'Get-DataverseConnectionReference' {
     }
 
     It "Filters by ConnectionReferenceLogicalName" {
-        $connection = getMockConnection
+        $connection = getMockConnection -Entities @("connectionreference")
 
         # Create test connection references
         $connRef1 = new-object Microsoft.Xrm.Sdk.Entity "connectionreference"
@@ -65,7 +65,7 @@ Describe 'Get-DataverseConnectionReference' {
     }
 
     It "Filters by ConnectorId" {
-        $connection = getMockConnection
+        $connection = getMockConnection -Entities @("connectionreference")
 
         # Create test connection references
         $connRef1 = new-object Microsoft.Xrm.Sdk.Entity "connectionreference"
@@ -91,7 +91,7 @@ Describe 'Get-DataverseConnectionReference' {
     }
 
     It "Supports wildcard filtering for ConnectorId" {
-        $connection = getMockConnection
+        $connection = getMockConnection -Entities @("connectionreference")
 
         # Create test connection references
         $connRef1 = new-object Microsoft.Xrm.Sdk.Entity "connectionreference"

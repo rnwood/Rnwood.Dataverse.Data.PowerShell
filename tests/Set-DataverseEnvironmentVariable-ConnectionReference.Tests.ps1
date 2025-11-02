@@ -7,7 +7,7 @@
 Describe 'Set-DataverseEnvironmentVariableValue' {
     Context 'Setting a single environment variable value' {
         It "Creates a new environment variable value when none exists" -Skip {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("environmentvariabledefinition", "environmentvariablevalue", "connectionreference")
             
             # Create an environment variable definition using Set-DataverseRecord
             $envVarDefId = [Guid]::NewGuid()
@@ -25,7 +25,7 @@ Describe 'Set-DataverseEnvironmentVariableValue' {
         }
 
         It "Updates an existing environment variable value" -Skip {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("environmentvariabledefinition", "environmentvariablevalue", "connectionreference")
             
             # Create an environment variable definition
             $envVarDefId = [Guid]::NewGuid()
@@ -53,7 +53,7 @@ Describe 'Set-DataverseEnvironmentVariableValue' {
 
         It "Throws error when environment variable definition does not exist" {
             # This test validates the cmdlet exists and has proper parameters
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("environmentvariabledefinition", "environmentvariablevalue", "connectionreference")
             
             # Should throw because entity metadata is not in mock, but this validates the cmdlet works
             { Set-DataverseEnvironmentVariableValue -Connection $connection -SchemaName "new_nonexistent" -Value "value" -ErrorAction Stop } | Should -Throw
@@ -62,7 +62,7 @@ Describe 'Set-DataverseEnvironmentVariableValue' {
 
     Context 'Setting multiple environment variable values' {
         It "Creates and updates multiple environment variables" -Skip {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("environmentvariabledefinition", "environmentvariablevalue", "connectionreference")
             
             # Create two environment variable definitions
             $envVarDef1Id = [Guid]::NewGuid()
@@ -99,7 +99,7 @@ Describe 'Set-DataverseEnvironmentVariableValue' {
         }
 
         It "Handles empty string values" -Skip {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("environmentvariabledefinition", "environmentvariablevalue", "connectionreference")
             
             # Create an environment variable definition
             $envVarDefId = [Guid]::NewGuid()
@@ -121,7 +121,7 @@ Describe 'Set-DataverseEnvironmentVariableValue' {
 Describe 'Set-DataverseConnectionReference' {
     Context 'Setting a single connection reference' {
         It "Updates a connection reference" -Skip {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("environmentvariabledefinition", "environmentvariablevalue", "connectionreference")
             
             # Create a connection reference using Set-DataverseRecord
             $connRefId = [Guid]::NewGuid()
@@ -145,7 +145,7 @@ Describe 'Set-DataverseConnectionReference' {
         }
 
         It "Updates an existing connection reference with a previous value" -Skip {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("environmentvariabledefinition", "environmentvariablevalue", "connectionreference")
             
             # Create a connection reference with an existing connection
             $connRefId = [Guid]::NewGuid()
@@ -172,7 +172,7 @@ Describe 'Set-DataverseConnectionReference' {
 
         It "Throws error when connection reference does not exist and ConnectorId is not provided" {
             # This test validates that ConnectorId is required for creation
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("environmentvariabledefinition", "environmentvariablevalue", "connectionreference")
 
             # Should throw because ConnectorId is required for creation
             { Set-DataverseConnectionReference -Connection $connection `
@@ -182,7 +182,7 @@ Describe 'Set-DataverseConnectionReference' {
 
         It "Creates a new connection reference when ConnectorId is provided" -Skip {
             # This test validates that creation works when ConnectorId is provided
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("environmentvariabledefinition", "environmentvariablevalue", "connectionreference")
 
             $result = Set-DataverseConnectionReference -Connection $connection `
                 -ConnectionReferenceLogicalName "new_created_connref" `
@@ -199,7 +199,7 @@ Describe 'Set-DataverseConnectionReference' {
 
     Context 'Setting multiple connection references' {
         It "Updates multiple connection references" -Skip {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("environmentvariabledefinition", "environmentvariablevalue", "connectionreference")
             
             # Create two connection references
             $connRef1Id = [Guid]::NewGuid()
