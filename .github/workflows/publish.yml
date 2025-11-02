@@ -73,11 +73,12 @@ jobs:
             $todayMidnightUtc = $nowUtc.Date
             
             # Count commits made today (since midnight UTC)
-            # git --since uses the local timezone, so we need to convert to ISO 8601 format with UTC timezone
+            # Use ISO 8601 format with 'Z' suffix to specify UTC timezone explicitly
             $todayIso = $todayMidnightUtc.ToString("yyyy-MM-ddT00:00:00Z")
             $commitsToday = git rev-list --count --since="$todayIso" HEAD 2>$null
             if ($null -eq $commitsToday -or $commitsToday -eq "" -or $commitsToday -eq "0") {
-              # If no commits today, use 1 as the build number
+              # If no commits today, use 1 as the build number to ensure unique versioning
+              # This represents the first build attempt for this date
               $commitsToday = 1
             }
             
