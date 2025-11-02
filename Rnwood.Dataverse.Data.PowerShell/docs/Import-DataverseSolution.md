@@ -19,7 +19,8 @@ Import-DataverseSolution [-InFile] <String> [-OverwriteUnmanagedCustomizations] 
  [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
  [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfAdditive]
  [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation]
- [-SkipEnvironmentVariableValidation] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion] [-SkipIfLowerVersion] 
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -30,7 +31,8 @@ Import-DataverseSolution -SolutionFile <Byte[]> [-OverwriteUnmanagedCustomizatio
  [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
  [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfAdditive]
  [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation]
- [-SkipEnvironmentVariableValidation] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion] [-SkipIfLowerVersion]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -127,6 +129,27 @@ PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MyManagedSolution.zip" -M
 ```
 
 Explicitly requests stage and upgrade mode. The cmdlet will check if the solution exists and use StageAndUpgradeAsyncRequest if it does, otherwise falls back to regular import.
+
+### Example 10: Skip import if same version is already installed
+```powershell
+PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_1.0.0.0.zip" -SkipIfSameVersion
+```
+
+Skips the import if the solution version in the file (e.g., 1.0.0.0) is the same as the version already installed in the target environment. Useful for deployment scripts that should be idempotent.
+
+### Example 11: Skip import if a newer version is already installed
+```powershell
+PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_1.0.0.0.zip" -SkipIfLowerVersion
+```
+
+Skips the import if the solution version in the file is lower than the version already installed in the target environment. Prevents accidental downgrades.
+
+### Example 12: Combine version checks
+```powershell
+PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -SkipIfSameVersion -SkipIfLowerVersion
+```
+
+Skips the import if the solution version in the file is the same as or lower than the version installed. Only imports if the file contains a newer version.
 
 ## PARAMETERS
 
@@ -345,6 +368,40 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -SkipIfLowerVersion
+Skip import if the solution version in the file is lower than the installed version in the target environment.
+
+This parameter allows you to prevent accidental downgrades by checking the version before importing. If the solution file version is lower than the installed version, the import is skipped with a warning message.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SkipIfSameVersion
+Skip import if the solution version in the file is the same as the installed version in the target environment.
+
+This parameter makes the import operation idempotent by skipping the import if the same version is already installed. Useful for deployment scripts that may be run multiple times.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -SkipProductUpdateDependencies
 Skip enforcement of dependencies related to product updates.
 
@@ -494,6 +551,13 @@ When using -HoldingSolution to import a solution as an upgrade, the cmdlet extra
 
 **UseUpdateIfAdditive Mode:**
 The -UseUpdateIfAdditive switch (experimental) performs a component comparison between the solution file and the target environment when the solution already exists. If the comparison shows only additive changes (no components removed or behavior changes that would remove data), it uses the simpler ImportSolutionAsyncRequest instead of StageAndUpgradeAsyncRequest for better performance. This switch is only valid when using the default Auto mode. Use Compare-DataverseSolutionComponents to preview what the comparison would show before using this switch.
+
+**Version Checking:**
+The `-SkipIfSameVersion` and `-SkipIfLowerVersion` switches allow you to control whether an import should proceed based on version comparison:
+- `-SkipIfSameVersion`: Skips the import if the solution file version matches the installed version. Useful for idempotent deployment scripts.
+- `-SkipIfLowerVersion`: Skips the import if the solution file version is lower than the installed version. Prevents accidental downgrades.
+
+Both switches can be combined to ensure only newer versions are imported. The version is extracted from the solution.xml file in the ZIP and compared to the version in the target environment's solution table. If the solution doesn't exist in the target environment, these switches have no effect and the import proceeds normally.
 
 Progress is reported using PowerShell's progress API and shows:
 - Current status (Waiting, In progress, etc.)
