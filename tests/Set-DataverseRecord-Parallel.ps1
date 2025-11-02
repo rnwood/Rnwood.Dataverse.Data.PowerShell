@@ -194,7 +194,7 @@ Describe "Set-DataverseRecord Parallel Processing" {    Context "Parallel Proces
                 @{ firstname = "John2"; lastname = "Doe2" }
             )
             $errors = @()
-            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru -Retries 5 -InitialRetryDelay 1 -MaxDegreeOfParallelism 2 -BatchSize 10 -ErrorVariable errors -ErrorAction SilentlyContinue
+            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru -Retries 5 -InitialRetryDelay 0.1 -MaxDegreeOfParallelism 2 -BatchSize 10 -ErrorVariable errors -ErrorAction SilentlyContinue
 
             # Should succeed after retry - no errors expected
             $errors.Count | Should -Be 0

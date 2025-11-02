@@ -169,7 +169,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
             $created[1] | format-list Id, firstname, lastname | Out-Host
 
             # Now remove with failure
-            $created | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 1 -initialretry 1 -Verbose
+            $created | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 0.1 -Verbose
 
             # Check they are deleted
             $remaining = Get-DataverseRecord -Connection $connection -TableName contact -verbose 
@@ -200,7 +200,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
             $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -PassThru -verbose
 
             # Now remove with failure on first item
-            $created | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 1  -initialretry 1 -Verbose
+            $created | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 0.1 -Verbose
 
             # Check they are deleted
             $remaining = Get-DataverseRecord -Connection $connection -TableName contact -verbose
@@ -232,7 +232,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
 
             # Now remove with failure exceeding retries
             $errors = @()
-            $created | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 1  -initialretry 1 -verbose -ErrorVariable errors -ErrorAction SilentlyContinue
+            $created | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 0.1 -verbose -ErrorVariable errors -ErrorAction SilentlyContinue
 
             $errors.Count | Should -Be 2
 

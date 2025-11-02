@@ -24,7 +24,7 @@ Describe "Set-DataverseRecord parallel with retries" {    Context "Retries with 
                 @{ firstname = "John2"; lastname = "Doe2" }
             )
             $errors = @()
-            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru -Retries 2 -InitialRetryDelay 1 -MaxDegreeOfParallelism 2 -BatchSize 10 -ErrorVariable errors -ErrorAction SilentlyContinue
+            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru -Retries 2 -InitialRetryDelay 0.1 -MaxDegreeOfParallelism 2 -BatchSize 10 -ErrorVariable errors -ErrorAction SilentlyContinue
 
             # Should succeed after retry
             $errors.Count | Should -Be 0
@@ -61,7 +61,7 @@ Describe "Set-DataverseRecord parallel with retries" {    Context "Retries with 
                 @{ firstname = "John1"; lastname = "Doe1" }
             )
             $errors = @()
-            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru -Retries 3 -InitialRetryDelay 1 -MaxDegreeOfParallelism 2 -BatchSize 1 -ErrorVariable errors -ErrorAction SilentlyContinue
+            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru -Retries 3 -InitialRetryDelay 0.1 -MaxDegreeOfParallelism 2 -BatchSize 1 -ErrorVariable errors -ErrorAction SilentlyContinue
 
             # Should succeed after retries
             $errors.Count | Should -Be 0
@@ -90,7 +90,7 @@ Describe "Set-DataverseRecord parallel with retries" {    Context "Retries with 
                 @{ firstname = "John1"; lastname = "Doe1" }
             )
             $errors = @()
-            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru -Retries 2 -InitialRetryDelay 1 -MaxDegreeOfParallelism 2 -BatchSize 10 -ErrorVariable errors -ErrorAction SilentlyContinue
+            $created = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru -Retries 2 -InitialRetryDelay 0.1 -MaxDegreeOfParallelism 2 -BatchSize 10 -ErrorVariable errors -ErrorAction SilentlyContinue
 
             # Should get errors after exhausting retries
             $errors.Count | Should -BeGreaterThan 0

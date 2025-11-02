@@ -1070,7 +1070,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
                 @{ firstname = "John2"; lastname = "Doe2" }
             )
 
-            $records | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -Verbose
+            $records | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 0.1 -Verbose
 
             $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
             $createdRecords.Count | Should -Be 2
@@ -1094,7 +1094,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
                 @{ firstname = "John2"; lastname = "Doe2" }
             )
 
-            $records | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -Verbose
+            $records | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 0.1 -Verbose
 
             $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
             $createdRecords.Count | Should -Be 2
@@ -1119,7 +1119,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             )
 
             $errors = @()
-            $records | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -ErrorVariable +errors -ErrorAction SilentlyContinue
+            $records | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 0.1 -ErrorVariable +errors -ErrorAction SilentlyContinue
 
             $errors.Count | Should -Be 2
 
