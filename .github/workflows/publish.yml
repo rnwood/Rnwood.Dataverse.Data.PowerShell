@@ -51,8 +51,8 @@ jobs:
             $versionnumber = $env:GITHUB_REF -replace "refs/tags/", ""
             (get-content -raw -encoding UTF8 $manifestpath ) -replace "ModuleVersion ?=.*", "ModuleVersion = `"$versionnumber`"" | set-content -encoding UTF8 $manifestpath
             Write-Host "Release version: $versionnumber"
-          } elseif ($env:GITHUB_REF -eq "refs/heads/main") {
-            # CI build on main branch - auto-determine version with date-based -ci suffix
+          } elseif ($env:GITHUB_REF -eq "refs/heads/main" -or $env:GITHUB_EVENT_NAME -eq "pull_request") {
+            # CI build on main branch or PR - auto-determine version using conventional commits
             $latestTag = git describe --tags --abbrev=0 2>$null
             if (-not $latestTag) {
               $latestTag = "0.0.0"
@@ -63,6 +63,69 @@ jobs:
               $baseVersion = $matches[1]
             } else {
               $baseVersion = "0.0.0"
+            }
+            
+            Write-Host "Latest tag version: $baseVersion"
+            
+            # Determine next version based on conventional commits
+            if ($env:GITHUB_EVENT_NAME -eq "pull_request") {
+              # For PRs, analyze PR description for conventional commits
+              Write-Host "PR detected - analyzing PR description for conventional commits"
+              
+              # Get PR body from GitHub event
+              $eventPath = $env:GITHUB_EVENT_PATH
+              if (Test-Path $eventPath) {
+                $event = Get-Content $eventPath -Raw | ConvertFrom-Json
+                $prBody = $event.pull_request.body
+                
+                if ($prBody) {
+                  Write-Host "PR Description:"
+                  Write-Host $prBody
+                  
+                  # Split PR body into lines for analysis
+                  $commitMessages = $prBody -split "`n" | Where-Object { $_ -match '\S' }
+                  
+                  # Use Get-NextVersion script to determine version bump
+                  $nextVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages $commitMessages
+                  Write-Host "Next version determined from PR description: $nextVersion"
+                  $baseVersion = $nextVersion
+                } else {
+                  Write-Host "No PR description found, defaulting to patch bump"
+                  # Default to patch bump if no PR description
+                  if ($baseVersion -match '^(\d+)\.(\d+)\.(\d+)') {
+                    $major = [int]$matches[1]
+                    $minor = [int]$matches[2]
+                    $patch = [int]$matches[3] + 1
+                    $baseVersion = "$major.$minor.$patch"
+                  }
+                }
+              }
+            } else {
+              # For main branch, analyze recent commits
+              Write-Host "Main branch detected - analyzing recent commits"
+              
+              # Get commits since last tag
+              $commitsSinceTag = git log "$latestTag..HEAD" --format="%s" 2>$null
+              if ($commitsSinceTag) {
+                $commitMessages = $commitsSinceTag -split "`n" | Where-Object { $_ -match '\S' }
+                
+                Write-Host "Commits since last tag:"
+                $commitMessages | ForEach-Object { Write-Host "  - $_" }
+                
+                # Use Get-NextVersion script to determine version bump
+                $nextVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages $commitMessages
+                Write-Host "Next version determined from commits: $nextVersion"
+                $baseVersion = $nextVersion
+              } else {
+                Write-Host "No commits since last tag, defaulting to patch bump"
+                # Default to patch bump if no commits found
+                if ($baseVersion -match '^(\d+)\.(\d+)\.(\d+)') {
+                  $major = [int]$matches[1]
+                  $minor = [int]$matches[2]
+                  $patch = [int]$matches[3] + 1
+                  $baseVersion = "$major.$minor.$patch"
+                }
+              }
             }
             
             # Get current date in yyyyMMdd format (UTC)

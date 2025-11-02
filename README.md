@@ -156,6 +156,19 @@ pwsh -Command "Invoke-Pester -Path tests/All.Tests.ps1 -Output Normal"
 - View source: [GitHub Repository](https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell)
 - Test coverage reports: See [TEST_COVERAGE_GAP_ANALYSIS.md](TEST_COVERAGE_GAP_ANALYSIS.md)
 
+### Contributing
+
+When submitting pull requests, please use **Conventional Commits** format in your PR description to enable automatic versioning:
+
+**Format:** `<type>(<scope>): <description>`
+
+**Examples:**
+- `feat: add batch delete operation` — Minor version bump (1.4.0 → 1.5.0)
+- `fix: resolve connection timeout` — Patch version bump (1.4.0 → 1.4.1)
+- `feat!: remove deprecated parameters` — Major version bump (1.4.0 → 2.0.0)
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
 ## License
 
 See [LICENSE](LICENSE) file for details.
