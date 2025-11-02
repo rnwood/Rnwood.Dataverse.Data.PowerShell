@@ -1,3 +1,4 @@
+
 Describe "View Management Cmdlets" {
     Context "Set-DataverseView - Basic Creation" {
         It "Creates a personal view with simple filter" {
@@ -21,7 +22,7 @@ Describe "View Management Cmdlets" {
             $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Test System View" `
                 -TableName contact `
-                -SystemView `
+                -ViewType "System" `
                 -Columns @(
                     @{name="firstname"; width=150},
                     @{name="lastname"; width=150},
@@ -82,7 +83,7 @@ Describe "View Management Cmdlets" {
             $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Default View" `
                 -TableName contact `
-                -SystemView `
+                -ViewType "System" `
                 -IsDefault `
                 -Columns @("firstname", "lastname")
             
@@ -92,11 +93,11 @@ Describe "View Management Cmdlets" {
         It "Creates a view with specific QueryType" {
             $connection = getMockConnection
             
-            # Create an Advanced Find view (QueryType = AdvancedFind)
+            # Create an Advanced Search view (QueryType = AdvancedSearch)
             $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Advanced Find View" `
                 -TableName contact `
-                -QueryType AdvancedFind `
+                -QueryType AdvancedSearch `
                 -Columns @("firstname", "lastname")
             
             $viewId | Should -Not -BeNullOrEmpty
@@ -249,6 +250,80 @@ Describe "View Management Cmdlets" {
             # Success if no error thrown
             $true | Should -Be $true
         }
+
+        It "Adds columns before a specific column" {
+            $connection = getMockConnection
+            
+            # Create a view first
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
+                -Name "Test View for InsertBefore" `
+                -TableName contact `
+                -Columns @("firstname", "lastname", "emailaddress1")
+            
+            # Add column before lastname
+            Set-DataverseView -Connection $connection `
+                -Id $viewId `
+                -AddColumns @("middlename") `
+                -InsertBefore "lastname"
+            
+            # Success if no error thrown
+            $true | Should -Be $true
+        }
+
+        It "Adds columns after a specific column" {
+            $connection = getMockConnection
+            
+            # Create a view first
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
+                -Name "Test View for InsertAfter" `
+                -TableName contact `
+                -Columns @("firstname", "lastname", "emailaddress1")
+            
+            # Add column after firstname
+            Set-DataverseView -Connection $connection `
+                -Id $viewId `
+                -AddColumns @("middlename") `
+                -InsertAfter "firstname"
+            
+            # Success if no error thrown
+            $true | Should -Be $true
+        }
+
+        It "Throws error when both InsertBefore and InsertAfter are specified" {
+            $connection = getMockConnection
+            
+            # Create a view first
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
+                -Name "Test View for Parameter Validation" `
+                -TableName contact `
+                -Columns @("firstname", "lastname")
+            
+            # Try to use both InsertBefore and InsertAfter - should throw
+            { 
+                Set-DataverseView -Connection $connection `
+                    -Id $viewId `
+                    -AddColumns @("middlename") `
+                    -InsertBefore "firstname" `
+                    -InsertAfter "lastname"
+            } | Should -Throw "Cannot specify both InsertBefore and InsertAfter*"
+        }
+
+        It "Throws error when InsertBefore is used without AddColumns" {
+            $connection = getMockConnection
+            
+            # Create a view first
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
+                -Name "Test View for Parameter Validation 2" `
+                -TableName contact `
+                -Columns @("firstname", "lastname")
+            
+            # Try to use InsertBefore without AddColumns - should throw
+            { 
+                Set-DataverseView -Connection $connection `
+                    -Id $viewId `
+                    -InsertBefore "firstname"
+            } | Should -Throw "*InsertBefore*InsertAfter*can only be used with the AddColumns parameter*"
+        }
     }
 
     Context "Filter Management" {
@@ -347,13 +422,13 @@ Describe "View Management Cmdlets" {
             $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Test System View" `
                 -TableName contact `
-                -SystemView `
+                -ViewType "System" `
                 -Columns @("firstname")
             
             # Set as default
             Set-DataverseView -Connection $connection `
                 -Id $viewId `
-                -SystemView `
+                -ViewType "System" `
                 -IsDefault
             
             # Success if no error thrown
@@ -406,11 +481,11 @@ Describe "View Management Cmdlets" {
             $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "System View to Remove" `
                 -TableName contact `
-                -SystemView `
+                -ViewType "System" `
                 -Columns @("firstname")
             
             # Remove the system view
-            Remove-DataverseView -Connection $connection -Id $viewId -SystemView -Confirm:$false
+            Remove-DataverseView -Connection $connection -Id $viewId -ViewType "System" -Confirm:$false
             
             # Success if no error thrown
             $true | Should -Be $true
@@ -560,7 +635,7 @@ Describe "View Management Cmdlets" {
             $viewId2 = Set-DataverseView -PassThru -Connection $connection `
                 -Name "View 2" `
                 -TableName contact `
-                -SystemView `
+                -ViewType "System" `
                 -Columns @("lastname")
             
             # Get all views
@@ -633,11 +708,11 @@ Describe "View Management Cmdlets" {
             $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "System View Test" `
                 -TableName contact `
-                -SystemView `
+                -ViewType "System" `
                 -Columns @("firstname")
             
             # Get only system views
-            $views = Get-DataverseView -Connection $connection -SystemView
+            $views = Get-DataverseView -Connection $connection -ViewType "System"
             
             $views | Should -Not -BeNullOrEmpty
             # All returned views should be system views
@@ -654,7 +729,7 @@ Describe "View Management Cmdlets" {
                 -Columns @("firstname")
             
             # Get only personal views
-            $views = Get-DataverseView -Connection $connection -PersonalView
+            $views = Get-DataverseView -Connection $connection -ViewType "Personal"
             
             $views | Should -Not -BeNullOrEmpty
             # All returned views should be personal views
@@ -668,15 +743,15 @@ Describe "View Management Cmdlets" {
             $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Advanced Find View" `
                 -TableName contact `
-                -QueryType AdvancedFind `
+                -QueryType AdvancedSearch `
                 -Columns @("firstname")
             
             # Get views by query type
-            $views = Get-DataverseView -Connection $connection -QueryType AdvancedFind
+            $views = Get-DataverseView -Connection $connection -QueryType AdvancedSearch
             
             $views | Should -Not -BeNullOrEmpty
             # All returned views should have query type 2
-            $views | ForEach-Object { $_.querytype | Should -Be 2 }
+            $views | ForEach-Object { $_.querytype | Should -Be 1 }
         }
 
         It "Gets views with wildcard name" {
@@ -709,11 +784,11 @@ Describe "View Management Cmdlets" {
             $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Contact System View" `
                 -TableName contact `
-                -SystemView `
+                -ViewType "System" `
                 -Columns @("firstname", "lastname")
             
             # Get system views for contact entity
-            $views = Get-DataverseView -Connection $connection -TableName contact -SystemView
+            $views = Get-DataverseView -Connection $connection -TableName contact -ViewType "System"
             
             $views | Should -Not -BeNullOrEmpty
             # All returned views should be system views for contact

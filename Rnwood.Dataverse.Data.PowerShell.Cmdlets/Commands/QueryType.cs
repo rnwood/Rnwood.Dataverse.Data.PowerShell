@@ -8,63 +8,93 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     public enum QueryType
     {
         /// <summary>
-        /// Other view type (0)
+        /// Main application view. Value = 0.
         /// </summary>
-        OtherView = 0,
+        MainApplicationView = 0,
 
         /// <summary>
-        /// Public view (1)
+        /// An advanced search. Value = 1.
         /// </summary>
-        PublicView = 1,
+        AdvancedSearch = 1,
 
         /// <summary>
-        /// Advanced Find view (2)
+        /// A subgrid query. Value = 2.
         /// </summary>
-        AdvancedFind = 2,
+        SubGrid = 2,
 
         /// <summary>
-        /// Sub-grid view (4)
+        /// A quick find query, which defines the columns searched using the Search field in a list view. Value = 4.
         /// </summary>
-        SubGrid = 4,
+        QuickFindSearch = 4,
 
         /// <summary>
-        /// Dashboard view (8)
+        /// A reporting query. Value = 8.
         /// </summary>
-        Dashboard = 8,
+        Reporting = 8,
 
         /// <summary>
-        /// Mobile client view (16)
+        /// An offline filter for Dynamics 365 for Outlook. Value = 16.
         /// </summary>
-        MobileClientView = 16,
+        OfflineFilters = 16,
 
         /// <summary>
-        /// Lookup view (64)
+        /// A lookup view. Value = 64.
         /// </summary>
         LookupView = 64,
 
         /// <summary>
-        /// Main application view (128)
+        /// Specifies the service management appointment book view. Value = 128.
         /// </summary>
-        MainApplicationView = 128,
+        SMAppointmentBookView = 128,
 
         /// <summary>
-        /// Quick Find search view (256)
+        /// Specifies the main application view without a subject. Value = 1024.
         /// </summary>
-        QuickFindSearch = 256,
+        MainApplicationViewWithoutSubject = 1024,
 
         /// <summary>
-        /// Associated view (512)
+        /// A saved query used for workflow templates and email templates. Value = 2048.
         /// </summary>
-        Associated = 512,
+        SavedQueryTypeOther = 2048,
 
         /// <summary>
-        /// Calendar view (1024)
+        /// A view for a dialog (workflow process). Value = 4096.
         /// </summary>
-        CalendarView = 1024,
+        InteractiveWorkflowView = 4096,
 
         /// <summary>
-        /// Interactive experience view (2048)
+        /// An offline template for Dynamics 365 for Outlook. Value = 8192.
         /// </summary>
-        InteractiveExperience = 2048
+        OfflineTemplate = 8192,
+
+        /// <summary>
+        /// A custom view. Value = 16384.
+        /// </summary>
+        CustomDefinedView = 16384,
+
+        /// <summary>
+        /// Specifies a view on the Product, DynamicProperty, and DynamicPropertyOptionSetItem entities that can be used to filter out the entities for which labels will be exported using the ExportFieldTranslationRequest message. Value = 65536.
+        /// </summary>
+        ExportFieldTranslationsView = 65536,
+
+        /// <summary>
+        /// A template for Dynamics 365 for Outlook. Value = 131072.
+        /// </summary>
+        OutlookTemplate = 131072,
+
+        /// <summary>
+        /// An address book filter. Value = 512.
+        /// </summary>
+        AddressBookFilters = 512,
+
+        /// <summary>
+        /// A filter for Dynamics 365 for Outlook. Value = 256.
+        /// </summary>
+        OutlookFilters = 256,
+
+        /// <summary>
+        /// A view for Copilot.
+        /// </summary>
+        CopilotView = 32768
     }
 }
