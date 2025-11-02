@@ -400,12 +400,46 @@ jobs:
             const fs = require('fs');
             const version = fs.readFileSync('ci-version.txt', 'utf8').trim();
             const shortSha = context.sha.substring(0, 7);
+            const tagName = `v${version}`;
+            
+            // Check if release with this tag already exists
+            try {
+              const existingRelease = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: tagName
+              });
+              
+              // If found, delete it (also deletes the tag if it was created by the release)
+              console.log(`Deleting existing release: ${tagName}`);
+              await github.rest.repos.deleteRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: existingRelease.data.id
+              });
+              
+              // Also delete the tag explicitly in case it still exists
+              try {
+                await github.rest.git.deleteRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `tags/${tagName}`
+                });
+                console.log(`Deleted existing tag: ${tagName}`);
+              } catch (error) {
+                // Tag might not exist or already deleted, ignore
+                console.log(`Tag ${tagName} not found or already deleted`);
+              }
+            } catch (error) {
+              // Release doesn't exist, which is fine
+              console.log(`No existing release found for ${tagName}`);
+            }
             
             // Create prerelease
             const release = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              tag_name: `v${version}`,
+              tag_name: tagName,
               name: `CI Build ${version}`,
               body: `Automated CI build from commit ${shortSha}\n\n**This is a prerelease version for testing purposes.**\n\nCommit: ${context.sha}\nBranch: main`,
               draft: false,
