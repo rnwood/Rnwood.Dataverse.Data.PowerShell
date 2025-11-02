@@ -72,17 +72,18 @@ jobs:
             # Get today's date at midnight (UTC)
             $todayMidnightUtc = $nowUtc.Date
             
-            # Count commits made today (since midnight UTC)
+            # Count commits made today (since midnight UTC) to use as build number
             # Use ISO 8601 format with 'Z' suffix to specify UTC timezone explicitly
             $todayIso = $todayMidnightUtc.ToString("yyyy-MM-ddT00:00:00Z")
             $commitsToday = git rev-list --count --since="$todayIso" HEAD 2>$null
             if ($null -eq $commitsToday -or $commitsToday -eq "" -or $commitsToday -eq "0") {
-              # If no commits today, use 1 as the build number to ensure unique versioning
-              # This represents the first build attempt for this date
+              # If no commits today (e.g., workflow re-run or manual trigger), use 1 as the build number
+              # Build number represents the incremental build attempt for this date, not strictly commit count
               $commitsToday = 1
             }
             
             # Build CI version with date-based prerelease suffix: ci<yyyyMMdd>.<buildNumber>
+            # where buildNumber is commit count today (or 1 for first build with no commits)
             $prereleaseString = "ci$dateString.$commitsToday"
             
             # Update manifest with base version and prerelease in one operation
