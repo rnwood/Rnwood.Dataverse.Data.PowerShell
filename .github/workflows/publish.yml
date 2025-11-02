@@ -12,6 +12,7 @@ jobs:
     permissions:
       contents: write  # Required for creating GitHub releases
       pull-requests: write
+    timeout-minutes: 60  # Fail fast if job exceeds 60 minutes
     strategy:
       matrix:
         include:
@@ -117,6 +118,7 @@ jobs:
       - if: ${{ matrix.powershell_version != '5' }}
         name: Test - pwsh
         id: test-pwsh
+        timeout-minutes: 45  # Tests expected to complete in < 45 minutes
         shell: pwsh
         run: |
           Write-Host "Using PowerShell $($PSVersionTable.PSVersion)"    
@@ -125,7 +127,7 @@ jobs:
           Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
           
           # Run tests with CI-friendly output
-          # Pester 5.x runs tests in parallel by default
+          # Note: Tests may be slow due to child process spawning and mock setup overhead
           $config = New-PesterConfiguration
           $config.Run.Path = 'tests/All.Tests.ps1'
           $config.Run.PassThru = $true
@@ -175,6 +177,7 @@ jobs:
       - if:  ${{ matrix.powershell_version == '5' }}
         name: Test - powershell
         id: test-powershell
+        timeout-minutes: 45  # Tests expected to complete in < 45 minutes
         shell: powershell
         run: |  
             $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
@@ -182,7 +185,7 @@ jobs:
             Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
             
             # Run tests with CI-friendly output
-            # Pester 5.x runs tests in parallel by default
+            # Note: Tests may be slow due to child process spawning and mock setup overhead
             $config = New-PesterConfiguration
             $config.Run.Path = 'tests/All.Tests.ps1'
             $config.Run.PassThru = $true

@@ -69,12 +69,12 @@ if ($result.FailedCount -gt 0) {
 }
 ```
 
-**Full Test Suite (Slow - 5+ minutes, use sparingly):**
+**Full Test Suite (Slow - 20-30 minutes, use sparingly):**
 ```powershell
 # Set module path first (REQUIRED)
 $env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
 
-# Run ALL tests - takes 5+ minutes, use only for final validation
+# Run ALL tests - takes 20-30 minutes, use only for final validation
 $config = New-PesterConfiguration
 $config.Run.Path = 'tests/All.Tests.ps1'
 $config.Run.PassThru = $true
@@ -97,15 +97,17 @@ Invoke-Pester -Output Detailed -Path e2e-tests
 - Tests copy module to temp directory to avoid file locking issues
 - Tests use FakeXrmEasy to mock Dataverse IOrganizationService
 - `tests/contact.xml` contains serialized EntityMetadata for mock connection
-- Tests spawn child PowerShell processes to test module loading
+- Tests spawn child PowerShell processes to test module loading (expensive ~6-7s each)
+- Each call to getMockConnection() loads and deserializes XML metadata (~6-7s overhead)
 - ALWAYS set $env:TESTMODULEPATH before running tests
 - **⚠️ ALWAYS use tests/All.Tests.ps1 as entry point** - individual test files will fail without setup
-- **⚠️ Full test suite takes 5+ minutes** - use filtered tests during development
+- **⚠️ Full test suite takes 20-30 minutes** - use filtered tests during development
+- **⚠️ Tests are inherently slow by design** - not a regression, this is expected behavior
 
 **TESTING REQUIREMENTS FOR CODE CHANGES:**
 - **ALL code changes MUST include tests** that validate the new functionality
 - **ALL tests MUST pass** before committing changes
-- **Use filtered tests during development** to avoid timeouts (20-30 seconds vs 5+ minutes)
+- **Use filtered tests during development** to avoid timeouts (20-30 seconds vs 20-30 minutes)
 - Run tests using the Testing Sequence above after building
 - For documentation changes with code examples:
   - Add tests in `tests/Cmdletname-maybeasuffix.ps1` that validate the example patterns
@@ -114,10 +116,10 @@ Invoke-Pester -Output Detailed -Path e2e-tests
   - If an entity is not in `tests/contact.xml`, either:
     - Create test data in the test itself using SDK Entity objects
     - Or document that the example is tested manually/in E2E tests
-- Expected test execution time: 20-30 seconds for filtered tests, 5+ minutes for full suite
+- Expected test execution time: 20-30 seconds for filtered tests, 20-30 minutes for full suite
 - Tests may fail if entities beyond 'contact' are queried without creating them first
 - **Document test results** in commits showing pass/fail counts
-- CI/CD pipeline will run all tests - ensure local tests pass first
+- CI/CD pipeline will run all tests - ensure local tests pass first (or use filtered tests)
 
 **COMMON TEST FILTERS:**
 ```powershell
