@@ -40,10 +40,7 @@ Describe 'Get-DataverseSolutionFile' {
             $testSolutionPath = Join-Path $tempDir "TestSolution_$(New-Guid).zip"
             
             # Create zip with solution.xml
-            # Load assembly if not already loaded
-            if (-not ([System.Management.Automation.PSTypeName]'System.IO.Compression.ZipArchive').Type) {
-                Add-Type -AssemblyName System.IO.Compression.FileSystem
-            }
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
             
             $stream = [System.IO.File]::Create($testSolutionPath)
             $zip = New-Object System.IO.Compression.ZipArchive($stream, [System.IO.Compression.ZipArchiveMode]::Create)
