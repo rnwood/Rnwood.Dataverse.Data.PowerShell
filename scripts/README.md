@@ -1,4 +1,37 @@
-# Coverage Scripts
+# Scripts
+
+This directory contains utility scripts for the project.
+
+## Version Management
+
+### Get-NextVersion.ps1
+
+Determines the next version number based on conventional commits.
+
+**Usage:**
+```powershell
+./scripts/Get-NextVersion.ps1 -BaseVersion "1.4.0" -CommitMessages @("feat: add new feature", "fix: bug fix")
+# Returns: 1.5.0 (minor bump due to feat:)
+```
+
+**Conventional Commit Rules:**
+- `feat:` → minor bump (1.4.0 → 1.5.0)
+- `fix:` → patch bump (1.4.0 → 1.4.1)
+- `feat!:` or `BREAKING CHANGE:` → major bump (1.4.0 → 2.0.0)
+- Other types → patch bump
+
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for full details.
+
+### Test-VersionLogic.ps1
+
+Tests the version calculation logic with various scenarios.
+
+**Usage:**
+```powershell
+./scripts/Test-VersionLogic.ps1
+```
+
+## Coverage Scripts
 
 ## Run-TestsWithCoverage.ps1
 
