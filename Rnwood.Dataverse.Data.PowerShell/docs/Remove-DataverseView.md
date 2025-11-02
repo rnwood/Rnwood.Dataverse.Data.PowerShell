@@ -13,7 +13,7 @@ Removes Dataverse views (savedquery and userquery entities).
 ## SYNTAX
 
 ```
-Remove-DataverseView -Id <Guid> [-SystemView] [-IfExists] [-Connection <ServiceClient>]
+Remove-DataverseView -Id <Guid> [-ViewType <String>] [-IfExists] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -123,21 +123,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SystemView
-Remove a system view (savedquery) instead of a personal view (userquery)
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -WhatIf
 Shows what would happen if the cmdlet runs.
 The cmdlet is not run.
@@ -166,6 +151,21 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ViewType
+Remove a system view (savedquery) instead of a personal view (userquery)
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
