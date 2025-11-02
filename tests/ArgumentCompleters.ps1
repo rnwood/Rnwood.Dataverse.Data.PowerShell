@@ -18,10 +18,10 @@ $env:PSModulePath = $tempmodulefolder
 Import-Module Rnwood.Dataverse.Data.PowerShell -Force
 
 # Helper function to get mock connection
-$script:metadata = $null
+$script:metadata = @()
 
 function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null) {
-    if (-not $script:metadata) {
+    if ($script:metadata.Count -eq 0) {
         Add-Type -AssemblyName "System.Runtime.Serialization"
 
         # Define the DataContractSerializer
@@ -29,8 +29,9 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null) {
     
         Get-Item $PSScriptRoot/*.xml | ForEach-Object {
             $stream = [IO.File]::OpenRead($_.FullName)
-            $script:metadata += $serializer.ReadObject($stream)
+            $metadata = $serializer.ReadObject($stream)
             $stream.Close()
+            $script:metadata = $script:metadata + @($metadata)
         }
     }
    
