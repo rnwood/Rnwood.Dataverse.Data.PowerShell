@@ -1,7 +1,10 @@
-using System;
-using System.Management.Automation;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using System;
+using System.Collections;
+using System.Linq;
+using System.Management.Automation;
+using System.Xml.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -48,8 +51,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the view type to filter by.
         /// </summary>
-        [Parameter(HelpMessage = "View type to filter by: 0=OtherView, 1=PublicView, 2=AdvancedFind, 4=SubGrid, 8=Dashboard, 16=MobileClientView, 64=LookupView, 128=MainApplicationView, 256=QuickFindSearch, 512=Associated, 1024=CalendarView, 2048=InteractiveExperience")]
-        public int? QueryType { get; set; }
+        [Parameter(HelpMessage = "View type to filter by")]
+        public QueryType? QueryType { get; set; }
+
+        private DataverseEntityConverter entityConverter;
+        private EntityMetadataFactory entityMetadataFactory;
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -57,6 +63,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
+
+            entityMetadataFactory = new EntityMetadataFactory(Connection);
+            entityConverter = new DataverseEntityConverter(Connection, entityMetadataFactory);
 
             // Determine which view types to query
             bool querySystemViews = !PersonalView.IsPresent || SystemView.IsPresent;
@@ -95,9 +104,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Check if wildcards are present
                 if (WildcardPattern.ContainsWildcardCharacters(Name))
                 {
-                    var pattern = new WildcardPattern(Name, WildcardOptions.IgnoreCase);
-                    // We'll filter in memory since Dataverse doesn't support wildcard queries directly
-                    WriteVerbose($"Will filter by name pattern: {Name}");
+                    // Convert PowerShell wildcards to SQL LIKE pattern
+                    string likePattern = Name.Replace("*", "%").Replace("?", "_");
+                    query.Criteria.AddCondition("name", ConditionOperator.Like, likePattern);
+                    WriteVerbose($"Filtering by name pattern: {Name} (LIKE: {likePattern})");
                 }
                 else
                 {
@@ -114,43 +124,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (QueryType.HasValue)
             {
-                query.Criteria.AddCondition("querytype", ConditionOperator.Equal, QueryType.Value);
+                query.Criteria.AddCondition("querytype", ConditionOperator.Equal, (int)QueryType.Value);
                 WriteVerbose($"Filtering by query type: {QueryType.Value}");
             }
 
-            // Execute query
-            var views = Connection.RetrieveMultiple(query);
+            // Execute query with paging
+            WriteVerbose($"Executing query for {entityName} views");
+            var views = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose);
 
-            WriteVerbose($"Found {views.Entities.Count} view(s) in {entityName}");
+            WriteVerbose($"Found views in {entityName}");
 
-            // Convert to PSObjects and output
-            foreach (var view in views.Entities)
+            // Convert to PSObjects and output with streaming
+            foreach (var view in views)
             {
-                // If Name parameter contains wildcards, filter in memory
-                if (!string.IsNullOrEmpty(Name) && WildcardPattern.ContainsWildcardCharacters(Name))
-                {
-                    var viewName = view.GetAttributeValue<string>("name");
-                    var pattern = new WildcardPattern(Name, WildcardOptions.IgnoreCase);
-                    if (!pattern.IsMatch(viewName ?? ""))
-                    {
-                        continue;
-                    }
-                }
-
-                var psObject = new PSObject();
-                
-                // Add all attributes from the view entity
-                foreach (var attribute in view.Attributes)
-                {
-                    if (attribute.Value is AliasedValue aliasedValue)
-                    {
-                        psObject.Properties.Add(new PSNoteProperty(attribute.Key, aliasedValue.Value));
-                    }
-                    else
-                    {
-                        psObject.Properties.Add(new PSNoteProperty(attribute.Key, attribute.Value));
-                    }
-                }
+                // Use DataverseEntityConverter to properly convert values (e.g., OptionSetValue to display labels)
+                var psObject = entityConverter.ConvertToPSObject(view, new ColumnSet(true), _ => ValueType.Display);
 
                 // Add a friendly property to indicate view type
                 psObject.Properties.Add(new PSNoteProperty("ViewType", entityName == "savedquery" ? "System" : "Personal"));
@@ -162,7 +150,61 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     psObject.Properties.Add(new PSNoteProperty("Id", view.Attributes[idAttributeName]));
                 }
 
+                // Parse layoutxml to create Columns property in the format expected by Set-DataverseView
+                var columnsProperty = ParseLayoutXmlForColumns(view.GetAttributeValue<string>("layoutxml"));
+                if (columnsProperty != null)
+                {
+                    psObject.Properties.Add(new PSNoteProperty("Columns", columnsProperty));
+                }
+
                 WriteObject(psObject);
+            }
+        }
+
+        private object[] ParseLayoutXmlForColumns(string layoutXml)
+        {
+            if (string.IsNullOrEmpty(layoutXml))
+            {
+                return null;
+            }
+
+            try
+            {
+                XNamespace ns = "http://schemas.microsoft.com/crm/2006/query";
+                XDocument doc = XDocument.Parse(layoutXml);
+                var cells = doc.Descendants(ns + "cell");
+
+                var columns = new System.Collections.Generic.List<object>();
+
+                foreach (var cell in cells)
+                {
+                    string columnName = cell.Attribute("name")?.Value;
+                    string widthStr = cell.Attribute("width")?.Value;
+
+                    if (!string.IsNullOrEmpty(columnName))
+                    {
+                        if (!string.IsNullOrEmpty(widthStr) && int.TryParse(widthStr, out int width) && width != 100)
+                        {
+                            // Only include width if it's not the default 100
+                            var columnConfig = new Hashtable();
+                            columnConfig["name"] = columnName;
+                            columnConfig["width"] = width;
+                            columns.Add(columnConfig);
+                        }
+                        else
+                        {
+                            // Just the column name as a string
+                            columns.Add(columnName);
+                        }
+                    }
+                }
+
+                return columns.ToArray();
+            }
+            catch (Exception ex)
+            {
+                WriteVerbose($"Failed to parse layout XML for columns: {ex.Message}");
+                return null;
             }
         }
     }

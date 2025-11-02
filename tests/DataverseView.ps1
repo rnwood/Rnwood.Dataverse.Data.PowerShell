@@ -92,11 +92,11 @@ Describe "View Management Cmdlets" {
         It "Creates a view with specific QueryType" {
             $connection = getMockConnection
             
-            # Create an Advanced Find view (QueryType = 2)
+            # Create an Advanced Find view (QueryType = AdvancedFind)
             $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Advanced Find View" `
                 -TableName contact `
-                -QueryType 2 `
+                -QueryType AdvancedFind `
                 -Columns @("firstname", "lastname")
             
             $viewId | Should -Not -BeNullOrEmpty
@@ -668,11 +668,11 @@ Describe "View Management Cmdlets" {
             $viewId = Set-DataverseView -PassThru -Connection $connection `
                 -Name "Advanced Find View" `
                 -TableName contact `
-                -QueryType 2 `
+                -QueryType AdvancedFind `
                 -Columns @("firstname")
             
             # Get views by query type
-            $views = Get-DataverseView -Connection $connection -QueryType 2
+            $views = Get-DataverseView -Connection $connection -QueryType AdvancedFind
             
             $views | Should -Not -BeNullOrEmpty
             # All returned views should have query type 2

@@ -100,10 +100,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter IsDefault { get; set; }
 
         /// <summary>
-        /// Gets or sets the view type. Default is 1 (public view). Only used when creating a new view.
+        /// Gets or sets the view type. Default is PublicView. Only used when creating a new view.
         /// </summary>
-        [Parameter(HelpMessage = "View type: 0=OtherView, 1=PublicView, 2=AdvancedFind, 4=SubGrid, 8=Dashboard, 16=MobileClientView, 64=LookupView, 128=MainApplicationView, 256=QuickFindSearch, 512=Associated, 1024=CalendarView, 2048=InteractiveExperience. Default is 1 (PublicView)")]
-        public int QueryType { get; set; } = 1; // Default to PublicView
+        [Parameter(HelpMessage = "View type. Default is PublicView")]
+        public QueryType QueryType { get; set; } = QueryType.PublicView; // Default to PublicView
 
         /// <summary>
         /// If specified, existing views matching the ID will not be updated.
@@ -283,7 +283,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         viewEntity["returnedtypecode"] = TableName;
                         viewEntity["fetchxml"] = fetchXml;
                         viewEntity["layoutxml"] = layoutXml;
-                        viewEntity["querytype"] = QueryType;
+                        viewEntity["querytype"] = (int)QueryType;
 
                         if (!string.IsNullOrEmpty(Description))
                         {

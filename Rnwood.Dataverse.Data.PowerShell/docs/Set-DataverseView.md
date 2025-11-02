@@ -15,7 +15,7 @@ schema: 2.0.0
 ```
 Set-DataverseView [-Id <Guid>] [-Name <String>] [-TableName <String>] [-SystemView] [-Description <String>]
  [-Columns <Object[]>] [-AddColumns <Object[]>] [-RemoveColumns <String[]>] [-UpdateColumns <Hashtable[]>]
- [-FilterValues <Hashtable[]>] [-FetchXml <String>] [-LayoutXml <String>] [-IsDefault] [-QueryType <Int32>]
+ [-FilterValues <Hashtable[]>] [-FetchXml <String>] [-LayoutXml <String>] [-IsDefault] [-QueryType <QueryType>]
  [-NoUpdate] [-NoCreate] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
@@ -256,11 +256,11 @@ Accept wildcard characters: False
 ```
 
 ### -QueryType
-View type: 0=OtherView, 1=PublicView, 2=AdvancedFind, 4=SubGrid, 8=Dashboard, 16=MobileClientView, 64=LookupView, 128=MainApplicationView, 256=QuickFindSearch, 512=Associated, 1024=CalendarView, 2048=InteractiveExperience.
-Default is 1 (PublicView)
+View type. Valid values: OtherView, PublicView, AdvancedFind, SubGrid, Dashboard, MobileClientView, LookupView, MainApplicationView, QuickFindSearch, Associated, CalendarView, InteractiveExperience.
+Default is PublicView
 
 ```yaml
-Type: Int32
+Type: QueryType
 Parameter Sets: (All)
 Aliases:
 
