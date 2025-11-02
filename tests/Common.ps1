@@ -54,7 +54,12 @@ function global:LoadTestMetadata {
         Import-Module Rnwood.Dataverse.Data.PowerShell
     }
     
-    Add-Type -AssemblyName "System.Runtime.Serialization"
+    # Load assembly (safe to call multiple times)
+    try {
+        Add-Type -AssemblyName "System.Runtime.Serialization" -ErrorAction SilentlyContinue
+    } catch {
+        # Assembly already loaded, which is fine
+    }
 
     # Define the DataContractSerializer
     $serializer = New-Object System.Runtime.Serialization.DataContractSerializer([Microsoft.Xrm.Sdk.Metadata.EntityMetadata])
