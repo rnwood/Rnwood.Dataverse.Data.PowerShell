@@ -1,6 +1,7 @@
 using Microsoft.Xrm.Sdk;
 using System;
 using System.Management.Automation;
+using System.ServiceModel;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -34,29 +35,46 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         protected override void ProcessRecord()
         {
-            base.ProcessRecord();
-
-            string entityName = ViewType == "System" ? "savedquery" : "userquery";
-
-            if (ShouldProcess($"{ViewType} view with ID '{Id}'", "Remove"))
+            try
             {
-                try
+                // base.ProcessRecord();
+
+                string entityName = ViewType == "System" ? "savedquery" : "userquery";
+
+                if (ShouldProcess($"{ViewType} view with ID '{Id}'", "Remove"))
                 {
                     Connection.Delete(entityName, Id);
                     WriteVerbose($"Removed {(ViewType == "System" ? "system" : "personal")} view with ID: {Id}");
                 }
-                catch (Exception ex)
+            }
+            catch (FaultException<OrganizationServiceFault> ex)
+            {
+                if (IfExists && (ex.Detail.ErrorCode == -2147220969 || ex.Message.Contains("Does Not Exist")))
                 {
-                    if (IfExists && ex.HResult == -2147220969)
-                    {
-                        WriteVerbose($"View with ID {Id} does not exist: {ex.Message}");
-                    }
-                    else
-                    {
-                        WriteError(new ErrorRecord(ex, "RemoveDataverseViewError", ErrorCategory.InvalidOperation, Id));
-                        throw;
-                    }
+                    WriteVerbose($"View with ID {Id} does not exist: {ex.Message}");
+                    return;
                 }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (FaultException ex)
+            {
+                if (IfExists && ex.Message.Contains("Does Not Exist"))
+                {
+                    WriteVerbose($"View with ID {Id} does not exist: {ex.Message}");
+                    return;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteVerbose($"Unexpected exception type: {ex.GetType().FullName}, Message: {ex.Message}");
+                throw;
             }
         }
     }
