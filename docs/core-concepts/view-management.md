@@ -282,27 +282,27 @@ Get-DataverseView -Connection $c -TableName contact -SystemView
 Views have different types for different purposes:
 
 ```powershell
-# Get Advanced Find views (QueryType = 2)
-Get-DataverseView -Connection $c -QueryType 2
+# Get Advanced Find views
+Get-DataverseView -Connection $c -QueryType AdvancedFind
 
-# Get Lookup views (QueryType = 64)
-Get-DataverseView -Connection $c -QueryType 64
+# Get Lookup views
+Get-DataverseView -Connection $c -QueryType LookupView
 ```
 
 Common query types:
-- `0` — Other View
-- `1` — Public View (default)
-- `2` — Advanced Find
-- `4` — Sub-Grid
-- `64` — Lookup View
-- `128` — Main Application View
+- `OtherView` — Other View
+- `PublicView` — Public View (default)
+- `AdvancedFind` — Advanced Find
+- `SubGrid` — Sub-Grid
+- `LookupView` — Lookup View
+- `MainApplicationView` — Main Application View
 
 ## Deleting Views
 
 ### Delete by ID
 
 ```powershell
-Remove-DataverseView -Connection $c -Id $viewId -Confirm:$false
+Remove-DataverseView -Connection $c -Id $viewId
 ```
 
 ### Delete with Confirmation
@@ -318,7 +318,7 @@ Remove-DataverseView -Connection $c -Id $viewId
 Suppress errors if the view doesn't exist:
 
 ```powershell
-Remove-DataverseView -Connection $c -Id $viewId -IfExists -Confirm:$false
+Remove-DataverseView -Connection $c -Id $viewId -IfExists
 ```
 
 ### Delete System Views
@@ -326,7 +326,7 @@ Remove-DataverseView -Connection $c -Id $viewId -IfExists -Confirm:$false
 Specify `-SystemView` when deleting system views:
 
 ```powershell
-Remove-DataverseView -Connection $c -Id $viewId -SystemView -Confirm:$false
+Remove-DataverseView -Connection $c -Id $viewId -SystemView
 ```
 
 ### Delete Multiple Views
@@ -335,7 +335,7 @@ Use the pipeline to delete multiple views:
 
 ```powershell
 Get-DataverseView -Connection $c -Name "Test*" |
-    Remove-DataverseView -Connection $c -Confirm:$false
+    Remove-DataverseView -Connection $c
 ```
 
 ## Control Flags
@@ -362,16 +362,6 @@ $viewId = Set-DataverseView -Connection $c -PassThru `
     -TableName contact `
     -Columns @("firstname", "lastname")
 ```
-
-## Best Practices
-
-1. **Use meaningful names**: Choose descriptive names that indicate the view's purpose
-2. **Start with personal views**: Test with personal views before creating system views
-3. **Use simplified filters when possible**: Hashtable filters are easier to maintain than FetchXML
-4. **Specify column widths**: Provide width configuration for better user experience
-5. **Use WhatIf**: Preview changes with `-WhatIf` before updating production views
-6. **Document complex filters**: Add comments explaining business logic in complex filter expressions
-7. **Test thoroughly**: Verify views display correctly in the application before deploying to production
 
 ## Common Scenarios
 

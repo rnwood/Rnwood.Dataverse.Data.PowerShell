@@ -7,7 +7,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Removes a view (savedquery or userquery) from Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "DataverseView", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
+    [Cmdlet(VerbsCommon.Remove, "DataverseView", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     public class RemoveDataverseViewCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
@@ -46,9 +46,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 catch (Exception ex)
                 {
-                    if (IfExists)
+                    if (IfExists && ex.HResult == -2147220969)
                     {
-                        WriteVerbose($"View with ID {Id} does not exist or could not be deleted: {ex.Message}");
+                        WriteVerbose($"View with ID {Id} does not exist: {ex.Message}");
                     }
                     else
                     {

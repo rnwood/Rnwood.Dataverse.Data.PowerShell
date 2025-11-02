@@ -14,7 +14,8 @@ schema: 2.0.0
 
 ```
 Get-DataverseView [[-Id] <Guid>] [-Name <String>] [-TableName <String>] [-SystemView] [-PersonalView]
- [-QueryType <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-QueryType <QueryType>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -95,10 +96,10 @@ Accept wildcard characters: False
 ```
 
 ### -QueryType
-View type to filter by: 0=OtherView, 1=PublicView, 2=AdvancedFind, 4=SubGrid, 8=Dashboard, 16=MobileClientView, 64=LookupView, 128=MainApplicationView, 256=QuickFindSearch, 512=Associated, 1024=CalendarView, 2048=InteractiveExperience
+View type to filter by. Valid values: OtherView, PublicView, AdvancedFind, SubGrid, Dashboard, MobileClientView, LookupView, MainApplicationView, QuickFindSearch, Associated, CalendarView, InteractiveExperience
 
 ```yaml
-Type: Int32
+Type: QueryType
 Parameter Sets: (All)
 Aliases:
 
