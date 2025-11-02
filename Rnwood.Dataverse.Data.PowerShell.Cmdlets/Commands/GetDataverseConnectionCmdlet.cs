@@ -446,6 +446,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				{
 					case PARAMSET_MOCK:
 
+						var swMock = System.Diagnostics.Stopwatch.StartNew();
+						WriteVerbose($"[PERF] Starting mock connection setup at {swMock.Elapsed.TotalSeconds}s");
+
+						var swBuilder = System.Diagnostics.Stopwatch.StartNew();
 						IXrmFakedContext xrmFakeContext = MiddlewareBuilder
 						.New()
 						.AddCrud()
@@ -454,11 +458,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						.UseCrud()
 						.SetLicense(FakeXrmEasyLicense.RPL_1_5)
 						.Build();
+						swBuilder.Stop();
+						WriteVerbose($"[PERF] MiddlewareBuilder completed in {swBuilder.Elapsed.TotalSeconds}s");
+
+						var swInit = System.Diagnostics.Stopwatch.StartNew();
 						xrmFakeContext.InitializeMetadata(Mock);
+						swInit.Stop();
+						WriteVerbose($"[PERF] InitializeMetadata completed in {swInit.Elapsed.TotalSeconds}s (total: {swMock.Elapsed.TotalSeconds}s)");
 
 						// Wrap the fake service with a thread-safe proxy since FakeXrmEasy is not thread-safe
+						var swGetService = System.Diagnostics.Stopwatch.StartNew();
 						var fakeService = xrmFakeContext.GetOrganizationService();
 						IOrganizationService threadSafeService = new ThreadSafeOrganizationServiceProxy(fakeService);
+						swGetService.Stop();
+						WriteVerbose($"[PERF] GetOrganizationService + ThreadSafeProxy completed in {swGetService.Elapsed.TotalSeconds}s (total: {swMock.Elapsed.TotalSeconds}s)");
 
 						// If RequestInterceptor is provided, wrap with script block interceptor
 						if (RequestInterceptor != null)
@@ -466,8 +479,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							threadSafeService = new MockOrganizationServiceWithScriptBlock(threadSafeService, RequestInterceptor);
 						}
 
+						var swConstructor = System.Diagnostics.Stopwatch.StartNew();
 						ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
 						result = (ServiceClient)contructor.Invoke(new object[] { threadSafeService, new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9, 2), A.Fake<ILogger>() });
+						swConstructor.Stop();
+						WriteVerbose($"[PERF] ServiceClient constructor completed in {swConstructor.Elapsed.TotalSeconds}s (total: {swMock.Elapsed.TotalSeconds}s)");
+
+						swMock.Stop();
+						WriteVerbose($"[PERF] Total mock connection setup completed in {swMock.Elapsed.TotalSeconds}s");
 						break;
 
 					case PARAMSET_CONNECTIONSTRING:

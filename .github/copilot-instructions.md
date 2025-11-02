@@ -36,7 +36,7 @@ Install-Module -Force -Scope CurrentUser Pester -MinimumVersion 5.0
 
 # 3. Run specific test groups using filters
 $config = New-PesterConfiguration
-$config.Run.Path = 'tests/All.Tests.ps1'  # MUST use All.Tests.ps1 for proper setup
+$config.Run.Path = 'tests'  # Pester discovers *.Tests.ps1 files, each includes Common.ps1
 $config.Run.PassThru = $true
 $config.Output.Verbosity = 'Normal'  # Shows summary and failures
 $config.Should.ErrorAction = 'Continue'
@@ -69,14 +69,15 @@ if ($result.FailedCount -gt 0) {
 }
 ```
 
-**Full Test Suite (Slow - 5+ minutes, use sparingly):**
+**Full Test Suite (Fast with parallel execution - 1-2 minutes):**
 ```powershell
 # Set module path first (REQUIRED)
 $env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
 
-# Run ALL tests - takes 5+ minutes, use only for final validation
+# Run ALL tests sequentially - use only for final validation
+# Note: CI runs tests in parallel which is much faster (~1-2 minutes)
 $config = New-PesterConfiguration
-$config.Run.Path = 'tests/All.Tests.ps1'
+$config.Run.Path = 'tests'  # Pester discovers *.Tests.ps1 files, each includes Common.ps1
 $config.Run.PassThru = $true
 $config.Output.Verbosity = 'Normal'
 $config.Should.ErrorAction = 'Continue'
@@ -97,27 +98,34 @@ Invoke-Pester -Output Detailed -Path e2e-tests
 - Tests copy module to temp directory to avoid file locking issues
 - Tests use FakeXrmEasy to mock Dataverse IOrganizationService
 - `tests/contact.xml` contains serialized EntityMetadata for mock connection
-- Tests spawn child PowerShell processes to test module loading
+- Tests spawn child PowerShell processes to test module loading (expensive ~6-7s each)
+- Each test file includes `Common.ps1` which sets up the environment and helper functions
+- Metadata is loaded only once per test session using global variables
 - ALWAYS set $env:TESTMODULEPATH before running tests
-- **⚠️ ALWAYS use tests/All.Tests.ps1 as entry point** - individual test files will fail without setup
-- **⚠️ Full test suite takes 5+ minutes** - use filtered tests during development
+- **⚠️ Run tests from 'tests' directory** - each file includes Common.ps1 for setup
+- **⚠️ CI runs tests in parallel** - full suite completes in ~1-2 minutes in CI
+- **⚠️ Local sequential runs** take ~3-5 minutes for 481 tests (optimized from 56 minutes!)
 
 **TESTING REQUIREMENTS FOR CODE CHANGES:**
 - **ALL code changes MUST include tests** that validate the new functionality
 - **ALL tests MUST pass** before committing changes
-- **Use filtered tests during development** to avoid timeouts (20-30 seconds vs 5+ minutes)
+- **Use filtered tests during development** for fastest iteration (20-30 seconds)
 - Run tests using the Testing Sequence above after building
 - For documentation changes with code examples:
-  - Add tests in `tests/Cmdletname-maybeasuffix.ps1` that validate the example patterns
+  - Add tests in `tests/Cmdletname-maybeasuffix.Tests.ps1` that validate the example patterns
   - Test both the verbose and simplified syntax variants where applicable
   - Tests should use the mock provider with FakeXrmEasy
-  - If an entity is not in `tests/contact.xml`, either:
+  - Specify required entities in getMockConnection -Entities parameter
+  - If an entity is not available as XML metadata:
     - Create test data in the test itself using SDK Entity objects
     - Or document that the example is tested manually/in E2E tests
-- Expected test execution time: 20-30 seconds for filtered tests, 5+ minutes for full suite
-- Tests may fail if entities beyond 'contact' are queried without creating them first
+- Expected test execution time: 
+  - Filtered tests: 20-30 seconds
+  - Full suite (sequential): ~3-5 minutes locally
+  - Full suite (parallel): ~1-2 minutes in CI
+- Tests may fail if entities aren't specified in getMockConnection -Entities parameter
 - **Document test results** in commits showing pass/fail counts
-- CI/CD pipeline will run all tests - ensure local tests pass first
+- CI/CD pipeline will run all tests - ensure local tests pass first (or use filtered tests)
 
 **COMMON TEST FILTERS:**
 ```powershell
