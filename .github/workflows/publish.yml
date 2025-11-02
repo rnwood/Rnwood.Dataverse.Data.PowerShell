@@ -51,6 +51,26 @@ jobs:
             $versionnumber = $env:GITHUB_REF -replace "refs/tags/", ""
             (get-content -raw -encoding UTF8 $manifestpath ) -replace "ModuleVersion ?=.*", "ModuleVersion = `"$versionnumber`"" | set-content -encoding UTF8 $manifestpath
             Write-Host "Release version: $versionnumber"
+            
+            # Generate release notes for stable release (compare to last stable release)
+            Write-Host "Generating release notes for stable release..."
+            $allTags = git tag --list --sort=-version:refname 2>$null
+            $stableReleases = $allTags | Where-Object { $_ -notmatch '-' } | Select-Object -First 2
+            
+            if ($stableReleases.Count -ge 2) {
+              $previousRelease = $stableReleases[1]
+              Write-Host "Comparing to previous stable release: $previousRelease"
+              $releaseNotes = & ./scripts/Get-ReleaseNotes.ps1 -FromRef $previousRelease -ToRef "HEAD" -Format markdown
+              $releaseNotesText = & ./scripts/Get-ReleaseNotes.ps1 -FromRef $previousRelease -ToRef "HEAD" -Format text
+            } else {
+              Write-Host "No previous stable release found, using all commits"
+              $releaseNotes = "Initial release"
+              $releaseNotesText = "Initial release"
+            }
+            
+            # Save release notes for later steps
+            $releaseNotes | Out-File -FilePath release-notes.md -Encoding utf8
+            $releaseNotesText | Out-File -FilePath release-notes.txt -Encoding utf8
           } elseif ($env:GITHUB_REF -eq "refs/heads/main" -or $env:GITHUB_EVENT_NAME -eq "pull_request") {
             # CI build on main branch or PR - auto-determine version using conventional commits
             $latestTag = git describe --tags --abbrev=0 2>$null
@@ -168,6 +188,34 @@ jobs:
             Write-Host "CI version: $baseVersion-$prereleaseString"
             # Save version for later steps
             "$baseVersion-$prereleaseString" | Out-File -FilePath ci-version.txt -Encoding utf8
+            
+            # Generate release notes for CI build (compare to last prerelease)
+            Write-Host "Generating release notes for CI build..."
+            $allTags = git tag --list --sort=-version:refname 2>$null
+            $prereleases = $allTags | Where-Object { $_ -match '-' } | Select-Object -First 1
+            
+            if ($prereleases) {
+              $previousPrerelease = $prereleases
+              Write-Host "Comparing to previous prerelease: $previousPrerelease"
+              $releaseNotes = & ./scripts/Get-ReleaseNotes.ps1 -FromRef $previousPrerelease -ToRef "HEAD" -Format markdown
+              $releaseNotesText = & ./scripts/Get-ReleaseNotes.ps1 -FromRef $previousPrerelease -ToRef "HEAD" -Format text
+            } else {
+              # If no prerelease found, compare to last stable tag
+              $latestStableTag = $allTags | Where-Object { $_ -notmatch '-' } | Select-Object -First 1
+              if ($latestStableTag) {
+                Write-Host "No previous prerelease found, comparing to last stable: $latestStableTag"
+                $releaseNotes = & ./scripts/Get-ReleaseNotes.ps1 -FromRef $latestStableTag -ToRef "HEAD" -Format markdown
+                $releaseNotesText = & ./scripts/Get-ReleaseNotes.ps1 -FromRef $latestStableTag -ToRef "HEAD" -Format text
+              } else {
+                Write-Host "No previous releases found, using all commits"
+                $releaseNotes = "Initial prerelease"
+                $releaseNotesText = "Initial prerelease"
+              }
+            }
+            
+            # Save release notes for later steps
+            $releaseNotes | Out-File -FilePath release-notes.md -Encoding utf8
+            $releaseNotesText | Out-File -FilePath release-notes.txt -Encoding utf8
           }
 
           dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj
@@ -345,6 +393,26 @@ jobs:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
         shell: pwsh
         run: |
+          # Add release notes to module manifest
+          $manifestPath = "out/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.psd1"
+          $releaseNotes = Get-Content -Path "release-notes.txt" -Raw
+          
+          $content = Get-Content -Path $manifestPath -Raw
+          
+          # Add or update ReleaseNotes in PrivateData.PSData
+          if ($content -match "ReleaseNotes\s*=") {
+            # ReleaseNotes already exists, replace it
+            $content = $content -replace "ReleaseNotes\s*=\s*['\"].*?['\"]", "ReleaseNotes = '$($releaseNotes -replace "'", "''")'"
+          } else {
+            # Add ReleaseNotes to PSData section
+            if ($content -match "PSData\s*=\s*@\{") {
+              $content = $content -replace "(PSData\s*=\s*@\{)", "`$1`n`t`tReleaseNotes = '$($releaseNotes -replace "'", "''")';"
+            }
+          }
+          
+          $content | Set-Content -Path $manifestPath -Encoding UTF8
+          
+          # Publish stable release to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
       
       # CI Build Publishing (main branch only)
@@ -398,13 +466,16 @@ jobs:
               console.log(`No existing release found for ${tagName}`);
             }
             
-            // Create prerelease
+            // Read release notes
+            const releaseNotes = fs.readFileSync('release-notes.md', 'utf8');
+            
+            // Create prerelease with release notes
             const release = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tagName,
               name: `CI Build ${version}`,
-              body: `Automated CI build from commit ${shortSha}\n\n**This is a prerelease version for testing purposes.**\n\nCommit: ${context.sha}\nBranch: main`,
+              body: `Automated CI build from commit ${shortSha}\n\n**This is a prerelease version for testing purposes.**\n\n## Changes\n\n${releaseNotes}\n\n---\n**Commit:** ${context.sha}\n**Branch:** main`,
               draft: false,
               prerelease: true,
               target_commitish: context.sha
@@ -426,6 +497,25 @@ jobs:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
         shell: pwsh
         run: |
+          # Add release notes to module manifest
+          $manifestPath = "out/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.psd1"
+          $releaseNotes = Get-Content -Path "release-notes.txt" -Raw
+          
+          $content = Get-Content -Path $manifestPath -Raw
+          
+          # Add or update ReleaseNotes in PrivateData.PSData
+          if ($content -match "ReleaseNotes\s*=") {
+            # ReleaseNotes already exists, replace it
+            $content = $content -replace "ReleaseNotes\s*=\s*['\"].*?['\"]", "ReleaseNotes = '$($releaseNotes -replace "'", "''")'"
+          } else {
+            # Add ReleaseNotes to PSData section
+            if ($content -match "PSData\s*=\s*@\{") {
+              $content = $content -replace "(PSData\s*=\s*@\{)", "`$1`n`t`tReleaseNotes = '$($releaseNotes -replace "'", "''")';"
+            }
+          }
+          
+          $content | Set-Content -Path $manifestPath -Encoding UTF8
+          
           # Publish prerelease to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
       

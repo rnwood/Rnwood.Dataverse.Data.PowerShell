@@ -22,6 +22,31 @@ Determines the next version number based on conventional commits.
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for full details.
 
+### Get-ReleaseNotes.ps1
+
+Generates release notes from conventional commits between two git references.
+
+**Usage:**
+```powershell
+# Markdown format for GitHub releases
+./scripts/Get-ReleaseNotes.ps1 -FromRef "v1.4.0" -ToRef "HEAD" -Format markdown
+
+# Text format for PowerShell Gallery
+./scripts/Get-ReleaseNotes.ps1 -FromRef "v1.4.0" -ToRef "HEAD" -Format text
+```
+
+**Features:**
+- Groups changes by type (Features, Bug Fixes, Breaking Changes, Other)
+- Supports emoji icons for better readability in GitHub releases
+- Generates both markdown and text formats
+- Automatically used by CI/CD workflow for releases
+
+**Change Categories:**
+- ⚠️ **BREAKING CHANGES**: Commits with `!` or `BREAKING CHANGE:` footer
+- ✨ **Features**: Commits starting with `feat:`
+- 🐛 **Bug Fixes**: Commits starting with `fix:`
+- 📝 **Other Changes**: Documentation, chore, refactor, etc.
+
 ### Test-VersionLogic.ps1
 
 Tests the version calculation logic with various scenarios.

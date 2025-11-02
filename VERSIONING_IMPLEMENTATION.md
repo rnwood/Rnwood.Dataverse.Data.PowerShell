@@ -38,13 +38,39 @@ A PowerShell script that:
 # Returns: 1.5.0 (minor bump due to feat:)
 ```
 
-### 2. Workflow Changes (`.github/workflows/publish.yml`)
+### 2. Release Notes Generation (`scripts/Get-ReleaseNotes.ps1`)
+A PowerShell script that:
+- Analyzes commit messages between two git references
+- Groups changes by type (Features, Bug Fixes, Breaking Changes, Other)
+- Generates formatted release notes in markdown or text format
+- Supports emoji icons for better readability in GitHub releases
+
+**Change Categories:**
+- **⚠️ BREAKING CHANGES**: Commits with `!` or `BREAKING CHANGE:` footer
+- **✨ Features**: Commits starting with `feat:`
+- **🐛 Bug Fixes**: Commits starting with `fix:`
+- **📝 Other Changes**: Documentation, chore, refactor, style, performance, test, build, CI commits
+
+**Release Notes Strategy:**
+- **CI Builds (Prereleases)**: Compare to last prerelease version
+- **Stable Releases**: Compare to last stable release version
+- If no previous version found, uses all commits or shows "Initial release"
+
+**Example usage:**
+```powershell
+./scripts/Get-ReleaseNotes.ps1 -FromRef "v1.4.0" -ToRef "HEAD" -Format markdown
+# Generates markdown release notes for commits between v1.4.0 and HEAD
+```
+
+### 3. Workflow Changes (`.github/workflows/publish.yml`)
 Updated the Build step to:
 - Detect PR events using `$env:GITHUB_EVENT_NAME -eq "pull_request"`
 - Read PR description from `$env:GITHUB_EVENT_PATH`
 - Parse PR body for conventional commits
 - Call `Get-NextVersion.ps1` to determine next version
+- **Generate release notes** using `Get-ReleaseNotes.ps1`
 - Apply the incremented version to CI builds
+- Save release notes for GitHub releases and PowerShell Gallery
 - Maintain backward compatibility for:
   - Tag-based releases (use tag version)
   - Main branch pushes (analyze commits since last tag)
@@ -55,11 +81,19 @@ Updated the Build step to:
 2. Parse PR description for conventional commits
 3. Determine bump type (major/minor/patch)
 4. Calculate next version (e.g., 1.5.0)
-5. Add prerelease suffix (e.g., 1.5.0-ci20241102123)
-6. Update module manifest
+5. Generate release notes comparing to appropriate previous version
+6. Add prerelease suffix (e.g., 1.5.0-ci20241102123)
+7. Update module manifest
+8. Save release notes to files (markdown and text formats)
 ```
 
-### 3. PR Template (`.github/pull_request_template.md`)
+**Release Notes Integration:**
+- **GitHub Releases**: Markdown release notes included in release body
+- **PowerShell Gallery**: Text release notes added to module manifest ReleaseNotes field
+- **CI Builds**: Compare to last prerelease, include in GitHub prerelease
+- **Stable Releases**: Compare to last stable release, include in both GitHub and Gallery
+
+### 4. PR Template (`.github/pull_request_template.md`)
 Created a template that:
 - Includes a dedicated "Conventional Commits" section
 - Provides clear examples of each commit type
@@ -180,22 +214,28 @@ BREAKING CHANGE: Removed -LegacyBehavior parameter
    - No manual version management needed
    - Consistent versioning across all PRs
    - Follows semantic versioning principles
+   - **Automatic release notes generation** from commit history
 
 3. **Clear Communication**
    - PR descriptions clearly indicate the type of changes
    - Version bumps are predictable and transparent
    - Breaking changes are explicitly marked
+   - **Release notes** automatically generated and included in:
+     - GitHub releases (markdown format with emoji icons)
+     - PowerShell Gallery (text format in module manifest)
 
 4. **Developer Friendly**
    - Simple format to follow
    - Clear documentation and examples
    - PR template guides contributors
    - Validation through tests
+   - Release notes organized by change type
 
 5. **Backward Compatible**
    - Existing tag-based releases still work
    - Main branch commits analyzed for version bumps
    - Falls back to patch bump if no conventional commits found
+   - Release notes compare to appropriate previous version automatically
 
 ## Migration Notes
 
