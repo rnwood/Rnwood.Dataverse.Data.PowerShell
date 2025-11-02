@@ -3,6 +3,11 @@
 Describe 'Get-DataverseSolutionFile' {
 
     BeforeAll {
+        # Ensure module is loaded (required for parallel job execution in CI)
+        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
+            Import-Module Rnwood.Dataverse.Data.PowerShell -ErrorAction Stop
+        }
+        
         # Create a minimal test solution.xml content
         $solutionXml = @"
 <?xml version="1.0" encoding="utf-8"?>

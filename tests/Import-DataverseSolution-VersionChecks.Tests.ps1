@@ -3,6 +3,11 @@
 Describe 'Import-DataverseSolution - Version Check Logic' {
 
     BeforeAll {
+        # Ensure module is loaded (required for parallel job execution in CI)
+        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
+            Import-Module Rnwood.Dataverse.Data.PowerShell -ErrorAction Stop
+        }
+        
         # Helper function to create a solution zip with specified version
         function New-TestSolutionZip {
             param(
