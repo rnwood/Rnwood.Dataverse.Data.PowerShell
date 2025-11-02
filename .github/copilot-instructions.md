@@ -253,6 +253,12 @@ Use conventional commit messages and be specific about the error or improvement.
 - Use pipeline: `Get-X | Where-Object { } | ForEach-Object { }`
 - Wrap paths in quotes: `"$ProjectDir/file"`
 
+### Cmdlet Help files
+- Create a help file for each cmdlet in `docs/`
+- Follow PlatyPS schema: .SYNOPSIS, .DESCRIPTION, .PARAMETER, .EXAMPLE, .NOTES
+- You must run updatehelp.ps1 (or a similar script targetting just the one cmdlet) to sync with cmdlet attributes before adding help
+- You must run updatehelp.ps1 after (or a similar script targetting just the one cmdlet) modifying cmdlet parameters to validate.
+
 ## Key Behavioral Notes
 - **Automatic Paging**: GetDataverseRecord fetches all pages automatically using PagingCookie
 - **Batching**: SetDataverseRecord, RemoveDataverseRecord use ExecuteMultipleRequest for >1 record

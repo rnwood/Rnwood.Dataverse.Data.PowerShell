@@ -86,7 +86,7 @@
   </Target>
 
   <!-- Use a stable intermediate-output stamp so MSBuild can compare inputs/outputs reliably across builds -->
-  <Target Name="BuildHelp" DependsOnTargets="BuildCmdlets" AfterTargets="Build" Inputs="@(HelpInput)" Outputs="$(IntermediateOutputPath)help.stamp">
+  <Target Name="BuildHelp" DependsOnTargets="BuildCmdlets;BuildLoader" AfterTargets="Build" Inputs="@(HelpInput)" Outputs="$(IntermediateOutputPath)help.stamp">
     <Message Text="Building help to $(TargetDir)" Importance="high" />
     <Message Text="pwsh -file &quot;$(ProjectDir)updatehelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\&quot;))&quot;" Importance="high" />
     <Exec Command="pwsh -file &quot;$(ProjectDir)updatehelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\&quot;))&quot;" />

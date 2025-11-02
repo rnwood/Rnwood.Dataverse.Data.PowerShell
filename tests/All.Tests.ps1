@@ -18,10 +18,10 @@ $env:ChildProcessPSModulePath = $tempmodulefolder
 Import-Module Rnwood.Dataverse.Data.PowerShell -Force
 
 # Helper functions in global scope so all tests can access them
-$script:metadata = $null
+$script:metadata = @()
 
 function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null) {
-    if (-not $script:metadata) {
+    if ($script:metadata.Count -eq 0) {
         if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
             Import-Module Rnwood.Dataverse.Data.PowerShell
         }
@@ -32,8 +32,9 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null) {
     
         Get-Item $PSScriptRoot/*.xml | ForEach-Object {
             $stream = [IO.File]::OpenRead($_.FullName)
-            $script:metadata += $serializer.ReadObject($stream)
+            $metadata = $serializer.ReadObject($stream)
             $stream.Close()
+            $script:metadata = $script:metadata + @($metadata)
         }
     }
    
