@@ -128,8 +128,9 @@ jobs:
           
           # Run tests with CI-friendly output
           # Note: Tests may be slow due to child process spawning and mock setup overhead
+          # Each test file now includes Common.ps1 for setup, allowing Pester to run them independently
           $config = New-PesterConfiguration
-          $config.Run.Path = 'tests/All.Tests.ps1'
+          $config.Run.Path = 'tests'
           $config.Run.PassThru = $true
           $config.Output.Verbosity = 'Detailed'
           $config.Output.CIFormat = 'GithubActions'
@@ -186,8 +187,9 @@ jobs:
             
             # Run tests with CI-friendly output
             # Note: Tests may be slow due to child process spawning and mock setup overhead
+            # Each test file now includes Common.ps1 for setup, allowing Pester to run them independently
             $config = New-PesterConfiguration
-            $config.Run.Path = 'tests/All.Tests.ps1'
+            $config.Run.Path = 'tests'
             $config.Run.PassThru = $true
             $config.Output.Verbosity = 'Detailed'
             $config.Output.CIFormat = 'GithubActions'

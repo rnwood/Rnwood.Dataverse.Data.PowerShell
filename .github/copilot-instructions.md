@@ -36,7 +36,7 @@ Install-Module -Force -Scope CurrentUser Pester -MinimumVersion 5.0
 
 # 3. Run specific test groups using filters
 $config = New-PesterConfiguration
-$config.Run.Path = 'tests/All.Tests.ps1'  # MUST use All.Tests.ps1 for proper setup
+$config.Run.Path = 'tests'  # Pester discovers *.Tests.ps1 files, each includes Common.ps1
 $config.Run.PassThru = $true
 $config.Output.Verbosity = 'Normal'  # Shows summary and failures
 $config.Should.ErrorAction = 'Continue'
@@ -76,7 +76,7 @@ $env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/
 
 # Run ALL tests - takes 20-30 minutes, use only for final validation
 $config = New-PesterConfiguration
-$config.Run.Path = 'tests/All.Tests.ps1'
+$config.Run.Path = 'tests'  # Pester discovers *.Tests.ps1 files, each includes Common.ps1
 $config.Run.PassThru = $true
 $config.Output.Verbosity = 'Normal'
 $config.Should.ErrorAction = 'Continue'
@@ -98,9 +98,10 @@ Invoke-Pester -Output Detailed -Path e2e-tests
 - Tests use FakeXrmEasy to mock Dataverse IOrganizationService
 - `tests/contact.xml` contains serialized EntityMetadata for mock connection
 - Tests spawn child PowerShell processes to test module loading (expensive ~6-7s each)
-- Each call to getMockConnection() loads and deserializes XML metadata (~6-7s overhead)
+- Each test file includes `Common.ps1` which sets up the environment and helper functions
+- Metadata is loaded only once per test session using global variables
 - ALWAYS set $env:TESTMODULEPATH before running tests
-- **⚠️ ALWAYS use tests/All.Tests.ps1 as entry point** - individual test files will fail without setup
+- **⚠️ Run tests from 'tests' directory** - each file includes Common.ps1 for setup
 - **⚠️ Full test suite takes 20-30 minutes** - use filtered tests during development
 - **⚠️ Tests are inherently slow by design** - not a regression, this is expected behavior
 
