@@ -40,7 +40,15 @@ Describe 'Get-DataverseSolutionFile' {
             $testSolutionPath = Join-Path $tempDir "TestSolution_$(New-Guid).zip"
             
             # Create zip with solution.xml
-            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            # Load required assemblies with explicit error handling for PS5 jobs
+            try {
+                [System.Reflection.Assembly]::Load("System.IO.Compression, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089") | Out-Null
+                [System.Reflection.Assembly]::Load("System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089") | Out-Null
+            } catch {
+                # Fallback for different .NET versions
+                Add-Type -AssemblyName System.IO.Compression
+                Add-Type -AssemblyName System.IO.Compression.FileSystem
+            }
             
             $stream = [System.IO.File]::Create($testSolutionPath)
             $zip = New-Object System.IO.Compression.ZipArchive($stream, [System.IO.Compression.ZipArchiveMode]::Create)
