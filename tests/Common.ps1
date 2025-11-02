@@ -54,11 +54,9 @@ function global:LoadTestMetadata {
         Import-Module Rnwood.Dataverse.Data.PowerShell
     }
     
-    # Load assembly (safe to call multiple times)
-    try {
-        Add-Type -AssemblyName "System.Runtime.Serialization" -ErrorAction SilentlyContinue
-    } catch {
-        # Assembly already loaded, which is fine
+    # Load assembly if not already loaded
+    if (-not ([System.Management.Automation.PSTypeName]'System.Runtime.Serialization.DataContractSerializer').Type) {
+        Add-Type -AssemblyName "System.Runtime.Serialization"
     }
 
     # Define the DataContractSerializer

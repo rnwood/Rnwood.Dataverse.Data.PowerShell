@@ -43,11 +43,9 @@ Describe 'Import-DataverseSolution - Version Check Logic' {
             $tempDir = [IO.Path]::GetTempPath()
             $testSolutionPath = Join-Path $tempDir "${UniqueName}_${Version}_$(New-Guid).zip"
             
-            # Load assembly (safe to call multiple times)
-            try {
-                Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction SilentlyContinue
-            } catch {
-                # Assembly already loaded, which is fine
+            # Load assembly if not already loaded
+            if (-not ([System.Management.Automation.PSTypeName]'System.IO.Compression.ZipArchive').Type) {
+                Add-Type -AssemblyName System.IO.Compression.FileSystem
             }
             
             $stream = [System.IO.File]::Create($testSolutionPath)
