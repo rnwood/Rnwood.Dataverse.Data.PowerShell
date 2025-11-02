@@ -268,7 +268,7 @@ Describe "Set-DataverseRecord Batched Retrieval" {
             }
             
             # Process with retries enabled and small retrieval batch size
-            $contacts | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 1 -RetrievalBatchSize 3 -Verbose
+            $contacts | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 0.1 -RetrievalBatchSize 3 -Verbose
             
             # Verify behavior:
             # 1. First RetrieveMultiple should fail
@@ -313,7 +313,7 @@ Describe "Set-DataverseRecord Batched Retrieval" {
             }
             
             # Process with 2 retries (should succeed on 3rd attempt)
-            $contacts | Set-DataverseRecord -Connection $connection -TableName contact -Retries 2 -InitialRetryDelay 1 -RetrievalBatchSize 2 -Verbose
+            $contacts | Set-DataverseRecord -Connection $connection -TableName contact -Retries 2 -InitialRetryDelay 0.1 -RetrievalBatchSize 2 -Verbose
             
             # Verify retry succeeded
             $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
@@ -338,7 +338,7 @@ Describe "Set-DataverseRecord Batched Retrieval" {
             
             # Process with retries, but all will fail
             $errors = @()
-            $contact | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 1 -RetrievalBatchSize 1 -ErrorVariable errors -ErrorAction SilentlyContinue
+            $contact | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 0.1 -RetrievalBatchSize 1 -ErrorVariable errors -ErrorAction SilentlyContinue
             
             # Should have at least one error
             $errors.Count | Should -BeGreaterThan 0 -Because "Error should be reported after retries exhausted"

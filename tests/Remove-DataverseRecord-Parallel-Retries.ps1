@@ -32,7 +32,7 @@ Describe "Remove-DataverseRecord parallel with retries" {    Context "Retries wi
             
             # Delete records with retry enabled and parallel processing
             $errors = @()
-            $c1, $c2 | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 2 -InitialRetryDelay 1 -MaxDegreeOfParallelism 2 -BatchSize 10 -ErrorVariable errors -ErrorAction SilentlyContinue
+            $c1, $c2 | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 2 -InitialRetryDelay 0.1 -MaxDegreeOfParallelism 2 -BatchSize 10 -ErrorVariable errors -ErrorAction SilentlyContinue
 
             # Should succeed after retry
             $errors.Count | Should -Be 0
@@ -70,7 +70,7 @@ Describe "Remove-DataverseRecord parallel with retries" {    Context "Retries wi
             
             # Delete record with retry enabled and parallel processing, no batching
             $errors = @()
-            $c1 | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 3 -InitialRetryDelay 1 -MaxDegreeOfParallelism 2 -BatchSize 1 -ErrorVariable errors -ErrorAction SilentlyContinue
+            $c1 | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 3 -InitialRetryDelay 0.1 -MaxDegreeOfParallelism 2 -BatchSize 1 -ErrorVariable errors -ErrorAction SilentlyContinue
 
             # Should succeed after retries
             $errors.Count | Should -Be 0
@@ -107,7 +107,7 @@ Describe "Remove-DataverseRecord parallel with retries" {    Context "Retries wi
 
             # Try to delete with limited retries (should fail after exhausting retries)
             $errors = @()
-            $c1 | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 2 -InitialRetryDelay 1 -MaxDegreeOfParallelism 2 -BatchSize 10 -ErrorVariable errors -ErrorAction SilentlyContinue
+            $c1 | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 2 -InitialRetryDelay 0.1 -MaxDegreeOfParallelism 2 -BatchSize 10 -ErrorVariable errors -ErrorAction SilentlyContinue
 
             # Should get errors after exhausting retries
             $errors.Count | Should -BeGreaterThan 0
