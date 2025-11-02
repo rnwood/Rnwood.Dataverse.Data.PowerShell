@@ -30,25 +30,37 @@ if (-not $global:TestMetadata) {
 }
 
 function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null) {
+    # Load metadata if not already loaded
     if ($global:TestMetadata.Count -eq 0) {
-        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
-            Import-Module Rnwood.Dataverse.Data.PowerShell
-        }
-        Add-Type -AssemblyName "System.Runtime.Serialization"
-
-        # Define the DataContractSerializer
-        $serializer = New-Object System.Runtime.Serialization.DataContractSerializer([Microsoft.Xrm.Sdk.Metadata.EntityMetadata])
-    
-        Get-Item $PSScriptRoot/*.xml | ForEach-Object {
-            $stream = [IO.File]::OpenRead($_.FullName)
-            $metadata = $serializer.ReadObject($stream)
-            $stream.Close()
-            $global:TestMetadata = $global:TestMetadata + @($metadata)
-        }
+        LoadTestMetadata
     }
    
+    # Create the connection (no caching for test isolation)
     $mockService = Get-DataverseConnection -url https://fake.crm.dynamics.com/ -mock $global:TestMetadata -RequestInterceptor $RequestInterceptor
     return $mockService
+}
+
+function global:LoadTestMetadata {
+    Write-Verbose "Loading metadata for the first time..." -Verbose
+    
+    if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
+        Import-Module Rnwood.Dataverse.Data.PowerShell
+    }
+    
+    Add-Type -AssemblyName "System.Runtime.Serialization"
+
+    # Define the DataContractSerializer
+    $serializer = New-Object System.Runtime.Serialization.DataContractSerializer([Microsoft.Xrm.Sdk.Metadata.EntityMetadata])
+
+    Get-Item $PSScriptRoot/*.xml | ForEach-Object {
+        Write-Verbose "Loading $($_.Name)..." -Verbose
+        $stream = [IO.File]::OpenRead($_.FullName)
+        $metadata = $serializer.ReadObject($stream)
+        $stream.Close()
+        $global:TestMetadata = $global:TestMetadata + @($metadata)
+    }
+    
+    Write-Verbose "Metadata loading completed - $($global:TestMetadata.Count) entities loaded" -Verbose
 }
 
 function global:newPwsh([scriptblock] $scriptblock) {
