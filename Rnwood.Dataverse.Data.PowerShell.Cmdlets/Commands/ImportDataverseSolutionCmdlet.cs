@@ -152,6 +152,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter SkipEnvironmentVariableValidation { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to skip import if the solution version in the file is the same as the installed version.
+        /// </summary>
+        [Parameter(HelpMessage = "Skip import if the solution version in the file is the same as the installed version in the target environment.")]
+        public SwitchParameter SkipIfSameVersion { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether to skip import if the solution version in the file is lower than the installed version.
+        /// </summary>
+        [Parameter(HelpMessage = "Skip import if the solution version in the file is lower than the installed version in the target environment.")]
+        public SwitchParameter SkipIfLowerVersion { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -211,14 +223,56 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             bool useHoldingSolution = Mode == ImportMode.HoldingSolution;
             bool useStageAndUpgrade = Mode == ImportMode.Auto || Mode == ImportMode.StageAndUpgrade;
 
-            // Extract solution info
-            var (solutionUniqueName, isManaged) = ExtractSolutionInfo(solutionBytes);
+            // Extract solution info including version
+            var (solutionUniqueName, isManaged, sourceSolutionVersion) = ExtractSolutionInfo(solutionBytes);
             WriteVerbose($"Source solution '{solutionUniqueName}' is {(isManaged ? "managed" : "unmanaged")}");
+            
+            if (sourceSolutionVersion != null)
+            {
+                WriteVerbose($"Source solution version: {sourceSolutionVersion}");
+            }
 
             // Check if this is an upgrade scenario and if the solution already exists
             bool shouldUseStageAndUpgrade = false;
             bool shouldUseHoldingSolution = false;
             bool solutionExists = DoesSolutionExist(solutionBytes);
+
+            // Version checking logic
+            if (solutionExists && (SkipIfSameVersion.IsPresent || SkipIfLowerVersion.IsPresent))
+            {
+                Version installedVersion = GetInstalledSolutionVersion(solutionUniqueName);
+                if (installedVersion != null && sourceSolutionVersion != null)
+                {
+                    WriteVerbose($"Installed solution version: {installedVersion}");
+                    
+                    int versionComparison = sourceSolutionVersion.CompareTo(installedVersion);
+                    
+                    if (SkipIfSameVersion.IsPresent && versionComparison == 0)
+                    {
+                        WriteWarning($"Skipping import: Solution '{solutionUniqueName}' version {sourceSolutionVersion} is already installed (same version).");
+                        return;
+                    }
+                    
+                    if (SkipIfLowerVersion.IsPresent && versionComparison < 0)
+                    {
+                        WriteWarning($"Skipping import: Solution '{solutionUniqueName}' version {sourceSolutionVersion} is lower than installed version {installedVersion}.");
+                        return;
+                    }
+                    
+                    WriteVerbose($"Version check passed: source version {sourceSolutionVersion} vs installed version {installedVersion}");
+                }
+                else
+                {
+                    if (sourceSolutionVersion == null)
+                    {
+                        WriteWarning($"Unable to extract source solution version for '{solutionUniqueName}'. Skipping version check.");
+                    }
+                    if (installedVersion == null)
+                    {
+                        WriteWarning($"Unable to retrieve installed solution version for '{solutionUniqueName}'. Skipping version check.");
+                    }
+                }
+            }
 
             if (useHoldingSolution)
             {
@@ -609,7 +663,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             try
             {
                 // Extract the solution unique name from customizations.xml inside the zip
-                var (solutionUniqueName, _) = ExtractSolutionInfo(solutionBytes);
+                var (solutionUniqueName, _, _) = ExtractSolutionInfo(solutionBytes);
 
                 WriteVerbose($"Checking if solution '{solutionUniqueName}' exists in target environment...");
 
@@ -641,7 +695,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private (string UniqueName, bool IsManaged) ExtractSolutionInfo(byte[] solutionBytes)
+        private (string UniqueName, bool IsManaged, Version Version) ExtractSolutionInfo(byte[] solutionBytes)
         {
                 using (var memoryStream = new MemoryStream(solutionBytes))
                 using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
@@ -663,7 +717,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             if (solutionManifest == null)
                             {
                                 ThrowTerminatingError(new ErrorRecord(new Exception("SolutionManifest element not found in solution.xml"), "SolutionManifestNotFound", ErrorCategory.InvalidData, null));
-                                return (null, false);
+                                return (null, false, null);
                             }
 
                             // Extract the UniqueName from the SolutionManifest
@@ -673,7 +727,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             if (uniqueNameElement == null)
                             {
                                 ThrowTerminatingError(new ErrorRecord(new Exception("UniqueName element not found in solution.xml"), "UniqueNameNotFound", ErrorCategory.InvalidData, null));
-                                return (null, false);
+                                return (null, false, null);
                             }
                             uniqueName = uniqueNameElement.Value;
 
@@ -691,12 +745,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 ThrowTerminatingError(new ErrorRecord(new Exception("Could not determine if solution is managed, assuming unmanaged"), "SolutionManagedStatusUnknown", ErrorCategory.InvalidData, null));
                             }
 
-                            return (uniqueName, isManaged);
+                            // Extract the Version from the SolutionManifest
+                            var versionElement = solutionManifest.Element("Version");
+                            Version version = null;
+                            if (versionElement != null && !string.IsNullOrEmpty(versionElement.Value))
+                            {
+                                Version.TryParse(versionElement.Value, out version);
+                            }
+
+                            return (uniqueName, isManaged, version);
                         }
                     }
                 }
 
-            return (null, false);
+            return (null, false, null);
         }
 
         private void ValidateSolutionComponents(byte[] solutionBytes)
@@ -1089,6 +1151,42 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
             }
+            return null;
+        }
+
+        private Version GetInstalledSolutionVersion(string solutionUniqueName)
+        {
+            try
+            {
+                var query = new QueryExpression("solution")
+                {
+                    ColumnSet = new ColumnSet("version"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("uniquename", ConditionOperator.Equal, solutionUniqueName)
+                        }
+                    },
+                    TopCount = 1
+                };
+
+                var solutions = Connection.RetrieveMultiple(query);
+
+                if (solutions.Entities.Count > 0)
+                {
+                    var versionString = solutions.Entities[0].GetAttributeValue<string>("version");
+                    if (!string.IsNullOrEmpty(versionString) && Version.TryParse(versionString, out var version))
+                    {
+                        return version;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteVerbose($"Error retrieving installed solution version: {ex.Message}");
+            }
+
             return null;
         }
     }
