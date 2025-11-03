@@ -1,4 +1,94 @@
-# Coverage Scripts
+# Scripts
+
+This directory contains utility scripts for the project.
+
+## Version Management
+
+### Get-NextVersion.ps1
+
+Determines the next version number based on conventional commits.
+
+**Usage:**
+```powershell
+./scripts/Get-NextVersion.ps1 -BaseVersion "1.4.0" -CommitMessages @("feat: add new feature", "fix: bug fix")
+# Returns: 1.5.0 (minor bump due to feat:)
+```
+
+**Conventional Commit Rules:**
+- `feat:` → minor bump (1.4.0 → 1.5.0)
+- `fix:` → patch bump (1.4.0 → 1.4.1)
+- `feat!:` or `BREAKING CHANGE:` → major bump (1.4.0 → 2.0.0)
+- Other types → patch bump
+
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for full details.
+
+### Get-ReleaseNotes.ps1
+
+Generates release notes from conventional commits between two git references.
+
+**Usage:**
+```powershell
+# Markdown format for GitHub releases
+./scripts/Get-ReleaseNotes.ps1 -FromRef "v1.4.0" -ToRef "HEAD" -Format markdown
+
+# Text format for PowerShell Gallery
+./scripts/Get-ReleaseNotes.ps1 -FromRef "v1.4.0" -ToRef "HEAD" -Format text
+```
+
+**Features:**
+- Groups changes by type (Features, Bug Fixes, Breaking Changes, Other)
+- Supports emoji icons for better readability in GitHub releases
+- Generates both markdown and text formats
+- Automatically used by CI/CD workflow for releases
+
+**Change Categories:**
+- ⚠️ **BREAKING CHANGES**: Commits with `!` or `BREAKING CHANGE:` footer
+- ✨ **Features**: Commits starting with `feat:`
+- 🐛 **Bug Fixes**: Commits starting with `fix:`
+- 📝 **Other Changes**: Documentation, chore, refactor, etc.
+
+### Test-VersionLogic.ps1
+
+Tests the version calculation logic with various scenarios.
+
+**Usage:**
+```powershell
+./scripts/Test-VersionLogic.ps1
+```
+
+### Test-ConventionalCommits.ps1
+
+Validates that a PR description contains at least one valid conventional commit message.
+
+**Usage:**
+```powershell
+# Validate a PR description
+./scripts/Test-ConventionalCommits.ps1 -PRDescription "feat: add new feature"
+
+# Returns $true if valid, $false if invalid
+```
+
+**Features:**
+- Checks for at least one conventional commit in the description
+- Provides detailed error messages when validation fails
+- Lists all valid commit types and examples
+- Used by CI/CD workflow to enforce PR requirements
+
+**Validation Rules:**
+- PR description must not be empty
+- Must contain at least one line matching conventional commit format
+- Format: `<type>(<scope>): <description>` where type is one of: feat, fix, docs, style, refactor, perf, test, build, ci, chore
+
+### Test-PRValidation.ps1
+
+Tests the PR validation logic to ensure it correctly identifies valid and invalid PR descriptions.
+
+**Usage:**
+```powershell
+./scripts/Test-PRValidation.ps1
+```
+
+## Coverage Scripts
 
 ## Run-TestsWithCoverage.ps1
 

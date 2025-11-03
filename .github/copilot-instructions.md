@@ -204,17 +204,61 @@ $config.Filter.FullName = '*Get-DataverseRecord - Basic*' # Basic Get tests
 **Matrix:** os=[ubuntu-latest, windows-latest] × powershell_version=['5', '7.4.11', 'latest'] × publish=[true/false once]  
 **Steps:**
 1. Checkout, install PowerShell version
-2. Build: Sets version from $env:GITHUB_REF if tag, builds main project, copies to out/
+2. Build: Determines version based on conventional commits, builds main project, copies to out/
 3. Test (pwsh): Sets $env:TESTMODULEPATH, installs Pester, runs tests, checks $LASTEXITCODE
 4. Test (powershell on Windows PS5): Same as above but with powershell.exe
 5. E2E Test: Sets E2ETESTS_* env vars from secrets, runs e2e-tests
 6. Publish (if matrix.publish && release): Runs Publish-Module to PowerShell Gallery
 
+## Versioning Strategy
+The project uses **Conventional Commits** to automatically determine version numbers:
+
+### Version Determination
+- **Release builds** (git tags): Use the tag version (e.g., `v1.5.0` → `1.5.0`)
+- **CI builds** (main branch or PRs): Automatically increment version based on conventional commits:
+  - Analyzes PR description or commits since last tag
+  - Determines version bump type (major/minor/patch)
+  - Creates prerelease version (e.g., `1.5.0-ci20241102001`)
+
+### Conventional Commit Format
+PR descriptions MUST include conventional commits to enable automatic versioning:
+
+**Format:** `<type>(<scope>): <description>`
+
+**Types and Version Bumps:**
+- `feat:` or `feat(<scope>):` → **Minor** version bump (1.4.0 → 1.5.0)
+- `fix:` or `fix(<scope>):` → **Patch** version bump (1.4.0 → 1.4.1)
+- `feat!:` or `fix!:` or `BREAKING CHANGE:` → **Major** version bump (1.4.0 → 2.0.0)
+- Other types (`docs:`, `chore:`, `style:`, `refactor:`, `perf:`, `test:`, `build:`, `ci:`) → **Patch** version bump
+
+**Examples:**
+```
+feat: add batch delete operation
+fix: resolve connection timeout issue
+feat!: remove deprecated parameters
+fix(auth): handle expired tokens correctly
+docs: update installation instructions
+```
+
+**Breaking Changes:**
+- Add `!` after type: `feat!:` or `fix!:`
+- Or include `BREAKING CHANGE:` in the commit body/PR description
+
+### PR Template
+Use `.github/pull_request_template.md` which includes a "Conventional Commits" section. Fill this section with conventional commit messages to ensure proper version calculation.
+
+### Version Calculation Script
+The `scripts/Get-NextVersion.ps1` script analyzes commit messages and returns the next version number. It:
+- Parses conventional commit syntax
+- Determines the highest bump level needed (major > minor > patch)
+- Calculates and returns the new version
+- Defaults to patch bump if no conventional commits found
+
 ## Common Development Tasks
 
 Always check help is up to date in cmdlets helpmessages and docs/*.MD files.
 
-Use conventional commit messages and be specific about the error or improvement.
+Use conventional commit messages in PR descriptions for automatic versioning.
 
 ### Adding a New Cmdlet
 1. Create `Rnwood.Dataverse.Data.PowerShell.Cmdlets/Commands/YourNewCmdlet.cs`

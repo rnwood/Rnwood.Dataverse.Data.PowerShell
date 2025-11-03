@@ -54,8 +54,28 @@ jobs:
             $versionnumber = $env:GITHUB_REF -replace "refs/tags/", ""
             (get-content -raw -encoding UTF8 $manifestpath ) -replace "ModuleVersion ?=.*", "ModuleVersion = `"$versionnumber`"" | set-content -encoding UTF8 $manifestpath
             Write-Host "Release version: $versionnumber"
-          } elseif ($env:GITHUB_REF -eq "refs/heads/main") {
-            # CI build on main branch - auto-determine version with date-based -ci suffix
+            
+            # Generate release notes for stable release (compare to last stable release)
+            Write-Host "Generating release notes for stable release..."
+            $allTags = git tag --list --sort=-version:refname 2>$null
+            $stableReleases = $allTags | Where-Object { $_ -notmatch '-' } | Select-Object -First 2
+            
+            if ($stableReleases.Count -ge 2) {
+              $previousRelease = $stableReleases[1]
+              Write-Host "Comparing to previous stable release: $previousRelease"
+              $releaseNotes = & ./scripts/Get-ReleaseNotes.ps1 -FromRef $previousRelease -ToRef "HEAD" -Format markdown
+              $releaseNotesText = & ./scripts/Get-ReleaseNotes.ps1 -FromRef $previousRelease -ToRef "HEAD" -Format text
+            } else {
+              Write-Host "No previous stable release found, using all commits"
+              $releaseNotes = "Initial release"
+              $releaseNotesText = "Initial release"
+            }
+            
+            # Save release notes for later steps
+            $releaseNotes | Out-File -FilePath release-notes.md -Encoding utf8
+            $releaseNotesText | Out-File -FilePath release-notes.txt -Encoding utf8
+          } elseif ($env:GITHUB_REF -eq "refs/heads/main" -or $env:GITHUB_EVENT_NAME -eq "pull_request") {
+            # CI build on main branch or PR - auto-determine version using conventional commits
             $latestTag = git describe --tags --abbrev=0 2>$null
             if (-not $latestTag) {
               $latestTag = "0.0.0"
@@ -66,6 +86,77 @@ jobs:
               $baseVersion = $matches[1]
             } else {
               $baseVersion = "0.0.0"
+            }
+            
+            Write-Host "Latest tag version: $baseVersion"
+            
+            # Determine next version based on conventional commits
+            if ($env:GITHUB_EVENT_NAME -eq "pull_request") {
+              # For PRs, analyze PR description for conventional commits
+              Write-Host "PR detected - analyzing PR description for conventional commits"
+              
+              # Get PR body from GitHub event
+              $eventPath = $env:GITHUB_EVENT_PATH
+              if (Test-Path $eventPath) {
+                $event = Get-Content $eventPath -Raw | ConvertFrom-Json
+                $prBody = $event.pull_request.body
+                
+                # Validate that PR description contains conventional commits
+                Write-Host ""
+                Write-Host "=== Validating PR Description ===" -ForegroundColor Cyan
+                $isValid = & ./scripts/Test-ConventionalCommits.ps1 -PRDescription $prBody
+                
+                if (-not $isValid) {
+                  Write-Host ""
+                  Write-Host "❌ BUILD FAILED: PR description does not contain valid conventional commit messages" -ForegroundColor Red
+                  Write-Host ""
+                  Write-Host "Please update your PR description to include at least one conventional commit message." -ForegroundColor Yellow
+                  Write-Host "Use the PR template which includes a 'Conventional Commits' section." -ForegroundColor Yellow
+                  Write-Host ""
+                  throw "PR description validation failed - missing conventional commit messages"
+                }
+                
+                Write-Host ""
+                Write-Host "PR Description:"
+                Write-Host $prBody
+                
+                # Split PR body into lines for analysis
+                $commitMessages = $prBody -split "`n" | Where-Object { $_ -match '\S' }
+                
+                # Use Get-NextVersion script to determine version bump
+                $nextVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages $commitMessages
+                Write-Host "Next version determined from PR description: $nextVersion"
+                $baseVersion = $nextVersion
+              }
+            } else {
+              # For main branch, analyze recent commits
+              Write-Host "Main branch detected - analyzing recent commits"
+              
+              # Validate that we have a valid tag before using it in git log
+              if ($latestTag -eq "0.0.0") {
+                Write-Host "No previous tag found, using all commits"
+                $commitsSinceTag = git log --format="%s" 2>$null
+              } else {
+                # Get commits since last tag with error handling
+                Write-Host "Getting commits since tag: $latestTag"
+                $commitsSinceTag = git log "$latestTag..HEAD" --format="%s" 2>$null
+              }
+              
+              if ($commitsSinceTag) {
+                $commitMessages = $commitsSinceTag -split "`n" | Where-Object { $_ -match '\S' }
+                
+                Write-Host "Commits since last tag:"
+                $commitMessages | ForEach-Object { Write-Host "  - $_" }
+                
+                # Use Get-NextVersion script to determine version bump
+                $nextVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages $commitMessages
+                Write-Host "Next version determined from commits: $nextVersion"
+                $baseVersion = $nextVersion
+              } else {
+                Write-Host "No commits since last tag, defaulting to patch bump"
+                # Use Get-NextVersion with empty messages (defaults to patch)
+                $baseVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages @()
+              }
             }
             
             # Get current date in yyyyMMdd format (UTC)
@@ -110,6 +201,34 @@ jobs:
             Write-Host "CI version: $baseVersion-$prereleaseString"
             # Save version for later steps
             "$baseVersion-$prereleaseString" | Out-File -FilePath ci-version.txt -Encoding utf8
+            
+            # Generate release notes for CI build (compare to last prerelease)
+            Write-Host "Generating release notes for CI build..."
+            $allTags = git tag --list --sort=-version:refname 2>$null
+            $prereleases = $allTags | Where-Object { $_ -match '-' } | Select-Object -First 1
+            
+            if ($prereleases) {
+              $previousPrerelease = $prereleases
+              Write-Host "Comparing to previous prerelease: $previousPrerelease"
+              $releaseNotes = & ./scripts/Get-ReleaseNotes.ps1 -FromRef $previousPrerelease -ToRef "HEAD" -Format markdown
+              $releaseNotesText = & ./scripts/Get-ReleaseNotes.ps1 -FromRef $previousPrerelease -ToRef "HEAD" -Format text
+            } else {
+              # If no prerelease found, compare to last stable tag
+              $latestStableTag = $allTags | Where-Object { $_ -notmatch '-' } | Select-Object -First 1
+              if ($latestStableTag) {
+                Write-Host "No previous prerelease found, comparing to last stable: $latestStableTag"
+                $releaseNotes = & ./scripts/Get-ReleaseNotes.ps1 -FromRef $latestStableTag -ToRef "HEAD" -Format markdown
+                $releaseNotesText = & ./scripts/Get-ReleaseNotes.ps1 -FromRef $latestStableTag -ToRef "HEAD" -Format text
+              } else {
+                Write-Host "No previous releases found, using all commits"
+                $releaseNotes = "Initial prerelease"
+                $releaseNotesText = "Initial prerelease"
+              }
+            }
+            
+            # Save release notes for later steps
+            $releaseNotes | Out-File -FilePath release-notes.md -Encoding utf8
+            $releaseNotesText | Out-File -FilePath release-notes.txt -Encoding utf8
           }
 
           dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj
@@ -341,6 +460,26 @@ jobs:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
         shell: pwsh
         run: |
+          # Add release notes to module manifest
+          $manifestPath = "out/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.psd1"
+          $releaseNotes = Get-Content -Path "release-notes.txt" -Raw
+          
+          $content = Get-Content -Path $manifestPath -Raw
+          
+          # Add or update ReleaseNotes in PrivateData.PSData
+          if ($content -match "ReleaseNotes\s*=") {
+            # ReleaseNotes already exists, replace it
+            $content = $content -replace "ReleaseNotes\s*=\s*['\"].*?['\"]", "ReleaseNotes = '$($releaseNotes -replace "'", "''")'"
+          } else {
+            # Add ReleaseNotes to PSData section
+            if ($content -match "PSData\s*=\s*@\{") {
+              $content = $content -replace "(PSData\s*=\s*@\{)", "`$1`n`t`tReleaseNotes = '$($releaseNotes -replace "'", "''")';"
+            }
+          }
+          
+          $content | Set-Content -Path $manifestPath -Encoding UTF8
+          
+          # Publish stable release to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
       
       # CI Build Publishing (main branch only)
@@ -394,13 +533,16 @@ jobs:
               console.log(`No existing release found for ${tagName}`);
             }
             
-            // Create prerelease
+            // Read release notes
+            const releaseNotes = fs.readFileSync('release-notes.md', 'utf8');
+            
+            // Create prerelease with release notes
             const release = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tagName,
               name: `CI Build ${version}`,
-              body: `Automated CI build from commit ${shortSha}\n\n**This is a prerelease version for testing purposes.**\n\nCommit: ${context.sha}\nBranch: main`,
+              body: `Automated CI build from commit ${shortSha}\n\n**This is a prerelease version for testing purposes.**\n\n## Changes\n\n${releaseNotes}\n\n---\n**Commit:** ${context.sha}\n**Branch:** main`,
               draft: false,
               prerelease: true,
               target_commitish: context.sha
@@ -422,6 +564,25 @@ jobs:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
         shell: pwsh
         run: |
+          # Add release notes to module manifest
+          $manifestPath = "out/Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.psd1"
+          $releaseNotes = Get-Content -Path "release-notes.txt" -Raw
+          
+          $content = Get-Content -Path $manifestPath -Raw
+          
+          # Add or update ReleaseNotes in PrivateData.PSData
+          if ($content -match "ReleaseNotes\s*=") {
+            # ReleaseNotes already exists, replace it
+            $content = $content -replace "ReleaseNotes\s*=\s*['\"].*?['\"]", "ReleaseNotes = '$($releaseNotes -replace "'", "''")'"
+          } else {
+            # Add ReleaseNotes to PSData section
+            if ($content -match "PSData\s*=\s*@\{") {
+              $content = $content -replace "(PSData\s*=\s*@\{)", "`$1`n`t`tReleaseNotes = '$($releaseNotes -replace "'", "''")';"
+            }
+          }
+          
+          $content | Set-Content -Path $manifestPath -Encoding UTF8
+          
           # Publish prerelease to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
       
