@@ -126,7 +126,11 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 - `Clear-DataverseMetadataCache` — clear the metadata cache
 
 ### Additional Operations
-For operations not covered by the cmdlets above, use [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) with SDK request objects to execute any Dataverse SDK operation directly.
+For operations not covered by the cmdlets above, use [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) with SDK request objects to execute any Dataverse SDK operation directly. The cmdlet supports two main approaches:
+- **Request parameter set**: Pass SDK request objects directly (returns raw SDK response objects)
+- **NameAndInputs parameter set**: Specify request name and parameters as hashtable (returns converted PSObject by default, use `-Raw` for raw response)
+
+See the [Invoke-DataverseRequest documentation](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) for details on response conversion and parameter sets.
 
 ## Testing
 

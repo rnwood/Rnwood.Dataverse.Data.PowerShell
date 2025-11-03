@@ -9,12 +9,22 @@ This document provides examples of common Dataverse operations using `Rnwood.Dat
 > # Old (removed):
 > # Invoke-DataverseBulkDelete -Connection $c -Query $criteria ...
 >
-> # New (use Invoke-DataverseRequest):
+> # New (use Invoke-DataverseRequest with Request parameter set):
 > $request = New-Object Microsoft.Crm.Sdk.Messages.BulkDeleteRequest
 > $request.QuerySet = @($criteria)
 > # ... set other required properties
 > $response = Invoke-DataverseRequest -Connection $c -Request $request
+> # Access response via SDK properties: $response.JobId, etc.
+>
+> # Alternative (use NameAndInputs parameter set with conversion):
+> $response = Invoke-DataverseRequest -Connection $c -RequestName "BulkDelete" -Parameters @{
+>     QuerySet = @($criteria)
+>     # ... other parameters
+> }
+> # Access response properties directly: $response.JobId (converted PSObject)
 > ```
+>
+> **Response Conversion**: When using the **NameAndInputs** parameter set (`-RequestName` and `-Parameters`), responses are automatically converted to PowerShell-friendly PSObjects. Use the `-Raw` switch to get the raw SDK response if needed. The **Request** parameter set (passing SDK request objects) always returns raw SDK responses.
 
 ## Table of Contents
 
