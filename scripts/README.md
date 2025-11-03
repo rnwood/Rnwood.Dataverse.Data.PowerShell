@@ -96,12 +96,15 @@ Tests the complete workflow version calculation logic including prerelease handl
 
 ### Test-WorkflowSimulation.ps1
 
-Simulates the workflow Build step to validate the logic.
+Simulates the workflow Build step to validate the basic version calculation logic.
 
 **Usage:**
 ```powershell
 ./scripts/Test-WorkflowSimulation.ps1
 ```
+
+**Note:** This is a simplified test that validates basic workflow functionality.
+For comprehensive prerelease version handling tests, see Test-WorkflowVersionCalculation.ps1.
 
 ### Test-ConventionalCommits.ps1
 
