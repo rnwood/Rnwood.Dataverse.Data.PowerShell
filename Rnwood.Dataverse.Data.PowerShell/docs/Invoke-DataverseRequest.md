@@ -51,6 +51,19 @@ This is useful for:
 
 The response from the request is returned to the pipeline.
 
+**Response Conversion:**
+
+For **Request** and **NameAndInputs** parameter sets, the response is automatically converted to a PowerShell-friendly PSObject format:
+- Response properties are accessible directly (e.g., `$response.UserId` instead of `$response.Results["UserId"]`)
+- Entity values are converted to PSObjects with display values (e.g., lookups show names instead of GUIDs)
+- EntityReference values are converted to display names (strings) when available
+- OptionSetValue values are converted to numeric values
+- Money values are converted to decimal values
+- EntityCollection values are converted to arrays of PSObjects
+- Primitive types (strings, numbers, GUIDs, booleans) are preserved as-is
+
+**REST** parameter set returns JSON objects as-is without conversion.
+
 **Retry Logic:**
 
 This cmdlet supports automatic retries for transient failures using exponential backoff:
@@ -68,11 +81,24 @@ This cmdlet supports automatic retries for transient failures using exponential 
 ```powershell
 PS C:\> $request = new-object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
 PS C:\> $response = Invoke-DataverseRequest -connection $c -request $request
+PS C:\> $response.UserId
 ```
 
-Invokes `WhoAmIRequest` using the type from the Dataverse SDK using existing connection `$c` and storing the response into a variable.
+Invokes `WhoAmIRequest` using the type from the Dataverse SDK using existing connection `$c` and storing the response into a variable. The response is automatically converted to a PSObject, so you can access properties directly (e.g., `$response.UserId` instead of `$response.Results["UserId"]`).
 
 ### Example 2
+```powershell
+PS C:\> $request = new-object Microsoft.Xrm.Sdk.Messages.RetrieveRequest
+PS C:\> $request.Target = new-object Microsoft.Xrm.Sdk.EntityReference "contact", "{DC66FE5D-B854-4F9D-BA63-4CEA4257A8E9}"
+PS C:\> $request.ColumnSet = new-object Microsoft.Xrm.Sdk.Query.ColumnSet "firstname", "lastname"
+PS C:\> $response = Invoke-DataverseRequest -connection $c -request $request
+PS C:\> $response.Entity.firstname
+PS C:\> $response.Entity.lastname
+```
+
+Retrieves a contact entity. The response Entity property is automatically converted to a PSObject with display values, so lookups show names and choices show labels.
+
+### Example 3
 
 ```powershell
 PS C:\> $request = new-object Microsoft.Xrm.Sdk.OrganizationRequest "myapi_EscalateCase"
@@ -81,9 +107,9 @@ PS C:\> $request["Priority"] = new-object Microsoft.Xrm.Sdk.OptionSetValue 1
 PS C:\> $response = Invoke-DataverseRequest -connection $c -request $request
 ```
 
-Invokes `myapi_EscalateCase` using without using a request type from the Dataverse SDK using existing connection `$c` and storing the response into a variable.
+Invokes `myapi_EscalateCase` without using a request type from the Dataverse SDK using existing connection `$c` and storing the response into a variable. Response properties are automatically converted to PowerShell-friendly format.
 
-### Example 3
+### Example 4
 
 ```powershell
 PS C:\> $Target = new-object Microsoft.Xrm.Sdk.EntityReference "incident", "{DC66FE5D-B854-4F9D-BA63-4CEA4257A8E9}"
@@ -96,7 +122,7 @@ PS C:\> $response = Invoke-DataverseRequest -connection $c myapi_EscalateCase @{
 
 Invokes `myapi_EscalateCase` by using just the request name and parameters using existing connection `$c` and storing the response into a variable.
 
-### Example 4
+### Example 5
 
 ```powershell
 PS C:\> invoke-dataverserequest -connection $c -method POST myapi_Example \
@@ -109,13 +135,13 @@ PS C:\> invoke-dataverserequest -connection $c -method POST myapi_Example \
 	}
 ```
 
-Invokes the `GET` `myapi_Example` REST API using custom headers and body
+Invokes the `POST` `myapi_Example` REST API using custom headers and body. REST responses are returned as JSON objects without conversion.
 
-### Example 5: Using retry logic for transient failures
+### Example 6: Using retry logic for transient failures
 
 ```powershell
 PS C:\> $request = New-Object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
-PS C:\> $response = Invoke-DataverseRequest -Connection $c -Request $request -Retries 3 -InitialRetryDelay 500 -Verbose
+PS C:\> $response = Invoke-DataverseRequest -Connection $c -Request $request -Retries 3 -InitialRetryDelay 5 -Verbose
 ```
 
 Invokes a WhoAmI request with automatic retry on transient failures. Failed requests will be retried up to 3 times with delays of 5s, 10s, and 20s respectively. The `-Verbose` flag shows retry attempts and wait times.
