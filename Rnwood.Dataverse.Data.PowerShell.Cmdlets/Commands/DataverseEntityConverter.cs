@@ -933,5 +933,129 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             return new EntityReference(tableName, id);
         }
+
+        /// <summary>
+        /// Converts an OrganizationResponse to a PSObject with converted property values.
+        /// </summary>
+        /// <param name="response">The OrganizationResponse to convert.</param>
+        /// <returns>A PSObject with properties converted using entity converter conventions.</returns>
+        public PSObject ConvertResponseToPSObject(OrganizationResponse response)
+        {
+            if (response == null)
+                return null;
+
+            PSObject result = new PSObject();
+
+            // Convert each property in the Results collection
+            foreach (var kvp in response.Results)
+            {
+                string propertyName = kvp.Key;
+                object propertyValue = kvp.Value;
+
+                // Convert the value using the appropriate converter
+                object convertedValue = ConvertResponsePropertyValue(propertyValue);
+                result.Properties.Add(new PSNoteProperty(propertyName, convertedValue));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Converts a response property value to a PowerShell-friendly format.
+        /// </summary>
+        private object ConvertResponsePropertyValue(object value)
+        {
+            if (value == null)
+                return null;
+
+            // Handle Entity
+            if (value is Entity entity)
+            {
+                // Get all columns for the entity
+                EntityMetadata entityMetadata = entityMetadataFactory.GetMetadata(entity.LogicalName);
+                ColumnSet columns = new ColumnSet(GetAllColumnNames(entityMetadata, false, null));
+                return ConvertToPSObject(entity, columns, _ => ValueType.Display);
+            }
+
+            // Handle EntityCollection
+            if (value is EntityCollection entityCollection)
+            {
+                List<PSObject> psObjects = new List<PSObject>();
+                if (entityCollection.Entities.Any())
+                {
+                    EntityMetadata entityMetadata = entityMetadataFactory.GetMetadata(entityCollection.Entities.First().LogicalName);
+                    ColumnSet columns = new ColumnSet(GetAllColumnNames(entityMetadata, false, null));
+                    
+                    foreach (Entity e in entityCollection.Entities)
+                    {
+                        psObjects.Add(ConvertToPSObject(e, columns, _ => ValueType.Display));
+                    }
+                }
+                return psObjects.ToArray();
+            }
+
+            // Handle EntityReference
+            if (value is EntityReference entityRef)
+            {
+                // Try to get the name if not present
+                if (string.IsNullOrEmpty(entityRef.Name) && entityRef.Id != Guid.Empty)
+                {
+                    try
+                    {
+                        EntityMetadata refEntityMetadata = entityMetadataFactory.GetMetadata(entityRef.LogicalName);
+                        string nameAttribute = refEntityMetadata.PrimaryNameAttribute;
+                        
+                        if (!string.IsNullOrEmpty(nameAttribute))
+                        {
+                            string name = service.Retrieve(entityRef.LogicalName, entityRef.Id, new ColumnSet(nameAttribute))
+                                .GetAttributeValue<string>(nameAttribute);
+                            
+                            if (!string.IsNullOrEmpty(name))
+                            {
+                                return name;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // If we can't resolve the name, return the entity reference as an object
+                    }
+                }
+                else if (!string.IsNullOrEmpty(entityRef.Name))
+                {
+                    return entityRef.Name;
+                }
+
+                // Return as PSObject with Id, TableName, and Name (if available)
+                return new DataverseEntityReference(entityRef);
+            }
+
+            // Handle OptionSetValue
+            if (value is OptionSetValue optionSetValue)
+            {
+                // We can't convert to label without metadata, so return the numeric value
+                return optionSetValue.Value;
+            }
+
+            // Handle Money
+            if (value is Money money)
+            {
+                return money.Value;
+            }
+
+            // Handle arrays/collections of convertible types
+            if (value is IEnumerable enumerable && !(value is string))
+            {
+                List<object> convertedList = new List<object>();
+                foreach (object item in enumerable)
+                {
+                    convertedList.Add(ConvertResponsePropertyValue(item));
+                }
+                return convertedList.ToArray();
+            }
+
+            // Return primitive types and other values as-is
+            return value;
+        }
     }
 }

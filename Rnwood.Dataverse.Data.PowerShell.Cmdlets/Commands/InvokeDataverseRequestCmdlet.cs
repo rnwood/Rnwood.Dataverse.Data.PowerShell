@@ -78,8 +78,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private RequestBatchProcessor _batchProcessor;
 		private CancellationTokenSource _userCancellationCts;
-
-
+		private EntityMetadataFactory _entityMetadataFactory;
+		private DataverseEntityConverter _entityConverter;
 
 		/// <summary>
 		/// Initializes the cmdlet.
@@ -87,6 +87,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();
+
+			// Initialize metadata factory and converter for non-REST parameter sets
+			if (ParameterSetName != "REST")
+			{
+				_entityMetadataFactory = new EntityMetadataFactory(Connection);
+				_entityConverter = new DataverseEntityConverter(Connection, _entityMetadataFactory);
+			}
 
 			// initialize cancellation token source for this pipeline invocation
 			_userCancellationCts = new CancellationTokenSource();
@@ -163,7 +170,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						WriteVerbose,
 						(err) => WriteError(err),
 						(obj) => WriteObject(obj),
-						ShouldProcess);
+						ShouldProcess,
+						_entityConverter);
 
 					context.Request = Request;
 					context.RetriesRemaining = Retries;
@@ -175,7 +183,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				{
 					// Non-batched: execute with retry wrapper already provided by base class
 					var response = ExecuteWithRetry(Request);
-					WriteObject(response);
+					
+					// Convert response to PSObject if we have a converter
+					if (_entityConverter != null)
+					{
+						var convertedResponse = _entityConverter.ConvertResponseToPSObject(response);
+						WriteObject(convertedResponse);
+					}
+					else
+					{
+						WriteObject(response);
+					}
 				}
 			}
 		}
