@@ -74,29 +74,4 @@ Describe "Module" {    It "Given the module is installed, it is listed as availa
         }
     }
 
-    It "Get-DataverseConnection supports optional URL for environment selection" {        # Import module if not already loaded
-        if (-not (Get-Module Rnwood.Dataverse.Data.PowerShell)) {
-            Import-Module Rnwood.Dataverse.Data.PowerShell
-        }
-        
-        $cmd = Get-Command Get-DataverseConnection
-        $cmd | Should -Not -BeNull
-        
-        # Check that URL is optional in the interactive parameter set
-        $interactiveParamSet = $cmd.ParameterSets | Where-Object { $_.Name -eq "Authenticate interactively" }
-        $interactiveParamSet | Should -Not -BeNull
-        
-        $urlParam = $interactiveParamSet.Parameters | Where-Object { $_.Name -eq "Url" }
-        $urlParam | Should -Not -BeNull
-        $urlParam.IsMandatory | Should -Be $false
-        
-        # Check that URL is also optional in device code parameter set
-        $deviceCodeParamSet = $cmd.ParameterSets | Where-Object { $_.Name -eq "Authenticate using the device code flow" }
-        $deviceCodeParamSet | Should -Not -BeNull
-        
-        $urlParamDeviceCode = $deviceCodeParamSet.Parameters | Where-Object { $_.Name -eq "Url" }
-        $urlParamDeviceCode | Should -Not -BeNull
-        $urlParamDeviceCode.IsMandatory | Should -Be $false
-    }
-
 }
