@@ -111,6 +111,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(ParameterSetName = PARAMSET_FOLDER, HelpMessage = "Publisher prefix for new web resources (e.g., 'new_'). Required for new web resources if file names don't contain a prefix.")]
         public string PublisherPrefix { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether to only update if the file is newer than the existing web resource.
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_FILE, HelpMessage = "If set, only updates if the file modification time is newer than the web resource modified time")]
+        [Parameter(ParameterSetName = PARAMSET_FOLDER, HelpMessage = "If set, only updates files that are newer than the corresponding web resources")]
+        public SwitchParameter IfNewer { get; set; }
+
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
@@ -165,6 +172,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
+            var fileInfo = new FileInfo(filePath);
             var fileBytes = File.ReadAllBytes(filePath);
             var contentBase64 = Convert.ToBase64String(fileBytes);
 
@@ -182,6 +190,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     WriteVerbose($"Skipping update of existing web resource: {webResourceName}");
                     return;
+                }
+
+                // Check IfNewer flag
+                if (IfNewer)
+                {
+                    var existingEntity = Connection.Retrieve("webresource", existingId.Value, new ColumnSet("modifiedon"));
+                    if (existingEntity.Contains("modifiedon"))
+                    {
+                        var modifiedOn = existingEntity.GetAttributeValue<DateTime>("modifiedon");
+                        if (fileInfo.LastWriteTimeUtc <= modifiedOn.ToUniversalTime())
+                        {
+                            WriteVerbose($"Skipping update - file is not newer than web resource: {webResourceName}");
+                            return;
+                        }
+                    }
                 }
 
                 entity.Id = existingId.Value;

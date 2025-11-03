@@ -19,7 +19,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     {
         private const string PARAMSET_QUERY = "Query";
         private const string PARAMSET_ID = "Id";
-        private const string PARAMSET_NAME = "Name";
 
         /// <summary>
         /// Gets or sets the ID of the web resource to retrieve.
@@ -28,16 +27,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Guid Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the name of the web resource to retrieve.
+        /// Gets or sets the name or name pattern of the web resource to retrieve. Supports wildcards (* and ?).
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_NAME, Mandatory = true, HelpMessage = "Name of the web resource to retrieve")]
+        [Parameter(ParameterSetName = PARAMSET_QUERY, HelpMessage = "Name or name pattern of the web resource. Supports wildcards (* and ?)")]
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets or sets filter values for querying web resources.
+        /// Gets or sets the web resource type to filter by (1=HTML, 2=CSS, 3=JS, 4=XML, 5=PNG, 6=JPG, 7=GIF, 8=XAP, 9=XSL, 10=ICO, 11=SVG, 12=RESX).
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_QUERY, HelpMessage = "Hashtable to filter web resources. Keys may be column names like 'webresourcetype', 'name', etc.")]
-        public Hashtable FilterValues { get; set; }
+        [Parameter(ParameterSetName = PARAMSET_QUERY, HelpMessage = "Web resource type to filter by: 1=HTML, 2=CSS, 3=JS, 4=XML, 5=PNG, 6=JPG, 7=GIF, 8=XAP, 9=XSL, 10=ICO, 11=SVG, 12=RESX")]
+        public int? WebResourceType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the display name or pattern to filter by. Supports wildcards (* and ?).
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_QUERY, HelpMessage = "Display name or pattern to filter by. Supports wildcards (* and ?)")]
+        public string DisplayName { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to include managed web resources.
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_QUERY, HelpMessage = "If set, includes managed web resources. Default is to include all.")]
+        public SwitchParameter? IsManaged { get; set; }
 
         /// <summary>
         /// Gets or sets the file path to save the web resource content.
@@ -57,34 +68,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "If set, decodes the content from base64 and returns as byte array")]
         public SwitchParameter DecodeContent { get; set; }
 
-        /// <summary>
-        /// Gets or sets the columns to return.
-        /// </summary>
-        [Parameter(HelpMessage = "Array of column names to return. If not specified, returns all columns.")]
-        [ArgumentCompleter(typeof(ColumnNamesArgumentCompleter))]
-        public string[] Columns { get; set; }
-
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
 
             QueryExpression query = new QueryExpression("webresource");
             query.ColumnSet = new ColumnSet(true);
-
-            if (Columns != null && Columns.Length > 0)
-            {
-                query.ColumnSet = new ColumnSet(Columns);
-                // Always include content, name, and webresourceid if we're writing to files
-                if (!string.IsNullOrEmpty(Path) || !string.IsNullOrEmpty(Folder))
-                {
-                    if (!query.ColumnSet.Columns.Contains("content"))
-                        query.ColumnSet.Columns.Add("content");
-                    if (!query.ColumnSet.Columns.Contains("name"))
-                        query.ColumnSet.Columns.Add("name");
-                    if (!query.ColumnSet.Columns.Contains("webresourceid"))
-                        query.ColumnSet.Columns.Add("webresourceid");
-                }
-            }
 
             // Apply filters based on parameter set
             switch (ParameterSetName)
@@ -93,19 +82,51 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     query.Criteria.AddCondition("webresourceid", ConditionOperator.Equal, Id);
                     break;
 
-                case PARAMSET_NAME:
-                    query.Criteria.AddCondition("name", ConditionOperator.Equal, Name);
-                    break;
-
                 case PARAMSET_QUERY:
-                    if (FilterValues != null)
+                    if (!string.IsNullOrEmpty(Name))
                     {
-                        FilterHelpers.ProcessHashFilterValues(query.Criteria, new Hashtable[] { FilterValues }, false);
+                        // Check if Name contains wildcards
+                        if (Name.Contains("*") || Name.Contains("?"))
+                        {
+                            // Convert wildcards to SQL LIKE pattern
+                            string likePattern = Name.Replace("*", "%").Replace("?", "_");
+                            query.Criteria.AddCondition("name", ConditionOperator.Like, likePattern);
+                        }
+                        else
+                        {
+                            query.Criteria.AddCondition("name", ConditionOperator.Equal, Name);
+                        }
+                    }
+
+                    if (WebResourceType.HasValue)
+                    {
+                        query.Criteria.AddCondition("webresourcetype", ConditionOperator.Equal, WebResourceType.Value);
+                    }
+
+                    if (!string.IsNullOrEmpty(DisplayName))
+                    {
+                        // Check if DisplayName contains wildcards
+                        if (DisplayName.Contains("*") || DisplayName.Contains("?"))
+                        {
+                            // Convert wildcards to SQL LIKE pattern
+                            string likePattern = DisplayName.Replace("*", "%").Replace("?", "_");
+                            query.Criteria.AddCondition("displayname", ConditionOperator.Like, likePattern);
+                        }
+                        else
+                        {
+                            query.Criteria.AddCondition("displayname", ConditionOperator.Equal, DisplayName);
+                        }
+                    }
+
+                    if (IsManaged.HasValue)
+                    {
+                        query.Criteria.AddCondition("ismanaged", ConditionOperator.Equal, IsManaged.Value);
                     }
                     break;
             }
 
-            var results = Connection.RetrieveMultiple(query);
+            // Use QueryHelpers to execute with automatic paging
+            var results = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose);
 
             if (!string.IsNullOrEmpty(Folder))
             {
@@ -115,23 +136,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     Directory.CreateDirectory(Folder);
                 }
 
-                foreach (var entity in results.Entities)
+                foreach (var entity in results)
                 {
                     SaveWebResourceToFolder(entity);
                 }
             }
-
-            foreach (var entity in results.Entities)
+            else
             {
-                var psObject = ConvertEntityToPSObject(entity);
-
-                if (!string.IsNullOrEmpty(Path) && results.Entities.Count == 1)
+                foreach (var entity in results)
                 {
-                    // Save single web resource to file
-                    SaveWebResourceToFile(entity, Path);
-                }
+                    var psObject = ConvertEntityToPSObject(entity);
 
-                WriteObject(psObject);
+                    if (!string.IsNullOrEmpty(Path) && ParameterSetName == PARAMSET_ID)
+                    {
+                        // Save single web resource to file only when querying by ID
+                        SaveWebResourceToFile(entity, Path);
+                    }
+
+                    WriteObject(psObject);
+                }
             }
         }
 
@@ -155,7 +178,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                     catch (FormatException ex)
                     {
-                        WriteWarning($"Failed to decode content for web resource: {ex.Message}");
+                        WriteError(new ErrorRecord(
+                            ex,
+                            "Base64DecodeError",
+                            ErrorCategory.InvalidData,
+                            entity.Id
+                        ));
                     }
                 }
             }

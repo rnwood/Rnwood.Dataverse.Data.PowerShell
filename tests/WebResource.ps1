@@ -7,7 +7,9 @@ Describe 'WebResource Cmdlets - Basic Functionality' {
         # Verify the cmdlet accepts the required parameters
         { Get-Command Get-DataverseWebResource -ParameterName Id } | Should -Not -Throw
         { Get-Command Get-DataverseWebResource -ParameterName Name } | Should -Not -Throw
-        { Get-Command Get-DataverseWebResource -ParameterName FilterValues } | Should -Not -Throw
+        { Get-Command Get-DataverseWebResource -ParameterName WebResourceType } | Should -Not -Throw
+        { Get-Command Get-DataverseWebResource -ParameterName DisplayName } | Should -Not -Throw
+        { Get-Command Get-DataverseWebResource -ParameterName IsManaged } | Should -Not -Throw
         { Get-Command Get-DataverseWebResource -ParameterName Path } | Should -Not -Throw
         { Get-Command Get-DataverseWebResource -ParameterName Folder } | Should -Not -Throw
         { Get-Command Get-DataverseWebResource -ParameterName DecodeContent } | Should -Not -Throw
@@ -24,6 +26,7 @@ Describe 'WebResource Cmdlets - Basic Functionality' {
         { Get-Command Set-DataverseWebResource -ParameterName PassThru } | Should -Not -Throw
         { Get-Command Set-DataverseWebResource -ParameterName NoUpdate } | Should -Not -Throw
         { Get-Command Set-DataverseWebResource -ParameterName NoCreate } | Should -Not -Throw
+        { Get-Command Set-DataverseWebResource -ParameterName IfNewer } | Should -Not -Throw
     }
     
     It "Remove-DataverseWebResource accepts ID parameter" {
