@@ -469,7 +469,8 @@ jobs:
           # Add or update ReleaseNotes in PrivateData.PSData
           if ($content -match "ReleaseNotes\s*=") {
             # ReleaseNotes already exists, replace it
-            $content = $content -replace "ReleaseNotes\s*=\s*['\"].*?['\"]", "ReleaseNotes = '$($releaseNotes -replace "'", "''")'"
+            $content = $content -replace "ReleaseNotes\s*=\s*'[^']*'", "ReleaseNotes = '$($releaseNotes -replace "'", "''")'"
+            $content = $content -replace 'ReleaseNotes\s*=\s*"[^"]*"', "ReleaseNotes = '$($releaseNotes -replace "'", "''")'"
           } else {
             # Add ReleaseNotes to PSData section
             if ($content -match "PSData\s*=\s*@\{") {
@@ -573,7 +574,8 @@ jobs:
           # Add or update ReleaseNotes in PrivateData.PSData
           if ($content -match "ReleaseNotes\s*=") {
             # ReleaseNotes already exists, replace it
-            $content = $content -replace "ReleaseNotes\s*=\s*['\"].*?['\"]", "ReleaseNotes = '$($releaseNotes -replace "'", "''")'"
+            $content = $content -replace "ReleaseNotes\s*=\s*'[^']*'", "ReleaseNotes = '$($releaseNotes -replace "'", "''")'"
+            $content = $content -replace 'ReleaseNotes\s*=\s*"[^"]*"', "ReleaseNotes = '$($releaseNotes -replace "'", "''")'"
           } else {
             # Add ReleaseNotes to PSData section
             if ($content -match "PSData\s*=\s*@\{") {
