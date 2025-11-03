@@ -1,0 +1,54 @@
+name: PR Title Validation
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  validate-pr-title:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: Validate PR Title
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          
+          # Get PR title from GitHub event
+          $eventPath = $env:GITHUB_EVENT_PATH
+          if (-not (Test-Path $eventPath)) {
+            Write-Host "ERROR: Could not find GitHub event file" -ForegroundColor Red
+            exit 1
+          }
+          
+          $event = Get-Content $eventPath -Raw | ConvertFrom-Json
+          $prTitle = $event.pull_request.title
+          
+          Write-Host ""
+          Write-Host "=== Validating PR Title ===" -ForegroundColor Cyan
+          Write-Host "PR Title: $prTitle" -ForegroundColor White
+          Write-Host ""
+          
+          # Validate that PR title contains conventional commits
+          $isValid = & ./scripts/Test-ConventionalCommits.ps1 -Text $prTitle
+          
+          if (-not $isValid) {
+            Write-Host ""
+            Write-Host "❌ VALIDATION FAILED: PR title does not contain a valid conventional commit message" -ForegroundColor Red
+            Write-Host ""
+            Write-Host "Please update your PR title to use conventional commit format." -ForegroundColor Yellow
+            Write-Host "Example: 'feat: add new feature' or 'fix: resolve bug'" -ForegroundColor Yellow
+            Write-Host ""
+            Write-Host "See the PR template for more details on conventional commit format." -ForegroundColor Yellow
+            Write-Host ""
+            exit 1
+          }
+          
+          Write-Host ""
+          Write-Host "✅ PR title validation successful!" -ForegroundColor Green
+          Write-Host ""
