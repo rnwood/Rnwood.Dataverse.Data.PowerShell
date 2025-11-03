@@ -14,7 +14,7 @@ Determines the next version number based on conventional commits, with support f
 ./scripts/Get-NextVersion.ps1 -BaseVersion "1.4.0" -CommitMessages @("feat: add new feature", "fix: bug fix")
 # Returns: 1.5.0 (minor bump due to feat:)
 
-# With existing prereleases - prevents double-incrementing
+# With existing prereleases - prevents double-incrementing on main branch
 ./scripts/Get-NextVersion.ps1 -BaseVersion "1.4.0" -CommitMessages @("feat: add new feature") -ExistingPrereleases @("1.5.0-ci20241103001")
 # Returns: 1.5.0 (uses existing prerelease version, doesn't bump to 1.6.0)
 ```
@@ -31,11 +31,18 @@ When `-ExistingPrereleases` is provided, the script:
 2. Finds the highest existing prerelease version
 3. Returns whichever is higher (prevents double-incrementing)
 
+**Workflow Usage:**
+- **PR builds**: Calculate version from PR title only (no prerelease comparison)
+  - Multiple PRs may calculate the same version - this is OK
+- **Main branch**: Analyze ALL commits since stable and use prerelease comparison
+  - Prevents double-bumping when multiple PRs with same change type merge sequentially
+
 **Example Scenario:**
-- Stable release: 1.0.0
-- PR1 with `feat!:` creates prerelease 2.0.0-ci001
-- PR2 with `feat!:` should also be 2.0.0-ci002 (not 3.0.0!)
-- Script uses existing prereleases to ensure correct version
+- Stable: 1.0.0
+- PR1 with `feat!:` calculates 2.0.0-ci001 (no prerelease logic)
+- PR2 with `feat!:` calculates 2.0.0-ci002 (no prerelease logic) ← versions clash, OK!
+- After both merge, main branch sees TWO `feat!:` commits
+- Main uses prerelease logic: sees 2.0.0-ci002 already exists, stays at 2.0.0-ci003 (not 3.0.0!)
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for full details.
 

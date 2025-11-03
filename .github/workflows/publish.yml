@@ -95,58 +95,11 @@ jobs:
             
             Write-Host "Latest stable release: $latestStableTag (version: $baseVersion)"
             
-            # Find all prerelease tags since the latest stable release
-            $existingPrereleases = @()
-            if ($latestStableTag -ne "0.0.0") {
-              # Get all tags that come after the stable release and have a prerelease suffix
-              $tagsAfterStable = git tag --list --sort=-version:refname --merged HEAD 2>$null | 
-                Where-Object { $_ -match '-' }
-              
-              # Filter to only prereleases that are based on or after the stable version
-              foreach ($tag in $tagsAfterStable) {
-                if ($tag -match '^v?(\d+)\.(\d+)\.(\d+)') {
-                  $tagVersion = "$($matches[1]).$($matches[2]).$($matches[3])"
-                  # Parse tag version
-                  if ($tagVersion -match '^(\d+)\.(\d+)\.(\d+)$') {
-                    $tagMajor = [int]$matches[1]
-                    $tagMinor = [int]$matches[2]
-                    $tagPatch = [int]$matches[3]
-                    
-                    # Parse base version
-                    if ($baseVersion -match '^(\d+)\.(\d+)\.(\d+)$') {
-                      $baseMajor = [int]$matches[1]
-                      $baseMinor = [int]$matches[2]
-                      $basePatch = [int]$matches[3]
-                      
-                      # Check if tag version is >= base version
-                      $isNewerOrEqual = $false
-                      if ($tagMajor -gt $baseMajor) {
-                        $isNewerOrEqual = $true
-                      } elseif ($tagMajor -eq $baseMajor -and $tagMinor -gt $baseMinor) {
-                        $isNewerOrEqual = $true
-                      } elseif ($tagMajor -eq $baseMajor -and $tagMinor -eq $baseMinor -and $tagPatch -ge $basePatch) {
-                        $isNewerOrEqual = $true
-                      }
-                      
-                      if ($isNewerOrEqual) {
-                        $existingPrereleases += $tag
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            
-            if ($existingPrereleases.Count -gt 0) {
-              Write-Host "Found $($existingPrereleases.Count) existing prerelease(s) since stable:"
-              $existingPrereleases | ForEach-Object { Write-Host "  - $_" }
-            } else {
-              Write-Host "No existing prereleases found since stable release"
-            }
-            
             # Determine next version based on conventional commits
             if ($env:GITHUB_EVENT_NAME -eq "pull_request") {
               # For PRs, analyze PR title for conventional commits
+              # Note: We don't use existing prereleases for PRs since each PR is independent
+              # and we don't care about version clashes in PR branches
               Write-Host "PR detected - analyzing PR title for conventional commits"
               
               # Get PR title from GitHub event
@@ -177,21 +130,64 @@ jobs:
                 # Use PR title as the commit message for analysis
                 $commitMessages = @($prTitle)
                 
-                # Use Get-NextVersion script to determine version bump
-                $params = @{
-                  BaseVersion = $baseVersion
-                  CommitMessages = $commitMessages
-                }
-                if ($existingPrereleases.Count -gt 0) {
-                  $params.ExistingPrereleases = $existingPrereleases
-                }
-                $nextVersion = & ./scripts/Get-NextVersion.ps1 @params
+                # Calculate version based on PR title only (no prerelease comparison)
+                $nextVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages $commitMessages
                 Write-Host "Next version determined from PR title: $nextVersion"
                 $baseVersion = $nextVersion
               }
             } else {
-              # For main branch, analyze recent commits
+              # For main branch, analyze recent commits and use existing prereleases
+              # to prevent double-bumping when multiple PRs with same change type are merged
               Write-Host "Main branch detected - analyzing recent commits"
+              
+              # Find all prerelease tags since the latest stable release
+              $existingPrereleases = @()
+              if ($latestStableTag -ne "0.0.0") {
+                # Get all tags that come after the stable release and have a prerelease suffix
+                $tagsAfterStable = git tag --list --sort=-version:refname --merged HEAD 2>$null | 
+                  Where-Object { $_ -match '-' }
+                
+                # Filter to only prereleases that are based on or after the stable version
+                foreach ($tag in $tagsAfterStable) {
+                  if ($tag -match '^v?(\d+)\.(\d+)\.(\d+)') {
+                    $tagVersion = "$($matches[1]).$($matches[2]).$($matches[3])"
+                    # Parse tag version
+                    if ($tagVersion -match '^(\d+)\.(\d+)\.(\d+)$') {
+                      $tagMajor = [int]$matches[1]
+                      $tagMinor = [int]$matches[2]
+                      $tagPatch = [int]$matches[3]
+                      
+                      # Parse base version
+                      if ($baseVersion -match '^(\d+)\.(\d+)\.(\d+)$') {
+                        $baseMajor = [int]$matches[1]
+                        $baseMinor = [int]$matches[2]
+                        $basePatch = [int]$matches[3]
+                        
+                        # Check if tag version is >= base version
+                        $isNewerOrEqual = $false
+                        if ($tagMajor -gt $baseMajor) {
+                          $isNewerOrEqual = $true
+                        } elseif ($tagMajor -eq $baseMajor -and $tagMinor -gt $baseMinor) {
+                          $isNewerOrEqual = $true
+                        } elseif ($tagMajor -eq $baseMajor -and $tagMinor -eq $baseMinor -and $tagPatch -ge $basePatch) {
+                          $isNewerOrEqual = $true
+                        }
+                        
+                        if ($isNewerOrEqual) {
+                          $existingPrereleases += $tag
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              
+              if ($existingPrereleases.Count -gt 0) {
+                Write-Host "Found $($existingPrereleases.Count) existing prerelease(s) since stable:"
+                $existingPrereleases | ForEach-Object { Write-Host "  - $_" }
+              } else {
+                Write-Host "No existing prereleases found since stable release"
+              }
               
               # Get commits since last stable tag
               if ($latestStableTag -eq "0.0.0") {
@@ -209,7 +205,7 @@ jobs:
                 Write-Host "Commits since last stable tag:"
                 $commitMessages | ForEach-Object { Write-Host "  - $_" }
                 
-                # Use Get-NextVersion script to determine version bump
+                # Use Get-NextVersion script to determine version bump with prerelease comparison
                 $params = @{
                   BaseVersion = $baseVersion
                   CommitMessages = $commitMessages
