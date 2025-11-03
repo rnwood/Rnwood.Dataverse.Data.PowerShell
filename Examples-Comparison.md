@@ -457,8 +457,10 @@ foreach ($webResource in $results.Entities) {
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
 # Simple - automatically saves all matching resources
-Get-DataverseWebResource -Connection $conn -FilterValues @{ webresourcetype = 3 } `
-    -Folder "C:\download"
+Get-DataverseWebResource -Connection $conn -WebResourceType 3 -Folder "C:\download"
+
+# Or with wildcards for name filtering
+Get-DataverseWebResource -Connection $conn -Name "new_*" -Folder "C:\download"
 ```
 
 ### Example: Delete a Web Resource
@@ -481,8 +483,12 @@ if ($result.Entities.Count -gt 0) {
 # Simple - delete by name directly
 Remove-DataverseWebResource -Connection $conn -Name "new_script"
 
-# Or pipe from Get
-Get-DataverseWebResource -Connection $conn -FilterValues @{ name = "new_script" } |
+# Or pipe from Get with name wildcard
+Get-DataverseWebResource -Connection $conn -Name "new_script*" |
+    Remove-DataverseWebResource -Connection $conn
+
+# Or by type
+Get-DataverseWebResource -Connection $conn -WebResourceType 3 |
     Remove-DataverseWebResource -Connection $conn
 ```
 

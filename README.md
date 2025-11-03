@@ -65,8 +65,11 @@ Set-DataverseWebResource -Connection $c -Name "new_myscript" -Path "./script.js"
 # Download a web resource
 Get-DataverseWebResource -Connection $c -Name "new_myscript" -Path "./downloaded-script.js"
 
-# Upload all files from a folder
-Set-DataverseWebResource -Connection $c -Folder "./webresources" -PublisherPrefix "new"
+# Upload all files from a folder (only if newer)
+Set-DataverseWebResource -Connection $c -Folder "./webresources" -PublisherPrefix "new" -IfNewer
+
+# Download all JavaScript web resources
+Get-DataverseWebResource -Connection $c -WebResourceType 3 -Folder "./downloaded"
 ```
 
 For more advanced scenarios including view management and app module management, see the [documentation](#documentation) section below.
