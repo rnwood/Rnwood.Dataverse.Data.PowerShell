@@ -74,6 +74,66 @@ Just regular description without conventional commits format
 "@
         BaseVersion = "1.4.0"
         ExpectedVersion = "1.4.1"
+    },
+    @{
+        Name = "breaking change with existing prerelease major bump (should not increment again)"
+        PRBody = @"
+## Conventional Commits
+- feat!: another breaking change
+"@
+        BaseVersion = "1.4.0"
+        ExistingPrereleases = @("2.0.0-ci20241101001")
+        ExpectedVersion = "2.0.0"
+    },
+    @{
+        Name = "feature with existing prerelease major bump (major is higher, keep it)"
+        PRBody = @"
+## Conventional Commits
+- feat: new feature
+"@
+        BaseVersion = "1.4.0"
+        ExistingPrereleases = @("2.0.0-ci20241101001")
+        ExpectedVersion = "2.0.0"
+    },
+    @{
+        Name = "breaking change with existing prerelease minor bump (should bump to major)"
+        PRBody = @"
+## Conventional Commits
+- feat!: breaking change
+"@
+        BaseVersion = "1.4.0"
+        ExistingPrereleases = @("1.5.0-ci20241101001")
+        ExpectedVersion = "2.0.0"
+    },
+    @{
+        Name = "feature with existing prerelease minor bump (should not increment again)"
+        PRBody = @"
+## Conventional Commits
+- feat: another feature
+"@
+        BaseVersion = "1.4.0"
+        ExistingPrereleases = @("1.5.0-ci20241101001")
+        ExpectedVersion = "1.5.0"
+    },
+    @{
+        Name = "fix with existing prerelease minor bump (minor is higher, keep it)"
+        PRBody = @"
+## Conventional Commits
+- fix: bug fix
+"@
+        BaseVersion = "1.4.0"
+        ExistingPrereleases = @("1.5.0-ci20241101001")
+        ExpectedVersion = "1.5.0"
+    },
+    @{
+        Name = "multiple prereleases, use highest"
+        PRBody = @"
+## Conventional Commits
+- feat: new feature
+"@
+        BaseVersion = "1.4.0"
+        ExistingPrereleases = @("1.5.0-ci20241101001", "1.4.1-ci20241102001", "1.4.2-ci20241103001")
+        ExpectedVersion = "1.5.0"
     }
 )
 
@@ -83,12 +143,22 @@ $failed = 0
 foreach ($test in $testCases) {
     Write-Host "Test: $($test.Name)" -ForegroundColor Yellow
     Write-Host "  Base Version: $($test.BaseVersion)"
+    if ($test.ExistingPrereleases) {
+        Write-Host "  Existing Prereleases: $($test.ExistingPrereleases -join ', ')"
+    }
     
     # Parse PR body into lines
     $commitMessages = $test.PRBody -split "`n" | Where-Object { $_ -match '\S' }
     
-    # Call Get-NextVersion
-    $result = & ./scripts/Get-NextVersion.ps1 -BaseVersion $test.BaseVersion -CommitMessages $commitMessages
+    # Call Get-NextVersion with optional prereleases
+    $params = @{
+        BaseVersion = $test.BaseVersion
+        CommitMessages = $commitMessages
+    }
+    if ($test.ExistingPrereleases) {
+        $params.ExistingPrereleases = $test.ExistingPrereleases
+    }
+    $result = & ./scripts/Get-NextVersion.ps1 @params
     
     Write-Host "  Calculated Version: $result"
     Write-Host "  Expected Version: $($test.ExpectedVersion)"
