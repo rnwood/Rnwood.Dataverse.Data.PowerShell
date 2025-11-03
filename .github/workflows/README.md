@@ -1,5 +1,42 @@
 # CI/CD Workflows
 
+## pr-title-validation.yml - PR Title Validation
+
+This workflow validates that PR titles follow conventional commit format, which is required for automatic versioning.
+
+### Triggers
+
+- **Pull Request**: Runs when a PR is opened, reopened, synchronized, or **edited** (title changed)
+
+### Validation Rules
+
+The workflow uses `scripts/Test-ConventionalCommits.ps1` to validate that PR titles use conventional commit format:
+
+- **Format**: `<type>(<scope>): <description>`
+- **Valid types**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
+- **Breaking changes**: Add `!` after type (e.g., `feat!:` or `fix!:`)
+
+### Examples
+
+Valid PR titles:
+- `feat: add batch delete operation`
+- `fix: resolve connection timeout issue`
+- `feat!: remove deprecated parameters`
+- `fix(auth): handle expired tokens correctly`
+
+Invalid PR titles:
+- `Update code` (missing type)
+- `feat add feature` (missing colon)
+- `random changes` (no conventional commit format)
+
+### Why This Workflow?
+
+The project uses conventional commits for automatic version determination. By validating PR titles in a separate workflow that runs on the `edited` event, we ensure:
+
+1. PR titles are validated immediately when created or edited
+2. Version calculation in the build workflow can rely on valid PR titles
+3. Feedback is fast and focused (doesn't require full build to run)
+
 ## publish.yml - Build and Test Workflow
 
 This workflow handles building, testing, and publishing the PowerShell module.

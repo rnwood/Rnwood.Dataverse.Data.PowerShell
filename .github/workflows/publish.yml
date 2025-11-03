@@ -108,24 +108,8 @@ jobs:
                 $event = Get-Content $eventPath -Raw | ConvertFrom-Json
                 $prTitle = $event.pull_request.title
                 
-                # Validate that PR title contains conventional commits
                 Write-Host ""
-                Write-Host "=== Validating PR Title ===" -ForegroundColor Cyan
-                $isValid = & ./scripts/Test-ConventionalCommits.ps1 -Text $prTitle
-                
-                if (-not $isValid) {
-                  Write-Host ""
-                  Write-Host "❌ BUILD FAILED: PR title does not contain a valid conventional commit message" -ForegroundColor Red
-                  Write-Host ""
-                  Write-Host "Please update your PR title to use conventional commit format." -ForegroundColor Yellow
-                  Write-Host "Example: 'feat: add new feature' or 'fix: resolve bug'" -ForegroundColor Yellow
-                  Write-Host ""
-                  throw "PR title validation failed - missing conventional commit message"
-                }
-                
-                Write-Host ""
-                Write-Host "PR Title:"
-                Write-Host $prTitle
+                Write-Host "PR Title: $prTitle"
                 
                 # Use PR title as the commit message for analysis
                 $commitMessages = @($prTitle)
