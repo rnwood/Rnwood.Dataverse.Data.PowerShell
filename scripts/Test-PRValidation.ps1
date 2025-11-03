@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     Simulates the workflow's PR validation to ensure it correctly
-    fails for missing conventional commits
+    validates PR titles for conventional commits
 #>
 
 $ErrorActionPreference = "Stop"
@@ -13,82 +13,108 @@ $ErrorActionPreference = "Stop"
 Write-Host "=== Testing PR Validation Logic ===" -ForegroundColor Cyan
 Write-Host ""
 
-# Test 1: Valid PR description
-Write-Host "Test 1: Valid PR description with conventional commits" -ForegroundColor Yellow
-$validPR = @"
-## Description
-Add new features
-
-## Conventional Commits
-- feat: add batch delete operation
-- fix: resolve connection timeout
-"@
+# Test 1: Valid PR title
+Write-Host "Test 1: Valid PR title with conventional commit" -ForegroundColor Yellow
+$validTitle = "feat: add batch delete operation"
 
 try {
-    $isValid = & ./scripts/Test-ConventionalCommits.ps1 -PRDescription $validPR
+    $isValid = & ./scripts/Test-ConventionalCommits.ps1 -Text $validTitle
     if ($isValid) {
-        Write-Host "✓ Valid PR passed validation" -ForegroundColor Green
+        Write-Host "✓ Valid PR title passed validation" -ForegroundColor Green
     } else {
-        Write-Host "✗ Valid PR failed validation (unexpected)" -ForegroundColor Red
+        Write-Host "✗ Valid PR title failed validation (unexpected)" -ForegroundColor Red
         exit 1
     }
 } catch {
-    Write-Host "✗ Valid PR threw exception (unexpected): $_" -ForegroundColor Red
+    Write-Host "✗ Valid PR title threw exception (unexpected): $_" -ForegroundColor Red
     exit 1
 }
 
 Write-Host ""
 
-# Test 2: Invalid PR description (no conventional commits)
-Write-Host "Test 2: Invalid PR description without conventional commits" -ForegroundColor Yellow
-$invalidPR = @"
-## Description
-Just some changes
-
-No conventional commits here.
-"@
+# Test 2: Another valid PR title with scope
+Write-Host "Test 2: Valid PR title with scope" -ForegroundColor Yellow
+$validTitleWithScope = "fix(auth): resolve connection timeout issue"
 
 try {
-    $isValid = & ./scripts/Test-ConventionalCommits.ps1 -PRDescription $invalidPR
+    $isValid = & ./scripts/Test-ConventionalCommits.ps1 -Text $validTitleWithScope
+    if ($isValid) {
+        Write-Host "✓ Valid PR title with scope passed validation" -ForegroundColor Green
+    } else {
+        Write-Host "✗ Valid PR title with scope failed validation (unexpected)" -ForegroundColor Red
+        exit 1
+    }
+} catch {
+    Write-Host "✗ Valid PR title with scope threw exception (unexpected): $_" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+
+# Test 3: Invalid PR title (no conventional commit)
+Write-Host "Test 3: Invalid PR title without conventional commit" -ForegroundColor Yellow
+$invalidTitle = "Just some changes to the code"
+
+try {
+    $isValid = & ./scripts/Test-ConventionalCommits.ps1 -Text $invalidTitle
     if (-not $isValid) {
-        Write-Host "✓ Invalid PR correctly failed validation" -ForegroundColor Green
+        Write-Host "✓ Invalid PR title correctly failed validation" -ForegroundColor Green
     } else {
-        Write-Host "✗ Invalid PR passed validation (unexpected)" -ForegroundColor Red
+        Write-Host "✗ Invalid PR title passed validation (unexpected)" -ForegroundColor Red
         exit 1
     }
 } catch {
-    Write-Host "✗ Invalid PR threw exception (unexpected): $_" -ForegroundColor Red
+    Write-Host "✗ Invalid PR title threw exception (unexpected): $_" -ForegroundColor Red
     exit 1
 }
 
 Write-Host ""
 
-# Test 3: Empty PR description
-Write-Host "Test 3: Empty PR description" -ForegroundColor Yellow
-$emptyPR = ""
+# Test 4: Empty PR title
+Write-Host "Test 4: Empty PR title" -ForegroundColor Yellow
+$emptyTitle = ""
 
 try {
-    $isValid = & ./scripts/Test-ConventionalCommits.ps1 -PRDescription $emptyPR
+    $isValid = & ./scripts/Test-ConventionalCommits.ps1 -Text $emptyTitle
     if (-not $isValid) {
-        Write-Host "✓ Empty PR correctly failed validation" -ForegroundColor Green
+        Write-Host "✓ Empty PR title correctly failed validation" -ForegroundColor Green
     } else {
-        Write-Host "✗ Empty PR passed validation (unexpected)" -ForegroundColor Red
+        Write-Host "✗ Empty PR title passed validation (unexpected)" -ForegroundColor Red
         exit 1
     }
 } catch {
-    Write-Host "✗ Empty PR threw exception (unexpected): $_" -ForegroundColor Red
+    Write-Host "✗ Empty PR title threw exception (unexpected): $_" -ForegroundColor Red
     exit 1
 }
 
 Write-Host ""
 
-# Test 4: Simulate workflow behavior with error throwing
-Write-Host "Test 4: Workflow error handling simulation" -ForegroundColor Yellow
+# Test 5: Breaking change in title
+Write-Host "Test 5: PR title with breaking change" -ForegroundColor Yellow
+$breakingTitle = "feat!: remove deprecated cmdlet parameters"
+
 try {
-    $isValid = & ./scripts/Test-ConventionalCommits.ps1 -PRDescription "No commits here"
+    $isValid = & ./scripts/Test-ConventionalCommits.ps1 -Text $breakingTitle
+    if ($isValid) {
+        Write-Host "✓ Breaking change PR title passed validation" -ForegroundColor Green
+    } else {
+        Write-Host "✗ Breaking change PR title failed validation (unexpected)" -ForegroundColor Red
+        exit 1
+    }
+} catch {
+    Write-Host "✗ Breaking change PR title threw exception (unexpected): $_" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host ""
+
+# Test 6: Simulate workflow behavior with error throwing
+Write-Host "Test 6: Workflow error handling simulation" -ForegroundColor Yellow
+try {
+    $isValid = & ./scripts/Test-ConventionalCommits.ps1 -Text "No commits here"
     if (-not $isValid) {
         Write-Host "Simulating workflow behavior: throwing error..." -ForegroundColor Yellow
-        throw "PR description validation failed - missing conventional commit messages"
+        throw "PR title validation failed - missing conventional commit message"
     }
 } catch {
     Write-Host "✓ Workflow correctly throws error: $_" -ForegroundColor Green

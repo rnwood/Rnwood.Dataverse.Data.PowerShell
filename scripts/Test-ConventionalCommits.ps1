@@ -1,41 +1,41 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-    Validates that a PR description contains conventional commit messages.
+    Validates that text contains a conventional commit message.
 
 .DESCRIPTION
-    Checks if a PR description contains at least one valid conventional commit
-    message. Used to enforce conventional commits in PR descriptions for
-    automatic versioning.
+    Checks if the provided text (PR title, PR description, or commit message)
+    contains at least one valid conventional commit message. Used to enforce
+    conventional commits for automatic versioning.
 
-.PARAMETER PRDescription
-    The PR description text to validate
+.PARAMETER Text
+    The text to validate (PR title, PR description, or commit message)
 
 .EXAMPLE
-    Test-ConventionalCommits -PRDescription "feat: add new feature"
+    Test-ConventionalCommits -Text "feat: add new feature"
     Returns $true
 
 .EXAMPLE
-    Test-ConventionalCommits -PRDescription "Random text without commits"
+    Test-ConventionalCommits -Text "Random text without commits"
     Returns $false
 #>
 
 param(
     [Parameter(Mandatory = $true)]
     [AllowEmptyString()]
-    [string]$PRDescription
+    [string]$Text
 )
 
 $ErrorActionPreference = "Stop"
 
-# Check if PR description is empty or whitespace only
-if ([string]::IsNullOrWhiteSpace($PRDescription)) {
-    Write-Host "ERROR: PR description is empty or missing" -ForegroundColor Red
+# Check if text is empty or whitespace only
+if ([string]::IsNullOrWhiteSpace($Text)) {
+    Write-Host "ERROR: Text is empty or missing" -ForegroundColor Red
     return $false
 }
 
 # Split into lines
-$lines = $PRDescription -split "`n" | Where-Object { $_ -match '\S' }
+$lines = $Text -split "`n" | Where-Object { $_ -match '\S' }
 
 # Look for at least one conventional commit message
 $foundConventionalCommit = $false
@@ -50,9 +50,9 @@ foreach ($line in $lines) {
 }
 
 if (-not $foundConventionalCommit) {
-    Write-Host "ERROR: No conventional commit messages found in PR description" -ForegroundColor Red
+    Write-Host "ERROR: No conventional commit message found" -ForegroundColor Red
     Write-Host ""
-    Write-Host "PR descriptions MUST include at least one conventional commit message." -ForegroundColor Yellow
+    Write-Host "Text MUST contain at least one conventional commit message." -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Required format: <type>(<scope>): <description>" -ForegroundColor Yellow
     Write-Host ""
@@ -78,5 +78,5 @@ if (-not $foundConventionalCommit) {
     return $false
 }
 
-Write-Host "✓ Found valid conventional commit message(s) in PR description" -ForegroundColor Green
+Write-Host "✓ Found valid conventional commit message" -ForegroundColor Green
 return $true

@@ -1,10 +1,6 @@
-## Description
-<!-- Provide a brief description of the changes in this PR -->
-
-## Conventional Commits
+## PR Title Instructions
 <!-- 
-This section is REQUIRED for automatic versioning.
-List your changes using conventional commit format:
+⚠️ IMPORTANT: Your PR title MUST use conventional commit format for automatic versioning.
 
 Format: <type>(<scope>): <description>
 
@@ -22,19 +18,18 @@ Types:
 
 Breaking changes:
 - Add ! after type for breaking changes: feat!: or fix!: (major version bump)
-- Or include "BREAKING CHANGE:" in the description (major version bump)
 
 Examples:
 - feat: add support for batch operations
 - fix: resolve connection timeout issue
 - feat!: remove deprecated cmdlet parameters
 - fix(auth): handle expired tokens correctly
-- BREAKING CHANGE: remove support for PowerShell 5.0
 
-Multiple commits can be listed, one per line.
+The scope is optional but recommended for clarity.
 -->
 
-- 
+## Description
+<!-- Provide a detailed description of the changes in this PR -->
 
 ## Changes Made
 <!-- Detailed list of changes -->
@@ -52,4 +47,4 @@ Multiple commits can be listed, one per line.
 - [ ] Code follows the project's coding conventions
 - [ ] Documentation updated (if needed)
 - [ ] Tests added/updated (if needed)
-- [ ] Conventional commits format used above
+- [ ] PR title uses conventional commit format (REQUIRED)

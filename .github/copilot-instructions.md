@@ -216,12 +216,12 @@ The project uses **Conventional Commits** to automatically determine version num
 ### Version Determination
 - **Release builds** (git tags): Use the tag version (e.g., `v1.5.0` → `1.5.0`)
 - **CI builds** (main branch or PRs): Automatically increment version based on conventional commits:
-  - Analyzes PR description or commits since last tag
+  - Analyzes PR title for PRs or commits since last tag for main branch
   - Determines version bump type (major/minor/patch)
   - Creates prerelease version (e.g., `1.5.0-ci20241102001`)
 
 ### Conventional Commit Format
-PR descriptions MUST include conventional commits to enable automatic versioning:
+PR titles MUST use conventional commit format to enable automatic versioning:
 
 **Format:** `<type>(<scope>): <description>`
 
@@ -242,10 +242,10 @@ docs: update installation instructions
 
 **Breaking Changes:**
 - Add `!` after type: `feat!:` or `fix!:`
-- Or include `BREAKING CHANGE:` in the commit body/PR description
+- Can also include `BREAKING CHANGE:` in the PR description body for details
 
 ### PR Template
-Use `.github/pull_request_template.md` which includes a "Conventional Commits" section. Fill this section with conventional commit messages to ensure proper version calculation.
+Use `.github/pull_request_template.md` which includes instructions for formatting your PR title with conventional commit format. The PR title is used for version calculation.
 
 ### Version Calculation Script
 The `scripts/Get-NextVersion.ps1` script analyzes commit messages and returns the next version number. It:
@@ -258,7 +258,7 @@ The `scripts/Get-NextVersion.ps1` script analyzes commit messages and returns th
 
 Always check help is up to date in cmdlets helpmessages and docs/*.MD files.
 
-Use conventional commit messages in PR descriptions for automatic versioning.
+Use conventional commit format in PR titles for automatic versioning.
 
 ### Adding a New Cmdlet
 1. Create `Rnwood.Dataverse.Data.PowerShell.Cmdlets/Commands/YourNewCmdlet.cs`
