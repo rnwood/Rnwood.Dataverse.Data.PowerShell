@@ -16,10 +16,10 @@ Creates or updates a relationship in Dataverse.
 Set-DataverseRelationshipMetadata [-SchemaName] <String> -RelationshipType <String> -ReferencedEntity <String>
  -ReferencingEntity <String> [-LookupAttributeSchemaName <String>] [-LookupAttributeDisplayName <String>]
  [-LookupAttributeDescription <String>] [-LookupAttributeRequiredLevel <String>]
- [-IntersectEntitySchemaName <String>] [-CascadeAssign <String>] [-CascadeShare <String>] [-CascadeUnshare <String>]
- [-CascadeReparent <String>] [-CascadeDelete <String>] [-CascadeMerge <String>] [-IsHierarchical]
- [-IsSearchable] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
+ [-IntersectEntitySchemaName <String>] [-CascadeAssign <String>] [-CascadeShare <String>]
+ [-CascadeUnshare <String>] [-CascadeReparent <String>] [-CascadeDelete <String>] [-CascadeMerge <String>]
+ [-IsHierarchical] [-IsSearchable] [-PassThru] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
