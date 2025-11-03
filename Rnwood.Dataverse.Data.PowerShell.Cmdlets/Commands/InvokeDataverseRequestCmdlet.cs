@@ -35,6 +35,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public Hashtable Parameters { get; set; } = new Hashtable();
 
 		/// <summary>
+		/// Return the raw OrganizationResponse instead of converting to a PSObject.
+		/// </summary>
+		[Parameter(ParameterSetName = "NameAndInputs", HelpMessage = "Return the raw OrganizationResponse instead of converting to a PSObject.")]
+		public SwitchParameter Raw { get; set; }
+
+		/// <summary>
 		/// HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).
 		/// </summary>
 		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 0, HelpMessage = "HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).")]
@@ -88,8 +94,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			base.BeginProcessing();
 
-			// Initialize metadata factory and converter for non-REST parameter sets
-			if (ParameterSetName != "REST")
+			// Initialize metadata factory and converter only for NameAndInputs parameter set when Raw is not specified
+			if (ParameterSetName == "NameAndInputs" && !Raw)
 			{
 				_entityMetadataFactory = new EntityMetadataFactory(Connection);
 				_entityConverter = new DataverseEntityConverter(Connection, _entityMetadataFactory);

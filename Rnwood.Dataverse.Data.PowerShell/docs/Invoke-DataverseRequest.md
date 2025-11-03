@@ -22,7 +22,7 @@ Invoke-DataverseRequest -Request <OrganizationRequest> [-BatchSize <UInt32>]
 
 ### NameAndInputs
 ```
-Invoke-DataverseRequest [-RequestName] <String> [[-Parameters] <Hashtable>] [-BatchSize <UInt32>]
+Invoke-DataverseRequest [-RequestName] <String> [[-Parameters] <Hashtable>] [-Raw] [-BatchSize <UInt32>]
  [-BypassBusinessLogicExecution <BusinessLogicTypes[]>] [-BypassBusinessLogicExecutionStepIds <Guid[]>]
  [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
@@ -40,9 +40,9 @@ Invoke-DataverseRequest [-Method] <HttpMethod> [-Path] <String> [[-Body] <PSObje
 This cmdlet allows you to execute any Dataverse request message.
 
 Three parameter sets are supported:
-1. **Request** - Pass an OrganizationRequest object from the SDK
-2. **NameAndInputs** - Specify request name and parameters as a hashtable (simpler)
-3. **REST** - Execute raw REST API calls with custom HTTP method, path, headers and body
+1. **Request** - Pass an OrganizationRequest object from the SDK (returns raw OrganizationResponse)
+2. **NameAndInputs** - Specify request name and parameters as a hashtable (returns converted PSObject by default)
+3. **REST** - Execute raw REST API calls with custom HTTP method, path, headers and body (returns JSON as-is)
 
 This is useful for:
 - Executing custom actions/API messages
@@ -53,14 +53,18 @@ The response from the request is returned to the pipeline.
 
 **Response Conversion:**
 
-For **Request** and **NameAndInputs** parameter sets, the response is automatically converted to a PowerShell-friendly PSObject format:
+For **NameAndInputs** parameter set, the response is automatically converted to a PowerShell-friendly PSObject format by default:
 - Response properties are accessible directly (e.g., `$response.UserId` instead of `$response.Results["UserId"]`)
 - Entity values are converted to PSObjects with display values (e.g., lookups show names instead of GUIDs)
 - EntityReference values are converted to display names (strings) when available
 - OptionSetValue values are converted to numeric values
 - Money values are converted to decimal values
-- EntityCollection values are converted to arrays of PSObjects
+- EntityCollection values are converted to arrays of PSObjects, with each entity converted using the entity converter
 - Primitive types (strings, numbers, GUIDs, booleans) are preserved as-is
+
+Use the `-Raw` switch parameter with **NameAndInputs** to return the raw OrganizationResponse without conversion.
+
+**Request** parameter set always returns the raw OrganizationResponse without conversion.
 
 **REST** parameter set returns JSON objects as-is without conversion.
 
@@ -81,36 +85,28 @@ This cmdlet supports automatic retries for transient failures using exponential 
 ```powershell
 PS C:\> $request = new-object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
 PS C:\> $response = Invoke-DataverseRequest -connection $c -request $request
-PS C:\> $response.UserId
+PS C:\> $response.Results["UserId"]
 ```
 
-Invokes `WhoAmIRequest` using the type from the Dataverse SDK using existing connection `$c` and storing the response into a variable. The response is automatically converted to a PSObject, so you can access properties directly (e.g., `$response.UserId` instead of `$response.Results["UserId"]`).
+Invokes `WhoAmIRequest` using the Request parameter set. The response is a raw `WhoAmIResponse` object. Access properties via the `Results` collection.
 
 ### Example 2
 ```powershell
-PS C:\> $request = new-object Microsoft.Xrm.Sdk.Messages.RetrieveRequest
-PS C:\> $request.Target = new-object Microsoft.Xrm.Sdk.EntityReference "contact", "{DC66FE5D-B854-4F9D-BA63-4CEA4257A8E9}"
-PS C:\> $request.ColumnSet = new-object Microsoft.Xrm.Sdk.Query.ColumnSet "firstname", "lastname"
-PS C:\> $response = Invoke-DataverseRequest -connection $c -request $request
-PS C:\> $response.Entity.firstname
-PS C:\> $response.Entity.lastname
+PS C:\> $response = Invoke-DataverseRequest -connection $c -requestname "WhoAmI" -parameters @{}
+PS C:\> $response.UserId
 ```
 
-Retrieves a contact entity. The response Entity property is automatically converted to a PSObject with display values, so lookups show names and choices show labels.
+Invokes `WhoAmI` using the NameAndInputs parameter set. The response is automatically converted to a PSObject, so you can access properties directly (e.g., `$response.UserId` instead of `$response.Results["UserId"]`).
 
 ### Example 3
-
 ```powershell
-PS C:\> $request = new-object Microsoft.Xrm.Sdk.OrganizationRequest "myapi_EscalateCase"
-PS C:\> $request["Target"] = new-object Microsoft.Xrm.Sdk.EntityReference "incident", "{DC66FE5D-B854-4F9D-BA63-4CEA4257A8E9}"
-PS C:\> $request["Priority"] = new-object Microsoft.Xrm.Sdk.OptionSetValue 1
-PS C:\> $response = Invoke-DataverseRequest -connection $c -request $request
+PS C:\> $response = Invoke-DataverseRequest -connection $c -requestname "WhoAmI" -parameters @{} -Raw
+PS C:\> $response.Results["UserId"]
 ```
 
-Invokes `myapi_EscalateCase` without using a request type from the Dataverse SDK using existing connection `$c` and storing the response into a variable. Response properties are automatically converted to PowerShell-friendly format.
+Invokes `WhoAmI` using the NameAndInputs parameter set with `-Raw` switch. The response is returned as a raw `OrganizationResponse` without conversion.
 
 ### Example 4
-
 ```powershell
 PS C:\> $Target = new-object Microsoft.Xrm.Sdk.EntityReference "incident", "{DC66FE5D-B854-4F9D-BA63-4CEA4257A8E9}"
 PS C:\> $Priority = new-object Microsoft.Xrm.Sdk.OptionSetValue 1
@@ -120,7 +116,7 @@ PS C:\> $response = Invoke-DataverseRequest -connection $c myapi_EscalateCase @{
 }
 ```
 
-Invokes `myapi_EscalateCase` by using just the request name and parameters using existing connection `$c` and storing the response into a variable.
+Invokes `myapi_EscalateCase` using the NameAndInputs parameter set. The response is automatically converted to a PSObject with properties accessible directly.
 
 ### Example 5
 
@@ -296,6 +292,21 @@ Aliases:
 
 Required: True
 Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Raw
+Return the raw OrganizationResponse instead of converting to a PSObject.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: NameAndInputs
+Aliases:
+
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
