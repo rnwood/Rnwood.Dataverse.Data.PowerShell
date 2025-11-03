@@ -963,6 +963,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Converts a response property value to a PowerShell-friendly format.
         /// </summary>
+        /// <remarks>
+        /// Note: This method retrieves all columns for Entity conversions and may perform
+        /// additional service calls to resolve EntityReference names. This is intentional
+        /// to provide user-friendly display values in responses, but may impact performance
+        /// for responses with many entities or entity references.
+        /// </remarks>
         private object ConvertResponsePropertyValue(object value)
         {
             if (value == null)
