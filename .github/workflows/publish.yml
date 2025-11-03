@@ -92,40 +92,40 @@ jobs:
             
             # Determine next version based on conventional commits
             if ($env:GITHUB_EVENT_NAME -eq "pull_request") {
-              # For PRs, analyze PR description for conventional commits
-              Write-Host "PR detected - analyzing PR description for conventional commits"
+              # For PRs, analyze PR title for conventional commits
+              Write-Host "PR detected - analyzing PR title for conventional commits"
               
-              # Get PR body from GitHub event
+              # Get PR title from GitHub event
               $eventPath = $env:GITHUB_EVENT_PATH
               if (Test-Path $eventPath) {
                 $event = Get-Content $eventPath -Raw | ConvertFrom-Json
-                $prBody = $event.pull_request.body
+                $prTitle = $event.pull_request.title
                 
-                # Validate that PR description contains conventional commits
+                # Validate that PR title contains conventional commits
                 Write-Host ""
-                Write-Host "=== Validating PR Description ===" -ForegroundColor Cyan
-                $isValid = & ./scripts/Test-ConventionalCommits.ps1 -PRDescription $prBody
+                Write-Host "=== Validating PR Title ===" -ForegroundColor Cyan
+                $isValid = & ./scripts/Test-ConventionalCommits.ps1 -Text $prTitle
                 
                 if (-not $isValid) {
                   Write-Host ""
-                  Write-Host "❌ BUILD FAILED: PR description does not contain valid conventional commit messages" -ForegroundColor Red
+                  Write-Host "❌ BUILD FAILED: PR title does not contain a valid conventional commit message" -ForegroundColor Red
                   Write-Host ""
-                  Write-Host "Please update your PR description to include at least one conventional commit message." -ForegroundColor Yellow
-                  Write-Host "Use the PR template which includes a 'Conventional Commits' section." -ForegroundColor Yellow
+                  Write-Host "Please update your PR title to use conventional commit format." -ForegroundColor Yellow
+                  Write-Host "Example: 'feat: add new feature' or 'fix: resolve bug'" -ForegroundColor Yellow
                   Write-Host ""
-                  throw "PR description validation failed - missing conventional commit messages"
+                  throw "PR title validation failed - missing conventional commit message"
                 }
                 
                 Write-Host ""
-                Write-Host "PR Description:"
-                Write-Host $prBody
+                Write-Host "PR Title:"
+                Write-Host $prTitle
                 
-                # Split PR body into lines for analysis
-                $commitMessages = $prBody -split "`n" | Where-Object { $_ -match '\S' }
+                # Use PR title as the commit message for analysis
+                $commitMessages = @($prTitle)
                 
                 # Use Get-NextVersion script to determine version bump
                 $nextVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages $commitMessages
-                Write-Host "Next version determined from PR description: $nextVersion"
+                Write-Host "Next version determined from PR title: $nextVersion"
                 $baseVersion = $nextVersion
               }
             } else {

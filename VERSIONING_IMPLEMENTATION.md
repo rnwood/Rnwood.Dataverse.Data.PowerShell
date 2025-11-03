@@ -10,8 +10,8 @@ The previous versioning strategy always used the latest git tag as the base vers
 - PowerShell Gallery rejects the publication with error: "version must exceed the current version"
 
 ## Solution
-Implement automatic version determination based on conventional commits in PR descriptions:
-1. Parse PR description for conventional commit messages
+Implement automatic version determination based on conventional commits in PR titles:
+1. Parse PR title for conventional commit message
 2. Determine the appropriate version bump (major, minor, or patch)
 3. Increment the base version accordingly
 4. Create CI builds with the incremented version (e.g., `1.4.1-ci...` or `1.5.0-ci...`)
@@ -65,8 +65,8 @@ A PowerShell script that:
 ### 3. Workflow Changes (`.github/workflows/publish.yml`)
 Updated the Build step to:
 - Detect PR events using `$env:GITHUB_EVENT_NAME -eq "pull_request"`
-- Read PR description from `$env:GITHUB_EVENT_PATH`
-- Parse PR body for conventional commits
+- Read PR title from `$env:GITHUB_EVENT_PATH`
+- Validate PR title contains a conventional commit
 - Call `Get-NextVersion.ps1` to determine next version
 - **Generate release notes** using `Get-ReleaseNotes.ps1`
 - Apply the incremented version to CI builds
@@ -78,7 +78,7 @@ Updated the Build step to:
 **Version calculation flow:**
 ```
 1. Get latest tag (e.g., v1.4.0)
-2. Parse PR description for conventional commits
+2. Parse PR title for conventional commit
 3. Determine bump type (major/minor/patch)
 4. Calculate next version (e.g., 1.5.0)
 5. Generate release notes comparing to appropriate previous version
@@ -94,14 +94,14 @@ Updated the Build step to:
 - **Stable Releases**: Compare to last stable release, include in both GitHub and Gallery
 
 **PR Validation:**
-- **Build fails** if PR description does not contain valid conventional commit messages
+- **Build fails** if PR title does not contain a valid conventional commit message
 - Clear error message guides contributors to fix the issue
 - Only validates new PRs (not historic commits in the repository)
 - Enforces consistent versioning for all new contributions
 
 ### 4. PR Template (`.github/pull_request_template.md`)
 Created a template that:
-- Includes a dedicated "Conventional Commits" section
+- Includes clear instructions at the top for PR title format
 - Provides clear examples of each commit type
 - Explains version bump rules
 - Ensures consistent formatting for parsing
@@ -109,31 +109,32 @@ Created a template that:
 
 **Template structure:**
 ```markdown
-## Conventional Commits
-<!-- This section is REQUIRED for automatic versioning -->
+## PR Title Instructions
+<!-- Your PR title MUST use conventional commit format -->
 
-- feat: add batch operations
-- fix: resolve connection timeout
-- docs: update documentation
+Format: <type>(<scope>): <description>
+Examples:
+- feat: add support for batch operations
+- fix: resolve connection timeout issue
 ```
 
 ### 5. PR Validation (`scripts/Test-ConventionalCommits.ps1`)
 A PowerShell script that:
-- Validates PR descriptions contain at least one conventional commit message
+- Validates text (PR title, description, or commit message) contains at least one conventional commit message
 - Provides clear error messages when validation fails
 - Lists all valid commit types and examples
 - Integrated into CI/CD workflow to fail builds for non-compliant PRs
 
 **Validation triggers:**
-- Empty or missing PR description → Build fails
-- No conventional commit messages found → Build fails
+- Empty or missing text → Build fails
+- No conventional commit message found → Build fails
 - At least one valid conventional commit → Build passes
 
 **Error message example:**
 ```
-ERROR: No conventional commit messages found in PR description
+ERROR: No conventional commit message found
 
-PR descriptions MUST include at least one conventional commit message.
+Text MUST contain at least one conventional commit message.
 
 Required format: <type>(<scope>): <description>
 
@@ -200,46 +201,36 @@ All tests pass successfully.
 ## Usage Examples
 
 ### Example 1: Feature Addition (Minor Bump)
-**PR Description:**
-```markdown
-## Conventional Commits
-- feat: add batch delete operation
-- docs: update batch operation examples
+**PR Title:**
+```
+feat: add batch delete operation
 ```
 
 **Result:** 1.4.0 → 1.5.0-ci20241102123
 
 ### Example 2: Bug Fix (Patch Bump)
-**PR Description:**
-```markdown
-## Conventional Commits
-- fix: resolve connection timeout issue
-- test: add timeout tests
+**PR Title:**
+```
+fix: resolve connection timeout issue
 ```
 
 **Result:** 1.4.0 → 1.4.1-ci20241102123
 
 ### Example 3: Breaking Change (Major Bump)
-**PR Description:**
-```markdown
-## Conventional Commits
-- feat!: remove deprecated cmdlet parameters
-
-BREAKING CHANGE: Removed -LegacyBehavior parameter
+**PR Title:**
+```
+feat!: remove deprecated cmdlet parameters
 ```
 
 **Result:** 1.4.0 → 2.0.0-ci20241102123
 
-### Example 4: Multiple Changes (Highest Wins)
-**PR Description:**
-```markdown
-## Conventional Commits
-- fix: bug fix
-- feat: new feature
-- docs: documentation
+### Example 4: With Scope
+**PR Title:**
+```
+fix(auth): handle expired tokens correctly
 ```
 
-**Result:** 1.4.0 → 1.5.0-ci20241102123 (minor wins over patch)
+**Result:** 1.4.0 → 1.4.1-ci20241102123
 
 ## Benefits
 
@@ -252,14 +243,16 @@ BREAKING CHANGE: Removed -LegacyBehavior parameter
    - Consistent versioning across all PRs
    - Follows semantic versioning principles
    - **Automatic release notes generation** from commit history
+   - Single source of truth (PR title) for versioning
 
 3. **Clear Communication**
-   - PR descriptions clearly indicate the type of changes
+   - PR titles clearly indicate the type of changes
    - Version bumps are predictable and transparent
    - Breaking changes are explicitly marked
    - **Release notes** automatically generated and included in:
      - GitHub releases (markdown format with emoji icons)
      - PowerShell Gallery (text format in module manifest)
+   - Easy to scan PR list for types of changes
 
 4. **Developer Friendly**
    - Simple format to follow
@@ -277,15 +270,16 @@ BREAKING CHANGE: Removed -LegacyBehavior parameter
 ## Migration Notes
 
 ### For New PRs
-- Use the PR template (auto-populated when creating PR)
-- Fill in the "Conventional Commits" section
+- Use conventional commit format in your PR title
 - Follow the format: `<type>(<scope>): <description>`
+- Examples: `feat: add new feature`, `fix: resolve bug`
 - The workflow will automatically determine the version
+- PR template provides instructions and examples
 
 ### For Existing Workflow
 - Tag-based releases: No changes needed, continue using git tags
 - Main branch pushes: Commits since last tag are analyzed
-- PR builds: Uses PR description for version calculation
+- PR builds: Uses PR title for version calculation
 
 ## Validation
 
@@ -298,10 +292,10 @@ All changes have been validated:
 
 ## Next Steps
 
-1. Merge this PR to enable conventional commits versioning
-2. Update existing open PRs to include conventional commits in description
+1. Merge this PR to enable conventional commits versioning via PR titles
+2. Update existing open PRs to use conventional commit format in their titles
 3. Monitor CI builds to ensure version calculation works correctly
-4. Consider adding a GitHub Action to validate PR descriptions contain conventional commits
+4. Consider adding PR title validation as a separate check for better visibility
 
 ## References
 

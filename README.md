@@ -158,7 +158,7 @@ pwsh -Command "Invoke-Pester -Path tests/All.Tests.ps1 -Output Normal"
 
 ### Contributing
 
-When submitting pull requests, please use **Conventional Commits** format in your PR description to enable automatic versioning:
+When submitting pull requests, please use **Conventional Commits** format in your PR title to enable automatic versioning:
 
 **Format:** `<type>(<scope>): <description>`
 

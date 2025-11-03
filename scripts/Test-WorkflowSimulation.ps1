@@ -16,15 +16,7 @@ Write-Host ""
 # Create a mock event.json file to simulate GitHub Actions PR event
 $mockEventJson = @{
     pull_request = @{
-        body = @"
-## Description
-Add new features and fix bugs
-
-## Conventional Commits
-- feat: add batch delete operation
-- fix: resolve connection timeout
-- docs: update documentation
-"@
+        title = "feat: add batch delete operation"
     }
 } | ConvertTo-Json -Depth 5
 
@@ -47,27 +39,27 @@ $baseVersion = $latestTag
 
 Write-Host "Latest tag version: $baseVersion"
 
-# For PRs, analyze PR description for conventional commits
-Write-Host "PR detected - analyzing PR description for conventional commits"
+# For PRs, analyze PR title for conventional commits
+Write-Host "PR detected - analyzing PR title for conventional commits"
 
-# Get PR body from GitHub event
+# Get PR title from GitHub event
 $event = Get-Content $eventPath -Raw | ConvertFrom-Json
-$prBody = $event.pull_request.body
+$prTitle = $event.pull_request.title
 
-if ($prBody) {
-    Write-Host "PR Description:"
-    Write-Host $prBody
+if ($prTitle) {
+    Write-Host "PR Title:"
+    Write-Host $prTitle
     Write-Host ""
     
-    # Split PR body into lines for analysis
-    $commitMessages = $prBody -split "`n" | Where-Object { $_ -match '\S' }
+    # Use PR title as the commit message for analysis
+    $commitMessages = @($prTitle)
     
     # Use Get-NextVersion script to determine version bump
     $nextVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages $commitMessages
-    Write-Host "Next version determined from PR description: $nextVersion"
+    Write-Host "Next version determined from PR title: $nextVersion"
     $baseVersion = $nextVersion
 } else {
-    Write-Host "No PR description found, defaulting to patch bump"
+    Write-Host "No PR title found, defaulting to patch bump"
 }
 
 # Get current date in yyyyMMdd format (UTC)

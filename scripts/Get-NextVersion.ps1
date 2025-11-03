@@ -4,7 +4,7 @@
     Determines the next version number based on conventional commits.
 
 .DESCRIPTION
-    Parses conventional commit messages from a PR description or commit history
+    Parses conventional commit messages from a PR title, PR description, or commit history
     and determines the appropriate version bump (major, minor, or patch).
     
     Conventional commit rules:
@@ -19,10 +19,10 @@
     The current/base version (e.g., "1.4.0")
 
 .PARAMETER CommitMessages
-    Array of commit messages or PR description text to analyze
+    Array of commit messages, PR title, or PR description text to analyze
 
 .EXAMPLE
-    Get-NextVersion -BaseVersion "1.4.0" -CommitMessages @("feat: add new feature", "fix: bug fix")
+    Get-NextVersion -BaseVersion "1.4.0" -CommitMessages @("feat: add new feature")
     Returns "1.5.0" (minor bump due to feat:)
 
 .EXAMPLE

@@ -9,22 +9,25 @@ Thank you for your interest in contributing! This document provides guidelines f
 3. **Make Changes**: Make your changes following the coding conventions
 4. **Write Tests**: Add tests for your changes
 5. **Test Locally**: Run tests to ensure they pass
-6. **Use Conventional Commits**: Format your PR description using conventional commits (see below)
+6. **Use Conventional Commits**: Format your PR title using conventional commits (see below)
 7. **Submit PR**: Submit your pull request with a clear description
 
 ## Conventional Commits for Versioning
 
-This project uses **Conventional Commits** in PR descriptions to automatically determine version numbers for CI builds.
+This project uses **Conventional Commits** in PR titles to automatically determine version numbers for CI builds.
 
 ### Format
 
+Your PR title should follow this format:
+
 ```
 <type>(<scope>): <description>
-
-[optional body]
-
-[optional footer(s)]
 ```
+
+Examples:
+- `feat: add batch delete operation`
+- `fix(auth): resolve connection timeout`
+- `feat!: remove deprecated parameters`
 
 ### Types and Version Bumps
 
@@ -63,8 +66,9 @@ BREAKING CHANGE: renamed -TableName to -Table for consistency
 
 **Adding a new feature:**
 ```
-feat: add support for many-to-many relationships
+PR Title: feat: add support for many-to-many relationships
 
+PR Description:
 - Implement Set-DataverseRelationshipMetadata cmdlet
 - Add relationship creation/update logic
 - Include tests for OneToMany and ManyToMany scenarios
@@ -72,16 +76,18 @@ feat: add support for many-to-many relationships
 
 **Fixing a bug:**
 ```
-fix: handle expired authentication tokens
+PR Title: fix: handle expired authentication tokens
 
+PR Description:
 Connection now automatically refreshes when token expires,
 preventing users from seeing authentication errors.
 ```
 
 **Breaking change:**
 ```
-feat!: remove deprecated cmdlet parameters
+PR Title: feat!: remove deprecated cmdlet parameters
 
+PR Description:
 BREAKING CHANGE: The following parameters have been removed:
 - Get-DataverseRecord: -UseDeprecatedAPI
 - Set-DataverseRecord: -LegacyBehavior
@@ -89,29 +95,25 @@ BREAKING CHANGE: The following parameters have been removed:
 Users should update scripts to use the new API.
 ```
 
-**Multiple changes in one PR:**
+**With scope:**
 ```
-## Conventional Commits
+PR Title: fix(auth): handle expired tokens correctly
 
-- feat: add batch operations support
-- fix: resolve connection timeout issue
-- docs: update batch operations examples
-- test: add tests for batch scenarios
+PR Description:
+Updated token refresh logic to prevent authentication errors.
 ```
 
 ## PR Template
 
-When you create a PR, the template will include a "Conventional Commits" section. Fill this section with your conventional commit messages. The CI/CD pipeline will parse these messages to determine the next version number.
+When you create a PR, the template will include instructions for formatting your PR title. The CI/CD pipeline will parse your PR title to determine the next version number.
 
-Example PR description:
+Example PR:
 
 ```markdown
+PR Title: feat: add batch operations support
+
 ## Description
 This PR adds support for batch operations and fixes a connection timeout issue.
-
-## Conventional Commits
-- feat: add batch operations support
-- fix: resolve connection timeout issue
 
 ## Changes Made
 - Added new BatchRequest handler
