@@ -16,7 +16,7 @@ Creates or updates a relationship in Dataverse.
 Set-DataverseRelationshipMetadata [-SchemaName] <String> -RelationshipType <String> -ReferencedEntity <String>
  -ReferencingEntity <String> [-LookupAttributeSchemaName <String>] [-LookupAttributeDisplayName <String>]
  [-LookupAttributeDescription <String>] [-LookupAttributeRequiredLevel <String>]
- [-IntersectEntityName <String>] [-CascadeAssign <String>] [-CascadeShare <String>] [-CascadeUnshare <String>]
+ [-IntersectEntitySchemaName <String>] [-CascadeAssign <String>] [-CascadeShare <String>] [-CascadeUnshare <String>]
  [-CascadeReparent <String>] [-CascadeDelete <String>] [-CascadeMerge <String>] [-IsHierarchical]
  [-IsSearchable] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
@@ -52,7 +52,7 @@ PS C:\> Set-DataverseRelationshipMetadata -SchemaName "new_project_contact" `
     -RelationshipType "ManyToMany" `
     -ReferencedEntity "new_project" `
     -ReferencingEntity "contact" `
-    -IntersectEntityName "new_project_contact"
+    -IntersectEntitySchemaName "new_project_contact"
 ```
 
 Creates a ManyToMany relationship between new_project and contact tables.
@@ -243,14 +243,14 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -IntersectEntityName
+### -IntersectEntitySchemaName
 Schema name of the intersect entity for ManyToMany relationships (e.g., 'new_project_contact').
-If not specified, the intersect entity name is generated automatically based on the SchemaName.
+If not specified, uses the relationship SchemaName.
 
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases:
+Aliases: IntersectEntityName
 
 Required: False
 Position: Named

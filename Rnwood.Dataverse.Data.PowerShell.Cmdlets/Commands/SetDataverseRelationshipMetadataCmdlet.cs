@@ -72,10 +72,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string LookupAttributeRequiredLevel { get; set; } = "None";
 
         /// <summary>
-        /// Gets or sets the intersect entity name for ManyToMany relationships.
+        /// Gets or sets the intersect entity schema name for ManyToMany relationships.
         /// </summary>
-        [Parameter(HelpMessage = "Schema name of the intersect entity for ManyToMany relationships (e.g., 'new_project_contact'). If not specified, generated automatically.")]
-        public string IntersectEntityName { get; set; }
+        [Parameter(HelpMessage = "Schema name of the intersect entity for ManyToMany relationships (e.g., 'new_project_contact'). If not specified, uses the relationship SchemaName.")]
+        [Alias("IntersectEntityName")]
+        public string IntersectEntitySchemaName { get; set; }
 
         /// <summary>
         /// Gets or sets the cascading behavior for assign operations.
@@ -280,20 +281,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void CreateManyToManyRelationship()
         {
+            var intersectEntitySchemaName = IntersectEntitySchemaName ?? SchemaName;
+            
             var relationship = new ManyToManyRelationshipMetadata
             {
                 SchemaName = SchemaName,
                 Entity1LogicalName = ReferencedEntity,
                 Entity2LogicalName = ReferencingEntity,
-                IntersectEntityName = IntersectEntityName ?? SchemaName.ToLower()
+                IntersectEntityName = intersectEntitySchemaName.ToLower()
             };
 
             var request = new CreateManyToManyRequest
             {
-                ManyToManyRelationship = relationship
+                ManyToManyRelationship = relationship,
+                IntersectEntitySchemaName = intersectEntitySchemaName
             };
 
-            WriteVerbose($"Creating ManyToMany relationship '{SchemaName}' between {ReferencedEntity} and {ReferencingEntity}");
+            WriteVerbose($"Creating ManyToMany relationship '{SchemaName}' between {ReferencedEntity} and {ReferencingEntity} with intersect entity '{intersectEntitySchemaName}'");
 
             Connection.Execute(request);
 
@@ -577,15 +581,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         ReferencingEntity));
                 }
 
-                // Check IntersectEntityName
-                if (MyInvocation.BoundParameters.ContainsKey(nameof(IntersectEntityName)) &&
-                    !string.Equals(IntersectEntityName, manyToMany.IntersectEntityName, StringComparison.OrdinalIgnoreCase))
+                // Check IntersectEntitySchemaName
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(IntersectEntitySchemaName)) &&
+                    !string.Equals(IntersectEntitySchemaName, manyToMany.IntersectEntityName, StringComparison.OrdinalIgnoreCase))
                 {
                     ThrowTerminatingError(new ErrorRecord(
-                        new InvalidOperationException($"Cannot change IntersectEntityName from '{manyToMany.IntersectEntityName}' to '{IntersectEntityName}'. This property is immutable after creation."),
-                        "ImmutableIntersectEntityName",
+                        new InvalidOperationException($"Cannot change IntersectEntitySchemaName from '{manyToMany.IntersectEntityName}' to '{IntersectEntitySchemaName}'. This property is immutable after creation."),
+                        "ImmutableIntersectEntitySchemaName",
                         ErrorCategory.InvalidOperation,
-                        IntersectEntityName));
+                        IntersectEntitySchemaName));
                 }
 
                 // Check if cascade behaviors are specified (not supported for ManyToMany)
