@@ -34,25 +34,6 @@
 
 # Working with Metadata
 
-Metadata in Dataverse defines the structure of your data - entities (tables), attributes (columns), relationships, and option sets (choice fields). The module provides comprehensive cmdlets for reading and managing metadata programmatically.
-
-## Key Concepts
-
-### What is Metadata?
-
-- **Entity Metadata**: Defines a table (entity) including its display name, primary attribute, ownership model, and behavior
-- **Attribute Metadata**: Defines a column (attribute) including its data type, format, constraints, and display properties
-- **Relationship Metadata**: Defines connections between entities (1:N, N:1, N:N relationships)
-- **Option Set Metadata**: Defines the choices available in choice fields (picklists)
-
-### Why Work with Metadata Programmatically?
-
-- **Automation**: Create and configure solutions automatically
-- **Documentation**: Generate documentation from your Dataverse schema
-- **Analysis**: Analyze schema complexity and dependencies
-- **Migration**: Clone schema between environments
-- **Validation**: Ensure schema consistency across environments
-
 ## Reading Metadata
 
 All Get cmdlets return raw SDK metadata objects, providing full access to all properties documented by Microsoft's SDK.
