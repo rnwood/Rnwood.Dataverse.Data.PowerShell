@@ -3,9 +3,6 @@
 ## Table of Contents
 
 - [Working with Metadata](#working-with-metadata)
-  - [Key Concepts](#key-concepts)
-    - [What is Metadata?](#what-is-metadata)
-    - [Why Work with Metadata Programmatically?](#why-work-with-metadata-programmatically)
   - [Reading Metadata](#reading-metadata)
     - [Entity Metadata](#entity-metadata)
     - [Attribute Metadata](#attribute-metadata)
@@ -22,12 +19,10 @@
     - [Creating Relationships](#creating-relationships)
     - [Creating Global Option Sets](#creating-global-option-sets)
   - [Deleting Metadata](#deleting-metadata)
-    - [Safety Features](#safety-features)
   - [Common Patterns](#common-patterns)
     - [Schema Documentation](#schema-documentation)
     - [Schema Validation](#schema-validation)
     - [Bulk Attribute Creation](#bulk-attribute-creation)
-  - [Best Practices](#best-practices)
   - [Related Resources](#related-resources)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -244,23 +239,6 @@ Set-DataverseOptionSetMetadata `
 
 Remove cmdlets permanently delete metadata. Use with caution.
 
-### Safety Features
-
-- **Confirmation prompts**: Required by default for destructive operations
-- **-WhatIf support**: Preview what would be deleted
-- **-Force parameter**: Bypass confirmation when automating
-
-```powershell
-# Delete with confirmation prompt
-Remove-DataverseAttributeMetadata -EntityName new_project -AttributeName new_oldfield
-
-# Skip confirmation (use in automation)
-Remove-DataverseAttributeMetadata -EntityName new_project -AttributeName new_oldfield -Force
-
-# Preview without deleting
-Remove-DataverseAttributeMetadata -EntityName new_project -AttributeName new_oldfield -WhatIf
-```
-
 ## Common Patterns
 
 ### Schema Documentation
@@ -318,16 +296,6 @@ foreach ($def in $attributeDefinitions) {
         @(if ($def.MaxLength) { @{MaxLength=$def.MaxLength} } else { @{} })
 }
 ```
-
-## Best Practices
-
-1. **Use caching for read-heavy operations**: Significantly improves performance
-2. **Always specify SchemaName**: Required for new metadata, use proper naming conventions
-3. **Test with -WhatIf first**: Preview destructive operations before executing
-4. **Handle SDK objects directly**: Access properties using SDK documentation (e.g., `$entity.DisplayName.UserLocalizedLabel.Label`)
-5. **Check for existence before creating**: Avoid errors by checking if metadata already exists
-6. **Use proper cascade settings**: Understand relationship cascade behavior before creating relationships
-7. **Document your schema changes**: Keep track of metadata modifications in your automation scripts
 
 ## Related Resources
 
