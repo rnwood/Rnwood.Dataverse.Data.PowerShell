@@ -6,12 +6,17 @@ This directory contains utility scripts for the project.
 
 ### Get-NextVersion.ps1
 
-Determines the next version number based on conventional commits.
+Determines the next version number based on conventional commits, with support for existing prerelease versions to avoid double-incrementing.
 
 **Usage:**
 ```powershell
+# Basic usage - calculate version from commits
 ./scripts/Get-NextVersion.ps1 -BaseVersion "1.4.0" -CommitMessages @("feat: add new feature", "fix: bug fix")
 # Returns: 1.5.0 (minor bump due to feat:)
+
+# With existing prereleases - prevents double-incrementing
+./scripts/Get-NextVersion.ps1 -BaseVersion "1.4.0" -CommitMessages @("feat: add new feature") -ExistingPrereleases @("1.5.0-ci20241103001")
+# Returns: 1.5.0 (uses existing prerelease version, doesn't bump to 1.6.0)
 ```
 
 **Conventional Commit Rules:**
@@ -19,6 +24,18 @@ Determines the next version number based on conventional commits.
 - `fix:` → patch bump (1.4.0 → 1.4.1)
 - `feat!:` or `BREAKING CHANGE:` → major bump (1.4.0 → 2.0.0)
 - Other types → patch bump
+
+**Prerelease Handling:**
+When `-ExistingPrereleases` is provided, the script:
+1. Calculates what the new version would be based on commits
+2. Finds the highest existing prerelease version
+3. Returns whichever is higher (prevents double-incrementing)
+
+**Example Scenario:**
+- Stable release: 1.0.0
+- PR1 with `feat!:` creates prerelease 2.0.0-ci001
+- PR2 with `feat!:` should also be 2.0.0-ci002 (not 3.0.0!)
+- Script uses existing prereleases to ensure correct version
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for full details.
 
@@ -49,11 +66,41 @@ Generates release notes from conventional commits between two git references.
 
 ### Test-VersionLogic.ps1
 
-Tests the version calculation logic with various scenarios.
+Tests the version calculation logic with various scenarios, including prerelease version handling.
 
 **Usage:**
 ```powershell
 ./scripts/Test-VersionLogic.ps1
+```
+
+**Test Coverage:**
+- Basic version bumps (major, minor, patch)
+- Multiple commits (ensures highest bump level wins)
+- Default to patch when no conventional commits found
+- Prerelease version handling (ensures no double-incrementing)
+
+### Test-WorkflowVersionCalculation.ps1
+
+Tests the complete workflow version calculation logic including prerelease handling with real-world scenarios.
+
+**Usage:**
+```powershell
+./scripts/Test-WorkflowVersionCalculation.ps1
+```
+
+**Test Scenarios:**
+- First PR with breaking change after stable release
+- Second PR with breaking change (should not double-increment)
+- Features and fixes with existing prereleases
+- Multiple prereleases with various bump types
+
+### Test-WorkflowSimulation.ps1
+
+Simulates the workflow Build step to validate the logic.
+
+**Usage:**
+```powershell
+./scripts/Test-WorkflowSimulation.ps1
 ```
 
 ### Test-ConventionalCommits.ps1
