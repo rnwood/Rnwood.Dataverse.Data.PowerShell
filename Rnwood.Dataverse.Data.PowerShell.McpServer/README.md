@@ -4,12 +4,13 @@ A Model Context Protocol (MCP) server that exposes PowerShell with the Dataverse
 
 ## Overview
 
-This MCP server allows AI assistants and other MCP clients to execute PowerShell scripts with the Rnwood.Dataverse.Data.PowerShell module pre-loaded. The server provides a sandboxed PowerShell environment where:
+This MCP server allows AI assistants and other MCP clients to execute PowerShell scripts with the Rnwood.Dataverse.Data.PowerShell module pre-loaded. The server provides a configurable PowerShell environment with:
 
-- Only the Dataverse Data PowerShell module is available
-- File system, registry, and other default PowerShell providers are disabled
-- Scripts run in isolated sessions with unique identifiers
-- Output can be retrieved incrementally or in full
+- Dataverse Data PowerShell module pre-loaded
+- **Persistent sessions** - create sessions and run multiple scripts sequentially
+- **Restricted language mode** by default (can be disabled)
+- **Providers disabled** by default (can be enabled)
+- Incremental output retrieval
 
 ## Requirements
 
@@ -44,24 +45,61 @@ dotnet build Rnwood.Dataverse.Data.PowerShell.McpServer/Rnwood.Dataverse.Data.Po
 
 ## Running
 
-The server requires a connection name to be specified either via command line argument or environment variable.
+The server supports several command-line options:
 
-**Option 1: Command line argument**
+### Options
+
+- `-c, --connection <name>` - Name of the saved Dataverse connection (or use `DATAVERSE_CONNECTION_NAME` env var)
+- `-u, --unrestricted-mode` - Disable PowerShell restricted language mode (default: restricted mode enabled)
+- `-p, --enable-providers` - Enable PowerShell providers like FileSystem, Registry, etc. (default: providers disabled)
+- `--help` - Display help information
+
+### Examples
+
+**Basic usage with restricted mode (default):**
 ```bash
-dotnet run --project Rnwood.Dataverse.Data.PowerShell.McpServer/Rnwood.Dataverse.Data.PowerShell.McpServer.csproj MyConnection
+dotnet run --project McpServer.csproj -- --connection MyConnection
 ```
 
-**Option 2: Environment variable**
+**Allow unrestricted PowerShell:**
+```bash
+dotnet run --project McpServer.csproj -- -c MyConnection --unrestricted-mode
+```
+
+**Enable filesystem and other providers:**
+```bash
+dotnet run --project McpServer.csproj -- -c MyConnection --enable-providers
+```
+
+**Full access (unrestricted mode + providers):**
+```bash
+dotnet run --project McpServer.csproj -- -c MyConnection -u -p
+```
+
+**Using environment variable for connection:**
 ```bash
 export DATAVERSE_CONNECTION_NAME=MyConnection
-dotnet run --project Rnwood.Dataverse.Data.PowerShell.McpServer/Rnwood.Dataverse.Data.PowerShell.McpServer.csproj
+dotnet run --project McpServer.csproj
 ```
 
-If no connection name is provided or the connection cannot be loaded, the server will fail with instructions on how to save a connection.
+## Security Modes
+
+### Restricted Language Mode (Default)
+- Limits PowerShell functionality for security
+- Prevents access to .NET types and methods
+- Best for untrusted script execution
+- Use `--unrestricted-mode` to disable
+
+### Provider Restrictions (Default)
+- Disables FileSystem, Registry, and other providers
+- Prevents file system access and modifications
+- Use `--enable-providers` to enable providers
+
+**⚠️ Warning**: Using `--unrestricted-mode` and `--enable-providers` removes safety restrictions. Only use in trusted environments.
 
 ## MCP Tools
 
-The server exposes four MCP tools:
+The server exposes five MCP tools for session management and script execution:
 
 ### GetCmdletList
 
@@ -73,9 +111,6 @@ Returns a list of all available Dataverse PowerShell cmdlets with their synopsis
 - JSON array with objects containing:
   - `Name`: Cmdlet name
   - `Synopsis`: Brief description of what the cmdlet does
-
-**Example usage:**
-Get a list of all available cmdlets to discover functionality.
 
 ### GetCmdletHelp
 
@@ -100,6 +135,37 @@ Returns detailed help information for a specific cmdlet.
 }
 ```
 
+### CreateSession
+
+Creates a new persistent PowerShell session with the Dataverse module and connection pre-loaded.
+
+**Parameters:** None
+
+**Returns:**
+- JSON object with:
+  - `sessionId`: Unique identifier for the session
+  - `message`: Status message
+
+**Usage:**
+This creates a runspace that persists across multiple script executions. Variables and state are maintained between scripts.
+
+### RunScriptInSession
+
+Executes a PowerShell script in an existing persistent session.
+
+**Parameters:**
+- `sessionId` (string, required): The session ID from CreateSession
+- `script` (string, required): The PowerShell script to execute
+
+**Returns:**
+- JSON object with:
+  - `sessionId`: The session ID
+  - `scriptExecutionId`: Unique ID for this script execution
+  - `message`: Status message
+
+**Usage:**
+Scripts run in the same runspace, so variables and state persist. The `$connection` variable is pre-loaded.
+
 ### StartScript
 
 Starts executing a PowerShell script with the Dataverse module pre-loaded and the default connection available as `$connection`.
@@ -112,24 +178,20 @@ Starts executing a PowerShell script with the Dataverse module pre-loaded and th
   - `sessionId`: Unique identifier for this script execution session
   - `message`: Status message
 
-**Example:**
-```json
-{
-  "script": "Get-DataverseRecord -Connection $connection -TableName contact -Top 10"
-}
-```
 
 ### GetScriptOutput
 
-Retrieves output from a running or completed PowerShell script session.
+Retrieves output from a script execution within a persistent session.
 
 **Parameters:**
-- `sessionId` (string, required): The session ID returned from StartScript
+- `sessionId` (string, required): The session ID from CreateSession
+- `scriptExecutionId` (string, required): The script execution ID from RunScriptInSession
 - `onlyNew` (boolean, optional): If true, returns only new output since the last call. If false, returns all output. Default: false
 
 **Returns:**
 - JSON object with:
   - `sessionId`: The session ID
+  - `scriptExecutionId`: The script execution ID
   - `output`: The script output (stdout, stderr, warnings, verbose, etc.)
   - `isComplete`: Boolean indicating if the script has finished executing
   - `hasError`: Boolean indicating if the script encountered errors
@@ -139,16 +201,31 @@ Retrieves output from a running or completed PowerShell script session.
 ```json
 {
   "sessionId": "abc123...",
+  "scriptExecutionId": "xyz789...",
   "onlyNew": false
 }
 ```
+
+### EndSession
+
+Ends a PowerShell session and releases all associated resources.
+
+**Parameters:**
+- `sessionId` (string, required): The session ID to end
+
+**Returns:**
+- JSON object with:
+  - `sessionId`: The ended session ID
+  - `message`: Status message
+
+**Usage:**
+Always end sessions when done to free up resources.
 
 ## Usage with MCP Clients
 
 ### Claude Desktop Configuration
 
-Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
-
+**Default configuration (restricted mode, providers disabled):**
 ```json
 {
   "mcpServers": {
@@ -157,7 +234,9 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
       "args": [
         "run",
         "--project",
-        "/path/to/Rnwood.Dataverse.Data.PowerShell.McpServer/Rnwood.Dataverse.Data.PowerShell.McpServer.csproj",
+        "/path/to/Rnwood.Dataverse.Data.PowerShell.McpServer.csproj",
+        "--",
+        "--connection",
         "MyConnection"
       ]
     }
@@ -165,8 +244,7 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
 }
 ```
 
-Or using environment variable:
-
+**Unrestricted mode with providers enabled:**
 ```json
 {
   "mcpServers": {
@@ -175,7 +253,28 @@ Or using environment variable:
       "args": [
         "run",
         "--project",
-        "/path/to/Rnwood.Dataverse.Data.PowerShell.McpServer/Rnwood.Dataverse.Data.PowerShell.McpServer.csproj"
+        "/path/to/Rnwood.Dataverse.Data.PowerShell.McpServer.csproj",
+        "--",
+        "-c",
+        "MyConnection",
+        "--unrestricted-mode",
+        "--enable-providers"
+      ]
+    }
+  }
+}
+```
+
+**Using environment variable:**
+```json
+{
+  "mcpServers": {
+    "dataverse-powershell": {
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "/path/to/Rnwood.Dataverse.Data.PowerShell.McpServer.csproj"
       ],
       "env": {
         "DATAVERSE_CONNECTION_NAME": "MyConnection"
@@ -200,60 +299,93 @@ Then update the configuration:
   "mcpServers": {
     "dataverse-powershell": {
       "command": "/path/to/Rnwood.Dataverse.Data.PowerShell.McpServer",
-      "args": ["MyConnection"]
+      "args": ["--connection", "MyConnection"]
     }
   }
 }
 ```
 
-## Example Workflow
+## Example Workflows
+
+### Single Script Execution (Old Pattern - Still Supported)
+
+For backward compatibility, you can use sessions for one-off script execution:
+
+1. Create a session: `CreateSession`
+2. Run a script: `RunScriptInSession` with your script
+3. Get output: `GetScriptOutput` 
+4. End session: `EndSession`
+
+### Persistent Session (Recommended Pattern)
+
+For interactive work with state preservation:
 
 1. Save a connection using PowerShell:
    ```powershell
    Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -Name "MyConnection" -SetAsDefault
    ```
 
-2. Configure the MCP server with the connection name
+2. Configure and start the MCP server
 
 3. AI assistant discovers available cmdlets with `GetCmdletList`
 
 4. AI assistant gets help for specific cmdlets with `GetCmdletHelp`
 
-5. AI assistant executes scripts with `StartScript` - the `$connection` variable is pre-loaded
+5. AI assistant creates a persistent session with `CreateSession`
 
-6. AI assistant polls `GetScriptOutput` to retrieve results
+6. AI assistant runs multiple scripts in sequence in the same session:
+   - First script: `RunScriptInSession` - e.g., `$accounts = Get-DataverseRecord -Connection $connection -TableName account -Top 10`
+   - Get results: `GetScriptOutput`
+   - Second script: `RunScriptInSession` - e.g., `$accounts | Select-Object name, accountnumber` (uses $accounts from previous script)
+   - Get results: `GetScriptOutput`
 
-7. When `isComplete` is true, the script has finished executing
+7. AI assistant ends the session with `EndSession` when done
+
+7. AI assistant ends the session with `EndSession` when done
 
 ## Security Considerations
 
-- **Sandboxing**: The PowerShell environment has most providers disabled (FileSystem, Registry, etc.)
+### Default Security (Recommended)
+- **Restricted Language Mode**: Limits PowerShell functionality, prevents access to .NET types
+- **Providers Disabled**: No FileSystem, Registry, or other provider access
 - **Module Restriction**: Only the Dataverse Data PowerShell module is pre-loaded
-- **Isolation**: Each script runs in its own session
-- **No Persistence**: Sessions are not persisted across server restarts
+- **Session Isolation**: Each session is isolated from others
 
-⚠️ **Warning**: This server executes arbitrary PowerShell code. Only use it in trusted environments and with trusted clients.
+### With --unrestricted-mode
+- Allows full PowerShell language features
+- Access to .NET types and methods
+- **Use only in fully trusted environments**
+
+### With --enable-providers
+- Enables FileSystem, Registry, and other providers
+- Allows file system access and modifications
+- **Use only when file operations are required and trusted**
+
+⚠️ **Warning**: This server executes arbitrary PowerShell code. Using `--unrestricted-mode` and `--enable-providers` removes safety restrictions. Only use in trusted environments with trusted clients.
 
 ## Architecture
 
 The server consists of:
 
-- **Program.cs**: Entry point that configures the MCP server with STDIO transport and loads the named connection
-- **PowerShellTools.cs**: MCP tool definitions (GetCmdletList, GetCmdletHelp, StartScript, GetScriptOutput)
+- **Program.cs**: Entry point using System.CommandLine for argument parsing, configures the MCP server with STDIO transport
+- **PowerShellTools.cs**: MCP tool definitions (GetCmdletList, GetCmdletHelp, CreateSession, RunScriptInSession, GetScriptOutput, EndSession)
 - **PowerShellExecutor.cs**: Manages PowerShell sessions and script execution
+  - **PowerShellExecutorConfig**: Configuration for language mode and provider restrictions
+  - **PersistentSession**: Maintains a PowerShell runspace across multiple script executions
+  - **ScriptExecution**: Tracks individual script execution within a session
   - Validates named connection on startup
-  - Creates minimal PowerShell runspaces with providers disabled
+  - Creates PowerShell runspaces with configurable restrictions
   - Loads the Dataverse module and default connection
   - Provides cmdlet discovery and help retrieval
   - Captures output, errors, warnings, and verbose messages
-  - Tracks session state and completion
+  - Tracks script completion (not runspace completion)
 
 ## Limitations
 
 - Sessions are stored in memory and lost on server restart
 - No support for interactive input (prompts, confirmations)
 - No support for UI elements (progress bars, etc.)
-- File system operations are disabled by default
+- File system operations require `--enable-providers` flag
 - Requires a pre-saved named connection to start
 
 ## Troubleshooting

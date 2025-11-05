@@ -1,27 +1,66 @@
 using System;
+using System.CommandLine;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Rnwood.Dataverse.Data.PowerShell.McpServer.Tools;
 
-var builder = Host.CreateApplicationBuilder(args);
-
-// Get connection name from environment variable or command line argument
-string? connectionName = Environment.GetEnvironmentVariable("DATAVERSE_CONNECTION_NAME");
-if (args.Length > 0)
+// Define command line options
+var connectionNameOption = new Option<string?>(
+    name: "--connection",
+    description: "The name of the saved Dataverse connection to use")
 {
-    connectionName = args[0];
-}
+    IsRequired = false
+};
+connectionNameOption.AddAlias("-c");
 
-builder.Services.AddMcpServer()
-    .WithStdioServerTransport()
-    .WithTools<PowerShellTools>();
+var unrestrictedModeOption = new Option<bool>(
+    name: "--unrestricted-mode",
+    description: "Disable PowerShell restricted language mode (allows unrestricted script execution)",
+    getDefaultValue: () => false);
+unrestrictedModeOption.AddAlias("-u");
 
-builder.Logging.AddConsole(options =>
+var enableProvidersOption = new Option<bool>(
+    name: "--enable-providers",
+    description: "Enable PowerShell providers (FileSystem, Registry, etc.)",
+    getDefaultValue: () => false);
+enableProvidersOption.AddAlias("-p");
+
+var rootCommand = new RootCommand("Dataverse PowerShell MCP Server - Execute PowerShell scripts with Dataverse module via Model Context Protocol")
 {
-    options.LogToStandardErrorThreshold = LogLevel.Trace;
-});
+    connectionNameOption,
+    unrestrictedModeOption,
+    enableProvidersOption
+};
 
-builder.Services.AddSingleton<PowerShellExecutor>(sp => new PowerShellExecutor(connectionName));
+rootCommand.SetHandler(async (connectionName, unrestrictedMode, enableProviders) =>
+{
+    // Check environment variable if connection name not provided
+    connectionName ??= Environment.GetEnvironmentVariable("DATAVERSE_CONNECTION_NAME");
 
-await builder.Build().RunAsync();
+    var config = new PowerShellExecutorConfig
+    {
+        ConnectionName = connectionName,
+        UseRestrictedLanguageMode = !unrestrictedMode,
+        EnableProviders = enableProviders
+    };
+
+    var builder = Host.CreateApplicationBuilder();
+
+    builder.Services.AddMcpServer()
+        .WithStdioServerTransport()
+        .WithTools<PowerShellTools>();
+
+    builder.Logging.AddConsole(options =>
+    {
+        options.LogToStandardErrorThreshold = LogLevel.Trace;
+    });
+
+    builder.Services.AddSingleton(config);
+    builder.Services.AddSingleton<PowerShellExecutor>();
+
+    await builder.Build().RunAsync();
+}, connectionNameOption, unrestrictedModeOption, enableProvidersOption);
+
+return await rootCommand.InvokeAsync(args);
