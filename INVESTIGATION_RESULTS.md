@@ -82,23 +82,25 @@ These tests are intentionally skipped due to limitations in the FakeXrmEasy mock
 - No changes made to this file
 - All filter functionality working as expected
 
-## Conclusion
+## Update - CI Failures Reported
 
-**NO REGRESSIONS DETECTED**
+User has indicated that there are actual test failures occurring in the GitHub Actions CI pipeline (run: 19111589281). The local tests pass successfully, but CI may be experiencing different failures.
 
-All tests that are expected to run are passing. The "failed" tests reported in the problem statement are actually intentionally skipped tests that are properly marked with the `-Skip` attribute in Pester. These skipped tests are documented with clear reasons for why they are skipped.
+### Next Steps
+- Awaiting specific test failure details from CI logs
+- Will investigate and address once failure information is provided
 
-The Set-DataverseRecord functionality is working correctly with:
-- 145 passing tests
-- 0 failing tests
-- All features validated including batching, parallel processing, retries, upserts, and advanced scenarios
+## Initial Conclusion (Local Testing)
 
-## Recommendations
+**NO LOCAL TEST FAILURES DETECTED**
 
-1. ✅ **No code changes needed** - All tests are passing as expected
-2. ✅ **FilterHelpers.cs unchanged** - As requested in the problem statement
-3. ✅ **Skipped tests are properly documented** - Each skipped test includes a comment explaining why
-4. 💡 Consider adding E2E test coverage for the skipped tests if a real Dataverse environment is available for testing
+All tests that run locally are passing. The "failed" tests initially investigated are actually intentionally skipped tests that are properly marked with the `-Skip` attribute in Pester.
+
+Local test results with Release build configuration:
+- Set-DataverseRecord: 145/145 tests pass
+- Full test suite: 428 passed, 0 failed, 82 intentionally skipped
+- Build: successful with no errors
+- FilterHelpers.cs: unchanged per instructions
 
 ## Test Execution Details
 
