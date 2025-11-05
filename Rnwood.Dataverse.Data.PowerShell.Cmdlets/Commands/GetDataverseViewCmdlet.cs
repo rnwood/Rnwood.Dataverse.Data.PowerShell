@@ -189,21 +189,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     // Parse FetchXML to extract Columns, Filters, and Links
                     var tableName = view.GetAttributeValue<string>("returnedtypecode");
                     var parsedProperties = ParseFetchXmlForQueryComponents(view.GetAttributeValue<string>("fetchxml"), view.GetAttributeValue<int?>("querytype"), tableName);
-                    if (parsedProperties.ContainsKey("Columns"))
+                    if (parsedProperties.TryGetValue("Columns", out var columnsObj))
                     {
                         // Combine column names from FetchXML with width info from layoutxml
                         var columnsWithWidths = CombineColumnsWithLayoutInfo(
-                            (string[])parsedProperties["Columns"],
+                            (string[])columnsObj,
                             view.GetAttributeValue<string>("layoutxml"));
                         psObject.Properties.Add(new PSNoteProperty("Columns", columnsWithWidths));
                     }
-                    if (parsedProperties.ContainsKey("Filters"))
+                    if (parsedProperties.TryGetValue("Filters", out var filtersObj))
                     {
-                        psObject.Properties.Add(new PSNoteProperty("Filters", parsedProperties["Filters"]));
+                        psObject.Properties.Add(new PSNoteProperty("Filters", filtersObj));
                     }
-                    if (parsedProperties.ContainsKey("Links"))
+                    if (parsedProperties.TryGetValue("Links", out var linksObj))
                     {
-                        psObject.Properties.Add(new PSNoteProperty("Links", parsedProperties["Links"]));
+                        psObject.Properties.Add(new PSNoteProperty("Links", linksObj));
                     }
                     if (parsedProperties.ContainsKey("OrderBy"))
                     {
