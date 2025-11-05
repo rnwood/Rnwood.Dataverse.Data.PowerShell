@@ -250,14 +250,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 columnConfig["name"] = columnName;
 
                 // Use width from layoutxml if available, otherwise default to 100
-                if (layoutWidths.TryGetValue(columnName, out int width))
-                {
-                    columnConfig["width"] = width;
-                }
-                else
-                {
-                    columnConfig["width"] = 100; // Default width
-                }
+                columnConfig["width"] = layoutWidths.TryGetValue(columnName, out int width) ? width : 100;
 
                 columns.Add(columnConfig);
             }
