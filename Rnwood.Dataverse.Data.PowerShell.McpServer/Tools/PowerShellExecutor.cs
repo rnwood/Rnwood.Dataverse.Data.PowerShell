@@ -82,7 +82,6 @@ public class ScriptSession : IDisposable
     private readonly string _script;
     private readonly string _modulePath;
     private System.Management.Automation.PowerShell? _powerShell;
-    private readonly List<PSDataCollection<PSObject>> _outputCollections = new();
     private readonly StringBuilder _output = new();
     private readonly StringBuilder _error = new();
     private int _lastReadPosition;
@@ -158,56 +157,44 @@ public class ScriptSession : IDisposable
         var outputCollection = new PSDataCollection<PSObject>();
         outputCollection.DataAdded += (sender, e) =>
         {
-            if (sender is PSDataCollection<PSObject> collection)
+            if (sender is PSDataCollection<PSObject> collection && e.Index < collection.Count)
             {
                 lock (_lock)
                 {
-                    foreach (var item in collection)
-                    {
-                        _output.AppendLine(item?.ToString() ?? "");
-                    }
+                    _output.AppendLine(collection[e.Index]?.ToString() ?? "");
                 }
             }
         };
 
         _powerShell.Streams.Error.DataAdded += (sender, e) =>
         {
-            if (sender is PSDataCollection<ErrorRecord> collection)
+            if (sender is PSDataCollection<ErrorRecord> collection && e.Index < collection.Count)
             {
                 lock (_lock)
                 {
-                    foreach (var error in collection)
-                    {
-                        _error.AppendLine($"ERROR: {error}");
-                    }
+                    _error.AppendLine($"ERROR: {collection[e.Index]}");
                 }
             }
         };
 
         _powerShell.Streams.Warning.DataAdded += (sender, e) =>
         {
-            if (sender is PSDataCollection<WarningRecord> collection)
+            if (sender is PSDataCollection<WarningRecord> collection && e.Index < collection.Count)
             {
                 lock (_lock)
                 {
-                    foreach (var warning in collection)
-                    {
-                        _output.AppendLine($"WARNING: {warning}");
-                    }
+                    _output.AppendLine($"WARNING: {collection[e.Index]}");
                 }
             }
         };
 
         _powerShell.Streams.Verbose.DataAdded += (sender, e) =>
         {
-            if (sender is PSDataCollection<VerboseRecord> collection)
+            if (sender is PSDataCollection<VerboseRecord> collection && e.Index < collection.Count)
             {
                 lock (_lock)
                 {
-                    foreach (var verbose in collection)
-                    {
-                        _output.AppendLine($"VERBOSE: {verbose}");
-                    }
+                    _output.AppendLine($"VERBOSE: {collection[e.Index]}");
                 }
             }
         };

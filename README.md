@@ -20,6 +20,7 @@ This module works in PowerShell Desktop and PowerShell Core, supporting Windows,
 - **Global metadata caching** — Optional shared cache for improved performance when working with metadata
 - Wide variety of auth options for interactive and unattended use
 - **XrmToolbox Plugin**: Embedded PowerShell console with automatic connection bridging. See [XrmToolbox Plugin README](Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/README.md)
+- **MCP Server**: Model Context Protocol server for AI assistants to execute PowerShell with Dataverse module. See [MCP Server README](Rnwood.Dataverse.Data.PowerShell.McpServer/README.md)
 - Retry logic with configurable retry counts and exponential backoff
 
 **Note**: On-premise Dataverse environments are not supported.
