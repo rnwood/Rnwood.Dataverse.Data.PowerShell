@@ -177,9 +177,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         psObject.Properties.Add(new PSNoteProperty("Description", view.Attributes["description"]));
                     }
-                    if (view.Attributes.ContainsKey("querytype"))
+                    if (view.Attributes.TryGetValue("querytype", out var queryTypeValue))
                     {
-                        psObject.Properties.Add(new PSNoteProperty("QueryType", (QueryType)view.Attributes["querytype"]));
+                        psObject.Properties.Add(new PSNoteProperty("QueryType", (QueryType)queryTypeValue));
                     }
                     if (view.Attributes.ContainsKey("isdefault"))
                     {
