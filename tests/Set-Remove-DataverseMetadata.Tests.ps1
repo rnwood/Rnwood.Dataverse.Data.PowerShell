@@ -731,6 +731,55 @@ Describe 'Set-DataverseAttributeMetadata' {
     }
 }
 
+Describe 'Remove-DataverseAttributeMetadata' {
+    Context 'Attribute Deletion' {
+        It "Supports WhatIf parameter" {
+            $connection = getMockConnection
+            
+            # WhatIf should not throw even with mock connection
+            { Remove-DataverseAttributeMetadata -Connection $connection `
+                -EntityName contact `
+                -AttributeName new_testfield `
+                -WhatIf } | Should -Not -Throw
+        }
+
+        It "Supports Confirm parameter to bypass confirmation" {
+            $connection = getMockConnection
+            
+            # Verify SupportsShouldProcess is enabled (allows -Confirm:$false)
+            $cmdlet = Get-Command Remove-DataverseAttributeMetadata
+            $cmdlet.Parameters.ContainsKey('Confirm') | Should -Be $true
+        }
+
+        It "Accepts AttributeName from pipeline by property name" {
+            $connection = getMockConnection
+            
+            # Verify parameter accepts pipeline input
+            $cmdlet = Get-Command Remove-DataverseAttributeMetadata
+            $attrParam = $cmdlet.Parameters['AttributeName']
+            $attrParam.Attributes.ValueFromPipelineByPropertyName | Should -Contain $true
+        }
+
+        It "Has EntityName alias of TableName" {
+            $connection = getMockConnection
+            
+            # Verify alias exists
+            $cmdlet = Get-Command Remove-DataverseAttributeMetadata
+            $entityParam = $cmdlet.Parameters['EntityName']
+            $entityParam.Aliases | Should -Contain 'TableName'
+        }
+
+        It "Has AttributeName alias of ColumnName" {
+            $connection = getMockConnection
+            
+            # Verify alias exists
+            $cmdlet = Get-Command Remove-DataverseAttributeMetadata
+            $attrParam = $cmdlet.Parameters['AttributeName']
+            $attrParam.Aliases | Should -Contain 'ColumnName'
+        }
+    }
+}
+
 Describe 'Remove-DataverseEntityMetadata' {
     Context 'Entity Deletion' {
         It "Supports WhatIf parameter" {
