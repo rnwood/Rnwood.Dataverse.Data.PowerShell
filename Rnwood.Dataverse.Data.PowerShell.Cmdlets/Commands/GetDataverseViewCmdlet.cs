@@ -157,33 +157,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     // Add normalized Id property for easier pipeline usage
                     string idAttributeName = entityName == "savedquery" ? "savedqueryid" : "userqueryid";
-                    if (view.Attributes.ContainsKey(idAttributeName))
+                    if (view.Attributes.TryGetValue(idAttributeName, out var idValue))
                     {
-                        psObject.Properties.Add(new PSNoteProperty("Id", view.Attributes[idAttributeName]));
+                        psObject.Properties.Add(new PSNoteProperty("Id", idValue));
                     }
 
                     psObject.Properties.Add(new PSNoteProperty("ViewType", entityName == "savedquery" ? "System" : "Personal"));
 
                     // Add properties that correspond to Set-DataverseView parameters
-                    if (view.Attributes.ContainsKey("name"))
+                    if (view.Attributes.TryGetValue("name", out var nameValue))
                     {
-                        psObject.Properties.Add(new PSNoteProperty("Name", view.Attributes["name"]));
+                        psObject.Properties.Add(new PSNoteProperty("Name", nameValue));
                     }
-                    if (view.Attributes.ContainsKey("returnedtypecode"))
+                    if (view.Attributes.TryGetValue("returnedtypecode", out var returnedTypeCodeValue))
                     {
-                        psObject.Properties.Add(new PSNoteProperty("TableName", view.Attributes["returnedtypecode"]));
+                        psObject.Properties.Add(new PSNoteProperty("TableName", returnedTypeCodeValue));
                     }
-                    if (view.Attributes.ContainsKey("description"))
+                    if (view.Attributes.TryGetValue("description", out var descriptionValue))
                     {
-                        psObject.Properties.Add(new PSNoteProperty("Description", view.Attributes["description"]));
+                        psObject.Properties.Add(new PSNoteProperty("Description", descriptionValue));
                     }
                     if (view.Attributes.TryGetValue("querytype", out var queryTypeValue))
                     {
                         psObject.Properties.Add(new PSNoteProperty("QueryType", (QueryType)queryTypeValue));
                     }
-                    if (view.Attributes.ContainsKey("isdefault"))
+                    if (view.Attributes.TryGetValue("isdefault", out var isDefaultValue))
                     {
-                        psObject.Properties.Add(new PSNoteProperty("IsDefault", view.Attributes["isdefault"]));
+                        psObject.Properties.Add(new PSNoteProperty("IsDefault", isDefaultValue));
                     }
 
                     // Parse FetchXML to extract Columns, Filters, and Links
