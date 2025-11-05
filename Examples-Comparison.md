@@ -2,20 +2,6 @@
 
 This document provides examples of common Dataverse operations using `Rnwood.Dataverse.Data.PowerShell`, showing how to accomplish tasks that were done with `Microsoft.Xrm.Data.PowerShell`.
 
-> **⚠️ IMPORTANT NOTE**: Many examples in this document reference specialized `Invoke-Dataverse*` cmdlets (e.g., `Invoke-DataverseBulkDelete`, `Invoke-DataverseAssign`) that have been removed from this module. These operations should now be performed using `Invoke-DataverseRequest` with SDK request objects. For current examples and usage patterns, please refer to the [core documentation](docs/core-concepts/) instead.
->
-> **Example migration**:
-> ```powershell
-> # Old (removed):
-> # Invoke-DataverseBulkDelete -Connection $c -Query $criteria ...
->
-> # New (use Invoke-DataverseRequest):
-> $request = New-Object Microsoft.Crm.Sdk.Messages.BulkDeleteRequest
-> $request.QuerySet = @($criteria)
-> # ... set other required properties
-> $response = Invoke-DataverseRequest -Connection $c -Request $request
-> ```
-
 ## Table of Contents
 
 - [Connection](#connection)
@@ -375,16 +361,20 @@ $conn.ExecuteCrmOrganizationRequest($caseClose)
 ```powershell
 $caseid = "9EFFD829-8D95-E611-80F3-5065F38B3191"
 
-# Using specialized cmdlet (simplest)
+# Using Invoke-DataverseRequest (recommended)
 $resolution = @{
     subject = "closure subject"
     incidentid = $caseid
 }
 
-Invoke-DataverseCloseIncident -Connection $conn `
-    -IncidentResolution $resolution `
-    -IncidentResolutionTableName incidentresolution `
-    -Status (New-Object Microsoft.Xrm.Sdk.OptionSetValue(-1))
+$request = New-Object Microsoft.Crm.Sdk.Messages.CloseIncidentRequest
+$request.IncidentResolution = New-Object Microsoft.Xrm.Sdk.Entity("incidentresolution")
+$request.IncidentResolution.Attributes["subject"] = "closure subject"
+$request.IncidentResolution.Attributes["incidentid"] = New-Object Microsoft.Xrm.Sdk.EntityReference("incident", $caseid)
+$request.IncidentResolution.Id = [guid]::NewGuid()
+$request.Status = New-Object Microsoft.Xrm.Sdk.OptionSetValue(-1)
+
+Invoke-DataverseRequest -Connection $conn -Request $request
 ```
 
 ### Example: Execute WhoAmI Request
@@ -415,13 +405,13 @@ $accountMetadata = $metadata | Where-Object {$_.LogicalName -eq "account"}
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Direct entity metadata retrieval
+# Using specific cmdlet (recommended)
 $accountMetadata = Get-DataverseEntityMetadata -Connection $conn -EntityName account
 
 # With attributes included
 $accountMetadata = Get-DataverseEntityMetadata -Connection $conn -EntityName account -IncludeAttributes
 
-# Or use SQL queries against metadata
+# Or use SQL queries against metadata (for complex queries)
 $entityInfo = Invoke-DataverseSql -Connection $conn -Sql @"
 SELECT name, displayname, primaryidattribute, primarynameattribute
 FROM metadata.entity
@@ -438,7 +428,7 @@ $metadata = Get-CrmEntityAllMetadata -conn $conn -EntityFilters Entity
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# List all entities
+# Using specific cmdlet (recommended)
 $entities = Get-DataverseEntityMetadata -Connection $conn
 
 # List only custom entities with details
@@ -461,7 +451,7 @@ $response = $conn.Execute($request)
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Get single attribute
+# Using specific cmdlet (recommended)
 $attribute = Get-DataverseAttributeMetadata -Connection $conn -EntityName contact -AttributeName firstname
 
 # Get all attributes for an entity
@@ -480,7 +470,7 @@ $attribute = Get-DataverseAttributeMetadata -Connection $conn -EntityName contac
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Get option set from entity attribute
+# Using specific cmdlet (recommended)
 $options = Get-DataverseOptionSetMetadata -Connection $conn -EntityName contact -AttributeName preferredcontactmethodcode
 
 # Get global option set
@@ -499,6 +489,7 @@ $allOptions = Get-DataverseOptionSetMetadata -Connection $conn
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
+# Using specific cmdlet (recommended)
 Set-DataverseEntityMetadata -Connection $conn `
     -EntityName new_project `
     -SchemaName new_Project `
@@ -518,6 +509,7 @@ Set-DataverseEntityMetadata -Connection $conn `
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
+# Using specific cmdlet (recommended)
 # Create string attribute
 Set-DataverseAttributeMetadata -Connection $conn `
     -EntityName new_project `
@@ -664,12 +656,8 @@ if ($solutions.Count -eq 1) {
 ```powershell
 $solutionUniqueName = 'mysolution'
 
-# Query for the solution
-$solution = Get-DataverseRecord -Connection $conn -TableName solution -Filter @{uniquename = $solutionUniqueName}
-
-if ($solution) {
-    Remove-DataverseRecord -Connection $conn -TableName solution -Id $solution.Id
-}
+# Using specialized cmdlet (recommended)
+Remove-DataverseSolution -Connection $conn -UniqueName $solutionUniqueName -Confirm:$false
 ```
 
 ### Example: Export a Solution
@@ -684,13 +672,8 @@ Export-CrmSolution -conn $conn -SolutionName $solutionName -Managed $false -Expo
 ```powershell
 $solutionName = "MySolution"
 
-# Using specialized cmdlet (simplest)
-$response = Invoke-DataverseExportSolution -Connection $conn `
-    -SolutionName $solutionName `
-    -Managed $false
-
-# Save the solution file
-[System.IO.File]::WriteAllBytes("C:\Solutions\$solutionName.zip", $response.ExportSolutionFile)
+# Using specialized cmdlet (recommended)
+Export-DataverseSolution -Connection $conn -SolutionName $solutionName -OutFile "C:\Solutions\$solutionName.zip"
 ```
 
 ### Example: Import a Solution
@@ -702,13 +685,8 @@ Import-CrmSolution -conn $conn -SolutionFilePath "C:\Solutions\MySolution.zip"
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-$solutionBytes = [System.IO.File]::ReadAllBytes("C:\Solutions\MySolution.zip")
-
-# Using specialized cmdlet (simplest)
-Invoke-DataverseImportSolution -Connection $conn `
-    -CustomizationFile $solutionBytes `
-    -PublishWorkflows $true `
-    -OverwriteUnmanagedCustomizations $false
+# Using specialized cmdlet (recommended)
+Import-DataverseSolution -Connection $conn -InFile "C:\Solutions\MySolution.zip"
 ```
 
 ### Example: List All Solutions
@@ -721,18 +699,30 @@ $solutions.CrmRecords | Select-Object uniquename,friendlyname,version
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Using Get-DataverseRecord
-$solutions = Get-DataverseRecord -Connection $conn -TableName solution -Columns uniquename,friendlyname,version
-
+# Using specialized cmdlet (recommended)
+$solutions = Get-DataverseSolution -Connection $conn
 $solutions | Select-Object uniquename,friendlyname,version
 
-# Or using SQL
-Invoke-DataverseSql -Connection $conn -Sql @"
+# Or using SQL for richer queries
+$solutions = Invoke-DataverseSql -Connection $conn -Sql @"
 SELECT uniquename, friendlyname, version
 FROM solution
 WHERE ismanaged = 0
 ORDER BY friendlyname
 "@
+```
+
+### Example: Update Solution Properties
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Requires complex SDK object creation and updates
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using specialized cmdlet (recommended)
+Set-DataverseSolution -Connection $conn -UniqueName "MySolution" -Description "Updated solution description"
 ```
 
 ## User and Team Operations
@@ -746,10 +736,12 @@ Add-CrmUserToTeam -TeamId $teamId -UserId $userId
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Using specialized cmdlet (simplest)
-Invoke-DataverseAddMembersTeam -Connection $conn `
-    -TeamId $teamId `
-    -MemberIds @($userId)
+# Using Invoke-DataverseRequest (recommended)
+$request = New-Object Microsoft.Crm.Sdk.Messages.AddMembersTeamRequest
+$request.TeamId = $teamId
+$request.MemberIds = @($userId)
+
+Invoke-DataverseRequest -Connection $conn -Request $request
 ```
 
 ### Example: Assign Security Role to User
@@ -928,7 +920,7 @@ $workflows = Get-CrmRecords -EntityLogicalName workflow `
 ```powershell
 # Using Get-DataverseRecord
 $workflows = Get-DataverseRecord -Connection $conn -TableName workflow `
-    -Filter @{type = 1} `
+    -FilterValues @{type = 1} `
     -Columns name,statecode,primaryentity
 
 # Or using SQL
@@ -1451,10 +1443,12 @@ $conn.ExecuteCrmOrganizationRequest($addMember)
 $marketingListId = "107E563B-7D21-40A5-AF6B-C8975E9C3860"
 $contactId = "C69F9B23-F3B2-403F-A1CF-C81FEF71126F"
 
-# Using specialized cmdlet (simplest)
-Invoke-DataverseAddMemberList -Connection $conn `
-    -EntityId $contactId `
-    -ListId $marketingListId
+# Using Invoke-DataverseRequest (recommended)
+$request = New-Object Microsoft.Crm.Sdk.Messages.AddMemberListRequest
+$request.EntityId = $contactId
+$request.ListId = $marketingListId
+
+Invoke-DataverseRequest -Connection $conn -Request $request
 ```
 
 ### Example: Remove Members from Marketing List
@@ -1470,10 +1464,12 @@ $conn.ExecuteCrmOrganizationRequest($removeMember)
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Using specialized cmdlet (simplest)
-Invoke-DataverseRemoveMemberList -Connection $conn `
-    -EntityId $contactId `
-    -ListId $marketingListId
+# Using Invoke-DataverseRequest (recommended)
+$request = New-Object Microsoft.Crm.Sdk.Messages.RemoveMemberListRequest
+$request.EntityId = $contactId
+$request.ListId = $marketingListId
+
+Invoke-DataverseRequest -Connection $conn -Request $request
 ```
 
 ### Example: Get All Members of a Marketing List
@@ -1626,8 +1622,11 @@ $conn.Execute($request)
 ```powershell
 $ruleId = "guid-here"
 
-# Using specialized cmdlet (simplest)
-Invoke-DataversePublishDuplicateRule -Connection $conn -DuplicateRuleId $ruleId
+# Using Invoke-DataverseRequest (recommended)
+$request = New-Object Microsoft.Crm.Sdk.Messages.PublishDuplicateRuleRequest
+$request.DuplicateRuleId = $ruleId
+
+Invoke-DataverseRequest -Connection $conn -Request $request
 ```
 
 ### Example: Unpublish Duplicate Detection Rule
@@ -1642,8 +1641,11 @@ $conn.Execute($request)
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Using specialized cmdlet (simplest)
-Invoke-DataverseUnpublishDuplicateRule -Connection $conn -DuplicateRuleId $ruleId
+# Using Invoke-DataverseRequest (recommended)
+$request = New-Object Microsoft.Crm.Sdk.Messages.UnpublishDuplicateRuleRequest
+$request.DuplicateRuleId = $ruleId
+
+Invoke-DataverseRequest -Connection $conn -Request $request
 ```
 
 ### Example: Run Duplicate Detection Job
@@ -1668,13 +1670,15 @@ $conn.Execute($request)
 $query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression("account")
 $query.ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet($true)
 
-# Using specialized cmdlet (simplest)
-Invoke-DataverseBulkDetectDuplicates -Connection $conn `
-    -Query $query `
-    -JobName "Detect Duplicate Accounts" `
-    -SendEmailNotification $false `
-    -ToRecipients @() `
-    -CCRecipients @()
+# Using Invoke-DataverseRequest (recommended)
+$request = New-Object Microsoft.Crm.Sdk.Messages.BulkDetectDuplicatesRequest
+$request.Query = $query
+$request.JobName = "Detect Duplicate Accounts"
+$request.SendEmailNotification = $false
+$request.ToRecipients = @()
+$request.CCRecipients = @()
+
+Invoke-DataverseRequest -Connection $conn -Request $request
 ```
 
 ## Business Process Flows
@@ -1759,8 +1763,9 @@ Export-CrmApplicationRibbonXml -conn $conn -RibbonFilePath $exportPath
 ```powershell
 $exportPath = "C:\RibbonExports"
 
-# Using specialized cmdlet (simplest)
-$response = Invoke-DataverseRetrieveApplicationRibbon -Connection $conn
+# Using Invoke-DataverseRequest (recommended)
+$request = New-Object Microsoft.Crm.Sdk.Messages.RetrieveApplicationRibbonRequest
+$response = Invoke-DataverseRequest -Connection $conn -Request $request
 
 # Save the ribbon XML
 $ribbonXml = $response.CompressedApplicationRibbonXml
@@ -1785,10 +1790,12 @@ $entities = @("account", "contact", "opportunity", "lead")
 $exportPath = "C:\RibbonExports"
 
 foreach($entity in $entities) {
-    # Using specialized cmdlet (simplest)
-    $response = Invoke-DataverseRetrieveEntityRibbon -Connection $conn `
-        -EntityName $entity `
-        -RibbonLocationFilter ([Microsoft.Crm.Sdk.Messages.RibbonLocationFilters]::All)
+    # Using Invoke-DataverseRequest (recommended)
+    $request = New-Object Microsoft.Crm.Sdk.Messages.RetrieveEntityRibbonRequest
+    $request.EntityName = $entity
+    $request.RibbonLocationFilter = [Microsoft.Crm.Sdk.Messages.RibbonLocationFilters]::All
+    
+    $response = Invoke-DataverseRequest -Connection $conn -Request $request
     
     # Save the ribbon XML
     $ribbonXml = $response.CompressedEntityXml
@@ -1849,28 +1856,23 @@ $results | Sort-Object Entity | Format-Table
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Get all QuickFind views using SQL
-$views = Invoke-DataverseSql -Connection $conn -Sql @"
-SELECT savedqueryid, name, fetchxml, returnedtypecode
-FROM savedquery
-WHERE querytype = 4
-ORDER BY returnedtypecode
-"@
+# Using specific cmdlet (recommended)
+$quickFindViews = Get-DataverseView -Connection $conn -QueryType QuickFind
 
 $results = @()
-foreach($view in $views) {
-    $xml = [xml]$view.fetchxml
+foreach($view in $quickFindViews) {
+    $xml = [xml]$view.FetchXml
     $filters = $xml.fetch.entity.filter.condition | Where-Object { $_.value -eq "{0}" }
     
     $results += [PSCustomObject]@{
-        Entity = $view.returnedtypecode
-        ViewName = $view.name
+        Entity = $view.ReturnedTypeCode
+        ViewName = $view.Name
         SearchFieldCount = $filters.Count
         SearchFields = ($filters.attribute -join ", ")
     }
 }
 
-$results | Format-Table
+$results | Sort-Object Entity | Format-Table
 ```
 
 ### Example: Get All Views for an Entity
@@ -1884,10 +1886,8 @@ $views = Get-CrmRecords -EntityLogicalName savedquery `
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
-# Using Get-DataverseRecord
-$views = Get-DataverseRecord -Connection $conn -TableName savedquery `
-    -Filter @{returnedtypecode = "account"} `
-    -Columns name,querytype,isdefault
+# Using specific cmdlet (recommended)
+$views = Get-DataverseView -Connection $conn -TableName account
 
 # Or using SQL for richer queries
 $views = Invoke-DataverseSql -Connection $conn -Sql @"
@@ -1923,18 +1923,85 @@ $personalViews = Get-CrmRecords -EntityLogicalName userquery `
 
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
+# Using specific cmdlet (recommended)
 $whoami = Get-DataverseWhoAmI -Connection $conn
-$userId = $whoami.UserId
+$personalViews = Get-DataverseView -Connection $conn -PersonalView -OwnerId $whoami.UserId
 
-# Using SQL
+# Or using SQL
 $personalViews = Invoke-DataverseSql -Connection $conn -Sql @"
 SELECT name, returnedtypecode, fetchxml
 FROM userquery
-WHERE ownerid = '$userId'
+WHERE ownerid = '$($whoami.UserId)'
 ORDER BY returnedtypecode, name
 "@
 
 $personalViews | Format-Table
+```
+
+### Example: Create a Custom View
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Requires complex SDK object creation
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using specific cmdlet (recommended)
+Set-DataverseView -Connection $conn -PassThru `
+    -TableName contact `
+    -Name "Active Contacts" `
+    -Columns @("fullname", "emailaddress1", "telephone1", "createdon") `
+    -FetchXml @"
+<fetch>
+  <entity name='contact'>
+    <attribute name='fullname' />
+    <attribute name='emailaddress1' />
+    <attribute name='telephone1' />
+    <attribute name='createdon' />
+    <filter>
+      <condition attribute='statecode' operator='eq' value='0' />
+    </filter>
+  </entity>
+</fetch>
+"@
+```
+
+### Example: Update an Existing View
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Requires complex SDK object creation and updates
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using specific cmdlet (recommended)
+# Get existing view
+$view = Get-DataverseView -Connection $conn -TableName contact -Name "Active Contacts"
+
+# Update the view
+Set-DataverseView -Connection $conn -Id $view.Id `
+    -Name "Active Contacts (Updated)" `
+    -Columns @("fullname", "emailaddress1", "telephone1", "createdon", "modifiedon")
+```
+
+### Example: Delete a View
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Requires finding the view and deleting the record
+$view = Get-CrmRecords -EntityLogicalName savedquery `
+    -FilterAttribute name -FilterOperator eq -FilterValue "My Custom View"
+if ($view.Count -eq 1) {
+    Remove-CrmRecord -EntityLogicalName savedquery -Id $view.CrmRecords[0].ReturnProperty_Id
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using specific cmdlet (recommended)
+Remove-DataverseView -Connection $conn -Name "My Custom View" -Confirm:$false
 ```
 
 ## Key Differences and Advantages

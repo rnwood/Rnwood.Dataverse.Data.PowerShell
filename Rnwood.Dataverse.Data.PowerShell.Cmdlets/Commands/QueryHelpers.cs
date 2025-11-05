@@ -1,12 +1,19 @@
+using MarkMpn.Sql4Cds.Engine.FetchXml;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
+using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
+using System.Management.Automation;
+using System.ServiceModel;
 using System.Text;
+using System.Runtime.Serialization;
+using System.IO;
+using System.Xml.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -253,6 +260,46 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 output.AppendLine("---");
                 AppendFaultDetails(fault.InnerFault, output);
             }
+        }
+
+        /// <summary>
+        /// Gets a formatted summary of all columns in an entity.
+        /// </summary>
+        public static string GetColumnSummary(Entity entity, DataverseEntityConverter converter, bool useEllipsis = true)
+        {
+            PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(entity.Attributes.Select(a => a.Key).ToArray()), a => ValueType.Raw);
+            return string.Join("\n", psObject.Properties.Select(a => a.Name + " = " + (useEllipsis ? Ellipsis(GetValueSummary(a.Value).ToString()) : GetValueSummary(a.Value).ToString())));
+        }
+
+        /// <summary>
+        /// Truncates a string value to 100 characters with ellipsis.
+        /// </summary>
+        public static string Ellipsis(string value)
+        {
+            if (value == null)
+            {
+                return null;
+            }
+
+            if (value.Length <= 100)
+            {
+                return value;
+            }
+
+            return value.Substring(0, 100) + "...";
+        }
+
+        /// <summary>
+        /// Gets a summary of values, handling collections.
+        /// </summary>
+        public static object GetValueSummary(object value)
+        {
+            if (!(value is string) && value is IEnumerable enumerable)
+            {
+                return "[" + string.Join(", ", enumerable.Cast<object>().Select(i => GetValueSummary(i))) + "]";
+            }
+
+            return value ?? "<null>";
         }
     }
 }
