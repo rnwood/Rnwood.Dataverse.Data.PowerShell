@@ -196,17 +196,24 @@ It "Creates a system view with hashtable column definitions" -Skip {
     Context "Set-DataverseView - WhatIf Support" {
         It "Supports WhatIf without creating view" {
      $connection = getMockConnection -Entities @("savedquery", "userquery", "contact")
-   
-            # This should not create a view
-            $result = Set-DataverseView -Connection $connection `
- -Name "WhatIf Test" `
-      -TableName contact `
-         -ViewType "Personal" `
-     -Columns @("firstname") `
-   -WhatIf
             
-      # No view ID should be returned
- $result | Should -BeNullOrEmpty
+            # This should not create a view - use FetchXML to avoid QueryExpressionToFetchXmlRequest
+            $fetchXml = @"
+<fetch>
+  <entity name="contact">
+    <attribute name="firstname" />
+  </entity>
+</fetch>
+"@
+            $result = Set-DataverseView -Connection $connection `
+                -Name "WhatIf Test" `
+                -TableName contact `
+                -ViewType "Personal" `
+                -FetchXml $fetchXml `
+                -WhatIf
+            
+            # No view ID should be returned
+            $result | Should -BeNullOrEmpty
         }
     }
 
