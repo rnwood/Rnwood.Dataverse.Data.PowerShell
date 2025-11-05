@@ -22,6 +22,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // entries are combined with AND. We create a container filter for
                 // the hashtable so it integrates correctly with the parent
                 // expression which may combine multiple hashtables with OR/AND.
+                FilterExpression containerFilter = parentFilterExpression.AddFilter(LogicalOperator.And);
 
                 foreach (DictionaryEntry filterValue in filterValues)
                 {
@@ -79,7 +80,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // Create a grouping filter under the container with the
                         // effective logical operator, then recurse to process the
                         // nested hashtables into that group.
-                        FilterExpression groupFilter = parentFilterExpression.AddFilter(effectiveGroupOperator);
+                        FilterExpression groupFilter = containerFilter.AddFilter(effectiveGroupOperator);
                         ProcessHashFilterValues(groupFilter, nested.ToArray(), isExcludeFilter);
 
                         continue;
@@ -139,7 +140,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 LogicalOperator innerOp = string.Equals(k, "and", StringComparison.OrdinalIgnoreCase) ? LogicalOperator.And : LogicalOperator.Or;
                                 LogicalOperator effective = innerOp == LogicalOperator.And ? LogicalOperator.Or : LogicalOperator.And;
                                 // Create grouping filter with effective operator
-                                FilterExpression groupFilter = parentFilterExpression.AddFilter(effective);
+                                FilterExpression groupFilter = containerFilter.AddFilter(effective);
                                 ProcessHashFilterValues(groupFilter, nested.ToArray(), !isExcludeFilter);
                                 continue;
                             }
@@ -178,7 +179,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // should be combined with OR (De Morgan). Therefore we
                         // create an OR group and recurse with inverted leaf
                         // semantics.
-                        FilterExpression notGroup = parentFilterExpression.AddFilter(LogicalOperator.Or);
+                        FilterExpression notGroup = containerFilter.AddFilter(LogicalOperator.Or);
                         ProcessHashFilterValues(notGroup, nested.ToArray(), !isExcludeFilter);
                         continue;
                     }
@@ -226,7 +227,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // If this is an include filter, expand XOR to OR of (Ai AND NOT others)
                         if (!isExcludeFilter)
                         {
-                            FilterExpression xorOuter = parentFilterExpression.AddFilter(LogicalOperator.Or);
+                            FilterExpression xorOuter = containerFilter.AddFilter(LogicalOperator.Or);
                             for (int i = 0; i < n; i++)
                             {
                                 // Term: Ai AND NOT(Aj for j != i)
@@ -289,7 +290,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             // hashtables (we already constructed the required
                             // NOTs explicitly) so pass isExcludeFilter=false when
                             // recursing.
-                            FilterExpression xorCompOuter = parentFilterExpression.AddFilter(LogicalOperator.Or);
+                            FilterExpression xorCompOuter = containerFilter.AddFilter(LogicalOperator.Or);
                             ProcessHashFilterValues(xorCompOuter, complements.ToArray(), false);
                         }
 
@@ -377,33 +378,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         if (!string.IsNullOrEmpty(entityPrefix))
                         {
-                            parentFilterExpression.AddCondition(entityPrefix, attributeName, op);
+                            containerFilter.AddCondition(entityPrefix, attributeName, op);
                         }
                         else
                         {
-                            parentFilterExpression.AddCondition(attributeName, op);
+                            containerFilter.AddCondition(attributeName, op);
                         }
                     }
                     else if (value is Array array)
                     {
                         if (!string.IsNullOrEmpty(entityPrefix))
                         {
-                            parentFilterExpression.AddCondition(entityPrefix, attributeName, op, (object[])array);
+                            containerFilter.AddCondition(entityPrefix, attributeName, op, (object[])array);
                         }
                         else
                         {
-                            parentFilterExpression.AddCondition(attributeName, op, (object[])array);
+                            containerFilter.AddCondition(attributeName, op, (object[])array);
                         }
                     }
                     else
                     {
                         if (!string.IsNullOrEmpty(entityPrefix))
                         {
-                            parentFilterExpression.AddCondition(entityPrefix, attributeName, op, value);
+                            containerFilter.AddCondition(entityPrefix, attributeName, op, value);
                         }
                         else
                         {
-                            parentFilterExpression.AddCondition(attributeName, op, value);
+                            containerFilter.AddCondition(attributeName, op, value);
                         }
                     }
                 }
