@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
+using Rnwood.Dataverse.Data.PowerShell.Model;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -307,5 +308,50 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         // Normalization of link filters has been removed. Link filter
         // hashtables are processed directly by FilterHelpers so callers
         // must provide keys that target the linked/to entity.
+
+		/// <summary>
+		/// Converts the DataverseLinkEntity to a Hashtable representation.
+		/// </summary>
+		/// <returns>A Hashtable containing the link specification.</returns>
+        public PSSerializableHashtable ToHashtable()
+        {
+            var ht = new PSSerializableHashtable();
+
+            // Add the link key-value pair
+            string linkKey = $"{LinkEntity.LinkFromEntityName}.{LinkEntity.LinkFromAttributeName}";
+            string linkValue = $"{LinkEntity.LinkToEntityName}.{LinkEntity.LinkToAttributeName}";
+            ht[linkKey] = linkValue;
+
+            // Add join type if not default (Inner)
+            if (LinkEntity.JoinOperator != JoinOperator.Inner)
+            {
+                ht["type"] = LinkEntity.JoinOperator.ToString();
+            }
+
+            // Add alias if present
+            if (!string.IsNullOrEmpty(LinkEntity.EntityAlias))
+            {
+                ht["alias"] = LinkEntity.EntityAlias;
+            }
+
+            // Add filter if present
+            if (LinkEntity.LinkCriteria != null && (LinkEntity.LinkCriteria.Conditions.Count > 0 || LinkEntity.LinkCriteria.Filters.Count > 0))
+            {
+                var filterHt = FilterHelpers.ConvertFilterExpressionToHashtables(LinkEntity.LinkCriteria, null);
+                if (filterHt != null)
+                {
+                    ht["filter"] = filterHt;
+                }
+            }
+
+            // Add nested links if present
+            if (LinkEntity.LinkEntities != null && LinkEntity.LinkEntities.Count > 0)
+            {
+                var links = LinkEntity.LinkEntities.Select(le => new DataverseLinkEntity(le).ToHashtable()).ToArray();
+                ht["links"] = links;
+            }
+
+            return ht;
+        }
     }
 }

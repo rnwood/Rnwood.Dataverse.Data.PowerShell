@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
+using System.Xml.Linq;
+using Rnwood.Dataverse.Data.PowerShell.Model;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -20,7 +22,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // entries are combined with AND. We create a container filter for
                 // the hashtable so it integrates correctly with the parent
                 // expression which may combine multiple hashtables with OR/AND.
-                FilterExpression containerFilter = parentFilterExpression.AddFilter(LogicalOperator.And);
 
                 foreach (DictionaryEntry filterValue in filterValues)
                 {
@@ -78,8 +79,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // Create a grouping filter under the container with the
                         // effective logical operator, then recurse to process the
                         // nested hashtables into that group.
-                        FilterExpression groupFilter = containerFilter.AddFilter(effectiveGroupOperator);
+                        FilterExpression groupFilter = parentFilterExpression.AddFilter(effectiveGroupOperator);
                         ProcessHashFilterValues(groupFilter, nested.ToArray(), isExcludeFilter);
+
                         continue;
                     }
 
@@ -137,7 +139,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 LogicalOperator innerOp = string.Equals(k, "and", StringComparison.OrdinalIgnoreCase) ? LogicalOperator.And : LogicalOperator.Or;
                                 LogicalOperator effective = innerOp == LogicalOperator.And ? LogicalOperator.Or : LogicalOperator.And;
                                 // Create grouping filter with effective operator
-                                FilterExpression groupFilter = containerFilter.AddFilter(effective);
+                                FilterExpression groupFilter = parentFilterExpression.AddFilter(effective);
                                 ProcessHashFilterValues(groupFilter, nested.ToArray(), !isExcludeFilter);
                                 continue;
                             }
@@ -176,7 +178,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // should be combined with OR (De Morgan). Therefore we
                         // create an OR group and recurse with inverted leaf
                         // semantics.
-                        FilterExpression notGroup = containerFilter.AddFilter(LogicalOperator.Or);
+                        FilterExpression notGroup = parentFilterExpression.AddFilter(LogicalOperator.Or);
                         ProcessHashFilterValues(notGroup, nested.ToArray(), !isExcludeFilter);
                         continue;
                     }
@@ -224,7 +226,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // If this is an include filter, expand XOR to OR of (Ai AND NOT others)
                         if (!isExcludeFilter)
                         {
-                            FilterExpression xorOuter = containerFilter.AddFilter(LogicalOperator.Or);
+                            FilterExpression xorOuter = parentFilterExpression.AddFilter(LogicalOperator.Or);
                             for (int i = 0; i < n; i++)
                             {
                                 // Term: Ai AND NOT(Aj for j != i)
@@ -287,7 +289,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             // hashtables (we already constructed the required
                             // NOTs explicitly) so pass isExcludeFilter=false when
                             // recursing.
-                            FilterExpression xorCompOuter = containerFilter.AddFilter(LogicalOperator.Or);
+                            FilterExpression xorCompOuter = parentFilterExpression.AddFilter(LogicalOperator.Or);
                             ProcessHashFilterValues(xorCompOuter, complements.ToArray(), false);
                         }
 
@@ -375,33 +377,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         if (!string.IsNullOrEmpty(entityPrefix))
                         {
-                            containerFilter.AddCondition(entityPrefix, attributeName, op);
+                            parentFilterExpression.AddCondition(entityPrefix, attributeName, op);
                         }
                         else
                         {
-                            containerFilter.AddCondition(attributeName, op);
+                            parentFilterExpression.AddCondition(attributeName, op);
                         }
                     }
                     else if (value is Array array)
                     {
                         if (!string.IsNullOrEmpty(entityPrefix))
                         {
-                            containerFilter.AddCondition(entityPrefix, attributeName, op, (object[])array);
+                            parentFilterExpression.AddCondition(entityPrefix, attributeName, op, (object[])array);
                         }
                         else
                         {
-                            containerFilter.AddCondition(attributeName, op, (object[])array);
+                            parentFilterExpression.AddCondition(attributeName, op, (object[])array);
                         }
                     }
                     else
                     {
                         if (!string.IsNullOrEmpty(entityPrefix))
                         {
-                            containerFilter.AddCondition(entityPrefix, attributeName, op, value);
+                            parentFilterExpression.AddCondition(entityPrefix, attributeName, op, value);
                         }
                         else
                         {
-                            containerFilter.AddCondition(attributeName, op, value);
+                            parentFilterExpression.AddCondition(attributeName, op, value);
                         }
                     }
                 }
@@ -514,6 +516,56 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             throw new InvalidDataException($"Item of type {o.GetType().FullName} cannot be converted to a hashtable.");
+        }
+
+        public static PSSerializableHashtable ConvertFilterExpressionToHashtables(FilterExpression filter, int? queryType)
+        {
+            if (filter == null || (filter.Conditions.Count == 0 && filter.Filters.Count == 0))
+            {
+                return null;
+            }
+
+            var ht = new PSSerializableHashtable();
+            string op = filter.FilterOperator == LogicalOperator.Or ? "or" : "and";
+
+
+            List<Hashtable> list = new List<Hashtable>();
+
+            if (filter.Conditions.Any())
+            {
+                // Add conditions
+                var columnsHt = new PSSerializableHashtable();
+                foreach (var condition in filter.Conditions)
+                {
+                    var condHt = new PSSerializableHashtable();
+                    condHt["operator"] = condition.Operator.ToString();
+                    if (condition.Values.Count == 1)
+                    {
+                        condHt["value"] = condition.Values[0];
+                    }
+                    else if (condition.Values.Count > 1)
+                    {
+                        condHt["value"] = condition.Values.ToArray();
+                    }
+                    else
+                    {
+                        condHt["value"] = null;
+                    }
+
+                    columnsHt[condition.AttributeName] = condHt;
+                }
+                list.Add(columnsHt);
+            }
+
+            // Add nested filters
+            foreach (var nestedFilter in filter.Filters)
+            {
+                list.Add(ConvertFilterExpressionToHashtables(nestedFilter, queryType));
+            }
+
+            ht[op] = list.ToArray();            
+
+            return ht;
         }
     }
 }

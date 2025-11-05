@@ -286,6 +286,8 @@ Use conventional commit messages in PR descriptions for automatic versioning.
 
 ## Coding Conventions
 
+DO NOT create summary documents unless requested.
+
 ### C# Cmdlets
 - Use `[Cmdlet(Verb, "Noun")]` with approved verbs (Get, Set, Remove, Invoke)
 - Use `[Parameter(Mandatory=$bool, Position=$int, ValueFromPipeline=$bool, ParameterSetName=$string)]`

@@ -20,7 +20,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets whether this is a system view (savedquery) or personal view (userquery). Default is system view.
         /// </summary>
-        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Remove a system view (savedquery) instead of a personal view (userquery)")]
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Work with a system view (savedquery) instead of a personal view (userquery)")]
         [ValidateSet("System", "Personal")]
         public string ViewType { get; set; } = "System";
 
@@ -70,11 +70,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     throw;
                 }
-            }
-            catch (Exception ex)
-            {
-                WriteVerbose($"Unexpected exception type: {ex.GetType().FullName}, Message: {ex.Message}");
-                throw;
             }
         }
     }
