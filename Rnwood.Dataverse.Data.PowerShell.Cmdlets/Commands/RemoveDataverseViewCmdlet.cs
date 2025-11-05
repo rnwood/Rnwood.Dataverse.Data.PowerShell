@@ -37,7 +37,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             try
             {
-                // base.ProcessRecord();
+                base.ProcessRecord();
 
                 string entityName = ViewType == "System" ? "savedquery" : "userquery";
 
