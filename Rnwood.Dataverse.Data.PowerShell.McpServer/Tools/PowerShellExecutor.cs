@@ -16,10 +16,30 @@ public class PowerShellExecutor : IDisposable
 
     public PowerShellExecutor()
     {
-        // Find the module path - it should be in the output directory
+        // Find the module path - try multiple locations
         var assemblyDir = Path.GetDirectoryName(typeof(PowerShellExecutor).Assembly.Location)!;
+        
+        // Try development path first (from bin/Debug/net8.0)
         _modulePath = Path.Combine(assemblyDir, "..", "..", "..", "Rnwood.Dataverse.Data.PowerShell", "bin", "Debug", "netstandard2.0");
         _modulePath = Path.GetFullPath(_modulePath);
+        
+        // If that doesn't exist, try relative to current directory
+        if (!Directory.Exists(_modulePath) || !File.Exists(Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1")))
+        {
+            // Try from Release build
+            _modulePath = Path.Combine(assemblyDir, "..", "..", "..", "Rnwood.Dataverse.Data.PowerShell", "bin", "Release", "netstandard2.0");
+            _modulePath = Path.GetFullPath(_modulePath);
+        }
+        
+        // If still not found, check environment variable
+        if (!Directory.Exists(_modulePath) || !File.Exists(Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1")))
+        {
+            var envPath = Environment.GetEnvironmentVariable("DATAVERSE_MODULE_PATH");
+            if (!string.IsNullOrEmpty(envPath))
+            {
+                _modulePath = envPath;
+            }
+        }
     }
 
     public string StartScript(string script)
