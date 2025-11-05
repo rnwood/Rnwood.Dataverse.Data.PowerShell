@@ -10,17 +10,24 @@ using System.Threading.Tasks;
 
 namespace Rnwood.Dataverse.Data.PowerShell.McpServer.Tools;
 
+public class PowerShellExecutorConfig
+{
+    public string? ConnectionName { get; set; }
+    public bool UseRestrictedLanguageMode { get; set; } = true;
+    public bool EnableProviders { get; set; } = false;
+}
+
 public class PowerShellExecutor : IDisposable
 {
-    private readonly ConcurrentDictionary<string, ScriptSession> _sessions = new();
+    private readonly ConcurrentDictionary<string, PersistentSession> _sessions = new();
     private readonly string _modulePath;
-    private readonly string? _connectionName;
+    private readonly PowerShellExecutorConfig _config;
     private bool _isInitialized;
     private readonly object _initLock = new();
 
-    public PowerShellExecutor(string? connectionName = null)
+    public PowerShellExecutor(PowerShellExecutorConfig config)
     {
-        _connectionName = connectionName;
+        _config = config;
         
         // Find the module path - try multiple locations
         var assemblyDir = Path.GetDirectoryName(typeof(PowerShellExecutor).Assembly.Location)!;
@@ -57,9 +64,9 @@ public class PowerShellExecutor : IDisposable
             if (_isInitialized) return;
 
             // Test that we can load the connection
-            if (!string.IsNullOrEmpty(_connectionName))
+            if (!string.IsNullOrEmpty(_config.ConnectionName))
             {
-                var testScript = $"Import-Module '{Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1")}'; $connection = Get-DataverseConnection -Name '{_connectionName}'; if ($null -eq $connection) {{ throw 'Failed to load connection' }}";
+                var testScript = $"Import-Module '{Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1")}'; $connection = Get-DataverseConnection -Name '{_config.ConnectionName}'; if ($null -eq $connection) {{ throw 'Failed to load connection' }}";
                 
                 using var runspace = RunspaceFactory.CreateRunspace();
                 runspace.Open();
@@ -73,12 +80,12 @@ public class PowerShellExecutor : IDisposable
                     if (ps.HadErrors)
                     {
                         var errorMsg = string.Join("\n", ps.Streams.Error.Select(e => e.ToString()));
-                        throw new InvalidOperationException($"Failed to load named connection '{_connectionName}'.\n\n{errorMsg}\n\nTo save a connection, use:\nGet-DataverseConnection -Url <your-url> -Interactive -Name '{_connectionName}' -SetAsDefault\n\nOr list saved connections with:\nGet-DataverseConnection -List");
+                        throw new InvalidOperationException($"Failed to load named connection '{_config.ConnectionName}'.\n\n{errorMsg}\n\nTo save a connection, use:\nGet-DataverseConnection -Url <your-url> -Interactive -Name '{_config.ConnectionName}' -SetAsDefault\n\nOr list saved connections with:\nGet-DataverseConnection -List");
                     }
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidOperationException($"Failed to validate connection '{_connectionName}': {ex.Message}\n\nTo save a connection, use:\nGet-DataverseConnection -Url <your-url> -Interactive -Name '{_connectionName}' -SetAsDefault\n\nOr list saved connections with:\nGet-DataverseConnection -List", ex);
+                    throw new InvalidOperationException($"Failed to validate connection '{_config.ConnectionName}': {ex.Message}\n\nTo save a connection, use:\nGet-DataverseConnection -Url <your-url> -Interactive -Name '{_config.ConnectionName}' -SetAsDefault\n\nOr list saved connections with:\nGet-DataverseConnection -List", ex);
                 }
             }
 
@@ -162,30 +169,52 @@ $helpObj | ConvertTo-Json -Depth 10
         return results.FirstOrDefault()?.ToString() ?? "{}";
     }
 
-    public string StartScript(string script)
+    public string CreateSession()
     {
         EnsureInitialized();
         
         var sessionId = Guid.NewGuid().ToString("N");
-        var session = new ScriptSession(sessionId, script, _modulePath, _connectionName);
+        var session = new PersistentSession(sessionId, _modulePath, _config);
         
         if (!_sessions.TryAdd(sessionId, session))
         {
             throw new InvalidOperationException($"Session {sessionId} already exists");
         }
 
-        session.Start();
+        session.Initialize();
         return sessionId;
     }
 
-    public ScriptOutputResult GetOutput(string sessionId, bool onlyNew)
+    public string RunScriptInSession(string sessionId, string script)
     {
         if (!_sessions.TryGetValue(sessionId, out var session))
         {
             throw new ArgumentException($"Session {sessionId} not found", nameof(sessionId));
         }
 
-        return session.GetOutput(onlyNew);
+        return session.RunScript(script);
+    }
+
+    public ScriptOutputResult GetScriptOutput(string sessionId, string scriptExecutionId, bool onlyNew)
+    {
+        if (!_sessions.TryGetValue(sessionId, out var session))
+        {
+            throw new ArgumentException($"Session {sessionId} not found", nameof(sessionId));
+        }
+
+        return session.GetScriptOutput(scriptExecutionId, onlyNew);
+    }
+
+    public void EndSession(string sessionId)
+    {
+        if (_sessions.TryRemove(sessionId, out var session))
+        {
+            session.Dispose();
+        }
+        else
+        {
+            throw new ArgumentException($"Session {sessionId} not found", nameof(sessionId));
+        }
     }
 
     public void Dispose()
@@ -198,12 +227,138 @@ $helpObj | ConvertTo-Json -Depth 10
     }
 }
 
-public class ScriptSession : IDisposable
+
+
+public class PersistentSession : IDisposable
 {
     private readonly string _sessionId;
-    private readonly string _script;
     private readonly string _modulePath;
-    private readonly string? _connectionName;
+    private readonly PowerShellExecutorConfig _config;
+    private Runspace? _runspace;
+    private readonly ConcurrentDictionary<string, ScriptExecution> _scriptExecutions = new();
+    private readonly object _lock = new();
+    private bool _isDisposed;
+
+    public PersistentSession(string sessionId, string modulePath, PowerShellExecutorConfig config)
+    {
+        _sessionId = sessionId;
+        _modulePath = modulePath;
+        _config = config;
+    }
+
+    public void Initialize()
+    {
+        lock (_lock)
+        {
+            if (_runspace != null)
+            {
+                throw new InvalidOperationException("Session already initialized");
+            }
+
+            var iss = _config.EnableProviders ? InitialSessionState.CreateDefault() : InitialSessionState.CreateDefault();
+            
+            if (!_config.EnableProviders)
+            {
+                // Disable all providers
+                iss.Providers.Clear();
+            }
+
+            // Set language mode
+            if (_config.UseRestrictedLanguageMode)
+            {
+                iss.LanguageMode = PSLanguageMode.RestrictedLanguage;
+            }
+
+            _runspace = RunspaceFactory.CreateRunspace(iss);
+            _runspace.Open();
+
+            // Import the Dataverse module
+            var moduleManifest = Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1");
+            if (File.Exists(moduleManifest))
+            {
+                using var ps = System.Management.Automation.PowerShell.Create();
+                ps.Runspace = _runspace;
+                ps.AddCommand("Import-Module").AddParameter("Name", moduleManifest);
+                ps.Invoke();
+                
+                if (ps.HadErrors)
+                {
+                    var errors = string.Join("\n", ps.Streams.Error.Select(e => e.ToString()));
+                    throw new InvalidOperationException($"Failed to import module: {errors}");
+                }
+            }
+
+            // Load the default connection if specified
+            if (!string.IsNullOrEmpty(_config.ConnectionName))
+            {
+                using var ps = System.Management.Automation.PowerShell.Create();
+                ps.Runspace = _runspace;
+                ps.AddScript($"$connection = Get-DataverseConnection -Name '{_config.ConnectionName}'");
+                ps.Invoke();
+                
+                if (ps.HadErrors)
+                {
+                    var errors = string.Join("\n", ps.Streams.Error.Select(e => e.ToString()));
+                    throw new InvalidOperationException($"Failed to load connection: {errors}");
+                }
+            }
+        }
+    }
+
+    public string RunScript(string script)
+    {
+        if (_isDisposed)
+        {
+            throw new ObjectDisposedException("Session has been disposed");
+        }
+
+        var executionId = Guid.NewGuid().ToString("N");
+        var execution = new ScriptExecution(executionId, script, _runspace!);
+        
+        if (!_scriptExecutions.TryAdd(executionId, execution))
+        {
+            throw new InvalidOperationException($"Script execution {executionId} already exists");
+        }
+
+        execution.Start();
+        return executionId;
+    }
+
+    public ScriptOutputResult GetScriptOutput(string scriptExecutionId, bool onlyNew)
+    {
+        if (!_scriptExecutions.TryGetValue(scriptExecutionId, out var execution))
+        {
+            throw new ArgumentException($"Script execution {scriptExecutionId} not found", nameof(scriptExecutionId));
+        }
+
+        return execution.GetOutput(onlyNew);
+    }
+
+    public void Dispose()
+    {
+        lock (_lock)
+        {
+            if (_isDisposed) return;
+            
+            _isDisposed = true;
+            
+            foreach (var execution in _scriptExecutions.Values)
+            {
+                execution.Dispose();
+            }
+            _scriptExecutions.Clear();
+            
+            _runspace?.Dispose();
+            _runspace = null;
+        }
+    }
+}
+
+public class ScriptExecution : IDisposable
+{
+    private readonly string _executionId;
+    private readonly string _script;
+    private readonly Runspace _runspace;
     private System.Management.Automation.PowerShell? _powerShell;
     private readonly StringBuilder _output = new();
     private readonly StringBuilder _error = new();
@@ -212,12 +367,11 @@ public class ScriptSession : IDisposable
     private Exception? _exception;
     private readonly object _lock = new();
 
-    public ScriptSession(string sessionId, string script, string modulePath, string? connectionName)
+    public ScriptExecution(string executionId, string script, Runspace runspace)
     {
-        _sessionId = sessionId;
+        _executionId = executionId;
         _script = script;
-        _modulePath = modulePath;
-        _connectionName = connectionName;
+        _runspace = runspace;
     }
 
     public void Start()
@@ -242,58 +396,8 @@ public class ScriptSession : IDisposable
 
     private void ExecuteScript()
     {
-        var iss = InitialSessionState.CreateDefault();
-        
-        // Disable all providers except the module provider
-        iss.Providers.Clear();
-        
-        // Create minimal runspace
-        using var runspace = RunspaceFactory.CreateRunspace(iss);
-        runspace.Open();
-
         _powerShell = System.Management.Automation.PowerShell.Create();
-        _powerShell.Runspace = runspace;
-
-        // Import the Dataverse module
-        var moduleManifest = Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1");
-        if (File.Exists(moduleManifest))
-        {
-            _powerShell.AddCommand("Import-Module").AddParameter("Name", moduleManifest);
-            _powerShell.Invoke();
-            _powerShell.Commands.Clear();
-            
-            if (_powerShell.HadErrors)
-            {
-                lock (_lock)
-                {
-                    foreach (var error in _powerShell.Streams.Error)
-                    {
-                        _error.AppendLine($"Module import error: {error}");
-                    }
-                }
-                _powerShell.Streams.Error.Clear();
-            }
-        }
-
-        // Load the default connection if specified
-        if (!string.IsNullOrEmpty(_connectionName))
-        {
-            _powerShell.AddScript($"$connection = Get-DataverseConnection -Name '{_connectionName}'");
-            _powerShell.Invoke();
-            _powerShell.Commands.Clear();
-            
-            if (_powerShell.HadErrors)
-            {
-                lock (_lock)
-                {
-                    foreach (var error in _powerShell.Streams.Error)
-                    {
-                        _error.AppendLine($"Connection load error: {error}");
-                    }
-                }
-                _powerShell.Streams.Error.Clear();
-            }
-        }
+        _powerShell.Runspace = _runspace;
 
         // Execute the script
         _powerShell.AddScript(_script);
@@ -369,7 +473,7 @@ public class ScriptSession : IDisposable
                 
                 return new ScriptOutputResult
                 {
-                    SessionId = _sessionId,
+                    SessionId = _executionId,
                     Output = newContent,
                     IsComplete = _isComplete,
                     HasError = _exception != null || _error.Length > 0
@@ -379,7 +483,7 @@ public class ScriptSession : IDisposable
             {
                 return new ScriptOutputResult
                 {
-                    SessionId = _sessionId,
+                    SessionId = _executionId,
                     Output = fullOutput,
                     IsComplete = _isComplete,
                     HasError = _exception != null || _error.Length > 0
