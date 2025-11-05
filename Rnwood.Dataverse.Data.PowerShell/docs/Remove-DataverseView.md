@@ -18,7 +18,7 @@ Remove-DataverseView -Id <Guid> [-ViewType <String>] [-IfExists] [-Connection <S
 ```
 
 ## DESCRIPTION
-The Remove-DataverseView cmdlet deletes Dataverse views from the savedquery (system views) and userquery (personal views) entities. Views define how records are displayed in model-driven apps and other Dataverse interfaces.
+The Remove-DataverseView cmdlet deletes Dataverse views from the savedquery (system views) or userquery (personal views) entities. Views define how records are displayed in model-driven apps and other Dataverse interfaces.
 
 The cmdlet supports safe deletion with confirmation prompts and WhatIf support. Use the -IfExists parameter to suppress errors when the view doesn't exist.
 
@@ -29,35 +29,57 @@ The cmdlet supports safe deletion with confirmation prompts and WhatIf support. 
 PS C:\> Remove-DataverseView -Connection $c -Id "12345678-1234-1234-1234-123456789012"
 ```
 
-Removes a personal view by its ID.
+Removes a personal view (default) by its ID. Prompts for confirmation before deletion.
 
 ### Example 2: Remove a system view
 ```powershell
-PS C:\> Remove-DataverseView -Connection $c -Id "12345678-1234-1234-1234-123456789012" -SystemView
+PS C:\> Remove-DataverseView -Connection $c -Id "12345678-1234-1234-1234-123456789012" -ViewType "System"
 ```
 
-Removes a system view by its ID.
+Removes a system view by its ID. ViewType must be specified when deleting system views.
 
 ### Example 3: Remove view if it exists
 ```powershell
-PS C:\> Remove-DataverseView -Connection $c -Id "12345678-1234-1234-1234-123456789012" -IfExists
+PS C:\> Remove-DataverseView -Connection $c -Id "12345678-1234-1234-1234-123456789012" -IfExists -Confirm:$false
 ```
 
-Removes a view if it exists, without raising an error if it doesn't.
+Removes a view if it exists, without raising an error if it doesn't exist. Suppresses the confirmation prompt.
 
-### Example 4: Remove multiple views
+### Example 4: Remove multiple views via pipeline
 ```powershell
-PS C:\> Get-DataverseView -Connection $c -Name "Test*" | Remove-DataverseView -Connection $c
+PS C:\> Get-DataverseView -Connection $c -Name "Test*" |
+    Remove-DataverseView -Connection $c -Confirm:$false
 ```
 
-Finds all views whose names start with "Test" and removes them.
+Finds all views whose names start with "Test" and removes them without confirmation prompts. The ViewType is automatically inferred from the pipeline input.
 
 ### Example 5: Remove with confirmation suppressed
 ```powershell
-PS C:\> Remove-DataverseView -Connection $c -Id "12345678-1234-1234-1234-123456789012" -Confirm:$false
+PS C:\> Remove-DataverseView -Connection $c -Id $viewId -ViewType "Personal" -Confirm:$false
 ```
 
-Removes a view without prompting for confirmation.
+Removes a personal view without prompting for confirmation.
+
+### Example 6: Use WhatIf to preview deletion
+```powershell
+PS C:\> Remove-DataverseView -Connection $c -Id $viewId -ViewType "System" -WhatIf
+```
+
+Shows what would happen if the view were deleted, without actually deleting it.
+
+### Example 7: Remove views in a safe workflow
+```powershell
+PS C:\> # Get test views
+PS C:\> $testViews = Get-DataverseView -Connection $c -Name "DEV_*"
+PS C:\> 
+PS C:\> # Preview what will be deleted
+PS C:\> $testViews | Remove-DataverseView -Connection $c -WhatIf
+PS C:\> 
+PS C:\> # Confirm and delete
+PS C:\> $testViews | Remove-DataverseView -Connection $c
+```
+
+Demonstrates a safe workflow: first preview with WhatIf, then delete with confirmation prompts.
 
 ## PARAMETERS
 
@@ -71,7 +93,7 @@ Aliases: cf
 
 Required: False
 Position: Named
-Default value: None
+Default value: True
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -94,7 +116,8 @@ Accept wildcard characters: False
 ```
 
 ### -Id
-ID of the view to remove
+ID of the view to remove.
+Required parameter.
 
 ```yaml
 Type: Guid
@@ -109,7 +132,8 @@ Accept wildcard characters: False
 ```
 
 ### -IfExists
-If specified, the cmdlet will not raise an error if the view does not exist
+If specified, the cmdlet will not raise an error if the view does not exist.
+Useful for idempotent scripts that may run multiple times.
 
 ```yaml
 Type: SwitchParameter
@@ -155,7 +179,9 @@ Accept wildcard characters: False
 ```
 
 ### -ViewType
-Remove a system view (savedquery) instead of a personal view (userquery)
+Specify "System" to remove a system view (savedquery) or "Personal" to remove a personal view (userquery).
+Default is "Personal" if not specified.
+When used with pipeline input from Get-DataverseView, this parameter is automatically inferred.
 
 ```yaml
 Type: String
@@ -164,7 +190,7 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
+Default value: Personal
 Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
@@ -180,11 +206,31 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Object
 ## NOTES
 
-- Prompts for confirmation by default; use -Confirm:$false to suppress.
-- System views (savedquery) are accessible to all users; personal views (userquery) are user-specific.
-- Use -IfExists to avoid errors when the view may have already been deleted.
-- Supports WhatIf to preview the operation without executing it.
-- Cannot be used to delete default system views in some cases.
+**Safety Features:**
+- Prompts for confirmation by default (use `-Confirm:$false` to suppress)
+- Supports WhatIf to preview operations without making changes
+- IfExists parameter prevents errors when view doesn't exist
+
+**View Types:**
+- Personal views (userquery): Default, user-specific views
+- System views (savedquery): Shared views accessible to all users
+- Some system views may be managed and cannot be deleted
+
+**Pipeline Support:**
+- Accepts view objects from Get-DataverseView
+- Automatically extracts Id and ViewType from pipeline input
+- Enables scenarios like `Get-DataverseView | Where-Object | Remove-DataverseView`
+
+**Error Handling:**
+- Without -IfExists: Throws error if view doesn't exist
+- With -IfExists: Silently continues if view doesn't exist
+- Writes verbose output when -IfExists suppresses an error
+
+**Best Practices:**
+- Always use -WhatIf first to preview deletions
+- Use -IfExists in idempotent scripts
+- Be careful with system views - they affect all users
+- Consider backing up views with Get-DataverseView before deletion
 
 ## RELATED LINKS
 
@@ -193,3 +239,5 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 [Get-DataverseView](Get-DataverseView.md)
 
 [Set-DataverseView](Set-DataverseView.md)
+
+[Querying Records](../../docs/core-concepts/querying.md)

@@ -22,11 +22,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             }
 
             var sb = new StringBuilder();
-            sb.Append("@{");
-
-            var entries = Keys.Cast<object>().Select(key => $"{FormatValue(key)} = {FormatValue(this[key])}");
-            sb.Append(string.Join("; ", entries));
-
+            sb.AppendLine("@{");
+            foreach (var key in Keys.Cast<object>())
+            {
+                sb.AppendLine($"    {FormatValue(key)} = {FormatValue(this[key])}");
+            }
             sb.Append("}");
             return sb.ToString();
         }
@@ -72,8 +72,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
 
             if (value is Array array)
             {
-                var elements = array.Cast<object>().Select(FormatValue);
-                return $"@({string.Join(", ", elements)})";
+                if (array.Length == 0)
+                {
+                    return "@()";
+                }
+                var sb = new StringBuilder();
+                sb.AppendLine("@(");
+                foreach (var element in array)
+                {
+                    sb.AppendLine($"    {FormatValue(element)},");
+                }
+                sb.Append(")");
+                return sb.ToString();
             }
 
             // For other types, use the default string representation

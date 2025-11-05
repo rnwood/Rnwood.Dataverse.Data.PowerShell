@@ -27,7 +27,7 @@
     - [Get by Name](#get-by-name)
     - [Filter by Type](#filter-by-type)
     - [Filter by Query Type](#filter-by-query-type)
-    - [Get Raw XML](#get-raw-xml)
+    - [Get Raw Values](#get-raw-values)
   - [Deleting Views](#deleting-views)
     - [Delete by ID](#delete-by-id)
     - [Delete with Confirmation](#delete-with-confirmation)
@@ -35,8 +35,8 @@
     - [Delete System Views](#delete-system-views)
     - [Delete Multiple Views](#delete-multiple-views)
   - [Control Flags](#control-flags)
-    - [NoCreate and NoUpdate](#nocreate-and-noupdate)
-    - [PassThru](#passthru)
+ - [NoCreate and NoUpdate](#nocreate-and-noupdate)
+  - [PassThru](#passthru)
   - [Common Scenarios](#common-scenarios)
     - [Clone a View](#clone-a-view)
     - [Create Views for Multiple Tables](#create-views-for-multiple-tables)
@@ -63,12 +63,14 @@ Dataverse views define how records are displayed in model-driven apps and other 
 - **Column management**: Add, remove, or update columns with width configuration
 - **Complex filters**: Support for nested AND/OR/NOT/XOR logical expressions
 - **Wildcard searches**: Find views using pattern matching
+- **Default views**: Mark views as default for their table
+- **Query types**: Support all Dataverse view types (MainApplicationView, AdvancedSearch, SubGrid, etc.)
 
 ## Creating Views
 
 ### Basic View Creation
 
-Create a personal view with simple filters:
+Create a personal view with simple filters (default):
 
 ```powershell
 $viewId = Set-DataverseView -Connection $c -PassThru `
@@ -83,9 +85,10 @@ $viewId = Set-DataverseView -Connection $c -PassThru `
 Create a system view accessible to all users:
 
 ```powershell
-Set-DataverseView -Connection $c -PassThru -SystemView `
+Set-DataverseView -Connection $c -PassThru `
     -Name "All Active Contacts" `
     -TableName contact `
+    -ViewType "System" `
     -Columns @("fullname", "emailaddress1", "telephone1") `
     -FilterValues @{ statecode = 0 }
 ```
@@ -95,18 +98,19 @@ Set-DataverseView -Connection $c -PassThru -SystemView `
 Use nested hashtables for complex logical expressions:
 
 ```powershell
-Set-DataverseView -Connection $c -PassThru -SystemView `
+Set-DataverseView -Connection $c -PassThru `
     -Name "High Value Opportunities" `
-    -TableName opportunity `
+-TableName opportunity `
+    -ViewType "System" `
     -Columns @("name", "estimatedvalue", "closeprobability", "actualclosedate") `
     -FilterValues @{
         and = @(
-            @{ statecode = 0 },
+          @{ statecode = 0 },
             @{ or = @(
-                @{ estimatedvalue = @{ value = 100000; operator = 'GreaterThan' } },
-                @{ closeprobability = @{ value = 80; operator = 'GreaterThan' } }
+@{ estimatedvalue = @{ value = 100000; operator = 'GreaterThan' } },
+@{ closeprobability = @{ value = 80; operator = 'GreaterThan' } }
             )}
-        )
+    )
     }
 ```
 
@@ -116,13 +120,13 @@ Specify column widths and display order:
 
 ```powershell
 Set-DataverseView -Connection $c -PassThru `
-    -Name "Contact Details" `
+  -Name "Contact Details" `
     -TableName contact `
     -Columns @(
-        @{ name = "firstname"; width = 100 },
+  @{ name = "firstname"; width = 100 },
         @{ name = "lastname"; width = 150 },
-        @{ name = "emailaddress1"; width = 250 },
-        @{ name = "telephone1"; width = 120 }
+     @{ name = "emailaddress1"; width = 250 },
+    @{ name = "telephone1"; width = 120 }
     ) `
     -FilterValues @{ statecode = 0 }
 ```
@@ -135,7 +139,7 @@ For advanced scenarios, use FetchXML directly:
 $fetchXml = @"
 <fetch>
   <entity name="contact">
-    <attribute name="firstname" />
+<attribute name="firstname" />
     <attribute name="lastname" />
     <attribute name="emailaddress1" />
     <filter type="and">
@@ -157,15 +161,19 @@ Set-DataverseView -Connection $c -PassThru `
 Create views with related data using link entities:
 
 ```powershell
+# Using Links parameter with DataverseLinkEntity objects
 Set-DataverseView -Connection $c -PassThru `
     -Name "Contacts with Accounts" `
-    -TableName contact `
-    -Columns @("firstname", "lastname", "emailaddress1", "account.name") `
+  -TableName contact `
+    -Columns @("firstname", "lastname", "emailaddress1") `
     -Links @(
-        New-DataverseLinkEntity -LinkToEntityName "account" `
-                               -LinkFromAttributeName "parentcustomerid" `
-                               -LinkToAttributeName "accountid" `
-                               -EntityAlias "account"
+        [PSCustomObject]@{
+            LinkToEntityName = "account"
+            LinkFromAttributeName = "parentcustomerid"
+   LinkToAttributeName = "accountid"
+EntityAlias = "account"
+   Columns = @("name")
+        }
     ) `
     -FilterValues @{ statecode = 0 }
 ```
@@ -177,10 +185,10 @@ For complete control over view layout, specify custom LayoutXML:
 ```powershell
 $layoutXml = @"
 <grid name="resultset" object="contact" jump="contactid" select="1" icon="1" preview="1">
-  <row name="result" id="contactid">
+<row name="result" id="contactid">
     <cell name="firstname" width="150" />
     <cell name="lastname" width="150" />
-    <cell name="emailaddress1" width="200" />
+  <cell name="emailaddress1" width="200" />
   </row>
 </grid>
 "@
@@ -196,11 +204,12 @@ Set-DataverseView -Connection $c -PassThru `
 
 ### Update with Upsert Pattern
 
-Provide the view ID to update an existing view:
+Provide the view ID to update an existing view. You must also specify the ViewType:
 
 ```powershell
 # Update view name and description
 Set-DataverseView -Connection $c -Id $viewId `
+    -ViewType "Personal" `
     -Name "Updated View Name" `
     -Description "Updated description"
 ```
@@ -211,9 +220,10 @@ Add new columns to an existing view:
 
 ```powershell
 Set-DataverseView -Connection $c -Id $viewId `
+    -ViewType "Personal" `
     -AddColumns @(
-        @{ name = "address1_city"; width = 150 },
-        @{ name = "birthdate"; width = 100 }
+     @{ name = "address1_city"; width = 150 },
+     @{ name = "birthdate"; width = 100 }
     )
 ```
 
@@ -222,13 +232,15 @@ Add columns at specific positions:
 ```powershell
 # Insert before a specific column
 Set-DataverseView -Connection $c -Id $viewId `
+    -ViewType "Personal" `
     -AddColumns @("jobtitle") `
-    -InsertBefore "emailaddress1"
+    -InsertColumnsBefore "emailaddress1"
 
 # Insert after a specific column
 Set-DataverseView -Connection $c -Id $viewId `
+    -ViewType "Personal" `
     -AddColumns @("mobilephone", "fax") `
-    -InsertAfter "telephone1"
+    -InsertColumnsAfter "telephone1"
 ```
 
 ### Remove Columns
@@ -237,6 +249,7 @@ Remove columns from a view:
 
 ```powershell
 Set-DataverseView -Connection $c -Id $viewId `
+    -ViewType "Personal" `
     -RemoveColumns @("fax", "address1_line1")
 ```
 
@@ -246,6 +259,7 @@ Change column widths or other properties:
 
 ```powershell
 Set-DataverseView -Connection $c -Id $viewId `
+  -ViewType "Personal" `
     -UpdateColumns @(
         @{ name = "firstname"; width = 200 },
         @{ name = "emailaddress1"; width = 300 }
@@ -258,10 +272,11 @@ Change the view's filter criteria:
 
 ```powershell
 Set-DataverseView -Connection $c -Id $viewId `
+    -ViewType "Personal" `
     -FilterValues @{
-        and = @(
-            @{ statecode = 0 },
-            @{ emailaddress1 = @{ operator = 'NotNull' } }
+      and = @(
+      @{ statecode = 0 },
+      @{ emailaddress1 = @{ operator = 'NotNull' } }
         )
     }
 ```
@@ -272,6 +287,7 @@ Perform multiple updates in one call:
 
 ```powershell
 Set-DataverseView -Connection $c -Id $viewId `
+    -ViewType "Personal" `
     -Name "Updated Contact View" `
     -Description "Shows active contacts with email" `
     -AddColumns @(@{ name = "mobilephone"; width = 120 }) `
@@ -324,13 +340,13 @@ Get only system or personal views:
 
 ```powershell
 # System views only
-Get-DataverseView -Connection $c -SystemView
+Get-DataverseView -Connection $c -ViewType "System"
 
 # Personal views only
-Get-DataverseView -Connection $c -PersonalView
+Get-DataverseView -Connection $c -ViewType "Personal"
 
 # System views for a specific table
-Get-DataverseView -Connection $c -TableName contact -SystemView
+Get-DataverseView -Connection $c -TableName contact -ViewType "System"
 ```
 
 ### Filter by Query Type
@@ -343,30 +359,40 @@ Get-DataverseView -Connection $c -QueryType AdvancedSearch
 
 # Get Lookup views
 Get-DataverseView -Connection $c -QueryType LookupView
+
+# Get Main Application views
+Get-DataverseView -Connection $c -QueryType MainApplicationView
 ```
 
 Common query types:
-- `OtherView` — Other View
-- `AdvancedSearch` — Advanced Search (default)
-- `AdvancedSearch` — Advanced Search (default)
-- `SubGrid` — Sub-Grid
-- `LookupView` — Lookup View
 - `MainApplicationView` — Main Application View
+- `AdvancedSearch` — Advanced Search (default for new views)
+- `SubGrid` — Sub-Grid
+- `QuickFindSearch` — Quick Find Search
+- `LookupView` — Lookup View
+- `Reporting` — Reporting View
 
-### Get Raw XML
+### Get Raw Values
 
-Retrieve views with raw FetchXML and LayoutXML instead of parsed properties:
+Retrieve views with raw attribute values instead of parsed properties:
 
 ```powershell
-$view = Get-DataverseView -Connection $c -Id $viewId -RawXml
-# $view.fetchxml contains the raw FetchXML
-# $view.layoutxml contains the raw LayoutXML
-# $view.Columns contains parsed column information from LayoutXML
+$view = Get-DataverseView -Connection $c -Id $viewId -Raw
+# $view contains all raw attributes from the savedquery/userquery record
+# Including fetchxml, layoutxml, querytype, etc.
 ```
+
+By default, Get-DataverseView returns parsed properties:
+- `Columns` — Array of column configurations with names and widths
+- `Filters` — Parsed filter hashtables
+- `Links` — Parsed link entity configurations
+- `OrderBy` — Array of sort specifications
 
 ## Deleting Views
 
 ### Delete by ID
+
+Delete a personal view (default):
 
 ```powershell
 Remove-DataverseView -Connection $c -Id $viewId
@@ -374,10 +400,10 @@ Remove-DataverseView -Connection $c -Id $viewId
 
 ### Delete with Confirmation
 
-The cmdlet prompts for confirmation by default:
+The cmdlet prompts for confirmation by default. Suppress with `-Confirm:$false`:
 
 ```powershell
-Remove-DataverseView -Connection $c -Id $viewId
+Remove-DataverseView -Connection $c -Id $viewId -Confirm:$false
 ```
 
 ### Delete if Exists
@@ -385,15 +411,15 @@ Remove-DataverseView -Connection $c -Id $viewId
 Suppress errors if the view doesn't exist:
 
 ```powershell
-Remove-DataverseView -Connection $c -Id $viewId -IfExists
+Remove-DataverseView -Connection $c -Id $viewId -IfExists -Confirm:$false
 ```
 
 ### Delete System Views
 
-Specify `-SystemView` when deleting system views:
+Specify `-ViewType "System"` when deleting system views:
 
 ```powershell
-Remove-DataverseView -Connection $c -Id $viewId -SystemView
+Remove-DataverseView -Connection $c -Id $viewId -ViewType "System" -Confirm:$false
 ```
 
 ### Delete Multiple Views
@@ -402,7 +428,7 @@ Use the pipeline to delete multiple views:
 
 ```powershell
 Get-DataverseView -Connection $c -Name "Test*" |
-    Remove-DataverseView -Connection $c
+    Remove-DataverseView -Connection $c -Confirm:$false
 ```
 
 ## Control Flags
@@ -413,10 +439,17 @@ Control whether views are created or updated:
 
 ```powershell
 # Only update if exists, don't create
-Set-DataverseView -Connection $c -Id $viewId -Name "Updated" -NoCreate
+Set-DataverseView -Connection $c -Id $viewId `
+    -ViewType "Personal" `
+    -Name "Updated" `
+  -NoCreate
 
 # Only create if doesn't exist, don't update
-Set-DataverseView -Connection $c -Id $viewId -Name "New View" -NoUpdate
+Set-DataverseView -Connection $c `
+    -Name "New View" `
+    -TableName contact `
+    -Columns @("firstname") `
+    -NoUpdate
 ```
 
 ### PassThru
@@ -438,15 +471,19 @@ $viewId = Set-DataverseView -Connection $c -PassThru `
 # Get existing view
 $originalView = Get-DataverseView -Connection $c -Id $originalViewId
 
-# Create new view with same columns and filters
+# Create new view with same columns
+# Note: Get-DataverseView returns Columns in the format expected by Set-DataverseView
 Set-DataverseView -Connection $c -PassThru `
-    -Name "$($originalView.name) (Copy)" `
-    -TableName $originalView.returnedtypecode `
+    -Name "$($originalView.Name) (Copy)" `
+    -TableName $originalView.TableName `
+    -ViewType $originalView.ViewType `
     -Columns $originalView.Columns `
-    -FetchXml $originalView.fetchxml
+    -FilterValues $originalView.Filters `
+    -Links $originalView.Links `
+    -OrderBy $originalView.OrderBy
 ```
 
-The `Columns` property returned by `Get-DataverseView` contains the column configuration in the same format accepted by `Set-DataverseView`, making it easy to clone or modify existing views.
+The `Columns` property returned by `Get-DataverseView` contains the column configuration (name and width) in the same format accepted by `Set-DataverseView`, making it easy to clone or modify existing views.
 
 ### Create Views for Multiple Tables
 
@@ -454,10 +491,11 @@ The `Columns` property returned by `Get-DataverseView` contains the column confi
 $tables = @("contact", "account", "lead")
 
 foreach ($table in $tables) {
-    Set-DataverseView -Connection $c -PassThru -SystemView `
+    Set-DataverseView -Connection $c -PassThru `
         -Name "Active $table Records" `
-        -TableName $table `
-        -Columns @("createdon", "modifiedon") `
+     -TableName $table `
+        -ViewType "System" `
+     -Columns @("createdon", "modifiedon") `
         -FilterValues @{ statecode = 0 }
 }
 ```
@@ -466,9 +504,9 @@ foreach ($table in $tables) {
 
 ```powershell
 # Get all system views and export metadata
-$views = Get-DataverseView -Connection $c -SystemView
+$views = Get-DataverseView -Connection $c -ViewType "System"
 
-$views | Select-Object name, returnedtypecode, ViewType, isdefault |
+$views | Select-Object Name, TableName, ViewType, IsDefault, QueryType |
     Export-Csv -Path "view-audit.csv" -NoTypeInformation
 ```
 

@@ -1,9 +1,11 @@
 using Microsoft.Crm.Sdk;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 using System.Xml.Linq;
@@ -185,7 +187,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
 
                     // Parse FetchXML to extract Columns, Filters, and Links
-                    var parsedProperties = ParseFetchXmlForQueryComponents(view.GetAttributeValue<string>("fetchxml"));
+                    var tableName = view.GetAttributeValue<string>("returnedtypecode");
+                    var parsedProperties = ParseFetchXmlForQueryComponents(view.GetAttributeValue<string>("fetchxml"), view.GetAttributeValue<int?>("querytype"), tableName);
                     if (parsedProperties.ContainsKey("Columns"))
                     {
                         // Combine column names from FetchXML with width info from layoutxml
@@ -202,52 +205,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         psObject.Properties.Add(new PSNoteProperty("Links", parsedProperties["Links"]));
                     }
-                }
-
-                WriteObject(psObject);
-            }
-        }
-
-        private object[] ParseLayoutXmlForColumns(string layoutXml)
-        {
-            if (string.IsNullOrEmpty(layoutXml))
-            {
-                return null;
-            }
-
-            try
-            {
-                XNamespace ns = "http://schemas.microsoft.com/crm/2006/query";
-                XDocument doc = XDocument.Parse(layoutXml);
-                var cells = doc.Descendants(ns + "cell");
-
-                var columns = new System.Collections.Generic.List<object>();
-
-                foreach (var cell in cells)
-                {
-                    string columnName = cell.Attribute("name")?.Value;
-                    string widthStr = cell.Attribute("width")?.Value;
-
-                    if (!string.IsNullOrEmpty(columnName))
+                    if (parsedProperties.ContainsKey("OrderBy"))
                     {
-                        var columnConfig = new PSSerializableHashtable();
-                        columnConfig["name"] = columnName;
-
-                        if (!string.IsNullOrEmpty(widthStr) && int.TryParse(widthStr, out int width))
-                        {
-                            columnConfig["width"] = width;
-
-                        }
-                        columns.Add(columnConfig);
+                        psObject.Properties.Add(new PSNoteProperty("OrderBy", parsedProperties["OrderBy"]));
                     }
                 }
 
-                return columns.ToArray();
-            }
-            catch (Exception ex)
-            {
-                WriteVerbose($"Failed to parse layout XML for columns: {ex.Message}");
-                return null;
+                WriteObject(psObject);
             }
         }
 
@@ -262,9 +226,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var layoutWidths = new System.Collections.Generic.Dictionary<string, int>();
             if (!string.IsNullOrEmpty(layoutXml))
             {
-                XNamespace ns = "http://schemas.microsoft.com/crm/2006/query";
                 XDocument doc = XDocument.Parse(layoutXml);
-                var cells = doc.Descendants(ns + "cell");
+                var cells = doc.Descendants("cell");
 
                 foreach (var cell in cells)
                 {
@@ -302,7 +265,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return columns.ToArray();
         }
 
-        private System.Collections.Generic.Dictionary<string, object> ParseFetchXmlForQueryComponents(string fetchXml)
+        private System.Collections.Generic.Dictionary<string, object> ParseFetchXmlForQueryComponents(string fetchXml, int? queryType, string tableName)
         {
             var result = new System.Collections.Generic.Dictionary<string, object>();
 
@@ -311,96 +274,72 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return result;
             }
 
-            try
+            string modifiedFetchXml = fetchXml;
+            Dictionary<string, string> placeholderMap = null;
+
+            if (queryType == 4) // QuickFindSearch
             {
-                // Use SDK to convert FetchXML to QueryExpression
-                var translateRequest = new FetchXmlToQueryExpressionRequest
-                {
-                    FetchXml = fetchXml
-                };
-                var translateResponse = (FetchXmlToQueryExpressionResponse)Connection.Execute(translateRequest);
-                var query = translateResponse.Query;
+                modifiedFetchXml = QuickFindHelper.PreprocessFetchXmlForQuickFind(fetchXml, tableName, entityMetadataFactory, out placeholderMap);
+            }
 
-                // Extract columns
-                if (query.ColumnSet != null && query.ColumnSet.Columns != null && query.ColumnSet.Columns.Count > 0)
-                {
-                    result["Columns"] = query.ColumnSet.Columns.ToArray();
-                }
+            // Use SDK to convert FetchXML to QueryExpression
+            var translateRequest = new FetchXmlToQueryExpressionRequest
+            {
+                FetchXml = modifiedFetchXml
+            };
+            var translateResponse = (FetchXmlToQueryExpressionResponse)Connection.Execute(translateRequest);
+            var query = translateResponse.Query;
 
-                // Extract filters
-                if (query.Criteria != null && (query.Criteria.Conditions.Count > 0 || query.Criteria.Filters.Count > 0))
-                {
-                    var filterHashtables = ConvertFilterExpressionToHashtables(query.Criteria);
-                    if (filterHashtables.Length > 0)
-                    {
-                        result["Filters"] = filterHashtables;
-                    }
-                }
+            if (queryType == 4 && placeholderMap != null)
+            {
+                // Replace back the unique keys with placeholders in the filter conditions
+                QuickFindHelper.ReplacePlaceholdersInFilter(query.Criteria, placeholderMap);
+            }
 
-                // Extract links
-                if (query.LinkEntities != null && query.LinkEntities.Count > 0)
+            result["Columns"] = query.ColumnSet?.Columns.ToArray() ?? new string[0];
+
+
+            // Extract filters
+            if (query.Criteria != null && (query.Criteria.Conditions.Count > 0 || query.Criteria.Filters.Count > 0))
+            {
+                var filterHashtables = FilterHelpers.ConvertFilterExpressionToHashtables(query.Criteria, queryType);
+                if (filterHashtables != null)
                 {
-                    var dataverseLinks = query.LinkEntities.Select(le => new DataverseLinkEntity(le)).ToArray();
-                    result["Links"] = dataverseLinks;
+                    result["Filters"] = new Hashtable[] { filterHashtables };
                 }
                 else
                 {
-                    result["Links"] = new DataverseLinkEntity[0];
+                    result["Filters"] = new Hashtable[0];
                 }
             }
-            catch (Exception ex)
+            else
             {
-                WriteVerbose($"Failed to parse FetchXML for query components: {ex.Message}");
+                result["Filters"] = new Hashtable[0];
+            }
+
+            // Extract links
+            if (query.LinkEntities != null && query.LinkEntities.Count > 0)
+            {
+                var hashtableLinks = query.LinkEntities.Select(le => new DataverseLinkEntity(le).ToHashtable()).ToArray();
+                result["Links"] = hashtableLinks;
+            }
+            else
+            {
+                result["Links"] = new PSSerializableHashtable[0];
+            }
+
+            // Extract order by
+            if (query.Orders != null && query.Orders.Count > 0)
+            {
+                var orderByStrings = query.Orders.Select(o => o.AttributeName + (o.OrderType == OrderType.Descending ? "-" : "")).ToArray();
+                result["OrderBy"] = orderByStrings;
+            }
+            else
+            {
+                result["OrderBy"] = new string[0];
             }
 
             return result;
-        }
-
-        private Hashtable[] ConvertFilterExpressionToHashtables(FilterExpression filter)
-        {
-            var result = new System.Collections.Generic.List<Hashtable>();
-
-            if (filter == null || (filter.Conditions.Count == 0 && filter.Filters.Count == 0))
-            {
-                return result.ToArray();
-            }
-
-            // Convert conditions
-            foreach (var condition in filter.Conditions)
-            {
-                var hashtable = new PSSerializableHashtable();
-                string key = condition.AttributeName;
-
-                // Add operator if not Equal
-                if (condition.Operator != ConditionOperator.Equal)
-                {
-                    key += ":" + condition.Operator.ToString();
-                }
-
-                if (condition.Values.Count == 1)
-                {
-                    hashtable[key] = condition.Values[0];
-                }
-                else if (condition.Values.Count > 1)
-                {
-                    hashtable[key] = condition.Values.ToArray();
-                }
-                else
-                {
-                    hashtable[key] = null;
-                }
-
-                result.Add(hashtable);
-            }
-
-            // Convert nested filters - for simplicity, we'll flatten them into separate hashtables
-            foreach (var nestedFilter in filter.Filters)
-            {
-                var nestedHashtables = ConvertFilterExpressionToHashtables(nestedFilter);
-                result.AddRange(nestedHashtables);
-            }
-
-            return result.ToArray();
         }
     }
 }
