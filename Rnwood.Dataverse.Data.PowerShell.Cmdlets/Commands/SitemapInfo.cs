@@ -23,11 +23,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string SitemapXml { get; set; }
 
         /// <summary>
-        /// Gets or sets the display name of the solution this sitemap belongs to.
-        /// </summary>
-        public string SolutionName { get; set; }
-
-        /// <summary>
         /// Gets or sets whether this is a managed sitemap.
         /// </summary>
         public bool IsManaged { get; set; }

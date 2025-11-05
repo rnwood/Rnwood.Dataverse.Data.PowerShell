@@ -146,7 +146,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Retrieve the sitemap
             var query = new QueryExpression("sitemap")
             {
-                ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapxml", "ismanaged"),
+                ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapxml"),
                 TopCount = 1
             };
 
@@ -179,17 +179,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             var sitemap = sitemaps.Entities[0];
             var retrievedSitemapId = sitemap.Id;
-            var isManaged = sitemap.GetAttributeValue<bool>("ismanaged");
-
-            if (isManaged)
-            {
-                ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException("Cannot remove entries from a managed sitemap."),
-                    "ManagedSitemapModificationNotAllowed",
-                    ErrorCategory.InvalidOperation,
-                    sitemapName));
-                return;
-            }
 
             var sitemapXml = sitemap.GetAttributeValue<string>("sitemapxml");
 

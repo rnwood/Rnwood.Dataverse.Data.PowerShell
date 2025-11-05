@@ -47,7 +47,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Query for the sitemap by name
                 var query = new QueryExpression("sitemap")
                 {
-                    ColumnSet = new ColumnSet("sitemapid", "sitemapname", "ismanaged"),
+                    ColumnSet = new ColumnSet("sitemapid", "sitemapname"),
                     Criteria = new FilterExpression
                     {
                         Conditions =
@@ -79,17 +79,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var sitemap = sitemaps.Entities[0];
                 sitemapId = sitemap.Id;
                 sitemapName = sitemap.GetAttributeValue<string>("sitemapname");
-                var isManaged = sitemap.GetAttributeValue<bool>("ismanaged");
-
-                if (isManaged)
-                {
-                    ThrowTerminatingError(new ErrorRecord(
-                        new InvalidOperationException($"Cannot delete managed sitemap '{sitemapName}'. Only unmanaged sitemaps can be deleted."),
-                        "ManagedSitemapDeleteNotAllowed",
-                        ErrorCategory.InvalidOperation,
-                        Name));
-                    return;
-                }
             }
             else // ById
             {
@@ -98,7 +87,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Query to check if it exists and get info
                 var query = new QueryExpression("sitemap")
                 {
-                    ColumnSet = new ColumnSet("sitemapid", "sitemapname", "ismanaged"),
+                    ColumnSet = new ColumnSet("sitemapid", "sitemapname"),
                     Criteria = new FilterExpression
                     {
                         Conditions =
@@ -130,17 +119,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var sitemap = sitemaps.Entities[0];
                 sitemapId = Id;
                 sitemapName = sitemap.GetAttributeValue<string>("sitemapname");
-                var isManaged = sitemap.GetAttributeValue<bool>("ismanaged");
-
-                if (isManaged)
-                {
-                    ThrowTerminatingError(new ErrorRecord(
-                        new InvalidOperationException($"Cannot delete managed sitemap '{sitemapName}'. Only unmanaged sitemaps can be deleted."),
-                        "ManagedSitemapDeleteNotAllowed",
-                        ErrorCategory.InvalidOperation,
-                        Id));
-                    return;
-                }
             }
 
             if (!ShouldProcess($"Sitemap '{sitemapName}' (ID: {sitemapId})", "Delete"))

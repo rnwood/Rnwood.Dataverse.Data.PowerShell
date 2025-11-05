@@ -81,6 +81,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the entity logical name (for SubAreas).
         /// </summary>
         [Parameter(HelpMessage = "The entity logical name (for SubAreas).")]
+        [ArgumentCompleter(typeof(TableNameArgumentCompleter))]
         public string Entity { get; set; }
 
         /// <summary>
@@ -100,6 +101,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(HelpMessage = "The parent Group ID (required for SubAreas when creating).")]
         public string ParentGroupId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the zero-based index position where the entry should be inserted or moved to.
+        /// If not specified, the entry is added at the end of its parent container.
+        /// </summary>
+        [Parameter(HelpMessage = "The zero-based index position where the entry should be inserted or moved to.")]
+        public int? Index { get; set; }
+
+        /// <summary>
+        /// Gets or sets the ID of the sibling entry before which this entry should be inserted or moved.
+        /// </summary>
+        [Parameter(HelpMessage = "The ID of the sibling entry before which this entry should be inserted or moved.")]
+        public string Before { get; set; }
+
+        /// <summary>
+        /// Gets or sets the ID of the sibling entry after which this entry should be inserted or moved.
+        /// </summary>
+        [Parameter(HelpMessage = "The ID of the sibling entry after which this entry should be inserted or moved.")]
+        public string After { get; set; }
 
         /// <summary>
         /// Gets or sets whether the entry is a default entry.
@@ -164,7 +184,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Retrieve the sitemap
             var query = new QueryExpression("sitemap")
             {
-                ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapxml", "ismanaged"),
+                ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapxml"),
                 TopCount = 1
             };
 
@@ -191,17 +211,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             var sitemap = sitemaps.Entities[0];
             var retrievedSitemapId = sitemap.Id;
-            var isManaged = sitemap.GetAttributeValue<bool>("ismanaged");
-
-            if (isManaged)
-            {
-                ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException("Cannot modify entries in a managed sitemap."),
-                    "ManagedSitemapModificationNotAllowed",
-                    ErrorCategory.InvalidOperation,
-                    sitemapName ?? sitemapId.ToString()));
-                return;
-            }
 
             var sitemapXml = sitemap.GetAttributeValue<string>("sitemapxml");
 
@@ -392,16 +401,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 switch (EntryType)
                 {
                     case SitemapEntryType.Area:
-                        doc.Root?.Add(newElement);
-                        added = true;
-                        WriteVerbose($"Added Area '{EntryId}' to sitemap root");
+                        if (doc.Root != null)
+                        {
+                            AddElementAtPosition(doc.Root, newElement, "Area");
+                            added = true;
+                            WriteVerbose($"Added Area '{EntryId}' to sitemap root");
+                        }
                         break;
 
                     case SitemapEntryType.Group:
                         var parentArea = FindElement(doc.Root, "Area", parentAreaId);
                         if (parentArea != null)
                         {
-                            parentArea.Add(newElement);
+                            AddElementAtPosition(parentArea, newElement, "Group");
                             added = true;
                             WriteVerbose($"Added Group '{EntryId}' to Area '{parentAreaId}'");
                         }
@@ -423,7 +435,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             var parentGroup = FindElement(area, "Group", parentGroupId);
                             if (parentGroup != null)
                             {
-                                parentGroup.Add(newElement);
+                                AddElementAtPosition(parentGroup, newElement, "SubArea");
                                 added = true;
                                 WriteVerbose($"Added SubArea '{EntryId}' to Group '{parentGroupId}' in Area '{parentAreaId}'");
                             }
@@ -536,6 +548,71 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             return parent.Elements(elementName)
                 .FirstOrDefault(e => e.Attribute("Id")?.Value == id);
+        }
+
+        private void AddElementAtPosition(XElement parent, XElement newElement, string elementType)
+        {
+            // If no position is specified, add at the end
+            if (!Index.HasValue && string.IsNullOrEmpty(Before) && string.IsNullOrEmpty(After))
+            {
+                parent.Add(newElement);
+                return;
+            }
+
+            // Get all child elements of the same type
+            var siblings = parent.Elements(elementType).ToList();
+
+            // Handle Index position
+            if (Index.HasValue)
+            {
+                int index = Index.Value;
+                if (index < 0 || index > siblings.Count)
+                {
+                    WriteWarning($"Index {index} is out of range (0-{siblings.Count}). Adding at the end.");
+                    parent.Add(newElement);
+                }
+                else if (index == siblings.Count)
+                {
+                    parent.Add(newElement);
+                }
+                else
+                {
+                    siblings[index].AddBeforeSelf(newElement);
+                }
+                return;
+            }
+
+            // Handle Before position
+            if (!string.IsNullOrEmpty(Before))
+            {
+                var beforeElement = siblings.FirstOrDefault(e => e.Attribute("Id")?.Value == Before);
+                if (beforeElement != null)
+                {
+                    beforeElement.AddBeforeSelf(newElement);
+                }
+                else
+                {
+                    WriteWarning($"Entry with ID '{Before}' not found. Adding at the end.");
+                    parent.Add(newElement);
+                }
+                return;
+            }
+
+            // Handle After position
+            if (!string.IsNullOrEmpty(After))
+            {
+                var afterElement = siblings.FirstOrDefault(e => e.Attribute("Id")?.Value == After);
+                if (afterElement != null)
+                {
+                    afterElement.AddAfterSelf(newElement);
+                }
+                else
+                {
+                    WriteWarning($"Entry with ID '{After}' not found. Adding at the end.");
+                    parent.Add(newElement);
+                }
+                return;
+            }
         }
     }
 }

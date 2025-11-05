@@ -13,9 +13,8 @@ Retrieves sitemap information from a Dataverse environment.
 ## SYNTAX
 
 ```
-Get-DataverseSitemap [[-Name] <String>] [-Id <Guid>] [-SolutionUniqueName <String>] [-AppUniqueName <String>]
- [-Managed] [-Unmanaged] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseSitemap [[-Name] <String>] [-Id <Guid>] [-AppUniqueName <String>] [-Managed] [-Unmanaged]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -172,21 +171,6 @@ Aliases:
 
 Required: False
 Position: 0
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -SolutionUniqueName
-Filter sitemaps by solution unique name.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False

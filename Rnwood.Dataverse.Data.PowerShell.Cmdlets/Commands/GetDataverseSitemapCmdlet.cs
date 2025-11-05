@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Management.Automation;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
@@ -23,12 +24,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(HelpMessage = "The unique identifier of the sitemap to retrieve.")]
         public Guid? Id { get; set; }
-
-        /// <summary>
-        /// Gets or sets the solution unique name to filter sitemaps by.
-        /// </summary>
-        [Parameter(HelpMessage = "Filter sitemaps by solution unique name.")]
-        public string SolutionUniqueName { get; set; }
 
         /// <summary>
         /// Gets or sets the app unique name to filter sitemaps by.
@@ -97,23 +92,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteVerbose("Filtering for unmanaged sitemaps only");
             }
 
-            // Add link to solution for solution information
-            if (!string.IsNullOrEmpty(SolutionUniqueName))
-            {
-                var solutionLink = query.AddLink("solution", "solutionid", "solutionid");
-                solutionLink.EntityAlias = "solution";
-                solutionLink.Columns = new ColumnSet("friendlyname", "uniquename");
-                solutionLink.LinkCriteria.AddCondition("uniquename", ConditionOperator.Equal, SolutionUniqueName);
-                WriteVerbose($"Filtering by solution unique name: {SolutionUniqueName}");
-            }
-            else
-            {
-                // Still link to solution to get solution name
-                var solutionLink = query.AddLink("solution", "solutionid", "solutionid", JoinOperator.LeftOuter);
-                solutionLink.EntityAlias = "solution";
-                solutionLink.Columns = new ColumnSet("friendlyname", "uniquename");
-            }
-
             // Add link to appmodule if filtering by app
             if (!string.IsNullOrEmpty(AppUniqueName))
             {
@@ -124,13 +102,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteVerbose($"Filtering by app unique name: {AppUniqueName}");
             }
 
-            // Execute query
-            var sitemaps = Connection.RetrieveMultiple(query);
+            // Execute query with paging
+            var sitemaps = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose).ToList();
 
-            WriteVerbose($"Found {sitemaps.Entities.Count} sitemap(s)");
+            WriteVerbose($"Found {sitemaps.Count} sitemap(s)");
 
             // Convert to SitemapInfo objects
-            foreach (var sitemap in sitemaps.Entities)
+            foreach (var sitemap in sitemaps)
             {
                 var sitemapInfo = new SitemapInfo
                 {
@@ -141,12 +119,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     CreatedOn = sitemap.GetAttributeValue<DateTime?>("createdon"),
                     ModifiedOn = sitemap.GetAttributeValue<DateTime?>("modifiedon")
                 };
-
-                // Extract solution information from the linked entity
-                if (sitemap.Contains("solution.friendlyname"))
-                {
-                    sitemapInfo.SolutionName = sitemap.GetAttributeValue<AliasedValue>("solution.friendlyname")?.Value as string;
-                }
 
                 // Extract app information from the linked entity if present
                 if (sitemap.Contains("app.uniquename"))

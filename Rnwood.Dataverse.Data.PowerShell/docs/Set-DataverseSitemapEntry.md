@@ -16,8 +16,9 @@ schema: 2.0.0
 Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>] [[-SitemapName] <String>]
  [-SitemapId <Guid>] -EntryType <SitemapEntryType> -EntryId <String> [-ResourceId <String>] [-Title <String>]
  [-Description <String>] [-Icon <String>] [-Entity <String>] [-Url <String>] [-ParentAreaId <String>]
- [-ParentGroupId <String>] [-IsDefault] [-Privilege <String>] [-PassThru] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-ParentGroupId <String>] [-Index <Int32>] [-Before <String>] [-After <String>] [-IsDefault]
+ [-Privilege <String>] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -33,6 +34,36 @@ PS C:\> {{ Add example code here }}
 {{ Add example description here }}
 
 ## PARAMETERS
+
+### -After
+The ID of the sibling entry after which this entry should be inserted or moved.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Before
+The ID of the sibling entry before which this entry should be inserted or moved.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -Confirm
 Prompts you for confirmation before running the cmdlet.
@@ -132,6 +163,21 @@ The new icon path (for Areas and SubAreas).
 
 ```yaml
 Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Index
+The zero-based index position where the entry should be inserted or moved to.
+
+```yaml
+Type: Int32
 Parameter Sets: (All)
 Aliases:
 
