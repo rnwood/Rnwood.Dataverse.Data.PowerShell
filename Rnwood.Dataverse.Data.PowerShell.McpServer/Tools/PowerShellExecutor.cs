@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Text;
@@ -13,9 +14,14 @@ public class PowerShellExecutor : IDisposable
 {
     private readonly ConcurrentDictionary<string, ScriptSession> _sessions = new();
     private readonly string _modulePath;
+    private readonly string? _connectionName;
+    private bool _isInitialized;
+    private readonly object _initLock = new();
 
-    public PowerShellExecutor()
+    public PowerShellExecutor(string? connectionName = null)
     {
+        _connectionName = connectionName;
+        
         // Find the module path - try multiple locations
         var assemblyDir = Path.GetDirectoryName(typeof(PowerShellExecutor).Assembly.Location)!;
         
@@ -42,10 +48,126 @@ public class PowerShellExecutor : IDisposable
         }
     }
 
+    private void EnsureInitialized()
+    {
+        if (_isInitialized) return;
+
+        lock (_initLock)
+        {
+            if (_isInitialized) return;
+
+            // Test that we can load the connection
+            if (!string.IsNullOrEmpty(_connectionName))
+            {
+                var testScript = $"Import-Module '{Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1")}'; $connection = Get-DataverseConnection -Name '{_connectionName}'; if ($null -eq $connection) {{ throw 'Failed to load connection' }}";
+                
+                using var runspace = RunspaceFactory.CreateRunspace();
+                runspace.Open();
+                using var ps = System.Management.Automation.PowerShell.Create();
+                ps.Runspace = runspace;
+                ps.AddScript(testScript);
+                
+                try
+                {
+                    ps.Invoke();
+                    if (ps.HadErrors)
+                    {
+                        var errorMsg = string.Join("\n", ps.Streams.Error.Select(e => e.ToString()));
+                        throw new InvalidOperationException($"Failed to load named connection '{_connectionName}'.\n\n{errorMsg}\n\nTo save a connection, use:\nGet-DataverseConnection -Url <your-url> -Interactive -Name '{_connectionName}' -SetAsDefault\n\nOr list saved connections with:\nGet-DataverseConnection -List");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Failed to validate connection '{_connectionName}': {ex.Message}\n\nTo save a connection, use:\nGet-DataverseConnection -Url <your-url> -Interactive -Name '{_connectionName}' -SetAsDefault\n\nOr list saved connections with:\nGet-DataverseConnection -List", ex);
+                }
+            }
+
+            _isInitialized = true;
+        }
+    }
+
+    public string GetCmdletList()
+    {
+        EnsureInitialized();
+        
+        var script = $@"
+Import-Module '{Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1")}'
+Get-Command -Module Rnwood.Dataverse.Data.PowerShell | ForEach-Object {{
+    $help = Get-Help $_.Name -ErrorAction SilentlyContinue
+    [PSCustomObject]@{{
+        Name = $_.Name
+        Synopsis = if ($help.Synopsis) {{ $help.Synopsis.Trim() }} else {{ '' }}
+    }}
+}} | ConvertTo-Json
+";
+
+        using var runspace = RunspaceFactory.CreateRunspace();
+        runspace.Open();
+        using var ps = System.Management.Automation.PowerShell.Create();
+        ps.Runspace = runspace;
+        ps.AddScript(script);
+        
+        var results = ps.Invoke();
+        if (ps.HadErrors)
+        {
+            throw new InvalidOperationException("Failed to get cmdlet list: " + string.Join("\n", ps.Streams.Error));
+        }
+
+        return results.FirstOrDefault()?.ToString() ?? "[]";
+    }
+
+    public string GetCmdletHelp(string cmdletName)
+    {
+        EnsureInitialized();
+        
+        var script = $@"
+Import-Module '{Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1")}'
+$help = Get-Help '{cmdletName}' -Full -ErrorAction Stop
+$helpObj = [PSCustomObject]@{{
+    Name = $help.Name
+    Synopsis = $help.Synopsis
+    Description = ($help.Description | ForEach-Object {{ $_.Text }}) -join ""`n""
+    Syntax = ($help.Syntax.syntaxItem | ForEach-Object {{ $_.name + ' ' + (($_.parameter | ForEach-Object {{ '-' + $_.name + ' <' + $_.type.name + '>' }}) -join ' ') }}) -join ""`n""
+    Parameters = @($help.parameters.parameter | ForEach-Object {{
+        [PSCustomObject]@{{
+            Name = $_.name
+            Type = $_.type.name
+            Required = $_.required
+            Description = ($_.description | ForEach-Object {{ $_.Text }}) -join ' '
+        }}
+    }})
+    Examples = @($help.examples.example | ForEach-Object {{
+        [PSCustomObject]@{{
+            Title = $_.title
+            Code = $_.code
+            Remarks = ($_.remarks | ForEach-Object {{ $_.Text }}) -join ""`n""
+        }}
+    }})
+}}
+$helpObj | ConvertTo-Json -Depth 10
+";
+
+        using var runspace = RunspaceFactory.CreateRunspace();
+        runspace.Open();
+        using var ps = System.Management.Automation.PowerShell.Create();
+        ps.Runspace = runspace;
+        ps.AddScript(script);
+        
+        var results = ps.Invoke();
+        if (ps.HadErrors)
+        {
+            throw new InvalidOperationException($"Failed to get help for cmdlet '{cmdletName}': " + string.Join("\n", ps.Streams.Error));
+        }
+
+        return results.FirstOrDefault()?.ToString() ?? "{}";
+    }
+
     public string StartScript(string script)
     {
+        EnsureInitialized();
+        
         var sessionId = Guid.NewGuid().ToString("N");
-        var session = new ScriptSession(sessionId, script, _modulePath);
+        var session = new ScriptSession(sessionId, script, _modulePath, _connectionName);
         
         if (!_sessions.TryAdd(sessionId, session))
         {
@@ -81,6 +203,7 @@ public class ScriptSession : IDisposable
     private readonly string _sessionId;
     private readonly string _script;
     private readonly string _modulePath;
+    private readonly string? _connectionName;
     private System.Management.Automation.PowerShell? _powerShell;
     private readonly StringBuilder _output = new();
     private readonly StringBuilder _error = new();
@@ -89,11 +212,12 @@ public class ScriptSession : IDisposable
     private Exception? _exception;
     private readonly object _lock = new();
 
-    public ScriptSession(string sessionId, string script, string modulePath)
+    public ScriptSession(string sessionId, string script, string modulePath, string? connectionName)
     {
         _sessionId = sessionId;
         _script = script;
         _modulePath = modulePath;
+        _connectionName = connectionName;
     }
 
     public void Start()
@@ -145,6 +269,26 @@ public class ScriptSession : IDisposable
                     foreach (var error in _powerShell.Streams.Error)
                     {
                         _error.AppendLine($"Module import error: {error}");
+                    }
+                }
+                _powerShell.Streams.Error.Clear();
+            }
+        }
+
+        // Load the default connection if specified
+        if (!string.IsNullOrEmpty(_connectionName))
+        {
+            _powerShell.AddScript($"$connection = Get-DataverseConnection -Name '{_connectionName}'");
+            _powerShell.Invoke();
+            _powerShell.Commands.Clear();
+            
+            if (_powerShell.HadErrors)
+            {
+                lock (_lock)
+                {
+                    foreach (var error in _powerShell.Streams.Error)
+                    {
+                        _error.AppendLine($"Connection load error: {error}");
                     }
                 }
                 _powerShell.Streams.Error.Clear();

@@ -15,6 +15,24 @@ public class PowerShellTools
         _executor = executor;
     }
 
+    [McpServerTool, Description("Get a list of all available Dataverse PowerShell cmdlets with their synopsis.")]
+    public string GetCmdletList()
+    {
+        return _executor.GetCmdletList();
+    }
+
+    [McpServerTool, Description("Get detailed help information for a specific Dataverse PowerShell cmdlet.")]
+    public string GetCmdletHelp(
+        [Description("The name of the cmdlet to get help for (e.g., 'Get-DataverseRecord')")] string cmdletName)
+    {
+        if (string.IsNullOrWhiteSpace(cmdletName))
+        {
+            throw new McpException("Cmdlet name cannot be empty");
+        }
+
+        return _executor.GetCmdletHelp(cmdletName);
+    }
+
     [McpServerTool, Description("Start executing a PowerShell script with the Dataverse module pre-loaded. Returns a session ID to retrieve output later.")]
     public string StartScript(
         [Description("The PowerShell script to execute")] string script)
