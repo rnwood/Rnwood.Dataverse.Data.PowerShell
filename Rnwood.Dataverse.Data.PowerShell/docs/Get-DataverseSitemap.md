@@ -31,10 +31,10 @@ The cmdlet returns SitemapInfo objects with metadata about each sitemap includin
 ```powershell
 PS C:\> Get-DataverseSitemap
 
-Name              Id                                   IsManaged SolutionName
-----              --                                   --------- ------------
-MySitemap         a1b2c3d4-5678-90ab-cdef-1234567890ab False     MySolution
-DefaultSitemap    f1e2d3c4-b5a6-9087-6543-210fedcba987 True      Default
+Name              Id                                   IsManaged
+----              --                                   ---------
+MySitemap         a1b2c3d4-5678-90ab-cdef-1234567890ab False
+DefaultSitemap    f1e2d3c4-b5a6-9087-6543-210fedcba987 True
 ```
 
 Retrieves all sitemaps from the Dataverse environment.
@@ -46,7 +46,6 @@ PS C:\> Get-DataverseSitemap -Name "MySitemap"
 Name              : MySitemap
 Id                : a1b2c3d4-5678-90ab-cdef-1234567890ab
 IsManaged         : False
-SolutionName      : MySolution
 AppUniqueName     : myapp
 CreatedOn         : 1/15/2024 10:30:00 AM
 ModifiedOn        : 1/20/2024 2:45:00 PM
@@ -55,31 +54,18 @@ SitemapXml        : <SiteMap>...</SiteMap>
 
 Retrieves a specific sitemap by its name with full details.
 
-### Example 3: Get sitemaps for a specific solution
+### Example 3: Get sitemaps for a specific app
 ```powershell
-PS C:\> Get-DataverseSitemap -SolutionUniqueName "MySolution"
+PS C:\> Get-DataverseSitemap -AppUniqueName "myapp"
 
 Name              Id                                   IsManaged
 ----              --                                   ---------
 MySitemap         a1b2c3d4-5678-90ab-cdef-1234567890ab False
-AnotherSitemap    b2c3d4e5-6789-01bc-def2-345678901bcd False
 ```
 
-Retrieves all sitemaps belonging to a specific solution.
+Retrieves all sitemaps associated with a specific app.
 
-### Example 4: Get sitemap for a specific app
-```powershell
-PS C:\> Get-DataverseSitemap -AppUniqueName "myapp"
-
-Name              : MySitemap
-Id                : a1b2c3d4-5678-90ab-cdef-1234567890ab
-AppUniqueName     : myapp
-SitemapXml        : <SiteMap>...</SiteMap>
-```
-
-Retrieves the sitemap associated with a specific app.
-
-### Example 5: Get only unmanaged sitemaps
+### Example 4: Get only unmanaged sitemaps
 ```powershell
 PS C:\> Get-DataverseSitemap -Unmanaged
 

@@ -8,7 +8,7 @@ schema: 2.0.0
 # Set-DataverseSitemapEntry
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Creates or updates an entry (Area, Group, or SubArea) in a Dataverse sitemap.
 
 ## SYNTAX
 
@@ -22,16 +22,46 @@ Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapIn
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Set-DataverseSitemapEntry cmdlet creates or updates navigation entries (Areas, Groups, SubAreas) in a Dataverse sitemap. It automatically detects whether an entry exists and either creates a new entry or updates the existing one. The cmdlet supports precise positioning control when creating entries.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Create a new Area
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Set-DataverseSitemapEntry -SitemapName "MySitemap" -EntryType Area -EntryId "SalesArea" -Title "Sales" -Icon "/_imgs/area/sales_24x24.gif"
 ```
 
-{{ Add example description here }}
+Creates a new Area entry in the sitemap.
+
+### Example 2: Create a Group with position control
+```powershell
+PS C:\> Set-DataverseSitemapEntry -SitemapName "MySitemap" -EntryType Group -EntryId "LeadsGroup" -ParentAreaId "SalesArea" -Title "Leads" -Index 0
+```
+
+Creates a new Group at the first position (index 0) within the SalesArea.
+
+### Example 3: Create a SubArea before another entry
+```powershell
+PS C:\> Set-DataverseSitemapEntry -SitemapName "MySitemap" -EntryType SubArea -EntryId "AccountsSubarea" `
+    -ParentAreaId "SalesArea" -ParentGroupId "CustomersGroup" `
+    -Entity "account" -Title "Accounts" -Before "ContactsSubarea"
+```
+
+Creates a new SubArea positioned before the "ContactsSubarea" entry.
+
+### Example 4: Update an existing entry
+```powershell
+PS C:\> Set-DataverseSitemapEntry -SitemapName "MySitemap" -EntryType Area -EntryId "SalesArea" -Title "Sales & Marketing"
+```
+
+Updates the title of an existing Area entry.
+
+### Example 5: Use pipeline to update entry
+```powershell
+PS C:\> Get-DataverseSitemapEntry -SitemapName "MySitemap" -EntryId "SalesArea" | Set-DataverseSitemapEntry -Title "Updated Sales"
+```
+
+Retrieves an entry and updates its title using the pipeline.
 
 ## PARAMETERS
 

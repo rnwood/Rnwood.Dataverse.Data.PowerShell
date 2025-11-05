@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseSitemapEntry
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves sitemap entries (Areas, Groups, SubAreas) from a Dataverse sitemap.
 
 ## SYNTAX
 
@@ -19,16 +19,44 @@ Get-DataverseSitemapEntry [-Sitemap <SitemapInfo>] [[-SitemapName] <String>] [-S
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Get-DataverseSitemapEntry cmdlet retrieves navigation entries (Areas, Groups, SubAreas) from a Dataverse sitemap XML definition. It supports filtering by entry type, ID, and parent relationships.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Get all entries from a sitemap
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Get-DataverseSitemapEntry -SitemapName "MySitemap"
 ```
 
-{{ Add example description here }}
+Retrieves all navigation entries (Areas, Groups, and SubAreas) from the specified sitemap.
+
+### Example 2: Get only Areas
+```powershell
+PS C:\> Get-DataverseSitemapEntry -SitemapName "MySitemap" -EntryType Area
+```
+
+Retrieves only Area entries from the sitemap.
+
+### Example 3: Get a specific entry
+```powershell
+PS C:\> Get-DataverseSitemapEntry -SitemapName "MySitemap" -EntryId "SalesArea"
+```
+
+Retrieves a specific entry by its ID.
+
+### Example 4: Get Groups within an Area
+```powershell
+PS C:\> Get-DataverseSitemapEntry -SitemapName "MySitemap" -EntryType Group -ParentAreaId "SalesArea"
+```
+
+Retrieves all Groups within the specified Area.
+
+### Example 5: Use pipeline
+```powershell
+PS C:\> Get-DataverseSitemap -Name "MySitemap" | Get-DataverseSitemapEntry -EntryType Area
+```
+
+Pipes a sitemap object to retrieve its Area entries.
 
 ## PARAMETERS
 
