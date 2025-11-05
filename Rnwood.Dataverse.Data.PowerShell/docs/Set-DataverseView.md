@@ -297,6 +297,40 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
+### -InsertColumnsAfter
+Column name to insert new columns after in the layout.
+Used with AddColumns parameter to specify the position where new columns should be inserted.
+Cannot be used together with InsertColumnsBefore.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InsertColumnsBefore
+Column name to insert new columns before in the layout.
+Used with AddColumns parameter to specify the position where new columns should be inserted.
+Cannot be used together with InsertColumnsAfter.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -IsDefault
 Set this view as the default view for the table.
 Only applicable to system views.
@@ -326,6 +360,22 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Links
+Link entities to apply to the view query.
+Accepts DataverseLinkEntity objects or hashtables with link configuration.
+
+```yaml
+Type: DataverseLinkEntity[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
@@ -377,6 +427,22 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -OrderBy
+List of columns to order records by.
+Suffix column name with - to sort descending (e.g., "createdon-", "name").
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
 ### -PassThru
 If specified, returns the ID of the created or updated view.
 
@@ -401,6 +467,7 @@ Default is AdvancedSearch.
 Type: QueryType
 Parameter Sets: (All)
 Aliases:
+Accepted values: MainApplicationView, AdvancedSearch, SubGrid, QuickFindSearch, Reporting, OfflineFilters, LookupView, SMAppointmentBookView, OutlookFilters, AddressBookFilters, MainApplicationViewWithoutSubject, SavedQueryTypeOther, InteractiveWorkflowView, OfflineTemplate, CustomDefinedView, CopilotView, ExportFieldTranslationsView, OutlookTemplate
 
 Required: False
 Position: Named
@@ -458,6 +525,24 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ViewType
+Specify "System" for system views (savedquery) or "Personal" for personal views (userquery).
+Default is "Personal" for new views.
+Required when updating existing views.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: System, Personal
+
+Required: False
+Position: Named
+Default value: Personal (for new views)
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
 ### -WhatIf
 Shows what would happen if the cmdlet runs.
 The cmdlet is not run.
@@ -489,95 +574,19 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Links
-Link entities to apply to the view query.
-Accepts DataverseLinkEntity objects or hashtables with link configuration.
-
-```yaml
-Type: DataverseLinkEntity[]
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -ViewType
-Specify "System" for system views (savedquery) or "Personal" for personal views (userquery).
-Default is "Personal" for new views.
-Required when updating existing views.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: Personal (for new views)
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -InsertColumnsAfter
-Column name to insert new columns after in the layout.
-Used with AddColumns parameter to specify the position where new columns should be inserted.
-Cannot be used together with InsertColumnsBefore.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -InsertColumnsBefore
-Column name to insert new columns before in the layout.
-Used with AddColumns parameter to specify the position where new columns should be inserted.
-Cannot be used together with InsertColumnsAfter.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -OrderBy
-List of columns to order records by.
-Suffix column name with - to sort descending (e.g., "createdon-", "name").
-
-```yaml
-Type: String[]
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### System.Guid
+### System.String
+### System.Object[]
+### System.Collections.Hashtable[]
+### Rnwood.Dataverse.Data.PowerShell.Commands.DataverseLinkEntity[]
+### System.String[]
+### System.Management.Automation.SwitchParameter
+### System.Nullable`1[[Rnwood.Dataverse.Data.PowerShell.Commands.QueryType, Rnwood.Dataverse.Data.PowerShell.Cmdlets, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]
 ## OUTPUTS
 
 ### System.Guid

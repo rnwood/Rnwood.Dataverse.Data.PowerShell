@@ -156,36 +156,7 @@ Valid values: MainApplicationView, AdvancedSearch, SubGrid, QuickFindSearch, Rep
 Type: QueryType
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TableName
-Logical name of the table to retrieve views for.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases: EntityName
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
+Accepted values: MainApplicationView, AdvancedSearch, SubGrid, QuickFindSearch, Reporting, OfflineFilters, LookupView, SMAppointmentBookView, OutlookFilters, AddressBookFilters, MainApplicationViewWithoutSubject, SavedQueryTypeOther, InteractiveWorkflowView, OfflineTemplate, CustomDefinedView, CopilotView, ExportFieldTranslationsView, OutlookTemplate
 
 Required: False
 Position: Named
@@ -211,6 +182,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -TableName
+Logical name of the table to retrieve views for.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: EntityName
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ViewType
 Retrieve views of the specified type.
 Valid values: "System" (savedquery) or "Personal" (userquery).
@@ -220,11 +206,27 @@ If not specified, retrieves both system and personal views.
 Type: String
 Parameter Sets: (All)
 Aliases:
+Accepted values: System, Personal
 
 Required: False
 Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
@@ -234,6 +236,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
+### System.String
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
