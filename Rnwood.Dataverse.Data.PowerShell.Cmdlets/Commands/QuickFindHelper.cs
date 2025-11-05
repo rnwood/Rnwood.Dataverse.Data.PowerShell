@@ -29,7 +29,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             placeholderMap = new Dictionary<string, string>();
             XDocument doc = XDocument.Parse(fetchXml);
-            XNamespace ns = "http://schemas.microsoft.com/crm/2006/query";
 
             // Get cached metadata
             var metadata = entityMetadataFactory.GetMetadata(tableName);
