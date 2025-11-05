@@ -45,9 +45,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string TableName { get; set; }
 
         /// <summary>
-        /// Gets or sets whether this is a system view (savedquery) or personal view (userquery). Default is system view.
+        /// Gets or sets whether this is a system view (savedquery) or personal view (userquery). Default is 'System'.
         /// </summary>
-        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Work with a system view (savedquery) instead of a personal view (userquery)")]
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Specifies whether to work with a system view (savedquery) or a personal view (userquery). Default is 'System'.")]
         [ValidateSet("System", "Personal")]
         public string ViewType { get; set; } = "System";
 
