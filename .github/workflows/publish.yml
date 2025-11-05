@@ -643,6 +643,56 @@ jobs:
           # Publish prerelease to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
       
+      # Build and publish MCP Server as .NET Global Tool
+      - if: ${{ matrix.publish }}
+        name: Build MCP Server Tool
+        shell: pwsh
+        run: |
+          # Get version from the module manifest or CI version file
+          if (Test-Path "ci-version.txt") {
+            $version = Get-Content "ci-version.txt" -Raw | ForEach-Object { $_.Trim() }
+            Write-Host "Using CI version: $version"
+          } elseif ($env:GITHUB_REF -like "refs/tags/*") {
+            $version = $env:GITHUB_REF -replace "refs/tags/v?", ""
+            Write-Host "Using release version: $version"
+          } else {
+            $version = "1.0.0"
+            Write-Host "Using default version: $version"
+          }
+          
+          # Update version in MCP Server project file
+          $projectPath = "Rnwood.Dataverse.Data.PowerShell.McpServer/Rnwood.Dataverse.Data.PowerShell.McpServer.csproj"
+          $content = Get-Content $projectPath -Raw
+          $content = $content -replace '<Version>.*?</Version>', "<Version>$version</Version>"
+          $content | Set-Content $projectPath -Encoding UTF8
+          
+          # Build the main module first (required for bundling)
+          dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj
+          
+          # Pack the MCP Server as a global tool
+          dotnet pack -c Release ./Rnwood.Dataverse.Data.PowerShell.McpServer/Rnwood.Dataverse.Data.PowerShell.McpServer.csproj -o ./nupkgs
+          
+          Write-Host "Package created successfully"
+          Get-ChildItem ./nupkgs
+      
+      - if: ${{ matrix.publish && github.event_name == 'release' && github.event.action == 'published' }}
+        name: Publish MCP Server to NuGet.org
+        env:
+          NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        shell: pwsh
+        run: |
+          # Push stable release to NuGet.org
+          dotnet nuget push ./nupkgs/*.nupkg --api-key $env:NUGET_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+      
+      - if: ${{ matrix.publish && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        name: Publish MCP Server CI Build to NuGet.org
+        env:
+          NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        shell: pwsh
+        run: |
+          # Push prerelease to NuGet.org
+          dotnet nuget push ./nupkgs/*.nupkg --api-key $env:NUGET_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+      
       # Upload test failure reports as artifacts
       - name: Upload test failure report
         if: failure() && github.event_name == 'pull_request'

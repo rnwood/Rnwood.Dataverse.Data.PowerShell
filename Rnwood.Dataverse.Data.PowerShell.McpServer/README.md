@@ -37,7 +37,27 @@ To list saved connections:
 Get-DataverseConnection -List
 ```
 
-## Building
+## Installation
+
+### As a .NET Global Tool (Recommended)
+
+Install the MCP server as a global tool from NuGet.org:
+
+```bash
+dotnet tool install --global Rnwood.Dataverse.Data.PowerShell.McpServer
+```
+
+To update to the latest version:
+```bash
+dotnet tool update --global Rnwood.Dataverse.Data.PowerShell.McpServer
+```
+
+To uninstall:
+```bash
+dotnet tool uninstall --global Rnwood.Dataverse.Data.PowerShell.McpServer
+```
+
+### From Source
 
 ```bash
 dotnet build Rnwood.Dataverse.Data.PowerShell.McpServer/Rnwood.Dataverse.Data.PowerShell.McpServer.csproj
@@ -56,24 +76,29 @@ The server supports several command-line options:
 
 ### Examples
 
-**Basic usage with restricted mode (default):**
+**Using the global tool (after installation):**
+```bash
+dataverse-mcp --connection MyConnection
+```
+
+**From source:**
 ```bash
 dotnet run --project McpServer.csproj -- --connection MyConnection
 ```
 
 **Allow unrestricted PowerShell:**
 ```bash
-dotnet run --project McpServer.csproj -- -c MyConnection --unrestricted-mode
+dataverse-mcp -c MyConnection --unrestricted-mode
 ```
 
 **Enable filesystem and other providers:**
 ```bash
-dotnet run --project McpServer.csproj -- -c MyConnection --enable-providers
+dataverse-mcp -c MyConnection --enable-providers
 ```
 
 **Full access (unrestricted mode + providers):**
 ```bash
-dotnet run --project McpServer.csproj -- -c MyConnection -u -p
+dataverse-mcp -c MyConnection -u -p
 ```
 
 **Using environment variable for connection:**
@@ -225,7 +250,43 @@ Always end sessions when done to free up resources.
 
 ### Claude Desktop Configuration
 
-**Default configuration (restricted mode, providers disabled):**
+**Using the global tool (recommended):**
+
+Default configuration (restricted mode, providers disabled):
+```json
+{
+  "mcpServers": {
+    "dataverse-powershell": {
+      "command": "dataverse-mcp",
+      "args": [
+        "--connection",
+        "MyConnection"
+      ]
+    }
+  }
+}
+```
+
+Unrestricted mode with providers enabled:
+```json
+{
+  "mcpServers": {
+    "dataverse-powershell": {
+      "command": "dataverse-mcp",
+      "args": [
+        "-c",
+        "MyConnection",
+        "--unrestricted-mode",
+        "--enable-providers"
+      ]
+    }
+  }
+}
+```
+
+**Using from source (development):**
+
+Default configuration:
 ```json
 {
   "mcpServers": {
@@ -243,26 +304,6 @@ Always end sessions when done to free up resources.
   }
 }
 ```
-
-**Unrestricted mode with providers enabled:**
-```json
-{
-  "mcpServers": {
-    "dataverse-powershell": {
-      "command": "dotnet",
-      "args": [
-        "run",
-        "--project",
-        "/path/to/Rnwood.Dataverse.Data.PowerShell.McpServer.csproj",
-        "--",
-        "-c",
-        "MyConnection",
-        "--unrestricted-mode",
-        "--enable-providers"
-      ]
-    }
-  }
-}
 ```
 
 **Using environment variable:**

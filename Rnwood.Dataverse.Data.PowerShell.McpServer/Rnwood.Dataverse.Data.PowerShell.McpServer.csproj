@@ -7,6 +7,19 @@
     <Copyright>Copyright © 2023-2024</Copyright>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <NoWarn>1701;1702</NoWarn>
+    
+    <!-- .NET Global Tool Configuration -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>dataverse-mcp</ToolCommandName>
+    <PackageId>Rnwood.Dataverse.Data.PowerShell.McpServer</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Robert Wood</Authors>
+    <Description>Model Context Protocol (MCP) server for PowerShell with Dataverse module. Execute PowerShell scripts with the Dataverse Data PowerShell module pre-loaded, with configurable security controls and persistent session support.</Description>
+    <PackageProjectUrl>https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>dataverse;powershell;mcp;model-context-protocol;dynamics365;powerplatform</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   
   <ItemGroup>
@@ -18,6 +31,23 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.csproj" />
+    <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.csproj">
+      <!-- Exclude module from main dependencies (we'll bundle separately) -->
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  
+  <!-- Bundle module files into package -->
+  <ItemGroup>
+    <None Include="..\Rnwood.Dataverse.Data.PowerShell\bin\$(Configuration)\netstandard2.0\**\*.*"
+          Exclude="..\Rnwood.Dataverse.Data.PowerShell\bin\$(Configuration)\netstandard2.0\**\*.deps.json"
+          Pack="true" 
+          PackagePath="tools\$(TargetFramework)\any\module\" 
+          Visible="false" />
   </ItemGroup>
 </Project>
