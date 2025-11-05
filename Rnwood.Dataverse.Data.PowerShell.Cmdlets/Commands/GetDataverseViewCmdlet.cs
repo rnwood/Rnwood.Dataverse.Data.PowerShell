@@ -205,9 +205,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         psObject.Properties.Add(new PSNoteProperty("Links", linksObj));
                     }
-                    if (parsedProperties.ContainsKey("OrderBy"))
+                    if (parsedProperties.TryGetValue("OrderBy", out var orderByValue))
                     {
-                        psObject.Properties.Add(new PSNoteProperty("OrderBy", parsedProperties["OrderBy"]));
+                        psObject.Properties.Add(new PSNoteProperty("OrderBy", orderByValue));
                     }
                 }
 
