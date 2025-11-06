@@ -1,3 +1,39 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [App Module Management](#app-module-management)
+  - [Retrieving App Modules](#retrieving-app-modules)
+    - [Get a specific app module by ID](#get-a-specific-app-module-by-id)
+    - [Get an app module by UniqueName](#get-an-app-module-by-uniquename)
+    - [Get all app modules](#get-all-app-modules)
+    - [Find app modules by name with wildcards](#find-app-modules-by-name-with-wildcards)
+    - [Get raw attribute values](#get-raw-attribute-values)
+    - [Get unpublished app modules](#get-unpublished-app-modules)
+  - [Creating and Updating App Modules](#creating-and-updating-app-modules)
+    - [Create a new app module](#create-a-new-app-module)
+    - [Update an existing app module by ID](#update-an-existing-app-module-by-id)
+    - [Update an app module by UniqueName](#update-an-app-module-by-uniquename)
+    - [Create with icon and form factor](#create-with-icon-and-form-factor)
+    - [Upsert pattern with NoCreate](#upsert-pattern-with-nocreate)
+    - [Safe update with NoUpdate](#safe-update-with-noupdate)
+    - [Publish an app after creation/update](#publish-an-app-after-creationupdate)
+    - [Validate an app before publishing](#validate-an-app-before-publishing)
+  - [Deleting App Modules](#deleting-app-modules)
+    - [Delete by ID](#delete-by-id)
+    - [Delete by UniqueName](#delete-by-uniquename)
+    - [Safe deletion with IfExists](#safe-deletion-with-ifexists)
+    - [Preview deletion with WhatIf](#preview-deletion-with-whatif)
+  - [Common Scenarios](#common-scenarios)
+    - [Clone an app module](#clone-an-app-module)
+    - [Bulk create apps for multiple purposes](#bulk-create-apps-for-multiple-purposes)
+    - [Audit app module configuration](#audit-app-module-configuration)
+    - [Clean up development apps](#clean-up-development-apps)
+  - [App Module Properties](#app-module-properties)
+  - [See Also](#see-also)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # App Module Management
 
 App modules (model-driven apps) define the structure, navigation, and components of model-driven applications in Dataverse. This guide covers creating, updating, retrieving, and deleting app modules using PowerShell.
@@ -223,7 +259,7 @@ When working with app modules, you'll encounter these key properties:
 
 ## See Also
 
-- [Connection Management](connections.md) — Managing Dataverse connections
+- [Connection Management](connections.md) ï¿½ Managing Dataverse connections
 - [Get-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseAppModule.md)
 - [Set-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseAppModule.md)
 - [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)
