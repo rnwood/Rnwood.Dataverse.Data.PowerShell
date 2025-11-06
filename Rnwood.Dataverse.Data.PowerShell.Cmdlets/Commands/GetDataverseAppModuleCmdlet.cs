@@ -38,8 +38,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "Return raw values instead of display values")]
         public SwitchParameter Raw { get; set; }
 
-        private DataverseEntityConverter entityConverter;
-        private EntityMetadataFactory entityMetadataFactory;
+
+        [Parameter(HelpMessage = "Allows unpublished records to be retrieved instead of the default published")]
+        public SwitchParameter Unpublished { gest; set; }
+
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -47,9 +49,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
-
-            entityMetadataFactory = new EntityMetadataFactory(Connection);
-            entityConverter = new DataverseEntityConverter(Connection, entityMetadataFactory);
 
             WriteVerbose("Querying app modules (appmodule)...");
             QueryAppModules();
@@ -102,17 +101,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Convert to PSObjects and output with streaming
             foreach (var appModule in appModules)
             {
-                PSObject psObject;
 
                 if (Raw.IsPresent)
                 {
                     // Return raw values
-                    psObject = entityConverter.ConvertToPSObject(appModule, new ColumnSet(true), _ => ValueType.Raw);
+                    WriteObject(appModule);
                 }
                 else
                 {
                     // Create PSObject with commonly used properties
-                    psObject = new PSObject();
+                    PSObject psObject = new PSObject();
 
                     // Add normalized Id property for easier pipeline usage
                     if (appModule.Attributes.TryGetValue("appmoduleid", out var idValue))
@@ -153,9 +151,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         psObject.Properties.Add(new PSNoteProperty("ClientType", clientTypeValue));
                     }
+
+                    WriteObject(psObject);
                 }
 
-                WriteObject(psObject);
+
             }
         }
     }
