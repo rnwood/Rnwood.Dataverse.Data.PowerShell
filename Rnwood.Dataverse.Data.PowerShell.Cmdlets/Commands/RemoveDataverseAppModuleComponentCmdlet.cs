@@ -1,4 +1,6 @@
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Management.Automation;
 using System.ServiceModel;
@@ -32,10 +34,52 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 base.ProcessRecord();
 
-                if (ShouldProcess($"App module component with ID '{Id}'", "Remove"))
+                // Retrieve the component to get the AppModuleId and ComponentType
+                Entity componentEntity = null;
+                try
                 {
-                    Connection.Delete("appmodulecomponent", Id);
-                    WriteVerbose($"Removed app module component with ID: {Id}");
+                    componentEntity = Connection.Retrieve("appmodulecomponent", Id, new ColumnSet("appmoduleidunique", "componenttype"));
+                }
+                catch (FaultException<OrganizationServiceFault> ex)
+                {
+                    if (IfExists && (ex.Detail.ErrorCode == -2147220969 || ex.Message.Contains("Does Not Exist")))
+                    {
+                        WriteVerbose($"App module component with ID {Id} does not exist: {ex.Message}");
+                        return;
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                catch (FaultException ex)
+                {
+                    if (IfExists && ex.Message.Contains("Does Not Exist"))
+                    {
+                        WriteVerbose($"App module component with ID {Id} does not exist: {ex.Message}");
+                        return;
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+
+                if (componentEntity != null)
+                {
+                    Guid appModuleId = componentEntity.GetAttributeValue<Guid>("appmoduleidunique");
+                    int componentType = componentEntity.GetAttributeValue<int>("componenttype");
+
+                    if (ShouldProcess($"App module component with ID '{Id}'", "Remove"))
+                    {
+                        var request = new RemoveAppComponentsRequest();
+                        request.Parameters["AppModuleId"] = appModuleId;
+                        request.Parameters["ComponentIds"] = new[] { Id };
+                        request.Parameters["ComponentType"] = componentType;
+                        
+                        Connection.Execute(request);
+                        WriteVerbose($"Removed app module component with ID: {Id}");
+                    }
                 }
             }
             catch (FaultException<OrganizationServiceFault> ex)

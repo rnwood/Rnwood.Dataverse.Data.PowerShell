@@ -324,7 +324,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - Set IsDefault for the primary component of each type
 - Use RootComponentBehavior to control sub-component inclusion
 
-
 ## RELATED LINKS
 
 [Get-DataverseAppModuleComponent](Get-DataverseAppModuleComponent.md)

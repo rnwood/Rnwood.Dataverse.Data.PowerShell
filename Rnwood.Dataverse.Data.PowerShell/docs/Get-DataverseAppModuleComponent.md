@@ -196,7 +196,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - Validating app configuration
 - Cloning app structures across environments
 
-
 ## RELATED LINKS
 
 [Set-DataverseAppModuleComponent](Set-DataverseAppModuleComponent.md)

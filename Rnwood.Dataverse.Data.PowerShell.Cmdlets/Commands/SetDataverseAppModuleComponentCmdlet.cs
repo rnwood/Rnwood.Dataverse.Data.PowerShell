@@ -1,3 +1,4 @@
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
@@ -115,7 +116,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (isUpdate)
                 {
-                    // Update existing component
+                    // Update existing component - requires removal and re-add
                     if (NoUpdate)
                     {
                         WriteVerbose("NoUpdate flag specified, skipping update");
@@ -128,55 +129,48 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (ShouldProcess($"App module component with ID '{componentId}'", "Update"))
                     {
-                        Entity updateEntity = new Entity("appmodulecomponent") { Id = componentId };
-                        bool updated = false;
+                        // Get existing component properties
+                        Guid appModuleId = componentEntity.Contains("appmoduleidunique") 
+                            ? componentEntity.GetAttributeValue<Guid>("appmoduleidunique")
+                            : AppModuleIdValue;
+                        Guid objectId = componentEntity.GetAttributeValue<Guid>("objectid");
+                        int componentType = componentEntity.GetAttributeValue<int>("componenttype");
 
-                        // Update RootComponentBehavior if provided and different
-                        if (RootComponentBehavior.HasValue)
-                        {
-                            int? currentRootComponentBehavior = componentEntity.Contains("rootcomponentbehavior") 
-                                ? componentEntity.GetAttributeValue<int>("rootcomponentbehavior") 
-                                : (int?)null;
-                            if (currentRootComponentBehavior != RootComponentBehavior.Value)
-                            {
-                                updateEntity["rootcomponentbehavior"] = RootComponentBehavior.Value;
-                                updated = true;
-                            }
-                        }
+                        // Use provided values or existing values
+                        int rootComponentBehavior = RootComponentBehavior ?? 
+                            (componentEntity.Contains("rootcomponentbehavior") ? componentEntity.GetAttributeValue<int>("rootcomponentbehavior") : 0);
+                        bool isDefault = IsDefault ?? componentEntity.GetAttributeValue<bool>("isdefault");
+                        bool isMetadata = IsMetadata ?? componentEntity.GetAttributeValue<bool>("ismetadata");
 
-                        // Update IsDefault if provided and different
-                        if (IsDefault.HasValue)
-                        {
-                            bool currentIsDefault = componentEntity.GetAttributeValue<bool>("isdefault");
-                            if (currentIsDefault != IsDefault.Value)
-                            {
-                                updateEntity["isdefault"] = IsDefault.Value;
-                                updated = true;
-                            }
-                        }
+                        // Remove the existing component using RemoveAppComponentsRequest
+                        var removeRequest = new RemoveAppComponentsRequest();
+                        removeRequest.Parameters["AppModuleId"] = appModuleId;
+                        removeRequest.Parameters["ComponentIds"] = new[] { componentId };
+                        removeRequest.Parameters["ComponentType"] = componentType;
+                        
+                        Connection.Execute(removeRequest);
+                        WriteVerbose($"Removed existing app module component with ID: {componentId}");
 
-                        // Update IsMetadata if provided and different
-                        if (IsMetadata.HasValue)
+                        // Re-add with updated properties using AddAppComponentsRequest
+                        var newComponentEntity = new Entity("appmodulecomponent")
                         {
-                            bool currentIsMetadata = componentEntity.GetAttributeValue<bool>("ismetadata");
-                            if (currentIsMetadata != IsMetadata.Value)
-                            {
-                                updateEntity["ismetadata"] = IsMetadata.Value;
-                                updated = true;
-                            }
-                        }
+                            Id = componentId
+                        };
+                        newComponentEntity["objectid"] = objectId;
+                        newComponentEntity["componenttype"] = componentType;
+                        newComponentEntity["rootcomponentbehavior"] = rootComponentBehavior;
+                        newComponentEntity["isdefault"] = isDefault;
+                        newComponentEntity["ismetadata"] = isMetadata;
 
-                        if (updated)
-                        {
-                            var converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
-                            string columnSummary = QueryHelpers.GetColumnSummary(updateEntity, converter, false);
-                            Connection.Update(updateEntity);
-                            WriteVerbose($"Updated app module component with ID: {componentId} columns:\n{columnSummary}");
-                        }
-                        else
-                        {
-                            WriteWarning("No modifications specified. App module component was not updated.");
-                        }
+                        var components = new EntityCollection();
+                        components.Entities.Add(newComponentEntity);
+
+                        var addRequest = new AddAppComponentsRequest();
+                        addRequest.Parameters["AppModuleId"] = appModuleId;
+                        addRequest.Parameters["Components"] = components;
+                        
+                        Connection.Execute(addRequest);
+                        WriteVerbose($"Re-added app module component with updated properties");
 
                         if (PassThru)
                         {
@@ -186,7 +180,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 else
                 {
-                    // Create new component
+                    // Create new component using AddAppComponentsRequest
                     if (NoCreate)
                     {
                         WriteVerbose("NoCreate flag specified and component not found, skipping creation");
@@ -209,36 +203,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (ShouldProcess($"App module component for AppModuleId '{AppModuleIdValue}', ObjectId '{ObjectId}'", "Create"))
                     {
-                        Entity newEntity = new Entity("appmodulecomponent");
+                        componentId = Id != Guid.Empty ? Id : Guid.NewGuid();
 
-                        if (Id != Guid.Empty)
+                        var newComponentEntity = new Entity("appmodulecomponent")
                         {
-                            newEntity.Id = Id;
-                        }
+                            Id = componentId
+                        };
+                        newComponentEntity["objectid"] = ObjectId;
+                        newComponentEntity["componenttype"] = ComponentType.Value;
+                        newComponentEntity["rootcomponentbehavior"] = RootComponentBehavior ?? 0;
+                        newComponentEntity["isdefault"] = IsDefault ?? false;
+                        newComponentEntity["ismetadata"] = IsMetadata ?? false;
 
-                        newEntity["appmoduleidunique"] = AppModuleIdValue;
-                        newEntity["objectid"] = ObjectId;
-                        newEntity["componenttype"] = ComponentType.Value;
+                        var components = new EntityCollection();
+                        components.Entities.Add(newComponentEntity);
 
-                        if (RootComponentBehavior.HasValue)
-                        {
-                            newEntity["rootcomponentbehavior"] = RootComponentBehavior.Value;
-                        }
+                        var request = new AddAppComponentsRequest();
+                        request.Parameters["AppModuleId"] = AppModuleIdValue;
+                        request.Parameters["Components"] = components;
 
-                        if (IsDefault.HasValue)
-                        {
-                            newEntity["isdefault"] = IsDefault.Value;
-                        }
-
-                        if (IsMetadata.HasValue)
-                        {
-                            newEntity["ismetadata"] = IsMetadata.Value;
-                        }
-
-                        var converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
-                        string columnSummary = QueryHelpers.GetColumnSummary(newEntity, converter, false);
-                        componentId = Connection.Create(newEntity);
-                        WriteVerbose($"Created new app module component with ID: {componentId} columns:\n{columnSummary}");
+                        Connection.Execute(request);
+                        WriteVerbose($"Added new app module component with ID: {componentId}");
 
                         if (PassThru)
                         {

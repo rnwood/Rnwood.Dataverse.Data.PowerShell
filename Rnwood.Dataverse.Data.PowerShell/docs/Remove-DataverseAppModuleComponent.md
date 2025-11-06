@@ -180,7 +180,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - Reorganizing app structure
 - Automated app configuration management
 
-
 ## RELATED LINKS
 
 [Get-DataverseAppModuleComponent](Get-DataverseAppModuleComponent.md)
