@@ -10,7 +10,7 @@
     
     <!-- .NET Global Tool Configuration -->
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>dataverse-mcp</ToolCommandName>
+    <ToolCommandName>rnwood-dataverse-mcp</ToolCommandName>
     <PackageId>Rnwood.Dataverse.Data.PowerShell.McpServer</PackageId>
     <Version>1.0.0</Version>
     <Authors>Robert Wood</Authors>
