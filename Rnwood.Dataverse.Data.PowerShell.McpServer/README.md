@@ -78,7 +78,7 @@ The server supports several command-line options:
 
 **Using the global tool (after installation):**
 ```bash
-dataverse-mcp --connection MyConnection
+rnwood-dataverse-mcp --connection MyConnection
 ```
 
 **From source:**
@@ -88,17 +88,17 @@ dotnet run --project McpServer.csproj -- --connection MyConnection
 
 **Allow unrestricted PowerShell:**
 ```bash
-dataverse-mcp -c MyConnection --unrestricted-mode
+rnwood-dataverse-mcp -c MyConnection --unrestricted-mode
 ```
 
 **Enable filesystem and other providers:**
 ```bash
-dataverse-mcp -c MyConnection --enable-providers
+rnwood-dataverse-mcp -c MyConnection --enable-providers
 ```
 
 **Full access (unrestricted mode + providers):**
 ```bash
-dataverse-mcp -c MyConnection -u -p
+rnwood-dataverse-mcp -c MyConnection -u -p
 ```
 
 **Using environment variable for connection:**
@@ -257,7 +257,7 @@ Default configuration (restricted mode, providers disabled):
 {
   "mcpServers": {
     "dataverse-powershell": {
-      "command": "dataverse-mcp",
+      "command": "rnwood-dataverse-mcp",
       "args": [
         "--connection",
         "MyConnection"
@@ -272,7 +272,7 @@ Unrestricted mode with providers enabled:
 {
   "mcpServers": {
     "dataverse-powershell": {
-      "command": "dataverse-mcp",
+      "command": "rnwood-dataverse-mcp",
       "args": [
         "-c",
         "MyConnection",
