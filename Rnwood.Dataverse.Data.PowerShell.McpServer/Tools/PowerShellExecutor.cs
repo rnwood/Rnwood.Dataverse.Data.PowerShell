@@ -293,12 +293,12 @@ public class PersistentSession : IDisposable
                 }
             }
 
-            // Load the default connection if specified
+            // Load the default connection if specified and set as default
             if (!string.IsNullOrEmpty(_config.ConnectionName))
             {
                 using var ps = System.Management.Automation.PowerShell.Create();
                 ps.Runspace = _runspace;
-                ps.AddScript($"$connection = Get-DataverseConnection -Name '{_config.ConnectionName}'");
+                ps.AddScript($"$connection = Get-DataverseConnection -Name '{_config.ConnectionName}' -SetAsDefault");
                 ps.Invoke();
                 
                 if (ps.HadErrors)
