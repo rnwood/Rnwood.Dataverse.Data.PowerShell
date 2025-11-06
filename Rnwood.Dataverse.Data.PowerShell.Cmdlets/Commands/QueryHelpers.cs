@@ -29,9 +29,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <param name="connection">The organization service connection</param>
         /// <param name="writeVerbose">Action to write verbose messages</param>
         /// <returns>Enumerable of entities from all pages</returns>
-        public static IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query, IOrganizationService connection, Action<string> writeVerbose)
+        public static IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query, IOrganizationService connection, Action<string> writeVerbose, bool unpublished = false)
         {
-            return ExecuteQueryWithPaging(query, connection, writeVerbose, null, null);
+            return ExecuteQueryWithPaging(query, connection, writeVerbose, null, null, unpublished);
         }
 
         /// <summary>
@@ -42,8 +42,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <param name="writeVerbose">Action to write verbose messages</param>
         /// <param name="isStopping">Function to check if the cmdlet is stopping</param>
         /// <param name="cancellationToken">Cancellation token to check during IO operations</param>
+        /// <param name="unpublished">Whether to include unpublished entities</param>
         /// <returns>Enumerable of entities from all pages</returns>
-        public static IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query, IOrganizationService connection, Action<string> writeVerbose, Func<bool> isStopping, System.Threading.CancellationToken? cancellationToken)
+        public static IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query, IOrganizationService connection, Action<string> writeVerbose, Func<bool> isStopping, System.Threading.CancellationToken? cancellationToken, bool unpublished = false)
         {
             writeVerbose($"Executing query: {QueryToVerboseString(query)}");
 
@@ -59,12 +60,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 qe.PageInfo = pageInfo;
 
-                RetrieveMultipleRequest request = new RetrieveMultipleRequest()
-                {
-                    Query = qe
-                };
+                OrganizationRequest request = unpublished ? (OrganizationRequest)new RetrieveUnpublishedMultipleRequest() { Query = qe } : new RetrieveMultipleRequest() { Query = qe };
 
-                RetrieveMultipleResponse response;
+                OrganizationResponse response;
+                EntityCollection entityCollection;
                 int pageNum = 0;
 
                 do
@@ -78,13 +77,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     pageNum++;
                     writeVerbose($"Retrieving page {pageNum}...");
-                    response = (RetrieveMultipleResponse)connection.Execute(request);
-                    writeVerbose($"Page {pageNum} returned {response.EntityCollection.Entities.Count} records");
+                    response = connection.Execute(request);
+                    entityCollection = GetEntityCollectionFromResponse(response);
+                    writeVerbose($"Page {pageNum} returned {entityCollection.Entities.Count} records");
 
                     pageInfo.PageNumber++;
-                    pageInfo.PagingCookie = response.EntityCollection.PagingCookie;
+                    pageInfo.PagingCookie = entityCollection.PagingCookie;
 
-                    foreach (Entity entity in response.EntityCollection.Entities)
+                    foreach (Entity entity in entityCollection.Entities)
                     {
                         // Check for cancellation during record iteration
                         if ((isStopping != null && isStopping()) || (cancellationToken.HasValue && cancellationToken.Value.IsCancellationRequested))
@@ -96,7 +96,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         yield return entity;
                     }
 
-                } while (response.EntityCollection.MoreRecords);
+                } while (entityCollection.MoreRecords);
                 
                 writeVerbose($"Query complete. Retrieved {pageNum} page(s)");
             }
@@ -105,15 +105,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // When TopCount is set (e.g., from FetchXML), execute without PageInfo
                 string topCountStr = query is QueryExpression qe2 ? qe2.TopCount?.ToString() : (query is QueryByAttribute qba2 ? qba2.TopCount?.ToString() : "null");
                 writeVerbose($"Executing query with TopCount={topCountStr}");
-                RetrieveMultipleRequest request = new RetrieveMultipleRequest()
-                {
-                    Query = query
-                };
+                OrganizationRequest request = unpublished ? (OrganizationRequest)new RetrieveUnpublishedMultipleRequest() { Query = query } : new RetrieveMultipleRequest() { Query = query };
 
-                RetrieveMultipleResponse response = (RetrieveMultipleResponse)connection.Execute(request);
-                writeVerbose($"Query returned {response.EntityCollection.Entities.Count} records");
+                OrganizationResponse response = connection.Execute(request);
+                EntityCollection entityCollection = GetEntityCollectionFromResponse(response);
+                writeVerbose($"Query returned {entityCollection.Entities.Count} records");
 
-                foreach (Entity entity in response.EntityCollection.Entities)
+                foreach (Entity entity in entityCollection.Entities)
                 {
                     yield return entity;
                 }
@@ -300,6 +298,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             return value ?? "<null>";
+        }
+
+        /// <summary>
+        /// Extracts the EntityCollection from a query response, handling both published and unpublished response types.
+        /// </summary>
+        /// <param name="response">The organization response from a query request</param>
+        /// <returns>The EntityCollection containing the query results</returns>
+        private static EntityCollection GetEntityCollectionFromResponse(OrganizationResponse response)
+        {
+            if (response is RetrieveMultipleResponse rmr)
+                return rmr.EntityCollection;
+            if (response is RetrieveUnpublishedMultipleResponse rumr)
+                return rumr.EntityCollection;
+            throw new InvalidOperationException($"Unexpected response type: {response.GetType().Name}");
         }
     }
 }
