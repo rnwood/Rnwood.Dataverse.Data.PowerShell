@@ -72,7 +72,37 @@ The server supports several command-line options:
 - `-c, --connection <name>` - Name of the saved Dataverse connection (or use `DATAVERSE_CONNECTION_NAME` env var)
 - `-u, --unrestricted-mode` - Disable PowerShell restricted language mode (default: restricted mode enabled)
 - `-p, --enable-providers` - Enable PowerShell providers like FileSystem, Registry, etc. (default: providers disabled)
+- `-h, --http` - Run in HTTP mode instead of STDIO mode (uses ASP.NET environment variables and command line args for bindings)
 - `--help` - Display help information
+
+### Transport Modes
+
+#### STDIO Mode (Default)
+
+The default mode uses standard input/output for communication, suitable for direct process invocation by MCP clients like Claude Desktop.
+
+#### HTTP Mode
+
+HTTP mode exposes the MCP server over HTTP with JSON-RPC endpoints at `/mcp`. This mode is useful for:
+- Running the server as a web service
+- Accessing from multiple clients
+- Integration with load balancers or API gateways
+
+HTTP mode uses standard ASP.NET Core environment variables and command line arguments for configuration:
+- `ASPNETCORE_URLS` or `--urls` - Set binding addresses (default: `http://localhost:5000`)
+- `ASPNETCORE_ENVIRONMENT` - Set environment (Development, Production, etc.)
+
+**Example HTTP mode:**
+```bash
+# Run on default port (5000)
+rnwood-dataverse-mcp --connection MyConnection --http
+
+# Run on custom port
+rnwood-dataverse-mcp --connection MyConnection --http --urls "http://localhost:8080"
+
+# Run with custom URLs environment variable
+ASPNETCORE_URLS="http://0.0.0.0:5000" rnwood-dataverse-mcp --connection MyConnection --http
+```
 
 ### Examples
 
@@ -99,6 +129,11 @@ rnwood-dataverse-mcp -c MyConnection --enable-providers
 **Full access (unrestricted mode + providers):**
 ```bash
 rnwood-dataverse-mcp -c MyConnection -u -p
+```
+
+**HTTP mode:**
+```bash
+rnwood-dataverse-mcp -c MyConnection --http
 ```
 
 **Using environment variable for connection:**
