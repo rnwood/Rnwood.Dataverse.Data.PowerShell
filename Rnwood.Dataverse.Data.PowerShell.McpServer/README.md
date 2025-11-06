@@ -83,7 +83,7 @@ The default mode uses standard input/output for communication, suitable for dire
 
 #### HTTP Mode
 
-HTTP mode exposes the MCP server over HTTP with JSON-RPC endpoints at `/mcp`. This mode is useful for:
+HTTP mode exposes the MCP server over HTTP using the official `ModelContextProtocol.AspNetCore` package. The MCP endpoint is automatically configured by the framework. This mode is useful for:
 - Running the server as a web service
 - Accessing from multiple clients
 - Integration with load balancers or API gateways
