@@ -1,9 +1,7 @@
 using System;
 using System.CommandLine;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -58,63 +56,21 @@ rootCommand.SetHandler(async (connectionName, unrestrictedMode, enableProviders,
 
     if (httpMode)
     {
-        // HTTP mode - use ASP.NET Core web host with direct tool invocation
+        // HTTP mode - use ASP.NET Core with MCP HTTP transport
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Logging.AddConsole();
 
         builder.Services.AddSingleton(config);
         builder.Services.AddSingleton<PowerShellExecutor>();
-        builder.Services.AddSingleton<PowerShellTools>();
+
+        builder.Services.AddMcpServer()
+            .WithHttpTransport()
+            .WithTools<PowerShellTools>();
 
         var app = builder.Build();
         
-        // Map JSON-RPC style HTTP endpoint
-        app.MapPost("/mcp", async (HttpContext context) =>
-        {
-            var tools = context.RequestServices.GetRequiredService<PowerShellTools>();
-            
-            // Simple JSON-RPC handler - parse request and call appropriate tool method
-            var request = await context.Request.ReadFromJsonAsync<JsonRpcRequest>();
-            
-            if (request == null)
-            {
-                context.Response.StatusCode = 400;
-                await context.Response.WriteAsJsonAsync(new { error = "Invalid request" });
-                return;
-            }
-
-            object result;
-            try
-            {
-                result = request.Method switch
-                {
-                    "initialize" => new
-                    {
-                        protocolVersion = "2024-11-05",
-                        capabilities = new { tools = new { } },
-                        serverInfo = new { name = "dataverse-powershell-mcp", version = "1.0.0" }
-                    },
-                    "tools/list" => tools.GetCmdletList(),
-                    "tools/call" => HandleToolCall(tools, request),
-                    _ => new { error = $"Unknown method: {request.Method}" }
-                };
-            }
-            catch (Exception ex)
-            {
-                result = new { error = ex.Message };
-            }
-
-            var response = new
-            {
-                jsonrpc = "2.0",
-                id = request.Id,
-                result
-            };
-            
-            context.Response.ContentType = "application/json";
-            await context.Response.WriteAsJsonAsync(response);
-        });
+        app.MapMcp();
 
         await app.RunAsync();
     }
@@ -140,27 +96,3 @@ rootCommand.SetHandler(async (connectionName, unrestrictedMode, enableProviders,
 }, connectionNameOption, unrestrictedModeOption, enableProvidersOption, httpModeOption);
 
 return await rootCommand.InvokeAsync(args);
-
-static object HandleToolCall(PowerShellTools tools, JsonRpcRequest request)
-{
-    var toolName = request.Params?.GetProperty("name").GetString();
-    var arguments = request.Params?.GetProperty("arguments");
-
-    return toolName switch
-    {
-        "GetCmdletList" => tools.GetCmdletList(),
-        "GetCmdletHelp" => tools.GetCmdletHelp(arguments?.GetProperty("cmdletName").GetString() ?? ""),
-        "CreateSession" => tools.CreateSession(),
-        "RunScriptInSession" => tools.RunScriptInSession(
-            arguments?.GetProperty("sessionId").GetString() ?? "",
-            arguments?.GetProperty("script").GetString() ?? ""),
-        "GetScriptOutput" => tools.GetScriptOutput(
-            arguments?.GetProperty("sessionId").GetString() ?? "",
-            arguments?.GetProperty("scriptExecutionId").GetString() ?? "",
-            arguments?.TryGetProperty("onlyNew", out var onlyNewVal) == true && onlyNewVal.GetBoolean()),
-        "EndSession" => tools.EndSession(arguments?.GetProperty("sessionId").GetString() ?? ""),
-        _ => JsonSerializer.Serialize(new { error = $"Unknown tool: {toolName}" })
-    };
-}
-
-record JsonRpcRequest(string Jsonrpc, object? Id, string Method, System.Text.Json.JsonElement? Params);
