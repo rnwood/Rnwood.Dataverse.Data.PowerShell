@@ -16,12 +16,6 @@ var connectionNameOption = new Option<string?>(
 };
 connectionNameOption.AddAlias("-c");
 
-var unrestrictedModeOption = new Option<bool>(
-    name: "--unrestricted-mode",
-    description: "Disable PowerShell restricted language mode (allows unrestricted script execution)",
-    getDefaultValue: () => false);
-unrestrictedModeOption.AddAlias("-u");
-
 var enableProvidersOption = new Option<bool>(
     name: "--enable-providers",
     description: "Enable PowerShell providers (FileSystem, Registry, etc.)",
@@ -37,12 +31,11 @@ httpModeOption.AddAlias("-h");
 var rootCommand = new RootCommand("Dataverse PowerShell MCP Server - Execute PowerShell scripts with Dataverse module via Model Context Protocol")
 {
     connectionNameOption,
-    unrestrictedModeOption,
     enableProvidersOption,
     httpModeOption
 };
 
-rootCommand.SetHandler(async (connectionName, unrestrictedMode, enableProviders, httpMode) =>
+rootCommand.SetHandler(async (connectionName, enableProviders, httpMode) =>
 {
     // Check environment variable if connection name not provided
     connectionName ??= Environment.GetEnvironmentVariable("DATAVERSE_CONNECTION_NAME");
@@ -50,7 +43,6 @@ rootCommand.SetHandler(async (connectionName, unrestrictedMode, enableProviders,
     var config = new PowerShellExecutorConfig
     {
         ConnectionName = connectionName,
-        UseRestrictedLanguageMode = !unrestrictedMode,
         EnableProviders = enableProviders
     };
 
@@ -93,6 +85,6 @@ rootCommand.SetHandler(async (connectionName, unrestrictedMode, enableProviders,
 
         await builder.Build().RunAsync();
     }
-}, connectionNameOption, unrestrictedModeOption, enableProvidersOption, httpModeOption);
+}, connectionNameOption, enableProvidersOption, httpModeOption);
 
 return await rootCommand.InvokeAsync(args);

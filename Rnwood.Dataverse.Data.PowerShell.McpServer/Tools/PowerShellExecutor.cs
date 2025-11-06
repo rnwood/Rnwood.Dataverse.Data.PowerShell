@@ -13,7 +13,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.McpServer.Tools;
 public class PowerShellExecutorConfig
 {
     public string? ConnectionName { get; set; }
-    public bool UseRestrictedLanguageMode { get; set; } = true;
     public bool EnableProviders { get; set; } = false;
 }
 
@@ -71,13 +70,17 @@ public class PowerShellExecutor : IDisposable
             // Test that we can load the connection
             if (!string.IsNullOrEmpty(_config.ConnectionName))
             {
-                var testScript = $"Import-Module '{Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1")}'; $connection = Get-DataverseConnection -Name '{_config.ConnectionName}'; if ($null -eq $connection) {{ throw 'Failed to load connection' }}";
+                var testScript = $"Import-Module Rnwood.Dataverse.Data.PowerShell";
                 
                 using var runspace = RunspaceFactory.CreateRunspace();
                 runspace.Open();
                 using var ps = System.Management.Automation.PowerShell.Create();
                 ps.Runspace = runspace;
                 ps.AddScript(testScript);
+                
+                    ps.Invoke();
+
+                testScript = $"$connection = Get-DataverseConnection -Name '{_config.ConnectionName}'; if ($null -eq $connection) {{ throw 'Failed to load connection' }}";
                 
                 try
                 {
@@ -103,7 +106,7 @@ public class PowerShellExecutor : IDisposable
         EnsureInitialized();
         
         var script = $@"
-Import-Module '{Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1")}'
+Import-Module 'Rnwood.Dataverse.Data.PowerShell'
 Get-Command -Module Rnwood.Dataverse.Data.PowerShell | ForEach-Object {{
     $help = Get-Help $_.Name -ErrorAction SilentlyContinue
     [PSCustomObject]@{{
@@ -133,7 +136,6 @@ Get-Command -Module Rnwood.Dataverse.Data.PowerShell | ForEach-Object {{
         EnsureInitialized();
         
         var script = $@"
-Import-Module '{Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1")}'
 $help = Get-Help '{cmdletName}' -Full -ErrorAction Stop
 $helpObj = [PSCustomObject]@{{
     Name = $help.Name
@@ -268,22 +270,13 @@ public class PersistentSession : IDisposable
                 iss.Providers.Clear();
             }
 
-            // Set language mode
-            if (_config.UseRestrictedLanguageMode)
-            {
-                iss.LanguageMode = PSLanguageMode.RestrictedLanguage;
-            }
-
             _runspace = RunspaceFactory.CreateRunspace(iss);
             _runspace.Open();
 
-            // Import the Dataverse module
-            var moduleManifest = Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1");
-            if (File.Exists(moduleManifest))
-            {
+    
                 using var ps = System.Management.Automation.PowerShell.Create();
                 ps.Runspace = _runspace;
-                ps.AddCommand("Import-Module").AddParameter("Name", moduleManifest);
+                ps.AddCommand("Import-Module").AddParameter("Name", "Rnwood.Dataverse.Data.PowerShell");
                 ps.Invoke();
                 
                 if (ps.HadErrors)
@@ -291,19 +284,19 @@ public class PersistentSession : IDisposable
                     var errors = string.Join("\n", ps.Streams.Error.Select(e => e.ToString()));
                     throw new InvalidOperationException($"Failed to import module: {errors}");
                 }
-            }
+            
 
             // Load the default connection if specified and set as default
             if (!string.IsNullOrEmpty(_config.ConnectionName))
             {
-                using var ps = System.Management.Automation.PowerShell.Create();
-                ps.Runspace = _runspace;
-                ps.AddScript($"$connection = Get-DataverseConnection -Name '{_config.ConnectionName}' -SetAsDefault");
-                ps.Invoke();
+                using var ps2 = System.Management.Automation.PowerShell.Create();
+                ps2.Runspace = _runspace;
+                ps2.AddScript($"$connection = Get-DataverseConnection -Name '{_config.ConnectionName}' -SetAsDefault");
+                ps2.Invoke();
                 
-                if (ps.HadErrors)
+                if (ps2.HadErrors)
                 {
-                    var errors = string.Join("\n", ps.Streams.Error.Select(e => e.ToString()));
+                    var errors = string.Join("\n", ps2.Streams.Error.Select(e => e.ToString()));
                     throw new InvalidOperationException($"Failed to load connection: {errors}");
                 }
             }
