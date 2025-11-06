@@ -206,19 +206,5 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - WebResourceId: The web resource ID for the app icon
 - FormFactor: The form factor (1=Main, 2=Quick, 3=Preview, 4=Dashboard)
 - ClientType: The client type for the app
-- NavigationType: The navigation type (Single session or Multi session)
-- IsFeatures: Whether the app is a feature app
-
-**Use Cases:**
-- Listing all model-driven apps in an environment
-- Finding apps by pattern matching
-- Retrieving app details for automation or documentation
-- Getting app configuration before making changes
-
-## RELATED LINKS
-
-[Set-DataverseAppModule](Set-DataverseAppModule.md)
-
-[Remove-DataverseAppModule](Remove-DataverseAppModule.md)
-
-[Get-DataverseAppModuleComponent](Get-DataverseAppModuleComponent.md)
+- NavigationType: The navigation type (SingleSession or MultiSession)
+- IsFeatured: Whether the app is a featured app

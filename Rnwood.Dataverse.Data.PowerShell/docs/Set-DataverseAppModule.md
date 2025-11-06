@@ -14,9 +14,10 @@ Creates or updates an app module (model-driven app) in Dataverse.
 
 ```
 Set-DataverseAppModule [-Id <Guid>] [-UniqueName <String>] [-Name <String>] [-Description <String>]
- [-Url <String>] [-WebResourceId <Guid>] [-FormFactor <Int32>] [-ClientType <Int32>] [-NoUpdate] [-NoCreate]
- [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+ [-Url <String>] [-WebResourceId <Guid>] [-FormFactor <Int32>] [-ClientType <Int32>] 
+ [-NavigationType <NavigationType>] [-IsFeatured <Boolean>] [-NoUpdate] [-NoCreate] [-PassThru] 
+ [-Publish] [-Validate] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] 
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -69,7 +70,29 @@ PS C:\> Set-DataverseAppModule -Connection $c -PassThru `
 
 Creates a new app module with icon, URL, and form factor settings.
 
-### Example 5: Upsert pattern with NoCreate
+### Example 5: Create with navigation type and featured setting
+```powershell
+PS C:\> Set-DataverseAppModule -Connection $c -PassThru `
+    -UniqueName "featured_app" `
+    -Name "Featured Application" `
+    -NavigationType MultiSession `
+    -IsFeatured $true
+```
+
+Creates a new app module with multi-session navigation and marks it as featured.
+
+### Example 6: Create and publish an app module
+```powershell
+PS C:\> Set-DataverseAppModule -Connection $c -PassThru `
+    -UniqueName "ready_app" `
+    -Name "Ready Application" `
+    -Validate `
+    -Publish
+```
+
+Creates a new app module, validates it, and publishes it immediately.
+
+### Example 7: Upsert pattern with NoCreate
 ```powershell
 PS C:\> Set-DataverseAppModule -Connection $c `
     -UniqueName "existing_app" `
@@ -79,7 +102,7 @@ PS C:\> Set-DataverseAppModule -Connection $c `
 
 Updates the app if it exists, but does nothing if it doesn't exist (prevents accidental creation).
 
-### Example 6: Safe update with NoUpdate
+### Example 8: Safe update with NoUpdate
 ```powershell
 PS C:\> Set-DataverseAppModule -Connection $c `
     -Id $appId `
@@ -184,6 +207,21 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
+### -IsFeatured
+Whether the app module is featured
+
+```yaml
+Type: Boolean
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
 ### -Name
 Display name of the app module
 
@@ -191,6 +229,22 @@ Display name of the app module
 Type: String
 Parameter Sets: (All)
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -NavigationType
+Navigation type for the app module (SingleSession or MultiSession)
+
+```yaml
+Type: NavigationType
+Parameter Sets: (All)
+Aliases:
+Accepted values: SingleSession, MultiSession
 
 Required: False
 Position: Named
@@ -244,6 +298,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Publish
+If specified, publishes the app module after creating or updating
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -UniqueName
 Unique name of the app module.
 Required when creating a new app module.
@@ -276,8 +345,23 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
+### -Validate
+If specified, validates the app module before publishing
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -WebResourceId
-Web resource ID for the app module icon
+Web resource ID for the app module icon. When creating, if not specified the default 953b9fac-1e5e-e611-80d6-00155ded156f is used.
 
 ```yaml
 Type: Guid
@@ -329,6 +413,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### System.Guid
 ### System.String
+### System.Boolean
+### NavigationType
 ### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ### System.Nullable`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
@@ -350,11 +436,22 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - NoCreate: Prevents creating new records (updates if found, does nothing if not found)
 - PassThru: Returns the ID of the created or updated record
 
+**Publishing and Validation:**
+- Validate: Validates the app module configuration and reports any issues
+- Publish: Publishes the app module making it available to users
+- Both can be used together to validate before publishing
+
+**Navigation Types:**
+- SingleSession: Traditional single-session navigation (value = 0)
+- MultiSession: Multi-session navigation allowing multiple browser tabs (value = 1)
+
 **Best Practices:**
 - Use UniqueName as the stable identifier for apps across environments
 - Include Name parameter when creating apps (defaults to UniqueName if not provided)
 - Use NoCreate for update-only scenarios
 - Use WhatIf to preview changes before execution
+- Validate apps before publishing to catch configuration issues early
+- Use IsFeatured to highlight important apps in the app launcher
 
 ## RELATED LINKS
 
