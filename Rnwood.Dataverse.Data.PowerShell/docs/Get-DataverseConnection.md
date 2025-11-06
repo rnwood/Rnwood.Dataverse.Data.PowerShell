@@ -18,19 +18,21 @@ See the examples for this pattern below.
 
 ### Get default connection
 ```
-Get-DataverseConnection [-GetDefault] [-SetAsDefault] [-Timeout <UInt32>] [<CommonParameters>]
+Get-DataverseConnection [-GetDefault] [-SetAsDefault] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ### Authenticate with username and password
 ```
 Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>]
- -Username <String> -Password <String> [-Timeout <UInt32>] [<CommonParameters>]
+ -Username <String> -Password <String> [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ### Authenticate with client secret
 ```
 Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> -Url <Uri>
- -ClientSecret <String> [-Timeout <UInt32>] [<CommonParameters>]
+ -ClientSecret <String> [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with client certificate
@@ -38,75 +40,80 @@ Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -Cli
 Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> -Url <Uri>
  -CertificatePath <String> [-CertificatePassword <String>] [-CertificateThumbprint <String>]
  [-CertificateStoreLocation <StoreLocation>] [-CertificateStoreName <StoreName>] [-Timeout <UInt32>]
- [<CommonParameters>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate interactively
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>]
- [-Interactive] [-Timeout <UInt32>] [<CommonParameters>]
+ [-Interactive] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate using the device code flow
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>]
- [-DeviceCode] [-Timeout <UInt32>] [<CommonParameters>]
+ [-DeviceCode] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with DefaultAzureCredential
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-Url <Uri>] [-DefaultAzureCredential]
- [-Timeout <UInt32>] [<CommonParameters>]
+ [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with ManagedIdentityCredential
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-Url <Uri>] [-ManagedIdentity]
- [-ManagedIdentityClientId <String>] [-Timeout <UInt32>] [<CommonParameters>]
+ [-ManagedIdentityClientId <String>] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ### Load a saved named connection
 ```
-Get-DataverseConnection [-SetAsDefault] -Name <String> [-Timeout <UInt32>] [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] -Name <String> [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ### Delete a saved named connection
 ```
 Get-DataverseConnection [-SetAsDefault] -Name <String> [-DeleteConnection] [-Timeout <UInt32>]
- [<CommonParameters>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Clear all saved connections
 ```
-Get-DataverseConnection [-SetAsDefault] [-ClearAllConnections] [-Timeout <UInt32>] [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] [-ClearAllConnections] [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### List saved named connections
 ```
-Get-DataverseConnection [-SetAsDefault] [-ListConnections] [-Timeout <UInt32>] [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] [-ListConnections] [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Return a mock connection
 ```
 Get-DataverseConnection [-SetAsDefault] -Mock <EntityMetadata[]> [-RequestInterceptor <ScriptBlock>] -Url <Uri>
- [-Timeout <UInt32>] [<CommonParameters>]
+ [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with Dataverse SDK connection string.
 ```
 Get-DataverseConnection [-SetAsDefault] -Url <Uri> -ConnectionString <String> [-Timeout <UInt32>]
- [<CommonParameters>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with access token script block
 ```
 Get-DataverseConnection [-SetAsDefault] -Url <Uri> -AccessToken <ScriptBlock> [-Timeout <UInt32>]
- [<CommonParameters>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Load connection from PAC CLI profile
 ```
-Get-DataverseConnection [-SetAsDefault] [-FromPac] [-Profile <String>] [-Timeout <UInt32>] [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] [-FromPac] [-Profile <String>] [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -775,17 +782,30 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### None
-
 ## OUTPUTS
 
 ### Microsoft.PowerPlatform.Dataverse.Client.ServiceClient
-
 ## NOTES
 
 ## RELATED LINKS

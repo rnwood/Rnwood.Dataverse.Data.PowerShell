@@ -14,7 +14,8 @@ Gets connection references from Dataverse.
 
 ```
 Get-DataverseConnectionReference [[-ConnectionReferenceLogicalName] <String>] [-DisplayName <String>]
- [-ConnectorId <String>] [-Connection <ServiceClient>] [<CommonParameters>]
+ [-ConnectorId <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -119,17 +120,30 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+Controls how PowerShell displays progress bars and progress messages for this cmdlet.
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### System.String
-
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
-
 ## NOTES
 
 This cmdlet automatically handles paging when retrieving large numbers of connection references, so you don't need to worry about result size limits.

@@ -18,8 +18,8 @@ Set-DataverseRelationshipMetadata [-SchemaName] <String> -RelationshipType <Stri
  [-LookupAttributeDescription <String>] [-LookupAttributeRequiredLevel <String>]
  [-IntersectEntitySchemaName <String>] [-CascadeAssign <String>] [-CascadeShare <String>]
  [-CascadeUnshare <String>] [-CascadeReparent <String>] [-CascadeDelete <String>] [-CascadeMerge <String>]
- [-IsHierarchical] [-IsSearchable] [-PassThru] [-Connection <ServiceClient>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+ [-IsHierarchical] [-IsSearchable] [-PassThru] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -453,17 +453,30 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### None
-
 ## OUTPUTS
 
 ### Microsoft.Xrm.Sdk.Metadata.RelationshipMetadataBase
-
 ## NOTES
 
 This cmdlet provides programmatic access to Dataverse metadata. For comprehensive documentation and examples, see the metadata concept guide at docs/core-concepts/metadata.md

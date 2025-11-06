@@ -92,7 +92,7 @@
     <Exec Command="pwsh -file &quot;$(ProjectDir)updatehelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\&quot;))&quot;" />
     <Message Text="pwsh -file &quot;$(ProjectDir)buildhelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\&quot;))&quot;" Importance="high" />
     <Exec Command="pwsh -file &quot;$(ProjectDir)buildhelp.ps1&quot; -projectdir &quot;$(ProjectDir.TrimEnd(&quot;\&quot;))&quot; -outdir &quot;$(TargetDir.TrimEnd(&quot;\&quot;))&quot;" />
-    <!-- Ensure intermediate output directory exists -->
+  <!-- Ensure intermediate output directory exists -->
     <MakeDir Directories="$(IntermediateOutputPath)" Condition="!Exists('$(IntermediateOutputPath)')" />
 
     <!-- Build an item list of lines to write to the stamp file (avoid concatenating item lists with strings) -->

@@ -13,7 +13,7 @@ Retrieves app module (model-driven app) information from a Dataverse environment
 ## SYNTAX
 
 ```
-Get-DataverseAppModule [[-Id] <Guid>] [-UniqueName <String>] [-Name <String>] [-Raw]
+Get-DataverseAppModule [[-Id] <Guid>] [-UniqueName <String>] [-Name <String>] [-Raw] [-Unpublished]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -149,6 +149,21 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
+### -Unpublished
+Allows unpublished records to be retrieved instead of the default published
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ProgressAction
 {{ Fill ProgressAction Description }}
 
@@ -188,8 +203,11 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - Description: Optional description of the app's purpose
 - PublishedOn: When the app was last published
 - Url: The relative URL for the app
+- WebResourceId: The web resource ID for the app icon
 - FormFactor: The form factor (1=Main, 2=Quick, 3=Preview, 4=Dashboard)
 - ClientType: The client type for the app
+- NavigationType: The navigation type (Single session or Multi session)
+- IsFeatures: Whether the app is a feature app
 
 **Use Cases:**
 - Listing all model-driven apps in an environment

@@ -3,6 +3,7 @@ using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Linq;
 using System.Management.Automation;
+using Microsoft.Xrm.Sdk.Metadata;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -40,7 +41,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 
         [Parameter(HelpMessage = "Allows unpublished records to be retrieved instead of the default published")]
-        public SwitchParameter Unpublished { gest; set; }
+        public SwitchParameter Unpublished { get; set; }
 
 
         /// <summary>
@@ -94,7 +95,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Execute query with paging
             WriteVerbose("Executing query for appmodule");
-            var appModules = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose);
+            var appModules = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, Unpublished.IsPresent);
 
             WriteVerbose($"Found {appModules.Count()} app module(s)");
 
@@ -113,44 +114,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     PSObject psObject = new PSObject();
 
                     // Add normalized Id property for easier pipeline usage
-                    if (appModule.Attributes.TryGetValue("appmoduleid", out var idValue))
-                    {
-                        psObject.Properties.Add(new PSNoteProperty("Id", idValue));
-                    }
+                    psObject.Properties.Add(new PSNoteProperty("Id", appModule.GetAttributeValue<Guid>("appmoduleid")));
 
                     // Add key properties
-                    if (appModule.Attributes.TryGetValue("uniquename", out var uniqueNameValue))
+                    psObject.Properties.Add(new PSNoteProperty("UniqueName", appModule.GetAttributeValue<string>("uniquename")));
+                    psObject.Properties.Add(new PSNoteProperty("Name", appModule.GetAttributeValue<string>("name")));
+                    psObject.Properties.Add(new PSNoteProperty("Description", appModule.GetAttributeValue<string>("description")));
+                    psObject.Properties.Add(new PSNoteProperty("PublishedOn", appModule.GetAttributeValue<DateTime?>("publishedon")));
+                    psObject.Properties.Add(new PSNoteProperty("Url", appModule.GetAttributeValue<string>("url")));
+                    psObject.Properties.Add(new PSNoteProperty("WebResourceId", appModule.GetAttributeValue<Guid?>("webresourceid")));
+                    psObject.Properties.Add(new PSNoteProperty("FormFactor", appModule.GetAttributeValue<int?>("formfactor")));
+                    psObject.Properties.Add(new PSNoteProperty("ClientType", appModule.GetAttributeValue<int?>("clienttype")));
+                    var navTypeValue = appModule.GetAttributeValue<OptionSetValue>("navigationtype")?.Value;
+                    NavigationType? navigationType = null;
+                    if (navTypeValue.HasValue)
                     {
-                        psObject.Properties.Add(new PSNoteProperty("UniqueName", uniqueNameValue));
+                        navigationType = (NavigationType)navTypeValue.Value;
                     }
-                    if (appModule.Attributes.TryGetValue("name", out var nameValue))
-                    {
-                        psObject.Properties.Add(new PSNoteProperty("Name", nameValue));
-                    }
-                    if (appModule.Attributes.TryGetValue("description", out var descriptionValue))
-                    {
-                        psObject.Properties.Add(new PSNoteProperty("Description", descriptionValue));
-                    }
-                    if (appModule.Attributes.TryGetValue("publishedon", out var publishedOnValue))
-                    {
-                        psObject.Properties.Add(new PSNoteProperty("PublishedOn", publishedOnValue));
-                    }
-                    if (appModule.Attributes.TryGetValue("url", out var urlValue))
-                    {
-                        psObject.Properties.Add(new PSNoteProperty("Url", urlValue));
-                    }
-                    if (appModule.Attributes.TryGetValue("webresourceid", out var webResourceIdValue))
-                    {
-                        psObject.Properties.Add(new PSNoteProperty("WebResourceId", webResourceIdValue));
-                    }
-                    if (appModule.Attributes.TryGetValue("formfactor", out var formFactorValue))
-                    {
-                        psObject.Properties.Add(new PSNoteProperty("FormFactor", formFactorValue));
-                    }
-                    if (appModule.Attributes.TryGetValue("clienttype", out var clientTypeValue))
-                    {
-                        psObject.Properties.Add(new PSNoteProperty("ClientType", clientTypeValue));
-                    }
+                    psObject.Properties.Add(new PSNoteProperty("NavigationType", navigationType));
+                    psObject.Properties.Add(new PSNoteProperty("IsFeatured", appModule.GetAttributeValue<bool?>("isfeatured")));
 
                     WriteObject(psObject);
                 }

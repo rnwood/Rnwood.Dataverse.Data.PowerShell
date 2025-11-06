@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using System.Management.Automation;
 using System.ServiceModel;
+using Microsoft.Crm.Sdk.Messages;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -49,7 +50,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the web resource ID for the app module icon.
         /// </summary>
-        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Web resource ID for the app module icon")]
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Web resource ID for the app module icon. When creating, if not specified the default 953b9fac-1e5e-e611-80d6-00155ded156f is used.")]
         public Guid? WebResourceId { get; set; }
 
         /// <summary>
@@ -63,6 +64,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Client type for the app module")]
         public int? ClientType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the navigation type for the app module.
+        /// </summary>
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Navigation type for the app module (0=Single session, 1=Multi session)")]
+        public NavigationType? NavigationType { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether the app module is featured.
+        /// </summary>
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Whether the app module is featured")]
+        public bool? IsFeatured { get; set; }
 
         /// <summary>
         /// If specified, existing app modules matching the ID or UniqueName will not be updated.
@@ -83,6 +96,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter PassThru { get; set; }
 
         /// <summary>
+        /// If specified, publishes the app module after creating or updating.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, publishes the app module after creating or updating")]
+        public SwitchParameter Publish { get; set; }
+
+        /// <summary>
+        /// If specified, validates the app module before publishing.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, validates the app module before publishing")]
+        public SwitchParameter Validate { get; set; }
+
+        /// <summary>
         /// Processes each record in the pipeline.
         /// </summary>
         protected override void ProcessRecord()
@@ -96,6 +121,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 Entity appModuleEntity = null;
                 bool isUpdate = false;
                 Guid appModuleId = Id;
+                bool validationPassed = true;
 
                 // Try to retrieve existing app module by ID first
                 if (Id != Guid.Empty)
@@ -111,6 +137,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         if (ex.HResult == -2146233088) // Object does not exist
                         {
                             WriteVerbose($"App module with ID {Id} not found");
+                            // Try to retrieve unpublished version
+                            try
+                            {
+                                var retrieveUnpublishedRequest = new RetrieveUnpublishedRequest
+                                {
+                                    Target = new EntityReference("appmodule", Id),
+                                    ColumnSet = new ColumnSet(true)
+                                };
+                                var response = (RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
+                                appModuleEntity = response.Entity;
+                                isUpdate = true;
+                                WriteVerbose($"Found existing unpublished app module with ID: {Id}");
+                            }
+                            catch (FaultException<OrganizationServiceFault> ex2)
+                            {
+                                if (ex2.HResult == -2146233088) // Object does not exist
+                                {
+                                    WriteVerbose($"Unpublished app module with ID {Id} not found");
+                                }
+                                else
+                                {
+                                    throw;
+                                }
+                            }
                         }
                         else
                         {
@@ -130,6 +180,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     query.Criteria.AddCondition("uniquename", ConditionOperator.Equal, UniqueName);
 
                     var results = Connection.RetrieveMultiple(query);
+                    if (results.Entities.Count == 0)
+                    {
+                        var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
+                        {
+                            Query = query
+                        };
+                        var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                        results = unpublishedResponse.EntityCollection;
+                    }
+
                     if (results.Entities.Count > 0)
                     {
                         appModuleEntity = results.Entities[0];
@@ -205,11 +265,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         if (WebResourceId.HasValue)
                         {
                             Guid? currentWebResourceId = appModuleEntity.Contains("webresourceid") 
-                                ? appModuleEntity.GetAttributeValue<EntityReference>("webresourceid")?.Id 
+                                ? appModuleEntity.GetAttributeValue<Guid?>("webresourceid") 
                                 : null;
                             if (currentWebResourceId != WebResourceId.Value)
                             {
-                                updateEntity["webresourceid"] = new EntityReference("webresource", WebResourceId.Value);
+                                updateEntity["webresourceid"] = WebResourceId;
                                 updated = true;
                             }
                         }
@@ -217,10 +277,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // Update FormFactor if provided and different
                         if (FormFactor.HasValue)
                         {
-                            int currentFormFactor = appModuleEntity.GetAttributeValue<int>("formfactor");
+                            int? currentFormFactor = appModuleEntity.GetAttributeValue<int?>("formfactor");
                             if (currentFormFactor != FormFactor.Value)
                             {
-                                updateEntity["formfactor"] = FormFactor.Value;
+                                updateEntity["formfactor"] = FormFactor;
                                 updated = true;
                             }
                         }
@@ -228,10 +288,32 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // Update ClientType if provided and different
                         if (ClientType.HasValue)
                         {
-                            int currentClientType = appModuleEntity.GetAttributeValue<int>("clienttype");
+                            int? currentClientType = appModuleEntity.GetAttributeValue<int?>("clienttype");
                             if (currentClientType != ClientType.Value)
                             {
-                                updateEntity["clienttype"] = ClientType.Value;
+                                updateEntity["clienttype"] = ClientType;
+                                updated = true;
+                            }
+                        }
+
+                        // Update NavigationType if provided and different
+                        if (NavigationType.HasValue)
+                        {
+                            OptionSetValue currentNavigationType = appModuleEntity.GetAttributeValue<OptionSetValue>("navigationtype");
+                            if (currentNavigationType?.Value != (int) NavigationType.Value)
+                            {
+                                updateEntity["navigationtype"] = NavigationType.HasValue? new OptionSetValue( (int)NavigationType.Value) : null;
+                                updated = true;
+                            }
+                        }
+
+                        // Update IsFeatured if provided and different
+                        if (IsFeatured.HasValue)
+                        {
+                            bool? currentIsFeatured = appModuleEntity.GetAttributeValue<bool?>("isfeatured");
+                            if (currentIsFeatured != IsFeatured.Value)
+                            {
+                                updateEntity["isfeatured"] = IsFeatured;
                                 updated = true;
                             }
                         }
@@ -302,7 +384,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         if (WebResourceId.HasValue)
                         {
-                            newEntity["webresourceid"] = new EntityReference("webresource", WebResourceId.Value);
+                            newEntity["webresourceid"] = WebResourceId.Value;
+                        } else
+                        {
+                            newEntity["webresourceid"] =  new Guid("953b9fac-1e5e-e611-80d6-00155ded156f");
                         }
 
                         if (FormFactor.HasValue)
@@ -313,6 +398,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         if (ClientType.HasValue)
                         {
                             newEntity["clienttype"] = ClientType.Value;
+                        }
+
+                        if (NavigationType.HasValue)
+                        {
+                            newEntity["navigationtype"] = new OptionSetValue((int)NavigationType.Value);
+                        }
+
+                        if (IsFeatured.HasValue)
+                        {
+                            newEntity["isfeatured"] = IsFeatured.Value;
                         }
 
                         var converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
@@ -326,6 +421,46 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
                     }
                 }
+
+                // Validate the app module if specified
+                if (Validate)
+                {
+                    var validateRequest = new ValidateAppRequest
+                    {
+                        AppModuleId = appModuleId
+                    };
+                    var validateResponse = (ValidateAppResponse)Connection.Execute(validateRequest);
+                    foreach (var issue in validateResponse.AppValidationResponse.ValidationIssueList)
+                    {
+         
+                        if (issue.ErrorType == ErrorType.Error)
+                        {
+                            WriteError(new ErrorRecord(new Exception(issue.Message), "ValidationError", ErrorCategory.InvalidData, null));
+                            validationPassed = false;
+                        }
+                        else
+                        {
+                            WriteWarning($"Validation warning: {issue.Message}");
+                        }
+                    }
+                }
+
+                // Publish the app module if specified
+                if (Publish)
+                {
+                    if (ShouldProcess($"App module with ID '{appModuleId}'", "Publish"))
+                    {
+                        var publishRequest = new PublishXmlRequest
+                        {
+                            // Setting the ParameterXml to an empty string to publish all changes
+                            ParameterXml = $"<importexportxml><appmodules><appmodule>{appModuleId}</appmodule></appmodules></importexportxml>"
+                        };
+                        Connection.Execute(publishRequest);
+                        WriteVerbose($"Published app module with ID: {appModuleId}");
+                    }
+                }
+
+                
             }
             catch (Exception ex)
             {
