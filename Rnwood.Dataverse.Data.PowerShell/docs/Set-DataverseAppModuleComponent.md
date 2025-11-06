@@ -263,8 +263,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Guid
 ## NOTES
 
-## RELATED LINKS
-
 Set-DataverseAppModuleComponent adds or updates components in a model-driven app.
 
 Required for creation: AppModuleIdValue, ObjectId, ComponentType
@@ -273,5 +271,7 @@ ComponentType values: 1=Entity, 29=Business Process Flow, 60=Chart, 62=Sitemap, 
 ## RELATED LINKS
 
 [Get-DataverseAppModuleComponent](Get-DataverseAppModuleComponent.md)
+
 [Remove-DataverseAppModuleComponent](Remove-DataverseAppModuleComponent.md)
+
 [Set-DataverseAppModule](Set-DataverseAppModule.md)

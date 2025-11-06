@@ -181,10 +181,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Object
 ## NOTES
 
-## RELATED LINKS
-
-## NOTES
-
 **IfExists Behavior:**
 - When specified, suppresses errors if the app doesn't exist
 - Useful in cleanup scripts or idempotent deployment scenarios

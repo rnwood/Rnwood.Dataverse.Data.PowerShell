@@ -150,8 +150,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Management.Automation.PSObject
 ## NOTES
 
-## RELATED LINKS
-
 Get-DataverseAppModuleComponent retrieves components that belong to a model-driven app. Components include entities, dashboards, business process flows, and other elements.
 
 Typical use: Get-DataverseAppModuleComponent -Connection $c -AppModuleIdValue $appId
@@ -159,5 +157,7 @@ Typical use: Get-DataverseAppModuleComponent -Connection $c -AppModuleIdValue $a
 ## RELATED LINKS
 
 [Set-DataverseAppModuleComponent](Set-DataverseAppModuleComponent.md)
+
 [Remove-DataverseAppModuleComponent](Remove-DataverseAppModuleComponent.md)
+
 [Get-DataverseAppModule](Get-DataverseAppModule.md)

@@ -135,8 +135,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Object
 ## NOTES
 
-## RELATED LINKS
-
 Remove-DataverseAppModuleComponent removes a component from a model-driven app.
 
 Use -IfExists to suppress errors when component doesn't exist.
@@ -144,5 +142,7 @@ Use -IfExists to suppress errors when component doesn't exist.
 ## RELATED LINKS
 
 [Get-DataverseAppModuleComponent](Get-DataverseAppModuleComponent.md)
+
 [Set-DataverseAppModuleComponent](Set-DataverseAppModuleComponent.md)
+
 [Remove-DataverseAppModule](Remove-DataverseAppModule.md)
