@@ -2,7 +2,7 @@
 
 <img src="logo.svg" height=150/>
 
-A PowerShell module for connecting to Microsoft Dataverse (used by Dynamics 365 and Power Apps) to query and manipulate data.
+A PowerShell module for connecting to Microsoft Dataverse (used by Dynamics 365 and Power Apps) to query and manipulate data. 
 
 This module works in PowerShell Desktop and PowerShell Core, supporting Windows, Linux, and macOS.
 
