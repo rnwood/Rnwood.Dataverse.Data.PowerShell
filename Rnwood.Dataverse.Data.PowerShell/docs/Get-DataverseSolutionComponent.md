@@ -15,13 +15,13 @@ Retrieves the components of a solution from a Dataverse environment.
 ### ByUniqueName
 ```
 Get-DataverseSolutionComponent [-SolutionName] <String> [-IncludeSubcomponents] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [<CommonParameters>]
 ```
 
 ### BySolutionId
 ```
 Get-DataverseSolutionComponent [-SolutionId] <Guid> [-IncludeSubcomponents] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -139,31 +139,19 @@ Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### System.String
+
 ### System.Guid
+
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
+
 ## NOTES
 - **Component Types**: The cmdlet returns components with numeric ComponentType values. Common types include:
   - 1: Entity
