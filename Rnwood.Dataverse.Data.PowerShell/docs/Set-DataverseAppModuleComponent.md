@@ -8,7 +8,7 @@ schema: 2.0.0
 # Set-DataverseAppModuleComponent
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Creates or updates an app module component in Dataverse.
 
 ## SYNTAX
 
@@ -20,16 +20,55 @@ Set-DataverseAppModuleComponent [-Id <Guid>] [-AppModuleIdValue <Guid>] [-Object
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Set-DataverseAppModuleComponent cmdlet adds or updates components in a model-driven app. Components can be entities, dashboards, charts, business process flows, sitemaps, and other app elements.
+
+If a component with the specified ID exists, it will be updated; otherwise, a new component is created.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Add an entity to an app module
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $app = Get-DataverseAppModule -Connection $c -UniqueName "myapp"
+PS C:\> $entityMetadata = Get-DataverseEntityMetadata -Connection $c -EntityName "contact"
+PS C:\> Set-DataverseAppModuleComponent -Connection $c -PassThru `
+    -AppModuleIdValue $app.Id `
+    -ObjectId $entityMetadata.MetadataId `
+    -ComponentType 1
 ```
 
-{{ Add example description here }}
+Adds the contact entity to an app module.
+
+### Example 2: Add a dashboard component
+```powershell
+PS C:\> Set-DataverseAppModuleComponent -Connection $c -PassThru `
+    -AppModuleIdValue $appId `
+    -ObjectId $dashboardId `
+    -ComponentType 60 `
+    -IsDefault $true
+```
+
+Adds a dashboard as the default dashboard for the app.
+
+### Example 3: Add a business process flow
+```powershell
+PS C:\> Set-DataverseAppModuleComponent -Connection $c -PassThru `
+    -AppModuleIdValue $appId `
+    -ObjectId $bpfId `
+    -ComponentType 29 `
+    -RootComponentBehavior 0
+```
+
+Adds a business process flow with IncludeSubcomponents behavior.
+
+### Example 4: Update component properties
+```powershell
+PS C:\> Set-DataverseAppModuleComponent -Connection $c `
+    -Id $componentId `
+    -IsDefault $true `
+    -RootComponentBehavior 1
+```
+
+Updates an existing component to be the default with DoNotIncludeSubcomponents behavior.
 
 ## PARAMETERS
 
@@ -263,10 +302,28 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Guid
 ## NOTES
 
-Set-DataverseAppModuleComponent adds or updates components in a model-driven app.
+**Required Parameters for Creation:**
+- AppModuleIdValue: The ID of the app module to add the component to
+- ObjectId: The ID of the component entity (entity, dashboard, etc.)
+- ComponentType: The type of component (see values below)
 
-Required for creation: AppModuleIdValue, ObjectId, ComponentType
-ComponentType values: 1=Entity, 29=Business Process Flow, 60=Chart, 62=Sitemap, etc.
+**Component Types:**
+- 1 = Entity
+- 29 = Business Process Flow  
+- 60 = Chart
+- 62 = Sitemap
+- 80 = Dashboard
+
+**Root Component Behavior:**
+- 0 = IncludeSubcomponents (default)
+- 1 = DoNotIncludeSubcomponents
+- 2 = IncludeAsShellOnly
+
+**Best Practices:**
+- Use Get-DataverseEntityMetadata to get entity MetadataId for ObjectId
+- Set IsDefault for the primary component of each type
+- Use RootComponentBehavior to control sub-component inclusion
+
 
 ## RELATED LINKS
 

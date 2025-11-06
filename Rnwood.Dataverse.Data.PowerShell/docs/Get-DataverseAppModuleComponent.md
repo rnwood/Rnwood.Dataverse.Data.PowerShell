@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseAppModuleComponent
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves app module component information from a Dataverse environment.
 
 ## SYNTAX
 
@@ -19,16 +19,43 @@ Get-DataverseAppModuleComponent [[-Id] <Guid>] [-AppModuleIdValue <Guid>] [-Obje
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Get-DataverseAppModuleComponent cmdlet retrieves components that belong to a model-driven app. Components define what entities, dashboards, business process flows, and other elements are included in an app.
+
+By default, the cmdlet returns parsed component information with key properties. Use the -Raw parameter to return all attribute values from the appmodulecomponent record.
+
+Components can be filtered by ID, app module ID, object ID, or component type.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Get all components for an app module
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $app = Get-DataverseAppModule -Connection $c -UniqueName "myapp"
+PS C:\> Get-DataverseAppModuleComponent -Connection $c -AppModuleIdValue $app.Id
 ```
 
-{{ Add example description here }}
+Retrieves all components associated with a specific app module.
+
+### Example 2: Get a specific component by ID
+```powershell
+PS C:\> Get-DataverseAppModuleComponent -Connection $c -Id "12345678-1234-1234-1234-123456789012"
+```
+
+Retrieves a specific component by its ID.
+
+### Example 3: Get components by component type
+```powershell
+PS C:\> Get-DataverseAppModuleComponent -Connection $c -AppModuleIdValue $appId -ComponentType 1
+```
+
+Retrieves all entity components (type 1) for an app module.
+
+### Example 4: Get components for a specific entity
+```powershell
+PS C:\> $entityId = [Guid]::Parse("...")
+PS C:\> Get-DataverseAppModuleComponent -Connection $c -ObjectId $entityId
+```
+
+Finds which app modules include a specific entity.
 
 ## PARAMETERS
 
@@ -150,9 +177,25 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Management.Automation.PSObject
 ## NOTES
 
-Get-DataverseAppModuleComponent retrieves components that belong to a model-driven app. Components include entities, dashboards, business process flows, and other elements.
+**Component Types:**
+- 1 = Entity
+- 29 = Business Process Flow
+- 60 = Chart
+- 62 = Sitemap
+- 80 = Dashboard
 
-Typical use: Get-DataverseAppModuleComponent -Connection $c -AppModuleIdValue $appId
+**Filtering:**
+- Filter by AppModuleIdValue to get all components for an app
+- Filter by ObjectId to find which apps use a specific component
+- Filter by ComponentType to get components of a specific type
+- Combine filters for more precise queries
+
+**Common Use Cases:**
+- Auditing what components are included in an app
+- Finding which apps use a specific entity or dashboard
+- Validating app configuration
+- Cloning app structures across environments
+
 
 ## RELATED LINKS
 
