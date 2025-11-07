@@ -49,7 +49,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             catch (FaultException<OrganizationServiceFault> ex)
             {
-                if (IfExists && (ex.Detail.ErrorCode == -2147220969 || ex.Message.Contains("Does Not Exist")))
+                if (IfExists && QueryHelpers.IsNotFoundException(ex))
                 {
                     WriteVerbose($"View with ID {Id} does not exist: {ex.Message}");
                     return;
@@ -61,7 +61,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             catch (FaultException ex)
             {
-                if (IfExists && ex.Message.Contains("Does Not Exist"))
+                if (IfExists && QueryHelpers.IsNotFoundException(ex))
                 {
                     WriteVerbose($"View with ID {Id} does not exist: {ex.Message}");
                     return;

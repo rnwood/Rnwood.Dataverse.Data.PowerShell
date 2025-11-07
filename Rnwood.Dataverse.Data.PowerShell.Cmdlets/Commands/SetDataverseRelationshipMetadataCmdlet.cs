@@ -197,7 +197,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             catch (FaultException<OrganizationServiceFault> ex)
             {
-                if (ex.HResult == -2146233088) // Object does not exist
+                if (QueryHelpers.IsNotFoundException(ex))
                 {
                     return false;
                 }
