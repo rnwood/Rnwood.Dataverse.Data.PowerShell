@@ -370,17 +370,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteVerbose($"Creating new {EntryType} entry '{EntryId}'...");
 
                 // Validate parent requirements for creation
-                if (EntryType == SitemapEntryType.Group || EntryType == SitemapEntryType.SubArea)
+                if ((EntryType == SitemapEntryType.Group || EntryType == SitemapEntryType.SubArea) && string.IsNullOrEmpty(parentAreaId))
                 {
-                    if (string.IsNullOrEmpty(parentAreaId))
-                    {
-                        ThrowTerminatingError(new ErrorRecord(
-                            new ArgumentException("ParentAreaId is required when creating Group and SubArea entries."),
-                            "MissingParentAreaId",
-                            ErrorCategory.InvalidArgument,
-                            null));
-                        return;
-                    }
+                    ThrowTerminatingError(new ErrorRecord(
+                        new ArgumentException("ParentAreaId is required when creating Group and SubArea entries."),
+                        "MissingParentAreaId",
+                        ErrorCategory.InvalidArgument,
+                        null));
+                    return;
                 }
 
                 if (EntryType == SitemapEntryType.SubArea && string.IsNullOrEmpty(parentGroupId))

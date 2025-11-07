@@ -144,38 +144,38 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             var entries = new List<SitemapEntryInfo>();
 
-            // Process Areas
-            if (!EntryType.HasValue || EntryType.Value == SitemapEntryType.Area)
+            // Process all entries in hierarchical order: Areas, then Groups, then SubAreas
+            var areas = doc.Root?.Elements("Area");
+            if (areas != null)
             {
-                var areas = doc.Root?.Elements("Area");
-                if (areas != null)
+                foreach (var area in areas)
                 {
-                    foreach (var area in areas)
+                    var areaId = area.Attribute("Id")?.Value;
+                    
+                    // Add Area if it matches the filter
+                    if (!EntryType.HasValue || EntryType.Value == SitemapEntryType.Area)
                     {
-                        var areaId = area.Attribute("Id")?.Value;
-                        
-                        if (!string.IsNullOrEmpty(EntryId) && areaId != EntryId)
-                            continue;
-
-                        var entry = new SitemapEntryInfo
+                        if (string.IsNullOrEmpty(EntryId) || areaId == EntryId)
                         {
-                            EntryType = SitemapEntryType.Area,
-                            Id = areaId,
-                            ResourceId = area.Attribute("ResourceId")?.Value,
-                            Title = area.Attribute("Title")?.Value,
-                            Description = area.Attribute("Description")?.Value,
-                            Icon = area.Attribute("Icon")?.Value,
-                            ShowInAppNavigation = ParseBool(area.Attribute("ShowInAppNavigation")?.Value)
-                        };
-
-                        entries.Add(entry);
-
-                        // Process Groups within this Area
-                        if ((!EntryType.HasValue || EntryType.Value == SitemapEntryType.Group) &&
-                            (string.IsNullOrEmpty(ParentAreaId) || ParentAreaId == areaId))
-                        {
-                            ProcessGroups(area, areaId, entries);
+                            var entry = new SitemapEntryInfo
+                            {
+                                EntryType = SitemapEntryType.Area,
+                                Id = areaId,
+                                ResourceId = area.Attribute("ResourceId")?.Value,
+                                Title = area.Attribute("Title")?.Value,
+                                Description = area.Attribute("Description")?.Value,
+                                Icon = area.Attribute("Icon")?.Value,
+                                ShowInAppNavigation = ParseBool(area.Attribute("ShowInAppNavigation")?.Value)
+                            };
+                            entries.Add(entry);
                         }
+                    }
+
+                    // Process Groups within this Area
+                    if ((!EntryType.HasValue || EntryType.Value == SitemapEntryType.Group || EntryType.Value == SitemapEntryType.SubArea) &&
+                        (string.IsNullOrEmpty(ParentAreaId) || ParentAreaId == areaId))
+                    {
+                        ProcessGroups(area, areaId, entries);
                     }
                 }
             }
@@ -195,21 +195,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 var groupId = group.Attribute("Id")?.Value;
 
-                if (!string.IsNullOrEmpty(EntryId) && groupId != EntryId)
-                    continue;
-
-                var entry = new SitemapEntryInfo
+                // Add Group if it matches the filter
+                if (!EntryType.HasValue || EntryType.Value == SitemapEntryType.Group)
                 {
-                    EntryType = SitemapEntryType.Group,
-                    Id = groupId,
-                    ParentAreaId = areaId,
-                    ResourceId = group.Attribute("ResourceId")?.Value,
-                    Title = group.Attribute("Title")?.Value,
-                    Description = group.Attribute("Description")?.Value,
-                    IsDefault = ParseBool(group.Attribute("IsProfile")?.Value)
-                };
-
-                entries.Add(entry);
+                    if (string.IsNullOrEmpty(EntryId) || groupId == EntryId)
+                    {
+                        var entry = new SitemapEntryInfo
+                        {
+                            EntryType = SitemapEntryType.Group,
+                            Id = groupId,
+                            ParentAreaId = areaId,
+                            ResourceId = group.Attribute("ResourceId")?.Value,
+                            Title = group.Attribute("Title")?.Value,
+                            Description = group.Attribute("Description")?.Value,
+                            IsDefault = ParseBool(group.Attribute("IsProfile")?.Value)
+                        };
+                        entries.Add(entry);
+                    }
+                }
 
                 // Process SubAreas within this Group
                 if ((!EntryType.HasValue || EntryType.Value == SitemapEntryType.SubArea) &&
@@ -227,26 +230,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 var subAreaId = subArea.Attribute("Id")?.Value;
 
-                if (!string.IsNullOrEmpty(EntryId) && subAreaId != EntryId)
-                    continue;
-
-                var entry = new SitemapEntryInfo
+                // Add SubArea if it matches the filter
+                if (string.IsNullOrEmpty(EntryId) || subAreaId == EntryId)
                 {
-                    EntryType = SitemapEntryType.SubArea,
-                    Id = subAreaId,
-                    ParentAreaId = areaId,
-                    ParentGroupId = groupId,
-                    ResourceId = subArea.Attribute("ResourceId")?.Value,
-                    Title = subArea.Attribute("Title")?.Value,
-                    Description = subArea.Attribute("Description")?.Value,
-                    Icon = subArea.Attribute("Icon")?.Value,
-                    Entity = subArea.Attribute("Entity")?.Value,
-                    Url = subArea.Attribute("Url")?.Value,
-                    IsDefault = ParseBool(subArea.Attribute("IsDefault")?.Value),
-                    Privilege = subArea.Attribute("Privilege")?.Value
-                };
-
-                entries.Add(entry);
+                    var entry = new SitemapEntryInfo
+                    {
+                        EntryType = SitemapEntryType.SubArea,
+                        Id = subAreaId,
+                        ParentAreaId = areaId,
+                        ParentGroupId = groupId,
+                        ResourceId = subArea.Attribute("ResourceId")?.Value,
+                        Title = subArea.Attribute("Title")?.Value,
+                        Description = subArea.Attribute("Description")?.Value,
+                        Icon = subArea.Attribute("Icon")?.Value,
+                        Entity = subArea.Attribute("Entity")?.Value,
+                        Url = subArea.Attribute("Url")?.Value,
+                        IsDefault = ParseBool(subArea.Attribute("IsDefault")?.Value),
+                        Privilege = subArea.Attribute("Privilege")?.Value
+                    };
+                    entries.Add(entry);
+                }
             }
         }
 

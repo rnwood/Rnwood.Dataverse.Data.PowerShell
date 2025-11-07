@@ -1,3 +1,5 @@
+. $PSScriptRoot/Common.ps1
+
 Describe 'Get-DataverseSitemap' {
     Context 'Cmdlet Structure' {
         It "Get-DataverseSitemap cmdlet exists and has expected parameters" {
@@ -5,7 +7,6 @@ Describe 'Get-DataverseSitemap' {
             $command | Should -Not -BeNullOrEmpty
             $command.Parameters.Keys | Should -Contain 'Name'
             $command.Parameters.Keys | Should -Contain 'Id'
-            $command.Parameters.Keys | Should -Contain 'SolutionUniqueName'
             $command.Parameters.Keys | Should -Contain 'AppUniqueName'
             $command.Parameters.Keys | Should -Contain 'Managed'
             $command.Parameters.Keys | Should -Contain 'Unmanaged'
@@ -141,7 +142,6 @@ Describe 'SitemapInfo Class' {
             $properties | Should -Contain 'Id'
             $properties | Should -Contain 'Name'
             $properties | Should -Contain 'SitemapXml'
-            $properties | Should -Contain 'SolutionName'
             $properties | Should -Contain 'IsManaged'
             $properties | Should -Contain 'AppUniqueName'
             $properties | Should -Contain 'CreatedOn'

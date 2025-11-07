@@ -247,7 +247,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             foreach (var group in area.Elements("Group"))
                             {
-                                entryElement = FindElement(group, "SubArea", EntryId);
+                                entryElement = FindElement(group, "SubArea", entryId);
                                 if (entryElement != null)
                                     break;
                             }
@@ -262,21 +262,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 if (IfExists.IsPresent)
                 {
-                    WriteVerbose($"{EntryType} entry '{EntryId}' not found. Skipping removal.");
+                    WriteVerbose($"{entryType} entry '{entryId}' not found. Skipping removal.");
                     return;
                 }
 
                 ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException($"{EntryType} entry '{EntryId}' not found in sitemap."),
+                    new InvalidOperationException($"{entryType} entry '{entryId}' not found in sitemap."),
                     "EntryNotFound",
                     ErrorCategory.ObjectNotFound,
-                    EntryId));
+                    entryId));
                 return;
             }
 
             // Remove the entry
             entryElement.Remove();
-            WriteVerbose($"Removed {EntryType} entry '{EntryId}' from sitemap XML");
+            WriteVerbose($"Removed {entryType} entry '{entryId}' from sitemap XML");
 
             // Update the sitemap
             var updateEntity = new Entity("sitemap", retrievedSitemapId);
@@ -285,8 +285,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             WriteVerbose("Updating sitemap in Dataverse...");
             Connection.Update(updateEntity);
 
-            WriteVerbose($"{EntryType} entry '{EntryId}' removed successfully.");
-            WriteObject($"{EntryType} entry '{EntryId}' removed from sitemap '{SitemapName}' successfully.");
+            WriteVerbose($"{entryType} entry '{entryId}' removed successfully.");
+            WriteObject($"{entryType} entry '{entryId}' removed from sitemap '{sitemapName}' successfully.");
         }
 
         private XElement FindElement(XElement parent, string elementName, string id)
