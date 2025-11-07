@@ -7,7 +7,7 @@ Describe "AppModule Management Cmdlets" {
     
     Context "Set-DataverseAppModule - Basic Creation" {
         It "Creates an app module with UniqueName" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule")
             
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
                 -UniqueName "test_app_module" `
@@ -19,7 +19,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "Creates an app module with minimal parameters" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
                 -UniqueName "minimal_app_module"
@@ -29,7 +29,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "Creates an app module with all parameters" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             $webResourceId = [Guid]::NewGuid()
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -45,7 +45,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "Creates an app module with specific ID" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             $specificId = [Guid]::NewGuid()
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -59,7 +59,7 @@ Describe "AppModule Management Cmdlets" {
 
     Context "Set-DataverseAppModule - Updates" {
         It "Updates an existing app module by ID" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create first
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -77,7 +77,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "Updates an existing app module by UniqueName" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create first
             Set-DataverseAppModule -Connection $connection `
@@ -94,7 +94,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "NoUpdate flag prevents updates" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create first
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -112,7 +112,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "NoCreate flag prevents creation" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Try to create with NoCreate flag
             $result = Set-DataverseAppModule -Connection $connection `
@@ -128,7 +128,7 @@ Describe "AppModule Management Cmdlets" {
 
     Context "Set-DataverseAppModule - WhatIf Support" {
         It "Supports WhatIf without creating app module" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             $result = Set-DataverseAppModule -Connection $connection `
                 -UniqueName "whatif_test_app" `
@@ -142,7 +142,7 @@ Describe "AppModule Management Cmdlets" {
 
     Context "Set-DataverseAppModule - Error Handling" {
         It "Throws error when UniqueName missing for creation" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             { 
                 Set-DataverseAppModule -Connection $connection `
@@ -154,7 +154,7 @@ Describe "AppModule Management Cmdlets" {
 
     Context "Get-DataverseAppModule - Retrieval" {
         It "Gets app module by ID" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create an app module
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -169,7 +169,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "Gets app module by UniqueName" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create an app module
             Set-DataverseAppModule -Connection $connection `
@@ -185,7 +185,7 @@ Describe "AppModule Management Cmdlets" {
 
         It "Gets app module by name with wildcard" -Skip {
             # Skip: FakeXrmEasy doesn't support wildcard filtering in QueryExpression
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create app modules
             Set-DataverseAppModule -Connection $connection `
@@ -205,7 +205,7 @@ Describe "AppModule Management Cmdlets" {
 
         It "Gets all app modules" -Skip {
             # Skip: FakeXrmEasy may not return all entities in mock
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create multiple app modules
             Set-DataverseAppModule -Connection $connection -UniqueName "all_app_1" -Name "All App 1"
@@ -218,7 +218,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "Gets app module with raw values" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create an app module
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -232,7 +232,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "Supports -Unpublished switch without error" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
 
             { Get-DataverseAppModule -Connection $connection -Unpublished } | Should -Not -Throw
         }
@@ -240,7 +240,7 @@ Describe "AppModule Management Cmdlets" {
 
     Context "Remove-DataverseAppModule - Basic Removal" {
         It "Removes an app module by ID" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create an app module
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -255,7 +255,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "Removes an app module by UniqueName" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create an app module
             Set-DataverseAppModule -Connection $connection `
@@ -272,7 +272,7 @@ Describe "AppModule Management Cmdlets" {
 
     Context "Remove-DataverseAppModule - IfExists Support" {
         It "Does not error when removing non-existent app module with IfExists" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Try to remove an app module that doesn't exist
             $nonExistentId = [Guid]::NewGuid()
@@ -284,7 +284,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "Errors when removing non-existent app module without IfExists" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Try to remove an app module that doesn't exist
             $nonExistentId = [Guid]::NewGuid()
@@ -296,7 +296,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "Does not error when removing by UniqueName with IfExists" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # This should not throw an error
             { 
@@ -307,7 +307,7 @@ Describe "AppModule Management Cmdlets" {
 
     Context "Remove-DataverseAppModule - WhatIf Support" {
         It "Supports WhatIf without removing app module" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create an app module
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -324,7 +324,7 @@ Describe "AppModule Management Cmdlets" {
 
     Context "Set/Get-DataverseAppModule - NavigationType and IsFeatured" {
         It "Sets NavigationType and IsFeatured and retrieves them" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
 
             $newId = Set-DataverseAppModule -PassThru -Connection $connection `
                 -UniqueName "navtype_test_app" `
@@ -341,7 +341,7 @@ Describe "AppModule Management Cmdlets" {
 
     Context "Set-DataverseAppModuleComponent - Basic Creation" {
         It "Creates an app module component" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create an app module first
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -360,7 +360,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "Creates an app module component with all parameters" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create an app module first
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -383,7 +383,7 @@ Describe "AppModule Management Cmdlets" {
 
     Context "Set-DataverseAppModuleComponent - Updates" {
         It "Updates an existing component" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create an app module
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -408,7 +408,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "NoUpdate flag prevents updates" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create an app module and component
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -434,7 +434,7 @@ Describe "AppModule Management Cmdlets" {
 
     Context "Set-DataverseAppModuleComponent - Error Handling" {
         It "Throws error when AppModuleIdValue missing for creation" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             { 
                 Set-DataverseAppModuleComponent -Connection $connection `
@@ -445,7 +445,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "Throws error when ObjectId missing for creation" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             { 
                 Set-DataverseAppModuleComponent -Connection $connection `
@@ -456,7 +456,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "Throws error when ComponentType missing for creation" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             { 
                 Set-DataverseAppModuleComponent -Connection $connection `
@@ -469,7 +469,7 @@ Describe "AppModule Management Cmdlets" {
 
     Context "Get-DataverseAppModuleComponent - Retrieval" {
         It "Gets component by ID" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create an app module and component
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -490,7 +490,7 @@ Describe "AppModule Management Cmdlets" {
 
         It "Gets components by AppModuleId" -Skip {
             # Skip: FakeXrmEasy may not properly filter by appmoduleidunique
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create an app module
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -519,7 +519,7 @@ Describe "AppModule Management Cmdlets" {
 
         It "Gets components by ComponentType" -Skip {
             # Skip: FakeXrmEasy may not properly filter by componenttype
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create components with different types
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -545,7 +545,7 @@ Describe "AppModule Management Cmdlets" {
 
     Context "Remove-DataverseAppModuleComponent - Basic Removal" {
         It "Removes a component by ID" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create an app module and component
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -568,7 +568,7 @@ Describe "AppModule Management Cmdlets" {
 
     Context "Remove-DataverseAppModuleComponent - IfExists Support" {
         It "Does not error when removing non-existent component with IfExists" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Try to remove a component that doesn't exist
             $nonExistentId = [Guid]::NewGuid()
@@ -580,7 +580,7 @@ Describe "AppModule Management Cmdlets" {
         }
 
         It "Errors when removing non-existent component without IfExists" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Try to remove a component that doesn't exist
             $nonExistentId = [Guid]::NewGuid()
@@ -594,7 +594,7 @@ Describe "AppModule Management Cmdlets" {
 
     Context "Integration Tests" {
         It "Creates app module, adds component, then removes both" {
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create app module
             $appModuleId = Set-DataverseAppModule -PassThru -Connection $connection `
@@ -625,7 +625,7 @@ Describe "AppModule Management Cmdlets" {
 
         It "Pipes app module to removal" -Skip {
             # Skip: Pipeline scenarios may require additional setup
-            $connection = getMockConnection
+            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             # Create and pipe to remove
             Set-DataverseAppModule -Connection $connection `

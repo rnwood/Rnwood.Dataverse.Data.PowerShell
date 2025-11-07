@@ -61,12 +61,46 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
             return $response
         }
         
-        # If there's a custom interceptor, call it
-        if ($null -ne $RequestInterceptor) {
-            return & $RequestInterceptor $request
+        # Handle RetrieveEntityRequest for appmodule/appmodulecomponent - return minimal metadata
+        if ($request.GetType().Name -eq 'RetrieveEntityRequest') {
+            $entityName = $request.LogicalName
+            if ($entityName -eq 'appmodule' -or $entityName -eq 'appmodulecomponent') {
+                # Return null to indicate metadata not found - will be handled gracefully
+                return $null
+            }
         }
         
-        return $null
+        # Handle ValidateAppRequest - return success response
+        if ($request.GetType().Name -eq 'ValidateAppRequest') {
+            $response = New-Object Microsoft.Crm.Sdk.Messages.ValidateAppResponse
+            $validationResponse = New-Object -TypeName PSObject -Property @{
+                ValidationIssueList = @()
+            }
+            $response.Results["AppValidationResponse"] = $validationResponse
+            return $response
+        }
+        
+        # Handle PublishXmlRequest - return empty response
+        if ($request.GetType().Name -eq 'PublishXmlRequest') {
+            return New-Object Microsoft.Crm.Sdk.Messages.PublishXmlResponse
+        }
+        
+        # Handle AddAppComponentsRequest and RemoveAppComponentsRequest
+        if ($request.GetType().Name -eq 'AddAppComponentsRequest' -or 
+            $request.GetType().Name -eq 'RemoveAppComponentsRequest') {
+            # Return empty response - the request was successful
+            return New-Object Microsoft.Xrm.Sdk.OrganizationResponse
+        }
+        
+        # If there's a custom interceptor, call it
+        if ($null -ne $RequestInterceptor) {
+            $result = & $RequestInterceptor $request
+            if ($null -ne $result) {
+                return $result
+            }
+        }
+        
+        # Don't return anything - let FakeXrmEasy handle the request
     }
    
     # Create the connection (no caching for test isolation)
