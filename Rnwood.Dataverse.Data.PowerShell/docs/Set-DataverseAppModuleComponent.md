@@ -109,6 +109,37 @@ Creates a component referencing the app by unique name, then sets it as default.
 
 ## PARAMETERS
 
+### -AppModuleId
+App module ID that this component belongs to.
+Required when creating a new component if AppModuleUniqueName is not specified.
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -AppModuleUniqueName
+Unique name of the app module that this component belongs to. If specified, takes precedence over AppModuleId.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
 ### -ComponentType
 Component type (Entity, View, BusinessProcessFlow, RibbonCommand, Chart, Form, SiteMap).
 Required when creating a new component.
@@ -117,6 +148,7 @@ Required when creating a new component.
 Type: AppModuleComponentType
 Parameter Sets: (All)
 Aliases:
+Accepted values: Entity, View, BusinessProcessFlow, RibbonCommand, Chart, Form, SiteMap
 
 Required: False
 Position: Named
@@ -271,6 +303,7 @@ Root component behavior (IncludeSubcomponents, DoNotIncludeSubcomponents, Includ
 Type: RootComponentBehavior
 Parameter Sets: (All)
 Aliases:
+Accepted values: IncludeSubcomponents, DoNotIncludeSubcomponents, IncludeAsShell
 
 Required: False
 Position: Named
@@ -310,45 +343,16 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -AppModuleId
-App module ID that this component belongs to.
-Required when creating a new component if AppModuleUniqueName is not specified.
-
-```yaml
-Type: Guid
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -AppModuleUniqueName
-Unique name of the app module that this component belongs to. If specified, takes precedence over AppModuleId.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### System.Guid
-### System.Nullable`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
-### System.Nullable`1[[System.Boolean, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.String
+### System.Nullable`1[[Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType, Rnwood.Dataverse.Data.PowerShell.Cmdlets, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]
+### System.Nullable`1[[Rnwood.Dataverse.Data.PowerShell.Commands.Model.RootComponentBehavior, Rnwood.Dataverse.Data.PowerShell.Cmdlets, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]
+### System.Nullable`1[[System.Boolean, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Guid

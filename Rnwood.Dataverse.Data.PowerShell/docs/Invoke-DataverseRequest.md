@@ -16,21 +16,23 @@ Invokes an arbitrary Dataverse request and returns the response.
 ```
 Invoke-DataverseRequest -Request <OrganizationRequest> [-BatchSize <UInt32>]
  [-BypassBusinessLogicExecution <BusinessLogicTypes[]>] [-BypassBusinessLogicExecutionStepIds <Guid[]>]
- [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>] [<CommonParameters>]
+ [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### NameAndInputs
 ```
 Invoke-DataverseRequest [-RequestName] <String> [[-Parameters] <Hashtable>] [-BatchSize <UInt32>]
  [-BypassBusinessLogicExecution <BusinessLogicTypes[]>] [-BypassBusinessLogicExecutionStepIds <Guid[]>]
- [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>] [<CommonParameters>]
+ [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### REST
 ```
 Invoke-DataverseRequest [-Method] <HttpMethod> [-Path] <String> [[-Body] <PSObject>]
  [-CustomHeaders <Hashtable>] [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-Connection <ServiceClient>]
- [<CommonParameters>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -323,13 +325,27 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### Microsoft.Xrm.Sdk.OrganizationRequest
-
 ## OUTPUTS
 
 ### System.Object

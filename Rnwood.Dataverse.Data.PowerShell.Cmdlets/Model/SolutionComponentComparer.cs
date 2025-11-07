@@ -131,9 +131,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
             // Going from higher number to lower number = including more data (BehaviorIncluded)
             // Going from lower number to higher number = excluding data (BehaviorExcluded)
 
-            var sourceBehaviorEnum = (RootComponentBehavior)sourceBehavior;
-            var targetBehaviorEnum = (RootComponentBehavior)targetBehavior;
-
             if (sourceBehavior < targetBehavior)
             {
                 // e.g., 0 (Full) -> 2 (Shell): excluding/removing data

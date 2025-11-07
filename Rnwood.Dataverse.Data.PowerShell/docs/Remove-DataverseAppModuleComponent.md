@@ -105,6 +105,36 @@ Removes multiple components safely with error suppression.
 
 ## PARAMETERS
 
+### -AppModuleId
+ID of the app module containing the component to remove.
+
+```yaml
+Type: Guid
+Parameter Sets: ByAppModuleId
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -AppModuleUniqueName
+Unique name of the app module containing the component to remove.
+
+```yaml
+Type: String
+Parameter Sets: ByAppModuleUniqueName
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
 ### -Confirm
 Prompts you for confirmation before running the cmdlet.
 
@@ -167,6 +197,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ObjectId
+Object ID of the component (entity metadata ID, form ID, view ID, etc.)
+
+```yaml
+Type: Guid
+Parameter Sets: ByAppModuleUniqueName, ByAppModuleId
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
 ### -WhatIf
 Shows what would happen if the cmdlet runs.
 The cmdlet is not run.
@@ -198,57 +243,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -AppModuleId
-ID of the app module containing the component to remove.
-
-```yaml
-Type: Guid
-Parameter Sets: ByAppModuleId
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -AppModuleUniqueName
-Unique name of the app module containing the component to remove.
-
-```yaml
-Type: String
-Parameter Sets: ByAppModuleUniqueName
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -ObjectId
-Object ID of the component (entity metadata ID, form ID, view ID, etc.)
-
-```yaml
-Type: Guid
-Parameter Sets: ByAppModuleUniqueName, ByAppModuleId
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### System.Guid
+### System.String
 ## OUTPUTS
 
 ### System.Object

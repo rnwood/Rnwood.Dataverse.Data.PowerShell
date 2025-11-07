@@ -116,14 +116,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             entityMetadataFactory = new EntityMetadataFactory(Connection);
 
-            try
-            {
-                Entity appModuleEntity = null;
-                bool isUpdate = false;
-                Guid appModuleId = Id;
-                bool validationPassed = true;
+            Entity appModuleEntity = null;
+            bool isUpdate = false;
+            Guid appModuleId = Id;
 
-                // Try to retrieve existing app module by ID first
+            // Try to retrieve existing app module by ID first
                 if (Id != Guid.Empty)
                 {
                     try
@@ -209,6 +206,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             WriteObject(appModuleId);
                         }
+                        return;
+                    }
+
+                    // Ensure we have the entity to update
+                    if (appModuleEntity == null)
+                    {
+                        WriteError(new ErrorRecord(
+                            new InvalidOperationException("App module entity not found for update"),
+                            "AppModuleEntityNotFound",
+                            ErrorCategory.ObjectNotFound,
+                            appModuleId));
                         return;
                     }
 
@@ -362,15 +370,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         newEntity["uniquename"] = UniqueName;
 
-                        if (!string.IsNullOrEmpty(Name))
-                        {
-                            newEntity["name"] = Name;
-                        }
-                        else
-                        {
-                            // If Name not provided, use UniqueName as default
-                            newEntity["name"] = UniqueName;
-                        }
+                        // If Name not provided, use UniqueName as default
+                        newEntity["name"] = !string.IsNullOrEmpty(Name) ? Name : UniqueName;
 
                         if (!string.IsNullOrEmpty(Description))
                         {
@@ -382,13 +383,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             newEntity["url"] = Url;
                         }
 
-                        if (WebResourceId.HasValue)
-                        {
-                            newEntity["webresourceid"] = WebResourceId.Value;
-                        } else
-                        {
-                            newEntity["webresourceid"] =  new Guid("953b9fac-1e5e-e611-80d6-00155ded156f");
-                        }
+                        newEntity["webresourceid"] = WebResourceId.HasValue 
+                            ? WebResourceId.Value 
+                            : new Guid("953b9fac-1e5e-e611-80d6-00155ded156f");
 
                         if (FormFactor.HasValue)
                         {
@@ -436,7 +433,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         if (issue.ErrorType == ErrorType.Error)
                         {
                             WriteError(new ErrorRecord(new Exception(issue.Message), "ValidationError", ErrorCategory.InvalidData, null));
-                            validationPassed = false;
                         }
                         else
                         {
@@ -446,26 +442,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 // Publish the app module if specified
-                if (Publish)
+                if (Publish && ShouldProcess($"App module with ID '{appModuleId}'", "Publish"))
                 {
-                    if (ShouldProcess($"App module with ID '{appModuleId}'", "Publish"))
+                    var publishRequest = new PublishXmlRequest
                     {
-                        var publishRequest = new PublishXmlRequest
-                        {
-                            // Setting the ParameterXml to an empty string to publish all changes
-                            ParameterXml = $"<importexportxml><appmodules><appmodule>{appModuleId}</appmodule></appmodules></importexportxml>"
-                        };
-                        Connection.Execute(publishRequest);
-                        WriteVerbose($"Published app module with ID: {appModuleId}");
-                    }
+                        // Setting the ParameterXml to an empty string to publish all changes
+                        ParameterXml = $"<importexportxml><appmodules><appmodule>{appModuleId}</appmodule></appmodules></importexportxml>"
+                    };
+                    Connection.Execute(publishRequest);
+                    WriteVerbose($"Published app module with ID: {appModuleId}");
                 }
-
-                
-            }
-            catch (Exception ex)
-            {
-                WriteError(new ErrorRecord(ex, "SetDataverseAppModuleError", ErrorCategory.InvalidOperation, null));
-            }
         }
     }
 }

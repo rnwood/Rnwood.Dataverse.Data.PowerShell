@@ -51,39 +51,32 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         protected override void ProcessRecord()
         {
-            try
+            base.ProcessRecord();
+
+            Guid componentId = Id;
+
+            if (ParameterSetName == "ByAppModuleUniqueName")
             {
-                base.ProcessRecord();
+                componentId = ResolveComponentByAppModuleUniqueName();
+            }
+            else if (ParameterSetName == "ByAppModuleId")
+            {
+                componentId = ResolveComponentByAppModuleId();
+            }
 
-                Guid componentId = Id;
+            if (componentId == Guid.Empty)
+            {
+                return; // Already handled by the resolve methods
+            }
 
-                if (ParameterSetName == "ByAppModuleUniqueName")
-                {
-                    componentId = ResolveComponentByAppModuleUniqueName();
-                }
-                else if (ParameterSetName == "ByAppModuleId")
-                {
-                    componentId = ResolveComponentByAppModuleId();
-                }
-
-                if (componentId == Guid.Empty)
-                {
-                    return; // Already handled by the resolve methods
-                }
-
-                // Retrieve the component to get the AppModuleIdUnique and ComponentType
-                Entity componentEntity = RetrieveComponent(componentId);
+            // Retrieve the component to get the AppModuleIdUnique and ComponentType
+            Entity componentEntity = RetrieveComponent(componentId);
                 if (componentEntity == null)
                 {
                     return; // Already handled by RetrieveComponent
                 }
 
                 RemoveComponentFromApp(componentEntity, componentId);
-            }
-            catch (Exception ex)
-            {
-                WriteError(new ErrorRecord(ex, "RemoveDataverseAppModuleComponentError", ErrorCategory.InvalidOperation, null));
-            }
         }
 
         /// <summary>

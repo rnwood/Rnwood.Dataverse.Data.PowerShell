@@ -188,16 +188,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            try
-            {
-                Entity componentEntity = null;
-                bool isUpdate = false;
-                Guid componentId = Id;
+            Entity componentEntity = null;
+            bool isUpdate = false;
+            Guid componentId = Id;
 
-                // Try to retrieve existing component by ID
-                if (Id != Guid.Empty)
-                {
-                    try
+            // Try to retrieve existing component by ID
+            if (Id != Guid.Empty)
+            {
+                try
                     {
                         componentEntity = Connection.Retrieve("appmodulecomponent", Id, new ColumnSet(true));
                         isUpdate = true;
@@ -304,7 +302,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             Components = new EntityReferenceCollection { entityReference }
                         };
 
-                        var response = (AddAppComponentsResponse)Connection.Execute(request);
+                        Connection.Execute(request);
                         WriteVerbose($"Added new app module component to app {appModuleId}");
 
                         // The AddAppComponentsRequest doesn't return the component ID directly,
@@ -341,10 +339,5 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                WriteError(new ErrorRecord(ex, "SetDataverseAppModuleComponentError", ErrorCategory.InvalidOperation, null));
-            }
-        }
     }
 }
