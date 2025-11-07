@@ -14,12 +14,12 @@ Parses a Dataverse solution file and returns metadata information.
 
 ### FromFile
 ```
-Get-DataverseSolutionFile [-Path] <String> [<CommonParameters>]
+Get-DataverseSolutionFile [-Path] <String> [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### FromBytes
 ```
-Get-DataverseSolutionFile -SolutionFile <Byte[]> [<CommonParameters>]
+Get-DataverseSolutionFile -SolutionFile <Byte[]> [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -108,17 +108,30 @@ Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### System.Byte[]
-
 ## OUTPUTS
 
 ### Rnwood.Dataverse.Data.PowerShell.SolutionInfo
-
 ## NOTES
 
 This cmdlet does not require a connection to Dataverse as it only parses the local solution file.

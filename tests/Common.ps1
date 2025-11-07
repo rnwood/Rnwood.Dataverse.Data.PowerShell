@@ -1,7 +1,12 @@
 $ErrorActionPreference = "Stop"
 
-# Only run setup once - check if already initialized
-if (-not $global:TestsInitialized) {
+# Helper to safely check if a global variable exists (avoids StrictMode errors)
+function Get-GlobalVarExists([string]$Name) {
+    return (Get-Variable -Scope Global -Name $Name -ErrorAction SilentlyContinue) -ne $null
+}
+
+# Only run setup once - check if already initialized (safe under StrictMode)
+if (-not (Get-GlobalVarExists 'TestsInitialized') -or -not $global:TestsInitialized) {
     # Module path setup before anything else
     if ($env:TESTMODULEPATH) {
         $source = $env:TESTMODULEPATH
@@ -25,7 +30,7 @@ if (-not $global:TestsInitialized) {
 
 # Helper functions in global scope so all tests can access them
 # Use global variable for metadata cache - stores metadata by entity name
-if (-not $global:TestMetadataCache) {
+if (-not (Get-GlobalVarExists 'TestMetadataCache')) {
     $global:TestMetadataCache = @{}
 }
 
@@ -39,8 +44,130 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
         $metadata += $global:TestMetadataCache[$entityName]
     }
    
+    # Create combined interceptor that handles unsupported requests and delegates to custom interceptor
+    $combinedInterceptor = if ($null -ne $RequestInterceptor) {
+        {
+            param($request)
+            
+            # First try the custom interceptor - it takes priority
+            # This allows tests to override default behavior
+            try {
+                $customResult = & $RequestInterceptor $request
+                if ($null -ne $customResult) {
+                    return $customResult
+                }
+            } catch {
+                # If custom interceptor throws, re-throw it (don't suppress test exceptions)
+                throw
+            }
+            
+            # Handle unsupported requests that FakeXrmEasy doesn't support
+            # Only do this if custom interceptor didn't handle it
+            
+            # Handle RetrieveUnpublishedRequest - return null entity (not found)
+            if ($request.GetType().Name -eq 'RetrieveUnpublishedRequest') {
+                return $null
+            }
+            
+            # Handle RetrieveUnpublishedMultipleRequest - return empty collection
+            if ($request.GetType().Name -eq 'RetrieveUnpublishedMultipleRequest') {
+                $response = New-Object Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse
+                $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
+                $response.Results.Add("EntityCollection", $entityCollection)
+                return $response
+            }
+            
+            # Handle ValidateAppRequest - return success response
+            if ($request.GetType().Name -eq 'ValidateAppRequest') {
+                $response = New-Object Microsoft.Crm.Sdk.Messages.ValidateAppResponse
+                # Create proper AppValidationResponse object
+                $validationResponseType = [Microsoft.Crm.Sdk.Messages.ValidateAppResponse].Assembly.GetType('Microsoft.Crm.Sdk.Messages.AppValidationResponse')
+                if ($null -ne $validationResponseType) {
+                    $validationResponse = [Activator]::CreateInstance($validationResponseType)
+                    # ValidationIssueList should be empty array
+                    $validationResponse.ValidationIssueList = @()
+                    $response.Results.Add("AppValidationResponse", $validationResponse)
+                } else {
+                    # Fallback: create a minimal object
+                    $validationResponse = New-Object PSObject -Property @{
+                        ValidationIssueList = @()
+                    }
+                    $response.Results.Add("AppValidationResponse", $validationResponse)
+                }
+                return $response
+            }
+            
+            # Handle PublishXmlRequest - return empty response
+            if ($request.GetType().Name -eq 'PublishXmlRequest') {
+                return New-Object Microsoft.Crm.Sdk.Messages.PublishXmlResponse
+            }
+            
+            # Handle AddAppComponentsRequest and RemoveAppComponentsRequest
+            if ($request.GetType().Name -eq 'AddAppComponentsRequest' -or 
+                $request.GetType().Name -eq 'RemoveAppComponentsRequest') {
+                # Return empty response - the request was successful
+                return New-Object Microsoft.Xrm.Sdk.OrganizationResponse
+            }
+            
+            # Don't return anything - let FakeXrmEasy handle the request
+        }.GetNewClosure()
+    } else {
+        {
+            param($request)
+            
+            # Handle unsupported requests that FakeXrmEasy doesn't support
+            
+            # Handle RetrieveUnpublishedRequest - return null entity (not found)
+            if ($request.GetType().Name -eq 'RetrieveUnpublishedRequest') {
+                return $null
+            }
+            
+            # Handle RetrieveUnpublishedMultipleRequest - return empty collection
+            if ($request.GetType().Name -eq 'RetrieveUnpublishedMultipleRequest') {
+                $response = New-Object Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse
+                $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
+                $response.Results.Add("EntityCollection", $entityCollection)
+                return $response
+            }
+            
+            # Handle ValidateAppRequest - return success response
+            if ($request.GetType().Name -eq 'ValidateAppRequest') {
+                $response = New-Object Microsoft.Crm.Sdk.Messages.ValidateAppResponse
+                # Create proper AppValidationResponse object
+                $validationResponseType = [Microsoft.Crm.Sdk.Messages.ValidateAppResponse].Assembly.GetType('Microsoft.Crm.Sdk.Messages.AppValidationResponse')
+                if ($null -ne $validationResponseType) {
+                    $validationResponse = [Activator]::CreateInstance($validationResponseType)
+                    # ValidationIssueList should be empty array
+                    $validationResponse.ValidationIssueList = @()
+                    $response.Results.Add("AppValidationResponse", $validationResponse)
+                } else {
+                    # Fallback: create a minimal object
+                    $validationResponse = New-Object PSObject -Property @{
+                        ValidationIssueList = @()
+                    }
+                    $response.Results.Add("AppValidationResponse", $validationResponse)
+                }
+                return $response
+            }
+            
+            # Handle PublishXmlRequest - return empty response
+            if ($request.GetType().Name -eq 'PublishXmlRequest') {
+                return New-Object Microsoft.Crm.Sdk.Messages.PublishXmlResponse
+            }
+            
+            # Handle AddAppComponentsRequest and RemoveAppComponentsRequest
+            if ($request.GetType().Name -eq 'AddAppComponentsRequest' -or 
+                $request.GetType().Name -eq 'RemoveAppComponentsRequest') {
+                # Return empty response - the request was successful
+                return New-Object Microsoft.Xrm.Sdk.OrganizationResponse
+            }
+            
+            # Don't return anything - let FakeXrmEasy handle the request
+        }
+    }
+   
     # Create the connection (no caching for test isolation)
-    $mockService = Get-DataverseConnection -url https://fake.crm.dynamics.com/ -mock $metadata -RequestInterceptor $RequestInterceptor
+    $mockService = Get-DataverseConnection -url https://fake.crm.dynamics.com/ -mock $metadata -RequestInterceptor $combinedInterceptor
     return $mockService
 }
 

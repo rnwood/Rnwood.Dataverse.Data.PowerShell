@@ -82,17 +82,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private string GetBehaviorName(int behavior)
-        {
-            switch (behavior)
-            {
-                case 0: return "Include Subcomponents";
-                case 1: return "Do Not Include Subcomponents";
-                case 2: return "Include As Shell";
-                default: return $"Unknown ({behavior})";
-            }
-        }
-
         private void OutputComponentAsObject(SolutionComponent component)
         {
             var result = new PSObject();
@@ -100,7 +89,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             result.Properties.Add(new PSNoteProperty("ObjectId", displayIdentifier));
             result.Properties.Add(new PSNoteProperty("ComponentType", component.ComponentType));
             result.Properties.Add(new PSNoteProperty("ComponentTypeName", ComponentTypeResolver.GetComponentTypeName(Connection, component)));
-            result.Properties.Add(new PSNoteProperty("Behavior", GetBehaviorName(component.RootComponentBehavior ?? 0)));
+            
+            var behaviorEnum = RootComponentBehaviorExtensions.FromInt(component.RootComponentBehavior);
+            result.Properties.Add(new PSNoteProperty("Behavior", behaviorEnum));
+            
             result.Properties.Add(new PSNoteProperty("IsSubcomponent", component.IsSubcomponent));
 
             if (component.IsSubcomponent)

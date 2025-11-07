@@ -16,13 +16,13 @@ Creates or updates connection reference values in Dataverse.
 ```
 Set-DataverseConnectionReference [-ConnectionReferenceLogicalName] <String> [-ConnectionId] <String>
  [[-ConnectorId] <String>] [-DisplayName <String>] [-Description <String>] [-Connection <ServiceClient>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### Multiple
 ```
-Set-DataverseConnectionReference -ConnectionReferences <Hashtable> [-Connection <ServiceClient>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
+Set-DataverseConnectionReference -ConnectionReferences <Hashtable> [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -236,13 +236,27 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### None
-
 ## OUTPUTS
 
 ### System.Object
