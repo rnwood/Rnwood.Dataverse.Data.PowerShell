@@ -95,7 +95,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
 
             // Use REST API to query msdyn_solutioncomponentsummary (virtual table)
             var filter = $"msdyn_solutionid eq {_solutionId:D}";
-            if (IsManagedSolution == true)
+            if (IsManagedSolution.HasValue && IsManagedSolution.Value)
             {
                 filter += " and msdyn_ismanaged eq 'True'";
             }
@@ -259,7 +259,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
             {
                 // Use REST API to query msdyn_solutioncomponentsummary for child components
                 var filter = $"msdyn_primaryentityname eq '{parentComponent.UniqueName}' and msdyn_componenttype eq {componentTypeFilter}";
-                if (IsManagedSolution == true)
+                if (IsManagedSolution.HasValue && IsManagedSolution.Value)
                 {
                     filter += " and msdyn_ismanaged eq 'True'";
                 }
