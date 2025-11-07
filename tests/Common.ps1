@@ -57,26 +57,28 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
         # Handle RetrieveUnpublishedMultipleRequest - return empty collection
         if ($request.GetType().Name -eq 'RetrieveUnpublishedMultipleRequest') {
             $response = New-Object Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse
-            $response.Results["EntityCollection"] = New-Object Microsoft.Xrm.Sdk.EntityCollection
+            $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
+            $response.Results.Add("EntityCollection", $entityCollection)
             return $response
-        }
-        
-        # Handle RetrieveEntityRequest for appmodule/appmodulecomponent - return minimal metadata
-        if ($request.GetType().Name -eq 'RetrieveEntityRequest') {
-            $entityName = $request.LogicalName
-            if ($entityName -eq 'appmodule' -or $entityName -eq 'appmodulecomponent') {
-                # Return null to indicate metadata not found - will be handled gracefully
-                return $null
-            }
         }
         
         # Handle ValidateAppRequest - return success response
         if ($request.GetType().Name -eq 'ValidateAppRequest') {
             $response = New-Object Microsoft.Crm.Sdk.Messages.ValidateAppResponse
-            $validationResponse = New-Object -TypeName PSObject -Property @{
-                ValidationIssueList = @()
+            # Create proper AppValidationResponse object
+            $validationResponseType = [Microsoft.Crm.Sdk.Messages.ValidateAppResponse].Assembly.GetType('Microsoft.Crm.Sdk.Messages.AppValidationResponse')
+            if ($null -ne $validationResponseType) {
+                $validationResponse = [Activator]::CreateInstance($validationResponseType)
+                # ValidationIssueList should be empty array
+                $validationResponse.ValidationIssueList = @()
+                $response.Results.Add("AppValidationResponse", $validationResponse)
+            } else {
+                # Fallback: create a minimal object
+                $validationResponse = New-Object PSObject -Property @{
+                    ValidationIssueList = @()
+                }
+                $response.Results.Add("AppValidationResponse", $validationResponse)
             }
-            $response.Results["AppValidationResponse"] = $validationResponse
             return $response
         }
         
