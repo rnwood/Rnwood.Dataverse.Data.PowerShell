@@ -129,23 +129,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (Id != Guid.Empty)
             {
                 try
+                {
+                    componentEntity = Connection.Retrieve("appmodulecomponent", Id, new ColumnSet(true));
+                    isUpdate = true;
+                    WriteVerbose($"Found existing app module component with ID: {Id}");
+                }
+                catch (FaultException<OrganizationServiceFault> ex)
+                {
+                    // Handle "does not exist" errors
+                    // HResult -2146233088 is the standard "object does not exist" error
+                    // Some environments may return different codes, so check the message too
+                    if (ex.HResult == -2146233088 || ex.Message.Contains("does not exist"))
                     {
-                        componentEntity = Connection.Retrieve("appmodulecomponent", Id, new ColumnSet(true));
-                        isUpdate = true;
-                        WriteVerbose($"Found existing app module component with ID: {Id}");
+                        WriteVerbose($"App module component with ID {Id} not found");
                     }
-                    catch (FaultException<OrganizationServiceFault> ex)
+                    else
                     {
-                        if (ex.HResult == -2146233088) // Object does not exist
-                        {
-                            WriteVerbose($"App module component with ID {Id} not found");
-                        }
-                        else
-                        {
-                            throw;
-                        }
+                        throw;
                     }
                 }
+            }
 
                 if (isUpdate)
                 {
