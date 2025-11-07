@@ -1,8 +1,11 @@
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Linq;
 using System.Management.Automation;
+using Rnwood.Dataverse.Data.PowerShell.Commands.Model;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -23,8 +26,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the app module ID to filter components by.
         /// </summary>
         [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Filter components by app module ID.")]
-        [Alias("AppModuleId")]
-        public Guid AppModuleIdValue { get; set; }
+        public Guid AppModuleId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the app module unique name to filter components by.
+        /// </summary>
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Filter components by app module unique name.")]
+        public string AppModuleUniqueName { get; set; }
 
         /// <summary>
         /// Gets or sets the object ID (component entity record ID) to filter by.
@@ -35,8 +43,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the component type to filter by.
         /// </summary>
-        [Parameter(HelpMessage = "Filter components by component type (1=Entity, 29=Business Process Flow, 60=Chart, 62=Sitemap, etc.)")]
-        public int? ComponentType { get; set; }
+        [Parameter(HelpMessage = "Filter components by component type (Entity, View, BusinessProcessFlow, RibbonCommand, Chart, Form, SiteMap)")]
+        public AppModuleComponentType? ComponentType { get; set; }
 
         /// <summary>
         /// Gets or sets whether to return raw values instead of display values.
@@ -44,18 +52,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "Return raw values instead of display values")]
         public SwitchParameter Raw { get; set; }
 
-        private DataverseEntityConverter entityConverter;
-        private EntityMetadataFactory entityMetadataFactory;
-
         /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
-
-            entityMetadataFactory = new EntityMetadataFactory(Connection);
-            entityConverter = new DataverseEntityConverter(Connection, entityMetadataFactory);
 
             WriteVerbose("Querying app module components (appmodulecomponent)...");
             QueryAppModuleComponents();
@@ -76,10 +78,74 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteVerbose($"Filtering by ID: {Id}");
             }
 
-            if (AppModuleIdValue != Guid.Empty)
+            if (AppModuleId != Guid.Empty)
             {
-                query.Criteria.AddCondition("appmoduleidunique", ConditionOperator.Equal, AppModuleIdValue);
-                WriteVerbose($"Filtering by app module ID: {AppModuleIdValue}");
+                var appModuleQuery = new QueryExpression("appmodule")
+                {
+                    ColumnSet = new ColumnSet("appmoduleidunique"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("appmoduleid", ConditionOperator.Equal, AppModuleId)
+                        }
+                    }
+                };
+
+                // Try published appmodules first
+                var response = Connection.Execute(new RetrieveMultipleRequest { Query = appModuleQuery });
+                var entities = ((RetrieveMultipleResponse)response).EntityCollection.Entities;
+
+                // If not found, try unpublished appmodules
+                if (entities.Count == 0)
+                {
+                    response = Connection.Execute(new RetrieveUnpublishedMultipleRequest { Query = appModuleQuery });
+                    entities = ((RetrieveUnpublishedMultipleResponse)response).EntityCollection.Entities;
+                }
+
+                if (entities.Count == 0)
+                {
+                    throw new Exception($"App module with ID {AppModuleId} not found.");
+                }
+
+                Guid appModuleIdUnique = entities[0].GetAttributeValue<Guid>("appmoduleidunique");
+                query.Criteria.AddCondition("appmoduleidunique", ConditionOperator.Equal, appModuleIdUnique);
+                WriteVerbose($"Filtering by app module ID: {AppModuleId}");
+            }
+
+            if (!string.IsNullOrEmpty(AppModuleUniqueName))
+            {
+                var appModuleQuery = new QueryExpression("appmodule")
+                {
+                    ColumnSet = new ColumnSet("appmoduleidunique"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("uniquename", ConditionOperator.Equal, AppModuleUniqueName)
+                        }
+                    }
+                };
+
+                // Try published appmodules first
+                var response = Connection.Execute(new RetrieveMultipleRequest { Query = appModuleQuery });
+                var entities = ((RetrieveMultipleResponse)response).EntityCollection.Entities;
+
+                // If not found, try unpublished appmodules
+                if (entities.Count == 0)
+                {
+                    response = Connection.Execute(new RetrieveUnpublishedMultipleRequest { Query = appModuleQuery });
+                    entities = ((RetrieveUnpublishedMultipleResponse)response).EntityCollection.Entities;
+                }
+
+                if (entities.Count == 0)
+                {
+                    throw new Exception($"App module with unique name {AppModuleUniqueName} not found.");
+                }
+
+                Guid appModuleIdUnique = entities[0].GetAttributeValue<Guid>("appmoduleidunique");
+                query.Criteria.AddCondition("appmoduleidunique", ConditionOperator.Equal, appModuleIdUnique);
+                WriteVerbose($"Filtering by app module unique name: {AppModuleUniqueName}");
             }
 
             if (ObjectId != Guid.Empty)
@@ -90,7 +156,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (ComponentType.HasValue)
             {
-                query.Criteria.AddCondition("componenttype", ConditionOperator.Equal, ComponentType.Value);
+                query.Criteria.AddCondition("componenttype", ConditionOperator.Equal, (int)ComponentType.Value);
                 WriteVerbose($"Filtering by component type: {ComponentType.Value}");
             }
 
@@ -103,52 +169,45 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Convert to PSObjects and output with streaming
             foreach (var component in components)
             {
-                PSObject psObject;
-
                 if (Raw.IsPresent)
                 {
-                    // Return raw values
-                    psObject = entityConverter.ConvertToPSObject(component, new ColumnSet(true), _ => ValueType.Raw);
+                    WriteObject(component);
                 }
                 else
                 {
                     // Create PSObject with commonly used properties
-                    psObject = new PSObject();
+                    PSObject psObject = new PSObject();
 
                     // Add normalized Id property for easier pipeline usage
-                    if (component.Attributes.TryGetValue("appmodulecomponentid", out var idValue))
-                    {
-                        psObject.Properties.Add(new PSNoteProperty("Id", idValue));
-                    }
+                    var id = component.GetAttributeValue<Guid?>("appmodulecomponentid");
+                    psObject.Properties.Add(new PSNoteProperty("Id", id));
 
                     // Add key properties
-                    if (component.Attributes.TryGetValue("appmoduleidunique", out var appModuleIdValue))
-                    {
-                        psObject.Properties.Add(new PSNoteProperty("AppModuleId", appModuleIdValue));
-                    }
-                    if (component.Attributes.TryGetValue("objectid", out var objectIdValue))
-                    {
-                        psObject.Properties.Add(new PSNoteProperty("ObjectId", objectIdValue));
-                    }
-                    if (component.Attributes.TryGetValue("componenttype", out var componentTypeValue))
-                    {
-                        psObject.Properties.Add(new PSNoteProperty("ComponentType", componentTypeValue));
-                    }
-                    if (component.Attributes.TryGetValue("rootcomponentbehavior", out var rootComponentBehaviorValue))
-                    {
-                        psObject.Properties.Add(new PSNoteProperty("RootComponentBehavior", rootComponentBehaviorValue));
-                    }
-                    if (component.Attributes.TryGetValue("isdefault", out var isDefaultValue))
-                    {
-                        psObject.Properties.Add(new PSNoteProperty("IsDefault", isDefaultValue));
-                    }
-                    if (component.Attributes.TryGetValue("ismetadata", out var isMetadataValue))
-                    {
-                        psObject.Properties.Add(new PSNoteProperty("IsMetadata", isMetadataValue));
-                    }
-                }
+                    var appModuleId = component.GetAttributeValue<EntityReference>("appmoduleidunique")?.Id;
+                    psObject.Properties.Add(new PSNoteProperty("AppModuleId", appModuleId));
 
-                WriteObject(psObject);
+                    var objectId = component.GetAttributeValue<Guid?>("objectid");
+                    psObject.Properties.Add(new PSNoteProperty("ObjectId", objectId));
+
+                    var rootAppModuleComponentId = component.GetAttributeValue<Guid?>("rootappmodulecomponentid");
+                    psObject.Properties.Add(new PSNoteProperty("RootAppModuleComponentId", rootAppModuleComponentId));
+
+                    var componentType = component.GetAttributeValue<OptionSetValue>("componenttype")?.Value;
+                    var componentTypeEnum = AppModuleComponentTypeExtensions.FromInt(componentType);
+                    psObject.Properties.Add(new PSNoteProperty("ComponentType", componentTypeEnum));
+
+                    var rootComponentBehavior = component.GetAttributeValue<OptionSetValue>("rootcomponentbehavior")?.Value;
+                    var behaviorEnum = RootComponentBehaviorExtensions.FromInt(rootComponentBehavior);
+                    psObject.Properties.Add(new PSNoteProperty("RootComponentBehavior", behaviorEnum));
+
+                    var isDefault = component.GetAttributeValue<bool?>("isdefault");
+                    psObject.Properties.Add(new PSNoteProperty("IsDefault", isDefault));
+
+                    var isMetadata = component.GetAttributeValue<bool?>("ismetadata");
+                    psObject.Properties.Add(new PSNoteProperty("IsMetadata", isMetadata));
+
+                    WriteObject(psObject);
+                }
             }
         }
     }

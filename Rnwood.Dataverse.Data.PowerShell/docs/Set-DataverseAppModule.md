@@ -14,10 +14,10 @@ Creates or updates an app module (model-driven app) in Dataverse.
 
 ```
 Set-DataverseAppModule [-Id <Guid>] [-UniqueName <String>] [-Name <String>] [-Description <String>]
- [-Url <String>] [-WebResourceId <Guid>] [-FormFactor <Int32>] [-ClientType <Int32>] 
- [-NavigationType <NavigationType>] [-IsFeatured <Boolean>] [-NoUpdate] [-NoCreate] [-PassThru] 
- [-Publish] [-Validate] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] 
- [-Confirm] [<CommonParameters>]
+ [-Url <String>] [-WebResourceId <Guid>] [-FormFactor <Int32>] [-ClientType <Int32>]
+ [-NavigationType <NavigationType>] [-IsFeatured <Boolean>] [-NoUpdate] [-NoCreate] [-PassThru] [-Publish]
+ [-Validate] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION

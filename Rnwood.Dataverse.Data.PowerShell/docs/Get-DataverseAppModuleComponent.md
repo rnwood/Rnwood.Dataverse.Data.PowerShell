@@ -13,9 +13,9 @@ Retrieves app module component information from a Dataverse environment.
 ## SYNTAX
 
 ```
-Get-DataverseAppModuleComponent [[-Id] <Guid>] [-AppModuleIdValue <Guid>] [-ObjectId <Guid>]
- [-ComponentType <Int32>] [-Raw] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseAppModuleComponent [[-Id] <Guid>] [-AppModuleId <Guid>] [-ObjectId <Guid>]
+ [-ComponentType <AppModuleComponentType>] [-Raw] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -59,26 +59,11 @@ Finds which app modules include a specific entity.
 
 ## PARAMETERS
 
-### -AppModuleIdValue
-Filter components by app module ID.
-
-```yaml
-Type: Guid
-Parameter Sets: (All)
-Aliases: AppModuleId
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
 ### -ComponentType
 Filter components by component type (1=Entity, 29=Business Process Flow, 60=Chart, 62=Sitemap, etc.)
 
 ```yaml
-Type: Int32
+Type: AppModuleComponentType
 Parameter Sets: (All)
 Aliases:
 
@@ -163,6 +148,21 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AppModuleId
+Filter components by app module ID.
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 

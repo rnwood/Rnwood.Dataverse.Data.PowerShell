@@ -29,9 +29,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
         public string ComponentTypeName { get; set; }
 
         /// <summary>
-        /// Gets or sets the root component behavior (0=Include, 1=Do Not Include, 2=Shell).
-  /// </summary>
-    public int? RootComponentBehavior { get; set; }
+        /// Gets or sets the root component behavior.
+        /// </summary>
+        public int? RootComponentBehavior { get; set; }
 
         /// <summary>
       /// Gets or sets whether this is a subcomponent.

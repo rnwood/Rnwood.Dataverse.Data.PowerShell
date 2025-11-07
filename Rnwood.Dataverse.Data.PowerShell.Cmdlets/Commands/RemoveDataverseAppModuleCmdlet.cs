@@ -1,4 +1,6 @@
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Linq;
@@ -48,11 +50,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var query = new QueryExpression("appmodule")
                     {
                         ColumnSet = new ColumnSet("appmoduleid"),
-                        Criteria = new FilterExpression()
+                        Criteria = new FilterExpression
+                        {
+                            Conditions =
+                            {
+                                new ConditionExpression("uniquename", ConditionOperator.Equal, UniqueName)
+                            }
+                        },
+                        TopCount = 1
                     };
-                    query.Criteria.AddCondition("uniquename", ConditionOperator.Equal, UniqueName);
 
-                    var results = Connection.RetrieveMultiple(query);
+                    // First try unpublished
+                    var request = new RetrieveUnpublishedMultipleRequest { Query = query };
+                    var response = (RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+                    var results = response.EntityCollection;
+
+                    if (results.Entities.Count == 0)
+                    {
+                        // Try published
+                        var pubRequest = new RetrieveMultipleRequest { Query = query };
+                        var pubResponse = (RetrieveMultipleResponse)Connection.Execute(pubRequest);
+                        results = pubResponse.EntityCollection;
+                    }
+
                     if (results.Entities.Count == 0)
                     {
                         if (IfExists)

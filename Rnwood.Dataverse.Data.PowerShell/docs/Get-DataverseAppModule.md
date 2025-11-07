@@ -208,3 +208,5 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - ClientType: The client type for the app
 - NavigationType: The navigation type (SingleSession or MultiSession)
 - IsFeatured: Whether the app is a featured app
+
+## RELATED LINKS

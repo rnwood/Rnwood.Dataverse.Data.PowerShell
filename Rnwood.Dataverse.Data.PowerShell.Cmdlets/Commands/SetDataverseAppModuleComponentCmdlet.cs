@@ -1,9 +1,11 @@
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Management.Automation;
 using System.ServiceModel;
+using Rnwood.Dataverse.Data.PowerShell.Commands.Model;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -23,11 +25,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Guid Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the app module ID that this component belongs to. Required when creating a new component.
+        /// Gets or sets the app module ID that this component belongs to. Required when creating a new component if AppModuleUniqueName is not specified.
         /// </summary>
-        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "App module ID that this component belongs to. Required when creating a new component.")]
-        [Alias("AppModuleId")]
-        public Guid AppModuleIdValue { get; set; }
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "App module ID that this component belongs to. Required when creating a new component if AppModuleUniqueName is not specified.")]
+        public Guid AppModuleId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the unique name of the app module that this component belongs to. If specified, takes precedence over AppModuleId.
+        /// </summary>
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Unique name of the app module that this component belongs to. If specified, takes precedence over AppModuleId.")]
+        public string AppModuleUniqueName { get; set; }
 
         /// <summary>
         /// Gets or sets the object ID (component entity record ID). Required when creating a new component.
@@ -38,14 +45,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the component type. Required when creating a new component.
         /// </summary>
-        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Component type (1=Entity, 29=Business Process Flow, 60=Chart, 62=Sitemap, etc.). Required when creating a new component.")]
-        public int? ComponentType { get; set; }
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Component type (Entity, View, BusinessProcessFlow, RibbonCommand, Chart, Form, SiteMap). Required when creating a new component.")]
+        public AppModuleComponentType? ComponentType { get; set; }
 
         /// <summary>
         /// Gets or sets the root component behavior.
         /// </summary>
-        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Root component behavior (0=IncludeSubcomponents, 1=DoNotIncludeSubcomponents, 2=IncludeAsShellOnly)")]
-        public int? RootComponentBehavior { get; set; }
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Root component behavior (IncludeSubcomponents, DoNotIncludeSubcomponents, IncludeAsShell)")]
+        public RootComponentBehavior? RootComponentBehavior { get; set; }
 
         /// <summary>
         /// Gets or sets whether this is the default component.
@@ -78,6 +85,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter PassThru { get; set; }
 
         /// <summary>
+        /// Gets the logical name of the table for the specified component type.
+        /// </summary>
+        /// <param name="componentType">The component type.</param>
+        /// <returns>The logical name of the corresponding table.</returns>
+        private string GetTableNameForComponentType(AppModuleComponentType componentType)
+        {
+            switch (componentType)
+            {
+                case AppModuleComponentType.Entity:
+                    return "entity";
+                case AppModuleComponentType.View:
+                    return "savedquery";
+                case AppModuleComponentType.BusinessProcessFlow:
+                    return "workflow";
+                case AppModuleComponentType.RibbonCommand:
+                    return "ribboncommand";
+                case AppModuleComponentType.Chart:
+                    return "savedqueryvisualization";
+                case AppModuleComponentType.Form:
+                    return "systemform";
+                case AppModuleComponentType.SiteMap:
+                    return "sitemap";
+                default:
+                    throw new ArgumentException($"Unknown component type: {componentType}");
+            }
+        }
+
+        /// <summary>
         /// Processes each record in the pipeline.
         /// </summary>
         protected override void ProcessRecord()
@@ -85,6 +120,73 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.ProcessRecord();
 
             entityMetadataFactory = new EntityMetadataFactory(Connection);
+
+            Guid appModuleIdUnique = Guid.Empty;
+            Guid appModuleId = AppModuleId;
+            if (!string.IsNullOrEmpty(AppModuleUniqueName))
+            {
+                // Query for appmodule by uniquename, preferring unpublished
+                var query = new QueryExpression("appmodule")
+                {
+                    ColumnSet = new ColumnSet("appmoduleid"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("uniquename", ConditionOperator.Equal, AppModuleUniqueName)
+                        }
+                    },
+                    TopCount = 1
+                };
+
+                // First try unpublished
+                var request = new RetrieveUnpublishedMultipleRequest { Query = query };
+                var response = (RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+                var results = response.EntityCollection;
+
+                if (results.Entities.Count == 0)
+                {
+                    // Try published
+                    var pubRequest = new RetrieveMultipleRequest { Query = query };
+                    var pubResponse = (RetrieveMultipleResponse)Connection.Execute(pubRequest);
+                    results = pubResponse.EntityCollection;
+                }
+
+                if (results.Entities.Count == 0)
+                {
+                    throw new ArgumentException($"App module with unique name '{AppModuleUniqueName}' not found.");
+                }
+
+                appModuleId = results.Entities[0].Id;
+                appModuleIdUnique = results.Entities[0].GetAttributeValue<Guid>("appmoduleidunique");
+            }
+            else if (appModuleId != Guid.Empty)
+            {
+                // If AppModuleId is provided, retrieve the unique name for querying
+                var query = new QueryExpression("appmodule")
+                {
+                    ColumnSet = new ColumnSet("uniquename"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("appmoduleid", ConditionOperator.Equal, appModuleId)
+                        }
+                    },
+                    TopCount = 1
+                };
+
+                var results = Connection.RetrieveMultiple(query);
+                if (results.Entities.Count > 0)
+                {
+                    AppModuleUniqueName = results.Entities[0].GetAttributeValue<string>("uniquename");
+                    appModuleIdUnique = results.Entities[0].GetAttributeValue<Guid>("appmoduleidunique");
+                }
+                else
+                {
+                    throw new ArgumentException($"App module with ID '{appModuleId}' not found.");
+                }
+            }
 
             try
             {
@@ -116,7 +218,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (isUpdate)
                 {
-                    // Update existing component - requires removal and re-add
+                    // Update existing component
                     if (NoUpdate)
                     {
                         WriteVerbose("NoUpdate flag specified, skipping update");
@@ -129,48 +231,37 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (ShouldProcess($"App module component with ID '{componentId}'", "Update"))
                     {
-                        // Get existing component properties
-                        Guid appModuleId = componentEntity.Contains("appmoduleidunique") 
-                            ? componentEntity.GetAttributeValue<Guid>("appmoduleidunique")
-                            : AppModuleIdValue;
-                        Guid objectId = componentEntity.GetAttributeValue<Guid>("objectid");
-                        int componentType = componentEntity.GetAttributeValue<int>("componenttype");
+                        var updateEntity = new Entity("appmodulecomponent", componentId);
+                        bool hasUpdates = false;
 
-                        // Use provided values or existing values
-                        int rootComponentBehavior = RootComponentBehavior ?? 
-                            (componentEntity.Contains("rootcomponentbehavior") ? componentEntity.GetAttributeValue<int>("rootcomponentbehavior") : 0);
-                        bool isDefault = IsDefault ?? componentEntity.GetAttributeValue<bool>("isdefault");
-                        bool isMetadata = IsMetadata ?? componentEntity.GetAttributeValue<bool>("ismetadata");
-
-                        // Remove the existing component using RemoveAppComponentsRequest
-                        var removeRequest = new RemoveAppComponentsRequest();
-                        removeRequest.Parameters["AppModuleId"] = appModuleId;
-                        removeRequest.Parameters["ComponentIds"] = new[] { componentId };
-                        removeRequest.Parameters["ComponentType"] = componentType;
-                        
-                        Connection.Execute(removeRequest);
-                        WriteVerbose($"Removed existing app module component with ID: {componentId}");
-
-                        // Re-add with updated properties using AddAppComponentsRequest
-                        var newComponentEntity = new Entity("appmodulecomponent")
+                        // Only update properties that were explicitly provided
+                        if (RootComponentBehavior.HasValue)
                         {
-                            Id = componentId
-                        };
-                        newComponentEntity["objectid"] = objectId;
-                        newComponentEntity["componenttype"] = componentType;
-                        newComponentEntity["rootcomponentbehavior"] = rootComponentBehavior;
-                        newComponentEntity["isdefault"] = isDefault;
-                        newComponentEntity["ismetadata"] = isMetadata;
+                            updateEntity["rootcomponentbehavior"] = new OptionSetValue((int)RootComponentBehavior.Value);
+                            hasUpdates = true;
+                        }
 
-                        var components = new EntityCollection();
-                        components.Entities.Add(newComponentEntity);
+                        if (IsDefault.HasValue)
+                        {
+                            updateEntity["isdefault"] = IsDefault.Value;
+                            hasUpdates = true;
+                        }
 
-                        var addRequest = new AddAppComponentsRequest();
-                        addRequest.Parameters["AppModuleId"] = appModuleId;
-                        addRequest.Parameters["Components"] = components;
-                        
-                        Connection.Execute(addRequest);
-                        WriteVerbose($"Re-added app module component with updated properties");
+                        if (IsMetadata.HasValue)
+                        {
+                            updateEntity["ismetadata"] = IsMetadata.Value;
+                            hasUpdates = true;
+                        }
+
+                        if (hasUpdates)
+                        {
+                            Connection.Update(updateEntity);
+                            WriteVerbose($"Updated app module component with ID: {componentId}");
+                        }
+                        else
+                        {
+                            WriteVerbose("No properties specified for update");
+                        }
 
                         if (PassThru)
                         {
@@ -188,9 +279,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
 
                     // Validate required parameters for creation
-                    if (AppModuleIdValue == Guid.Empty)
+                    if (appModuleId == Guid.Empty)
                     {
-                        throw new ArgumentException("AppModuleIdValue is required when creating a new app module component");
+                        throw new ArgumentException("AppModuleId or AppModuleUniqueName is required when creating a new app module component");
                     }
                     if (ObjectId == Guid.Empty)
                     {
@@ -201,33 +292,51 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         throw new ArgumentException("ComponentType is required when creating a new app module component");
                     }
 
-                    if (ShouldProcess($"App module component for AppModuleId '{AppModuleIdValue}', ObjectId '{ObjectId}'", "Create"))
+                    if (ShouldProcess($"App module component for AppModuleId '{AppModuleId}', ObjectId '{ObjectId}'", "Create"))
                     {
-                        componentId = Id != Guid.Empty ? Id : Guid.NewGuid();
+                        // Use AddAppComponentsRequest to add the component to the app
+                        var tableName = GetTableNameForComponentType(ComponentType.Value);
+                        var entityReference = new EntityReference(tableName, ObjectId);
 
-                        var newComponentEntity = new Entity("appmodulecomponent")
+                        var request = new AddAppComponentsRequest
                         {
-                            Id = componentId
+                            AppId = appModuleId,
+                            Components = new EntityReferenceCollection { entityReference }
                         };
-                        newComponentEntity["objectid"] = ObjectId;
-                        newComponentEntity["componenttype"] = ComponentType.Value;
-                        newComponentEntity["rootcomponentbehavior"] = RootComponentBehavior ?? 0;
-                        newComponentEntity["isdefault"] = IsDefault ?? false;
-                        newComponentEntity["ismetadata"] = IsMetadata ?? false;
 
-                        var components = new EntityCollection();
-                        components.Entities.Add(newComponentEntity);
+                        var response = (AddAppComponentsResponse)Connection.Execute(request);
+                        WriteVerbose($"Added new app module component to app {appModuleId}");
 
-                        var request = new AddAppComponentsRequest();
-                        request.Parameters["AppModuleId"] = AppModuleIdValue;
-                        request.Parameters["Components"] = components;
-
-                        Connection.Execute(request);
-                        WriteVerbose($"Added new app module component with ID: {componentId}");
-
+                        // The AddAppComponentsRequest doesn't return the component ID directly,
+                        // so we need to query for it if PassThru is requested
                         if (PassThru)
                         {
-                            WriteObject(componentId);
+                            // Query to find the created component
+                            var query = new QueryExpression("appmodulecomponent")
+                            {
+                                ColumnSet = new ColumnSet("appmodulecomponentid"),
+                                Criteria = new FilterExpression
+                                {
+                                    Conditions =
+                                    {
+                                        new ConditionExpression("appmoduleidunique", ConditionOperator.Equal, appModuleIdUnique),
+                                        new ConditionExpression("objectid", ConditionOperator.Equal, ObjectId),
+                                        new ConditionExpression("componenttype", ConditionOperator.Equal, (int)ComponentType.Value)
+                                    }
+                                },
+                                TopCount = 1
+                            };
+
+                            var results = Connection.RetrieveMultiple(query);
+                            if (results.Entities.Count > 0)
+                            {
+                                componentId = results.Entities[0].Id;
+                                WriteObject(componentId);
+                            }
+                            else
+                            {
+                                WriteWarning("Component was created but could not be retrieved for PassThru");
+                            }
                         }
                     }
                 }
