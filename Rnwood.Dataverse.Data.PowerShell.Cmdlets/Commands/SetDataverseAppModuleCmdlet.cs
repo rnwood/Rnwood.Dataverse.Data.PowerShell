@@ -131,7 +131,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                     catch (FaultException<OrganizationServiceFault> ex)
                     {
-                        if (ex.HResult == -2146233088) // Object does not exist
+                        if (QueryHelpers.IsNotFoundException(ex))
                         {
                             WriteVerbose($"App module with ID {Id} not found");
                             // Try to retrieve unpublished version
@@ -149,7 +149,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             }
                             catch (FaultException<OrganizationServiceFault> ex2)
                             {
-                                if (ex2.HResult == -2146233088) // Object does not exist
+                                if (QueryHelpers.IsNotFoundException(ex2))
                                 {
                                     WriteVerbose($"Unpublished app module with ID {Id} not found");
                                 }

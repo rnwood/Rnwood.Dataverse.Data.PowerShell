@@ -313,5 +313,96 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return rumr.EntityCollection;
             throw new InvalidOperationException($"Unexpected response type: {response.GetType().Name}");
         }
+
+        /// <summary>
+        /// Determines if a FaultException indicates that a record or entity was not found.
+        /// This method handles various error codes and messages used by different versions of 
+        /// FakeXrmEasy and real Dataverse environments.
+        /// </summary>
+        /// <param name="ex">The FaultException to check</param>
+        /// <returns>True if the exception indicates the entity/record was not found, false otherwise</returns>
+        public static bool IsNotFoundException(FaultException<OrganizationServiceFault> ex)
+        {
+            if (ex == null)
+                return false;
+
+            // Check for standard error codes:
+            // -2147220969 (0x80040217): Record not found (Dataverse standard)
+            // -2146233088 (0x80131500): Object does not exist (common in FakeXrmEasy)
+            if (ex.Detail != null && (ex.Detail.ErrorCode == -2147220969 || ex.Detail.ErrorCode == -2146233088))
+                return true;
+
+            // FakeXrmEasy sometimes sets HResult instead of Detail.ErrorCode
+            if (ex.HResult == -2146233088)
+                return true;
+
+            // Check message for various "not found" patterns (case-insensitive)
+            if (ex.Message != null)
+            {
+                string lowerMessage = ex.Message.ToLower();
+                if (lowerMessage.Contains("does not exist") || 
+                    lowerMessage.Contains("not found") ||
+                    lowerMessage.Contains("doesn't exist"))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Determines if a generic FaultException indicates that a record or entity was not found.
+        /// This overload handles non-generic FaultException which may be thrown by some versions of FakeXrmEasy.
+        /// </summary>
+        /// <param name="ex">The FaultException to check</param>
+        /// <returns>True if the exception indicates the entity/record was not found, false otherwise</returns>
+        public static bool IsNotFoundException(FaultException ex)
+        {
+            if (ex == null)
+                return false;
+
+            // Check HResult for object does not exist error
+            if (ex.HResult == -2146233088 || ex.HResult == -2147220969)
+                return true;
+
+            // Check message for various "not found" patterns (case-insensitive)
+            if (ex.Message != null)
+            {
+                string lowerMessage = ex.Message.ToLower();
+                if (lowerMessage.Contains("does not exist") || 
+                    lowerMessage.Contains("not found") ||
+                    lowerMessage.Contains("doesn't exist"))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Determines if an OrganizationServiceFault indicates that a record or entity was not found.
+        /// Used when working with faults from ExecuteMultipleResponse or other batch operations.
+        /// </summary>
+        /// <param name="fault">The OrganizationServiceFault to check</param>
+        /// <returns>True if the fault indicates the entity/record was not found, false otherwise</returns>
+        public static bool IsNotFoundException(OrganizationServiceFault fault)
+        {
+            if (fault == null)
+                return false;
+
+            // Check for standard error codes
+            if (fault.ErrorCode == -2147220969 || fault.ErrorCode == -2146233088)
+                return true;
+
+            // Check message for various "not found" patterns (case-insensitive)
+            if (fault.Message != null)
+            {
+                string lowerMessage = fault.Message.ToLower();
+                if (lowerMessage.Contains("does not exist") || 
+                    lowerMessage.Contains("not found") ||
+                    lowerMessage.Contains("doesn't exist"))
+                    return true;
+            }
+
+            return false;
+        }
     }
 }

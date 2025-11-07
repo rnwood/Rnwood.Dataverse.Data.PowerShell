@@ -136,10 +136,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 catch (FaultException<OrganizationServiceFault> ex)
                 {
-                    // Handle "does not exist" errors
-                    // HResult -2146233088 is the standard "object does not exist" error
-                    // Some environments may return different codes, so check the message too (case-insensitive)
-                    if (ex.HResult == -2146233088 || ex.Message.IndexOf("does not exist", StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (QueryHelpers.IsNotFoundException(ex))
                     {
                         WriteVerbose($"App module component with ID {Id} not found");
                     }
