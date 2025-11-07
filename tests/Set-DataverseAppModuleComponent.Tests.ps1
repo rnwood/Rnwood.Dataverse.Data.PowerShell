@@ -6,18 +6,18 @@ Describe 'Set-DataverseAppModuleComponent' {
     }
 
     Context "Parameter validation" {
-        It "Should throw error when AppModuleIdValue is missing for creation" {
+        It "Should throw error when AppModuleId is missing for creation" {
             $objectId = [Guid]::NewGuid()
 
-            # Test validation for required AppModuleIdValue
-            { Set-DataverseAppModuleComponent -Connection $connection -ObjectId $objectId -ComponentType ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity) } | Should -Throw "*AppModuleIdValue is required*"
+            # Test validation for required AppModuleId
+            { Set-DataverseAppModuleComponent -Connection $connection -ObjectId $objectId -ComponentType ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity) } | Should -Throw "*AppModuleId or AppModuleUniqueName is required*"
         }
 
         It "Should throw error when ObjectId is missing for creation" {
             $appModuleId = [Guid]::NewGuid()
 
             # Test validation for required ObjectId
-            { Set-DataverseAppModuleComponent -Connection $connection -AppModuleIdValue $appModuleId -ComponentType ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity) } | Should -Throw "*ObjectId is required*"
+            { Set-DataverseAppModuleComponent -Connection $connection -AppModuleId $appModuleId -ComponentType ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity) } | Should -Throw "*ObjectId is required*"
         }
 
         It "Should throw error when ComponentType is missing for creation" {
@@ -25,7 +25,7 @@ Describe 'Set-DataverseAppModuleComponent' {
             $objectId = [Guid]::NewGuid()
 
             # Test validation for required ComponentType
-            { Set-DataverseAppModuleComponent -Connection $connection -AppModuleIdValue $appModuleId -ObjectId $objectId } | Should -Throw "*ComponentType is required*"
+            { Set-DataverseAppModuleComponent -Connection $connection -AppModuleId $appModuleId -ObjectId $objectId } | Should -Throw "*ComponentType is required*"
         }
 
         It "Should skip creation when NoCreate flag is specified and component doesn't exist" {
@@ -33,7 +33,7 @@ Describe 'Set-DataverseAppModuleComponent' {
             $objectId = [Guid]::NewGuid()
 
             # Test NoCreate flag - this should exit gracefully without throwing
-            { Set-DataverseAppModuleComponent -Connection $connection -AppModuleIdValue $appModuleId -ObjectId $objectId -ComponentType ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity) -NoCreate } | Should -Not -Throw
+            { Set-DataverseAppModuleComponent -Connection $connection -AppModuleId $appModuleId -ObjectId $objectId -ComponentType ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity) -NoCreate } | Should -Not -Throw
         }
     }
 
@@ -74,7 +74,7 @@ Describe 'Set-DataverseAppModuleComponent' {
             $componentTypes | ForEach-Object {
                 $componentType = $_
                 try {
-                    Set-DataverseAppModuleComponent -Connection $connection -AppModuleIdValue $appModuleId -ObjectId $objectId -ComponentType $componentType -ErrorAction Stop
+                    Set-DataverseAppModuleComponent -Connection $connection -AppModuleId $appModuleId -ObjectId $objectId -ComponentType $componentType -ErrorAction Stop
                 } catch {
                     # We expect AddAppComponentsRequest to fail in mock environment, but parameter binding should work
                     $_.Exception.Message | Should -Not -Match "Cannot bind parameter.*ComponentType"
@@ -98,7 +98,7 @@ Describe 'Set-DataverseAppModuleComponent' {
             $behaviors | ForEach-Object {
                 $behavior = $_
                 try {
-                    Set-DataverseAppModuleComponent -Connection $connection -AppModuleIdValue $appModuleId -ObjectId $objectId -ComponentType ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity) -RootComponentBehavior $behavior -ErrorAction Stop
+                    Set-DataverseAppModuleComponent -Connection $connection -AppModuleId $appModuleId -ObjectId $objectId -ComponentType ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity) -RootComponentBehavior $behavior -ErrorAction Stop
                 } catch {
                     # We expect AddAppComponentsRequest to fail in mock environment, but parameter binding should work
                     $_.Exception.Message | Should -Not -Match "Cannot bind parameter.*RootComponentBehavior"
@@ -113,7 +113,7 @@ Describe 'Set-DataverseAppModuleComponent' {
             $objectId = [Guid]::NewGuid()
 
             # Test WhatIf support - should not actually execute
-            { Set-DataverseAppModuleComponent -Connection $connection -AppModuleIdValue $appModuleId -ObjectId $objectId -ComponentType ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity) -WhatIf } | Should -Not -Throw
+            { Set-DataverseAppModuleComponent -Connection $connection -AppModuleId $appModuleId -ObjectId $objectId -ComponentType ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity) -WhatIf } | Should -Not -Throw
         }
 
         It "Should support Confirm parameter" {
@@ -122,7 +122,7 @@ Describe 'Set-DataverseAppModuleComponent' {
 
             # Test Confirm support with confirmation disabled
             try {
-                Set-DataverseAppModuleComponent -Connection $connection -AppModuleIdValue $appModuleId -ObjectId $objectId -ComponentType ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity) -Confirm:$false
+                Set-DataverseAppModuleComponent -Connection $connection -AppModuleId $appModuleId -ObjectId $objectId -ComponentType ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity) -Confirm:$false
             } catch {
                 # Expected to fail due to mock limitations, but should not be a parameter binding issue
                 $_.Exception.Message | Should -Not -Match "Cannot bind parameter.*Confirm"
@@ -135,7 +135,7 @@ Describe 'Set-DataverseAppModuleComponent' {
             # Create test objects with pipeline properties
             $testObjects = @(
                 [PSCustomObject]@{
-                    AppModuleIdValue = [Guid]::NewGuid()
+                    AppModuleId = [Guid]::NewGuid()
                     ObjectId = [Guid]::NewGuid()
                     ComponentType = [Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity
                     RootComponentBehavior = [Rnwood.Dataverse.Data.PowerShell.Commands.Model.RootComponentBehavior]::IncludeSubcomponents
@@ -177,7 +177,7 @@ Describe 'Set-DataverseAppModuleComponent' {
         It "Should have proper parameter sets defined" {
             $cmdlet = Get-Command Set-DataverseAppModuleComponent
             $cmdlet.Parameters.Keys | Should -Contain "Id"
-            $cmdlet.Parameters.Keys | Should -Contain "AppModuleIdValue" 
+            $cmdlet.Parameters.Keys | Should -Contain "AppModuleId" 
             $cmdlet.Parameters.Keys | Should -Contain "AppModuleUniqueName"
             $cmdlet.Parameters.Keys | Should -Contain "ObjectId"
             $cmdlet.Parameters.Keys | Should -Contain "ComponentType"
@@ -187,21 +187,6 @@ Describe 'Set-DataverseAppModuleComponent' {
             $cmdlet.Parameters.Keys | Should -Contain "NoUpdate"
             $cmdlet.Parameters.Keys | Should -Contain "NoCreate"
             $cmdlet.Parameters.Keys | Should -Contain "PassThru"
-        }
-    }
-
-    Context "Alias support" {
-        It "Should support AppModuleId as an alias for AppModuleIdValue" {
-            $appModuleId = [Guid]::NewGuid()
-            $objectId = [Guid]::NewGuid()
-
-            # Test using the alias instead of the main parameter name
-            try {
-                Set-DataverseAppModuleComponent -Connection $connection -AppModuleId $appModuleId -ObjectId $objectId -ComponentType ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity) -ErrorAction Stop
-            } catch {
-                # We expect AddAppComponentsRequest to fail in mock environment, but parameter binding should work
-                $_.Exception.Message | Should -Not -Match "Cannot bind parameter.*AppModuleId"
-            }
         }
     }
 

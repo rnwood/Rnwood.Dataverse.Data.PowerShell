@@ -110,6 +110,11 @@ For more advanced scenarios including view management and app module management,
 - [`Set-DataverseAppModule`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseAppModule.md) — create or update app modules
 - [`Remove-DataverseAppModule`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md) — delete app modules
 
+### App Module Component Management
+- [`Get-DataverseAppModuleComponent`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseAppModuleComponent.md) — retrieve components included in an app (entities, forms, views, etc.)
+- [`Set-DataverseAppModuleComponent`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseAppModuleComponent.md) — add or update a component within an app
+- [`Remove-DataverseAppModuleComponent`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModuleComponent.md) — remove a component from an app
+
 ### Advanced Operations
 - [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) — execute arbitrary SDK requests
 - [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) — run SQL queries against Dataverse

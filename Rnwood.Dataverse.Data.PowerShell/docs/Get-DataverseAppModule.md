@@ -64,10 +64,25 @@ Retrieves an app module with all raw attribute values instead of parsed properti
 ### Example 6: Get app module and its components
 ```powershell
 PS C:\> $app = Get-DataverseAppModule -Connection $c -UniqueName "myapp"
-PS C:\> $components = Get-DataverseAppModuleComponent -Connection $c -AppModuleIdValue $app.Id
+PS C:\> $components = Get-DataverseAppModuleComponent -Connection $c -AppModuleId $app.Id
 ```
 
-Gets an app module and then retrieves all its components.
+Gets an app module and then retrieves all its components. (Parameter name corrected: use -AppModuleId not -AppModuleIdValue.)
+
+### Example 7: Retrieve unpublished versions of apps
+```powershell
+PS C:\> Get-DataverseAppModule -Connection $c -Unpublished -UniqueName "myapp"
+```
+
+Retrieves the unpublished definition if present (falls back to published when unpublished not found).
+
+### Example 8: Create and then verify navigation type & featured flag
+```powershell
+PS C:\> $id = Set-DataverseAppModule -Connection $c -PassThru -UniqueName "multi_session_app" -Name "Multi Session" -NavigationType MultiSession -IsFeatured $true
+PS C:\> Get-DataverseAppModule -Connection $c -Id $id | Select-Object UniqueName, NavigationType, IsFeatured
+```
+
+Creates an app module with multi-session navigation and verifies the values.
 
 ## PARAMETERS
 
@@ -203,10 +218,10 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - Description: Optional description of the app's purpose
 - PublishedOn: When the app was last published
 - Url: The relative URL for the app
-- WebResourceId: The web resource ID for the app icon
+- WebResourceId: The web resource ID for the app icon (defaults internally if not specified on creation)
 - FormFactor: The form factor (1=Main, 2=Quick, 3=Preview, 4=Dashboard)
 - ClientType: The client type for the app
-- NavigationType: The navigation type (SingleSession or MultiSession)
+- NavigationType: The navigation type (SingleSession=0 or MultiSession=1)
 - IsFeatured: Whether the app is a featured app
 
 ## RELATED LINKS

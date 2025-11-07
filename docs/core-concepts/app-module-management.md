@@ -119,6 +119,26 @@ Set-DataverseAppModule -Connection $c -PassThru `
     -WebResourceId $iconResourceId `
     -FormFactor 1 `  # Main form factor
     -ClientType 1
+
+### Create with navigation type and featured flag
+
+```powershell
+Set-DataverseAppModule -Connection $c -PassThru `
+    -UniqueName "featured_app" `
+    -Name "Featured App" `
+    -NavigationType MultiSession `
+    -IsFeatured $true
+```
+
+### Validate and publish an app
+
+```powershell
+Set-DataverseAppModule -Connection $c -PassThru `
+    -UniqueName "ready_app" `
+    -Name "Ready App" `
+    -Validate `
+    -Publish
+```
 ```
 
 ### Upsert pattern with NoCreate
@@ -262,4 +282,4 @@ When working with app modules, you'll encounter these key properties:
 - [Connection Management](connections.md) � Managing Dataverse connections
 - [Get-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseAppModule.md)
 - [Set-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseAppModule.md)
-- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)
+- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)

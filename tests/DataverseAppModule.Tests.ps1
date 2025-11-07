@@ -230,6 +230,12 @@ Describe "AppModule Management Cmdlets" {
             
             $appModule | Should -Not -BeNullOrEmpty
         }
+
+        It "Supports -Unpublished switch without error" {
+            $connection = getMockConnection
+
+            { Get-DataverseAppModule -Connection $connection -Unpublished } | Should -Not -Throw
+        }
     }
 
     Context "Remove-DataverseAppModule - Basic Removal" {
@@ -316,6 +322,23 @@ Describe "AppModule Management Cmdlets" {
         }
     }
 
+    Context "Set/Get-DataverseAppModule - NavigationType and IsFeatured" {
+        It "Sets NavigationType and IsFeatured and retrieves them" {
+            $connection = getMockConnection
+
+            $newId = Set-DataverseAppModule -PassThru -Connection $connection `
+                -UniqueName "navtype_test_app" `
+                -Name "NavType Test" `
+                -NavigationType ([Rnwood.Dataverse.Data.PowerShell.Commands.NavigationType]::MultiSession) `
+                -IsFeatured $true
+
+            $app = Get-DataverseAppModule -Connection $connection -Id $newId
+            $app | Should -Not -BeNullOrEmpty
+            $app.NavigationType | Should -Be ([Rnwood.Dataverse.Data.PowerShell.Commands.NavigationType]::MultiSession)
+            $app.IsFeatured | Should -Be $true
+        }
+    }
+
     Context "Set-DataverseAppModuleComponent - Basic Creation" {
         It "Creates an app module component" {
             $connection = getMockConnection
@@ -328,7 +351,7 @@ Describe "AppModule Management Cmdlets" {
             # Create a component
             $objectId = [Guid]::NewGuid()
             $componentId = Set-DataverseAppModuleComponent -PassThru -Connection $connection `
-                -AppModuleIdValue $appModuleId `
+                -AppModuleId $appModuleId `
                 -ObjectId $objectId `
                 -ComponentType 1
             
@@ -347,7 +370,7 @@ Describe "AppModule Management Cmdlets" {
             # Create a component with all parameters
             $objectId = [Guid]::NewGuid()
             $componentId = Set-DataverseAppModuleComponent -PassThru -Connection $connection `
-                -AppModuleIdValue $appModuleId `
+                -AppModuleId $appModuleId `
                 -ObjectId $objectId `
                 -ComponentType 1 `
                 -RootComponentBehavior 0 `
@@ -370,7 +393,7 @@ Describe "AppModule Management Cmdlets" {
             # Create a component
             $objectId = [Guid]::NewGuid()
             $componentId = Set-DataverseAppModuleComponent -PassThru -Connection $connection `
-                -AppModuleIdValue $appModuleId `
+                -AppModuleId $appModuleId `
                 -ObjectId $objectId `
                 -ComponentType 1 `
                 -IsDefault $false
@@ -394,7 +417,7 @@ Describe "AppModule Management Cmdlets" {
             
             $objectId = [Guid]::NewGuid()
             $componentId = Set-DataverseAppModuleComponent -PassThru -Connection $connection `
-                -AppModuleIdValue $appModuleId `
+                -AppModuleId $appModuleId `
                 -ObjectId $objectId `
                 -ComponentType 1
             
@@ -455,7 +478,7 @@ Describe "AppModule Management Cmdlets" {
             
             $objectId = [Guid]::NewGuid()
             $componentId = Set-DataverseAppModuleComponent -PassThru -Connection $connection `
-                -AppModuleIdValue $appModuleId `
+                -AppModuleId $appModuleId `
                 -ObjectId $objectId `
                 -ComponentType 1
             
@@ -488,7 +511,7 @@ Describe "AppModule Management Cmdlets" {
                 -ComponentType 1
             
             # Get all components for the app module
-            $components = Get-DataverseAppModuleComponent -Connection $connection -AppModuleIdValue $appModuleId
+            $components = Get-DataverseAppModuleComponent -Connection $connection -AppModuleId $appModuleId
             
             $components | Should -Not -BeNullOrEmpty
             $components.Count | Should -BeGreaterThan 0
@@ -504,12 +527,12 @@ Describe "AppModule Management Cmdlets" {
                 -Name "Type Filter App"
             
             Set-DataverseAppModuleComponent -Connection $connection `
-                -AppModuleIdValue $appModuleId `
+                -AppModuleId $appModuleId `
                 -ObjectId ([Guid]::NewGuid()) `
                 -ComponentType 1
             
             Set-DataverseAppModuleComponent -Connection $connection `
-                -AppModuleIdValue $appModuleId `
+                -AppModuleId $appModuleId `
                 -ObjectId ([Guid]::NewGuid()) `
                 -ComponentType 60
             
@@ -531,7 +554,7 @@ Describe "AppModule Management Cmdlets" {
             
             $objectId = [Guid]::NewGuid()
             $componentId = Set-DataverseAppModuleComponent -PassThru -Connection $connection `
-                -AppModuleIdValue $appModuleId `
+                -AppModuleId $appModuleId `
                 -ObjectId $objectId `
                 -ComponentType 1
             
@@ -584,7 +607,7 @@ Describe "AppModule Management Cmdlets" {
             # Add component
             $objectId = [Guid]::NewGuid()
             $componentId = Set-DataverseAppModuleComponent -PassThru -Connection $connection `
-                -AppModuleIdValue $appModuleId `
+                -AppModuleId $appModuleId `
                 -ObjectId $objectId `
                 -ComponentType 1
             

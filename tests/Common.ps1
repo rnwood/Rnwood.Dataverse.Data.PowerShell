@@ -1,7 +1,12 @@
 $ErrorActionPreference = "Stop"
 
-# Only run setup once - check if already initialized
-if (-not $global:TestsInitialized) {
+# Helper to safely check if a global variable exists (avoids StrictMode errors)
+function Get-GlobalVarExists([string]$Name) {
+    return (Get-Variable -Scope Global -Name $Name -ErrorAction SilentlyContinue) -ne $null
+}
+
+# Only run setup once - check if already initialized (safe under StrictMode)
+if (-not (Get-GlobalVarExists 'TestsInitialized') -or -not $global:TestsInitialized) {
     # Module path setup before anything else
     if ($env:TESTMODULEPATH) {
         $source = $env:TESTMODULEPATH
@@ -25,7 +30,7 @@ if (-not $global:TestsInitialized) {
 
 # Helper functions in global scope so all tests can access them
 # Use global variable for metadata cache - stores metadata by entity name
-if (-not $global:TestMetadataCache) {
+if (-not (Get-GlobalVarExists 'TestMetadataCache')) {
     $global:TestMetadataCache = @{}
 }
 
