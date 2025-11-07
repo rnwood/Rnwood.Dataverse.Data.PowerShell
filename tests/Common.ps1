@@ -44,8 +44,33 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
         $metadata += $global:TestMetadataCache[$entityName]
     }
    
+    # Create default interceptor that handles unsupported requests (like RetrieveUnpublishedRequest)
+    # and combines it with any custom interceptor
+    $defaultInterceptor = {
+        param($request)
+        
+        # Handle RetrieveUnpublishedRequest - return null entity (not found)
+        if ($request.GetType().Name -eq 'RetrieveUnpublishedRequest') {
+            return $null
+        }
+        
+        # Handle RetrieveUnpublishedMultipleRequest - return empty collection
+        if ($request.GetType().Name -eq 'RetrieveUnpublishedMultipleRequest') {
+            $response = New-Object Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse
+            $response.Results["EntityCollection"] = New-Object Microsoft.Xrm.Sdk.EntityCollection
+            return $response
+        }
+        
+        # If there's a custom interceptor, call it
+        if ($null -ne $RequestInterceptor) {
+            return & $RequestInterceptor $request
+        }
+        
+        return $null
+    }
+   
     # Create the connection (no caching for test isolation)
-    $mockService = Get-DataverseConnection -url https://fake.crm.dynamics.com/ -mock $metadata -RequestInterceptor $RequestInterceptor
+    $mockService = Get-DataverseConnection -url https://fake.crm.dynamics.com/ -mock $metadata -RequestInterceptor $defaultInterceptor
     return $mockService
 }
 
