@@ -2,7 +2,8 @@
 
 Describe 'Remove-DataverseAppModuleComponent' {
     BeforeEach {
-        $connection = getMockConnection
+        # Load the required entities for these tests
+        $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
     }
 
     Context "Parameter validation" {

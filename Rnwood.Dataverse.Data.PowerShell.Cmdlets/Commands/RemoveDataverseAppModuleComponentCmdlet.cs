@@ -69,14 +69,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return; // Already handled by the resolve methods
             }
 
+            // For WhatIf, just show what would be done without retrieving the component
+            if (!ShouldProcess($"App module component with ID '{componentId}'", "Remove"))
+            {
+                return;
+            }
+
             // Retrieve the component to get the AppModuleIdUnique and ComponentType
             Entity componentEntity = RetrieveComponent(componentId);
-                if (componentEntity == null)
-                {
-                    return; // Already handled by RetrieveComponent
-                }
+            if (componentEntity == null)
+            {
+                return; // Already handled by RetrieveComponent
+            }
 
-                RemoveComponentFromApp(componentEntity, componentId);
+            RemoveComponentFromApp(componentEntity, componentId);
         }
 
         /// <summary>
@@ -285,19 +291,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Need to resolve the actual app module ID from the unique ID for the RemoveAppComponentsRequest
             Guid appModuleId = ResolveAppModuleIdFromUniqueId(appModuleIdUnique);
 
-            if (ShouldProcess($"App module component with ID '{componentId}'", "Remove"))
+            var request = new RemoveAppComponentsRequest()
             {
-                var request = new RemoveAppComponentsRequest()
-                {
-                    AppId = appModuleId,
-                    Components = new EntityReferenceCollection() {
-                        new EntityReference(GetTableNameForComponentType((AppModuleComponentType)componentType), objectId)
-                    }
-                };
+                AppId = appModuleId,
+                Components = new EntityReferenceCollection() {
+                    new EntityReference(GetTableNameForComponentType((AppModuleComponentType)componentType), objectId)
+                }
+            };
 
-                Connection.Execute(request);
-                WriteVerbose($"Removed app module component with ID: {componentId}");
-            }
+            Connection.Execute(request);
+            WriteVerbose($"Removed app module component with ID: {componentId}");
         }
 
         /// <summary>
