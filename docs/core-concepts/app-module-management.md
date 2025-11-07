@@ -15,7 +15,7 @@
     - [Update an existing app module by ID](#update-an-existing-app-module-by-id)
     - [Update an app module by UniqueName](#update-an-app-module-by-uniquename)
     - [Create with icon and form factor](#create-with-icon-and-form-factor)
-    - [Upsert pattern with NoCreate](#upsert-pattern-with-nocreate)
+    - [Validate and publish an app](#validate-and-publish-an-app)
     - [Safe update with NoUpdate](#safe-update-with-noupdate)
     - [Publish an app after creation/update](#publish-an-app-after-creationupdate)
     - [Validate an app before publishing](#validate-an-app-before-publishing)

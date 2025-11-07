@@ -1,3 +1,34 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [App Module Component Management](#app-module-component-management)
+  - [Retrieving Components](#retrieving-components)
+    - [Get all components for an app by unique name](#get-all-components-for-an-app-by-unique-name)
+    - [Get components for an app by Id](#get-components-for-an-app-by-id)
+    - [Get components of a specific type (e.g. Entities)](#get-components-of-a-specific-type-eg-entities)
+    - [Get apps which include a given entity](#get-apps-which-include-a-given-entity)
+    - [Get raw component records](#get-raw-component-records)
+  - [Creating Components](#creating-components)
+    - [Add an entity to an app (by unique name)](#add-an-entity-to-an-app-by-unique-name)
+    - [Add a form as default](#add-a-form-as-default)
+    - [Add multiple entities in bulk](#add-multiple-entities-in-bulk)
+  - [Updating Components](#updating-components)
+    - [Set a component as default and change behavior](#set-a-component-as-default-and-change-behavior)
+    - [Safely skip updates](#safely-skip-updates)
+    - [Prevent creation (update-only mode)](#prevent-creation-update-only-mode)
+  - [Removing Components](#removing-components)
+    - [Remove by component Id](#remove-by-component-id)
+    - [Remove by app unique name & object Id](#remove-by-app-unique-name--object-id)
+    - [Safe removal](#safe-removal)
+    - [Preview removal](#preview-removal)
+  - [Component Types](#component-types)
+  - [Root Component Behavior](#root-component-behavior)
+  - [Tips & Best Practices](#tips--best-practices)
+  - [See Also](#see-also)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # App Module Component Management
 
 App module components define which entities, forms, views, charts, business process flows, ribbon commands and site maps are included inside a model-driven app module.
