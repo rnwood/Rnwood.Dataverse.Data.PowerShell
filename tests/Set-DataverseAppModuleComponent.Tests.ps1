@@ -2,7 +2,7 @@
 
 Describe 'Set-DataverseAppModuleComponent' {
     BeforeEach {
-        $connection = getMockConnection
+        $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
     }
 
     Context "Parameter validation" {

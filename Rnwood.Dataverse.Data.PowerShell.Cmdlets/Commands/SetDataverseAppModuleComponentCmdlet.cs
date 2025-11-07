@@ -121,73 +121,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             entityMetadataFactory = new EntityMetadataFactory(Connection);
 
-            Guid appModuleIdUnique = Guid.Empty;
-            Guid appModuleId = AppModuleId;
-            if (!string.IsNullOrEmpty(AppModuleUniqueName))
-            {
-                // Query for appmodule by uniquename, preferring unpublished
-                var query = new QueryExpression("appmodule")
-                {
-                    ColumnSet = new ColumnSet("appmoduleid"),
-                    Criteria = new FilterExpression
-                    {
-                        Conditions =
-                        {
-                            new ConditionExpression("uniquename", ConditionOperator.Equal, AppModuleUniqueName)
-                        }
-                    },
-                    TopCount = 1
-                };
-
-                // First try unpublished
-                var request = new RetrieveUnpublishedMultipleRequest { Query = query };
-                var response = (RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
-                var results = response.EntityCollection;
-
-                if (results.Entities.Count == 0)
-                {
-                    // Try published
-                    var pubRequest = new RetrieveMultipleRequest { Query = query };
-                    var pubResponse = (RetrieveMultipleResponse)Connection.Execute(pubRequest);
-                    results = pubResponse.EntityCollection;
-                }
-
-                if (results.Entities.Count == 0)
-                {
-                    throw new ArgumentException($"App module with unique name '{AppModuleUniqueName}' not found.");
-                }
-
-                appModuleId = results.Entities[0].Id;
-                appModuleIdUnique = results.Entities[0].GetAttributeValue<Guid>("appmoduleidunique");
-            }
-            else if (appModuleId != Guid.Empty)
-            {
-                // If AppModuleId is provided, retrieve the unique name for querying
-                var query = new QueryExpression("appmodule")
-                {
-                    ColumnSet = new ColumnSet("uniquename"),
-                    Criteria = new FilterExpression
-                    {
-                        Conditions =
-                        {
-                            new ConditionExpression("appmoduleid", ConditionOperator.Equal, appModuleId)
-                        }
-                    },
-                    TopCount = 1
-                };
-
-                var results = Connection.RetrieveMultiple(query);
-                if (results.Entities.Count > 0)
-                {
-                    AppModuleUniqueName = results.Entities[0].GetAttributeValue<string>("uniquename");
-                    appModuleIdUnique = results.Entities[0].GetAttributeValue<Guid>("appmoduleidunique");
-                }
-                else
-                {
-                    throw new ArgumentException($"App module with ID '{appModuleId}' not found.");
-                }
-            }
-
             Entity componentEntity = null;
             bool isUpdate = false;
             Guid componentId = Id;
@@ -269,6 +202,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 else
                 {
+                    // Component doesn't exist
+                    
+                    // If NoUpdate is specified, just exit gracefully
+                    if (NoUpdate)
+                    {
+                        WriteVerbose("NoUpdate flag specified and component not found, skipping");
+                        return;
+                    }
+                    
                     // Create new component using AddAppComponentsRequest
                     if (NoCreate)
                     {
@@ -276,33 +218,124 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         return;
                     }
 
-                    // Validate required parameters for creation
-                    if (appModuleId == Guid.Empty)
+                    // Check if user provided any creation parameters
+                    // If they provided at least one creation param, validate all are present
+                    bool hasAnyCreationParam = AppModuleId != Guid.Empty || !string.IsNullOrEmpty(AppModuleUniqueName) || 
+                                               ObjectId != Guid.Empty || ComponentType.HasValue;
+                    
+                    Guid appModuleId = AppModuleId;
+                    
+                    if (hasAnyCreationParam)
                     {
-                        throw new ArgumentException("AppModuleId or AppModuleUniqueName is required when creating a new app module component");
+                        // User is trying to create - validate all required parameters
+                        if (appModuleId == Guid.Empty && string.IsNullOrEmpty(AppModuleUniqueName))
+                        {
+                            throw new ArgumentException("AppModuleId or AppModuleUniqueName is required when creating a new app module component");
+                        }
+                        if (ObjectId == Guid.Empty)
+                        {
+                            throw new ArgumentException("ObjectId is required when creating a new app module component");
+                        }
+                        if (!ComponentType.HasValue)
+                        {
+                            throw new ArgumentException("ComponentType is required when creating a new app module component");
+                        }
                     }
-                    if (ObjectId == Guid.Empty)
+                    else
                     {
-                        throw new ArgumentException("ObjectId is required when creating a new app module component");
-                    }
-                    if (!ComponentType.HasValue)
-                    {
-                        throw new ArgumentException("ComponentType is required when creating a new app module component");
+                        // User only provided ID and update properties - can't create, just return gracefully
+                        WriteVerbose("Component not found and no creation parameters provided - skipping");
+                        return;
                     }
 
-                    if (ShouldProcess($"App module component for AppModuleId '{AppModuleId}', ObjectId '{ObjectId}'", "Create"))
+                    // Now resolve the AppModule ID if needed (skip lookup if WhatIf to avoid validation errors)
+                    Guid appModuleIdUnique = Guid.Empty;
+                    bool isWhatIf = this.MyInvocation.BoundParameters.ContainsKey("WhatIf") && 
+                                    ((SwitchParameter)this.MyInvocation.BoundParameters["WhatIf"]).IsPresent;
+                    
+                    if (!string.IsNullOrEmpty(AppModuleUniqueName))
+                    {
+                        if (!isWhatIf)
+                        {
+                            // Query for appmodule by uniquename, preferring unpublished
+                            var query = new QueryExpression("appmodule")
+                            {
+                                ColumnSet = new ColumnSet("appmoduleid", "appmoduleidunique"),
+                                Criteria = new FilterExpression
+                                {
+                                    Conditions =
+                                    {
+                                        new ConditionExpression("uniquename", ConditionOperator.Equal, AppModuleUniqueName)
+                                    }
+                                },
+                                TopCount = 1
+                            };
+
+                            // First try unpublished
+                            var request = new RetrieveUnpublishedMultipleRequest { Query = query };
+                            var response = (RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+                            var results = response.EntityCollection;
+
+                            if (results.Entities.Count == 0)
+                            {
+                                // Try published
+                                var pubRequest = new RetrieveMultipleRequest { Query = query };
+                                var pubResponse = (RetrieveMultipleResponse)Connection.Execute(pubRequest);
+                                results = pubResponse.EntityCollection;
+                            }
+
+                            if (results.Entities.Count == 0)
+                            {
+                                throw new ArgumentException($"App module with unique name '{AppModuleUniqueName}' not found.");
+                            }
+
+                            appModuleId = results.Entities[0].Id;
+                            appModuleIdUnique = results.Entities[0].GetAttributeValue<Guid>("appmoduleidunique");
+                        }
+                    }
+                    else if (appModuleId != Guid.Empty)
+                    {
+                        if (!isWhatIf)
+                        {
+                            // If AppModuleId is provided, retrieve the appmoduleidunique for querying
+                            var query = new QueryExpression("appmodule")
+                            {
+                                ColumnSet = new ColumnSet("appmoduleidunique"),
+                                Criteria = new FilterExpression
+                                {
+                                    Conditions =
+                                    {
+                                        new ConditionExpression("appmoduleid", ConditionOperator.Equal, appModuleId)
+                                    }
+                                },
+                                TopCount = 1
+                            };
+
+                            var results = Connection.RetrieveMultiple(query);
+                            if (results.Entities.Count > 0)
+                            {
+                                appModuleIdUnique = results.Entities[0].GetAttributeValue<Guid>("appmoduleidunique");
+                            }
+                            else
+                            {
+                                throw new ArgumentException($"App module with ID '{appModuleId}' not found.");
+                            }
+                        }
+                    }
+
+                    if (ShouldProcess($"App module component for AppModuleId '{appModuleId}', ObjectId '{ObjectId}'", "Create"))
                     {
                         // Use AddAppComponentsRequest to add the component to the app
                         var tableName = GetTableNameForComponentType(ComponentType.Value);
                         var entityReference = new EntityReference(tableName, ObjectId);
 
-                        var request = new AddAppComponentsRequest
+                        var addRequest = new AddAppComponentsRequest
                         {
                             AppId = appModuleId,
                             Components = new EntityReferenceCollection { entityReference }
                         };
 
-                        Connection.Execute(request);
+                        Connection.Execute(addRequest);
                         WriteVerbose($"Added new app module component to app {appModuleId}");
 
                         // The AddAppComponentsRequest doesn't return the component ID directly,
