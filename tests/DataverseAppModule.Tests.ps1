@@ -433,7 +433,7 @@ Describe "AppModule Management Cmdlets" {
     }
 
     Context "Set-DataverseAppModuleComponent - Error Handling" {
-        It "Throws error when AppModuleIdValue missing for creation" {
+        It "Throws error when AppModuleId/UniqueName missing for creation" {
             $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
             
             { 
@@ -441,7 +441,7 @@ Describe "AppModule Management Cmdlets" {
                     -ObjectId ([Guid]::NewGuid()) `
                     -ComponentType 1 `
                     -ErrorAction Stop
-            } | Should -Throw "*AppModuleIdValue*required*"
+            } | Should -Throw "*AppModuleId*AppModuleUniqueName*required*"
         }
 
         It "Throws error when ObjectId missing for creation" {
@@ -449,7 +449,7 @@ Describe "AppModule Management Cmdlets" {
             
             { 
                 Set-DataverseAppModuleComponent -Connection $connection `
-                    -AppModuleIdValue ([Guid]::NewGuid()) `
+                    -AppModuleId ([Guid]::NewGuid()) `
                     -ComponentType 1 `
                     -ErrorAction Stop
             } | Should -Throw "*ObjectId*required*"
@@ -460,7 +460,7 @@ Describe "AppModule Management Cmdlets" {
             
             { 
                 Set-DataverseAppModuleComponent -Connection $connection `
-                    -AppModuleIdValue ([Guid]::NewGuid()) `
+                    -AppModuleId ([Guid]::NewGuid()) `
                     -ObjectId ([Guid]::NewGuid()) `
                     -ErrorAction Stop
             } | Should -Throw "*ComponentType*required*"
