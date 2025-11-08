@@ -24,6 +24,12 @@ Remove-DataverseSitemap -Id <Guid> [-IfExists] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
+### ByUniqueName
+```
+Remove-DataverseSitemap -UniqueName <String> [-IfExists] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
 ## DESCRIPTION
 
 This cmdlet removes (deletes) a sitemap from a Dataverse environment. You can specify the sitemap to delete by name or by ID.
@@ -195,6 +201,21 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UniqueName
+The unique name of the sitemap to remove.
+
+```yaml
+Type: String
+Parameter Sets: ByUniqueName
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 

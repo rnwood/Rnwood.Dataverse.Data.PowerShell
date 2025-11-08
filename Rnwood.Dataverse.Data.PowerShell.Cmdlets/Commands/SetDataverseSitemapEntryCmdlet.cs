@@ -59,9 +59,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter SubArea { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether to create or update a Privilege entry.
+        /// </summary>
+        [Parameter(ParameterSetName = "Privilege", Mandatory = true, HelpMessage = "Create or update a Privilege entry.")]
+        public SwitchParameter Privilege { get; set; }
+
+        /// <summary>
         /// Gets or sets the ID of the entry to create or update.
         /// </summary>
-        [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The ID of the entry to create or update.")]
+        [Parameter(ParameterSetName = "Area", Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The ID of the entry to create or update.")]
+        [Parameter(ParameterSetName = "Group", Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The ID of the entry to create or update.")]
+        [Parameter(ParameterSetName = "SubArea", Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The ID of the entry to create or update.")]
+        [Parameter(ParameterSetName = "Privilege", ValueFromPipelineByPropertyName = true, HelpMessage = "The ID of the entry to create or update (auto-generated for privileges if not provided).")]
         [ValidateNotNullOrEmpty]
         [Alias("Id")]
         public string EntryId { get; set; }
@@ -129,6 +138,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string ParentGroupId { get; set; }
 
         /// <summary>
+        /// Gets or sets the parent SubArea ID (required for Privileges when creating).
+        /// </summary>
+        [Parameter(ParameterSetName = "Privilege", Mandatory = true, HelpMessage = "The parent SubArea ID (required for Privileges when creating).")]
+        public string ParentSubAreaId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the entity name for privilege entries.
+        /// </summary>
+        [Parameter(ParameterSetName = "Privilege", Mandatory = true, HelpMessage = "The entity name for privilege entries.")]
+        [ArgumentCompleter(typeof(TableNameArgumentCompleter))]
+        public string PrivilegeEntity { get; set; }
+
+        /// <summary>
+        /// Gets or sets the privilege name for privilege entries (e.g., Read, Write, Create, Delete).
+        /// </summary>
+        [Parameter(ParameterSetName = "Privilege", Mandatory = true, HelpMessage = "The privilege name for privilege entries (e.g., Read, Write, Create, Delete).")]
+        [ValidateSet("Read", "Write", "Create", "Delete", "Append", "AppendTo", "Share", "Assign")]
+        public string PrivilegeName { get; set; }
+
+        /// <summary>
         /// Gets or sets the zero-based index position where the entry should be inserted or moved to.
         /// If not specified, the entry is added at the end of its parent container.
         /// </summary>
@@ -153,11 +182,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "Whether the entry is a default entry.")]
         public SwitchParameter IsDefault { get; set; }
 
-        /// <summary>
-        /// Gets or sets the privilege required to view this entry.
-        /// </summary>
-        [Parameter(HelpMessage = "The privilege required to view this entry.")]
-        public string Privilege { get; set; }
+
 
         /// <summary>
         /// Gets or sets whether to return the created or updated entry.
@@ -199,6 +224,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             else if (SubArea.IsPresent)
             {
                 entryType = SitemapEntryType.SubArea;
+            }
+            else if (Privilege.IsPresent)
+            {
+                entryType = SitemapEntryType.Privilege;
+                
+                // Auto-generate EntryId for privileges if not provided
+                if (string.IsNullOrEmpty(EntryId))
+                {
+                    EntryId = $"{PrivilegeEntity}_{PrivilegeName}";
+                }
             }
             else
             {
@@ -354,6 +389,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 entryElement = FindElement(group, "SubArea", EntryId);
                                 if (entryElement != null)
                                     break;
+                            }
+                            if (entryElement != null)
+                                break;
+                        }
+                    }
+                    break;
+
+                case SitemapEntryType.Privilege:
+                    if (!string.IsNullOrEmpty(ParentSubAreaId))
+                    {
+                        // Search for the SubArea containing this privilege
+                        foreach (var area in doc.Root?.Elements("Area") ?? Enumerable.Empty<XElement>())
+                        {
+                            foreach (var group in area.Elements("Group"))
+                            {
+                                var subArea = FindElement(group, "SubArea", ParentSubAreaId);
+                                if (subArea != null)
+                                {
+                                    entryElement = subArea.Elements("Privilege")
+                                        .FirstOrDefault(p => p.Attribute("Entity")?.Value == PrivilegeEntity &&
+                                                           p.Attribute("Privilege")?.Value == PrivilegeName);
+                                    break;
+                                }
                             }
                             if (entryElement != null)
                                 break;
@@ -555,11 +613,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         updated = true;
                     }
 
-                    if (!string.IsNullOrEmpty(Privilege))
-                    {
-                        entryElement.SetAttributeValue("Privilege", Privilege);
-                        updated = true;
-                    }
+
                 }
 
                 if (!updated)
@@ -662,6 +716,52 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             return;
                         }
                         break;
+
+                    case SitemapEntryType.Privilege:
+                        // Find the parent SubArea
+                        XElement parentSubArea = null;
+                        foreach (var area in doc.Root?.Elements("Area") ?? Enumerable.Empty<XElement>())
+                        {
+                            foreach (var group in area.Elements("Group"))
+                            {
+                                parentSubArea = FindElement(group, "SubArea", ParentSubAreaId);
+                                if (parentSubArea != null)
+                                    break;
+                            }
+                            if (parentSubArea != null)
+                                break;
+                        }
+
+                        if (parentSubArea != null)
+                        {
+                            // Check if privilege already exists (update case)
+                            var existingPrivilege = parentSubArea.Elements("Privilege")
+                                .FirstOrDefault(p => p.Attribute("Entity")?.Value == PrivilegeEntity &&
+                                               p.Attribute("Privilege")?.Value == PrivilegeName);
+
+                            if (existingPrivilege != null)
+                            {
+                                // Update existing privilege (though there's not much to update for privileges)
+                                WriteVerbose($"Privilege '{PrivilegeEntity}_{PrivilegeName}' already exists in SubArea '{ParentSubAreaId}'");
+                            }
+                            else
+                            {
+                                // Add new privilege
+                                parentSubArea.Add(newElement);
+                                WriteVerbose($"Added Privilege '{PrivilegeEntity}_{PrivilegeName}' to SubArea '{ParentSubAreaId}'");
+                            }
+                            added = true;
+                        }
+                        else
+                        {
+                            ThrowTerminatingError(new ErrorRecord(
+                                new InvalidOperationException($"Parent SubArea '{ParentSubAreaId}' not found."),
+                                "ParentSubAreaNotFound",
+                                ErrorCategory.ObjectNotFound,
+                                ParentSubAreaId));
+                            return;
+                        }
+                        break;
                 }
 
                 if (!added)
@@ -761,7 +861,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     ParentAreaId = finalParentAreaId,
                     ParentGroupId = finalParentGroupId,
                     IsDefault = IsDefault.IsPresent ? true : (bool?)null,
-                    Privilege = Privilege
+                    PrivilegeEntity = PrivilegeEntity,
+                    PrivilegeName = PrivilegeName,
+                    ParentSubAreaId = ParentSubAreaId
                 };
                 WriteObject(entry);
             }
@@ -769,8 +871,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private XElement CreateEntryElement(SitemapEntryType entryType)
         {
+            XElement element;
+            
+            if (entryType == SitemapEntryType.Privilege)
+            {
+                // For privileges, create a Privilege element with Entity and Privilege attributes
+                element = new XElement("Privilege");
+                element.SetAttributeValue("Entity", PrivilegeEntity);
+                element.SetAttributeValue("Privilege", PrivilegeName);
+                return element;
+            }
+            
             var elementName = entryType.ToString();
-            var element = new XElement(elementName);
+            element = new XElement(elementName);
 
             element.SetAttributeValue("Id", EntryId);
 
@@ -804,8 +917,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (IsDefault.IsPresent)
                     element.SetAttributeValue("IsDefault", "true");
 
-                if (!string.IsNullOrEmpty(Privilege))
-                    element.SetAttributeValue("Privilege", Privilege);
+
             }
 
             return element;

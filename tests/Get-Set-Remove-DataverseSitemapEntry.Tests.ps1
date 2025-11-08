@@ -166,6 +166,7 @@ Describe 'Set-DataverseSitemapEntry' {
             $sitemapXml = "<SiteMap></SiteMap>"
             $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
             $sitemapEntity["sitemapname"] = "TestSitemap"
+            $sitemapEntity["sitemapnameunique"] = "TestSitemap"
             $sitemapEntity["sitemapxml"] = $sitemapXml
             $connection.Create($sitemapEntity) | Out-Null
         }
@@ -199,7 +200,7 @@ Describe 'Set-DataverseSitemapEntry' {
         It "Can create new SubArea with ResourceId properties under Group" {
             # Ensure Area and Group exist
             Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSitemap" -Area -EntryId "ParentArea2" -ResourceId "Area_Parent2" | Out-Null
-            Set-DataverseSitemapEntry -Connection $connection -SitemapName "TestSitemap" -Group -EntryId "ParentGroup" -ParentAreaId "ParentArea2" -ResourceId "Group_Parent" | Out-Null
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSitemap" -Group -EntryId "ParentGroup" -ParentAreaId "ParentArea2" -ResourceId "Group_Parent" | Out-Null
             
             $result = Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSitemap" -SubArea -EntryId "TestSubArea" -ParentAreaId "ParentArea2" -ParentGroupId "ParentGroup" -ResourceId "SubArea_Test" -DescriptionResourceId "Test_SubArea_Description" -ToolTipResourceId "Test_SubArea_ToolTip" -Entity "contact" -PassThru
             
@@ -231,6 +232,7 @@ Describe 'Set-DataverseSitemapEntry' {
 "@
             $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
             $sitemapEntity["sitemapname"] = "UpdateTestSitemap"
+            $sitemapEntity["sitemapnameunique"] = "UpdateTestSitemap"
             $sitemapEntity["sitemapxml"] = $sitemapXml
             $connection.Create($sitemapEntity) | Out-Null
         }
@@ -271,6 +273,7 @@ Describe 'Set-DataverseSitemapEntry' {
             $sitemapXml = "<SiteMap></SiteMap>"
             $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
             $sitemapEntity["sitemapname"] = "ErrorTestSitemap"
+            $sitemapEntity["sitemapnameunique"] = "ErrorTestSitemap"
             $sitemapEntity["sitemapxml"] = $sitemapXml
             $connection.Create($sitemapEntity) | Out-Null
             
@@ -321,12 +324,13 @@ Describe 'Remove-DataverseSitemapEntry' {
 "@
             $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
             $sitemapEntity["sitemapname"] = "RemoveTestSitemap"
+            $sitemapEntity["sitemapnameunique"] = "RemoveTestSitemap"
             $sitemapEntity["sitemapxml"] = $sitemapXml
             $connection.Create($sitemapEntity) | Out-Null
         }
 
         It "Can remove SubArea entry" {
-            Remove-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "RemoveTestSitemap" -SubArea -EntryId "RemoveTestSubArea"
+            Remove-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "RemoveTestSitemap" -SubArea -EntryId "RemoveTestSubArea" -Confirm:$false
             
             # Verify removal
             $subAreas = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "RemoveTestSitemap" -SubArea
@@ -334,7 +338,7 @@ Describe 'Remove-DataverseSitemapEntry' {
         }
 
         It "Can remove Group entry" {
-            Remove-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "RemoveTestSitemap" -Group -EntryId "RemoveTestGroup"
+            Remove-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "RemoveTestSitemap" -Group -EntryId "RemoveTestGroup" -Confirm:$false
             
             # Verify removal
             $groups = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "RemoveTestSitemap" -Group
@@ -342,7 +346,7 @@ Describe 'Remove-DataverseSitemapEntry' {
         }
 
         It "Can remove Area entry" {
-            Remove-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "RemoveTestSitemap" -Area -EntryId "RemoveTestArea"
+            Remove-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "RemoveTestSitemap" -Area -EntryId "RemoveTestArea" -Confirm:$false
             
             # Verify removal
             $areas = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "RemoveTestSitemap" -Area
@@ -350,11 +354,11 @@ Describe 'Remove-DataverseSitemapEntry' {
         }
 
         It "Does not throw error when removing non-existent entry with IfExists flag" {
-            { Remove-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "RemoveTestSitemap" -Area -EntryId "NonExistentEntry" -IfExists } | Should -Not -Throw
+            { Remove-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "RemoveTestSitemap" -Area -EntryId "NonExistentEntry" -IfExists -Confirm:$false } | Should -Not -Throw
         }
 
         It "Throws error when removing non-existent entry without IfExists flag" {
-            { Remove-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "RemoveTestSitemap" -Area -EntryId "NonExistentEntry" } | Should -Throw
+            { Remove-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "RemoveTestSitemap" -Area -EntryId "NonExistentEntry" -Confirm:$false } | Should -Throw
         }
     }
 }
@@ -415,6 +419,7 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
             $sitemapXml = "<SiteMap></SiteMap>"
             $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
             $sitemapEntity["sitemapname"] = "XMLTestSitemap"
+            $sitemapEntity["sitemapnameunique"] = "XMLTestSitemap"
             $sitemapEntity["sitemapxml"] = $sitemapXml
             $sitemapId = $connection.Create($sitemapEntity)
             
@@ -438,6 +443,7 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
 "@
             $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
             $sitemapEntity["sitemapname"] = "TypoTestSitemap"
+            $sitemapEntity["sitemapnameunique"] = "TypoTestSitemap"
             $sitemapEntity["sitemapxml"] = $sitemapXml
             $connection.Create($sitemapEntity) | Out-Null
             
@@ -471,6 +477,7 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
             # Add mock sitemap to FakeXrmEasy
             $privilegeSitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
             $privilegeSitemapEntity["sitemapname"] = "PrivilegeSitemap"
+            $privilegeSitemapEntity["sitemapnameunique"] = "PrivilegeSitemap"
             $privilegeSitemapEntity["sitemapxml"] = $privilegeSitemapXml
             $connection.Create($privilegeSitemapEntity) | Out-Null
         }

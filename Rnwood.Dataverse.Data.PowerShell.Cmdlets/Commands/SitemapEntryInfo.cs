@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -77,10 +78,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         public bool? ShowInAppNavigation { get; set; }
 
-        /// <summary>
-        /// Gets or sets the privilege required to view this entry.
-        /// </summary>
-        public string Privilege { get; set; }
+
 
         /// <summary>
         /// Gets or sets the entity name for privilege entries.
@@ -96,6 +94,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the parent SubArea ID for privilege entries.
         /// </summary>
         public string ParentSubAreaId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the collection of privileges for SubArea entries.
+        /// </summary>
+        public List<PrivilegeInfo> Privileges { get; set; } = new List<PrivilegeInfo>();
     }
 
     /// <summary>
@@ -122,5 +125,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// A privilege required for a SubArea.
         /// </summary>
         Privilege
+    }
+
+    /// <summary>
+    /// Represents a privilege within a sitemap SubArea.
+    /// </summary>
+    public class PrivilegeInfo
+    {
+        /// <summary>
+        /// Gets or sets the entity name for the privilege.
+        /// </summary>
+        public string Entity { get; set; }
+
+        /// <summary>
+        /// Gets or sets the privilege name (e.g., "Read", "Write", "Create", "Delete").
+        /// </summary>
+        public string Privilege { get; set; }
     }
 }

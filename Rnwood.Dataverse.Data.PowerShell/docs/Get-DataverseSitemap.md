@@ -45,8 +45,8 @@ PS C:\> Get-DataverseSitemap -Name "MySitemap"
 
 Name              : MySitemap
 Id                : a1b2c3d4-5678-90ab-cdef-1234567890ab
+UniqueName        : MySitemap
 IsManaged         : False
-AppUniqueName     : myapp
 CreatedOn         : 1/15/2024 10:30:00 AM
 ModifiedOn        : 1/20/2024 2:45:00 PM
 SitemapXml        : <SiteMap>...</SiteMap>
@@ -54,30 +54,29 @@ SitemapXml        : <SiteMap>...</SiteMap>
 
 Retrieves a specific sitemap by its name with full details.
 
-### Example 3: Get sitemaps for a specific app
+### Example 3: Get sitemap by unique name
 ```powershell
-PS C:\> Get-DataverseSitemap -AppUniqueName "myapp"
+PS C:\> Get-DataverseSitemap -UniqueName "mysitemap_unique"
 
-Name              Id                                   IsManaged
-----              --                                   ---------
-MySitemap         a1b2c3d4-5678-90ab-cdef-1234567890ab False
+Name              Id                                   IsManaged  UniqueName
+----              --                                   ---------  ----------
+MySitemap         a1b2c3d4-5678-90ab-cdef-1234567890ab False      mysitemap_unique
 ```
 
-Retrieves all sitemaps associated with a specific app.
+Retrieves a specific sitemap by its unique name.
 
-### Example 4: Get only unmanaged sitemaps
+### Example 4: Get sitemap by ID
 ```powershell
-PS C:\> Get-DataverseSitemap -Unmanaged
+PS C:\> Get-DataverseSitemap -Id "a1b2c3d4-5678-90ab-cdef-1234567890ab"
 
-Name              Id                                   IsManaged
-----              --                                   ---------
-MySitemap         a1b2c3d4-5678-90ab-cdef-1234567890ab False
-CustomSitemap     c3d4e5f6-7890-12cd-ef34-56789012cdef False
+Name              Id                                   IsManaged  CreatedOn            ModifiedOn
+----              --                                   ---------  ---------            ----------
+MySitemap         a1b2c3d4-5678-90ab-cdef-1234567890ab False      1/15/2024 10:30:00 AM 1/20/2024 2:45:00 PM
 ```
 
-Retrieves only unmanaged sitemaps that can be edited.
+Retrieves a sitemap by its unique identifier.
 
-### Example 6: Export sitemap XML to file
+### Example 5: Export sitemap XML to file
 ```powershell
 PS C:\> $sitemap = Get-DataverseSitemap -Name "MySitemap"
 PS C:\> $sitemap.SitemapXml | Out-File -FilePath "MySitemap.xml"

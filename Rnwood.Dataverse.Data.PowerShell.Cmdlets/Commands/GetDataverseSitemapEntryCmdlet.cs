@@ -12,7 +12,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Retrieves sitemap entries (Areas, Groups, SubAreas) from a Dataverse sitemap.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "DataverseSitemapEntry")]
+    [Cmdlet(VerbsCommon.Get, "DataverseSitemapEntry", DefaultParameterSetName = "Default")]
     [OutputType(typeof(SitemapEntryInfo))]
     public class GetDataverseSitemapEntryCmdlet : OrganizationServiceCmdlet
     {
@@ -44,33 +44,49 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets a value indicating whether to retrieve Group entries.
         /// </summary>
-        [Parameter(ParameterSetName = "Group", Mandatory = true, HelpMessage = "Retrieve Group entries.")]
+        [Parameter(ParameterSetName = "Group", HelpMessage = "Retrieve Group entries.")]
         public SwitchParameter Group { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether to retrieve SubArea entries.
         /// </summary>
-        [Parameter(ParameterSetName = "SubArea", Mandatory = true, HelpMessage = "Retrieve SubArea entries.")]
+        [Parameter(ParameterSetName = "SubArea", HelpMessage = "Retrieve SubArea entries.")]
         public SwitchParameter SubArea { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to retrieve Privilege entries.
+        /// </summary>
+        [Parameter(ParameterSetName = "Privilege", HelpMessage = "Retrieve Privilege entries.")]
+        public SwitchParameter Privilege { get; set; }
 
         /// <summary>
         /// Gets or sets the ID of a specific entry to retrieve.
         /// </summary>
-        [Parameter(HelpMessage = "The ID of a specific entry to retrieve.")]
+        [Parameter(ParameterSetName = "Default", HelpMessage = "The ID of a specific entry to retrieve.")]
+        [Parameter(ParameterSetName = "Area", HelpMessage = "The ID of a specific entry to retrieve.")]
+        [Parameter(ParameterSetName = "Group", HelpMessage = "The ID of a specific entry to retrieve.")]
+        [Parameter(ParameterSetName = "SubArea", HelpMessage = "The ID of a specific entry to retrieve.")]
+        [Parameter(ParameterSetName = "Privilege", HelpMessage = "The ID of a specific entry to retrieve.")]
         public string EntryId { get; set; }
 
         /// <summary>
-        /// Gets or sets the parent Area ID to filter by (required for Groups and SubAreas).
+        /// Gets or sets the parent Area ID to filter by (optional for Groups and SubAreas).
         /// </summary>
-        [Parameter(ParameterSetName = "Group", Mandatory = true, HelpMessage = "Filter entries by parent Area ID (required for Groups).")]
-        [Parameter(ParameterSetName = "SubArea", Mandatory = true, HelpMessage = "Filter entries by parent Area ID (required for SubAreas).")]
+        [Parameter(ParameterSetName = "Group", HelpMessage = "Filter entries by parent Area ID (optional for Groups).")]
+        [Parameter(ParameterSetName = "SubArea", HelpMessage = "Filter entries by parent Area ID (optional for SubAreas).")]
         public string ParentAreaId { get; set; }
 
         /// <summary>
-        /// Gets or sets the parent Group ID to filter by (required for SubAreas).
+        /// Gets or sets the parent Group ID to filter by (optional for SubAreas).
         /// </summary>
-        [Parameter(ParameterSetName = "SubArea", Mandatory = true, HelpMessage = "Filter SubAreas by parent Group ID (required for SubAreas).")]
+        [Parameter(ParameterSetName = "SubArea", HelpMessage = "Filter SubAreas by parent Group ID (optional for SubAreas).")]
         public string ParentGroupId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the parent SubArea ID to filter by (required for Privileges).
+        /// </summary>
+        [Parameter(ParameterSetName = "Privilege", Mandatory = true, HelpMessage = "Filter Privileges by parent SubArea ID (required for Privileges).")]
+        public string ParentSubAreaId { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -115,10 +131,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 entryType = SitemapEntryType.SubArea;
             }
+            else if (Privilege.IsPresent)
+            {
+                entryType = SitemapEntryType.Privilege;
+            }
 
             // Get local copies of parameters for use in helper methods
             string parentAreaId = ParentAreaId;
             string parentGroupId = ParentGroupId;
+            string parentSubAreaId = ParentSubAreaId;
             string entryId = EntryId;
 
             // Retrieve the sitemap, preferring unpublished
@@ -231,10 +252,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
 
                     // Process Groups within this Area
-                    if ((!entryType.HasValue || entryType.Value == SitemapEntryType.Group || entryType.Value == SitemapEntryType.SubArea) &&
+                    if ((!entryType.HasValue || entryType.Value == SitemapEntryType.Group || entryType.Value == SitemapEntryType.SubArea || entryType.Value == SitemapEntryType.Privilege) &&
                         (string.IsNullOrEmpty(parentAreaId) || parentAreaId == areaId))
                     {
-                        ProcessGroups(area, areaId, entries, entryType, entryId, parentGroupId);
+                        ProcessGroups(area, areaId, entries, entryType, entryId, parentGroupId, parentSubAreaId);
                     }
                 }
             }
@@ -247,7 +268,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private void ProcessGroups(XElement areaElement, string areaId, List<SitemapEntryInfo> entries, SitemapEntryType? entryType, string entryId, string parentGroupId)
+        private void ProcessGroups(XElement areaElement, string areaId, List<SitemapEntryInfo> entries, SitemapEntryType? entryType, string entryId, string parentGroupId, string parentSubAreaId)
         {
             var groups = areaElement.Elements("Group");
             foreach (var group in groups)
@@ -276,15 +297,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 // Process SubAreas within this Group
-                if ((!entryType.HasValue || entryType.Value == SitemapEntryType.SubArea) &&
+                if ((!entryType.HasValue || entryType.Value == SitemapEntryType.SubArea || entryType.Value == SitemapEntryType.Privilege) &&
                     (string.IsNullOrEmpty(parentGroupId) || parentGroupId == groupId))
                 {
-                    ProcessSubAreas(group, areaId, groupId, entries, entryId);
+                    ProcessSubAreas(group, areaId, groupId, entries, entryType, entryId, parentSubAreaId);
                 }
             }
         }
 
-        private void ProcessSubAreas(XElement groupElement, string areaId, string groupId, List<SitemapEntryInfo> entries, string entryId)
+        private void ProcessSubAreas(XElement groupElement, string areaId, string groupId, List<SitemapEntryInfo> entries, SitemapEntryType? entryType, string entryId, string parentSubAreaId)
         {
             var subAreas = groupElement.Elements("SubArea");
             foreach (var subArea in subAreas)
@@ -292,7 +313,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var subAreaId = subArea.Attribute("Id")?.Value;
 
                 // Add SubArea if it matches the filter
-                if (string.IsNullOrEmpty(entryId) || subAreaId == entryId)
+                if ((!entryType.HasValue || entryType.Value == SitemapEntryType.SubArea) &&
+                    (string.IsNullOrEmpty(entryId) || subAreaId == entryId))
                 {
                     var entry = new SitemapEntryInfo
                     {
@@ -308,10 +330,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         Icon = subArea.Attribute("Icon")?.Value,
                         Entity = subArea.Attribute("Entity")?.Value,
                         Url = subArea.Attribute("Url")?.Value,
-                        IsDefault = ParseBool(subArea.Attribute("IsDefault")?.Value),
-                        Privilege = subArea.Attribute("Privilege")?.Value
+                        IsDefault = ParseBool(subArea.Attribute("IsDefault")?.Value)
                     };
+                    
+                    // Populate privileges collection for SubArea
+                    PopulatePrivileges(subArea, entry);
+                    
                     entries.Add(entry);
+                }
+
+                // Process Privileges within this SubArea
+                if ((entryType.HasValue && entryType.Value == SitemapEntryType.Privilege) &&
+                    (string.IsNullOrEmpty(parentSubAreaId) || parentSubAreaId == subAreaId))
+                {
+                    ProcessPrivileges(subArea, subAreaId, entries, entryId);
                 }
             }
         }
@@ -325,6 +357,50 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return result;
 
             return null;
+        }
+
+        private void PopulatePrivileges(XElement subAreaElement, SitemapEntryInfo subAreaEntry)
+        {
+            var privileges = subAreaElement.Elements("Privilege");
+            foreach (var privilege in privileges)
+            {
+                var entity = privilege.Attribute("Entity")?.Value;
+                var name = privilege.Attribute("Privilege")?.Value;
+
+                if (!string.IsNullOrEmpty(entity) && !string.IsNullOrEmpty(name))
+                {
+                    subAreaEntry.Privileges.Add(new PrivilegeInfo
+                    {
+                        Entity = entity,
+                        Privilege = name
+                    });
+                }
+            }
+        }
+
+        private void ProcessPrivileges(XElement subAreaElement, string subAreaId, List<SitemapEntryInfo> entries, string entryId)
+        {
+            var privileges = subAreaElement.Elements("Privilege");
+            foreach (var privilege in privileges)
+            {
+                var entity = privilege.Attribute("Entity")?.Value;
+                var name = privilege.Attribute("Privilege")?.Value;
+                var privilegeId = $"{entity}_{name}";
+
+                // Add Privilege if it matches the filter
+                if (string.IsNullOrEmpty(entryId) || privilegeId == entryId)
+                {
+                    var entry = new SitemapEntryInfo
+                    {
+                        EntryType = SitemapEntryType.Privilege,
+                        Id = privilegeId,
+                        ParentSubAreaId = subAreaId,
+                        PrivilegeEntity = entity,
+                        PrivilegeName = name
+                    };
+                    entries.Add(entry);
+                }
+            }
         }
     }
 }

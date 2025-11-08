@@ -12,10 +12,32 @@ Removes an entry (Area, Group, or SubArea) from a Dataverse sitemap.
 
 ## SYNTAX
 
+### Area
 ```
 Remove-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
- [[-SitemapName] <String>] [-SitemapUniqueName <String>] [-SitemapId <Guid>] [-EntryType <SitemapEntryType>]
- -EntryId <String> [-ParentAreaId <String>] [-ParentGroupId <String>] [-IfExists] [-Connection <ServiceClient>]
+ [-SitemapUniqueName <String>] [-SitemapId <Guid>] [-Area] -EntryId <String> [-IfExists]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### Group
+```
+Remove-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
+ [-SitemapUniqueName <String>] [-SitemapId <Guid>] [-Group] -EntryId <String> [-IfExists]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### SubArea
+```
+Remove-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
+ [-SitemapUniqueName <String>] [-SitemapId <Guid>] [-SubArea] -EntryId <String> [-IfExists]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### Privilege
+```
+Remove-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
+ [-SitemapUniqueName <String>] [-SitemapId <Guid>] [-Privilege] -PrivilegeEntity <String>
+ -PrivilegeName <String> -ParentSubAreaId <String> [-IfExists] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -88,7 +110,7 @@ The ID of the entry to remove.
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: Area, Group, SubArea
 Aliases: Id
 
 Required: True
@@ -128,36 +150,6 @@ Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
-### -ParentAreaId
-The parent Area ID (for locating Groups and SubAreas).
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ParentGroupId
-The parent Group ID (for locating SubAreas).
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Sitemap
 Sitemap object from Get-DataverseSitemap.
 
@@ -183,21 +175,6 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -SitemapName
-The name of the sitemap containing the entry.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases: Name
-
-Required: False
-Position: 0
 Default value: None
 Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
@@ -234,33 +211,123 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -EntryType
-The type of entry to remove (Area, Group, SubArea).
-
-```yaml
-Type: SitemapEntryType
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -SitemapUniqueName
 The unique name of the sitemap containing the entry.
 
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases:
+Aliases: Name
 
 Required: False
 Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Area
+Remove an Area entry.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Area
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Group
+Remove a Group entry.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Group
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ParentSubAreaId
+The parent SubArea ID containing the privilege.
+
+```yaml
+Type: String
+Parameter Sets: Privilege
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Privilege
+Remove a Privilege entry.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Privilege
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PrivilegeEntity
+The entity name for the privilege to remove.
+
+```yaml
+Type: String
+Parameter Sets: Privilege
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -PrivilegeName
+The privilege name to remove.
+
+```yaml
+Type: String
+Parameter Sets: Privilege
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SubArea
+Remove a SubArea entry.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: SubArea
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
