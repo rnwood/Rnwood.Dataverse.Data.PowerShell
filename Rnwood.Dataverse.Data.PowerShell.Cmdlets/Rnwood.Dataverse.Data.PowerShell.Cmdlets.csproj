@@ -19,7 +19,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net6.0|AnyCPU'">
     <WarningsAsErrors></WarningsAsErrors>
     <NoWarn>1701;1702;NU1605</NoWarn>
   </PropertyGroup>
@@ -27,7 +27,7 @@
     <WarningsAsErrors></WarningsAsErrors>
     <NoWarn>1701;1702;NU1605</NoWarn>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net6.0|AnyCPU'">
     <WarningsAsErrors></WarningsAsErrors>
     <NoWarn>1701;1702;NU1605</NoWarn>
   </PropertyGroup>
