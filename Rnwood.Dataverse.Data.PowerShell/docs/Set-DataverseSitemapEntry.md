@@ -14,11 +14,11 @@ Creates or updates an entry (Area, Group, or SubArea) in a Dataverse sitemap.
 
 ```
 Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>] [[-SitemapName] <String>]
- [-SitemapId <Guid>] -EntryType <SitemapEntryType> -EntryId <String> [-ResourceId <String>] [-Title <String>]
- [-Description <String>] [-Icon <String>] [-Entity <String>] [-Url <String>] [-ParentAreaId <String>]
- [-ParentGroupId <String>] [-Index <Int32>] [-Before <String>] [-After <String>] [-IsDefault]
- [-Privilege <String>] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
+ [-SitemapUniqueName <String>] [-SitemapId <Guid>] -EntryType <SitemapEntryType> -EntryId <String>
+ [-ResourceId <String>] [-Title <String>] [-Description <String>] [-Icon <String>] [-Entity <String>]
+ [-Url <String>] [-ParentAreaId <String>] [-ParentGroupId <String>] [-Index <Int32>] [-Before <String>]
+ [-After <String>] [-IsDefault] [-Privilege <String>] [-PassThru] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -169,22 +169,6 @@ Required: True
 Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -EntryType
-The type of entry to update (Area, Group, SubArea).
-
-```yaml
-Type: SitemapEntryType
-Parameter Sets: (All)
-Aliases:
-Accepted values: Area, Group, SubArea
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
@@ -429,6 +413,36 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -EntryType
+The type of entry to update (Area, Group, SubArea).
+
+```yaml
+Type: SitemapEntryType
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SitemapUniqueName
+The unique name of the sitemap containing the entry.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -437,7 +451,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapEntryInfo
 ### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapInfo
 ### System.String
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapEntryInfo

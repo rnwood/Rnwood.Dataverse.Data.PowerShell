@@ -23,6 +23,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string ResourceId { get; set; }
 
         /// <summary>
+        /// Gets or sets the resource ID for localized descriptions.
+        /// </summary>
+        public string DescriptionResourceId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the resource ID for localized tooltips.
+        /// </summary>
+        public string ToolTipResourceId { get; set; }
+
+        /// <summary>
         /// Gets or sets the title/label of the entry.
         /// </summary>
         public string Title { get; set; }
@@ -71,6 +81,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the privilege required to view this entry.
         /// </summary>
         public string Privilege { get; set; }
+
+        /// <summary>
+        /// Gets or sets the entity name for privilege entries.
+        /// </summary>
+        public string PrivilegeEntity { get; set; }
+
+        /// <summary>
+        /// Gets or sets the privilege name for privilege entries.
+        /// </summary>
+        public string PrivilegeName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the parent SubArea ID for privilege entries.
+        /// </summary>
+        public string ParentSubAreaId { get; set; }
     }
 
     /// <summary>
@@ -91,6 +116,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// A navigation item within a group.
         /// </summary>
-        SubArea
+        SubArea,
+
+        /// <summary>
+        /// A privilege required for a SubArea.
+        /// </summary>
+        Privilege
     }
 }

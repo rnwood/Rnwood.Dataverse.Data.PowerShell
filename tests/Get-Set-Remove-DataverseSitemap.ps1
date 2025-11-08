@@ -7,9 +7,8 @@ Describe 'Get-DataverseSitemap' {
             $command | Should -Not -BeNullOrEmpty
             $command.Parameters.Keys | Should -Contain 'Name'
             $command.Parameters.Keys | Should -Contain 'Id'
-            $command.Parameters.Keys | Should -Contain 'AppUniqueName'
-            $command.Parameters.Keys | Should -Contain 'Managed'
-            $command.Parameters.Keys | Should -Contain 'Unmanaged'
+            $command.Parameters.Keys | Should -Contain 'UniqueName'
+            $command.Parameters.Keys | Should -Contain 'Unpublished'
             $command.Parameters.Keys | Should -Contain 'Connection'
         }
     }
@@ -24,6 +23,7 @@ Describe 'Set-DataverseSitemap' {
             $command.Parameters.Keys | Should -Contain 'Id'
             $command.Parameters.Keys | Should -Contain 'SitemapXml'
             $command.Parameters.Keys | Should -Contain 'PassThru'
+            $command.Parameters.Keys | Should -Contain 'Publish'
             $command.Parameters.Keys | Should -Contain 'Connection'
             $command.Parameters.Keys | Should -Contain 'WhatIf'
             $command.Parameters.Keys | Should -Contain 'Confirm'
@@ -38,16 +38,52 @@ Describe 'Set-DataverseSitemap' {
             { Set-DataverseSitemap -Connection $connection -Name "InvalidSitemap" -SitemapXml $invalidXml } | Should -Throw
         }
 
-        It "Validates XML format" {
-            $validXml = "<SiteMap><Area Id='Test'/></SiteMap>"
+        It "Creates new sitemap when UniqueName is provided but doesn't exist" {
+            $connection = getMockConnection
             
-            # Valid XML should not throw during validation
-            { [xml]$validXml } | Should -Not -Throw
+            # Use a unique name that definitely doesn't exist
+            $uniqueName = "TestUniqueName_$(Get-Random)"
             
-            # Verify parsing works
-            $xmlDoc = [xml]$validXml
-            $xmlDoc | Should -Not -BeNullOrEmpty
-            $xmlDoc.SiteMap | Should -Not -BeNullOrEmpty
+            # This should create a new sitemap since the unique name doesn't exist
+            $results = Set-DataverseSitemap -Connection $connection -Name "Test Sitemap" -UniqueName $uniqueName -PassThru
+            
+            # Should return multiple objects: message string and GUID
+            $results | Should -HaveCount 2
+            $results[0] | Should -BeOfType [string]
+            $results[1] | Should -BeOfType [Guid]
+            $results[1] | Should -Not -Be ([Guid]::Empty)
+        }
+
+        It "Updates sitemap without SitemapXml parameter preserves existing XML" {
+            $connection = getMockConnection -Entities @('sitemap')
+            
+            # Create a custom sitemap XML
+            $customXml = @"
+<SiteMap IntroducedVersion="7.0.0.0">
+  <Area Id="CustomArea" ResourceId="Custom.Title" DescriptionResourceId="Custom.Title" ShowGroups="true" IntroducedVersion="7.0.0.0">
+    <Titles><Title LCID="1033" Title="Custom Area"/></Titles>
+    <Group Id="CustomGroup" ResourceId="Custom.Group" DescriptionResourceId="Custom.Group" IntroducedVersion="7.0.0.0" IsProfile="false" ToolTipResourseId="SitemapDesigner.Unknown">
+      <SubArea Id="CustomSubArea" Icon="/_imgs/imagestrips/transparent_spacer.gif" Entity="account" Client="All,Outlook,OutlookLaptopClient,OutlookWorkstationClient,Web" AvailableOffline="true" PassParams="false" Sku="All,OnPremise,Live,SPLA"/>
+    </Group>
+  </Area>
+</SiteMap>
+"@
+            
+            # Create a sitemap with custom XML
+            $createResult = Set-DataverseSitemap -Connection $connection -Name "Test Sitemap" -UniqueName "TestUniqueName" -SitemapXml $customXml -PassThru
+            $sitemapId = $createResult[1]
+            
+            # Verify the sitemap was created with custom XML
+            $createdSitemap = Get-DataverseSitemap -Connection $connection -Id $sitemapId
+            $createdSitemap.SitemapXml | Should -Be $customXml
+            
+            # Now update with different name but no SitemapXml
+            Set-DataverseSitemap -Connection $connection -UniqueName "TestUniqueName" -Name "Updated Name"
+            
+            # Verify the SitemapXml was not overwritten with default
+            $updatedSitemap = Get-DataverseSitemap -Connection $connection -Id $sitemapId
+            $updatedSitemap.SitemapXml | Should -Be $customXml
+            $updatedSitemap.Name | Should -Be "Updated Name"
         }
     }
 }
@@ -143,7 +179,7 @@ Describe 'SitemapInfo Class' {
             $properties | Should -Contain 'Name'
             $properties | Should -Contain 'SitemapXml'
             $properties | Should -Contain 'IsManaged'
-            $properties | Should -Contain 'AppUniqueName'
+            $properties | Should -Contain 'UniqueName'
             $properties | Should -Contain 'CreatedOn'
             $properties | Should -Contain 'ModifiedOn'
         }

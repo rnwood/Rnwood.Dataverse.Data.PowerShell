@@ -2,6 +2,7 @@ using System;
 using System.Management.Automation;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Crm.Sdk.Messages;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -12,6 +13,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     [OutputType(typeof(Guid))]
     public class SetDataverseSitemapCmdlet : OrganizationServiceCmdlet
     {
+        private const string DefaultSitemapXml = @"<SiteMap IntroducedVersion=""7.0.0.0""><Area Id=""area_f25442ad""
+             ResourceId=""SitemapDesigner.NewTitle"" DescriptionResourceId=""SitemapDesigner.NewTitle""       
+             ShowGroups=""true"" IntroducedVersion=""7.0.0.0""><Titles><Title LCID=""1033"" Title=""Area1""       
+             /></Titles><Group Id=""group_3d08e7b2"" ResourceId=""SitemapDesigner.NewGroup""
+             DescriptionResourceId=""SitemapDesigner.NewGroup"" IntroducedVersion=""7.0.0.0""
+             IsProfile=""false"" ToolTipResourseId=""SitemapDesigner.Unknown""><SubArea
+             Id=""subarea_6b3ec540"" Icon=""/_imgs/imagestrips/transparent_spacer.gif""
+             Entity=""contact""
+             Client=""All,Outlook,OutlookLaptopClient,OutlookWorkstationClient,Web""
+             AvailableOffline=""true"" PassParams=""false"" Sku=""All,OnPremise,Live,SPLA"" 
+             /></Group></Area></SiteMap>";
         /// <summary>
         /// Gets or sets the name of the sitemap to create or update.
         /// </summary>
@@ -26,10 +38,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Guid? Id { get; set; }
 
         /// <summary>
+        /// Gets or sets the unique name of the sitemap to update. If a sitemap with this unique name exists, it will be updated; otherwise, a new sitemap is created with this unique name.
+        /// </summary>
+        [Parameter(HelpMessage = "The unique name of the sitemap to update. If a sitemap with this unique name exists, it will be updated; otherwise, a new sitemap is created with this unique name.", ValueFromPipelineByPropertyName = true)]
+        public string UniqueName { get; set; }
+
+        /// <summary>
         /// Gets or sets the XML definition of the sitemap.
         /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "The XML definition of the sitemap.", ValueFromPipelineByPropertyName = true)]
-        [ValidateNotNullOrEmpty]
+        [Parameter(HelpMessage = "The XML definition of the sitemap. If not specified, a default sitemap will be used.", ValueFromPipelineByPropertyName = true)]
         public string SitemapXml { get; set; }
 
         /// <summary>
@@ -39,67 +56,117 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter PassThru { get; set; }
 
         /// <summary>
+        /// If specified, publishes the sitemap after creating or updating.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, publishes the sitemap after creating or updating")]
+        public SwitchParameter Publish { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
 
-            // Validate XML format
-            try
+            Guid sitemapId = Guid.Empty;
+            bool isUpdate = false;
+            Entity existingSitemap = null;
+
+            // Determine if we're updating or creating
+            if (Id.HasValue)
             {
-                System.Xml.Linq.XDocument.Parse(SitemapXml);
+                // Update by ID
+                isUpdate = true;
+                sitemapId = Id.Value;
             }
-            catch (System.Xml.XmlException ex)
+            else if (!string.IsNullOrEmpty(UniqueName))
             {
-                ThrowTerminatingError(new ErrorRecord(
-                    new ArgumentException($"Invalid XML format: {ex.Message}"),
-                    "InvalidXmlFormat",
-                    ErrorCategory.InvalidArgument,
-                    SitemapXml));
-                return;
-            }
-
-            Guid sitemapId;
-            bool isUpdate = Id.HasValue && Id.Value != Guid.Empty;
-
-            if (isUpdate)
-            {
-                // Update existing sitemap
-                if (!ShouldProcess($"Sitemap '{Name}' (ID: {Id.Value})", "Update"))
-                {
-                    return;
-                }
-
-                WriteVerbose($"Checking if sitemap with ID {Id.Value} exists...");
-
-                // Verify the sitemap exists
-                var existingQuery = new QueryExpression("sitemap")
+                // Try to find existing sitemap by UniqueName
+                var query = new QueryExpression("sitemap")
                 {
                     ColumnSet = new ColumnSet("sitemapid", "sitemapname", "ismanaged"),
                     Criteria = new FilterExpression
                     {
                         Conditions =
                         {
-                            new ConditionExpression("sitemapid", ConditionOperator.Equal, Id.Value)
+                            new ConditionExpression("sitemapnameunique", ConditionOperator.Equal, UniqueName)
                         }
                     },
                     TopCount = 1
                 };
 
-                var existingSitemaps = Connection.RetrieveMultiple(existingQuery);
-
-                if (existingSitemaps.Entities.Count == 0)
+                var results = Connection.RetrieveMultiple(query);
+                if (results.Entities.Count == 0)
                 {
-                    ThrowTerminatingError(new ErrorRecord(
-                        new InvalidOperationException($"Sitemap with ID '{Id.Value}' not found."),
-                        "SitemapNotFound",
-                        ErrorCategory.ObjectNotFound,
-                        Id.Value));
+                    var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
+                    {
+                        Query = query
+                    };
+                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                    results = unpublishedResponse.EntityCollection;
+                }
+
+                if (results.Entities.Count > 0)
+                {
+                    // Found existing sitemap, update it
+                    isUpdate = true;
+                    existingSitemap = results.Entities[0];
+                    sitemapId = existingSitemap.Id;
+                }
+                // If not found, we'll create a new one (isUpdate remains false)
+            }
+
+            if (isUpdate)
+            {
+                // Update existing sitemap
+                if (!ShouldProcess($"Sitemap '{Name}' (ID: {sitemapId})", "Update"))
+                {
                     return;
                 }
 
-                var existingSitemap = existingSitemaps.Entities[0];
+                WriteVerbose($"Checking if sitemap with ID {sitemapId} exists...");
+
+                // If we don't have the existing sitemap yet (when updating by ID), fetch it
+                if (existingSitemap == null)
+                {
+                    var existingQuery = new QueryExpression("sitemap")
+                    {
+                        ColumnSet = new ColumnSet("sitemapid", "sitemapname", "ismanaged"),
+                        Criteria = new FilterExpression
+                        {
+                            Conditions =
+                            {
+                                new ConditionExpression("sitemapid", ConditionOperator.Equal, sitemapId)
+                            }
+                        },
+                        TopCount = 1
+                    };
+
+                    var existingSitemaps = Connection.RetrieveMultiple(existingQuery);
+
+                    if (existingSitemaps.Entities.Count == 0)
+                    {
+                        var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
+                        {
+                            Query = existingQuery
+                        };
+                        var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                        existingSitemaps = unpublishedResponse.EntityCollection;
+                    }
+
+                    if (existingSitemaps.Entities.Count == 0)
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Sitemap with ID '{sitemapId}' not found."),
+                            "SitemapNotFound",
+                            ErrorCategory.ObjectNotFound,
+                            sitemapId));
+                        return;
+                    }
+
+                    existingSitemap = existingSitemaps.Entities[0];
+                }
+
                 var isManaged = existingSitemap.GetAttributeValue<bool>("ismanaged");
 
                 if (isManaged)
@@ -108,21 +175,40 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         new InvalidOperationException("Cannot update a managed sitemap. Only unmanaged sitemaps can be modified."),
                         "ManagedSitemapUpdateNotAllowed",
                         ErrorCategory.InvalidOperation,
-                        Id.Value));
+                        sitemapId));
                     return;
                 }
 
                 WriteVerbose($"Updating sitemap '{Name}'...");
 
-                var updateEntity = new Entity("sitemap", Id.Value);
+                var updateEntity = new Entity("sitemap", sitemapId);
                 updateEntity["sitemapname"] = Name;
-                updateEntity["sitemapxml"] = SitemapXml;
+                if (!string.IsNullOrEmpty(UniqueName))
+                {
+                    updateEntity["sitemapnameunique"] = UniqueName;
+                }
+                if (!string.IsNullOrEmpty(SitemapXml))
+                {
+                    // Validate XML format before updating
+                    try
+                    {
+                        System.Xml.Linq.XDocument.Parse(SitemapXml);
+                    }
+                    catch (System.Xml.XmlException ex)
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new ArgumentException($"Invalid XML format: {ex.Message}"),
+                            "InvalidXmlFormat",
+                            ErrorCategory.InvalidArgument,
+                            SitemapXml));
+                        return;
+                    }
+                    updateEntity["sitemapxml"] = SitemapXml;
+                }
 
                 Connection.Update(updateEntity);
-                sitemapId = Id.Value;
 
                 WriteVerbose("Sitemap updated successfully.");
-                WriteObject($"Sitemap '{Name}' updated successfully.");
             }
             else
             {
@@ -134,14 +220,49 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 WriteVerbose($"Creating new sitemap '{Name}'...");
 
+                // Use default XML if not provided
+                if (string.IsNullOrEmpty(SitemapXml))
+                {
+                    SitemapXml = DefaultSitemapXml;
+                }
+
+                // Validate XML format
+                try
+                {
+                    System.Xml.Linq.XDocument.Parse(SitemapXml);
+                }
+                catch (System.Xml.XmlException ex)
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new ArgumentException($"Invalid XML format: {ex.Message}"),
+                        "InvalidXmlFormat",
+                        ErrorCategory.InvalidArgument,
+                        SitemapXml));
+                    return;
+                }
+
                 var createEntity = new Entity("sitemap");
                 createEntity["sitemapname"] = Name;
+                if (!string.IsNullOrEmpty(UniqueName))
+                {
+                    createEntity["sitemapnameunique"] = UniqueName;
+                }
                 createEntity["sitemapxml"] = SitemapXml;
 
                 sitemapId = Connection.Create(createEntity);
 
                 WriteVerbose($"Sitemap created successfully with ID: {sitemapId}");
-                WriteObject($"Sitemap '{Name}' created successfully with ID: {sitemapId}");
+            }
+
+            // Publish the sitemap if specified
+            if (Publish && ShouldProcess($"Sitemap with ID '{sitemapId}'", "Publish"))
+            {
+                var publishRequest = new PublishXmlRequest
+                {
+                    ParameterXml = $"<importexportxml><sitemaps><sitemap>{sitemapId}</sitemap></sitemaps></importexportxml>"
+                };
+                Connection.Execute(publishRequest);
+                WriteVerbose($"Published sitemap with ID: {sitemapId}");
             }
 
             if (PassThru.IsPresent)

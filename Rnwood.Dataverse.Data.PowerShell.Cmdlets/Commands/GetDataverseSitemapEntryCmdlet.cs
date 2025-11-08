@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 using System.Xml.Linq;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 
@@ -22,11 +23,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SitemapInfo Sitemap { get; set; }
 
         /// <summary>
-        /// Gets or sets the name of the sitemap to retrieve entries from.
+        /// Gets or sets the unique name of the sitemap to retrieve entries from.
         /// </summary>
-        [Parameter(Position = 0, ValueFromPipelineByPropertyName = true, HelpMessage = "The name of the sitemap to retrieve entries from.")]
+        [Parameter(Position = 0, ValueFromPipelineByPropertyName = true, HelpMessage = "The unique name of the sitemap to retrieve entries from.")]
         [Alias("Name")]
-        public string SitemapName { get; set; }
+        public string SitemapUniqueName { get; set; }
 
         /// <summary>
         /// Gets or sets the ID of the sitemap to retrieve entries from.
@@ -35,10 +36,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Guid? SitemapId { get; set; }
 
         /// <summary>
-        /// Gets or sets the type of entries to retrieve.
+        /// Gets or sets a value indicating whether to retrieve Area entries.
         /// </summary>
-        [Parameter(HelpMessage = "The type of entries to retrieve (Area, Group, SubArea). If not specified, all types are returned.")]
-        public SitemapEntryType? EntryType { get; set; }
+        [Parameter(ParameterSetName = "Area", HelpMessage = "Retrieve Area entries.")]
+        public SwitchParameter Area { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to retrieve Group entries.
+        /// </summary>
+        [Parameter(ParameterSetName = "Group", Mandatory = true, HelpMessage = "Retrieve Group entries.")]
+        public SwitchParameter Group { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to retrieve SubArea entries.
+        /// </summary>
+        [Parameter(ParameterSetName = "SubArea", Mandatory = true, HelpMessage = "Retrieve SubArea entries.")]
+        public SwitchParameter SubArea { get; set; }
 
         /// <summary>
         /// Gets or sets the ID of a specific entry to retrieve.
@@ -47,15 +60,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string EntryId { get; set; }
 
         /// <summary>
-        /// Gets or sets the parent Area ID to filter by (for Groups and SubAreas).
+        /// Gets or sets the parent Area ID to filter by (required for Groups and SubAreas).
         /// </summary>
-        [Parameter(HelpMessage = "Filter entries by parent Area ID (for Groups and SubAreas).")]
+        [Parameter(ParameterSetName = "Group", Mandatory = true, HelpMessage = "Filter entries by parent Area ID (required for Groups).")]
+        [Parameter(ParameterSetName = "SubArea", Mandatory = true, HelpMessage = "Filter entries by parent Area ID (required for SubAreas).")]
         public string ParentAreaId { get; set; }
 
         /// <summary>
-        /// Gets or sets the parent Group ID to filter by (for SubAreas).
+        /// Gets or sets the parent Group ID to filter by (required for SubAreas).
         /// </summary>
-        [Parameter(HelpMessage = "Filter SubAreas by parent Group ID.")]
+        [Parameter(ParameterSetName = "SubArea", Mandatory = true, HelpMessage = "Filter SubAreas by parent Group ID (required for SubAreas).")]
         public string ParentGroupId { get; set; }
 
         /// <summary>
@@ -66,33 +80,51 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.ProcessRecord();
 
             // Get sitemap name and ID from Sitemap object if provided
-            string sitemapName = SitemapName;
+            string sitemapUniqueName = SitemapUniqueName;
             Guid? sitemapId = SitemapId;
 
             if (Sitemap != null)
             {
-                if (string.IsNullOrEmpty(sitemapName))
-                    sitemapName = Sitemap.Name;
+                if (string.IsNullOrEmpty(sitemapUniqueName))
+                    sitemapUniqueName = Sitemap.UniqueName;
                 if (!sitemapId.HasValue || sitemapId.Value == Guid.Empty)
                     sitemapId = Sitemap.Id;
             }
 
-            if (string.IsNullOrEmpty(sitemapName) && (!sitemapId.HasValue || sitemapId.Value == Guid.Empty))
+            if (string.IsNullOrEmpty(sitemapUniqueName) && (!sitemapId.HasValue || sitemapId.Value == Guid.Empty))
             {
                 ThrowTerminatingError(new ErrorRecord(
-                    new ArgumentException("Either SitemapName, SitemapId, or a Sitemap object must be provided."),
+                    new ArgumentException("Either SitemapUniqueName, SitemapId, or a Sitemap object must be provided."),
                     "MissingSitemapIdentifier",
                     ErrorCategory.InvalidArgument,
                     null));
                 return;
             }
 
-            WriteVerbose($"Retrieving sitemap entries from sitemap '{sitemapName ?? sitemapId.ToString()}'...");
+            // Determine entry type from parameter set
+            SitemapEntryType? entryType = null;
+            if (Area.IsPresent)
+            {
+                entryType = SitemapEntryType.Area;
+            }
+            else if (Group.IsPresent)
+            {
+                entryType = SitemapEntryType.Group;
+            }
+            else if (SubArea.IsPresent)
+            {
+                entryType = SitemapEntryType.SubArea;
+            }
 
-            // Retrieve the sitemap
+            // Get local copies of parameters for use in helper methods
+            string parentAreaId = ParentAreaId;
+            string parentGroupId = ParentGroupId;
+            string entryId = EntryId;
+
+            // Retrieve the sitemap, preferring unpublished
             var query = new QueryExpression("sitemap")
             {
-                ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapxml"),
+                ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapnameunique", "sitemapxml"),
                 TopCount = 1
             };
 
@@ -102,22 +134,47 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             else
             {
-                query.Criteria.AddCondition("sitemapname", ConditionOperator.Equal, sitemapName);
+                query.Criteria.AddCondition("sitemapnameunique", ConditionOperator.Equal, sitemapUniqueName);
             }
 
-            var sitemaps = Connection.RetrieveMultiple(query);
+            Entity sitemap = null;
 
-            if (sitemaps.Entities.Count == 0)
+            // First try unpublished
+            try
+            {
+                var request = new Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleRequest { Query = query };
+                var response = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+                if (response.EntityCollection.Entities.Count > 0)
+                {
+                    sitemap = response.EntityCollection.Entities[0];
+                    WriteVerbose("Found sitemap in unpublished records");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteVerbose($"Failed to retrieve unpublished sitemap: {ex.Message}");
+            }
+
+            // If not found in unpublished, try published
+            if (sitemap == null)
+            {
+                var sitemaps = Connection.RetrieveMultiple(query);
+                if (sitemaps.Entities.Count > 0)
+                {
+                    sitemap = sitemaps.Entities[0];
+                    WriteVerbose("Found sitemap in published records");
+                }
+            }
+
+            if (sitemap == null)
             {
                 ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException($"Sitemap '{sitemapName ?? sitemapId.ToString()}' not found."),
+                    new InvalidOperationException($"Sitemap '{sitemapUniqueName ?? sitemapId.ToString()}' not found."),
                     "SitemapNotFound",
                     ErrorCategory.ObjectNotFound,
-                    sitemapName ?? sitemapId.ToString()));
+                    sitemapUniqueName ?? sitemapId.ToString()));
                 return;
             }
-
-            var sitemap = sitemaps.Entities[0];
             var sitemapXml = sitemap.GetAttributeValue<string>("sitemapxml");
 
             if (string.IsNullOrEmpty(sitemapXml))
@@ -153,9 +210,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var areaId = area.Attribute("Id")?.Value;
                     
                     // Add Area if it matches the filter
-                    if (!EntryType.HasValue || EntryType.Value == SitemapEntryType.Area)
+                    if (!entryType.HasValue || entryType.Value == SitemapEntryType.Area)
                     {
-                        if (string.IsNullOrEmpty(EntryId) || areaId == EntryId)
+                        if (string.IsNullOrEmpty(entryId) || areaId == entryId)
                         {
                             var entry = new SitemapEntryInfo
                             {
@@ -164,6 +221,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 ResourceId = area.Attribute("ResourceId")?.Value,
                                 Title = area.Attribute("Title")?.Value,
                                 Description = area.Attribute("Description")?.Value,
+                                DescriptionResourceId = area.Attribute("DescriptionResourceId")?.Value,
+                                ToolTipResourceId = area.Attribute("ToolTipResourceId")?.Value ?? area.Attribute("ToolTipResourseId")?.Value,
                                 Icon = area.Attribute("Icon")?.Value,
                                 ShowInAppNavigation = ParseBool(area.Attribute("ShowInAppNavigation")?.Value)
                             };
@@ -172,10 +231,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
 
                     // Process Groups within this Area
-                    if ((!EntryType.HasValue || EntryType.Value == SitemapEntryType.Group || EntryType.Value == SitemapEntryType.SubArea) &&
-                        (string.IsNullOrEmpty(ParentAreaId) || ParentAreaId == areaId))
+                    if ((!entryType.HasValue || entryType.Value == SitemapEntryType.Group || entryType.Value == SitemapEntryType.SubArea) &&
+                        (string.IsNullOrEmpty(parentAreaId) || parentAreaId == areaId))
                     {
-                        ProcessGroups(area, areaId, entries);
+                        ProcessGroups(area, areaId, entries, entryType, entryId, parentGroupId);
                     }
                 }
             }
@@ -188,7 +247,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private void ProcessGroups(XElement areaElement, string areaId, List<SitemapEntryInfo> entries)
+        private void ProcessGroups(XElement areaElement, string areaId, List<SitemapEntryInfo> entries, SitemapEntryType? entryType, string entryId, string parentGroupId)
         {
             var groups = areaElement.Elements("Group");
             foreach (var group in groups)
@@ -196,9 +255,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var groupId = group.Attribute("Id")?.Value;
 
                 // Add Group if it matches the filter
-                if (!EntryType.HasValue || EntryType.Value == SitemapEntryType.Group)
+                if (!entryType.HasValue || entryType.Value == SitemapEntryType.Group)
                 {
-                    if (string.IsNullOrEmpty(EntryId) || groupId == EntryId)
+                    if (string.IsNullOrEmpty(entryId) || groupId == entryId)
                     {
                         var entry = new SitemapEntryInfo
                         {
@@ -208,6 +267,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             ResourceId = group.Attribute("ResourceId")?.Value,
                             Title = group.Attribute("Title")?.Value,
                             Description = group.Attribute("Description")?.Value,
+                            DescriptionResourceId = group.Attribute("DescriptionResourceId")?.Value,
+                            ToolTipResourceId = group.Attribute("ToolTipResourceId")?.Value ?? group.Attribute("ToolTipResourseId")?.Value,
                             IsDefault = ParseBool(group.Attribute("IsProfile")?.Value)
                         };
                         entries.Add(entry);
@@ -215,15 +276,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 // Process SubAreas within this Group
-                if ((!EntryType.HasValue || EntryType.Value == SitemapEntryType.SubArea) &&
-                    (string.IsNullOrEmpty(ParentGroupId) || ParentGroupId == groupId))
+                if ((!entryType.HasValue || entryType.Value == SitemapEntryType.SubArea) &&
+                    (string.IsNullOrEmpty(parentGroupId) || parentGroupId == groupId))
                 {
-                    ProcessSubAreas(group, areaId, groupId, entries);
+                    ProcessSubAreas(group, areaId, groupId, entries, entryId);
                 }
             }
         }
 
-        private void ProcessSubAreas(XElement groupElement, string areaId, string groupId, List<SitemapEntryInfo> entries)
+        private void ProcessSubAreas(XElement groupElement, string areaId, string groupId, List<SitemapEntryInfo> entries, string entryId)
         {
             var subAreas = groupElement.Elements("SubArea");
             foreach (var subArea in subAreas)
@@ -231,7 +292,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var subAreaId = subArea.Attribute("Id")?.Value;
 
                 // Add SubArea if it matches the filter
-                if (string.IsNullOrEmpty(EntryId) || subAreaId == EntryId)
+                if (string.IsNullOrEmpty(entryId) || subAreaId == entryId)
                 {
                     var entry = new SitemapEntryInfo
                     {
@@ -242,6 +303,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         ResourceId = subArea.Attribute("ResourceId")?.Value,
                         Title = subArea.Attribute("Title")?.Value,
                         Description = subArea.Attribute("Description")?.Value,
+                        DescriptionResourceId = subArea.Attribute("DescriptionResourceId")?.Value,
+                        ToolTipResourceId = subArea.Attribute("ToolTipResourceId")?.Value ?? subArea.Attribute("ToolTipResourseId")?.Value,
                         Icon = subArea.Attribute("Icon")?.Value,
                         Entity = subArea.Attribute("Entity")?.Value,
                         Url = subArea.Attribute("Url")?.Value,

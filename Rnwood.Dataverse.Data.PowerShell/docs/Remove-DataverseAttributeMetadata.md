@@ -250,9 +250,13 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.String
+You can pipe attribute names to this cmdlet.
+
 ## OUTPUTS
 
-### System.Object
+### None
+This cmdlet does not produce any output.
+
 ## NOTES
 
 This cmdlet provides programmatic access to Dataverse metadata. For comprehensive documentation and examples, see the metadata concept guide at docs/core-concepts/metadata.md

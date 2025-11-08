@@ -20,28 +20,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string Name { get; set; }
 
         /// <summary>
+        /// Gets or sets the unique name of the sitemap to retrieve.
+        /// </summary>
+        [Parameter(HelpMessage = "The unique name of the sitemap to retrieve.")]
+        public string UniqueName { get; set; }
+
+        /// <summary>
         /// Gets or sets the unique identifier of the sitemap to retrieve.
         /// </summary>
         [Parameter(HelpMessage = "The unique identifier of the sitemap to retrieve.")]
         public Guid? Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the app unique name to filter sitemaps by.
+        /// Gets or sets whether to retrieve unpublished sitemaps instead of the default published ones.
         /// </summary>
-        [Parameter(HelpMessage = "Filter sitemaps associated with a specific app unique name.")]
-        public string AppUniqueName { get; set; }
-
-        /// <summary>
-        /// Gets or sets whether to filter for managed sitemaps only.
-        /// </summary>
-        [Parameter(HelpMessage = "Filter to return only managed sitemaps.")]
-        public SwitchParameter Managed { get; set; }
-
-        /// <summary>
-        /// Gets or sets whether to filter for unmanaged sitemaps only.
-        /// </summary>
-        [Parameter(HelpMessage = "Filter to return only unmanaged sitemaps.")]
-        public SwitchParameter Unmanaged { get; set; }
+        [Parameter(HelpMessage = "Allows unpublished records to be retrieved instead of the default published")]
+        public SwitchParameter Unpublished { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -58,6 +52,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ColumnSet = new ColumnSet(
                     "sitemapid",
                     "sitemapname",
+                    "sitemapnameunique",
                     "sitemapxml",
                     "ismanaged",
                     "createdby",
@@ -81,29 +76,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteVerbose($"Filtering by name: {Name}");
             }
 
-            if (Managed.IsPresent && !Unmanaged.IsPresent)
+            if (!string.IsNullOrEmpty(UniqueName))
             {
-                query.Criteria.AddCondition("ismanaged", ConditionOperator.Equal, true);
-                WriteVerbose("Filtering for managed sitemaps only");
-            }
-            else if (Unmanaged.IsPresent && !Managed.IsPresent)
-            {
-                query.Criteria.AddCondition("ismanaged", ConditionOperator.Equal, false);
-                WriteVerbose("Filtering for unmanaged sitemaps only");
-            }
-
-            // Add link to appmodule if filtering by app
-            if (!string.IsNullOrEmpty(AppUniqueName))
-            {
-                var appLink = query.AddLink("appmodule", "sitemapid", "appmoduleid");
-                appLink.EntityAlias = "app";
-                appLink.Columns = new ColumnSet("uniquename", "name");
-                appLink.LinkCriteria.AddCondition("uniquename", ConditionOperator.Equal, AppUniqueName);
-                WriteVerbose($"Filtering by app unique name: {AppUniqueName}");
+                query.Criteria.AddCondition("sitemapnameunique", ConditionOperator.Equal, UniqueName);
+                WriteVerbose($"Filtering by unique name: {UniqueName}");
             }
 
             // Execute query with paging
-            var sitemaps = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose).ToList();
+            var sitemaps = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, Unpublished.IsPresent).ToList();
 
             WriteVerbose($"Found {sitemaps.Count} sitemap(s)");
 
@@ -114,17 +94,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     Id = sitemap.Id,
                     Name = sitemap.GetAttributeValue<string>("sitemapname"),
+                    UniqueName = sitemap.GetAttributeValue<string>("sitemapnameunique"),
                     SitemapXml = sitemap.GetAttributeValue<string>("sitemapxml"),
                     IsManaged = sitemap.GetAttributeValue<bool>("ismanaged"),
                     CreatedOn = sitemap.GetAttributeValue<DateTime?>("createdon"),
                     ModifiedOn = sitemap.GetAttributeValue<DateTime?>("modifiedon")
                 };
-
-                // Extract app information from the linked entity if present
-                if (sitemap.Contains("app.uniquename"))
-                {
-                    sitemapInfo.AppUniqueName = sitemap.GetAttributeValue<AliasedValue>("app.uniquename")?.Value as string;
-                }
 
                 WriteObject(sitemapInfo);
             }

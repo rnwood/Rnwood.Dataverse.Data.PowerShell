@@ -28,9 +28,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public bool IsManaged { get; set; }
 
         /// <summary>
-        /// Gets or sets the app unique name if this sitemap is associated with an app.
+        /// Gets or sets the unique name.
         /// </summary>
-        public string AppUniqueName { get; set; }
+        public string UniqueName { get; set; }
 
         /// <summary>
         /// Gets or sets when the sitemap was created.

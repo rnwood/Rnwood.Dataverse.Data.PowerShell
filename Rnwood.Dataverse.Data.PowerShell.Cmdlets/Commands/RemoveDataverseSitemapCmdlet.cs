@@ -2,6 +2,7 @@ using System;
 using System.Management.Automation;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Crm.Sdk.Messages;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -23,6 +24,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(Mandatory = true, ParameterSetName = "ById", HelpMessage = "The unique identifier of the sitemap to remove.", ValueFromPipelineByPropertyName = true)]
         public Guid Id { get; set; }
+
+        /// <summary>
+        /// Gets or sets the unique name of the sitemap to remove.
+        /// </summary>
+        [Parameter(Mandatory = true, ParameterSetName = "ByUniqueName", HelpMessage = "The unique name of the sitemap to remove.", ValueFromPipelineByPropertyName = true)]
+        [ValidateNotNullOrEmpty]
+        public string UniqueName { get; set; }
 
         /// <summary>
         /// Gets or sets whether to suppress errors if the sitemap does not exist.
@@ -62,6 +70,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (sitemaps.Entities.Count == 0)
                 {
+                    // Check unpublished sitemaps
+                    var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
+                    {
+                        Query = query
+                    };
+                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                    sitemaps = unpublishedResponse.EntityCollection;
+                }
+
+                if (sitemaps.Entities.Count == 0)
+                {
                     if (IfExists.IsPresent)
                     {
                         WriteVerbose($"Sitemap '{Name}' not found. Skipping deletion.");
@@ -73,6 +92,57 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         "SitemapNotFound",
                         ErrorCategory.ObjectNotFound,
                         Name));
+                    return;
+                }
+
+                var sitemap = sitemaps.Entities[0];
+                sitemapId = sitemap.Id;
+                sitemapName = sitemap.GetAttributeValue<string>("sitemapname");
+            }
+            else if (ParameterSetName == "ByUniqueName")
+            {
+                WriteVerbose($"Querying for sitemap with unique name '{UniqueName}'...");
+
+                // Query for the sitemap by unique name
+                var query = new QueryExpression("sitemap")
+                {
+                    ColumnSet = new ColumnSet("sitemapid", "sitemapname"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("sitemapnameunique", ConditionOperator.Equal, UniqueName)
+                        }
+                    },
+                    TopCount = 1
+                };
+
+                var sitemaps = Connection.RetrieveMultiple(query);
+
+                if (sitemaps.Entities.Count == 0)
+                {
+                    // Check unpublished sitemaps
+                    var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
+                    {
+                        Query = query
+                    };
+                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                    sitemaps = unpublishedResponse.EntityCollection;
+                }
+
+                if (sitemaps.Entities.Count == 0)
+                {
+                    if (IfExists.IsPresent)
+                    {
+                        WriteVerbose($"Sitemap with unique name '{UniqueName}' not found. Skipping deletion.");
+                        return;
+                    }
+
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Sitemap with unique name '{UniqueName}' not found."),
+                        "SitemapNotFound",
+                        ErrorCategory.ObjectNotFound,
+                        UniqueName));
                     return;
                 }
 
@@ -99,6 +169,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
 
                 var sitemaps = Connection.RetrieveMultiple(query);
+
+                if (sitemaps.Entities.Count == 0)
+                {
+                    // Check unpublished sitemaps
+                    var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
+                    {
+                        Query = query
+                    };
+                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                    sitemaps = unpublishedResponse.EntityCollection;
+                }
 
                 if (sitemaps.Entities.Count == 0)
                 {

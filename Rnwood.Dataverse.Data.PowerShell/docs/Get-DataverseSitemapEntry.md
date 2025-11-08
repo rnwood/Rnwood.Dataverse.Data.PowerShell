@@ -13,9 +13,10 @@ Retrieves sitemap entries (Areas, Groups, SubAreas) from a Dataverse sitemap.
 ## SYNTAX
 
 ```
-Get-DataverseSitemapEntry [-Sitemap <SitemapInfo>] [[-SitemapName] <String>] [-SitemapId <Guid>]
- [-EntryType <SitemapEntryType>] [-EntryId <String>] [-ParentAreaId <String>] [-ParentGroupId <String>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseSitemapEntry [-Sitemap <SitemapInfo>] [[-SitemapName] <String>] [-SitemapUniqueName <String>]
+ [-SitemapId <Guid>] [-EntryType <SitemapEntryType>] [-EntryId <String>] [-ParentAreaId <String>]
+ [-ParentGroupId <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -84,23 +85,6 @@ The ID of a specific entry to retrieve.
 Type: String
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -EntryType
-The type of entries to retrieve (Area, Group, SubArea).
-If not specified, all types are returned.
-
-```yaml
-Type: SitemapEntryType
-Parameter Sets: (All)
-Aliases:
-Accepted values: Area, Group, SubArea
 
 Required: False
 Position: Named
@@ -199,6 +183,37 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -EntryType
+The type of entries to retrieve (Area, Group, SubArea).
+If not specified, all types are returned.
+
+```yaml
+Type: SitemapEntryType
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SitemapUniqueName
+The unique name of the sitemap to retrieve entries from.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -206,7 +221,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapInfo
 ### System.String
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapEntryInfo
