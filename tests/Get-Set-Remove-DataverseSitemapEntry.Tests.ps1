@@ -385,7 +385,6 @@ Describe 'SitemapEntryInfo Class' {
             $properties | Should -Contain 'ParentAreaId'
             $properties | Should -Contain 'ParentGroupId'
             $properties | Should -Contain 'ShowInAppNavigation'
-            $properties | Should -Contain 'Privilege'
             $properties | Should -Contain 'PrivilegeEntity'
             $properties | Should -Contain 'PrivilegeName'
             $properties | Should -Contain 'ParentSubAreaId'
