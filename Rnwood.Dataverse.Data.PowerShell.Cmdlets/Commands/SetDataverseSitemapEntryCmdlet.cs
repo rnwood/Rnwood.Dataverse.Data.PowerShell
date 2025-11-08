@@ -781,7 +781,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             WriteVerbose("Updating sitemap in Dataverse...");
             Connection.Update(updateEntity);
 
-            WriteObject($"{entryType} entry '{EntryId}' {(isUpdate ? "updated" : "created")} in sitemap '{sitemapUniqueName ?? sitemapId.ToString()}' successfully.");
+            WriteVerbose($"{entryType} entry '{EntryId}' {(isUpdate ? "updated" : "created")} in sitemap '{sitemapUniqueName ?? sitemapId.ToString()}' successfully.");
 
             if (PassThru.IsPresent)
             {

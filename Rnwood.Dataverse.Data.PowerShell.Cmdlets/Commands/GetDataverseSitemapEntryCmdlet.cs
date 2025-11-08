@@ -264,7 +264,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             foreach (var entry in entries)
             {
-                WriteObject(entry);
+                WriteObject(CreatePSObject(entry));
             }
         }
 
@@ -334,6 +334,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     };
                     
                     // Populate privileges collection for SubArea
+                    entry.Privileges = new List<PrivilegeInfo>();
                     PopulatePrivileges(subArea, entry);
                     
                     entries.Add(entry);
@@ -401,6 +402,32 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     entries.Add(entry);
                 }
             }
+        }
+
+        private PSObject CreatePSObject(SitemapEntryInfo entry)
+        {
+            PSObject psObject = new PSObject();
+            psObject.Properties.Add(new PSNoteProperty("EntryType", entry.EntryType));
+            psObject.Properties.Add(new PSNoteProperty("Id", entry.Id));
+
+            if (!string.IsNullOrEmpty(entry.ResourceId)) psObject.Properties.Add(new PSNoteProperty("ResourceId", entry.ResourceId));
+            if (!string.IsNullOrEmpty(entry.Title)) psObject.Properties.Add(new PSNoteProperty("Title", entry.Title));
+            if (!string.IsNullOrEmpty(entry.Description)) psObject.Properties.Add(new PSNoteProperty("Description", entry.Description));
+            if (!string.IsNullOrEmpty(entry.DescriptionResourceId)) psObject.Properties.Add(new PSNoteProperty("DescriptionResourceId", entry.DescriptionResourceId));
+            if (!string.IsNullOrEmpty(entry.ToolTipResourceId)) psObject.Properties.Add(new PSNoteProperty("ToolTipResourceId", entry.ToolTipResourceId));
+            if (!string.IsNullOrEmpty(entry.Icon)) psObject.Properties.Add(new PSNoteProperty("Icon", entry.Icon));
+            if (!string.IsNullOrEmpty(entry.Entity)) psObject.Properties.Add(new PSNoteProperty("Entity", entry.Entity));
+            if (!string.IsNullOrEmpty(entry.Url)) psObject.Properties.Add(new PSNoteProperty("Url", entry.Url));
+            if (entry.IsDefault.HasValue) psObject.Properties.Add(new PSNoteProperty("IsDefault", entry.IsDefault.Value));
+            if (!string.IsNullOrEmpty(entry.ParentAreaId)) psObject.Properties.Add(new PSNoteProperty("ParentAreaId", entry.ParentAreaId));
+            if (!string.IsNullOrEmpty(entry.ParentGroupId)) psObject.Properties.Add(new PSNoteProperty("ParentGroupId", entry.ParentGroupId));
+            if (entry.ShowInAppNavigation.HasValue) psObject.Properties.Add(new PSNoteProperty("ShowInAppNavigation", entry.ShowInAppNavigation.Value));
+            if (entry.Privileges != null) psObject.Properties.Add(new PSNoteProperty("Privileges", entry.Privileges));
+            if (!string.IsNullOrEmpty(entry.PrivilegeEntity)) psObject.Properties.Add(new PSNoteProperty("PrivilegeEntity", entry.PrivilegeEntity));
+            if (!string.IsNullOrEmpty(entry.PrivilegeName)) psObject.Properties.Add(new PSNoteProperty("PrivilegeName", entry.PrivilegeName));
+            if (!string.IsNullOrEmpty(entry.ParentSubAreaId)) psObject.Properties.Add(new PSNoteProperty("ParentSubAreaId", entry.ParentSubAreaId));
+
+            return psObject;
         }
     }
 }

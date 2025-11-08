@@ -98,7 +98,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the collection of privileges for SubArea entries.
         /// </summary>
-        public List<PrivilegeInfo> Privileges { get; set; } = new List<PrivilegeInfo>();
+        public List<PrivilegeInfo> Privileges { get; set; }
     }
 
     /// <summary>
