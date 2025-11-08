@@ -734,22 +734,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         if (parentSubArea != null)
                         {
-                            // Check if privilege already exists (update case)
-                            var existingPrivilege = parentSubArea.Elements("Privilege")
-                                .FirstOrDefault(p => p.Attribute("Entity")?.Value == PrivilegeEntity &&
-                                               p.Attribute("Privilege")?.Value == PrivilegeName);
+                            // Remove all existing privileges for this entity (replace case)
+                            var existingPrivileges = parentSubArea.Elements("Privilege")
+                                .Where(p => string.Equals(p.Attribute("Entity")?.Value, PrivilegeEntity, StringComparison.OrdinalIgnoreCase))
+                                .ToList();
 
-                            if (existingPrivilege != null)
+                            foreach (var existingPrivilege in existingPrivileges)
                             {
-                                // Update existing privilege (though there's not much to update for privileges)
-                                WriteVerbose($"Privilege '{PrivilegeEntity}_{PrivilegeName}' already exists in SubArea '{ParentSubAreaId}'");
+                                existingPrivilege.Remove();
                             }
-                            else
-                            {
-                                // Add new privilege
-                                parentSubArea.Add(newElement);
-                                WriteVerbose($"Added Privilege '{PrivilegeEntity}_{PrivilegeName}' to SubArea '{ParentSubAreaId}'");
-                            }
+
+                            // Add new privilege
+                            parentSubArea.Add(newElement);
+                            WriteVerbose($"Added Privilege '{PrivilegeEntity}_{PrivilegeName}' to SubArea '{ParentSubAreaId}'");
                             added = true;
                         }
                         else
@@ -863,7 +860,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     IsDefault = IsDefault.IsPresent ? true : (bool?)null,
                     PrivilegeEntity = PrivilegeEntity,
                     PrivilegeName = PrivilegeName,
-                    ParentSubAreaId = ParentSubAreaId
+                    ParentSubAreaId = ParentSubAreaId,
                 };
                 WriteObject(entry);
             }

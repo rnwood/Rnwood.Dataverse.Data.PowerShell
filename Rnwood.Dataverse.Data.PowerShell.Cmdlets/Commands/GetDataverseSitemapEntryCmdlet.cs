@@ -396,7 +396,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         Id = privilegeId,
                         ParentSubAreaId = subAreaId,
                         PrivilegeEntity = entity,
-                        PrivilegeName = name
+                        PrivilegeName = name,
                     };
                     entries.Add(entry);
                 }

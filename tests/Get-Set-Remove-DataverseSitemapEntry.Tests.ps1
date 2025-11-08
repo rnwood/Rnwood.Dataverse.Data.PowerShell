@@ -561,7 +561,7 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
             $initialCount = $subArea.Privileges.Count
             
             # Remove the privilege
-            Remove-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -Privilege -PrivilegeEntity "account" -PrivilegeName "Delete" -ParentSubAreaId "nav_activities"
+            Remove-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -Privilege -PrivilegeEntity "account" -PrivilegeName "Delete" -ParentSubAreaId "nav_activities" -Confirm:$false
             
             # Verify it was removed
             $subAreaAfter = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -EntryId "nav_activities"
