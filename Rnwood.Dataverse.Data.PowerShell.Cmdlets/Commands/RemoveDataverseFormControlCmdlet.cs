@@ -60,14 +60,52 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Find the control to remove
             XElement controlToRemove = null;
-            XElement parentRow = null;
+            XElement parentCell = null;
             if (ParameterSetName == "ById")
             {
-                (controlToRemove, parentRow) = FormXmlHelper.FindControl(systemForm, controlId: ControlId);
+                (controlToRemove, parentCell) = FormXmlHelper.FindControl(systemForm, controlId: ControlId);
             }
             else
             {
-                (controlToRemove, parentRow) = FormXmlHelper.FindControlByDataField(systemForm, TabName, SectionName, DataField);
+                // ByDataField parameter set
+                if (!string.IsNullOrEmpty(SectionName))
+                {
+                    // Search in specific section
+                    (controlToRemove, parentCell) = FormXmlHelper.FindControlByDataField(systemForm, TabName, SectionName, DataField);
+                }
+                else
+                {
+                    // Search in all sections of the tab
+                    var tab = FormXmlHelper.FindTab(systemForm, tabName: TabName);
+                    if (tab == null)
+                    {
+                        throw new InvalidOperationException($"Tab '{TabName}' not found in form");
+                    }
+                    
+                    // Search through all sections in the tab
+                    foreach (var section in tab.Descendants("section"))
+                    {
+                        var rows = section.Element("rows");
+                        if (rows != null)
+                        {
+                            foreach (var row in rows.Elements("row"))
+                            {
+                                foreach (var cell in row.Elements("cell"))
+                                {
+                                    var control = cell.Elements("control").FirstOrDefault(c => c.Attribute("datafieldname")?.Value == DataField);
+                                    if (control != null)
+                                    {
+                                        controlToRemove = control;
+                                        parentCell = cell;
+                                        break;
+                                    }
+                                }
+                                if (controlToRemove != null) break;
+                            }
+                            if (controlToRemove != null) break;
+                        }
+                    }
+                }
             }
 
             if (controlToRemove == null)
@@ -85,9 +123,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Remove the control's parent cell
-            var parentCell = controlToRemove.Parent;
             if (parentCell != null)
             {
+                var parentRow = parentCell.Parent; // Get the row containing the cell
                 parentCell.Remove();
                 
                 // If row is now empty, remove it too

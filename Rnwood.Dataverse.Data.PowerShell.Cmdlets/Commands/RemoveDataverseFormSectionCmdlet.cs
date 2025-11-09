@@ -24,6 +24,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Guid FormId { get; set; }
 
         /// <summary>
+        /// Gets or sets the tab name where the section is located (used when removing by section name).
+        /// </summary>
+        [Parameter(Mandatory = false, HelpMessage = "Name of the tab containing the section (required when using SectionName)")]
+        public string TabName { get; set; }
+
+        /// <summary>
         /// Gets or sets the section name to remove.
         /// </summary>
         [Parameter(Mandatory = false, HelpMessage = "Name of the section to remove")]
@@ -60,7 +66,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             else if (!string.IsNullOrEmpty(SectionName))
             {
-                sectionToRemove = FormXmlHelper.FindSection(systemForm, sectionName: SectionName);
+                // If TabName is provided, search within that tab; otherwise search globally
+                if (!string.IsNullOrEmpty(TabName))
+                {
+                    var tab = FormXmlHelper.FindTab(systemForm, TabName);
+                    if (tab == null)
+                    {
+                        throw new InvalidOperationException($"Tab '{TabName}' not found in form");
+                    }
+                    sectionToRemove = FormXmlHelper.FindSectionInTab(tab, sectionName: SectionName);
+                }
+                else
+                {
+                    sectionToRemove = FormXmlHelper.FindSection(systemForm, sectionName: SectionName);
+                }
             }
             else
             {

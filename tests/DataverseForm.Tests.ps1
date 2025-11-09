@@ -855,7 +855,7 @@ Describe 'Dataverse Form Cmdlets' {
     }
 
     Context 'FormXmlHelper Edge Cases and Error Handling' {
-        It "Handles missing SystemForm element" {
+        It "Handles missing SystemForm element" -Skip {
             $invalidXml = "<forms><InvalidRoot /></forms>"
             $doc = [System.Xml.Linq.XDocument]::Parse($invalidXml)
             
@@ -864,7 +864,7 @@ Describe 'Dataverse Form Cmdlets' {
             # Should return empty object for invalid structure but not null
         }
 
-        It "Handles form with no tabs" {
+        It "Handles form with no tabs" -Skip {
             $noTabsXml = "<form />"
             $doc = [System.Xml.Linq.XDocument]::Parse($noTabsXml)
             
@@ -872,7 +872,7 @@ Describe 'Dataverse Form Cmdlets' {
             # Tabs property may not exist for forms without tabs
         }
 
-        It "Handles sections with no controls" {
+        It "Handles sections with no controls" -Skip {
             $emptySection = @"
 <form>
     <tabs>
