@@ -553,7 +553,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -DataField 'testfield' -Label 'Test Label' -Disabled -Visible:$false -IsRequired -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -DataField 'testfield' -Label 'Test Label' -Disabled -Hidden:$false -IsRequired -WhatIf } | Should -Not -Throw
         }
 
         It "Handles positioning with Index" {

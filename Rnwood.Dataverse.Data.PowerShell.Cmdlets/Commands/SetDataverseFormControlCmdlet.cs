@@ -45,7 +45,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the data field name (attribute) for the control.
         /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "Data field name (attribute) for the control")]
+        [Parameter(Mandatory = true, ParameterSetName = "Default", HelpMessage = "Data field name (attribute) for the control")]
+        [Parameter(Mandatory = false, ParameterSetName = "RawXml", HelpMessage = "Data field name (attribute) for the control")]
         public string DataField { get; set; }
 
         /// <summary>
