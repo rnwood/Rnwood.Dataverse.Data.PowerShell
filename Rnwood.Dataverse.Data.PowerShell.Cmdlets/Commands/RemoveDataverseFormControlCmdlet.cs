@@ -44,7 +44,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the tab name where the section is located.
         /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "Name of the tab containing the section")]
+        [Parameter(Mandatory = true, ParameterSetName = "ByDataField", HelpMessage = "Name of the tab containing the section")]
         public string TabName { get; set; }
 
         /// <summary>
