@@ -14,29 +14,30 @@ Creates or updates a form in a Dataverse environment.
 
 ### Update
 ```
-Set-DataverseForm -Id <Guid> [-Entity <String>] [-Name <String>] [-FormType <String>] [-Description <String>]
- [-IsActive] [-IsDefault] [-FormPresentation <String>] [-PassThru] [-Publish] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataverseForm -Id <Guid> [-Entity <String>] [-Name <String>] [-FormType <FormType>] [-Description <String>]
+ [-IsActive] [-IsDefault] [-FormPresentation <FormPresentation>] [-PassThru] [-Publish]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### UpdateWithXml
 ```
-Set-DataverseForm -Id <Guid> [-Entity <String>] [-Name <String>] [-FormType <String>] -FormXmlContent <String>
- [-Description <String>] [-IsActive] [-IsDefault] [-FormPresentation <String>] [-PassThru] [-Publish]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataverseForm -Id <Guid> [-Entity <String>] [-Name <String>] [-FormType <FormType>]
+ -FormXmlContent <String> [-Description <String>] [-IsActive] [-IsDefault]
+ [-FormPresentation <FormPresentation>] [-PassThru] [-Publish] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### Create
 ```
-Set-DataverseForm -Entity <String> -Name <String> -FormType <String> [-Description <String>] [-IsActive]
- [-IsDefault] [-FormPresentation <String>] [-PassThru] [-Publish] [-Connection <ServiceClient>]
+Set-DataverseForm -Entity <String> -Name <String> -FormType <FormType> [-Description <String>] [-IsActive]
+ [-IsDefault] [-FormPresentation <FormPresentation>] [-PassThru] [-Publish] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### CreateWithXml
 ```
-Set-DataverseForm -Entity <String> -Name <String> -FormType <String> -FormXmlContent <String>
- [-Description <String>] [-IsActive] [-IsDefault] [-FormPresentation <String>] [-PassThru] [-Publish]
+Set-DataverseForm -Entity <String> -Name <String> -FormType <FormType> -FormXmlContent <String>
+ [-Description <String>] [-IsActive] [-IsDefault] [-FormPresentation <FormPresentation>] [-PassThru] [-Publish]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -164,7 +165,7 @@ Accept wildcard characters: False
 Form presentation: ClassicForm (0), AirForm (1), ConvertedICForm (2)
 
 ```yaml
-Type: String
+Type: FormPresentation
 Parameter Sets: (All)
 Aliases:
 Accepted values: ClassicForm, AirForm, ConvertedICForm
@@ -180,10 +181,10 @@ Accept wildcard characters: False
 Form type: Main, QuickCreate, QuickView, Card, Dashboard
 
 ```yaml
-Type: String
+Type: FormType
 Parameter Sets: Update, UpdateWithXml
 Aliases:
-Accepted values: Main, QuickCreate, QuickView, Card, Dashboard
+Accepted values: Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard
 
 Required: False
 Position: Named
@@ -193,10 +194,10 @@ Accept wildcard characters: False
 ```
 
 ```yaml
-Type: String
+Type: FormType
 Parameter Sets: Create, CreateWithXml
 Aliases:
-Accepted values: Main, QuickCreate, QuickView, Card, Dashboard
+Accepted values: Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard, Main, QuickCreate, QuickView, Card, Dashboard
 
 Required: True
 Position: Named

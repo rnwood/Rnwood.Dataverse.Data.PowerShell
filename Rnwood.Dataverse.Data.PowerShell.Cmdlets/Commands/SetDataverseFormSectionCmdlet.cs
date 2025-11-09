@@ -2,9 +2,11 @@ using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Rnwood.Dataverse.Data.PowerShell.Model;
 using System;
 using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 using System.Xml.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -20,7 +22,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the form ID.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the form")]
-        [Alias("formid")]
         public Guid FormId { get; set; }
 
         /// <summary>
@@ -32,7 +33,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the section ID for updating an existing section.
         /// </summary>
-        [Parameter(ParameterSetName = "Update", Mandatory = true, HelpMessage = "ID of the section to update")]
+        [Parameter(Mandatory = false, HelpMessage = "ID of the section to create or update")]
         public string SectionId { get; set; }
 
         /// <summary>
@@ -87,19 +88,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the zero-based index position where the section should be inserted.
         /// </summary>
-        [Parameter(ParameterSetName = "Create", HelpMessage = "Zero-based index position to insert the section")]
+        [Parameter(HelpMessage = "Zero-based index position to insert the section")]
         public int? Index { get; set; }
 
         /// <summary>
         /// Gets or sets the name or ID of the section before which to insert this section.
         /// </summary>
-        [Parameter(ParameterSetName = "Create", HelpMessage = "Name or ID of the section before which to insert")]
+        [Parameter(HelpMessage = "Name or ID of the section before which to insert")]
         public string InsertBefore { get; set; }
 
         /// <summary>
         /// Gets or sets the name or ID of the section after which to insert this section.
         /// </summary>
-        [Parameter(ParameterSetName = "Create", HelpMessage = "Name or ID of the section after which to insert")]
+        [Parameter(HelpMessage = "Name or ID of the section after which to insert")]
         public string InsertAfter { get; set; }
 
         /// <summary>
@@ -109,12 +110,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter PassThru { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to publish the form after modifying the section.
-        /// </summary>
-        [Parameter(HelpMessage = "Publish the form after modifying the section")]
-        public SwitchParameter Publish { get; set; }
-
-        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -122,21 +117,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.ProcessRecord();
 
             // Retrieve the form
-            Entity form = Connection.Retrieve("systemform", FormId, new ColumnSet("formxml", "objecttypecode"));
-            
-            if (!form.Contains("formxml"))
-            {
-                throw new InvalidOperationException($"Form '{FormId}' does not contain FormXml");
-            }
-
-            string formXml = form.GetAttributeValue<string>("formxml");
-            XDocument doc = XDocument.Parse(formXml);
-            XElement systemForm = doc.Root?.Element("SystemForm");
-            
-            if (systemForm == null)
-            {
-                throw new InvalidOperationException("Invalid FormXml structure");
-            }
+            Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml", "objecttypecode"));
+            var (doc, systemForm) = FormXmlHelper.ParseFormXml(form);
 
             // Find the tab
             var tabsElement = systemForm.Element("tabs");
@@ -179,84 +161,89 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             XElement section = null;
             string sectionId = null;
-            bool isUpdate = ParameterSetName == "Update";
+            bool isUpdate = false;
 
-            if (isUpdate)
+            // Check if section exists by ID or Name
+            if (!string.IsNullOrEmpty(SectionId))
             {
-                // Find existing section
+                // Find by ID
                 section = sectionsElement.Elements("section").FirstOrDefault(s => s.Attribute("id")?.Value == SectionId);
-                if (section == null)
+                if (section != null)
                 {
-                    throw new InvalidOperationException($"Section with ID '{SectionId}' not found in tab '{TabName}'");
+                    isUpdate = true;
+                    sectionId = SectionId;
                 }
-                sectionId = SectionId;
             }
             else
             {
-                // Check if section with same name exists
+                // Find by Name
                 section = sectionsElement.Elements("section").FirstOrDefault(s => s.Attribute("name")?.Value == Name);
                 if (section != null)
                 {
-                    // Update existing section
                     isUpdate = true;
                     sectionId = section.Attribute("id")?.Value;
                 }
-                else
+            }
+
+            if (isUpdate)
+            {
+                // Update existing section - no positioning needed
+            }
+            else
+            {
+                // Section does not exist - create new
+                sectionId = !string.IsNullOrEmpty(SectionId) ? SectionId : Guid.NewGuid().ToString();
+                section = new XElement("section");
+                
+                // Handle positioning for new section
+                if (Index.HasValue)
                 {
-                    // Create new section
-                    sectionId = Guid.NewGuid().ToString("B");
-                    section = new XElement("section");
-                    
-                    // Handle positioning
-                    if (Index.HasValue)
+                    // Insert at specific index
+                    var sections = sectionsElement.Elements("section").ToList();
+                    if (Index.Value >= 0 && Index.Value <= sections.Count)
                     {
-                        // Insert at specific index
-                        var sections = sectionsElement.Elements("section").ToList();
-                        if (Index.Value >= 0 && Index.Value <= sections.Count)
+                        if (Index.Value == sections.Count)
                         {
-                            if (Index.Value == sections.Count)
-                            {
-                                sectionsElement.Add(section);
-                            }
-                            else
-                            {
-                                sections[Index.Value].AddBeforeSelf(section);
-                            }
+                            sectionsElement.Add(section);
                         }
                         else
                         {
-                            throw new InvalidOperationException($"Index {Index.Value} is out of range. Valid range is 0-{sections.Count}");
+                            sections[Index.Value].AddBeforeSelf(section);
                         }
-                    }
-                    else if (!string.IsNullOrEmpty(InsertBefore))
-                    {
-                        // Insert before specified section
-                        var referenceSection = sectionsElement.Elements("section")
-                            .FirstOrDefault(s => s.Attribute("name")?.Value == InsertBefore || 
-                                                s.Attribute("id")?.Value == InsertBefore);
-                        if (referenceSection == null)
-                        {
-                            throw new InvalidOperationException($"Reference section '{InsertBefore}' not found");
-                        }
-                        referenceSection.AddBeforeSelf(section);
-                    }
-                    else if (!string.IsNullOrEmpty(InsertAfter))
-                    {
-                        // Insert after specified section
-                        var referenceSection = sectionsElement.Elements("section")
-                            .FirstOrDefault(s => s.Attribute("name")?.Value == InsertAfter || 
-                                                s.Attribute("id")?.Value == InsertAfter);
-                        if (referenceSection == null)
-                        {
-                            throw new InvalidOperationException($"Reference section '{InsertAfter}' not found");
-                        }
-                        referenceSection.AddAfterSelf(section);
                     }
                     else
                     {
-                        // Add at the end (default)
-                        sectionsElement.Add(section);
+                        throw new InvalidOperationException($"Index {Index.Value} is out of range. Valid range is 0-{sections.Count}");
                     }
+                }
+                else if (!string.IsNullOrEmpty(InsertBefore))
+                {
+                    // Insert before specified section
+                    var referenceSection = sectionsElement.Elements("section")
+                        .FirstOrDefault(s => s.Attribute("name")?.Value == InsertBefore || 
+                                            s.Attribute("id")?.Value == InsertBefore);
+                    if (referenceSection == null)
+                    {
+                        throw new InvalidOperationException($"Reference section '{InsertBefore}' not found");
+                    }
+                    referenceSection.AddBeforeSelf(section);
+                }
+                else if (!string.IsNullOrEmpty(InsertAfter))
+                {
+                    // Insert after specified section
+                    var referenceSection = sectionsElement.Elements("section")
+                        .FirstOrDefault(s => s.Attribute("name")?.Value == InsertAfter || 
+                                            s.Attribute("id")?.Value == InsertAfter);
+                    if (referenceSection == null)
+                    {
+                        throw new InvalidOperationException($"Reference section '{InsertAfter}' not found");
+                    }
+                    referenceSection.AddAfterSelf(section);
+                }
+                else
+                {
+                    // Add at the end (default)
+                    sectionsElement.Add(section);
                 }
             }
 
@@ -322,30 +309,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
-            // Update form
-            Entity updateForm = new Entity("systemform", FormId);
-            updateForm["formxml"] = doc.ToString();
-            Connection.Update(updateForm);
+            // Update the form
+            FormXmlHelper.UpdateFormXml(Connection, FormId, doc);
 
-            WriteVerbose($"{action}d section '{Name}' in tab '{TabName}' on form '{FormId}'");
-
-            // Publish if requested
-            if (Publish.IsPresent)
-            {
-                string entityName = form.GetAttributeValue<string>("objecttypecode");
-                WriteVerbose($"Publishing entity '{entityName}'...");
-                var publishRequest = new PublishXmlRequest
-                {
-                    ParameterXml = $"<importexportxml><entities><entity>{entityName}</entity></entities></importexportxml>"
-                };
-                Connection.Execute(publishRequest);
-                WriteVerbose("Entity published successfully");
-            }
-
+            // Return the section ID if PassThru is specified
             if (PassThru.IsPresent)
             {
                 WriteObject(sectionId);
             }
+
+            WriteVerbose($"{action}d section '{Name}' (ID: {sectionId}) in form '{FormId}'");
         }
     }
 }

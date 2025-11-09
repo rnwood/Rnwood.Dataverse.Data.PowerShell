@@ -3,6 +3,7 @@ using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.Linq;
 using System.Management.Automation;
 using System.Xml.Linq;
 
@@ -44,14 +45,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets or sets the form type. Valid values: Main (2), QuickCreate (5), QuickView (6), Card (11), Dashboard (0).
+        /// Gets or sets the form type.
         /// </summary>
-        [Parameter(ParameterSetName = "Create", Mandatory = true, HelpMessage = "Form type: Main, QuickCreate, QuickView, Card, Dashboard")]
-        [Parameter(ParameterSetName = "CreateWithXml", Mandatory = true, HelpMessage = "Form type: Main, QuickCreate, QuickView, Card, Dashboard")]
-        [Parameter(ParameterSetName = "Update", HelpMessage = "Form type: Main, QuickCreate, QuickView, Card, Dashboard")]
-        [Parameter(ParameterSetName = "UpdateWithXml", HelpMessage = "Form type: Main, QuickCreate, QuickView, Card, Dashboard")]
-        [ValidateSet("Main", "QuickCreate", "QuickView", "Card", "Dashboard")]
-        public string FormType { get; set; }
+        [Parameter(ParameterSetName = "Create", Mandatory = true, HelpMessage = "Form type")]
+        [Parameter(ParameterSetName = "CreateWithXml", Mandatory = true, HelpMessage = "Form type")]
+        [Parameter(ParameterSetName = "Update", HelpMessage = "Form type")]
+        [Parameter(ParameterSetName = "UpdateWithXml", HelpMessage = "Form type")]
+        public FormType? FormType { get; set; }
 
         /// <summary>
         /// Gets or sets the complete FormXml. When provided, this takes precedence over individual parameters.
@@ -82,9 +82,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the form presentation type.
         /// </summary>
-        [Parameter(HelpMessage = "Form presentation: ClassicForm (0), AirForm (1), ConvertedICForm (2)")]
-        [ValidateSet("ClassicForm", "AirForm", "ConvertedICForm")]
-        public string FormPresentation { get; set; }
+        [Parameter(HelpMessage = "Form presentation type")]
+        public FormPresentation? FormPresentation { get; set; }
 
         /// <summary>
         /// Gets or sets whether to return the form ID after creation/update.
@@ -135,9 +134,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 form["objecttypecode"] = Entity;
             }
 
-            if (!string.IsNullOrEmpty(FormType))
+            if (FormType.HasValue)
             {
-                form["type"] = new OptionSetValue(GetFormTypeValue(FormType));
+                form["type"] = new OptionSetValue((int)FormType.Value);
             }
 
             if (!string.IsNullOrEmpty(Description))
@@ -155,40 +154,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 form["isdefault"] = IsDefault.IsPresent;
             }
 
-            if (!string.IsNullOrEmpty(FormPresentation))
+            if (FormPresentation.HasValue)
             {
-                form["formpresentation"] = new OptionSetValue(GetFormPresentationValue(FormPresentation));
+                form["formpresentation"] = new OptionSetValue((int)FormPresentation.Value);
             }
 
             // Handle FormXml
             if (!string.IsNullOrEmpty(FormXmlContent))
-            {
-                // Validate and update FormXml
-                try
-                {
-                    XDocument doc = XDocument.Parse(FormXmlContent);
-                    
-                    // Ensure formid in XML matches the entity formid
-                    XElement systemForm = doc.Root?.Element("SystemForm");
-                    if (systemForm != null)
-                    {
-                        XElement formIdElement = systemForm.Element("formid");
-                        if (formIdElement != null)
-                        {
-                            formIdElement.Value = formId.ToString("B").ToUpper();
-                        }
-                        else
-                        {
-                            systemForm.Add(new XElement("formid", formId.ToString("B").ToUpper()));
-                        }
-                    }
-                    
-                    form["formxml"] = doc.ToString();
-                }
-                catch (Exception ex)
-                {
-                    throw new ArgumentException($"Invalid FormXml: {ex.Message}", nameof(FormXmlContent), ex);
-                }
+            { 
+                form["formxml"] = FormXmlContent;  
             }
             else if (!isUpdate)
             {
@@ -242,63 +216,37 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private int GetFormTypeValue(string formType)
-        {
-            switch (formType)
-            {
-                case "Main": return 2;
-                case "QuickCreate": return 5;
-                case "QuickView": return 6;
-                case "Card": return 11;
-                case "Dashboard": return 0;
-                default: return 2;
-            }
-        }
 
-        private int GetFormPresentationValue(string presentation)
-        {
-            switch (presentation)
-            {
-                case "ClassicForm": return 0;
-                case "AirForm": return 1;
-                case "ConvertedICForm": return 2;
-                default: return 0;
-            }
-        }
 
         private string GenerateMinimalFormXml(Guid formId, string entityName, string formName)
         {
-            string formIdString = formId.ToString("B").ToUpper();
+            string tabId = Guid.NewGuid().ToString("D").ToUpper();
+            string sectionId = Guid.NewGuid().ToString("D").ToUpper();
             
-            return $@"<forms type=""main"">
-  <SystemForm>
-    <formid>{formIdString}</formid>
-    <FormPresentation>0</FormPresentation>
-    <IsCustomizable>1</IsCustomizable>
-    <tabs>
-      <tab name=""general"" id=""{Guid.NewGuid():B}"" expanded=""true"" showlabel=""false"" verticallayout=""true"">
-        <labels>
-          <label description=""General"" languagecode=""1033"" />
-        </labels>
-        <columns>
-          <column width=""100%"">
-            <sections>
-              <section name=""section_1"" showlabel=""false"" showbar=""false"" id=""{Guid.NewGuid():B}"" columns=""1"" labelwidth=""115"" celllabelalignment=""Left"" celllabelposition=""Left"">
-                <labels>
-                  <label description=""Section"" languagecode=""1033"" />
-                </labels>
-                <rows />
-              </section>
-            </sections>
-          </column>
-        </columns>
-      </tab>
-    </tabs>
-    <Navigation />
-    <footer />
-    <events />
-  </SystemForm>
-</forms>";
+            return $@"<form>
+  <tabs>
+    <tab id=""{{{tabId}}}"" name=""General"" IsUserDefined=""0"" visible=""true"">
+      <labels>
+        <label description=""General"" languagecode=""1033"" />
+      </labels>
+      <columns>
+        <column width=""100%"">
+          <sections>
+            <section id=""{{{sectionId}}}"" name=""GeneralSection"" showlabel=""true"">
+              <labels>
+                <label description=""General"" languagecode=""1033"" />
+              </labels>
+              <rows>
+                <row>
+                </row>
+              </rows>
+            </section>
+          </sections>
+        </column>
+      </columns>
+    </tab>
+  </tabs>
+</form>";
         }
     }
 }

@@ -2,9 +2,11 @@ using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Rnwood.Dataverse.Data.PowerShell.Model;
 using System;
 using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 using System.Xml.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -19,26 +21,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the form ID.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the form")]
-        [Alias("formid")]
         public Guid FormId { get; set; }
 
         /// <summary>
         /// Gets or sets the section name to remove.
         /// </summary>
-        [Parameter(Mandatory = true, ParameterSetName = "ByName", HelpMessage = "Name of the section to remove")]
+        [Parameter(Mandatory = false, HelpMessage = "Name of the section to remove")]
         public string SectionName { get; set; }
 
         /// <summary>
         /// Gets or sets the section ID to remove.
         /// </summary>
-        [Parameter(Mandatory = true, ParameterSetName = "ById", HelpMessage = "ID of the section to remove")]
+        [Parameter(Mandatory = false, HelpMessage = "ID of the section to remove")]
         public string SectionId { get; set; }
-
-        /// <summary>
-        /// Gets or sets whether to publish the form after removing the section.
-        /// </summary>
-        [Parameter(HelpMessage = "Publish the form after removing the section")]
-        public SwitchParameter Publish { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -48,21 +43,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.ProcessRecord();
 
             // Retrieve the form
-            Entity form = Connection.Retrieve("systemform", FormId, new ColumnSet("formxml", "objecttypecode"));
-            
-            if (!form.Contains("formxml"))
-            {
-                throw new InvalidOperationException($"Form '{FormId}' does not contain FormXml");
-            }
-
-            string formXml = form.GetAttributeValue<string>("formxml");
-            XDocument doc = XDocument.Parse(formXml);
-            XElement systemForm = doc.Root?.Element("SystemForm");
-            
-            if (systemForm == null)
-            {
-                throw new InvalidOperationException("Invalid FormXml structure");
-            }
+            Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml", "objecttypecode"));
+            var (doc, systemForm) = FormXmlHelper.ParseFormXml(form);
 
             var tabsElement = systemForm.Element("tabs");
             if (tabsElement == null)
@@ -72,42 +54,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             XElement sectionToRemove = null;
-
-            // Find the section
-            foreach (var tab in tabsElement.Elements("tab"))
+            if (!string.IsNullOrEmpty(SectionId))
             {
-                var columnsElement = tab.Element("columns");
-                if (columnsElement == null) continue;
-
-                foreach (var column in columnsElement.Elements("column"))
-                {
-                    var sectionsElement = column.Element("sections");
-                    if (sectionsElement == null) continue;
-
-                    if (ParameterSetName == "ByName")
-                    {
-                        sectionToRemove = sectionsElement.Elements("section")
-                            .FirstOrDefault(s => s.Attribute("name")?.Value == SectionName);
-                    }
-                    else
-                    {
-                        sectionToRemove = sectionsElement.Elements("section")
-                            .FirstOrDefault(s => s.Attribute("id")?.Value == SectionId);
-                    }
-
-                    if (sectionToRemove != null) break;
-                }
-
-                if (sectionToRemove != null) break;
+                sectionToRemove = FormXmlHelper.FindSection(systemForm, sectionId: SectionId);
+            }
+            else if (!string.IsNullOrEmpty(SectionName))
+            {
+                sectionToRemove = FormXmlHelper.FindSection(systemForm, sectionName: SectionName);
+            }
+            else
+            {
+                throw new ArgumentException("Either SectionName or SectionId must be provided");
             }
 
             if (sectionToRemove == null)
             {
-                string identifier = ParameterSetName == "ByName" ? SectionName : SectionId;
+                string identifier = !string.IsNullOrEmpty(SectionId) ? SectionId : SectionName;
                 throw new InvalidOperationException($"Section '{identifier}' not found in form");
             }
 
-            string targetName = ParameterSetName == "ByName" ? SectionName : SectionId;
+            string targetName = !string.IsNullOrEmpty(SectionId) ? SectionId : SectionName;
 
             // Confirm action
             if (!ShouldProcess($"form '{FormId}'", $"Remove section '{targetName}'"))
@@ -119,24 +85,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             sectionToRemove.Remove();
 
             // Update form
-            Entity updateForm = new Entity("systemform", FormId);
-            updateForm["formxml"] = doc.ToString();
-            Connection.Update(updateForm);
-
+            FormXmlHelper.UpdateFormXml(Connection, FormId, doc);
             WriteVerbose($"Removed section '{targetName}' from form '{FormId}'");
-
-            // Publish if requested
-            if (Publish.IsPresent)
-            {
-                string entityName = form.GetAttributeValue<string>("objecttypecode");
-                WriteVerbose($"Publishing entity '{entityName}'...");
-                var publishRequest = new PublishXmlRequest
-                {
-                    ParameterXml = $"<importexportxml><entities><entity>{entityName}</entity></entities></importexportxml>"
-                };
-                Connection.Execute(publishRequest);
-                WriteVerbose("Entity published successfully");
-            }
         }
     }
 }

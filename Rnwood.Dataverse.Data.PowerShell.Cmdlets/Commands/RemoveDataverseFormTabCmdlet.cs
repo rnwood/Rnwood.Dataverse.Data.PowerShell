@@ -2,9 +2,11 @@ using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Rnwood.Dataverse.Data.PowerShell.Model;
 using System;
 using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 using System.Xml.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -19,26 +21,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the form ID from which to remove the tab.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the form")]
-        [Alias("formid")]
         public Guid FormId { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the tab to remove.
         /// </summary>
-        [Parameter(Mandatory = true, ParameterSetName = "ByName", HelpMessage = "Name of the tab to remove")]
+        [Parameter(Mandatory = false, HelpMessage = "Name of the tab to remove")]
         public string TabName { get; set; }
 
         /// <summary>
         /// Gets or sets the ID of the tab to remove.
         /// </summary>
-        [Parameter(Mandatory = true, ParameterSetName = "ById", HelpMessage = "ID of the tab to remove")]
+        [Parameter(Mandatory = false, HelpMessage = "ID of the tab to remove")]
         public string TabId { get; set; }
-
-        /// <summary>
-        /// Gets or sets whether to publish the form after removing the tab.
-        /// </summary>
-        [Parameter(HelpMessage = "Publish the form after removing the tab")]
-        public SwitchParameter Publish { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -48,21 +43,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.ProcessRecord();
 
             // Retrieve the form
-            Entity form = Connection.Retrieve("systemform", FormId, new ColumnSet("formxml", "objecttypecode"));
-            
-            if (!form.Contains("formxml"))
-            {
-                throw new InvalidOperationException($"Form '{FormId}' does not contain FormXml");
-            }
-
-            string formXml = form.GetAttributeValue<string>("formxml");
-            XDocument doc = XDocument.Parse(formXml);
-            XElement systemForm = doc.Root?.Element("SystemForm");
-            
-            if (systemForm == null)
-            {
-                throw new InvalidOperationException("Invalid FormXml structure");
-            }
+            Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml", "objecttypecode"));
+            var (doc, systemForm) = FormXmlHelper.ParseFormXml(form);
 
             XElement tabsElement = systemForm.Element("tabs");
             if (tabsElement == null)
@@ -72,11 +54,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             XElement tabToRemove = null;
-            if (ParameterSetName == "ByName")
+            if (!string.IsNullOrEmpty(TabId))
             {
-                tabToRemove = tabsElement.Elements("tab")
-                    .FirstOrDefault(t => t.Attribute("name")?.Value == TabName);
-                
+                tabToRemove = FormXmlHelper.FindTab(systemForm, tabId: TabId);
+                if (tabToRemove == null)
+                {
+                    throw new InvalidOperationException($"Tab with ID '{TabId}' not found in form");
+                }
+            }
+            else if (!string.IsNullOrEmpty(TabName))
+            {
+                tabToRemove = FormXmlHelper.FindTab(systemForm, tabName: TabName);
                 if (tabToRemove == null)
                 {
                     throw new InvalidOperationException($"Tab '{TabName}' not found in form");
@@ -84,16 +72,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             else
             {
-                tabToRemove = tabsElement.Elements("tab")
-                    .FirstOrDefault(t => t.Attribute("id")?.Value == TabId);
-                
-                if (tabToRemove == null)
-                {
-                    throw new InvalidOperationException($"Tab with ID '{TabId}' not found in form");
-                }
+                throw new ArgumentException("Either TabName or TabId must be provided");
             }
 
-            string targetName = ParameterSetName == "ByName" ? TabName : TabId;
+            string targetName = !string.IsNullOrEmpty(TabId) ? TabId : TabName;
             
             // Confirm action
             if (!ShouldProcess($"form '{FormId}'", $"Remove tab '{targetName}'"))
@@ -105,24 +87,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             tabToRemove.Remove();
 
             // Update form
-            Entity updateForm = new Entity("systemform", FormId);
-            updateForm["formxml"] = doc.ToString();
-            Connection.Update(updateForm);
-
+            FormXmlHelper.UpdateFormXml(Connection, FormId, doc);
             WriteVerbose($"Removed tab '{targetName}' from form '{FormId}'");
-
-            // Publish if requested
-            if (Publish.IsPresent)
-            {
-                string entityName = form.GetAttributeValue<string>("objecttypecode");
-                WriteVerbose($"Publishing entity '{entityName}'...");
-                var publishRequest = new PublishXmlRequest
-                {
-                    ParameterXml = $"<importexportxml><entities><entity>{entityName}</entity></entities></importexportxml>"
-                };
-                Connection.Execute(publishRequest);
-                WriteVerbose("Entity published successfully");
-            }
         }
     }
 }

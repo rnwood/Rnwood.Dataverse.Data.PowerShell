@@ -2,9 +2,11 @@ using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Rnwood.Dataverse.Data.PowerShell.Model;
 using System;
 using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 using System.Xml.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -19,7 +21,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the form ID.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the form")]
-        [Alias("formid")]
         public Guid FormId { get; set; }
 
         /// <summary>
@@ -41,10 +42,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string SectionName { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to publish the form after removing the control.
+        /// Gets or sets the tab name where the section is located.
         /// </summary>
-        [Parameter(HelpMessage = "Publish the form after removing the control")]
-        public SwitchParameter Publish { get; set; }
+        [Parameter(Mandatory = true, HelpMessage = "Name of the tab containing the section")]
+        public string TabName { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -54,89 +55,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.ProcessRecord();
 
             // Retrieve the form
-            Entity form = Connection.Retrieve("systemform", FormId, new ColumnSet("formxml", "objecttypecode"));
-            
-            if (!form.Contains("formxml"))
-            {
-                throw new InvalidOperationException($"Form '{FormId}' does not contain FormXml");
-            }
+            Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml", "objecttypecode"));
+            var (doc, systemForm) = FormXmlHelper.ParseFormXml(form);
 
-            string formXml = form.GetAttributeValue<string>("formxml");
-            XDocument doc = XDocument.Parse(formXml);
-            XElement systemForm = doc.Root?.Element("SystemForm");
-            
-            if (systemForm == null)
-            {
-                throw new InvalidOperationException("Invalid FormXml structure");
-            }
-
-            var tabsElement = systemForm.Element("tabs");
-            if (tabsElement == null)
-            {
-                WriteWarning("Form has no tabs");
-                return;
-            }
-
+            // Find the control to remove
             XElement controlToRemove = null;
             XElement parentRow = null;
-
-            // Find the control
-            foreach (var tab in tabsElement.Elements("tab"))
+            if (ParameterSetName == "ById")
             {
-                var columnsElement = tab.Element("columns");
-                if (columnsElement == null) continue;
-
-                foreach (var column in columnsElement.Elements("column"))
-                {
-                    var sectionsElement = column.Element("sections");
-                    if (sectionsElement == null) continue;
-
-                    var sections = sectionsElement.Elements("section");
-
-                    if (ParameterSetName == "ByDataField" && !string.IsNullOrEmpty(SectionName))
-                    {
-                        sections = sections.Where(s => s.Attribute("name")?.Value == SectionName);
-                    }
-
-                    foreach (var section in sections)
-                    {
-                        var rowsElement = section.Element("rows");
-                        if (rowsElement == null) continue;
-
-                        foreach (var row in rowsElement.Elements("row"))
-                        {
-                            foreach (var cell in row.Elements("cell"))
-                            {
-                                var control = cell.Elements("control").FirstOrDefault(c =>
-                                {
-                                    if (ParameterSetName == "ById")
-                                    {
-                                        return c.Attribute("id")?.Value == ControlId;
-                                    }
-                                    else
-                                    {
-                                        return c.Attribute("datafieldname")?.Value == DataField;
-                                    }
-                                });
-
-                                if (control != null)
-                                {
-                                    controlToRemove = control;
-                                    parentRow = row;
-                                    break;
-                                }
-                            }
-
-                            if (controlToRemove != null) break;
-                        }
-
-                        if (controlToRemove != null) break;
-                    }
-
-                    if (controlToRemove != null) break;
-                }
-
-                if (controlToRemove != null) break;
+                (controlToRemove, parentRow) = FormXmlHelper.FindControl(systemForm, controlId: ControlId);
+            }
+            else
+            {
+                (controlToRemove, parentRow) = FormXmlHelper.FindControlByDataField(systemForm, TabName, SectionName, DataField);
             }
 
             if (controlToRemove == null)
@@ -167,24 +98,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Update form
-            Entity updateForm = new Entity("systemform", FormId);
-            updateForm["formxml"] = doc.ToString();
-            Connection.Update(updateForm);
-
+            FormXmlHelper.UpdateFormXml(Connection, FormId, doc);
             WriteVerbose($"Removed control '{targetName}' from form '{FormId}'");
-
-            // Publish if requested
-            if (Publish.IsPresent)
-            {
-                string entityName = form.GetAttributeValue<string>("objecttypecode");
-                WriteVerbose($"Publishing entity '{entityName}'...");
-                var publishRequest = new PublishXmlRequest
-                {
-                    ParameterXml = $"<importexportxml><entities><entity>{entityName}</entity></entities></importexportxml>"
-                };
-                Connection.Execute(publishRequest);
-                WriteVerbose("Entity published successfully");
-            }
         }
     }
 }

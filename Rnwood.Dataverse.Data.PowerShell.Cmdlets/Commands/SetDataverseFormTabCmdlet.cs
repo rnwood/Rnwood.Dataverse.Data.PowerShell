@@ -2,9 +2,11 @@ using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Rnwood.Dataverse.Data.PowerShell.Model;
 using System;
 using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 using System.Xml.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -20,13 +22,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the form ID.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the form")]
-        [Alias("formid")]
         public Guid FormId { get; set; }
 
         /// <summary>
         /// Gets or sets the tab ID for updating an existing tab.
         /// </summary>
-        [Parameter(ParameterSetName = "Update", Mandatory = true, HelpMessage = "ID of the tab to update")]
+        [Parameter(Mandatory = false, HelpMessage = "ID of the tab to create or update")]
         public string TabId { get; set; }
 
         /// <summary>
@@ -72,21 +73,49 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter VerticalLayout { get; set; }
 
         /// <summary>
+        /// Gets or sets the column layout for the tab.
+        /// </summary>
+        [Parameter(HelpMessage = "Column layout for the tab (OneColumn, TwoColumns, ThreeColumns)")]
+        [ValidateSet("OneColumn", "TwoColumns", "ThreeColumns")]
+        public string Layout { get; set; }
+
+        /// <summary>
+        /// Gets or sets the width of the first column (when using TwoColumns or ThreeColumns layout).
+        /// </summary>
+        [Parameter(HelpMessage = "Width of the first column as percentage (0-100)")]
+        [ValidateRange(0, 100)]
+        public int? Column1Width { get; set; }
+
+        /// <summary>
+        /// Gets or sets the width of the second column (when using TwoColumns or ThreeColumns layout).
+        /// </summary>
+        [Parameter(HelpMessage = "Width of the second column as percentage (0-100)")]
+        [ValidateRange(0, 100)]
+        public int? Column2Width { get; set; }
+
+        /// <summary>
+        /// Gets or sets the width of the third column (when using ThreeColumns layout).
+        /// </summary>
+        [Parameter(HelpMessage = "Width of the third column as percentage (0-100)")]
+        [ValidateRange(0, 100)]
+        public int? Column3Width { get; set; }
+
+        /// <summary>
         /// Gets or sets the zero-based index position where the tab should be inserted.
         /// </summary>
-        [Parameter(ParameterSetName = "Create", HelpMessage = "Zero-based index position to insert the tab")]
+        [Parameter(HelpMessage = "Zero-based index position to insert the tab")]
         public int? Index { get; set; }
 
         /// <summary>
         /// Gets or sets the name or ID of the tab before which to insert this tab.
         /// </summary>
-        [Parameter(ParameterSetName = "Create", HelpMessage = "Name or ID of the tab before which to insert")]
+        [Parameter(HelpMessage = "Name or ID of the tab before which to insert")]
         public string InsertBefore { get; set; }
 
         /// <summary>
         /// Gets or sets the name or ID of the tab after which to insert this tab.
         /// </summary>
-        [Parameter(ParameterSetName = "Create", HelpMessage = "Name or ID of the tab after which to insert")]
+        [Parameter(HelpMessage = "Name or ID of the tab after which to insert")]
         public string InsertAfter { get; set; }
 
         /// <summary>
@@ -96,12 +125,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter PassThru { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to publish the form after modifying the tab.
-        /// </summary>
-        [Parameter(HelpMessage = "Publish the form after modifying the tab")]
-        public SwitchParameter Publish { get; set; }
-
-        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -109,21 +132,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.ProcessRecord();
 
             // Retrieve the form
-            Entity form = Connection.Retrieve("systemform", FormId, new ColumnSet("formxml", "objecttypecode"));
-            
-            if (!form.Contains("formxml"))
-            {
-                throw new InvalidOperationException($"Form '{FormId}' does not contain FormXml");
-            }
-
-            string formXml = form.GetAttributeValue<string>("formxml");
-            XDocument doc = XDocument.Parse(formXml);
-            XElement systemForm = doc.Root?.Element("SystemForm");
-            
-            if (systemForm == null)
-            {
-                throw new InvalidOperationException("Invalid FormXml structure");
-            }
+            Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml", "objecttypecode"));
+            var (doc, systemForm) = FormXmlHelper.ParseFormXml(form);
 
             XElement tabsElement = systemForm.Element("tabs");
             if (tabsElement == null)
@@ -134,84 +144,89 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             XElement tab = null;
             string tabId = null;
-            bool isUpdate = ParameterSetName == "Update";
+            bool isUpdate = false;
 
-            if (isUpdate)
+            // Check if tab exists by ID or Name
+            if (!string.IsNullOrEmpty(TabId))
             {
-                // Find existing tab
+                // Find by ID
                 tab = tabsElement.Elements("tab").FirstOrDefault(t => t.Attribute("id")?.Value == TabId);
-                if (tab == null)
+                if (tab != null)
                 {
-                    throw new InvalidOperationException($"Tab with ID '{TabId}' not found in form");
+                    isUpdate = true;
+                    tabId = TabId;
                 }
-                tabId = TabId;
             }
             else
             {
-                // Check if tab with same name exists
+                // Find by Name
                 tab = tabsElement.Elements("tab").FirstOrDefault(t => t.Attribute("name")?.Value == Name);
                 if (tab != null)
                 {
-                    // Update existing tab
                     isUpdate = true;
                     tabId = tab.Attribute("id")?.Value;
                 }
-                else
+            }
+
+            if (isUpdate)
+            {
+                // Update existing tab - no positioning needed
+            }
+            else
+            {
+                // Tab does not exist - create new
+                tabId = !string.IsNullOrEmpty(TabId) ? TabId : Guid.NewGuid().ToString();
+                tab = new XElement("tab");
+                
+                // Handle positioning for new tab
+                if (Index.HasValue)
                 {
-                    // Create new tab
-                    tabId = Guid.NewGuid().ToString("B");
-                    tab = new XElement("tab");
-                    
-                    // Handle positioning
-                    if (Index.HasValue)
+                    // Insert at specific index
+                    var tabs = tabsElement.Elements("tab").ToList();
+                    if (Index.Value >= 0 && Index.Value <= tabs.Count)
                     {
-                        // Insert at specific index
-                        var tabs = tabsElement.Elements("tab").ToList();
-                        if (Index.Value >= 0 && Index.Value <= tabs.Count)
+                        if (Index.Value == tabs.Count)
                         {
-                            if (Index.Value == tabs.Count)
-                            {
-                                tabsElement.Add(tab);
-                            }
-                            else
-                            {
-                                tabs[Index.Value].AddBeforeSelf(tab);
-                            }
+                            tabsElement.Add(tab);
                         }
                         else
                         {
-                            throw new InvalidOperationException($"Index {Index.Value} is out of range. Valid range is 0-{tabs.Count}");
+                            tabs[Index.Value].AddBeforeSelf(tab);
                         }
-                    }
-                    else if (!string.IsNullOrEmpty(InsertBefore))
-                    {
-                        // Insert before specified tab
-                        var referenceTab = tabsElement.Elements("tab")
-                            .FirstOrDefault(t => t.Attribute("name")?.Value == InsertBefore || 
-                                                t.Attribute("id")?.Value == InsertBefore);
-                        if (referenceTab == null)
-                        {
-                            throw new InvalidOperationException($"Reference tab '{InsertBefore}' not found");
-                        }
-                        referenceTab.AddBeforeSelf(tab);
-                    }
-                    else if (!string.IsNullOrEmpty(InsertAfter))
-                    {
-                        // Insert after specified tab
-                        var referenceTab = tabsElement.Elements("tab")
-                            .FirstOrDefault(t => t.Attribute("name")?.Value == InsertAfter || 
-                                                t.Attribute("id")?.Value == InsertAfter);
-                        if (referenceTab == null)
-                        {
-                            throw new InvalidOperationException($"Reference tab '{InsertAfter}' not found");
-                        }
-                        referenceTab.AddAfterSelf(tab);
                     }
                     else
                     {
-                        // Add at the end (default)
-                        tabsElement.Add(tab);
+                        throw new InvalidOperationException($"Index {Index.Value} is out of range. Valid range is 0-{tabs.Count}");
                     }
+                }
+                else if (!string.IsNullOrEmpty(InsertBefore))
+                {
+                    // Insert before specified tab
+                    var referenceTab = tabsElement.Elements("tab")
+                        .FirstOrDefault(t => t.Attribute("name")?.Value == InsertBefore || 
+                                            t.Attribute("id")?.Value == InsertBefore);
+                    if (referenceTab == null)
+                    {
+                        throw new InvalidOperationException($"Reference tab '{InsertBefore}' not found");
+                    }
+                    referenceTab.AddBeforeSelf(tab);
+                }
+                else if (!string.IsNullOrEmpty(InsertAfter))
+                {
+                    // Insert after specified tab
+                    var referenceTab = tabsElement.Elements("tab")
+                        .FirstOrDefault(t => t.Attribute("name")?.Value == InsertAfter || 
+                                            t.Attribute("id")?.Value == InsertAfter);
+                    if (referenceTab == null)
+                    {
+                        throw new InvalidOperationException($"Reference tab '{InsertAfter}' not found");
+                    }
+                    referenceTab.AddAfterSelf(tab);
+                }
+                else
+                {
+                    // Add at the end (default)
+                    tabsElement.Add(tab);
                 }
             }
 
@@ -259,9 +274,77 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ));
             }
 
-            // Ensure columns element exists for new tabs
-            if (!isUpdate || tab.Element("columns") == null)
+            // Handle column layout
+            UpdateColumnLayout(tab, isUpdate);
+
+            // Confirm action
+            string action = isUpdate ? "Update" : "Create";
+            if (!ShouldProcess($"form '{FormId}'", $"{action} tab '{Name}'"))
             {
+                return;
+            }
+
+            // Update the form
+            FormXmlHelper.UpdateFormXml(Connection, FormId, doc);
+
+            // Return the tab ID if PassThru is specified
+            if (PassThru.IsPresent)
+            {
+                WriteObject(tabId);
+            }
+
+            WriteVerbose($"{action}d tab '{Name}' (ID: {tabId}) in form '{FormId}'");
+        }
+
+        private void UpdateColumnLayout(XElement tab, bool isUpdate)
+        {
+            // Handle layout and column width changes
+            if (!string.IsNullOrEmpty(Layout) || 
+                !string.IsNullOrEmpty(Column1Width?.ToString()) || 
+                !string.IsNullOrEmpty(Column2Width?.ToString()) || 
+                !string.IsNullOrEmpty(Column3Width?.ToString()))
+            {
+                XElement columnsElement = tab.Element("columns");
+                var existingColumns = columnsElement?.Elements("column").ToArray() ?? new XElement[0];
+                
+                // Determine target layout
+                string targetLayout = Layout;
+                if (string.IsNullOrEmpty(targetLayout))
+                {
+                    // Infer layout from column width parameters
+                    if (!string.IsNullOrEmpty(Column3Width?.ToString()))
+                        targetLayout = "ThreeColumns";
+                    else if (!string.IsNullOrEmpty(Column2Width?.ToString()))
+                        targetLayout = "TwoColumns";
+                    else
+                        targetLayout = "OneColumn";
+                }
+
+                // Create new columns structure
+                if (columnsElement == null)
+                {
+                    columnsElement = new XElement("columns");
+                    tab.Add(columnsElement);
+                }
+                else
+                {
+                    // Preserve sections from existing columns
+                    var existingSections = existingColumns
+                        .SelectMany(col => col.Element("sections")?.Elements("section") ?? Enumerable.Empty<XElement>())
+                        .ToArray();
+                    
+                    columnsElement.RemoveAll();
+                    
+                    // Create columns based on layout
+                    CreateColumnsForLayout(columnsElement, targetLayout);
+                    
+                    // Redistribute sections across new columns
+                    RedistributeSections(columnsElement, existingSections);
+                }
+            }
+            else if (!isUpdate)
+            {
+                // For new tabs without layout specified, create default single column
                 if (tab.Element("columns") == null)
                 {
                     XElement columnsElement = new XElement("columns",
@@ -273,37 +356,60 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     tab.Add(columnsElement);
                 }
             }
+        }
 
-            // Confirm action
-            string action = isUpdate ? "Update" : "Create";
-            if (!ShouldProcess($"form '{FormId}'", $"{action} tab '{Name}'"))
+        private void CreateColumnsForLayout(XElement columnsElement, string layout)
+        {
+            switch (layout)
             {
+                case "OneColumn":
+                    columnsElement.Add(new XElement("column",
+                        new XAttribute("width", $"{Column1Width ?? 100}%"),
+                        new XElement("sections")));
+                    break;
+                
+                case "TwoColumns":
+                    columnsElement.Add(new XElement("column",
+                        new XAttribute("width", $"{Column1Width ?? 50}%"),
+                        new XElement("sections")));
+                    columnsElement.Add(new XElement("column",
+                        new XAttribute("width", $"{Column2Width ?? 50}%"),
+                        new XElement("sections")));
+                    break;
+                
+                case "ThreeColumns":
+                    columnsElement.Add(new XElement("column",
+                        new XAttribute("width", $"{Column1Width ?? 33}%"),
+                        new XElement("sections")));
+                    columnsElement.Add(new XElement("column",
+                        new XAttribute("width", $"{Column2Width ?? 33}%"),
+                        new XElement("sections")));
+                    columnsElement.Add(new XElement("column",
+                        new XAttribute("width", $"{Column3Width ?? 34}%"),
+                        new XElement("sections")));
+                    break;
+            }
+        }
+
+        private void RedistributeSections(XElement columnsElement, XElement[] existingSections)
+        {
+            if (existingSections.Length == 0)
                 return;
-            }
 
-            // Update form
-            Entity updateForm = new Entity("systemform", FormId);
-            updateForm["formxml"] = doc.ToString();
-            Connection.Update(updateForm);
+            var columns = columnsElement.Elements("column").ToArray();
+            if (columns.Length == 0)
+                return;
 
-            WriteVerbose($"{action}d tab '{Name}' on form '{FormId}'");
-
-            // Publish if requested
-            if (Publish.IsPresent)
+            // Distribute sections evenly across columns
+            for (int i = 0; i < existingSections.Length; i++)
             {
-                string entityName = form.GetAttributeValue<string>("objecttypecode");
-                WriteVerbose($"Publishing entity '{entityName}'...");
-                var publishRequest = new PublishXmlRequest
-                {
-                    ParameterXml = $"<importexportxml><entities><entity>{entityName}</entity></entities></importexportxml>"
-                };
-                Connection.Execute(publishRequest);
-                WriteVerbose("Entity published successfully");
-            }
-
-            if (PassThru.IsPresent)
-            {
-                WriteObject(tabId);
+                int columnIndex = i % columns.Length;
+                var targetColumn = columns[columnIndex];
+                var sectionsElement = targetColumn.Element("sections");
+                
+                // Create a copy of the section to avoid moving it
+                var sectionCopy = new XElement(existingSections[i]);
+                sectionsElement.Add(sectionCopy);
             }
         }
     }

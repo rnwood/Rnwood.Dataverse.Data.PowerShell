@@ -14,19 +14,26 @@ Retrieves forms from a Dataverse environment.
 
 ### ById
 ```
-Get-DataverseForm -Id <Guid> [-IncludeFormXml] [-ParseFormXml] [-Connection <ServiceClient>]
+Get-DataverseForm -Id <Guid> [-IncludeFormXml] [-ParseFormXml] [-Unpublished] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### ByEntity
 ```
-Get-DataverseForm -Entity <String> [-FormType <String>] [-IncludeFormXml] [-ParseFormXml]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseForm -Entity <String> [-FormType <FormType>] [-UniqueNameFilter <String>] [-IncludeFormXml]
+ [-ParseFormXml] [-Unpublished] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ### ByName
 ```
-Get-DataverseForm -Entity <String> -Name <String> [-IncludeFormXml] [-ParseFormXml]
+Get-DataverseForm -Entity <String> -Name <String> [-IncludeFormXml] [-ParseFormXml] [-Unpublished]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### ByUniqueName
+```
+Get-DataverseForm -Entity <String> -UniqueName <String> [-IncludeFormXml] [-ParseFormXml] [-Unpublished]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -105,7 +112,7 @@ Logical name of the entity/table for which to retrieve forms
 
 ```yaml
 Type: String
-Parameter Sets: ByEntity, ByName
+Parameter Sets: ByEntity, ByName, ByUniqueName
 Aliases: EntityName, TableName
 
 Required: True
@@ -119,7 +126,7 @@ Accept wildcard characters: False
 Form type filter: Main (2), QuickCreate (5), QuickView (6), Card (11), Dashboard (0), MainInteractionCentric (63), Other (100), MainBackup (101), AppointmentBook (102), Dialog (103)
 
 ```yaml
-Type: String
+Type: FormType
 Parameter Sets: ByEntity
 Aliases:
 Accepted values: Main, QuickCreate, QuickView, Card, Dashboard, MainInteractionCentric, Other, MainBackup, AppointmentBook, Dialog
@@ -191,6 +198,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Unpublished
+Include unpublished forms in the results
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ProgressAction
 {{ Fill ProgressAction Description }}
 
@@ -198,6 +220,36 @@ Accept wildcard characters: False
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UniqueName
+Unique name of the form to retrieve
+
+```yaml
+Type: String
+Parameter Sets: ByUniqueName
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UniqueNameFilter
+Unique name filter for forms
+
+```yaml
+Type: String
+Parameter Sets: ByEntity
+Aliases:
 
 Required: False
 Position: Named

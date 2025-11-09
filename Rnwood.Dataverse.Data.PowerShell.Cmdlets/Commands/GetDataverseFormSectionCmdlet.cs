@@ -1,6 +1,7 @@
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Rnwood.Dataverse.Data.PowerShell.Model;
 using System;
 using System.Linq;
 using System.Management.Automation;
@@ -19,7 +20,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the form ID.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the form")]
-        [Alias("formid")]
         public Guid FormId { get; set; }
 
         /// <summary>
@@ -41,24 +41,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            // Retrieve the form
-            Entity form = Connection.Retrieve("systemform", FormId, new ColumnSet("formxml"));
-            
-            if (!form.Contains("formxml"))
-            {
-                WriteWarning($"Form '{FormId}' does not contain FormXml");
-                return;
-            }
-
-            string formXml = form.GetAttributeValue<string>("formxml");
-            XDocument doc = XDocument.Parse(formXml);
-            XElement systemForm = doc.Root?.Element("SystemForm");
-            
-            if (systemForm == null)
-            {
-                WriteWarning("Invalid FormXml structure");
-                return;
-            }
+            Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml"));
+            var (doc, systemForm) = FormXmlHelper.ParseFormXml(form);
 
             var tabsElement = systemForm.Element("tabs");
             if (tabsElement == null)
@@ -89,28 +73,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 foreach (var section in sections)
                 {
-                    PSObject sectionObj = new PSObject();
+                    PSObject sectionObj = FormXmlHelper.ParseSection(section);
+                    // Add form and tab context
                     sectionObj.Properties.Add(new PSNoteProperty("FormId", FormId));
                     sectionObj.Properties.Add(new PSNoteProperty("TabName", currentTabName));
-                    sectionObj.Properties.Add(new PSNoteProperty("Id", section.Attribute("id")?.Value));
-                    sectionObj.Properties.Add(new PSNoteProperty("Name", section.Attribute("name")?.Value));
-                    sectionObj.Properties.Add(new PSNoteProperty("ShowLabel", section.Attribute("showlabel")?.Value != "false"));
                     sectionObj.Properties.Add(new PSNoteProperty("ShowBar", section.Attribute("showbar")?.Value != "false"));
-                    sectionObj.Properties.Add(new PSNoteProperty("Visible", section.Attribute("visible")?.Value != "false"));
-                    sectionObj.Properties.Add(new PSNoteProperty("Columns", section.Attribute("columns")?.Value));
                     sectionObj.Properties.Add(new PSNoteProperty("LabelWidth", section.Attribute("labelwidth")?.Value));
-
-                    // Parse labels
-                    var labelsElement = section.Element("labels");
-                    if (labelsElement != null)
-                    {
-                        var labels = labelsElement.Elements("label").Select(l => new PSObject(new
-                        {
-                            Description = l.Attribute("description")?.Value,
-                            LanguageCode = l.Attribute("languagecode")?.Value
-                        })).ToArray();
-                        sectionObj.Properties.Add(new PSNoteProperty("Labels", labels));
-                    }
 
                     WriteObject(sectionObj);
                 }

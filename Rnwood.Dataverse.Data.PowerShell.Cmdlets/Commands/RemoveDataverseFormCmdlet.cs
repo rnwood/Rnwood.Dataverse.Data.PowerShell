@@ -3,7 +3,9 @@ using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -72,9 +74,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 };
 
-                EntityCollection results = Connection.RetrieveMultiple(query);
+                var results = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, true).ToList();
 
-                if (results.Entities.Count == 0)
+                if (results.Count == 0)
                 {
                     if (IfExists.IsPresent)
                     {
@@ -84,13 +86,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     throw new InvalidOperationException($"Form '{Name}' not found for entity '{Entity}'");
                 }
 
-                if (results.Entities.Count > 1)
+                if (results.Count > 1)
                 {
                     throw new InvalidOperationException($"Multiple forms found with name '{Name}' for entity '{Entity}'");
                 }
 
-                formId = results.Entities[0].GetAttributeValue<Guid>("formid");
-                entityName = results.Entities[0].GetAttributeValue<string>("objecttypecode");
+                formId = results[0].GetAttributeValue<Guid>("formid");
+                entityName = results[0].GetAttributeValue<string>("objecttypecode");
             }
             else
             {
@@ -104,14 +106,42 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         Entity form = Connection.Retrieve("systemform", formId, new ColumnSet("objecttypecode"));
                         entityName = form.GetAttributeValue<string>("objecttypecode");
                     }
-                    catch (Exception)
+                    catch (FaultException<OrganizationServiceFault> ex)
                     {
-                        if (IfExists.IsPresent)
+                        if (QueryHelpers.IsNotFoundException(ex))
                         {
-                            WriteVerbose($"Form '{formId}' does not exist");
-                            return;
+                            // Try unpublished version
+                            try
+                            {
+                                var retrieveUnpublishedRequest = new RetrieveUnpublishedRequest
+                                {
+                                    Target = new EntityReference("systemform", formId),
+                                    ColumnSet = new ColumnSet("objecttypecode")
+                                };
+                                var response = (RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
+                                entityName = response.Entity.GetAttributeValue<string>("objecttypecode");
+                            }
+                            catch (FaultException<OrganizationServiceFault> ex2)
+                            {
+                                if (QueryHelpers.IsNotFoundException(ex2))
+                                {
+                                    if (IfExists.IsPresent)
+                                    {
+                                        WriteVerbose($"Form '{formId}' does not exist");
+                                        return;
+                                    }
+                                    throw;
+                                }
+                                else
+                                {
+                                    throw;
+                                }
+                            }
                         }
-                        throw;
+                        else
+                        {
+                            throw;
+                        }
                     }
                 }
             }

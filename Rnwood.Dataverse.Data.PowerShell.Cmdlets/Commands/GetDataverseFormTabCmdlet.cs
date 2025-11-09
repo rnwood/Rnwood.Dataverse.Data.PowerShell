@@ -1,6 +1,7 @@
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Rnwood.Dataverse.Data.PowerShell.Model;
 using System;
 using System.Linq;
 using System.Management.Automation;
@@ -19,7 +20,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the form ID from which to retrieve tabs.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the form")]
-        [Alias("formid")]
         public Guid FormId { get; set; }
 
         /// <summary>
@@ -35,24 +35,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            // Retrieve the form
-            Entity form = Connection.Retrieve("systemform", FormId, new ColumnSet("formxml"));
-            
-            if (!form.Contains("formxml"))
-            {
-                WriteWarning($"Form '{FormId}' does not contain FormXml");
-                return;
-            }
-
-            string formXml = form.GetAttributeValue<string>("formxml");
-            XDocument doc = XDocument.Parse(formXml);
-            XElement systemForm = doc.Root?.Element("SystemForm");
-            
-            if (systemForm == null)
-            {
-                WriteWarning("Invalid FormXml structure");
-                return;
-            }
+            Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml"));
+            var (doc, systemForm) = FormXmlHelper.ParseFormXml(form);
 
             var tabsElement = systemForm.Element("tabs");
             if (tabsElement == null)
@@ -69,26 +53,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             foreach (var tab in tabs)
             {
-                PSObject tabObj = new PSObject();
+                PSObject tabObj = FormXmlHelper.ParseTab(tab);
+                // Add form context
                 tabObj.Properties.Add(new PSNoteProperty("FormId", FormId));
-                tabObj.Properties.Add(new PSNoteProperty("Id", tab.Attribute("id")?.Value));
-                tabObj.Properties.Add(new PSNoteProperty("Name", tab.Attribute("name")?.Value));
-                tabObj.Properties.Add(new PSNoteProperty("Expanded", tab.Attribute("expanded")?.Value == "true"));
-                tabObj.Properties.Add(new PSNoteProperty("Visible", tab.Attribute("visible")?.Value != "false"));
-                tabObj.Properties.Add(new PSNoteProperty("ShowLabel", tab.Attribute("showlabel")?.Value != "false"));
                 tabObj.Properties.Add(new PSNoteProperty("VerticalLayout", tab.Attribute("verticallayout")?.Value == "true"));
-
-                // Parse labels
-                var labelsElement = tab.Element("labels");
-                if (labelsElement != null)
-                {
-                    var labels = labelsElement.Elements("label").Select(l => new PSObject(new
-                    {
-                        Description = l.Attribute("description")?.Value,
-                        LanguageCode = l.Attribute("languagecode")?.Value
-                    })).ToArray();
-                    tabObj.Properties.Add(new PSNoteProperty("Labels", labels));
-                }
+                tabObj.Properties.Add(new PSNoteProperty("ShowLabel", tab.Attribute("showlabel")?.Value != "false"));
 
                 WriteObject(tabObj);
             }
