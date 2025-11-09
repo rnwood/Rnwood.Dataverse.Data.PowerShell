@@ -1,3 +1,40 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [Form Management](#form-management)
+  - [Overview](#overview)
+  - [Form Types](#form-types)
+  - [Basic Form Operations](#basic-form-operations)
+    - [Retrieving Forms](#retrieving-forms)
+    - [Creating and Updating Forms](#creating-and-updating-forms)
+    - [Deleting Forms](#deleting-forms)
+  - [Working with Form Components](#working-with-form-components)
+    - [Tabs](#tabs)
+    - [Sections](#sections)
+    - [Controls](#controls)
+  - [Advanced Control Types](#advanced-control-types)
+    - [Option Set (Dropdown)](#option-set-dropdown)
+    - [Boolean (Two Options)](#boolean-two-options)
+    - [Subgrid](#subgrid)
+    - [Web Resource](#web-resource)
+    - [Quick View Form](#quick-view-form)
+  - [Raw XML Control Manipulation](#raw-xml-control-manipulation)
+  - [Positioning Strategies](#positioning-strategies)
+    - [By Index](#by-index)
+    - [Relative Positioning](#relative-positioning)
+    - [Default Behavior](#default-behavior)
+  - [Important Considerations](#important-considerations)
+    - [Section Name Scoping](#section-name-scoping)
+    - [Publishing](#publishing)
+    - [WhatIf and Confirm](#whatif-and-confirm)
+  - [Best Practices](#best-practices)
+  - [Error Handling](#error-handling)
+  - [Complete Example](#complete-example)
+  - [See Also](#see-also)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Form Management
 
 This guide covers managing Dataverse forms and form components using PowerShell cmdlets.
