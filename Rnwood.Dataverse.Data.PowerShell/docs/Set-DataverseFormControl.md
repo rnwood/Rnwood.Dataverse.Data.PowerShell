@@ -12,9 +12,19 @@ Creates or updates a control in a Dataverse form section.
 
 ## SYNTAX
 
+### Default
 ```
 Set-DataverseFormControl -FormId <Guid> -SectionName <String> -TabName <String> [-ControlId <String>]
- -DataField <String> -ControlXml <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>]
+ -DataField <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Hidden]
+ [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>]
+ [-Index <Int32>] [-InsertBefore <String>] [-InsertAfter <String>] [-PassThru] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### RawXml
+```
+Set-DataverseFormControl -FormId <Guid> -SectionName <String> -TabName <String> [-ControlId <String>]
+ [-DataField <String>] -ControlXml <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>]
  [-Disabled] [-Hidden] [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired]
  [-Parameters <Hashtable>] [-Index <Int32>] [-InsertBefore <String>] [-InsertAfter <String>] [-PassThru]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
@@ -240,7 +250,7 @@ Raw XML for the control element. Use this for advanced control configurations th
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: RawXml
 Aliases:
 
 Required: True
@@ -255,10 +265,22 @@ Data field name (attribute logical name) for the control. This binds the control
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: Default
 Aliases:
 
 Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: String
+Parameter Sets: RawXml
+Aliases:
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

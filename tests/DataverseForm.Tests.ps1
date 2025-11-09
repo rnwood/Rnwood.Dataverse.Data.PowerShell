@@ -713,7 +713,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Remove-DataverseFormControl -Connection $connection -FormId $formId -ControlId 'firstname' -WhatIf } | Should -Not -Throw
+            { Remove-DataverseFormControl -Connection $connection -FormId $formId -ControlId 'firstname' -Confirm:$false -WhatIf } | Should -Not -Throw
         }
 
         It "Removes control by data field" {
@@ -727,7 +727,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Remove-DataverseFormControl -Connection $connection -FormId $formId -DataField 'lastname' -WhatIf } | Should -Not -Throw
+            { Remove-DataverseFormControl -Connection $connection -FormId $formId -DataField 'lastname' -Confirm:$false -WhatIf } | Should -Not -Throw
         }
 
         It "Removes control from specific section" {
@@ -741,7 +741,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Remove-DataverseFormControl -Connection $connection -FormId $formId -SectionName 'name' -ControlId 'middlename' -WhatIf } | Should -Not -Throw
+            { Remove-DataverseFormControl -Connection $connection -FormId $formId -SectionName 'name' -ControlId 'middlename' -Confirm:$false -WhatIf } | Should -Not -Throw
         }
     }
 
@@ -757,7 +757,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Remove-DataverseFormSection -Connection $connection -FormId $formId -TabName 'general' -SectionName 'description' -WhatIf } | Should -Not -Throw
+            { Remove-DataverseFormSection -Connection $connection -FormId $formId -TabName 'general' -SectionName 'description' -Confirm:$false -WhatIf } | Should -Not -Throw
         }
 
         It "Removes section by ID" {
@@ -771,7 +771,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Remove-DataverseFormSection -Connection $connection -FormId $formId -SectionId '{e165b345-b7ce-4c73-a508-0f42cbf6dd53}' -WhatIf } | Should -Not -Throw
+            { Remove-DataverseFormSection -Connection $connection -FormId $formId -SectionId '{e165b345-b7ce-4c73-a508-0f42cbf6dd53}' -Confirm:$false -WhatIf } | Should -Not -Throw
         }
     }
 
@@ -787,7 +787,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Remove-DataverseFormTab -Connection $connection -FormId $formId -TabName 'administration' -WhatIf } | Should -Not -Throw
+            { Remove-DataverseFormTab -Connection $connection -FormId $formId -TabName 'administration' -Confirm:$false -WhatIf } | Should -Not -Throw
         }
 
         It "Removes tab by ID" {
@@ -801,7 +801,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Remove-DataverseFormTab -Connection $connection -FormId $formId -TabId '{0dd7233e-247b-4eef-a71b-0185da6d16ad}' -WhatIf } | Should -Not -Throw
+            { Remove-DataverseFormTab -Connection $connection -FormId $formId -TabId '{0dd7233e-247b-4eef-a71b-0185da6d16ad}' -Confirm:$false -WhatIf } | Should -Not -Throw
         }
     }
 
@@ -818,7 +818,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseForm -Connection $connection -FormId $formId -FormXml $global:testFormXml -WhatIf } | Should -Not -Throw
+            { Set-DataverseForm -Connection $connection -FormId $formId -FormXml $global:testFormXml -Confirm:$false -WhatIf } | Should -Not -Throw
         }
 
         It "Updates form name and description" {
@@ -833,7 +833,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseForm -Connection $connection -FormId $formId -Name 'Updated Contact Form' -Description 'Updated description' -WhatIf } | Should -Not -Throw
+            { Set-DataverseForm -Connection $connection -FormId $formId -Name 'Updated Contact Form' -Description 'Updated description' -Confirm:$false -WhatIf } | Should -Not -Throw
         }
     }
 
@@ -850,7 +850,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Remove-DataverseForm -Connection $connection -FormId $formId -WhatIf } | Should -Not -Throw
+            { Remove-DataverseForm -Connection $connection -FormId $formId -Confirm:$false -WhatIf } | Should -Not -Throw
         }
     }
 
