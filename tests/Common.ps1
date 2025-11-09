@@ -68,13 +68,6 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
             # FormXmlHelper will catch that and fall back to regular Retrieve
             # (Don't return anything - let FakeXrmEasy handle it and throw its own exception)
             
-            # Handle RetrieveUnpublishedMultipleRequest - return empty collection
-            if ($request.GetType().Name -eq 'RetrieveUnpublishedMultipleRequest') {
-                $response = New-Object Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse
-                $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
-                $response.Results.Add("EntityCollection", $entityCollection)
-                return $response
-            }
             
             # Handle ValidateAppRequest - return success response
             if ($request.GetType().Name -eq 'ValidateAppRequest') {
@@ -120,13 +113,6 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
             # FormXmlHelper will catch that and fall back to regular Retrieve
             # (Don't return anything - let FakeXrmEasy handle it and throw its own exception)
             
-            # Handle RetrieveUnpublishedMultipleRequest - return empty collection
-            if ($request.GetType().Name -eq 'RetrieveUnpublishedMultipleRequest') {
-                $response = New-Object Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse
-                $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
-                $response.Results.Add("EntityCollection", $entityCollection)
-                return $response
-            }
             
             # Handle ValidateAppRequest - return success response
             if ($request.GetType().Name -eq 'ValidateAppRequest') {

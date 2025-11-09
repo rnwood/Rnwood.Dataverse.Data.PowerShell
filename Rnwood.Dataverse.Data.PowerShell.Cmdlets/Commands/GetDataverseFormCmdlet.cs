@@ -135,7 +135,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             QueryExpression query = new QueryExpression("systemform")
             {
-                ColumnSet = new ColumnSet("formid", "name", "uniquename", "objecttypecode", "type", "description",
+                ColumnSet = new ColumnSet("systemformid", "name", "uniquename", "objecttypecode", "type", "description",
                     "formactivationstate", "formpresentation", "isdefault")
             };
 
@@ -147,7 +147,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             switch (ParameterSetName)
             {
                 case "ById":
-                    query.Criteria.AddCondition("formid", ConditionOperator.Equal, Id);
+                    query.Criteria.AddCondition("systemformid", ConditionOperator.Equal, Id);
                     break;
 
                 case "ByEntity":
@@ -178,7 +178,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             foreach (Entity form in results)
             {
                 PSObject output = new PSObject();
-                output.Properties.Add(new PSNoteProperty("FormId", form.GetAttributeValue<Guid>("formid")));
+                output.Properties.Add(new PSNoteProperty("FormId", form.GetAttributeValue<Guid>("systemformid")));
                 output.Properties.Add(new PSNoteProperty("Name", form.GetAttributeValue<string>("name")));
                 output.Properties.Add(new PSNoteProperty("UniqueName", form.GetAttributeValue<string>("uniquename")));
                 output.Properties.Add(new PSNoteProperty("Entity", form.GetAttributeValue<string>("objecttypecode")));
