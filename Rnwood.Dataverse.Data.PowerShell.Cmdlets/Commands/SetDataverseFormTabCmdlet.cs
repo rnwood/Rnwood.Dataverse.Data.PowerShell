@@ -55,10 +55,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter Expanded { get; set; }
 
         /// <summary>
-        /// Gets or sets whether the tab is visible.
+        /// Gets or sets whether the tab is hidden.
         /// </summary>
-        [Parameter(HelpMessage = "Whether the tab is visible")]
-        public SwitchParameter Visible { get; set; } = true;
+        [Parameter(HelpMessage = "Whether the tab is hidden")]
+        public SwitchParameter Hidden { get; set; } = true;
 
         /// <summary>
         /// Gets or sets whether to show the tab label.
@@ -239,9 +239,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 tab.SetAttributeValue("expanded", Expanded.IsPresent ? "true" : "false");
             }
             
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
             {
-                tab.SetAttributeValue("visible", Visible.IsPresent ? "true" : "false");
+                tab.SetAttributeValue("visible", Hidden.IsPresent ? "false" : "true");
+            }
+            else if (!isUpdate)
+            {
+                tab.SetAttributeValue("visible", "true");
             }
             
             if (MyInvocation.BoundParameters.ContainsKey(nameof(ShowLabel)))

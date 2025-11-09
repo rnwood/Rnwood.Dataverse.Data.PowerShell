@@ -80,10 +80,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter Disabled { get; set; }
 
         /// <summary>
-        /// Gets or sets whether the control is visible.
+        /// Gets or sets whether the control is hidden.
         /// </summary>
-        [Parameter(HelpMessage = "Whether the control is visible")]
-        public SwitchParameter Visible { get; set; } = true;
+        [Parameter(HelpMessage = "Whether the control is hidden")]
+        public SwitchParameter Hidden { get; set; } = true;
 
         /// <summary>
         /// Gets or sets the number of rows (for multiline text).
@@ -484,28 +484,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
 
-                if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
                 {
-                    if (!Visible.IsPresent)
-                    {
-                        control.SetAttributeValue("visible", "false");
-                    }
-                    else
-                    {
-                        control.SetAttributeValue("visible", null);
-                    }
+                    control.SetAttributeValue("visible", Hidden.IsPresent ? "false" : "true");
+                }
+                else
+                {
+                    control.SetAttributeValue("visible", "true");
                 }
 
                 if (MyInvocation.BoundParameters.ContainsKey(nameof(ShowLabel)))
                 {
-                    if (!ShowLabel.IsPresent)
-                    {
-                        control.SetAttributeValue("showlabel", "false");
-                    }
-                    else
-                    {
-                        control.SetAttributeValue("showlabel", null);
-                    }
+                    control.SetAttributeValue("showlabel", ShowLabel.IsPresent ? "true" : "false");
                 }
 
                 if (MyInvocation.BoundParameters.ContainsKey(nameof(IsRequired)))

@@ -67,10 +67,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter ShowBar { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets whether the section is visible.
+        /// Gets or sets whether the section is hidden.
         /// </summary>
-        [Parameter(HelpMessage = "Whether the section is visible")]
-        public SwitchParameter Visible { get; set; } = true;
+        [Parameter(HelpMessage = "Whether the section is hidden")]
+        public SwitchParameter Hidden { get; set; } = true;
 
         /// <summary>
         /// Gets or sets the number of columns in the section.
@@ -114,6 +114,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(HelpMessage = "Zero-based index of the column within the tab where the section should be placed")]
         public int? ColumnIndex { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cell label alignment.
+        /// </summary>
+        [Parameter(HelpMessage = "Cell label alignment (Center, Left, Right)")]
+        public CellLabelAlignment? CellLabelAlignment { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cell label position.
+        /// </summary>
+        [Parameter(HelpMessage = "Cell label position (Top, Left)")]
+        public CellLabelPosition? CellLabelPosition { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -366,9 +378,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 section.SetAttributeValue("showbar", ShowBar.IsPresent ? "true" : "false");
             }
             
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
             {
-                section.SetAttributeValue("visible", Visible.IsPresent ? "true" : "false");
+                section.SetAttributeValue("visible", Hidden.IsPresent ? "false" : "true");
+            }
+            else if (!isUpdate)
+            {
+                section.SetAttributeValue("visible", "true");
             }
 
             if (Columns.HasValue)
@@ -379,6 +395,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (LabelWidth.HasValue)
             {
                 section.SetAttributeValue("labelwidth", LabelWidth.Value);
+            }
+
+            if (CellLabelAlignment.HasValue)
+            {
+                section.SetAttributeValue("celllabelalignment", CellLabelAlignment.Value.ToString());
+            }
+
+            if (CellLabelPosition.HasValue)
+            {
+                section.SetAttributeValue("celllabelposition", CellLabelPosition.Value.ToString());
             }
 
             // Update or add labels

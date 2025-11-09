@@ -402,6 +402,24 @@ Describe 'Dataverse Form Cmdlets' {
             $result.Controls | Should -Not -BeNullOrEmpty
             $result.Controls.Count | Should -BeGreaterThan 5
         }
+
+        It "Parses cell label alignment and position properties" {
+            $connection = getMockConnection -Entities @("systemform")
+            
+            $formId = [System.Guid]::NewGuid()
+            $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
+            $form["systemformid"] = $form.Id = $formId
+            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["objecttypecode"] = "contact"
+            $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
+            $connection.Create($form)
+            
+            $result = Get-DataverseFormSection -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name'
+            
+            $result | Should -Not -BeNullOrEmpty
+            $result.PSObject.Properties.Name | Should -Contain 'CellLabelAlignment'
+            $result.PSObject.Properties.Name | Should -Contain 'CellLabelPosition'
+        }
     }
 
     Context 'Get-DataverseFormControl' {
@@ -609,6 +627,20 @@ Describe 'Dataverse Form Cmdlets' {
             $connection.Create($form)
             
             { Set-DataverseFormSection -Connection $connection -FormId $formId -TabName 'general' -SectionName 'testsection' -Label 'Test Section' -Visible:$false -ShowLabel:$false -WhatIf } | Should -Not -Throw
+        }
+
+        It "Sets cell label alignment and position" {
+            $connection = getMockConnection -Entities @("systemform")
+            
+            $formId = [System.Guid]::NewGuid()
+            $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
+            $form["systemformid"] = $form.Id = $formId
+            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["objecttypecode"] = "contact"
+            $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
+            $connection.Create($form)
+            
+            { Set-DataverseFormSection -Connection $connection -FormId $formId -TabName 'general' -SectionName 'testsection' -CellLabelAlignment 'Center' -CellLabelPosition 'Top' -WhatIf } | Should -Not -Throw
         }
     }
 

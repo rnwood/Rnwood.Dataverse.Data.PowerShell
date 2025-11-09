@@ -121,12 +121,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter IncludeFormXml { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to parse the FormXml and include structured tab/section/control information.
-        /// </summary>
-        [Parameter(HelpMessage = "Parse FormXml and include structured tab/section/control information")]
-        public SwitchParameter ParseFormXml { get; set; }
-
-        /// <summary>
         /// Gets or sets whether to include unpublished forms in the results.
         /// </summary>
         [Parameter(HelpMessage = "Include unpublished forms in the results")]
@@ -145,7 +139,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     "formactivationstate", "formpresentation", "isdefault")
             };
 
-            if (IncludeFormXml.IsPresent || ParseFormXml.IsPresent)
+            if (IncludeFormXml.IsPresent)
             {
                 query.ColumnSet.AddColumn("formxml");
             }
@@ -197,16 +191,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (IncludeFormXml.IsPresent && form.Contains("formxml"))
                 {
                     output.Properties.Add(new PSNoteProperty("FormXml", form.GetAttributeValue<string>("formxml")));
-                }
-
-                if (ParseFormXml.IsPresent && form.Contains("formxml"))
-                {
-                    string formXml = form.GetAttributeValue<string>("formxml");
-                    if (!string.IsNullOrWhiteSpace(formXml))
-                    {
-                        XDocument doc = XDocument.Parse(formXml);
-                        output.Properties.Add(new PSNoteProperty("ParsedForm", FormXmlHelper.ParseFormStructure(doc)));
-                    }
                 }
 
                 WriteObject(output);
