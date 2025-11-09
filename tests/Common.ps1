@@ -64,10 +64,9 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
             # Handle unsupported requests that FakeXrmEasy doesn't support
             # Only do this if custom interceptor didn't handle it
             
-            # Handle RetrieveUnpublishedRequest - return null entity (not found)
-            if ($request.GetType().Name -eq 'RetrieveUnpublishedRequest') {
-                return $null
-            }
+            # Handle RetrieveUnpublishedRequest - don't handle it, let FakeXrmEasy throw "not implemented"
+            # FormXmlHelper will catch that and fall back to regular Retrieve
+            # (Don't return anything - let FakeXrmEasy handle it and throw its own exception)
             
             # Handle RetrieveUnpublishedMultipleRequest - return empty collection
             if ($request.GetType().Name -eq 'RetrieveUnpublishedMultipleRequest') {
@@ -117,10 +116,9 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
             
             # Handle unsupported requests that FakeXrmEasy doesn't support
             
-            # Handle RetrieveUnpublishedRequest - return null entity (not found)
-            if ($request.GetType().Name -eq 'RetrieveUnpublishedRequest') {
-                return $null
-            }
+            # Handle RetrieveUnpublishedRequest - don't handle it, let FakeXrmEasy throw "not implemented"
+            # FormXmlHelper will catch that and fall back to regular Retrieve
+            # (Don't return anything - let FakeXrmEasy handle it and throw its own exception)
             
             # Handle RetrieveUnpublishedMultipleRequest - return empty collection
             if ($request.GetType().Name -eq 'RetrieveUnpublishedMultipleRequest') {

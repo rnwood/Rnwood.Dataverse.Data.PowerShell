@@ -42,18 +42,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
                 };
                 var response = (RetrieveUnpublishedResponse)connection.Execute(retrieveUnpublishedRequest);
                 
-                // Check if response is null (can happen in mock environments like FakeXrmEasy)
-                if (response == null || response.Entity == null)
-                {
-                    return connection.Retrieve("systemform", formId, columnSet);
-                }
-                
                 return response.Entity;
-            }
-            catch (NullReferenceException)
-            {
-                // Fallback for mock environments where RetrieveUnpublishedRequest returns null
-                return connection.Retrieve("systemform", formId, columnSet);
             }
             catch (FaultException<OrganizationServiceFault> ex)
             {
@@ -67,7 +56,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
                     throw;
                 }
             }
-            catch (Exception ex) when (ex.Message.Contains("not been implemented") || ex.Message.Contains("not supported"))
+            catch (Exception ex) when (ex.Message.Contains("not been implemented") || 
+                                       ex.Message.Contains("not supported") || 
+                                       ex.Message.Contains("not yet supported") ||
+                                       ex.GetType().Name.Contains("UnsupportedException"))
             {
                 // Fallback for mock/test environments that don't support RetrieveUnpublishedRequest
                 // (e.g., FakeXrmEasy)
