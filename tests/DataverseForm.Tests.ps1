@@ -510,7 +510,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormControl -Connection $connection -FormId $formId -SectionName 'name' -DataField 'newfield' -Label 'New Field' -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -DataField 'newfield' -Label 'New Field' -WhatIf } | Should -Not -Throw
         }
 
         It "Updates existing control" {
@@ -524,7 +524,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormControl -Connection $connection -FormId $formId -SectionName 'name' -ControlId 'firstname' -DataField 'firstname' -Label 'Updated First Name' -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -ControlId 'firstname' -DataField 'firstname' -Label 'Updated First Name' -WhatIf } | Should -Not -Throw
         }
 
         It "Creates control with raw XML" {
@@ -539,7 +539,7 @@ Describe 'Dataverse Form Cmdlets' {
             $connection.Create($form)
             
             $controlXml = '<control id="testfield" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="testfield" />'
-            { Set-DataverseFormControl -Connection $connection -FormId $formId -SectionName 'name' -ControlXml $controlXml -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -ControlXml $controlXml -WhatIf } | Should -Not -Throw
         }
 
         It "Sets control properties correctly" {
@@ -553,7 +553,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormControl -Connection $connection -FormId $formId -SectionName 'name' -DataField 'testfield' -Label 'Test Label' -Disabled -Visible:$false -IsRequired -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -DataField 'testfield' -Label 'Test Label' -Disabled -Visible:$false -IsRequired -WhatIf } | Should -Not -Throw
         }
 
         It "Handles positioning with Index" {
@@ -567,7 +567,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormControl -Connection $connection -FormId $formId -SectionName 'name' -DataField 'indexedfield' -Index 2 -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -DataField 'indexedfield' -Index 2 -WhatIf } | Should -Not -Throw
         }
 
         It "Handles positioning with InsertBefore" {
@@ -581,7 +581,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormControl -Connection $connection -FormId $formId -SectionName 'name' -DataField 'beforefield' -InsertBefore 'firstname' -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -DataField 'beforefield' -InsertBefore 'firstname' -WhatIf } | Should -Not -Throw
         }
 
         It "Handles positioning with InsertAfter" {
@@ -595,7 +595,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormControl -Connection $connection -FormId $formId -SectionName 'name' -DataField 'afterfield' -InsertAfter 'lastname' -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -DataField 'afterfield' -InsertAfter 'lastname' -WhatIf } | Should -Not -Throw
         }
     }
 
