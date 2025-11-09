@@ -12,15 +12,8 @@ Removes a tab from a Dataverse form.
 
 ## SYNTAX
 
-### ByName
 ```
-Remove-DataverseFormTab -FormId <Guid> -TabName <String> [-Publish] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
-```
-
-### ById
-```
-Remove-DataverseFormTab -FormId <Guid> -TabId <String> [-Publish] [-Connection <ServiceClient>]
+Remove-DataverseFormTab -FormId <Guid> [-TabName <String>] [-TabId <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -162,30 +155,15 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -Publish
-Publish the form after removing the tab. This makes changes visible to users immediately. If not specified, the form remains in draft state.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -TabId
 ID of the tab to remove. Use this when you have the specific tab ID rather than the name.
 
 ```yaml
 Type: String
-Parameter Sets: ById
+Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -197,10 +175,10 @@ Name of the tab to remove. The tab name must exist in the form.
 
 ```yaml
 Type: String
-Parameter Sets: ByName
+Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -244,13 +222,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
-You can pipe form IDs to this cmdlet.
-
 ## OUTPUTS
 
 ### System.Object
-This cmdlet does not generate output unless an error occurs.
-
 ## NOTES
 
 **Important Warnings:**

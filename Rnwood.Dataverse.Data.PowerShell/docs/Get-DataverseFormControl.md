@@ -13,8 +13,8 @@ Retrieves control information from a Dataverse form.
 ## SYNTAX
 
 ```
-Get-DataverseFormControl -FormId <Guid> [-TabName <String>] [-SectionName <String>] [-ControlId <String>] 
-[-DataField <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseFormControl -FormId <Guid> [-SectionName <String>] [-ControlId <String>] [-DataField <String>]
+ [-TabName <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -207,47 +207,15 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
-You can pipe form IDs to this cmdlet.
-
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
-Returns PSObjects with the following properties:
-- **Id**: Control ID (string)
-- **DataField**: Name of the bound data field/attribute (string)
-- **ClassId**: Control class identifier (string)
-- **FormId**: ID of the containing form (Guid)
-- **TabName**: Name of the containing tab (string)
-- **SectionName**: Name of the containing section (string)
-- **Disabled**: Whether the control is disabled (boolean)
-- **Hidden**: Whether the control is hidden (boolean, opposite of Visible)
-- **ShowLabel**: Whether to show the control label (boolean)
-- **IsRequired**: Whether the control is marked as required (boolean)
-- **Labels**: Array of localized labels with Description and LanguageCode
-- **Events**: Event handlers configured for the control (PSObject)
-- **Parameters**: Custom parameters for the control (PSObject)
-
 ## NOTES
 
-**Form Structure Hierarchy:**
-```
-Form
-??? Header
-??? Tabs
-?   ??? Tab 1
-?   ?   ??? Columns
-?   ?   ?   ??? Column 1
-?   ?   ?   ?   ??? Section 1
-?   ?   ?   ?   ?   ??? Row 1
-?   ?   ?   ?   ?   ?   ??? Cell 1 ? Control 1
-?   ?   ?   ?   ?   ?   ??? Cell 2 ? Control 2
-?   ?   ?   ?   ?   ??? Row 2
-?   ?   ?   ?   ??? Section 2
-?   ?   ?   ??? Column 2
-?   ?   ??? Controls (within sections)
-?   ??? Tab 2
-??? Footer/Navigation
-```
+**Form Structure Hierarchy:**  
+Form -> Header -> Tabs -> Tab Columns -> Sections -> Rows -> Cells -> Controls
+
+Controls are the finest level of detail in a form structure. Each control is contained in a cell within a row, which is within a section, within a tab column.
 
 **Control Types:**
 Controls are identified by their ClassId attribute which determines behavior:

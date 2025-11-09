@@ -12,15 +12,8 @@ Removes a section from a Dataverse form tab.
 
 ## SYNTAX
 
-### ByName
 ```
-Remove-DataverseFormSection -FormId <Guid> -TabName <String> -SectionName <String> [-Publish] 
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
-```
-
-### ById
-```
-Remove-DataverseFormSection -FormId <Guid> -TabName <String> -SectionId <String> [-Publish] 
+Remove-DataverseFormSection -FormId <Guid> [-SectionName <String>] [-SectionId <String>]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -163,30 +156,15 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -Publish
-Publish the form after removing the section. This makes changes visible to users immediately. If not specified, the form remains in draft state.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -SectionId
 ID of the section to remove. Use this when you have the specific section ID rather than the name.
 
 ```yaml
 Type: String
-Parameter Sets: ById
+Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -198,25 +176,10 @@ Name of the section to remove. The section name must exist in the specified tab.
 
 ```yaml
 Type: String
-Parameter Sets: ByName
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -TabName
-Name of the tab containing the section to remove.
-
-```yaml
-Type: String
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -260,13 +223,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
-You can pipe form IDs to this cmdlet.
-
 ## OUTPUTS
 
 ### System.Object
-This cmdlet does not generate output unless an error occurs.
-
 ## NOTES
 
 **Important Warnings:**

@@ -12,31 +12,12 @@ Creates or updates a control in a Dataverse form section.
 
 ## SYNTAX
 
-### Update
 ```
-Set-DataverseFormControl -FormId <Guid> -SectionName <String> -ControlId <String> -DataField <String>
- [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Visible] [-Rows <Int32>]
- [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>] [-PassThru]
- [-Publish] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
-```
-
-### Create
-```
-Set-DataverseFormControl -FormId <Guid> -SectionName <String> -DataField <String> [-ControlType <String>]
- [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Visible] [-Rows <Int32>] [-ColSpan <Int32>]
- [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>] [-Index <Int32>]
- [-InsertBefore <String>] [-InsertAfter <String>] [-PassThru] [-Publish] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
-```
-
-### RawXml
-```
-Set-DataverseFormControl -FormId <Guid> -SectionName <String> -ControlXml <String> [-ControlType <String>]
- [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Visible] [-Rows <Int32>] [-ColSpan <Int32>]
- [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>] [-Index <Int32>]
- [-InsertBefore <String>] [-InsertAfter <String>] [-PassThru] [-Publish] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataverseFormControl -FormId <Guid> -SectionName <String> -TabName <String> [-ControlId <String>]
+ -DataField <String> -ControlXml <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>]
+ [-Disabled] [-Hidden] [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired]
+ [-Parameters <Hashtable>] [-Index <Int32>] [-InsertBefore <String>] [-InsertAfter <String>] [-PassThru]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -228,10 +209,10 @@ ID of the control to update. When provided, the cmdlet updates an existing contr
 
 ```yaml
 Type: String
-Parameter Sets: Update
+Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -259,7 +240,7 @@ Raw XML for the control element. Use this for advanced control configurations th
 
 ```yaml
 Type: String
-Parameter Sets: RawXml
+Parameter Sets: (All)
 Aliases:
 
 Required: True
@@ -274,7 +255,7 @@ Data field name (attribute logical name) for the control. This binds the control
 
 ```yaml
 Type: String
-Parameter Sets: Update, Create
+Parameter Sets: (All)
 Aliases:
 
 Required: True
@@ -314,12 +295,27 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
+### -Hidden
+Whether the control is hidden
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Index
 Zero-based index position to insert the control within the section. If not specified, the control is added at the end.
 
 ```yaml
 Type: Int32
-Parameter Sets: Create, RawXml
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -334,7 +330,7 @@ ID or data field name of the control after which to insert the new control. Cann
 
 ```yaml
 Type: String
-Parameter Sets: Create, RawXml
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -349,7 +345,7 @@ ID or data field name of the control before which to insert the new control. Can
 
 ```yaml
 Type: String
-Parameter Sets: Create, RawXml
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -434,21 +430,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Publish
-Publish the form after modifying the control. This makes changes visible to users immediately.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -RowSpan
 Number of rows the control spans in the section layout. Useful for controls that need more vertical space.
 
@@ -509,15 +490,15 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Visible
-Whether the control is visible to users. Hidden controls are not displayed but retain their data.
+### -TabName
+Name of the tab containing the section
 
 ```yaml
-Type: SwitchParameter
+Type: String
 Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -561,13 +542,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
-You can pipe form IDs to this cmdlet.
-
 ## OUTPUTS
 
 ### System.String
-When -PassThru is specified, returns the control ID as a string.
-
 ## NOTES
 
 **Control Types and Usage:**
@@ -607,36 +584,24 @@ When -PassThru is specified, returns the control ID as a string.
 
 **Common Parameters by Control Type:**
 
-**Subgrid Parameters:**
-```powershell
-@{
-    'targetEntityType' = 'opportunity'
-    'viewId' = 'view-guid'
-    'RelationshipName' = 'contact_customer_opportunity'
-    'EnableQuickFind' = 'true'
-    'EnableViewPicker' = 'true'
-    'RecordsPerPage' = '5'
-}
-```
+**Subgrid Parameters:**  
+- targetEntityType = 'opportunity'
+- viewId = 'view-guid'
+- RelationshipName = 'contact_customer_opportunity'
+- EnableQuickFind = 'true'
+- EnableViewPicker = 'true'
+- RecordsPerPage = '5'
 
-**WebResource Parameters:**
-```powershell
-@{
-    'src' = 'WebResources/custom_control.html'
-    'height' = '300'
-    'width' = '100%'
-    'scrolling' = 'no'
-    'border' = '0'
-}
-```
+**WebResource Parameters:**  
+- src = 'WebResources/custom_control.html'
+- height = '300'
+- width = '100%'
+- scrolling = 'no'
+- border = '0'
 
-**DateTime Parameters:**
-```powershell
-@{
-    'DateAndTimeStyle' = 'DateAndTime'  # or 'DateOnly'
-    'HideTimeForDate' = 'false'
-}
-```
+**DateTime Parameters:**  
+- DateAndTimeStyle = 'DateAndTime' (or 'DateOnly')
+- HideTimeForDate = 'false'
 
 **Best Practices:**
 - Use meaningful control IDs for easier maintenance

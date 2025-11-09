@@ -134,41 +134,15 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
-You can pipe form IDs to this cmdlet.
-
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
-Returns PSObjects with the following properties:
-- **Id**: Tab ID (GUID)
-- **Name**: Tab name/identifier
-- **Expanded**: Whether the tab is expanded by default (boolean)
-- **Visible**: Whether the tab is visible (boolean)
-- **Hidden**: Whether the tab is hidden (boolean, opposite of Visible)
-- **VerticalLayout**: Whether the tab uses vertical layout (boolean)
-- **ShowLabel**: Whether to show the tab label (boolean)
-- **Layout**: Tab layout type (OneColumn, TwoColumns, ThreeColumns, Custom, or None)
-- **Column1Width**, **Column2Width**, **Column3Width**: Column width percentages (if applicable)
-- **Labels**: Array of localized labels with Description and LanguageCode
-- **Sections**: Array of sections contained in the tab
-
 ## NOTES
 
-**Form Structure Hierarchy:**
-```
-Form
-??? Header
-??? Tabs
-?   ??? Tab 1
-?   ?   ??? Columns (1-3 typical)
-?   ?   ?   ??? Column 1
-?   ?   ?   ?   ??? Sections
-?   ?   ?   ??? Column 2
-?   ?   ?       ??? Sections
-?   ?   ??? Sections (within columns)
-?   ??? Tab 2
-??? Footer/Navigation
-```
+**Form Structure Hierarchy:**  
+Form -> Header -> Tabs -> Tab (with columns) -> Sections -> Controls
+
+Tabs typically contain 1-3 columns, each column contains sections, and sections contain controls arranged in rows and cells.
 
 **Tab Layout Types:**
 - **OneColumn**: Single column layout (100% width)

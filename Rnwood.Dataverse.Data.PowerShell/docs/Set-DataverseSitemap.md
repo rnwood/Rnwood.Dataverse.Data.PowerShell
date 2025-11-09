@@ -197,8 +197,38 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Publish
+If specified, publishes the sitemap after creating or updating.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -SitemapXml
 The XML definition of the sitemap. Must be valid XML conforming to the SiteMap schema.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -UniqueName
+The unique name of the sitemap to update. If a sitemap with this unique name exists, it will be updated; otherwise, a new sitemap is created with this unique name.
 
 ```yaml
 Type: String
@@ -242,43 +272,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Publish
-If specified, publishes the sitemap after creating or updating.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -UniqueName
-The unique name of the sitemap to update. If a sitemap with this unique name exists, it will be updated; otherwise, a new sitemap is created with this unique name.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### System.String
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Guid

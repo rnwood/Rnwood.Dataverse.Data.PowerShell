@@ -158,45 +158,15 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
-You can pipe form IDs to this cmdlet.
-
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
-Returns PSObjects with the following properties:
-- **Id**: Section ID (GUID)
-- **Name**: Section name/identifier
-- **FormId**: ID of the containing form (Guid)
-- **TabName**: Name of the containing tab (string)
-- **ColumnIndex**: Zero-based index of the parent column within the tab (integer)
-- **ShowLabel**: Whether to show the section label (boolean)
-- **Hidden**: Whether the section is hidden (boolean, opposite of Visible)
-- **ShowBar**: Whether to show the section bar (boolean)
-- **LabelWidth**: Width of labels in pixels (string)
-- **Columns**: Number of columns in the section (integer or string)
-- **CellLabelAlignment**: Cell label alignment (CellLabelAlignment enum or null)
-- **CellLabelPosition**: Cell label position (CellLabelPosition enum or null)
-- **Labels**: Array of localized labels with Description and LanguageCode
-- **Controls**: Array of controls contained in the section
-
 ## NOTES
 
-**Form Structure Hierarchy:**
-```
-Form
-??? Header
-??? Tabs
-?   ??? Tab 1
-?   ?   ??? Columns (1-3 typical)
-?   ?   ?   ??? Column 1
-?   ?   ?   ?   ??? Section 1
-?   ?   ?   ?   ??? Section 2
-?   ?   ?   ??? Column 2
-?   ?   ?       ??? Section 3
-?   ?   ??? Sections (within columns)
-?   ??? Tab 2
-??? Footer/Navigation
-```
+**Form Structure Hierarchy:**  
+Form -> Header -> Tabs -> Tab Columns -> Sections -> Controls
+
+Tabs contain 1-3 columns (typically), each column contains multiple sections. Sections contain controls arranged in rows and cells.
 
 **Section Column Layout:**
 - **Columns**: Number of columns within the section (1-4 typical)

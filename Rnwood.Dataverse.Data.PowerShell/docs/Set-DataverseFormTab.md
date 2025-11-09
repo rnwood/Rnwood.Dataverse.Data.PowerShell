@@ -15,8 +15,8 @@ Creates or updates a tab on a Dataverse form with support for column layouts.
 ```
 Set-DataverseFormTab -FormId <Guid> [-TabId <String>] -Name <String> [-Label <String>] [-LanguageCode <Int32>]
  [-Expanded] [-Hidden] [-ShowLabel] [-VerticalLayout] [-Layout <String>] [-Column1Width <Int32>]
- [-Column2Width <Int32>] [-Column3Width <Int32>] [-Index <Int32>] [-InsertBefore <String>] 
- [-InsertAfter <String>] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] 
+ [-Column2Width <Int32>] [-Column3Width <Int32>] [-Index <Int32>] [-InsertBefore <String>]
+ [-InsertAfter <String>] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -95,6 +95,66 @@ PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -Name "FirstTab" -La
 Creates a new tab at the beginning (first position) of the tab list.
 
 ## PARAMETERS
+
+### -Column1Width
+Width of the first column as percentage (0-100)
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Column2Width
+Width of the second column as percentage (0-100)
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Column3Width
+Width of the third column as percentage (0-100)
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
@@ -324,51 +384,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Column1Width
-Width of the first column as percentage (0-100)
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Column2Width
-Width of the second column as percentage (0-100)
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Column3Width
-Width of the third column as percentage (0-100)
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -WhatIf
 Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
@@ -376,21 +391,6 @@ Shows what would happen if the cmdlet runs. The cmdlet is not run.
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
 
 Required: False
 Position: Named
@@ -420,12 +420,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
-
 ## OUTPUTS
 
 ### System.String
-When -PassThru is specified, returns the tab ID.
-
 ## NOTES
 
 **Column Layout Management:**

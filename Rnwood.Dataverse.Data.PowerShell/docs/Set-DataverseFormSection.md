@@ -13,10 +13,10 @@ Creates or updates a section in a Dataverse form tab.
 ## SYNTAX
 
 ```
-Set-DataverseFormSection -FormId <Guid> -TabName <String> [-SectionId <String>] -Name <String> [-Label <String>]
- [-LanguageCode <Int32>] [-ShowLabel] [-ShowBar] [-Hidden] [-Columns <Int32>] [-LabelWidth <Int32>]
- [-Index <Int32>] [-InsertBefore <String>] [-InsertAfter <String>] [-ColumnIndex <Int32>] 
- [-CellLabelAlignment <CellLabelAlignment>] [-CellLabelPosition <CellLabelPosition>] [-PassThru] 
+Set-DataverseFormSection -FormId <Guid> -TabName <String> [-SectionId <String>] -Name <String>
+ [-Label <String>] [-LanguageCode <Int32>] [-ShowLabel] [-ShowBar] [-Hidden] [-Columns <Int32>]
+ [-LabelWidth <Int32>] [-Index <Int32>] [-InsertBefore <String>] [-InsertAfter <String>] [-PassThru]
+ [-ColumnIndex <Int32>] [-CellLabelAlignment <CellLabelAlignment>] [-CellLabelPosition <CellLabelPosition>]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -172,6 +172,21 @@ Number of columns in the section (1-4). Controls how many columns of controls ca
 Type: Int32
 Parameter Sets: (All)
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
 
 Required: False
 Position: Named
@@ -422,21 +437,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -ProgressAction
 Controls how progress information is displayed during cmdlet execution.
 
@@ -458,12 +458,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
-
 ## OUTPUTS
 
 ### System.String
-When -PassThru is specified, returns the section ID.
-
 ## NOTES
 
 **Section Layout:**

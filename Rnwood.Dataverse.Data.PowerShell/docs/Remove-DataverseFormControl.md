@@ -14,13 +14,13 @@ Removes a control from a Dataverse form section.
 
 ### ById
 ```
-Remove-DataverseFormControl -FormId <Guid> -ControlId <String> [-Publish] [-Connection <ServiceClient>]
+Remove-DataverseFormControl -FormId <Guid> -ControlId <String> -TabName <String> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### ByDataField
 ```
-Remove-DataverseFormControl -FormId <Guid> -TabName <String> -SectionName <String> -DataField <String> [-Publish]
+Remove-DataverseFormControl -FormId <Guid> -DataField <String> [-SectionName <String>] -TabName <String>
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -225,21 +225,6 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -Publish
-Publish the form after removing the control. This makes changes visible to users immediately. If not specified, the form remains in draft state.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -SectionName
 Name of the section containing the control to remove. Required when using the ByDataField parameter set.
 
@@ -248,7 +233,7 @@ Type: String
 Parameter Sets: ByDataField
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -260,7 +245,7 @@ Name of the tab containing the section with the control to remove. Required when
 
 ```yaml
 Type: String
-Parameter Sets: ByDataField
+Parameter Sets: (All)
 Aliases:
 
 Required: True
@@ -307,13 +292,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
-You can pipe form IDs to this cmdlet.
-
 ## OUTPUTS
 
 ### System.Object
-This cmdlet does not generate output unless an error occurs.
-
 ## NOTES
 
 **Important Warnings:**
