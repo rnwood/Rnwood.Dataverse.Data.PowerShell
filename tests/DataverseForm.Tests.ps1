@@ -855,49 +855,6 @@ Describe 'Dataverse Form Cmdlets' {
     }
 
     Context 'FormXmlHelper Edge Cases and Error Handling' {
-        It "Handles missing SystemForm element" -Skip {
-            $invalidXml = "<forms><InvalidRoot /></forms>"
-            $doc = [System.Xml.Linq.XDocument]::Parse($invalidXml)
-            
-            $parsed = [Rnwood.Dataverse.Data.PowerShell.Model.FormXmlHelper]::ParseFormStructure($doc)
-            $parsed | Should -Not -BeNullOrEmpty
-            # Should return empty object for invalid structure but not null
-        }
-
-        It "Handles form with no tabs" -Skip {
-            $noTabsXml = "<form />"
-            $doc = [System.Xml.Linq.XDocument]::Parse($noTabsXml)
-            
-            { $parsed = [Rnwood.Dataverse.Data.PowerShell.Model.FormXmlHelper]::ParseFormStructure($doc) } | Should -Not -Throw
-            # Tabs property may not exist for forms without tabs
-        }
-
-        It "Handles sections with no controls" -Skip {
-            $emptySection = @"
-<form>
-    <tabs>
-        <tab name="test">
-            <columns>
-                <column>
-                    <sections>
-                        <section name="empty">
-                            <rows />
-                        </section>
-                    </sections>
-                </column>
-            </columns>
-        </tab>
-    </tabs>
-</form>
-"@
-            $doc = [System.Xml.Linq.XDocument]::Parse($emptySection)
-            
-            { $parsed = [Rnwood.Dataverse.Data.PowerShell.Model.FormXmlHelper]::ParseFormStructure($doc) } | Should -Not -Throw
-            $parsed.Tabs | Should -HaveCount 1
-            $parsed.Tabs[0].Sections | Should -HaveCount 1
-            # Controls array may be empty for sections with no controls
-        }
-
         It "Handles FindTab with null parameters" {
             $doc = [System.Xml.Linq.XDocument]::Parse($testFormXml)
             $systemForm = $doc.Root
