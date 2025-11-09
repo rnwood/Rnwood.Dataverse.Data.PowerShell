@@ -110,6 +110,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter PassThru { get; set; }
 
         /// <summary>
+        /// Zero-based index of the column within the tab where the section should be placed.
+        /// </summary>
+        [Parameter(HelpMessage = "Zero-based index of the column within the tab where the section should be placed")]
+        public int? ColumnIndex { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -143,107 +149,206 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 targetTab.Add(columnsElement);
             }
 
-            // Get or create first column
-            XElement column = columnsElement.Elements("column").FirstOrDefault();
-            if (column == null)
+            // Determine tab columns count from tab attribute if present
+            int? tabColumnsAttr = null;
+            var tabColumnsAttrVal = targetTab.Attribute("columns")?.Value;
+            if (!string.IsNullOrEmpty(tabColumnsAttrVal) && int.TryParse(tabColumnsAttrVal, out int parsedTabCols))
             {
-                column = new XElement("column", new XAttribute("width", "100%"));
-                columnsElement.Add(column);
+                tabColumnsAttr = parsedTabCols;
             }
 
-            // Get or create sections element
-            XElement sectionsElement = column.Element("sections");
-            if (sectionsElement == null)
+            // Ensure there are column elements; if none exist, create defaults based on tabColumnsAttr or single
+            var columnsList = columnsElement.Elements("column").ToList();
+            if (columnsList.Count == 0)
             {
-                sectionsElement = new XElement("sections");
-                column.Add(sectionsElement);
+                int createCount = tabColumnsAttr ?? 1;
+                for (int i = 0; i < createCount; i++)
+                {
+                    columnsElement.Add(new XElement("column",
+                        new XAttribute("width", $"{(100 / createCount)}%"),
+                        new XElement("sections")
+                    ));
+                }
+                columnsList = columnsElement.Elements("column").ToList();
             }
 
+            // Validate ColumnIndex against tab column count (preference: tabColumnsAttr when present)
+            if (ColumnIndex.HasValue)
+            {
+                if (tabColumnsAttr.HasValue)
+                {
+                    if (ColumnIndex.Value < 0 || ColumnIndex.Value >= tabColumnsAttr.Value)
+                        throw new InvalidOperationException($"ColumnIndex {ColumnIndex.Value} is out of range. Valid range is 0-{tabColumnsAttr.Value - 1}");
+                }
+                else
+                {
+                    if (ColumnIndex.Value < 0 || ColumnIndex.Value >= columnsList.Count)
+                        throw new InvalidOperationException($"ColumnIndex {ColumnIndex.Value} is out of range. Valid range is 0-{columnsList.Count - 1}");
+                }
+            }
+
+            // Find existing section across all columns
             XElement section = null;
             string sectionId = null;
             bool isUpdate = false;
+            XElement currentColumn = null;
 
-            // Check if section exists by ID or Name
-            if (!string.IsNullOrEmpty(SectionId))
+            // Search by ID or name across columns
+            foreach (var col in columnsList)
             {
-                // Find by ID
-                section = sectionsElement.Elements("section").FirstOrDefault(s => s.Attribute("id")?.Value == SectionId);
-                if (section != null)
+                var secs = col.Element("sections");
+                if (secs == null) continue;
+
+                if (!string.IsNullOrEmpty(SectionId))
                 {
-                    isUpdate = true;
-                    sectionId = SectionId;
+                    var s = secs.Elements("section").FirstOrDefault(sx => sx.Attribute("id")?.Value == SectionId);
+                    if (s != null)
+                    {
+                        section = s;
+                        sectionId = SectionId;
+                        isUpdate = true;
+                        currentColumn = col;
+                        break;
+                    }
                 }
+
+                var byName = secs.Elements("section").FirstOrDefault(sx => sx.Attribute("name")?.Value == Name);
+                if (byName != null)
+                {
+                    section = byName;
+                    sectionId = section.Attribute("id")?.Value;
+                    isUpdate = true;
+                    currentColumn = col;
+                    break;
+                }
+            }
+
+            // Determine target column element based on ColumnIndex or existing/current column or default first
+            XElement targetColumn = null;
+            if (ColumnIndex.HasValue)
+            {
+                targetColumn = columnsList[ColumnIndex.Value];
+            }
+            else if (isUpdate && currentColumn != null)
+            {
+                targetColumn = currentColumn;
             }
             else
             {
-                // Find by Name
-                section = sectionsElement.Elements("section").FirstOrDefault(s => s.Attribute("name")?.Value == Name);
-                if (section != null)
-                {
-                    isUpdate = true;
-                    sectionId = section.Attribute("id")?.Value;
-                }
+                targetColumn = columnsList.First();
+            }
+
+            // Ensure target column has sections element
+            var targetSectionsElement = targetColumn.Element("sections");
+            if (targetSectionsElement == null)
+            {
+                targetSectionsElement = new XElement("sections");
+                targetColumn.Add(targetSectionsElement);
             }
 
             if (isUpdate)
             {
-                // Update existing section - no positioning needed
+                // If ColumnIndex specified and different to current, move the section
+                if (ColumnIndex.HasValue && currentColumn != null && !object.ReferenceEquals(currentColumn, targetColumn))
+                {
+                    // Remove from current
+                    var currentSections = currentColumn.Element("sections");
+                    section.Remove();
+
+                    // Insert into target - respect Index/InsertBefore/InsertAfter if provided, else append
+                    if (Index.HasValue)
+                    {
+                        var targetSecs = targetSectionsElement.Elements("section").ToList();
+                        if (Index.Value >= 0 && Index.Value <= targetSecs.Count)
+                        {
+                            if (Index.Value == targetSecs.Count)
+                                targetSectionsElement.Add(section);
+                            else
+                                targetSecs[Index.Value].AddBeforeSelf(section);
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Index {Index.Value} is out of range. Valid range is 0-{targetSecs.Count}");
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(InsertBefore))
+                    {
+                        var refSec = targetSectionsElement.Elements("section")
+                            .FirstOrDefault(s => s.Attribute("name")?.Value == InsertBefore || s.Attribute("id")?.Value == InsertBefore);
+                        if (refSec == null)
+                            throw new InvalidOperationException($"Reference section '{InsertBefore}' not found in target column");
+                        refSec.AddBeforeSelf(section);
+                    }
+                    else if (!string.IsNullOrEmpty(InsertAfter))
+                    {
+                        var refSec = targetSectionsElement.Elements("section")
+                            .FirstOrDefault(s => s.Attribute("name")?.Value == InsertAfter || s.Attribute("id")?.Value == InsertAfter);
+                        if (refSec == null)
+                            throw new InvalidOperationException($"Reference section '{InsertAfter}' not found in target column");
+                        refSec.AddAfterSelf(section);
+                    }
+                    else
+                    {
+                        targetSectionsElement.Add(section);
+                    }
+
+                    // update currentColumn reference
+                    currentColumn = targetColumn;
+                }
+                // else update attributes only
             }
             else
             {
                 // Section does not exist - create new
                 sectionId = !string.IsNullOrEmpty(SectionId) ? SectionId : Guid.NewGuid().ToString();
                 section = new XElement("section");
-                
-                // Handle positioning for new section
+
+                // Handle positioning for new section within targetSectionsElement
                 if (Index.HasValue)
                 {
-                    // Insert at specific index
-                    var sections = sectionsElement.Elements("section").ToList();
-                    if (Index.Value >= 0 && Index.Value <= sections.Count)
+                    var targetSecs = targetSectionsElement.Elements("section").ToList();
+                    if (Index.Value >= 0 && Index.Value <= targetSecs.Count)
                     {
-                        if (Index.Value == sections.Count)
+                        if (Index.Value == targetSecs.Count)
                         {
-                            sectionsElement.Add(section);
+                            targetSectionsElement.Add(section);
                         }
                         else
                         {
-                            sections[Index.Value].AddBeforeSelf(section);
+                            targetSecs[Index.Value].AddBeforeSelf(section);
                         }
                     }
                     else
                     {
-                        throw new InvalidOperationException($"Index {Index.Value} is out of range. Valid range is 0-{sections.Count}");
+                        throw new InvalidOperationException($"Index {Index.Value} is out of range. Valid range is 0-{targetSecs.Count}");
                     }
                 }
                 else if (!string.IsNullOrEmpty(InsertBefore))
                 {
-                    // Insert before specified section
-                    var referenceSection = sectionsElement.Elements("section")
+                    var referenceSection = targetSectionsElement.Elements("section")
                         .FirstOrDefault(s => s.Attribute("name")?.Value == InsertBefore || 
                                             s.Attribute("id")?.Value == InsertBefore);
                     if (referenceSection == null)
                     {
-                        throw new InvalidOperationException($"Reference section '{InsertBefore}' not found");
+                        throw new InvalidOperationException($"Reference section '{InsertBefore}' not found in target column");
                     }
                     referenceSection.AddBeforeSelf(section);
                 }
                 else if (!string.IsNullOrEmpty(InsertAfter))
                 {
-                    // Insert after specified section
-                    var referenceSection = sectionsElement.Elements("section")
+                    var referenceSection = targetSectionsElement.Elements("section")
                         .FirstOrDefault(s => s.Attribute("name")?.Value == InsertAfter || 
                                             s.Attribute("id")?.Value == InsertAfter);
                     if (referenceSection == null)
                     {
-                        throw new InvalidOperationException($"Reference section '{InsertAfter}' not found");
+                        throw new InvalidOperationException($"Reference section '{InsertAfter}' not found in target column");
                     }
                     referenceSection.AddAfterSelf(section);
                 }
                 else
                 {
                     // Add at the end (default)
-                    sectionsElement.Add(section);
+                    targetSectionsElement.Add(section);
                 }
             }
 

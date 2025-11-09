@@ -51,7 +51,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             var tabs = tabsElement.Elements("tab");
-            
+
             if (!string.IsNullOrEmpty(TabName))
             {
                 tabs = tabs.Where(t => t.Attribute("name")?.Value == TabName);
@@ -63,24 +63,44 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var columnsElement = tab.Element("columns");
                 if (columnsElement == null) continue;
 
-                var sections = columnsElement.Elements("column")
-                    .SelectMany(col => col.Element("sections")?.Elements("section") ?? Enumerable.Empty<XElement>());
+                // Iterate columns with index so we can report which column each section belongs to
+                var columnsWithIndex = columnsElement.Elements("column").Select((col, idx) => new { Column = col, Index = idx }).ToList();
 
-                if (!string.IsNullOrEmpty(SectionName))
+                foreach (var colInfo in columnsWithIndex)
                 {
-                    sections = sections.Where(s => s.Attribute("name")?.Value == SectionName);
-                }
+                    var sections = colInfo.Column.Element("sections")?.Elements("section") ?? Enumerable.Empty<XElement>();
 
-                foreach (var section in sections)
-                {
-                    PSObject sectionObj = FormXmlHelper.ParseSection(section);
-                    // Add form and tab context
-                    sectionObj.Properties.Add(new PSNoteProperty("FormId", FormId));
-                    sectionObj.Properties.Add(new PSNoteProperty("TabName", currentTabName));
-                    sectionObj.Properties.Add(new PSNoteProperty("ShowBar", section.Attribute("showbar")?.Value != "false"));
-                    sectionObj.Properties.Add(new PSNoteProperty("LabelWidth", section.Attribute("labelwidth")?.Value));
+                    if (!string.IsNullOrEmpty(SectionName))
+                    {
+                        sections = sections.Where(s => s.Attribute("name")?.Value == SectionName);
+                    }
 
-                    WriteObject(sectionObj);
+                    foreach (var section in sections)
+                    {
+                        PSObject sectionObj = FormXmlHelper.ParseSection(section);
+                        // Add form and tab context
+                        sectionObj.Properties.Add(new PSNoteProperty("FormId", FormId));
+                        sectionObj.Properties.Add(new PSNoteProperty("TabName", currentTabName));
+                        sectionObj.Properties.Add(new PSNoteProperty("ShowBar", section.Attribute("showbar")?.Value != "false"));
+                        sectionObj.Properties.Add(new PSNoteProperty("LabelWidth", section.Attribute("labelwidth")?.Value));
+
+                        // Add Columns attribute if present (parse to int when possible)
+                        var columnsAttr = section.Attribute("columns")?.Value;
+                        if (!string.IsNullOrEmpty(columnsAttr) && int.TryParse(columnsAttr, out int cols))
+                        {
+                            sectionObj.Properties.Add(new PSNoteProperty("Columns", cols));
+                        }
+                        else
+                        {
+                            sectionObj.Properties.Add(new PSNoteProperty("Columns", columnsAttr));
+                        }
+
+
+                        // Add the zero-based index of the parent column within the tab
+                        sectionObj.Properties.Add(new PSNoteProperty("ColumnIndex", colInfo.Index));
+
+                        WriteObject(sectionObj);
+                    }
                 }
             }
         }

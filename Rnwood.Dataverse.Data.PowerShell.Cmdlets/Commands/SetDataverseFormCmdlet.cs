@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using System.Management.Automation;
 using System.Xml.Linq;
+using System.Security;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -197,9 +198,58 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (Publish.IsPresent)
                 {
                     WriteVerbose($"Publishing form '{formId}'...");
+
+                    string publishEntity = Entity;
+                    if (string.IsNullOrEmpty(publishEntity))
+                    {
+                        // First try unpublished version
+                        try
+                        {
+                            var retrieveUnpublishedRequest = new RetrieveUnpublishedRequest
+                            {
+                                Target = new EntityReference("systemform", formId),
+                                ColumnSet = new ColumnSet("objecttypecode")
+                            };
+
+                            var unpublishedResponse = (RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
+                            var unpublishedForm = unpublishedResponse?.Entity;
+                            publishEntity = unpublishedForm?.GetAttributeValue<string>("objecttypecode");
+                            WriteVerbose($"Determined entity for unpublished form '{formId}' as '{publishEntity}'");
+                        }
+                        catch (System.ServiceModel.FaultException<OrganizationServiceFault> ex)
+                        {
+                            if (QueryHelpers.IsNotFoundException(ex))
+                            {
+                                WriteVerbose($"Unpublished form '{formId}' not found (unpublished).");
+                            }
+                            else
+                            {
+                                throw;
+                            }
+                        }
+                        catch (System.ServiceModel.FaultException ex)
+                        {
+                            if (QueryHelpers.IsNotFoundException(ex))
+                            {
+                                WriteVerbose($"Unpublished form '{formId}' not found (unpublished).");
+
+
+                                var retrievedForm = Connection.Retrieve("systemform", formId, new ColumnSet("objecttypecode"));
+                                publishEntity = retrievedForm?.GetAttributeValue<string>("objecttypecode");
+                                WriteVerbose($"Determined entity for published form '{formId}' as '{publishEntity}'");
+                            }
+                            else
+                            {
+                                throw;
+                            }
+                        }
+                    }
+
+                    string parameterXml = $"<importexportxml><entities><entity>{SecurityElement.Escape(publishEntity)}</entity></entities></importexportxml>";
+
                     var publishRequest = new PublishXmlRequest
                     {
-                        ParameterXml = $"<importexportxml><entities><entity>{Entity}</entity></entities></importexportxml>"
+                        ParameterXml = parameterXml
                     };
                     Connection.Execute(publishRequest);
                     WriteVerbose("Form published successfully");

@@ -325,6 +325,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     columnsElement = new XElement("columns");
                     tab.Add(columnsElement);
+
+                    // No existing columns - create columns for the requested layout
+                    CreateColumnsForLayout(columnsElement, targetLayout);
                 }
                 else
                 {
