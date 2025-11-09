@@ -8,42 +8,150 @@ schema: 2.0.0
 # Set-DataverseFormSection
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Creates or updates a section in a Dataverse form tab.
 
 ## SYNTAX
 
-### Update
 ```
-Set-DataverseFormSection -FormId <Guid> -TabName <String> -SectionId <String> -Name <String> [-Label <String>]
- [-LanguageCode <Int32>] [-ShowLabel] [-ShowBar] [-Visible] [-Columns <Int32>] [-LabelWidth <Int32>]
- [-PassThru] [-Publish] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
-```
-
-### Create
-```
-Set-DataverseFormSection -FormId <Guid> -TabName <String> -Name <String> [-Label <String>]
- [-LanguageCode <Int32>] [-ShowLabel] [-ShowBar] [-Visible] [-Columns <Int32>] [-LabelWidth <Int32>]
- [-Index <Int32>] [-InsertBefore <String>] [-InsertAfter <String>] [-PassThru] [-Publish]
+Set-DataverseFormSection -FormId <Guid> -TabName <String> [-SectionId <String>] -Name <String> [-Label <String>]
+ [-LanguageCode <Int32>] [-ShowLabel] [-ShowBar] [-Hidden] [-Columns <Int32>] [-LabelWidth <Int32>]
+ [-Index <Int32>] [-InsertBefore <String>] [-InsertAfter <String>] [-ColumnIndex <Int32>] 
+ [-CellLabelAlignment <CellLabelAlignment>] [-CellLabelPosition <CellLabelPosition>] [-PassThru] 
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Set-DataverseFormSection cmdlet creates new sections or updates existing sections in Dataverse form tabs. Sections are containers within form tabs that hold controls and define layout structure. You can specify positioning, layout properties, labels, and visibility settings.
+
+When creating a new section, it will be added to the first available column unless ColumnIndex is specified. When updating an existing section (by providing SectionId), the specified properties will be modified while preserving other existing settings.
+
+Sections can be positioned using Index, InsertBefore, or InsertAfter parameters, and can be placed in specific tab columns using ColumnIndex.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Create a new section in a tab
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information'
+PS C:\> Set-DataverseFormSection -Connection $c -FormId $form.FormId -TabName 'General' `
+    -Name 'CustomSection' -Label 'Custom Information' -Columns 2 -PassThru
 ```
 
-{{ Add example description here }}
+Creates a new section named 'CustomSection' with 2 columns in the General tab.
+
+### Example 2: Update an existing section's properties
+```powershell
+PS C:\> $section = Get-DataverseFormSection -Connection $c -FormId $formId -TabName 'General' -SectionName 'ContactDetails'
+PS C:\> Set-DataverseFormSection -Connection $c -FormId $formId -TabName 'General' `
+    -SectionId $section.Id -Name 'ContactDetails' `
+    -Label 'Updated Contact Information' -ShowLabel -ShowBar -Columns 1
+```
+
+Updates an existing section's label and layout properties.
+
+### Example 3: Create a section at a specific position
+```powershell
+PS C:\> Set-DataverseFormSection -Connection $c -FormId $formId -TabName 'Details' `
+    -Name 'AddressSection' -Label 'Address Information' `
+    -InsertAfter 'ContactSection' -Columns 2 -PassThru
+```
+
+Creates a new section positioned after the 'ContactSection' with 2-column layout.
+
+### Example 4: Create a section in specific column
+```powershell
+PS C:\> Set-DataverseFormSection -Connection $c -FormId $formId -TabName 'General' `
+    -Name 'RightPanelSection' -Label 'Additional Details' `
+    -ColumnIndex 1 -Columns 1 -LabelWidth 120 -PassThru
+```
+
+Creates a section in the second column (index 1) of the tab with custom label width.
+
+### Example 5: Create section with cell formatting
+```powershell
+PS C:\> Set-DataverseFormSection -Connection $c -FormId $formId -TabName 'Advanced' `
+    -Name 'FormattedSection' -Label 'Formatted Information' `
+    -CellLabelAlignment Center -CellLabelPosition Top -Columns 2 -PassThru
+```
+
+Creates a section with centered labels positioned above controls.
+
+### Example 6: Create hidden section for conditional display
+```powershell
+PS C:\> Set-DataverseFormSection -Connection $c -FormId $formId -TabName 'Advanced' `
+    -Name 'ConditionalSection' -Label 'Advanced Settings' `
+    -Hidden -Columns 1 -ShowLabel:$false -PassThru
+```
+
+Creates a hidden section that can be shown conditionally via business rules or JavaScript.
+
+### Example 7: Move existing section to different position
+```powershell
+PS C:\> $section = Get-DataverseFormSection -Connection $c -FormId $formId -TabName 'General' -SectionName 'Summary'
+PS C:\> Set-DataverseFormSection -Connection $c -FormId $formId -TabName 'General' `
+    -SectionId $section.Id -Name 'Summary' -Index 0
+```
+
+Moves an existing section to the first position (index 0) within its column.
+
+### Example 8: Bulk section creation
+```powershell
+PS C:\> $sections = @(
+    @{ Name = 'BasicInfo'; Label = 'Basic Information'; Columns = 2; ColumnIndex = 0 }
+    @{ Name = 'ContactDetails'; Label = 'Contact Details'; Columns = 1; ColumnIndex = 1 }
+    @{ Name = 'Preferences'; Label = 'User Preferences'; Columns = 2; ColumnIndex = 0 }
+)
+
+PS C:\> foreach ($section in $sections) {
+    try {
+        $sectionId = Set-DataverseFormSection -Connection $c -FormId $formId -TabName 'General' `
+            -Name $section.Name -Label $section.Label -Columns $section.Columns `
+            -ColumnIndex $section.ColumnIndex -PassThru
+        Write-Host "Created section: $($section.Name) with ID: $sectionId"
+    }
+    catch {
+        Write-Warning "Failed to create section $($section.Name): $($_.Exception.Message)"
+    }
+}
+```
+
+Creates multiple sections in specific columns with error handling.
 
 ## PARAMETERS
 
-### -Columns
-Number of columns in the section (1-4)
+### -CellLabelAlignment
+Cell label alignment for controls within the section
+
+```yaml
+Type: CellLabelAlignment
+Parameter Sets: (All)
+Aliases:
+Accepted values: Center, Left, Right
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CellLabelPosition
+Cell label position for controls within the section
+
+```yaml
+Type: CellLabelPosition
+Parameter Sets: (All)
+Aliases:
+Accepted values: Top, Left
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ColumnIndex
+Zero-based index of the column within the tab where the section should be placed
 
 ```yaml
 Type: Int32
@@ -57,13 +165,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -Columns
+Number of columns in the section (1-4). Controls how many columns of controls can be placed side-by-side in the section.
 
 ```yaml
-Type: SwitchParameter
+Type: Int32
 Parameter Sets: (All)
-Aliases: cf
+Aliases:
 
 Required: False
 Position: Named
@@ -90,7 +198,7 @@ Accept wildcard characters: False
 ```
 
 ### -FormId
-ID of the form
+ID of the form containing the tab where the section will be created or updated
 
 ```yaml
 Type: Guid
@@ -104,12 +212,27 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
+### -Hidden
+Whether the section is hidden
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Index
-Zero-based index position to insert the section
+Zero-based index position to insert the section within its target column. If not specified, the section is added at the end.
 
 ```yaml
 Type: Int32
-Parameter Sets: Create
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -120,11 +243,11 @@ Accept wildcard characters: False
 ```
 
 ### -InsertAfter
-Name or ID of the section after which to insert
+Name or ID of the section after which to insert the new section. Cannot be used with Index or InsertBefore.
 
 ```yaml
 Type: String
-Parameter Sets: Create
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -135,11 +258,11 @@ Accept wildcard characters: False
 ```
 
 ### -InsertBefore
-Name or ID of the section before which to insert
+Name or ID of the section before which to insert the new section. Cannot be used with Index or InsertAfter.
 
 ```yaml
 Type: String
-Parameter Sets: Create
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -150,7 +273,7 @@ Accept wildcard characters: False
 ```
 
 ### -Label
-Label text for the section
+Display label text for the section
 
 ```yaml
 Type: String
@@ -165,7 +288,7 @@ Accept wildcard characters: False
 ```
 
 ### -LabelWidth
-Width of labels in pixels
+Width of labels in pixels for controls within the section
 
 ```yaml
 Type: Int32
@@ -180,7 +303,7 @@ Accept wildcard characters: False
 ```
 
 ### -LanguageCode
-Language code for the label (default: 1033)
+Language code for the label (default: 1033 for English)
 
 ```yaml
 Type: Int32
@@ -189,13 +312,13 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
+Default value: 1033
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
 ### -Name
-Name of the section
+Logical name of the section. Required for all operations.
 
 ```yaml
 Type: String
@@ -210,22 +333,7 @@ Accept wildcard characters: False
 ```
 
 ### -PassThru
-Return the section ID
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Publish
-Publish the form after modifying the section
+Return the section ID after creation/update
 
 ```yaml
 Type: SwitchParameter
@@ -240,14 +348,14 @@ Accept wildcard characters: False
 ```
 
 ### -SectionId
-ID of the section to update
+ID of the existing section to update. If not specified, a new section will be created.
 
 ```yaml
 Type: String
-Parameter Sets: Update
+Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -255,7 +363,7 @@ Accept wildcard characters: False
 ```
 
 ### -ShowBar
-Whether to show the section bar
+Whether to show the section bar (border/divider)
 
 ```yaml
 Type: SwitchParameter
@@ -299,24 +407,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Visible
-Whether the section is visible
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
 Type: SwitchParameter
@@ -330,8 +422,23 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ProgressAction
-{{ Fill ProgressAction Description }}
+Controls how progress information is displayed during cmdlet execution.
 
 ```yaml
 Type: ActionPreference
@@ -351,9 +458,61 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
+
 ## OUTPUTS
 
 ### System.String
+When -PassThru is specified, returns the section ID.
+
 ## NOTES
 
+**Section Layout:**
+- **Columns**: Number of columns within the section (1-4)
+- Controls within a section are arranged in the specified number of columns
+- Different from tab columns - sections have their own internal column layout
+
+**Section Placement:**
+- **ColumnIndex**: Determines which tab column the section is placed in (0-based)
+- If not specified, section is placed in the first available column
+- Tab must have the specified column index or an error will occur
+
+**Positioning Options:**
+- **Index**: Zero-based position within the target column
+- **InsertBefore**: Insert before the specified section (by name or ID)
+- **InsertAfter**: Insert after the specified section (by name or ID)
+- Index takes precedence over Insert parameters if multiple are specified
+
+**Cell Label Formatting:**
+- **CellLabelAlignment**: How labels are aligned (Center, Left, Right)
+- **CellLabelPosition**: Where labels are positioned relative to controls (Top, Left)
+- **LabelWidth**: Fixed width in pixels for control labels
+
+**Section Creation vs Update:**
+- If SectionId is not specified, a new section is created
+- If SectionId is specified, the existing section is updated
+- New sections are added at the end of the target column unless positioning is specified
+
+**Best Practices:**
+- Use descriptive section names for better form organization
+- Group related controls within the same section
+- Consider using multiple columns for better space utilization
+- Test layout changes thoroughly before publishing
+- Use -WhatIf to preview changes before applying
+
+**Common Use Cases:**
+- Grouping related form controls
+- Creating responsive form layouts
+- Organizing information hierarchically
+- Supporting conditional visibility scenarios
+
 ## RELATED LINKS
+
+[Get-DataverseFormSection](Get-DataverseFormSection.md)
+
+[Remove-DataverseFormSection](Remove-DataverseFormSection.md)
+
+[Set-DataverseFormControl](Set-DataverseFormControl.md)
+
+[Get-DataverseFormTab](Get-DataverseFormTab.md)
+
+[Set-DataverseFormTab](Set-DataverseFormTab.md)

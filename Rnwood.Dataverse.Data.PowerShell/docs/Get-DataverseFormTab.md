@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseFormTab
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves tab information from a Dataverse form.
 
 ## SYNTAX
 
@@ -18,16 +18,51 @@ Get-DataverseFormTab -FormId <Guid> [-TabName <String>] [-Connection <ServiceCli
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Get-DataverseFormTab cmdlet retrieves tab information from a Dataverse form. It parses the FormXML to extract tab details including name, ID, visibility, layout, labels, and sections. You can retrieve all tabs from a form or filter by a specific tab name.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Get all tabs from a form
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information'
+PS C:\> Get-DataverseFormTab -Connection $c -FormId $form.Id
 ```
 
-{{ Add example description here }}
+Retrieves all tabs from the contact Information form.
+
+### Example 2: Get a specific tab by name
+```powershell
+PS C:\> $formId = '12345678-1234-1234-1234-123456789012'
+PS C:\> Get-DataverseFormTab -Connection $c -FormId $formId -TabName 'General'
+```
+
+Retrieves only the 'General' tab from the specified form.
+
+### Example 3: Pipeline usage with form objects
+```powershell
+PS C:\> Get-DataverseForm -Connection $c -Entity 'account' | 
+    ForEach-Object { Get-DataverseFormTab -Connection $c -FormId $_.Id }
+```
+
+Gets all tabs from all account forms using pipeline.
+
+### Example 4: Explore tab structure
+```powershell
+PS C:\> $tab = Get-DataverseFormTab -Connection $c -FormId $formId -TabName 'Details'
+PS C:\> $tab.Layout          # Shows OneColumn, TwoColumns, ThreeColumns, or Custom
+PS C:\> $tab.Sections        # Array of sections in the tab
+PS C:\> $tab.Labels          # Localized labels for the tab
+```
+
+Explores the structure and properties of a specific tab.
+
+### Example 5: Check tab visibility settings
+```powershell
+PS C:\> $tabs = Get-DataverseFormTab -Connection $c -FormId $formId
+PS C:\> $tabs | Where-Object { $_.Hidden -eq $true }
+```
+
+Finds all hidden tabs in the form.
 
 ## PARAMETERS
 
@@ -49,7 +84,7 @@ Accept wildcard characters: False
 ```
 
 ### -FormId
-ID of the form
+ID of the form to retrieve tabs from.
 
 ```yaml
 Type: Guid
@@ -64,7 +99,7 @@ Accept wildcard characters: False
 ```
 
 ### -TabName
-Name of a specific tab to retrieve
+Name of a specific tab to retrieve. If not specified, all tabs are returned.
 
 ```yaml
 Type: String
@@ -79,7 +114,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
-{{ Fill ProgressAction Description }}
+Controls how progress information is displayed during cmdlet execution.
 
 ```yaml
 Type: ActionPreference
@@ -99,9 +134,68 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
+You can pipe form IDs to this cmdlet.
+
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
+Returns PSObjects with the following properties:
+- **Id**: Tab ID (GUID)
+- **Name**: Tab name/identifier
+- **Expanded**: Whether the tab is expanded by default (boolean)
+- **Visible**: Whether the tab is visible (boolean)
+- **Hidden**: Whether the tab is hidden (boolean, opposite of Visible)
+- **VerticalLayout**: Whether the tab uses vertical layout (boolean)
+- **ShowLabel**: Whether to show the tab label (boolean)
+- **Layout**: Tab layout type (OneColumn, TwoColumns, ThreeColumns, Custom, or None)
+- **Column1Width**, **Column2Width**, **Column3Width**: Column width percentages (if applicable)
+- **Labels**: Array of localized labels with Description and LanguageCode
+- **Sections**: Array of sections contained in the tab
+
 ## NOTES
 
+**Form Structure Hierarchy:**
+```
+Form
+??? Header
+??? Tabs
+?   ??? Tab 1
+?   ?   ??? Columns (1-3 typical)
+?   ?   ?   ??? Column 1
+?   ?   ?   ?   ??? Sections
+?   ?   ?   ??? Column 2
+?   ?   ?       ??? Sections
+?   ?   ??? Sections (within columns)
+?   ??? Tab 2
+??? Footer/Navigation
+```
+
+**Tab Layout Types:**
+- **OneColumn**: Single column layout (100% width)
+- **TwoColumns**: Two-column layout (typically 50%/50% or custom)
+- **ThreeColumns**: Three-column layout (typically 33%/33%/33% or custom)
+- **Custom**: More than 3 columns or non-standard configuration
+- **None**: No columns element found
+
+**Common Use Cases:**
+- Form analysis and documentation
+- Programmatic form structure validation
+- Automated form configuration auditing
+- Cross-environment form comparison
+
+**Performance Notes:**
+- Retrieves unpublished form version first, falls back to published
+- Parses FormXML on-demand, minimal performance impact
+- Use -TabName to filter for better performance on large forms
+
 ## RELATED LINKS
+
+[Get-DataverseForm](Get-DataverseForm.md)
+
+[Set-DataverseFormTab](Set-DataverseFormTab.md)
+
+[Remove-DataverseFormTab](Remove-DataverseFormTab.md)
+
+[Get-DataverseFormSection](Get-DataverseFormSection.md)
+
+[Get-DataverseFormControl](Get-DataverseFormControl.md)

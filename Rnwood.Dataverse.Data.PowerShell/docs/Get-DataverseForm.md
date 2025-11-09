@@ -14,38 +14,38 @@ Retrieves forms from a Dataverse environment.
 
 ### ById
 ```
-Get-DataverseForm -Id <Guid> [-IncludeFormXml] [-ParseFormXml] [-Unpublished] [-Connection <ServiceClient>]
+Get-DataverseForm -Id <Guid> [-IncludeFormXml] [-Unpublished] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### ByEntity
 ```
 Get-DataverseForm -Entity <String> [-FormType <FormType>] [-UniqueNameFilter <String>] [-IncludeFormXml]
- [-ParseFormXml] [-Unpublished] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [-Unpublished] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### ByName
 ```
-Get-DataverseForm -Entity <String> -Name <String> [-IncludeFormXml] [-ParseFormXml] [-Unpublished]
+Get-DataverseForm -Entity <String> -Name <String> [-IncludeFormXml] [-Unpublished]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### ByUniqueName
 ```
-Get-DataverseForm -Entity <String> -UniqueName <String> [-IncludeFormXml] [-ParseFormXml] [-Unpublished]
+Get-DataverseForm -Entity <String> -UniqueName <String> [-IncludeFormXml] [-Unpublished]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-The Get-DataverseForm cmdlet retrieves form definitions from a Dataverse environment. Forms can be retrieved by ID, by entity name (optionally filtered by form type), or by entity name and form name. The cmdlet returns simplified PSObject output with form properties, and can optionally include the raw FormXml or parse it into structured tab/section/control information.
+The Get-DataverseForm cmdlet retrieves form definitions from a Dataverse environment. Forms can be retrieved by ID, by entity name (optionally filtered by form type), or by entity name and form name. The cmdlet returns simplified PSObject output with form properties, and can optionally include the raw FormXml content.
+
+Use the specialized form management cmdlets (Get-DataverseFormTab, Get-DataverseFormSection, Get-DataverseFormControl) to work with specific form components.
 
 ## EXAMPLES
 
 ### Example 1: Get all forms for an entity
 ```powershell
-PS C:\> $conn = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
-PS C:\> Get-DataverseForm -Connection $conn -Entity 'contact'
+PS C:\> Get-DataverseForm -Connection $c -Entity 'contact'
 ```
 
 Retrieves all forms for the contact entity.
@@ -53,40 +53,52 @@ Retrieves all forms for the contact entity.
 ### Example 2: Get a specific form by ID
 ```powershell
 PS C:\> $formId = 'a1234567-89ab-cdef-0123-456789abcdef'
-PS C:\> Get-DataverseForm -Connection $conn -Id $formId
+PS C:\> Get-DataverseForm -Connection $c -Id $formId
 ```
 
 Retrieves a specific form by its ID.
 
 ### Example 3: Get forms of a specific type
 ```powershell
-PS C:\> Get-DataverseForm -Connection $conn -Entity 'account' -FormType 'Main'
+PS C:\> Get-DataverseForm -Connection $c -Entity 'account' -FormType 'Main'
 ```
 
 Retrieves all main forms for the account entity.
 
 ### Example 4: Get a form by entity and name
 ```powershell
-PS C:\> Get-DataverseForm -Connection $conn -Entity 'contact' -Name 'Information'
+PS C:\> Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information'
 ```
 
 Retrieves the contact form named "Information".
 
 ### Example 5: Get form with FormXml
 ```powershell
-PS C:\> $form = Get-DataverseForm -Connection $conn -Entity 'contact' -Name 'Information' -IncludeFormXml
+PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information' -IncludeFormXml
 PS C:\> $form.FormXml
 ```
 
 Retrieves a form and includes the raw FormXml content.
 
-### Example 6: Get form with parsed structure
+### Example 6: Work with form structure using specialized cmdlets
 ```powershell
-PS C:\> $form = Get-DataverseForm -Connection $conn -Entity 'contact' -Name 'Information' -ParseFormXml
-PS C:\> $form.ParsedForm.Tabs | ForEach-Object { $_.Name }
+PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information'
+PS C:\> # Get all tabs from the form
+PS C:\> $tabs = Get-DataverseFormTab -Connection $c -FormId $form.FormId
+PS C:\> # Get all sections from a specific tab
+PS C:\> $sections = Get-DataverseFormSection -Connection $c -FormId $form.FormId -TabName 'General'
+PS C:\> # Get all controls from a specific section
+PS C:\> $controls = Get-DataverseFormControl -Connection $c -FormId $form.FormId -TabName 'General' -SectionName 'Details'
 ```
 
-Retrieves a form and parses the FormXml into a structured object with tabs, sections, and controls.
+Demonstrates how to explore form structure using the specialized form cmdlets.
+
+### Example 7: Get unpublished forms
+```powershell
+PS C:\> Get-DataverseForm -Connection $c -Entity 'contact' -Unpublished
+```
+
+Retrieves unpublished forms for the contact entity.
 
 ## PARAMETERS
 
@@ -123,7 +135,7 @@ Accept wildcard characters: False
 ```
 
 ### -FormType
-Form type filter: Main (2), QuickCreate (5), QuickView (6), Card (11), Dashboard (0), MainInteractionCentric (63), Other (100), MainBackup (101), AppointmentBook (102), Dialog (103)
+Form type filter
 
 ```yaml
 Type: FormType
@@ -183,21 +195,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ParseFormXml
-Parse FormXml and include structured tab/section/control information
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Unpublished
 Include unpublished forms in the results
 
@@ -214,7 +211,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
-{{ Fill ProgressAction Description }}
+Controls how progress information is displayed during cmdlet execution.
 
 ```yaml
 Type: ActionPreference
@@ -269,4 +266,51 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Management.Automation.PSObject
 ## NOTES
 
+**Form Types Available:**
+- Dashboard (0) - Dashboard forms
+- AppointmentBook (1) - Appointment book forms  
+- Main (2) - Main entity forms
+- MiniCampaignBO (3) - Mini campaign forms
+- Preview (4) - Preview forms
+- MobileExpress (5) - Mobile express forms
+- QuickViewForm (6) - Quick view forms
+- QuickCreate (7) - Quick create forms
+- Dialog (8) - Dialog forms
+- TaskFlowForm (9) - Task flow forms
+- InteractionCentricDashboard (10) - Interaction centric dashboards
+- Card (11) - Card forms
+- MainInteractiveExperience (12) - Main interactive experience forms
+- ContextualDashboard (13) - Contextual dashboards
+- Other (100) - Other form types
+- MainBackup (101) - Main backup forms
+- AppointmentBookBackup (102) - Appointment book backup forms
+- PowerBIDashboard (103) - Power BI dashboard forms
+
+**Form Presentation Types:**
+- ClassicForm (0) - Classic form presentation
+- AirForm (1) - Air form presentation
+- ConvertedICForm (2) - Converted interaction centric form presentation
+
+**Performance:**
+- Use -IncludeFormXml only when needed as FormXml can be large
+- Query by specific ID when possible for best performance
+- Use -FormType to filter results when querying by entity
+
+**Related Cmdlets:**
+- Use Get-DataverseFormTab to retrieve tab information
+- Use Get-DataverseFormSection to retrieve section information  
+- Use Get-DataverseFormControl to retrieve control information
+- Use Set-DataverseForm to create or update forms
+- Use Remove-DataverseForm to delete forms
+
 ## RELATED LINKS
+
+[Set-DataverseForm](Set-DataverseForm.md)
+
+[Remove-DataverseForm](Remove-DataverseForm.md)
+
+[Get-DataverseFormTab](Get-DataverseFormTab.md)
+
+[Get-DataverseFormSection](Get-DataverseFormSection.md)
+
+[Get-DataverseFormControl](Get-DataverseFormControl.md)

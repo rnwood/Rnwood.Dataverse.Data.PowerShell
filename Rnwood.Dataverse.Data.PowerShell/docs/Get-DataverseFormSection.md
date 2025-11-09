@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseFormSection
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves section information from a Dataverse form.
 
 ## SYNTAX
 
@@ -18,16 +18,60 @@ Get-DataverseFormSection -FormId <Guid> [-TabName <String>] [-SectionName <Strin
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Get-DataverseFormSection cmdlet retrieves section information from a Dataverse form. It parses the FormXML to extract section details including name, ID, visibility, column layout, labels, and contained controls. You can retrieve all sections from a form, filter by tab name, or get a specific section by name.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Get all sections from a form
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information'
+PS C:\> Get-DataverseFormSection -Connection $c -FormId $form.FormId
 ```
 
-{{ Add example description here }}
+Retrieves all sections from all tabs in the contact Information form.
+
+### Example 2: Get sections from a specific tab
+```powershell
+PS C:\> $formId = '12345678-1234-1234-1234-123456789012'
+PS C:\> Get-DataverseFormSection -Connection $c -FormId $formId -TabName 'General'
+```
+
+Retrieves all sections from the 'General' tab of the specified form.
+
+### Example 3: Get a specific section by name
+```powershell
+PS C:\> Get-DataverseFormSection -Connection $c -FormId $formId -SectionName 'ContactDetails'
+```
+
+Retrieves only the section named 'ContactDetails' from the form.
+
+### Example 4: Get sections from specific tab and section
+```powershell
+PS C:\> Get-DataverseFormSection -Connection $c -FormId $formId -TabName 'Details' -SectionName 'AdditionalInfo'
+```
+
+Retrieves the 'AdditionalInfo' section specifically from the 'Details' tab.
+
+### Example 5: Explore section properties
+```powershell
+PS C:\> $section = Get-DataverseFormSection -Connection $c -FormId $formId -TabName 'General' -SectionName 'Summary'
+PS C:\> $section.ColumnIndex    # Which column in the tab this section belongs to
+PS C:\> $section.Columns        # Number of columns in the section
+PS C:\> $section.Controls       # Controls contained in this section
+PS C:\> $section.Labels         # Localized labels for the section
+```
+
+Explores the structure and properties of a specific section.
+
+### Example 6: Find sections with specific properties
+```powershell
+PS C:\> $sections = Get-DataverseFormSection -Connection $c -FormId $formId
+PS C:\> $sections | Where-Object { $_.Hidden -eq $true }                    # Hidden sections
+PS C:\> $sections | Where-Object { $_.Columns -gt 1 }                      # Multi-column sections
+PS C:\> $sections | Where-Object { $_.ShowLabel -eq $false }               # Sections without labels
+```
+
+Filters sections based on specific properties.
 
 ## PARAMETERS
 
@@ -49,7 +93,7 @@ Accept wildcard characters: False
 ```
 
 ### -FormId
-ID of the form
+ID of the form to retrieve sections from.
 
 ```yaml
 Type: Guid
@@ -64,7 +108,7 @@ Accept wildcard characters: False
 ```
 
 ### -SectionName
-Name of a specific section to retrieve
+Name of a specific section to retrieve. If not specified, all sections are returned.
 
 ```yaml
 Type: String
@@ -79,7 +123,7 @@ Accept wildcard characters: False
 ```
 
 ### -TabName
-Name of the tab containing the sections
+Name of the tab containing the sections. If not specified, sections from all tabs are returned.
 
 ```yaml
 Type: String
@@ -94,7 +138,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
-{{ Fill ProgressAction Description }}
+Controls how progress information is displayed during cmdlet execution.
 
 ```yaml
 Type: ActionPreference
@@ -114,9 +158,75 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
+You can pipe form IDs to this cmdlet.
+
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
+Returns PSObjects with the following properties:
+- **Id**: Section ID (GUID)
+- **Name**: Section name/identifier
+- **FormId**: ID of the containing form (Guid)
+- **TabName**: Name of the containing tab (string)
+- **ColumnIndex**: Zero-based index of the parent column within the tab (integer)
+- **ShowLabel**: Whether to show the section label (boolean)
+- **Hidden**: Whether the section is hidden (boolean, opposite of Visible)
+- **ShowBar**: Whether to show the section bar (boolean)
+- **LabelWidth**: Width of labels in pixels (string)
+- **Columns**: Number of columns in the section (integer or string)
+- **CellLabelAlignment**: Cell label alignment (CellLabelAlignment enum or null)
+- **CellLabelPosition**: Cell label position (CellLabelPosition enum or null)
+- **Labels**: Array of localized labels with Description and LanguageCode
+- **Controls**: Array of controls contained in the section
+
 ## NOTES
 
+**Form Structure Hierarchy:**
+```
+Form
+??? Header
+??? Tabs
+?   ??? Tab 1
+?   ?   ??? Columns (1-3 typical)
+?   ?   ?   ??? Column 1
+?   ?   ?   ?   ??? Section 1
+?   ?   ?   ?   ??? Section 2
+?   ?   ?   ??? Column 2
+?   ?   ?       ??? Section 3
+?   ?   ??? Sections (within columns)
+?   ??? Tab 2
+??? Footer/Navigation
+```
+
+**Section Column Layout:**
+- **Columns**: Number of columns within the section (1-4 typical)
+- Different from tab columns - sections have their own internal column layout
+- Controls within a section are arranged in the specified number of columns
+
+**Cell Label Properties:**
+- **CellLabelAlignment**: Center, Left, Right
+- **CellLabelPosition**: Top, Left
+- Controls how labels appear for controls within the section
+
+**Common Use Cases:**
+- Form analysis and documentation
+- Section-level customization and validation
+- Automated form configuration auditing
+- Cross-environment form comparison
+
+**Performance Notes:**
+- Retrieves unpublished form version first, falls back to published
+- Parses FormXML on-demand with minimal performance impact
+- Use -TabName and -SectionName filters for better performance on large forms
+
 ## RELATED LINKS
+
+[Get-DataverseForm](Get-DataverseForm.md)
+
+[Get-DataverseFormTab](Get-DataverseFormTab.md)
+
+[Set-DataverseFormSection](Set-DataverseFormSection.md)
+
+[Remove-DataverseFormSection](Remove-DataverseFormSection.md)
+
+[Get-DataverseFormControl](Get-DataverseFormControl.md)

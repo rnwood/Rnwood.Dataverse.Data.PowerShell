@@ -12,27 +12,20 @@ Creates or updates a tab on a Dataverse form with support for column layouts.
 
 ## SYNTAX
 
-### Update
 ```
-Set-DataverseFormTab -FormId <Guid> -TabId <String> -Name <String> [-Label <String>] [-LanguageCode <Int32>]
- [-Expanded] [-Visible] [-ShowLabel] [-VerticalLayout] [-Layout <String>] [-Column1Width <Int32>]
- [-Column2Width <Int32>] [-Column3Width <Int32>] [-PassThru] [-Publish] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
-```
-
-### Create
-```
-Set-DataverseFormTab -FormId <Guid> -Name <String> [-Label <String>] [-LanguageCode <Int32>] [-Expanded]
- [-Visible] [-ShowLabel] [-VerticalLayout] [-Layout <String>] [-Column1Width <Int32>] [-Column2Width <Int32>]
- [-Column3Width <Int32>] [-Index <Int32>] [-InsertBefore <String>] [-InsertAfter <String>] [-PassThru]
- [-Publish] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+Set-DataverseFormTab -FormId <Guid> [-TabId <String>] -Name <String> [-Label <String>] [-LanguageCode <Int32>]
+ [-Expanded] [-Hidden] [-ShowLabel] [-VerticalLayout] [-Layout <String>] [-Column1Width <Int32>]
+ [-Column2Width <Int32>] [-Column3Width <Int32>] [-Index <Int32>] [-InsertBefore <String>] 
+ [-InsertAfter <String>] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] 
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 The Set-DataverseFormTab cmdlet creates new tabs or updates existing ones on Dataverse forms. It supports comprehensive column layout management, allowing you to configure one, two, or three column layouts with custom width percentages.
 
-The cmdlet can create new tabs or update existing ones by name or ID. When updating column layouts, existing sections are automatically redistributed across the new column structure.
+When creating a new tab, it will be added to the end of the tab list unless positioning parameters (Index, InsertBefore, or InsertAfter) are specified. When updating an existing tab (by providing TabId), the specified properties will be modified while preserving other existing settings.
+
+When changing column layouts, existing sections are automatically redistributed across the new column structure.
 
 ## EXAMPLES
 
@@ -61,8 +54,9 @@ Creates a tab with three columns with custom widths.
 
 ### Example 4: Update existing tab layout
 ```powershell
-PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -Name "general" `
-    -Layout TwoColumns -Column1Width "50%" -Column2Width "50%"
+PS C:\> $tab = Get-DataverseFormTab -Connection $c -FormId $formId -TabName "general"
+PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -TabId $tab.Id -Name "general" `
+    -Layout TwoColumns -Column1Width 50 -Column2Width 50
 ```
 
 Updates an existing tab to use a two-column layout with equal widths.
@@ -70,39 +64,42 @@ Updates an existing tab to use a two-column layout with equal widths.
 ### Example 5: Create tab with positioning
 ```powershell
 PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -Name "Summary" -Label "Summary" `
-    -InsertBefore "general" -Layout OneColumn
+    -InsertBefore "general" -Layout OneColumn -PassThru
 ```
 
-Creates a new tab and positions it before the "general" tab.
+Creates a new tab and positions it before the "general" tab, returning the new tab ID.
 
-### Example 6: Convert three-column to two-column
+### Example 6: Create collapsed hidden tab
 ```powershell
-PS C:\> $tabId = Get-DataverseFormTab -Connection $c -FormId $formId -TabName "details" | Select-Object -ExpandProperty Id
-PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -TabId $tabId -Name "details" `
-    -Layout TwoColumns -Column1Width "70%" -Column2Width "30%"
+PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -Name "Advanced" -Label "Advanced Options" `
+    -Hidden -Expanded:$false -ShowLabel
 ```
 
-Updates an existing tab to change from any layout to a two-column layout, redistributing sections automatically.
+Creates a new tab that is hidden and collapsed by default but shows the label.
+
+### Example 7: Update tab visibility and layout
+```powershell
+PS C:\> $tab = Get-DataverseFormTab -Connection $c -FormId $formId -TabName "details"
+PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -TabId $tab.Id -Name "details" `
+    -Hidden:$false -Layout ThreeColumns -Column1Width 33 -Column2Width 33 -Column3Width 34
+```
+
+Updates an existing tab to make it visible and change to a three-column layout.
+
+### Example 8: Create tab at specific position
+```powershell
+PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -Name "FirstTab" -Label "First Tab" `
+    -Index 0 -Layout OneColumn
+```
+
+Creates a new tab at the beginning (first position) of the tab list.
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
+http://server.com/MyOrg/).
+If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient
@@ -117,7 +114,7 @@ Accept wildcard characters: False
 ```
 
 ### -Expanded
-Whether the tab is expanded by default.
+Whether the tab is expanded by default
 
 ```yaml
 Type: SwitchParameter
@@ -132,7 +129,7 @@ Accept wildcard characters: False
 ```
 
 ### -FormId
-ID of the form to create or update the tab on.
+ID of the form to create or update the tab on
 
 ```yaml
 Type: Guid
@@ -146,12 +143,27 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
+### -Hidden
+Whether the tab is hidden
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Index
-Zero-based index position to insert the tab. Only used when creating new tabs.
+Zero-based index position to insert the tab. Used only when creating new tabs.
 
 ```yaml
 Type: Int32
-Parameter Sets: Create
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -162,11 +174,11 @@ Accept wildcard characters: False
 ```
 
 ### -InsertAfter
-Name or ID of the tab after which to insert this tab. Only used when creating new tabs.
+Name or ID of the tab after which to insert this tab. Used only when creating new tabs.
 
 ```yaml
 Type: String
-Parameter Sets: Create
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -177,11 +189,11 @@ Accept wildcard characters: False
 ```
 
 ### -InsertBefore
-Name or ID of the tab before which to insert this tab. Only used when creating new tabs.
+Name or ID of the tab before which to insert this tab. Used only when creating new tabs.
 
 ```yaml
 Type: String
-Parameter Sets: Create
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -192,7 +204,7 @@ Accept wildcard characters: False
 ```
 
 ### -Label
-Display label text for the tab.
+Display label text for the tab
 
 ```yaml
 Type: String
@@ -207,7 +219,7 @@ Accept wildcard characters: False
 ```
 
 ### -LanguageCode
-Language code for the label (default: 1033 for English).
+Language code for the label (default: 1033 for English)
 
 ```yaml
 Type: Int32
@@ -217,6 +229,22 @@ Aliases:
 Required: False
 Position: Named
 Default value: 1033
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Layout
+Column layout for the tab
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: OneColumn, TwoColumns, ThreeColumns
+
+Required: False
+Position: Named
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -237,22 +265,7 @@ Accept wildcard characters: False
 ```
 
 ### -PassThru
-If specified, returns the tab ID.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Publish
-Publishes the form after modifying the tab.
+Return the tab ID after creation/update
 
 ```yaml
 Type: SwitchParameter
@@ -267,7 +280,7 @@ Accept wildcard characters: False
 ```
 
 ### -ShowLabel
-Whether to show the tab label.
+Whether to show the tab label
 
 ```yaml
 Type: SwitchParameter
@@ -276,20 +289,20 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: True
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
 ### -TabId
-ID of the existing tab to update. Required when using the Update parameter set.
+ID of the existing tab to update. If not specified, a new tab will be created.
 
 ```yaml
 Type: String
-Parameter Sets: Update
+Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -297,7 +310,7 @@ Accept wildcard characters: False
 ```
 
 ### -VerticalLayout
-Whether to use vertical layout for the tab.
+Whether to use vertical layout for the tab
 
 ```yaml
 Type: SwitchParameter
@@ -311,17 +324,47 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Visible
-Whether the tab is visible.
+### -Column1Width
+Width of the first column as percentage (0-100)
 
 ```yaml
-Type: SwitchParameter
+Type: Int32
 Parameter Sets: (All)
 Aliases:
 
 Required: False
 Position: Named
-Default value: True
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Column2Width
+Width of the second column as percentage (0-100)
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Column3Width
+Width of the third column as percentage (0-100)
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -341,73 +384,28 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ProgressAction
-{{ Fill ProgressAction Description }}
+Controls how progress information is displayed during cmdlet execution.
 
 ```yaml
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Column1Width
-Width of the first column as percentage (0-100). Used with TwoColumns or ThreeColumns layout.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Column2Width
-Width of the second column as percentage (0-100). Used with TwoColumns or ThreeColumns layout.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Column3Width
-Width of the third column as percentage (0-100). Used with ThreeColumns layout.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Layout
-Column layout for the tab. Valid values: OneColumn, TwoColumns, ThreeColumns.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
 
 Required: False
 Position: Named
@@ -422,35 +420,44 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
+
 ## OUTPUTS
 
 ### System.String
+When -PassThru is specified, returns the tab ID.
+
 ## NOTES
 
-**Column Layouts:**
-- **OneColumn**: Single column layout (default width 100%)
-- **TwoColumns**: Two-column layout (default widths 50%/50%)
-- **ThreeColumns**: Three-column layout (default widths 33%/33%/34%)
+**Column Layout Management:**
+- **OneColumn**: Creates a single column layout (100% width)
+- **TwoColumns**: Creates a two-column layout (default 50%/50%)
+- **ThreeColumns**: Creates a three-column layout (default 33%/33%/34%)
+- Column widths are specified as percentages (0-100)
+- Total width should add up to 100% for best results
 
-**Column Width Guidelines:**
-- Widths must be specified as percentages (e.g., "50%", "33%")
-- Total width should typically sum to 100%
-- Default widths are provided if not specified
+**Tab Creation vs Update:**
+- If TabId is not specified, a new tab is created
+- If TabId is specified, the existing tab is updated
+- New tabs are added at the end unless positioning parameters are used
+
+**Positioning Options (New Tabs Only):**
+- **Index**: Zero-based position in the tab list
+- **InsertBefore**: Insert before the specified tab (by name or ID)
+- **InsertAfter**: Insert after the specified tab (by name or ID)
+- Index takes precedence over Insert parameters if multiple are specified
 
 **Section Redistribution:**
-- When changing layouts, existing sections are automatically redistributed
-- Sections are distributed evenly across the new column structure
-- Section content and configuration is preserved
+When changing column layouts on existing tabs, sections are automatically redistributed:
+- Sections are collected from the old layout
+- Distributed evenly across the new columns
+- Original section order is preserved as much as possible
 
-**Form Publishing:**
-- Use -Publish to immediately publish changes
-- Publishing is required for changes to appear in the UI
-- Can also publish separately using Publish-DataverseEntity
-
-**Update vs Create:**
-- Tabs are identified by name for upsert behavior
-- Specify -TabId for explicit updates to existing tabs
-- Use positioning parameters only when creating new tabs
+**Best Practices:**
+- Always specify column widths when using TwoColumns or ThreeColumns layouts
+- Use descriptive tab names for better form organization
+- Consider user experience when positioning tabs
+- Test layout changes thoroughly before publishing
+- Use -WhatIf to preview changes before applying
 
 ## RELATED LINKS
 
@@ -458,6 +465,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 [Remove-DataverseFormTab](Remove-DataverseFormTab.md)
 
-[Get-DataverseFormSection](Get-DataverseFormSection.md)
-
 [Set-DataverseFormSection](Set-DataverseFormSection.md)
+
+[Get-DataverseForm](Get-DataverseForm.md)

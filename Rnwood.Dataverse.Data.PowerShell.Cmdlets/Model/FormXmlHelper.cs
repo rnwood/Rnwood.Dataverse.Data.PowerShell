@@ -85,7 +85,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
 
             if (systemForm == null)
             {
-                throw new InvalidOperationException($"Form '{form.Id}' has invalid FormXml structure - missing SystemForm element");
+                throw new InvalidOperationException($"Form '{form.Id}' has invalid FormXml structure - missing form element");
             }
 
             return (doc, systemForm);
@@ -441,7 +441,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             tabObj.Properties.Add(new PSNoteProperty("Id", tab.Attribute("id")?.Value));
             tabObj.Properties.Add(new PSNoteProperty("Name", tab.Attribute("name")?.Value));
             tabObj.Properties.Add(new PSNoteProperty("Expanded", tab.Attribute("expanded")?.Value == "true"));
-            tabObj.Properties.Add(new PSNoteProperty("Visible", tab.Attribute("visible")?.Value != "false"));
             tabObj.Properties.Add(new PSNoteProperty("Hidden", tab.Attribute("visible")?.Value == "false"));
             tabObj.Properties.Add(new PSNoteProperty("VerticalLayout", tab.Attribute("verticallayout")?.Value == "true"));
             tabObj.Properties.Add(new PSNoteProperty("ShowLabel", tab.Attribute("showlabel")?.Value != "false"));
@@ -540,7 +539,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             secObj.Properties.Add(new PSNoteProperty("Id", section.Attribute("id")?.Value));
             secObj.Properties.Add(new PSNoteProperty("Name", section.Attribute("name")?.Value));
             secObj.Properties.Add(new PSNoteProperty("ShowLabel", section.Attribute("showlabel")?.Value != "false"));
-            secObj.Properties.Add(new PSNoteProperty("Visible", section.Attribute("visible")?.Value != "false"));
             secObj.Properties.Add(new PSNoteProperty("Hidden", section.Attribute("visible")?.Value == "false"));
             secObj.Properties.Add(new PSNoteProperty("ShowBar", section.Attribute("showbar")?.Value != "false"));
             secObj.Properties.Add(new PSNoteProperty("LabelWidth", section.Attribute("labelwidth")?.Value));
@@ -615,7 +613,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             ctrlObj.Properties.Add(new PSNoteProperty("DataField", control.Attribute("datafieldname")?.Value));
             ctrlObj.Properties.Add(new PSNoteProperty("ClassId", control.Attribute("classid")?.Value));
             ctrlObj.Properties.Add(new PSNoteProperty("Disabled", control.Attribute("disabled")?.Value == "true"));
-            ctrlObj.Properties.Add(new PSNoteProperty("Visible", control.Attribute("visible")?.Value != "false"));
+            ctrlObj.Properties.Add(new PSNoteProperty("Hidden", control.Attribute("visible")?.Value == "false"));
             ctrlObj.Properties.Add(new PSNoteProperty("ShowLabel", control.Attribute("showlabel")?.Value != "false"));
             ctrlObj.Properties.Add(new PSNoteProperty("IsRequired", control.Attribute("isrequired")?.Value == "true"));
 

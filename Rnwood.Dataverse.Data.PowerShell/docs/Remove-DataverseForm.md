@@ -25,63 +25,70 @@ Remove-DataverseForm -Entity <String> -Name <String> [-Publish] [-IfExists] [-Co
 ```
 
 ## DESCRIPTION
-The Remove-DataverseForm cmdlet deletes form definitions from a Dataverse environment. Forms can be deleted by ID or by entity name and form name. The cmdlet supports -WhatIf and -Confirm for safe deletion operations. Optionally, the entity can be published after form deletion to apply changes immediately.
+The Remove-DataverseForm cmdlet deletes form definitions from a Dataverse environment. Forms can be deleted by ID or by entity name and form name. The cmdlet supports -WhatIf and -Confirm for safe deletion operations and includes built-in confirmation prompts for destructive operations.
+
+?? **Warning**: Deleting forms is irreversible. Always use -WhatIf first and ensure you have backups of important forms.
 
 ## EXAMPLES
 
-### Example 1: Delete a form by ID
+### Example 1: Delete a form by ID with confirmation
 ```powershell
-PS C:\> $conn = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
 PS C:\> $formId = 'a1234567-89ab-cdef-0123-456789abcdef'
-PS C:\> Remove-DataverseForm -Connection $conn -Id $formId
+PS C:\> Remove-DataverseForm -Connection $c -Id $formId
 ```
 
-Deletes a form by its ID with confirmation prompt.
+Deletes a form by its ID with built-in confirmation prompt.
 
 ### Example 2: Delete a form by entity and name
 ```powershell
-PS C:\> Remove-DataverseForm -Connection $conn -Entity 'contact' -Name 'Old Contact Form' -Confirm:$false
+PS C:\> Remove-DataverseForm -Connection $c -Entity 'contact' -Name 'Old Contact Form' -Confirm:$false
 ```
 
 Deletes a form by entity name and form name without confirmation.
 
-### Example 3: Delete form and publish
+### Example 3: Delete form and publish immediately
 ```powershell
-PS C:\> Remove-DataverseForm -Connection $conn -Id $formId -Publish
+PS C:\> Remove-DataverseForm -Connection $c -Id $formId -Publish -Confirm:$false
 ```
 
 Deletes a form and immediately publishes the entity to apply changes.
 
-### Example 4: Delete form if it exists
+### Example 4: Safe deletion with IfExists
 ```powershell
-PS C:\> Remove-DataverseForm -Connection $conn -Entity 'account' -Name 'Test Form' -IfExists -Confirm:$false
+PS C:\> Remove-DataverseForm -Connection $c -Entity 'account' -Name 'Test Form' -IfExists -Confirm:$false
 ```
 
 Attempts to delete a form but doesn't raise an error if the form doesn't exist.
 
-### Example 5: WhatIf simulation
+### Example 5: Preview deletion with WhatIf
 ```powershell
-PS C:\> Remove-DataverseForm -Connection $conn -Id $formId -WhatIf
+PS C:\> Remove-DataverseForm -Connection $c -Id $formId -WhatIf
 ```
 
 Shows what would happen if the form were deleted without actually deleting it.
 
-## PARAMETERS
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
+### Example 6: Batch delete forms with pipeline
+```powershell
+PS C:\> Get-DataverseForm -Connection $c -Entity 'contact' | 
+    Where-Object { $_.Name -like 'Test*' } | 
+    Remove-DataverseForm -Connection $c -IfExists -Confirm:$false
 ```
+
+Finds and deletes all contact forms whose names start with 'Test'.
+
+### Example 7: Delete form and handle errors gracefully
+```powershell
+PS C:\> try {
+    Remove-DataverseForm -Connection $c -Entity 'contact' -Name 'NonexistentForm' -IfExists
+    Write-Host "Form deletion completed successfully"
+} catch {
+    Write-Warning "Failed to delete form: $($_.Exception.Message)"
+}
+```
+
+Demonstrates error handling when deleting forms.
+
+## PARAMETERS
 
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
@@ -101,7 +108,7 @@ Accept wildcard characters: False
 ```
 
 ### -Entity
-Logical name of the entity/table
+Logical name of the entity/table containing the form to delete
 
 ```yaml
 Type: String
@@ -131,7 +138,7 @@ Accept wildcard characters: False
 ```
 
 ### -IfExists
-Don't raise an error if the form doesn't exist
+Don't raise an error if the form doesn't exist. Useful for idempotent scripts where the form may have already been deleted.
 
 ```yaml
 Type: SwitchParameter
@@ -161,7 +168,7 @@ Accept wildcard characters: False
 ```
 
 ### -Publish
-Publish the entity after deleting the form
+Publish the entity after deleting the form. This applies the changes immediately and makes them visible to users.
 
 ```yaml
 Type: SwitchParameter
@@ -191,8 +198,23 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ProgressAction
-{{ Fill ProgressAction Description }}
+Controls how progress information is displayed during cmdlet execution.
 
 ```yaml
 Type: ActionPreference
@@ -212,9 +234,37 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
+You can pipe form IDs to this cmdlet.
+
 ## OUTPUTS
 
-### System.Object
+### None
+This cmdlet does not return any output.
+
 ## NOTES
 
-## RELATED LINKS
+**Safety Features:**
+- Built-in confirmation prompts for destructive operations
+- Support for -WhatIf to preview changes
+- -IfExists parameter to avoid errors in idempotent scripts
+
+**Publishing Behavior:**
+- Form deletion takes effect immediately in the unpublished layer
+- Use -Publish to immediately apply changes to the published layer
+- Changes are visible to users only after publishing
+
+**Error Handling:**
+- Throws exceptions if form is not found (unless -IfExists is used)
+- Supports both published and unpublished form deletion
+- Validates form existence before attempting deletion
+
+**Best Practices:**
+- Always test with -WhatIf first
+- Use -IfExists in automated scripts for idempotency
+- Consider backing up forms before deletion
+- Use -Publish when immediate effect is needed
+
+**Related Operations:**
+- Use Get-DataverseForm to find forms before deletion
+- Use Set-DataverseForm to modify forms instead of deleting/recreating
+- Consider deactivating forms instead of deleting them when possible
