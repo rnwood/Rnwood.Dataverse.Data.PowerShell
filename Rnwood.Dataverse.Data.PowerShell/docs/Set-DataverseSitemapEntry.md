@@ -15,7 +15,7 @@ Creates or updates an entry (Area, Group, or SubArea) in a Dataverse sitemap.
 ### Area
 ```
 Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
- [-SitemapUniqueName <String>] [-SitemapId <Guid>] [-Area] -EntryId <String> [-ResourceId <String>]
+ [[-SitemapUniqueName] <String>] [-SitemapId <Guid>] [-Area] -EntryId <String> [-ResourceId <String>]
  [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Title <String>] [-Description <String>]
  [-Icon <String>] [-Entity <String>] [-Url <String>] [-Index <Int32>] [-Before <String>] [-After <String>]
  [-IsDefault] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
@@ -25,7 +25,7 @@ Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapIn
 ### Group
 ```
 Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
- [-SitemapUniqueName <String>] [-SitemapId <Guid>] [-Group] -EntryId <String> [-ResourceId <String>]
+ [[-SitemapUniqueName] <String>] [-SitemapId <Guid>] [-Group] -EntryId <String> [-ResourceId <String>]
  [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Title <String>] [-Description <String>]
  [-Icon <String>] [-Entity <String>] [-Url <String>] [-ParentAreaId <String>] [-Index <Int32>]
  [-Before <String>] [-After <String>] [-IsDefault] [-PassThru] [-Connection <ServiceClient>]
@@ -35,7 +35,7 @@ Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapIn
 ### SubArea
 ```
 Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
- [-SitemapUniqueName <String>] [-SitemapId <Guid>] [-SubArea] -EntryId <String> [-ResourceId <String>]
+ [[-SitemapUniqueName] <String>] [-SitemapId <Guid>] [-SubArea] -EntryId <String> [-ResourceId <String>]
  [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Title <String>] [-Description <String>]
  [-Icon <String>] [-Entity <String>] [-Url <String>] [-ParentAreaId <String>] [-ParentGroupId <String>]
  [-Index <Int32>] [-Before <String>] [-After <String>] [-IsDefault] [-PassThru] [-Connection <ServiceClient>]
@@ -45,7 +45,7 @@ Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapIn
 ### Privilege
 ```
 Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
- [-SitemapUniqueName <String>] [-SitemapId <Guid>] [-Privilege] [-EntryId <String>] [-ResourceId <String>]
+ [[-SitemapUniqueName] <String>] [-SitemapId <Guid>] [-Privilege] [-EntryId <String>] [-ResourceId <String>]
  [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Title <String>] [-Description <String>]
  [-Icon <String>] [-Entity <String>] [-Url <String>] -ParentSubAreaId <String> -PrivilegeEntity <String>
  -PrivilegeName <String> [-Index <Int32>] [-Before <String>] [-After <String>] [-IsDefault] [-PassThru]
@@ -105,6 +105,21 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Area
+Create or update an Area entry.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Area
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -173,6 +188,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -DescriptionResourceId
+The resource ID for localized descriptions.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Entity
 The new entity logical name (for SubAreas).
 
@@ -212,6 +242,21 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Group
+Create or update a Group entry.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Group
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
@@ -305,6 +350,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ParentSubAreaId
+The parent SubArea ID (required for Privileges when creating).
+
+```yaml
+Type: String
+Parameter Sets: Privilege
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -PassThru
 If specified, returns the created or updated entry.
 
@@ -327,6 +387,37 @@ The privilege required to view this entry.
 Type: SwitchParameter
 Parameter Sets: Privilege
 Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PrivilegeEntity
+The entity name for privilege entries.
+
+```yaml
+Type: String
+Parameter Sets: Privilege
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PrivilegeName
+The privilege name for privilege entries (e.g., Read, Write, Create, Delete).
+
+```yaml
+Type: String
+Parameter Sets: Privilege
+Aliases:
+Accepted values: Read, Write, Create, Delete, Append, AppendTo, Share, Assign
 
 Required: True
 Position: Named
@@ -380,8 +471,53 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
+### -SitemapUniqueName
+The unique name of the sitemap containing the entry.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: Name
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -SubArea
+Create or update a SubArea entry.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: SubArea
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Title
 The new title/label of the entry.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ToolTipResourceId
+The resource ID for localized tooltips.
 
 ```yaml
 Type: String
@@ -441,141 +577,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SitemapUniqueName
-The unique name of the sitemap containing the entry.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases: Name
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -Area
-Create or update an Area entry.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Area
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -DescriptionResourceId
-The resource ID for localized descriptions.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Group
-Create or update a Group entry.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Group
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -SubArea
-Create or update a SubArea entry.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: SubArea
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ToolTipResourceId
-The resource ID for localized tooltips.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ParentSubAreaId
-The parent SubArea ID (required for Privileges when creating).
-
-```yaml
-Type: String
-Parameter Sets: Privilege
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -PrivilegeEntity
-The entity name for privilege entries.
-
-```yaml
-Type: String
-Parameter Sets: Privilege
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -PrivilegeName
-The privilege name for privilege entries (e.g., Read, Write, Create, Delete).
-
-```yaml
-Type: String
-Parameter Sets: Privilege
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -584,7 +585,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapEntryInfo
 ### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapInfo
 ### System.String
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapEntryInfo

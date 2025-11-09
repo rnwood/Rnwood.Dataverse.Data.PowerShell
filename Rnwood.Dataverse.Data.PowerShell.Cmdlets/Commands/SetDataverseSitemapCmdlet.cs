@@ -95,15 +95,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     TopCount = 1
                 };
 
-                var results = Connection.RetrieveMultiple(query);
+                // Try unpublished first
+                var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
+                {
+                    Query = query
+                };
+                var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                var results = unpublishedResponse.EntityCollection;
+                
                 if (results.Entities.Count == 0)
                 {
-                    var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
-                    {
-                        Query = query
-                    };
-                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
-                    results = unpublishedResponse.EntityCollection;
+                    // If not found in unpublished, try published
+                    results = Connection.RetrieveMultiple(query);
                 }
 
                 if (results.Entities.Count > 0)
@@ -142,16 +145,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         TopCount = 1
                     };
 
-                    var existingSitemaps = Connection.RetrieveMultiple(existingQuery);
+                    // Try unpublished first
+                    var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
+                    {
+                        Query = existingQuery
+                    };
+                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                    var existingSitemaps = unpublishedResponse.EntityCollection;
 
                     if (existingSitemaps.Entities.Count == 0)
                     {
-                        var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
-                        {
-                            Query = existingQuery
-                        };
-                        var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
-                        existingSitemaps = unpublishedResponse.EntityCollection;
+                        // If not found in unpublished, try published
+                        existingSitemaps = Connection.RetrieveMultiple(existingQuery);
                     }
 
                     if (existingSitemaps.Entities.Count == 0)
