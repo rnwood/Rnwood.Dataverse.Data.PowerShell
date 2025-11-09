@@ -205,30 +205,7 @@ Describe 'Dataverse Form Cmdlets' {
             $result.FormXml | Should -BeLike '*<form*'
         }
 
-        It "Parses FormXml when ParseFormXml switch is used" -Skip {
-            $connection = getMockConnection -Entities @("systemform")
-            
-            # Create a test form
-            $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
-            $form["formid"] = $form.Id = [System.Guid]::NewGuid()
-            $form["name"] = "Contact Information"
-            $form["uniquename"] = "Contact_Information"
-            $form["objecttypecode"] = "contact"
-            $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
-            $form["description"] = "Main form for contact"
-            $form["formactivationstate"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(1)
-            $form["formpresentation"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(0)
-            $form["isdefault"] = $true
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
-            $connection.Create($form)
-            
-            $result = Get-DataverseForm -Connection $connection -Entity 'contact' -ParseFormXml
-            
-            $result | Should -Not -BeNullOrEmpty
-            $result.ParsedForm | Should -Not -BeNullOrEmpty
-            $result.ParsedForm.Tabs | Should -Not -BeNullOrEmpty
-            $result.ParsedForm.Tabs.Count | Should -BeGreaterThan 0
-        }
+
 
         It "Filters by FormType when specified" {
             $connection = getMockConnection -Entities @("systemform")

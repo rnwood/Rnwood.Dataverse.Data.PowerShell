@@ -23,9 +23,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Guid FormId { get; set; }
 
         /// <summary>
-        /// Gets or sets the section name to filter controls.
+        /// Gets or sets the tab name to filter controls.
         /// </summary>
-        [Parameter(HelpMessage = "Name of the section containing the controls")]
+        [Parameter(HelpMessage = "Name of the tab containing the section")]
+        public string TabName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the section name to filter controls. TabName must be provided when using SectionName.
+        /// </summary>
+        [Parameter(HelpMessage = "Name of the section containing the controls. TabName is required when using SectionName.")]
         public string SectionName { get; set; }
 
         /// <summary>
@@ -41,17 +47,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string DataField { get; set; }
 
         /// <summary>
-        /// Gets or sets the tab name to filter controls.
-        /// </summary>
-        [Parameter(HelpMessage = "Name of the tab containing the section")]
-        public string TabName { get; set; }
-
-        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
+
+            // Validate that TabName is provided when SectionName is specified
+            if (!string.IsNullOrEmpty(SectionName) && string.IsNullOrEmpty(TabName))
+            {
+                throw new ArgumentException("TabName is required when SectionName is specified. Section names are only unique within a tab.");
+            }
 
             Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml"));
             var (doc, systemForm) = FormXmlHelper.ParseFormXml(form);

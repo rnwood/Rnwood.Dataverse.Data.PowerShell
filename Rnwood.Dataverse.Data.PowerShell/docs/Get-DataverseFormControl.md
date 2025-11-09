@@ -13,8 +13,8 @@ Retrieves control information from a Dataverse form.
 ## SYNTAX
 
 ```
-Get-DataverseFormControl -FormId <Guid> [-SectionName <String>] [-ControlId <String>] [-DataField <String>]
- [-TabName <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseFormControl -FormId <Guid> [-TabName <String>] [-SectionName <String>] [-ControlId <String>]
+ [-DataField <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION

@@ -13,7 +13,7 @@ Removes a section from a Dataverse form tab.
 ## SYNTAX
 
 ```
-Remove-DataverseFormSection -FormId <Guid> [-SectionName <String>] [-SectionId <String>]
+Remove-DataverseFormSection -FormId <Guid> [-TabName <String>] [-SectionName <String>] [-SectionId <String>]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -173,6 +173,21 @@ Accept wildcard characters: False
 
 ### -SectionName
 Name of the section to remove. The section name must exist in the specified tab.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TabName
+Name of the tab containing the section (required when using SectionName)
 
 ```yaml
 Type: String
