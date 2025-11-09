@@ -30,13 +30,13 @@ PS C:\> Get-DataverseFormControl -Connection $c -FormId $form.FormId
 
 Retrieves all controls from all tabs and sections in the contact Information form.
 
-### Example 2: Get controls from a specific section
+### Example 2: Get controls from a specific section (requires TabName)
 ```powershell
 PS C:\> $formId = '12345678-1234-1234-1234-123456789012'
-PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId -SectionName 'ContactDetails'
+PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId -TabName 'General' -SectionName 'ContactDetails'
 ```
 
-Retrieves all controls from the 'ContactDetails' section.
+Retrieves all controls from the 'ContactDetails' section in the 'General' tab. Note: TabName is required when SectionName is specified since section names are only unique within a tab.
 
 ### Example 3: Get a specific control by ID
 ```powershell
@@ -157,7 +157,7 @@ Accept wildcard characters: False
 ```
 
 ### -SectionName
-Name of the section containing the controls. If not specified, controls from all sections are returned.
+Name of the section containing the controls. TabName is required when using SectionName since section names are only unique within a tab. If not specified, controls from all sections are returned.
 
 ```yaml
 Type: String
