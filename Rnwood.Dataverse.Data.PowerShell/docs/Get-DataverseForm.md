@@ -141,7 +141,7 @@ Form type filter
 Type: FormType
 Parameter Sets: ByEntity
 Aliases:
-Accepted values: Main, QuickCreate, QuickView, Card, Dashboard, MainInteractionCentric, Other, MainBackup, AppointmentBook, Dialog
+Accepted values: Dashboard, AppointmentBook, Main, MiniCampaignBO, Preview, MobileExpress, QuickViewForm, QuickCreate, Dialog, TaskFlowForm, InteractionCentricDashboard, Card, MainInteractiveExperience, ContextualDashboard, Other, MainBackup, AppointmentBookBackup, PowerBIDashboard
 
 Required: False
 Position: Named
@@ -195,36 +195,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Unpublished
-Include unpublished forms in the results
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-Controls how progress information is displayed during cmdlet execution.
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -UniqueName
 Unique name of the form to retrieve
 
@@ -247,6 +217,36 @@ Unique name filter for forms
 Type: String
 Parameter Sets: ByEntity
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Unpublished
+Include unpublished forms in the results
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+Controls how progress information is displayed during cmdlet execution.
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
 
 Required: False
 Position: Named
