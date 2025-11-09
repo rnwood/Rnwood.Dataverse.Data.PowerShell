@@ -14,7 +14,7 @@ Removes a control from a Dataverse form section.
 
 ### ById
 ```
-Remove-DataverseFormControl -FormId <Guid> -ControlId <String> -TabName <String> [-Connection <ServiceClient>]
+Remove-DataverseFormControl -FormId <Guid> -ControlId <String> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -245,7 +245,7 @@ Name of the tab containing the section with the control to remove. Required when
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: ByDataField
 Aliases:
 
 Required: True
