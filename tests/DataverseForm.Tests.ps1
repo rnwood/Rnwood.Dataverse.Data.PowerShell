@@ -727,7 +727,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Remove-DataverseFormControl -Connection $connection -FormId $formId -DataField 'lastname' -Confirm:$false -WhatIf } | Should -Not -Throw
+            { Remove-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -DataField 'lastname' -Confirm:$false -WhatIf } | Should -Not -Throw
         }
 
         It "Removes control from specific section" {
@@ -741,7 +741,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Remove-DataverseFormControl -Connection $connection -FormId $formId -SectionName 'name' -ControlId 'middlename' -Confirm:$false -WhatIf } | Should -Not -Throw
+            { Remove-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -DataField 'middlename' -Confirm:$false -WhatIf } | Should -Not -Throw
         }
     }
 
