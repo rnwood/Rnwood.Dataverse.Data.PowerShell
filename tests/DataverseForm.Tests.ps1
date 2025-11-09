@@ -312,7 +312,7 @@ Describe 'Dataverse Form Cmdlets' {
             $result.Id | Should -Be '{9748ec98-3746-40cc-83bf-d15c7363166f}'
         }
 
-        It "Includes sections when IncludeSections switch is used" {
+        It "Includes sections in tab output" {
             $connection = getMockConnection -Entities @("systemform")
             
             $formId = [System.Guid]::NewGuid()
@@ -323,7 +323,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            $result = Get-DataverseFormTab -Connection $connection -FormId $formId -TabName 'general' -IncludeSections
+            $result = Get-DataverseFormTab -Connection $connection -FormId $formId -TabName 'general'
             
             $result | Should -Not -BeNullOrEmpty
             $result.Sections | Should -Not -BeNullOrEmpty
@@ -385,7 +385,7 @@ Describe 'Dataverse Form Cmdlets' {
             $result.Id | Should -Be '{90b0776f-2977-4695-9cd4-73bb6c820f88}'
         }
 
-        It "Includes controls when IncludeControls switch is used" {
+        It "Includes controls in section output" {
             $connection = getMockConnection -Entities @("systemform")
             
             $formId = [System.Guid]::NewGuid()
@@ -396,7 +396,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            $result = Get-DataverseFormSection -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -IncludeControls
+            $result = Get-DataverseFormSection -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name'
             
             $result | Should -Not -BeNullOrEmpty
             $result.Controls | Should -Not -BeNullOrEmpty
@@ -598,7 +598,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormSection -Connection $connection -Form $formId -TabName 'general' -SectionName 'newsection' -Label 'New Section' -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormSection -Connection $connection -FormId $formId -TabName 'general' -Name 'newsection' -Label 'New Section' -WhatIf } | Should -Not -Throw
         }
 
         It "Updates existing section" {
@@ -612,7 +612,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormSection -Connection $connection -Form $formId -TabName 'general' -SectionName 'name' -Label 'Updated Name Section' -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormSection -Connection $connection -FormId $formId -TabName 'general' -Name 'name' -Label 'Updated Name Section' -WhatIf } | Should -Not -Throw
         }
 
         It "Sets section visibility and properties" {
@@ -626,7 +626,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormSection -Connection $connection -FormId $formId -TabName 'general' -SectionName 'testsection' -Label 'Test Section' -Visible:$false -ShowLabel:$false -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormSection -Connection $connection -FormId $formId -TabName 'general' -Name 'testsection' -Label 'Test Section' -Hidden:$true -ShowLabel:$false -WhatIf } | Should -Not -Throw
         }
 
         It "Sets cell label alignment and position" {
@@ -640,7 +640,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormSection -Connection $connection -FormId $formId -TabName 'general' -SectionName 'testsection' -CellLabelAlignment 'Center' -CellLabelPosition 'Top' -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormSection -Connection $connection -FormId $formId -TabName 'general' -Name 'testsection' -CellLabelAlignment 'Center' -CellLabelPosition 'Top' -WhatIf } | Should -Not -Throw
         }
     }
 
@@ -656,7 +656,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormTab -Connection $connection -FormId $formId -TabName 'newtab' -Label 'New Tab' -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormTab -Connection $connection -FormId $formId -Name 'newtab' -Label 'New Tab' -WhatIf } | Should -Not -Throw
         }
 
         It "Updates existing tab" {
@@ -670,7 +670,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormTab -Connection $connection -FormId $formId -TabName 'general' -Label 'Updated General Tab' -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormTab -Connection $connection -FormId $formId -Name 'general' -Label 'Updated General Tab' -WhatIf } | Should -Not -Throw
         }
 
         It "Sets tab visibility and expansion" {
@@ -684,7 +684,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormTab -Connection $connection -FormId $formId -TabName 'testtab' -Label 'Test Tab' -Visible:$false -Expanded:$false -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormTab -Connection $connection -FormId $formId -Name 'testtab' -Label 'Test Tab' -Hidden:$true -Expanded:$false -WhatIf } | Should -Not -Throw
         }
     }
 
