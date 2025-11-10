@@ -12,23 +12,12 @@ Creates or updates a control in a Dataverse form section or header.
 
 ## SYNTAX
 
-### Default
 ```
-Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
- -DataField <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Hidden]
- [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>]
- [-Row <Int32>] [-Column <Int32>] [-PassThru] [-CellId <String>] [-Auto] [-LockLevel <Int32>]
+Set-DataverseFormControl -FormId <Guid> -SectionName <String> -TabName <String> [-ControlId <String>]
+ -DataField <String> -ControlXml <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>]
+ [-Disabled] [-Visible] [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired]
+ [-Parameters <Hashtable>] [-PassThru] [-Row <Int32>] [-Column <Int32>] [-CellId <String>]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
-```
-
-### RawXml
-```
-Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
- [-DataField <String>] -ControlXml <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>]
- [-Disabled] [-Hidden] [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired]
- [-Parameters <Hashtable>] [-Row <Int32>] [-Column <Int32>] [-PassThru] [-CellId <String>] [-Auto]
- [-LockLevel <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -246,8 +235,38 @@ Updates an existing header control's label and cell span without recreating it.
 
 ## PARAMETERS
 
+### -CellId
+ID of the cell that will contain the control. Used for advanced form customization scenarios.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ColSpan
 Number of columns the control spans in the section layout. Typical values are 1-4 depending on section column configuration.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Column
+Zero-based column index where the control should be placed. Must not exceed section column count.
 
 ```yaml
 Type: Int32
@@ -315,7 +334,7 @@ Control type for specialized behaviors. Valid values: Standard, Lookup, OptionSe
 Type: String
 Parameter Sets: (All)
 Aliases:
-Accepted values: Standard, Lookup, OptionSet, DateTime, Boolean, Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch, Notes
+Accepted values: Standard, Lookup, OptionSet, DateTime, Boolean, Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch, Notes, Email, Memo, Money, Data
 
 Required: False
 Position: Named
@@ -329,7 +348,7 @@ Raw XML for the control element. Use this for advanced control configurations th
 
 ```yaml
 Type: String
-Parameter Sets: RawXml
+Parameter Sets: (All)
 Aliases:
 
 Required: True
@@ -344,22 +363,10 @@ Data field name (attribute logical name) for the control. This binds the control
 
 ```yaml
 Type: String
-Parameter Sets: Default
+Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-```yaml
-Type: String
-Parameter Sets: RawXml
-Aliases:
-
-Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -393,21 +400,6 @@ Required: True
 Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -Hidden
-Whether the control is hidden from users. Hidden controls are present in the form but not visible.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
@@ -486,6 +478,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Row
+Zero-based row index where the control should be placed. New rows are added if needed.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -RowSpan
 Number of rows the control spans in the section layout. Useful for controls that need more vertical space.
 
@@ -524,7 +531,7 @@ Type: String
 Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -561,6 +568,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Visible
+Whether the control is visible
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -WhatIf
 Shows what would happen if the cmdlet runs.
 The cmdlet is not run.
@@ -584,81 +606,6 @@ Controls how progress information is displayed during cmdlet execution.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Auto
-Whether the cell is auto-sized to fit content. Used for responsive form layouts.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CellId
-ID of the cell that will contain the control. Used for advanced form customization scenarios.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Column
-Zero-based column index where the control should be placed. Must not exceed section column count.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -LockLevel
-Lock level for the cell (0=None, 1=Form, 2=System). Controls edit permissions at the cell level.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Row
-Zero-based row index where the control should be placed. New rows are added if needed.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
 
 Required: False
 Position: Named
