@@ -35,6 +35,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public Hashtable Parameters { get; set; } = new Hashtable();
 
 		/// <summary>
+		/// Return the raw OrganizationResponse instead of converting to a PSObject.
+		/// </summary>
+		[Parameter(ParameterSetName = "NameAndInputs", HelpMessage = "Return the raw OrganizationResponse instead of converting to a PSObject.")]
+		public SwitchParameter Raw { get; set; }
+
+		/// <summary>
 		/// HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).
 		/// </summary>
 		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 0, HelpMessage = "HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).")]
@@ -78,8 +84,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		private RequestBatchProcessor _batchProcessor;
 		private CancellationTokenSource _userCancellationCts;
-
-
+		private EntityMetadataFactory _entityMetadataFactory;
+		private DataverseEntityConverter _entityConverter;
 
 		/// <summary>
 		/// Initializes the cmdlet.
@@ -87,6 +93,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		protected override void BeginProcessing()
 		{
 			base.BeginProcessing();
+
+			// Initialize metadata factory and converter only for NameAndInputs parameter set when Raw is not specified
+			if (ParameterSetName == "NameAndInputs" && !Raw)
+			{
+				_entityMetadataFactory = new EntityMetadataFactory(Connection);
+				_entityConverter = new DataverseEntityConverter(Connection, _entityMetadataFactory);
+			}
 
 			// initialize cancellation token source for this pipeline invocation
 			_userCancellationCts = new CancellationTokenSource();
@@ -163,7 +176,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						WriteVerbose,
 						(err) => WriteError(err),
 						(obj) => WriteObject(obj),
-						ShouldProcess);
+						ShouldProcess,
+						_entityConverter);
 
 					context.Request = Request;
 					context.RetriesRemaining = Retries;
@@ -175,7 +189,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				{
 					// Non-batched: execute with retry wrapper already provided by base class
 					var response = ExecuteWithRetry(Request);
-					WriteObject(response);
+					
+					// Convert response to PSObject if we have a converter
+					if (_entityConverter != null)
+					{
+						var convertedResponse = _entityConverter.ConvertResponseToPSObject(response);
+						WriteObject(convertedResponse);
+					}
+					else
+					{
+						WriteObject(response);
+					}
 				}
 			}
 		}

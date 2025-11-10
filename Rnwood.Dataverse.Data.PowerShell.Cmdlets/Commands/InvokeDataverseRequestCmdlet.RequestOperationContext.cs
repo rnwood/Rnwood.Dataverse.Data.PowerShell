@@ -15,8 +15,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             private readonly Action<ErrorRecord> _writeError;
             private readonly Action<object> _writeObject;
             private readonly Func<string, bool> _shouldProcess;
+            private readonly DataverseEntityConverter _entityConverter;
 
-            public RequestOperationContext(PSObject inputObject, OrganizationRequest request, int retries, int initialRetryDelay, Action<string> writeVerbose, Action<ErrorRecord> writeError, Action<object> writeObject, Func<string, bool> shouldProcess)
+            public RequestOperationContext(PSObject inputObject, OrganizationRequest request, int retries, int initialRetryDelay, Action<string> writeVerbose, Action<ErrorRecord> writeError, Action<object> writeObject, Func<string, bool> shouldProcess, DataverseEntityConverter entityConverter = null)
             {
                 InputObject = inputObject;
                 Request = request;
@@ -28,6 +29,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 _writeError = writeError;
                 _writeObject = writeObject;
                 _shouldProcess = shouldProcess;
+                _entityConverter = entityConverter;
             }
 
             public PSObject InputObject { get; }
@@ -40,7 +42,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             public void Complete(OrganizationResponse response)
             {
                 _writeVerbose($"Request completed: {Request?.GetType().Name}");
-                try { _writeObject(response); } catch { }
+                try 
+                { 
+                    // Convert response to PSObject if we have a converter
+                    if (_entityConverter != null)
+                    {
+                        var convertedResponse = _entityConverter.ConvertResponseToPSObject(response);
+                        _writeObject(convertedResponse);
+                    }
+                    else
+                    {
+                        _writeObject(response);
+                    }
+                } 
+                catch { }
             }
 
             public bool HandleFault(OrganizationServiceFault fault)
