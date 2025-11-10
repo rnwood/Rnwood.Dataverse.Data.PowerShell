@@ -269,6 +269,51 @@ Set-DataverseAttributeMetadata -EntityName new_customentity `
     -DisplayName "Category" `
     -OptionSetName my_globalcategories
 
+# Create a lookup attribute to a single target entity
+Set-DataverseAttributeMetadata -EntityName new_customentity `
+    -AttributeName new_accountid `
+    -SchemaName new_AccountId `
+    -AttributeType Lookup `
+    -DisplayName "Account" `
+    -Description "Related account" `
+    -Targets @('account') `
+    -RequiredLevel None
+
+# Create a lookup with custom relationship name
+Set-DataverseAttributeMetadata -EntityName new_project `
+    -AttributeName new_parentprojectid `
+    -SchemaName new_ParentProjectId `
+    -AttributeType Lookup `
+    -DisplayName "Parent Project" `
+    -Targets @('new_project') `
+    -RelationshipSchemaName new_project_parentproject
+
+# Create a lookup with cascade delete behavior
+Set-DataverseAttributeMetadata -EntityName new_task `
+    -AttributeName new_projectid `
+    -SchemaName new_ProjectId `
+    -AttributeType Lookup `
+    -DisplayName "Project" `
+    -Targets @('new_project') `
+    -CascadeDelete Cascade `
+    -CascadeAssign Cascade `
+    -RequiredLevel ApplicationRequired
+
+# Create a lookup with all cascade behaviors specified
+Set-DataverseAttributeMetadata -EntityName new_lineitem `
+    -AttributeName new_orderid `
+    -SchemaName new_OrderId `
+    -AttributeType Lookup `
+    -DisplayName "Order" `
+    -Targets @('new_order') `
+    -CascadeDelete Cascade `
+    -CascadeAssign Cascade `
+    -CascadeShare Cascade `
+    -CascadeUnshare Cascade `
+    -CascadeReparent Cascade `
+    -CascadeMerge Cascade `
+    -IsSearchable
+
 # Create a file attribute
 Set-DataverseAttributeMetadata -EntityName new_customentity `
     -AttributeName new_attachment `
@@ -282,6 +327,13 @@ Set-DataverseAttributeMetadata -EntityName contact `
     -AttributeName firstname `
     -DisplayName "First Name (Updated)" `
     -Description "Updated description" `
+    -Force
+
+# Update a lookup attribute's display name
+Set-DataverseAttributeMetadata -EntityName contact `
+    -AttributeName parentcustomerid `
+    -DisplayName "Company Name" `
+    -Description "The parent company for this contact" `
     -Force
 
 # Update with -PassThru to get the result
@@ -466,3 +518,14 @@ foreach ($entity in $customEntities) {
 - The cmdlets handle all Dataverse attribute types comprehensively
 - Type-specific properties are validated based on the attribute type
 - Global option sets can be reused across multiple entities
+
+### Lookup Attribute Notes
+
+- **Creating Lookups**: When creating a lookup attribute, a OneToMany relationship is automatically created between the target and referencing entities
+- **Single-Target Lookups**: Currently, only single-target lookups are supported. Specify one entity in the `-Targets` parameter
+- **Multi-Target (Polymorphic) Lookups**: Not yet supported. Use `Set-DataverseRelationshipMetadata` to create multiple separate relationships if needed
+- **Relationship Names**: Use `-RelationshipSchemaName` to specify a custom relationship name, or let the cmdlet generate one automatically
+- **Cascade Behaviors**: Configure cascade behaviors for assign, share, unshare, reparent, delete, and merge operations using the `-Cascade*` parameters
+- **Updating Lookups**: You can update the display name, description, and required level of existing lookup attributes
+- **Immutable Properties**: Target entities and cascade behaviors cannot be changed after creation. Use `Set-DataverseRelationshipMetadata` to update cascade behaviors
+- **Publishing**: Use the `-Publish` switch to automatically publish the entity after creating or updating the lookup attribute
