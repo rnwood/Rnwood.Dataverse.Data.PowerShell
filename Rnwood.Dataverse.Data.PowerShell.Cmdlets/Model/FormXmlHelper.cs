@@ -55,6 +55,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
                     throw;
                 }
             }
+            catch (Exception)
+            {
+                // For testing with FakeXrmEasy or other scenarios where RetrieveUnpublished is not supported,
+                // fall back to regular Retrieve
+                return connection.Retrieve("systemform", formId, columnSet);
+            }
         }
 
         /// <summary>

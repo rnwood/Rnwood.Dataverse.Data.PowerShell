@@ -64,8 +64,9 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
             # Handle unsupported requests that FakeXrmEasy doesn't support
             # Only do this if custom interceptor didn't handle it
             
-            # Handle RetrieveUnpublishedRequest - don't handle it, let FakeXrmEasy throw "not implemented"
-            # FormXmlHelper will catch that and fall back to regular Retrieve
+            # Handle RetrieveUnpublishedRequest - let it fall through to FakeXrmEasy
+            # which will throw OpenSourceUnsupportedException
+            # FormXmlHelper will catch this and fall back to regular Retrieve
             # (Don't return anything - let FakeXrmEasy handle it and throw its own exception)
             
             
@@ -109,8 +110,9 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
             
             # Handle unsupported requests that FakeXrmEasy doesn't support
             
-            # Handle RetrieveUnpublishedRequest - don't handle it, let FakeXrmEasy throw "not implemented"
-            # FormXmlHelper will catch that and fall back to regular Retrieve
+            # Handle RetrieveUnpublishedRequest - let it fall through to FakeXrmEasy
+            # which will throw OpenSourceUnsupportedException
+            # FormXmlHelper will catch this and fall back to regular Retrieve
             # (Don't return anything - let FakeXrmEasy handle it and throw its own exception)
             
             
