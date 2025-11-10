@@ -44,7 +44,7 @@ Describe 'Form Control Management - New Features' {
 </form>
 '@
         }
-        Set-DataverseRecord -Connection $connection -TableName systemform -Record $formRecord
+        $formRecord | Set-DataverseRecord -Connection $connection -TableName systemform -CreateOnly | Out-Null
     }
 
     Context 'Get-DataverseFormControl - Cell Attributes' {

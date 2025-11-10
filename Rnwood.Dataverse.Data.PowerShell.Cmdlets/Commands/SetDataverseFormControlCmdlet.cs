@@ -14,7 +14,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Creates or updates a control in a Dataverse form section.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "DataverseFormControl", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
+    [Cmdlet(VerbsCommon.Set, "DataverseFormControl", DefaultParameterSetName = "Standard", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     [OutputType(typeof(string))]
     public class SetDataverseFormControlCmdlet : OrganizationServiceCmdlet
     {
@@ -46,7 +46,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the data field name (attribute) for the control.
         /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "Data field name (attribute) for the control")]
+        [Parameter(Mandatory = true, ParameterSetName = "Standard", HelpMessage = "Data field name (attribute) for the control")]
         public string DataField { get; set; }
 
         /// <summary>
@@ -372,11 +372,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
 
-                // For new controls, ControlType is mandatory unless RawXml
-                if (!isUpdate && ParameterSetName != "RawXml" && !MyInvocation.BoundParameters.ContainsKey(nameof(ControlType)))
-                {
-                    ThrowTerminatingError(new ErrorRecord(new ArgumentException("ControlType is required when creating a new control."), "ControlTypeRequired", ErrorCategory.InvalidArgument, null));
-                }
+                // For new controls, we'll use the default ControlType if not specified
+                // (ControlType has a default value of "Standard")
 
                 if (!isUpdate)
                 {
