@@ -17,8 +17,8 @@ Creates or updates a control in a Dataverse form section or header.
 Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
  -DataField <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Visible]
  [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>]
- [-PassThru] [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-PassThru] [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Auto] [-LockLevel <Int32>] [-Hidden]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### RawXml
@@ -26,8 +26,8 @@ Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String
 Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
  -ControlXml <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Visible]
  [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>]
- [-PassThru] [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-PassThru] [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Auto] [-LockLevel <Int32>] [-Hidden]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -245,6 +245,21 @@ Updates an existing header control's label and cell span without recreating it.
 
 ## PARAMETERS
 
+### -Auto
+Whether the cell should be auto-sized
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -CellId
 ID of the cell that will contain the control. Used for advanced form customization scenarios.
 
@@ -413,6 +428,21 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
+### -Hidden
+Whether the control is hidden
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -IsRequired
 Whether the control is required (must have a value before saving). This affects field validation and visual indicators.
 
@@ -445,6 +475,21 @@ Accept wildcard characters: False
 
 ### -LanguageCode
 Language code for the label (default: 1033 for English US). Use this for localized forms.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LockLevel
+Lock level for the cell
 
 ```yaml
 Type: Int32
