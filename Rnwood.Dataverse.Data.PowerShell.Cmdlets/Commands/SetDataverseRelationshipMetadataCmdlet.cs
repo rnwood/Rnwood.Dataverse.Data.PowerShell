@@ -1,3 +1,4 @@
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -139,6 +140,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter PassThru { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to publish the relationship after creating or updating.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, publishes the relationship after creating or updating")]
+        public SwitchParameter Publish { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet.
         /// </summary>
         protected override void ProcessRecord()
@@ -181,6 +188,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 MetadataCache.InvalidateEntity(connectionKey, ReferencedEntity);
                 MetadataCache.InvalidateEntity(connectionKey, ReferencingEntity);
             }
+
+            // Publish the relationship if specified
+            if (Publish && ShouldProcess($"Entities '{ReferencedEntity}' and '{ReferencingEntity}'", "Publish"))
+            {
+                var publishRequest = new PublishXmlRequest
+                {
+                    ParameterXml = $"<importexportxml><entities><entity>{ReferencedEntity}</entity><entity>{ReferencingEntity}</entity></entities></importexportxml>"
+                };
+                Connection.Execute(publishRequest);
+                WriteVerbose($"Published entities '{ReferencedEntity}' and '{ReferencingEntity}'");
+            }
         }
 
         private bool CheckRelationshipExists(string schemaName)
@@ -197,7 +215,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             catch (FaultException<OrganizationServiceFault> ex)
             {
-                if (ex.HResult == -2146233088) // Object does not exist
+                if (QueryHelpers.IsNotFoundException(ex))
                 {
                     return false;
                 }

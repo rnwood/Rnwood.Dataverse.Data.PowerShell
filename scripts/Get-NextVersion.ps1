@@ -7,6 +7,9 @@
     Parses conventional commit messages from a PR title, PR description, or commit history
     and determines the appropriate version bump (major, minor, or patch).
     
+    Takes into account existing prerelease versions to avoid double-incrementing when
+    multiple PRs with similar changes are created since the last stable release.
+    
     Conventional commit rules:
     - feat: or feat(<scope>): → minor version bump
     - fix: or fix(<scope>): → patch version bump
@@ -16,10 +19,14 @@
     If no conventional commits are found, defaults to patch version bump.
 
 .PARAMETER BaseVersion
-    The current/base version (e.g., "1.4.0")
+    The current/base stable version (e.g., "1.4.0")
 
 .PARAMETER CommitMessages
     Array of commit messages, PR title, or PR description text to analyze
+
+.PARAMETER ExistingPrereleases
+    Array of existing prerelease versions since the base version (e.g., @("1.5.0-ci20241103001"))
+    Used to prevent double-incrementing when multiple PRs have similar changes
 
 .EXAMPLE
     Get-NextVersion -BaseVersion "1.4.0" -CommitMessages @("feat: add new feature")
@@ -32,6 +39,10 @@
 .EXAMPLE
     Get-NextVersion -BaseVersion "1.4.0" -CommitMessages @("feat!: breaking change")
     Returns "2.0.0" (major bump)
+
+.EXAMPLE
+    Get-NextVersion -BaseVersion "1.4.0" -CommitMessages @("feat!: breaking change") -ExistingPrereleases @("2.0.0-ci20241101001")
+    Returns "2.0.0" (major already bumped by existing prerelease, no double increment)
 #>
 
 param(
@@ -40,7 +51,11 @@ param(
     
     [Parameter(Mandatory = $true)]
     [AllowEmptyCollection()]
-    [string[]]$CommitMessages
+    [string[]]$CommitMessages,
+    
+    [Parameter(Mandatory = $false)]
+    [AllowEmptyCollection()]
+    [string[]]$ExistingPrereleases = @()
 )
 
 $ErrorActionPreference = "Stop"
@@ -123,6 +138,68 @@ switch ($bumpLevel) {
 }
 
 $newVersion = "$newMajor.$newMinor.$newPatch"
-Write-Verbose "New version: $newVersion (bump: $bumpLevel)"
+Write-Verbose "New version calculated from commits: $newVersion (bump: $bumpLevel)"
+
+# Check if existing prereleases already achieved a higher or equal version
+if ($ExistingPrereleases.Count -gt 0) {
+    Write-Verbose "Checking existing prereleases..."
+    
+    $highestPrerelease = $null
+    $highestPrereleaseVersion = $null
+    
+    foreach ($prerelease in $ExistingPrereleases) {
+        # Extract version number from prerelease (e.g., "1.5.0-ci20241103001" -> "1.5.0")
+        if ($prerelease -match '^v?(\d+)\.(\d+)\.(\d+)') {
+            $preMajor = [int]$matches[1]
+            $preMinor = [int]$matches[2]
+            $prePatch = [int]$matches[3]
+            
+            Write-Verbose "  Prerelease: $prerelease -> $preMajor.$preMinor.$prePatch"
+            
+            # Compare versions (major.minor.patch)
+            $isHigher = $false
+            if ($null -eq $highestPrereleaseVersion) {
+                $isHigher = $true
+            } elseif ($preMajor -gt $highestPrereleaseVersion[0]) {
+                $isHigher = $true
+            } elseif ($preMajor -eq $highestPrereleaseVersion[0] -and $preMinor -gt $highestPrereleaseVersion[1]) {
+                $isHigher = $true
+            } elseif ($preMajor -eq $highestPrereleaseVersion[0] -and $preMinor -eq $highestPrereleaseVersion[1] -and $prePatch -gt $highestPrereleaseVersion[2]) {
+                $isHigher = $true
+            }
+            
+            if ($isHigher) {
+                $highestPrerelease = $prerelease
+                $highestPrereleaseVersion = @($preMajor, $preMinor, $prePatch)
+            }
+        }
+    }
+    
+    if ($null -ne $highestPrereleaseVersion) {
+        Write-Verbose "  Highest prerelease version: $($highestPrereleaseVersion -join '.')"
+        
+        # Compare with calculated new version
+        $newIsHigher = $false
+        if ($newMajor -gt $highestPrereleaseVersion[0]) {
+            $newIsHigher = $true
+        } elseif ($newMajor -eq $highestPrereleaseVersion[0] -and $newMinor -gt $highestPrereleaseVersion[1]) {
+            $newIsHigher = $true
+        } elseif ($newMajor -eq $highestPrereleaseVersion[0] -and $newMinor -eq $highestPrereleaseVersion[1] -and $newPatch -gt $highestPrereleaseVersion[2]) {
+            $newIsHigher = $true
+        }
+        
+        if ($newIsHigher) {
+            Write-Verbose "  New version $newVersion is higher than existing prereleases, using it"
+        } else {
+            Write-Verbose "  Existing prerelease version is >= new version, using existing prerelease version"
+            $newMajor = $highestPrereleaseVersion[0]
+            $newMinor = $highestPrereleaseVersion[1]
+            $newPatch = $highestPrereleaseVersion[2]
+            $newVersion = "$newMajor.$newMinor.$newPatch"
+        }
+    }
+}
+
+Write-Verbose "Final version: $newVersion"
 
 return $newVersion

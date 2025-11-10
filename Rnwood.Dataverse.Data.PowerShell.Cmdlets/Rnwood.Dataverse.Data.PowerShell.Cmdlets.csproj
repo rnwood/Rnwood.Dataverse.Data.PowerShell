@@ -19,7 +19,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net6.0|AnyCPU'">
     <WarningsAsErrors></WarningsAsErrors>
     <NoWarn>1701;1702;NU1605</NoWarn>
   </PropertyGroup>
@@ -27,7 +27,7 @@
     <WarningsAsErrors></WarningsAsErrors>
     <NoWarn>1701;1702;NU1605</NoWarn>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net6.0|AnyCPU'">
     <WarningsAsErrors></WarningsAsErrors>
     <NoWarn>1701;1702;NU1605</NoWarn>
   </PropertyGroup>
@@ -37,7 +37,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.17.0" />
-    <PackageReference Include="MarkMpn.Sql4Cds.Engine" Version="10.1.0" />
+    <PackageReference Include="MarkMpn.Sql4Cds.Engine" Version="10.1.1" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.32" />
     <PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.78.0" />
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.10">

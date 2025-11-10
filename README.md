@@ -2,13 +2,15 @@
 
 <img src="logo.svg" height=150/>
 
-A PowerShell module for connecting to Microsoft Dataverse (used by Dynamics 365 and Power Apps) to query and manipulate data.
+A PowerShell module for connecting to Microsoft Dataverse (used by Dynamics 365 and Power Apps) to query and manipulate data. 
 
 This module works in PowerShell Desktop and PowerShell Core, supporting Windows, Linux, and macOS.
 
 ## Features
 
 - Creating, updating, upserting and deleting records including M:M records
+- **View management**: Create, update, retrieve, and delete system and personal views with FetchXML or simplified filter syntax
+- **App module management**: Create, update, retrieve, and delete model-driven apps
 - Simple PowerShell objects for input and output instead of complex SDK Entity classes
 - Automatic data type conversion using metadata - use friendly labels for choices and names for lookups
 - Automatic lookup conversion - use record names instead of GUIDs (when unique)
@@ -63,6 +65,8 @@ Set-DataverseRecord -Connection $c -TableName contact -Id $contactId -InputObjec
 Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 ```
 
+For more advanced scenarios including view management and app module management, see the [documentation](#documentation) section below.
+
 ## Documentation
 
 ### Getting Started
@@ -75,6 +79,8 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 - [Querying Records](docs/core-concepts/querying.md) - Filtering, paging, sorting, linking, SQL queries
 - [Creating and Updating Records](docs/core-concepts/creating-updating.md) - Create, update, upsert operations
 - [Deleting Records](docs/core-concepts/deleting.md) - Delete operations and SQL alternatives
+- [View Management](docs/core-concepts/view-management.md) - Create, update, and manage system and personal views
+- [App Module Management](docs/core-concepts/app-module-management.md) - Create, update, and manage model-driven apps
 - [Working with Metadata](docs/core-concepts/metadata.md) - Reading and managing schema (entities, attributes, relationships, option sets)
 - [Error Handling and Batch Operations](docs/core-concepts/error-handling.md) - Error handling and retry logic
 - [Environment Variables and Connection References](docs/core-concepts/environment-variables-connection-references.md) - Managing configuration and connections
@@ -88,13 +94,39 @@ Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
 
 ## Main Cmdlets
 
-### Data Operations
+### Record Management
 - [`Get-DataverseConnection`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseConnection.md) — create or retrieve a connection
 - [`Get-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) — query and retrieve records
 - [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) — create, update or upsert records
 - [`Remove-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) — delete records
+
+### View Management
+- [`Get-DataverseView`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseView.md) — retrieve system and personal views
+- [`Set-DataverseView`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseView.md) — create or update views with FetchXML or simplified filters
+- [`Remove-DataverseView`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseView.md) — delete views
+
+### App Module Management
+- [`Get-DataverseAppModule`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseAppModule.md) — retrieve app modules (model-driven apps)
+- [`Set-DataverseAppModule`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseAppModule.md) — create or update app modules
+- [`Remove-DataverseAppModule`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md) — delete app modules
+
+### App Module Component Management
+- [`Get-DataverseAppModuleComponent`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseAppModuleComponent.md) — retrieve components included in an app (entities, forms, views, etc.)
+- [`Set-DataverseAppModuleComponent`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseAppModuleComponent.md) — add or update a component within an app
+- [`Remove-DataverseAppModuleComponent`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModuleComponent.md) — remove a component from an app
+
+### Advanced Operations
 - [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) — execute arbitrary SDK requests
 - [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) — run SQL queries against Dataverse
+
+### Sitemap Management
+
+- [`Get-DataverseSitemap`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSitemap.md) — retrieve sitemap navigation definitions
+- [`Set-DataverseSitemap`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSitemap.md) — create or update sitemap navigation
+- [`Remove-DataverseSitemap`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseSitemap.md) — delete sitemap navigation
+- [`Get-DataverseSitemapEntry`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSitemapEntry.md) — retrieve sitemap entries (Areas, Groups, SubAreas)
+- [`Set-DataverseSitemapEntry`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSitemapEntry.md) — create or update navigation entries
+- [`Remove-DataverseSitemapEntry`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseSitemapEntry.md) — remove navigation entries from sitemap
 
 ### Environment Variables
 - [`Get-DataverseEnvironmentVariableDefinition`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseEnvironmentVariableDefinition.md) — query environment variable definitions

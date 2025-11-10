@@ -148,8 +148,13 @@ new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionNam
             result.Properties.Add(new PSNoteProperty("TargetObjectId", (object)targetComponent?.ObjectId));
 
             result.Properties.Add(new PSNoteProperty("Status", status.ToString()));
-            result.Properties.Add(new PSNoteProperty("SourceBehavior", sourceComponent?.RootComponentBehavior.HasValue ?? false ? GetBehaviorName(sourceComponent.RootComponentBehavior.Value) : null));
-            result.Properties.Add(new PSNoteProperty("TargetBehavior", targetComponent?.RootComponentBehavior.HasValue ?? false ? GetBehaviorName(targetComponent.RootComponentBehavior.Value) : null));
+            
+            var sourceBehaviorEnum = RootComponentBehaviorExtensions.FromInt(sourceComponent?.RootComponentBehavior);
+            var targetBehaviorEnum = RootComponentBehaviorExtensions.FromInt(targetComponent?.RootComponentBehavior);
+            
+            result.Properties.Add(new PSNoteProperty("SourceBehavior", sourceBehaviorEnum));
+            result.Properties.Add(new PSNoteProperty("TargetBehavior", targetBehaviorEnum));
+            
             result.Properties.Add(new PSNoteProperty("IsSubcomponent", sourceComponent?.IsSubcomponent ?? targetComponent?.IsSubcomponent ?? false));
 
             if ((sourceComponent?.IsSubcomponent ?? targetComponent?.IsSubcomponent ?? false) &&
@@ -162,17 +167,6 @@ new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionNam
             }
 
             WriteObject(result);
-        }
-
-        private string GetBehaviorName(int behavior)
-        {
-            switch (behavior)
-            {
-                case 0: return "Include Subcomponents";
-                case 1: return "Do Not Include Subcomponents";
-                case 2: return "Include As Shell";
-                default: return $"Unknown ({behavior})";
-            }
         }
 
         private string ExtractSolutionName(byte[] solutionBytes)

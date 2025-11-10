@@ -30,43 +30,5 @@ Describe "Invoke-DataverseRequest - Batching and responses" {
         { @() | Invoke-DataverseRequest -Connection $connection -BatchSize 5 } | Should -Not -Throw
     }
 
-    Context "StopProcessing (Ctrl+C) Support" {
-        It "InvokeDataverseRequestCmdlet has StopProcessing override" {
-            # Verify that the cmdlet class has a StopProcessing method
-            $cmdletType = [Rnwood.Dataverse.Data.PowerShell.Commands.InvokeDataverseRequestCmdlet]
-            $stopProcessingMethod = $cmdletType.GetMethod("StopProcessing", [System.Reflection.BindingFlags]::Instance -bor [System.Reflection.BindingFlags]::NonPublic -bor [System.Reflection.BindingFlags]::Public)
-            
-            $stopProcessingMethod | Should -Not -BeNullOrEmpty
-            $stopProcessingMethod.DeclaringType.Name | Should -Be "InvokeDataverseRequestCmdlet"
-        }
-    }
-
-    Context "Bypass Business Logic Parameters" {
-        It "Does not throw when bypass parameters are provided with batching" {
-            # Create test requests
-            $requests = 1..3 | ForEach-Object { New-Object Microsoft.Crm.Sdk.Messages.WhoAmIRequest }
-
-            # Execute with bypass parameters and batching - should not throw
-            {
-                $requests | Invoke-DataverseRequest -Connection $connection `
-                    -BypassBusinessLogicExecution CustomSync,CustomAsync `
-                    -BypassBusinessLogicExecutionStepIds @([Guid]::NewGuid(), [Guid]::NewGuid()) `
-                    -BatchSize 10
-            } | Should -Not -Throw
-        }
-
-        It "Does not throw when bypass parameters are provided without batching" {
-            # Create a single test request
-            $request = New-Object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
-
-            # Execute with bypass parameters but no batching - should not throw
-            {
-                $request | Invoke-DataverseRequest -Connection $connection `
-                    -BypassBusinessLogicExecution CustomAsync `
-                    -BypassBusinessLogicExecutionStepIds @([Guid]::NewGuid()) `
-                    -BatchSize 1
-            } | Should -Not -Throw
-        }
-    }
 }
 

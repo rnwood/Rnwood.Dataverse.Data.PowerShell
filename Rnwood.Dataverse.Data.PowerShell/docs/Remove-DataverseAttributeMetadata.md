@@ -13,7 +13,7 @@ Deletes an attribute (column) from a Dataverse entity.
 ## SYNTAX
 
 ```
-Remove-DataverseAttributeMetadata [-EntityName] <String> [-AttributeName] <String> [-Force]
+Remove-DataverseAttributeMetadata [-EntityName] <String> [-AttributeName] <String>
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -214,21 +214,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Force
-Force deletion without confirmation prompt. Use with caution as this bypasses the safety confirmation.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -WhatIf
 Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
@@ -245,7 +230,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
-Controls how PowerShell handles progress messages. This is a common parameter added automatically by PowerShell.
+{{ Fill ProgressAction Description }}
 
 ```yaml
 Type: ActionPreference
@@ -265,13 +250,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.String
-You can pipe attribute names to this cmdlet.
-
 ## OUTPUTS
 
-### None
-This cmdlet does not produce any output.
-
+### System.Object
 ## NOTES
 
 This cmdlet provides programmatic access to Dataverse metadata. For comprehensive documentation and examples, see the metadata concept guide at docs/core-concepts/metadata.md

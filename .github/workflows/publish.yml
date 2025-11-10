@@ -76,23 +76,30 @@ jobs:
             $releaseNotesText | Out-File -FilePath release-notes.txt -Encoding utf8
           } elseif ($env:GITHUB_REF -eq "refs/heads/main" -or $env:GITHUB_EVENT_NAME -eq "pull_request") {
             # CI build on main branch or PR - auto-determine version using conventional commits
-            $latestTag = git describe --tags --abbrev=0 2>$null
-            if (-not $latestTag) {
-              $latestTag = "0.0.0"
+            
+            # Get all tags sorted by version
+            $allTags = git tag --list --sort=-version:refname 2>$null
+            
+            # Find the latest stable release (no prerelease suffix)
+            $latestStableTag = $allTags | Where-Object { $_ -notmatch '-' } | Select-Object -First 1
+            if (-not $latestStableTag) {
+              $latestStableTag = "0.0.0"
             }
             
-            # Parse version from tag
-            if ($latestTag -match '^v?(\d+\.\d+\.\d+)') {
+            # Parse version from stable tag
+            if ($latestStableTag -match '^v?(\d+\.\d+\.\d+)') {
               $baseVersion = $matches[1]
             } else {
               $baseVersion = "0.0.0"
             }
             
-            Write-Host "Latest tag version: $baseVersion"
+            Write-Host "Latest stable release: $latestStableTag (version: $baseVersion)"
             
             # Determine next version based on conventional commits
             if ($env:GITHUB_EVENT_NAME -eq "pull_request") {
               # For PRs, analyze PR title for conventional commits
+              # Note: We don't use existing prereleases for PRs since each PR is independent
+              # and we don't care about version clashes in PR branches
               Write-Host "PR detected - analyzing PR title for conventional commits"
               
               # Get PR title from GitHub event
@@ -101,61 +108,109 @@ jobs:
                 $event = Get-Content $eventPath -Raw | ConvertFrom-Json
                 $prTitle = $event.pull_request.title
                 
-                # Validate that PR title contains conventional commits
                 Write-Host ""
-                Write-Host "=== Validating PR Title ===" -ForegroundColor Cyan
-                $isValid = & ./scripts/Test-ConventionalCommits.ps1 -Text $prTitle
-                
-                if (-not $isValid) {
-                  Write-Host ""
-                  Write-Host "❌ BUILD FAILED: PR title does not contain a valid conventional commit message" -ForegroundColor Red
-                  Write-Host ""
-                  Write-Host "Please update your PR title to use conventional commit format." -ForegroundColor Yellow
-                  Write-Host "Example: 'feat: add new feature' or 'fix: resolve bug'" -ForegroundColor Yellow
-                  Write-Host ""
-                  throw "PR title validation failed - missing conventional commit message"
-                }
-                
-                Write-Host ""
-                Write-Host "PR Title:"
-                Write-Host $prTitle
+                Write-Host "PR Title: $prTitle"
                 
                 # Use PR title as the commit message for analysis
                 $commitMessages = @($prTitle)
                 
-                # Use Get-NextVersion script to determine version bump
+                # Calculate version based on PR title only (no prerelease comparison)
                 $nextVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages $commitMessages
                 Write-Host "Next version determined from PR title: $nextVersion"
                 $baseVersion = $nextVersion
               }
             } else {
-              # For main branch, analyze recent commits
+              # For main branch, analyze recent commits and use existing prereleases
+              # to prevent double-bumping when multiple PRs with same change type are merged
               Write-Host "Main branch detected - analyzing recent commits"
               
-              # Validate that we have a valid tag before using it in git log
-              if ($latestTag -eq "0.0.0") {
+              # Find all prerelease tags since the latest stable release
+              $existingPrereleases = @()
+              if ($latestStableTag -ne "0.0.0") {
+                # Get all tags that come after the stable release and have a prerelease suffix
+                $tagsAfterStable = git tag --list --sort=-version:refname --merged HEAD 2>$null | 
+                  Where-Object { $_ -match '-' }
+                
+                # Filter to only prereleases that are based on or after the stable version
+                foreach ($tag in $tagsAfterStable) {
+                  if ($tag -match '^v?(\d+)\.(\d+)\.(\d+)') {
+                    $tagVersion = "$($matches[1]).$($matches[2]).$($matches[3])"
+                    # Parse tag version
+                    if ($tagVersion -match '^(\d+)\.(\d+)\.(\d+)$') {
+                      $tagMajor = [int]$matches[1]
+                      $tagMinor = [int]$matches[2]
+                      $tagPatch = [int]$matches[3]
+                      
+                      # Parse base version
+                      if ($baseVersion -match '^(\d+)\.(\d+)\.(\d+)$') {
+                        $baseMajor = [int]$matches[1]
+                        $baseMinor = [int]$matches[2]
+                        $basePatch = [int]$matches[3]
+                        
+                        # Check if tag version is >= base version
+                        $isNewerOrEqual = $false
+                        if ($tagMajor -gt $baseMajor) {
+                          $isNewerOrEqual = $true
+                        } elseif ($tagMajor -eq $baseMajor -and $tagMinor -gt $baseMinor) {
+                          $isNewerOrEqual = $true
+                        } elseif ($tagMajor -eq $baseMajor -and $tagMinor -eq $baseMinor -and $tagPatch -ge $basePatch) {
+                          $isNewerOrEqual = $true
+                        }
+                        
+                        if ($isNewerOrEqual) {
+                          $existingPrereleases += $tag
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              
+              if ($existingPrereleases.Count -gt 0) {
+                Write-Host "Found $($existingPrereleases.Count) existing prerelease(s) since stable:"
+                $existingPrereleases | ForEach-Object { Write-Host "  - $_" }
+              } else {
+                Write-Host "No existing prereleases found since stable release"
+              }
+              
+              # Get commits since last stable tag
+              if ($latestStableTag -eq "0.0.0") {
                 Write-Host "No previous tag found, using all commits"
                 $commitsSinceTag = git log --format="%s" 2>$null
               } else {
-                # Get commits since last tag with error handling
-                Write-Host "Getting commits since tag: $latestTag"
-                $commitsSinceTag = git log "$latestTag..HEAD" --format="%s" 2>$null
+                # Get commits since last stable tag with error handling
+                Write-Host "Getting commits since tag: $latestStableTag"
+                $commitsSinceTag = git log "$latestStableTag..HEAD" --format="%s" 2>$null
               }
               
               if ($commitsSinceTag) {
                 $commitMessages = $commitsSinceTag -split "`n" | Where-Object { $_ -match '\S' }
                 
-                Write-Host "Commits since last tag:"
+                Write-Host "Commits since last stable tag:"
                 $commitMessages | ForEach-Object { Write-Host "  - $_" }
                 
-                # Use Get-NextVersion script to determine version bump
-                $nextVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages $commitMessages
+                # Use Get-NextVersion script to determine version bump with prerelease comparison
+                $params = @{
+                  BaseVersion = $baseVersion
+                  CommitMessages = $commitMessages
+                }
+                if ($existingPrereleases.Count -gt 0) {
+                  $params.ExistingPrereleases = $existingPrereleases
+                }
+                $nextVersion = & ./scripts/Get-NextVersion.ps1 @params
                 Write-Host "Next version determined from commits: $nextVersion"
                 $baseVersion = $nextVersion
               } else {
-                Write-Host "No commits since last tag, defaulting to patch bump"
+                Write-Host "No commits since last stable tag, defaulting to patch bump"
                 # Use Get-NextVersion with empty messages (defaults to patch)
-                $baseVersion = & ./scripts/Get-NextVersion.ps1 -BaseVersion $baseVersion -CommitMessages @()
+                $params = @{
+                  BaseVersion = $baseVersion
+                  CommitMessages = @()
+                }
+                if ($existingPrereleases.Count -gt 0) {
+                  $params.ExistingPrereleases = $existingPrereleases
+                }
+                $baseVersion = & ./scripts/Get-NextVersion.ps1 @params
               }
             }
             

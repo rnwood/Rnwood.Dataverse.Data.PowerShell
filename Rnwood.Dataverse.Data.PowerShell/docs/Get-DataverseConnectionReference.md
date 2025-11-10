@@ -121,7 +121,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
-Controls how PowerShell displays progress bars and progress messages for this cmdlet.
+{{ Fill ProgressAction Description }}
 
 ```yaml
 Type: ActionPreference

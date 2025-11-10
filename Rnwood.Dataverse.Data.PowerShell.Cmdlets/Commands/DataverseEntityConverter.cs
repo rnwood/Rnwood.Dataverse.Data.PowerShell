@@ -365,7 +365,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
                     }
 
-                    return entity.GetAttributeValue<object>(attributeMetadata.LogicalName);
+                    // Check for special managed property types
+                    object rawValue = entity.GetAttributeValue<object>(attributeMetadata.LogicalName);
+                    if (rawValue is Microsoft.Xrm.Sdk.BooleanManagedProperty booleanManagedProperty)
+                    {
+                        return booleanManagedProperty.Value;
+                    }
+
+                    return rawValue;
             }
         }
 
@@ -459,7 +466,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                         lookupQuery.AddAttributeValue(lookupNameAttribute, stringValue);
                                     }
 
-                                    var lookupRecords = service.RetrieveMultiple(lookupQuery).Entities;
+                                    var lookupRecords = QueryHelpers.ExecuteQueryWithPaging(lookupQuery, service, (msg) => { }).ToList();
 
                                     if (lookupRecords.Count == 1)
                                     {
@@ -787,7 +794,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                         }
                                     }
 
-                                    DataCollection<Entity> targetRecords = service.RetrieveMultiple(targetEntityQuery).Entities;
+                                    var targetRecords = QueryHelpers.ExecuteQueryWithPaging(targetEntityQuery, service, (msg) => { }).ToList();
                                     if (targetRecords.Count > 0)
                                     {
                                         convertedValue = targetRecords[0].ToEntityReference();

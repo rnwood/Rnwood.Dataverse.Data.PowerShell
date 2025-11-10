@@ -169,6 +169,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
+        /// Gets a formatted summary of all columns in an entity.
+        /// </summary>
+        public static string GetColumnSummary(Entity entity, DataverseEntityConverter converter)
+        {
+            return QueryHelpers.GetColumnSummary(entity, converter, true);
+        }
+
+        /// <summary>
+        /// Column names that should not be updated directly - they require special handling.
+        /// </summary>
+        public static readonly string[] DontUpdateDirectlyColumnNames = new[] { "statuscode", "statecode", "ownerid" };
+
+        /// <summary>
         /// Truncates a string value to 100 characters with ellipsis.
         /// </summary>
         public static string Ellipsis(string value)
@@ -198,20 +211,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             return value ?? "<null>";
         }
-
-        /// <summary>
-        /// Gets a formatted summary of all columns in an entity.
-        /// </summary>
-        public static string GetColumnSummary(Entity entity, DataverseEntityConverter converter)
-        {
-            PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(entity.Attributes.Select(a => a.Key).ToArray()), a => ValueType.Raw);
-            return string.Join("\n", psObject.Properties.Select(a => a.Name + " = " + Ellipsis((GetValueSummary(a.Value)).ToString())));
-        }
-
-        /// <summary>
-        /// Column names that should not be updated directly - they require special handling.
-        /// </summary>
-        public static readonly string[] DontUpdateDirectlyColumnNames = new[] { "statuscode", "statecode", "ownerid" };
 
         /// <summary>
         /// Removes unchanged columns from target entity by comparing with existing record.

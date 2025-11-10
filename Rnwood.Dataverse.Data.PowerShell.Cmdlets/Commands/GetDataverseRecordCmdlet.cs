@@ -1,5 +1,3 @@
-
-
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
@@ -252,6 +250,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.")]
         [Parameter(ParameterSetName = PARAMSET_MATCHON, HelpMessage = "Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.")]
         public SwitchParameter IncludeSystemColumns { get; set; }
+
+        /// <summary>
+        /// If specified, retrieves unpublished records instead of published ones.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, retrieves unpublished records instead of published ones.")]
+        public SwitchParameter Unpublished { get; set; }
 
         private EntityMetadataFactory entiyMetadataFactory;
         private DataverseEntityConverter entityConverter;
@@ -515,7 +519,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     WriteVerbose($"Retrieving records by MatchOn ({matchColumn}) in batch");
 
                     // Match back to items using streaming to avoid buffering all records
-                    foreach (var entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, () => Stopping, _userCancellationCts?.Token))
+                    foreach (var entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, () => Stopping, _userCancellationCts?.Token, Unpublished.IsPresent))
                     {
                         foreach (var item in itemsNeedingMatch)
                         {
@@ -573,7 +577,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     WriteVerbose($"Retrieving records by MatchOn ({string.Join(",", matchOnColumnList)}) in batch");
 
                     // Match back to items using streaming to avoid buffering all records
-                    foreach (var entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, () => Stopping, _userCancellationCts?.Token))
+                    foreach (var entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, () => Stopping, _userCancellationCts?.Token, Unpublished.IsPresent))
                     {
                         foreach (var item in itemsNeedingMatch)
                         {
@@ -850,7 +854,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private IEnumerable<Entity> GetRecords(QueryExpression query)
         {
-            return QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, () => Stopping, _userCancellationCts?.Token);
+            return QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, () => Stopping, _userCancellationCts?.Token, Unpublished.IsPresent);
         }
 
 

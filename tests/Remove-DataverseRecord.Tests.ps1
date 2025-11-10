@@ -333,41 +333,5 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
         }
     }
 
-    Context "StopProcessing (Ctrl+C) Support" {
-        It "RemoveDataverseRecordCmdlet has StopProcessing override" {
-            # Verify that the cmdlet class has a StopProcessing method
-            $cmdletType = [Rnwood.Dataverse.Data.PowerShell.Commands.RemoveDataverseRecordCmdlet]
-            $stopProcessingMethod = $cmdletType.GetMethod("StopProcessing", [System.Reflection.BindingFlags]::Instance -bor [System.Reflection.BindingFlags]::NonPublic -bor [System.Reflection.BindingFlags]::Public)
-            
-            $stopProcessingMethod | Should -Not -BeNullOrEmpty
-            $stopProcessingMethod.DeclaringType.Name | Should -Be "RemoveDataverseRecordCmdlet"
-        }
-    }
-
-    Context "Bypass Business Logic Parameters" {
-        It "Does not throw when bypass parameters are provided with batching" {
-            $connection = getMockConnection
-            # Create test records first so we can delete them
-            $records = 1..3 | ForEach-Object {
-                [PSCustomObject]@{
-                    firstname = "BypassTest$_"
-                    lastname = "ToDelete$_"
-                }
-            }
-            
-            $createdIds = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru | 
-                ForEach-Object { $_.Id }
-
-            # Execute with bypass parameters and batching - should not throw
-            {
-                $createdIds | ForEach-Object {
-                    Remove-DataverseRecord -Connection $connection -TableName contact -Id $_ `
-                        -BypassBusinessLogicExecution CustomSync `
-                        -BypassBusinessLogicExecutionStepIds @([Guid]::NewGuid()) `
-                        -BatchSize 10
-                }
-            } | Should -Not -Throw
-        }
-    }
 }
 

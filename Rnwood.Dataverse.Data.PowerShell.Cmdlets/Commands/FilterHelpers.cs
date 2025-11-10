@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
+using System.Xml.Linq;
+using Rnwood.Dataverse.Data.PowerShell.Model;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -80,6 +82,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // nested hashtables into that group.
                         FilterExpression groupFilter = containerFilter.AddFilter(effectiveGroupOperator);
                         ProcessHashFilterValues(groupFilter, nested.ToArray(), isExcludeFilter);
+
                         continue;
                     }
 
@@ -514,6 +517,56 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             throw new InvalidDataException($"Item of type {o.GetType().FullName} cannot be converted to a hashtable.");
+        }
+
+        public static PSSerializableHashtable ConvertFilterExpressionToHashtables(FilterExpression filter, int? queryType)
+        {
+            if (filter == null || (filter.Conditions.Count == 0 && filter.Filters.Count == 0))
+            {
+                return null;
+            }
+
+            var ht = new PSSerializableHashtable();
+            string op = filter.FilterOperator == LogicalOperator.Or ? "or" : "and";
+
+
+            List<Hashtable> list = new List<Hashtable>();
+
+            if (filter.Conditions.Any())
+            {
+                // Add conditions
+                var columnsHt = new PSSerializableHashtable();
+                foreach (var condition in filter.Conditions)
+                {
+                    var condHt = new PSSerializableHashtable();
+                    condHt["operator"] = condition.Operator.ToString();
+                    if (condition.Values.Count == 1)
+                    {
+                        condHt["value"] = condition.Values[0];
+                    }
+                    else if (condition.Values.Count > 1)
+                    {
+                        condHt["value"] = condition.Values.ToArray();
+                    }
+                    else
+                    {
+                        condHt["value"] = null;
+                    }
+
+                    columnsHt[condition.AttributeName] = condHt;
+                }
+                list.Add(columnsHt);
+            }
+
+            // Add nested filters
+            foreach (var nestedFilter in filter.Filters)
+            {
+                list.Add(ConvertFilterExpressionToHashtables(nestedFilter, queryType));
+            }
+
+            ht[op] = list.ToArray();            
+
+            return ht;
         }
     }
 }

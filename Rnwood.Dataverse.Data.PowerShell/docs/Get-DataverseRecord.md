@@ -18,7 +18,7 @@ Get-DataverseRecord [-TableName] <String> [-VerboseRecordCount] [-RecordCount] [
  [-Criteria <FilterExpression>] [-Links <DataverseLinkEntity[]>] [-ExcludeFilterValues <Hashtable[]>]
  [-ExcludeFilterOr] [-ActiveOnly] [-Id <Guid[]>] [-Name <String[]>] [-ExcludeId <Guid[]>] [-Columns <String[]>]
  [-ExcludeColumns <String[]>] [-OrderBy <String[]>] [-Top <Int32>] [-PageSize <Int32>]
- [-LookupValuesReturnName] [-IncludeSystemColumns] [-Connection <ServiceClient>]
+ [-LookupValuesReturnName] [-IncludeSystemColumns] [-Unpublished] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -27,14 +27,14 @@ Get-DataverseRecord [-TableName] <String> [-VerboseRecordCount] [-RecordCount] [
 Get-DataverseRecord [-TableName] <String> -InputObject <PSObject> -MatchOn <String[][]> [-AllowMultipleMatches]
  [-VerboseRecordCount] [-RecordCount] [-Columns <String[]>] [-ExcludeColumns <String[]>] [-OrderBy <String[]>]
  [-Top <Int32>] [-PageSize <Int32>] [-RetrievalBatchSize <UInt32>] [-LookupValuesReturnName]
- [-IncludeSystemColumns] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-IncludeSystemColumns] [-Unpublished] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [<CommonParameters>]
 ```
 
 ### FetchXml
 ```
 Get-DataverseRecord [-VerboseRecordCount] [-RecordCount] [-FetchXml <String>] [-LookupValuesReturnName]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Unpublished] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -751,6 +751,21 @@ Default is all results.
 ```yaml
 Type: Int32
 Parameter Sets: Simple, MatchOn
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Unpublished
+If specified, retrieves unpublished records instead of published ones.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
 Aliases:
 
 Required: False

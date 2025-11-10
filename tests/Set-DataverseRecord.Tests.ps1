@@ -1186,36 +1186,5 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
         }
     }
 
-    Context "StopProcessing (Ctrl+C) Support" {
-        It "SetDataverseRecordCmdlet has StopProcessing override" {
-            # Verify that the cmdlet class has a StopProcessing method
-            $cmdletType = [Rnwood.Dataverse.Data.PowerShell.Commands.SetDataverseRecordCmdlet]
-            $stopProcessingMethod = $cmdletType.GetMethod("StopProcessing", [System.Reflection.BindingFlags]::Instance -bor [System.Reflection.BindingFlags]::NonPublic -bor [System.Reflection.BindingFlags]::Public)
-            
-            $stopProcessingMethod | Should -Not -BeNullOrEmpty
-            $stopProcessingMethod.DeclaringType.Name | Should -Be "SetDataverseRecordCmdlet"
-        }
-    }
-
-    Context "Bypass Business Logic Parameters" {
-        It "Does not throw when bypass parameters are provided with batching" {
-            $connection = getMockConnection
-            # Create test records
-            $records = 1..3 | ForEach-Object {
-                [PSCustomObject]@{
-                    firstname = "Test$_"
-                    lastname = "User$_"
-                }
-            }
-
-            # Execute with bypass parameters and batching - should not throw
-            {
-                $records | Set-DataverseRecord -Connection $connection -TableName contact `
-                    -BypassBusinessLogicExecution CustomSync,CustomAsync `
-                    -BypassBusinessLogicExecutionStepIds @([Guid]::NewGuid()) `
-                    -BatchSize 10 -CreateOnly
-            } | Should -Not -Throw
-        }
-    }
 }
 

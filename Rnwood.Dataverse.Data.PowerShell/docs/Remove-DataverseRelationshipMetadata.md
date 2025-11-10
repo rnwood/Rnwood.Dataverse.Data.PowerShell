@@ -246,7 +246,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
-Controls how PowerShell handles progress messages. This is a common parameter added automatically by PowerShell.
+{{ Fill ProgressAction Description }}
 
 ```yaml
 Type: ActionPreference

@@ -1,12 +1,19 @@
+using MarkMpn.Sql4Cds.Engine.FetchXml;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
+using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
+using System.Management.Automation;
+using System.ServiceModel;
 using System.Text;
+using System.Runtime.Serialization;
+using System.IO;
+using System.Xml.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -22,9 +29,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <param name="connection">The organization service connection</param>
         /// <param name="writeVerbose">Action to write verbose messages</param>
         /// <returns>Enumerable of entities from all pages</returns>
-        public static IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query, IOrganizationService connection, Action<string> writeVerbose)
+        public static IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query, IOrganizationService connection, Action<string> writeVerbose, bool unpublished = false)
         {
-            return ExecuteQueryWithPaging(query, connection, writeVerbose, null, null);
+            return ExecuteQueryWithPaging(query, connection, writeVerbose, null, null, unpublished);
         }
 
         /// <summary>
@@ -35,8 +42,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <param name="writeVerbose">Action to write verbose messages</param>
         /// <param name="isStopping">Function to check if the cmdlet is stopping</param>
         /// <param name="cancellationToken">Cancellation token to check during IO operations</param>
+        /// <param name="unpublished">Whether to include unpublished entities</param>
         /// <returns>Enumerable of entities from all pages</returns>
-        public static IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query, IOrganizationService connection, Action<string> writeVerbose, Func<bool> isStopping, System.Threading.CancellationToken? cancellationToken)
+        public static IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query, IOrganizationService connection, Action<string> writeVerbose, Func<bool> isStopping, System.Threading.CancellationToken? cancellationToken, bool unpublished = false)
         {
             writeVerbose($"Executing query: {QueryToVerboseString(query)}");
 
@@ -52,12 +60,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 qe.PageInfo = pageInfo;
 
-                RetrieveMultipleRequest request = new RetrieveMultipleRequest()
-                {
-                    Query = qe
-                };
+                OrganizationRequest request = unpublished ? (OrganizationRequest)new RetrieveUnpublishedMultipleRequest() { Query = qe } : new RetrieveMultipleRequest() { Query = qe };
 
-                RetrieveMultipleResponse response;
+                OrganizationResponse response;
+                EntityCollection entityCollection;
                 int pageNum = 0;
 
                 do
@@ -71,13 +77,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     pageNum++;
                     writeVerbose($"Retrieving page {pageNum}...");
-                    response = (RetrieveMultipleResponse)connection.Execute(request);
-                    writeVerbose($"Page {pageNum} returned {response.EntityCollection.Entities.Count} records");
+                    response = connection.Execute(request);
+                    entityCollection = GetEntityCollectionFromResponse(response);
+                    writeVerbose($"Page {pageNum} returned {entityCollection.Entities.Count} records");
 
                     pageInfo.PageNumber++;
-                    pageInfo.PagingCookie = response.EntityCollection.PagingCookie;
+                    pageInfo.PagingCookie = entityCollection.PagingCookie;
 
-                    foreach (Entity entity in response.EntityCollection.Entities)
+                    foreach (Entity entity in entityCollection.Entities)
                     {
                         // Check for cancellation during record iteration
                         if ((isStopping != null && isStopping()) || (cancellationToken.HasValue && cancellationToken.Value.IsCancellationRequested))
@@ -89,7 +96,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         yield return entity;
                     }
 
-                } while (response.EntityCollection.MoreRecords);
+                } while (entityCollection.MoreRecords);
                 
                 writeVerbose($"Query complete. Retrieved {pageNum} page(s)");
             }
@@ -98,15 +105,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // When TopCount is set (e.g., from FetchXML), execute without PageInfo
                 string topCountStr = query is QueryExpression qe2 ? qe2.TopCount?.ToString() : (query is QueryByAttribute qba2 ? qba2.TopCount?.ToString() : "null");
                 writeVerbose($"Executing query with TopCount={topCountStr}");
-                RetrieveMultipleRequest request = new RetrieveMultipleRequest()
-                {
-                    Query = query
-                };
+                OrganizationRequest request = unpublished ? (OrganizationRequest)new RetrieveUnpublishedMultipleRequest() { Query = query } : new RetrieveMultipleRequest() { Query = query };
 
-                RetrieveMultipleResponse response = (RetrieveMultipleResponse)connection.Execute(request);
-                writeVerbose($"Query returned {response.EntityCollection.Entities.Count} records");
+                OrganizationResponse response = connection.Execute(request);
+                EntityCollection entityCollection = GetEntityCollectionFromResponse(response);
+                writeVerbose($"Query returned {entityCollection.Entities.Count} records");
 
-                foreach (Entity entity in response.EntityCollection.Entities)
+                foreach (Entity entity in entityCollection.Entities)
                 {
                     yield return entity;
                 }
@@ -253,6 +258,151 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 output.AppendLine("---");
                 AppendFaultDetails(fault.InnerFault, output);
             }
+        }
+
+        /// <summary>
+        /// Gets a formatted summary of all columns in an entity.
+        /// </summary>
+        public static string GetColumnSummary(Entity entity, DataverseEntityConverter converter, bool useEllipsis = true)
+        {
+            PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(entity.Attributes.Select(a => a.Key).ToArray()), a => ValueType.Raw);
+            return string.Join("\n", psObject.Properties.Select(a => a.Name + " = " + (useEllipsis ? Ellipsis(GetValueSummary(a.Value).ToString()) : GetValueSummary(a.Value).ToString())));
+        }
+
+        /// <summary>
+        /// Truncates a string value to 100 characters with ellipsis.
+        /// </summary>
+        public static string Ellipsis(string value)
+        {
+            if (value == null)
+            {
+                return null;
+            }
+
+            if (value.Length <= 100)
+            {
+                return value;
+            }
+
+            return value.Substring(0, 100) + "...";
+        }
+
+        /// <summary>
+        /// Gets a summary of values, handling collections.
+        /// </summary>
+        public static object GetValueSummary(object value)
+        {
+            if (!(value is string) && value is IEnumerable enumerable)
+            {
+                return "[" + string.Join(", ", enumerable.Cast<object>().Select(i => GetValueSummary(i))) + "]";
+            }
+
+            return value ?? "<null>";
+        }
+
+        /// <summary>
+        /// Extracts the EntityCollection from a query response, handling both published and unpublished response types.
+        /// </summary>
+        /// <param name="response">The organization response from a query request</param>
+        /// <returns>The EntityCollection containing the query results</returns>
+        private static EntityCollection GetEntityCollectionFromResponse(OrganizationResponse response)
+        {
+            if (response is RetrieveMultipleResponse rmr)
+                return rmr.EntityCollection;
+            if (response is RetrieveUnpublishedMultipleResponse rumr)
+                return rumr.EntityCollection;
+            throw new InvalidOperationException($"Unexpected response type: {response.GetType().Name}");
+        }
+
+        /// <summary>
+        /// Determines if a FaultException indicates that a record or entity was not found.
+        /// This method handles various error codes and messages used by different versions of 
+        /// FakeXrmEasy and real Dataverse environments.
+        /// </summary>
+        /// <param name="ex">The FaultException to check</param>
+        /// <returns>True if the exception indicates the entity/record was not found, false otherwise</returns>
+        public static bool IsNotFoundException(FaultException<OrganizationServiceFault> ex)
+        {
+            if (ex == null)
+                return false;
+
+            // Check for standard error codes:
+            // -2147220969 (0x80040217): Record not found (Dataverse standard)
+            // -2146233088 (0x80131500): Object does not exist (common in FakeXrmEasy)
+            if (ex.Detail != null && (ex.Detail.ErrorCode == -2147220969 || ex.Detail.ErrorCode == -2146233088))
+                return true;
+
+            // FakeXrmEasy sometimes sets HResult instead of Detail.ErrorCode
+            if (ex.HResult == -2146233088)
+                return true;
+
+            // Check message for various "not found" patterns (case-insensitive)
+            if (ex.Message != null)
+            {
+                string lowerMessage = ex.Message.ToLower();
+                if (lowerMessage.Contains("does not exist") || 
+                    lowerMessage.Contains("not found") ||
+                    lowerMessage.Contains("doesn't exist"))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Determines if a generic FaultException indicates that a record or entity was not found.
+        /// This overload handles non-generic FaultException which may be thrown by some versions of FakeXrmEasy.
+        /// </summary>
+        /// <param name="ex">The FaultException to check</param>
+        /// <returns>True if the exception indicates the entity/record was not found, false otherwise</returns>
+        public static bool IsNotFoundException(FaultException ex)
+        {
+            if (ex == null)
+                return false;
+
+            // Check HResult for object does not exist error
+            if (ex.HResult == -2146233088 || ex.HResult == -2147220969)
+                return true;
+
+            // Check message for various "not found" patterns (case-insensitive)
+            if (ex.Message != null)
+            {
+                string lowerMessage = ex.Message.ToLower();
+                if (lowerMessage.Contains("does not exist") || 
+                    lowerMessage.Contains("not found") ||
+                    lowerMessage.Contains("doesn't exist"))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Determines if an OrganizationServiceFault indicates that a record or entity was not found.
+        /// Used when working with faults from ExecuteMultipleResponse or other batch operations.
+        /// </summary>
+        /// <param name="fault">The OrganizationServiceFault to check</param>
+        /// <returns>True if the fault indicates the entity/record was not found, false otherwise</returns>
+        public static bool IsNotFoundException(OrganizationServiceFault fault)
+        {
+            if (fault == null)
+                return false;
+
+            // Check for standard error codes
+            if (fault.ErrorCode == -2147220969 || fault.ErrorCode == -2146233088)
+                return true;
+
+            // Check message for various "not found" patterns (case-insensitive)
+            if (fault.Message != null)
+            {
+                string lowerMessage = fault.Message.ToLower();
+                if (lowerMessage.Contains("does not exist") || 
+                    lowerMessage.Contains("not found") ||
+                    lowerMessage.Contains("doesn't exist"))
+                    return true;
+            }
+
+            return false;
         }
     }
 }
