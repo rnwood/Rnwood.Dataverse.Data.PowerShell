@@ -147,6 +147,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string CellId { get; set; }
 
         /// <summary>
+        /// Gets or sets whether the cell should be auto-sized.
+        /// </summary>
+        [Parameter(HelpMessage = "Whether the cell should be auto-sized")]
+        public SwitchParameter Auto { get; set; }
+
+        /// <summary>
+        /// Gets or sets the lock level for the cell.
+        /// </summary>
+        [Parameter(HelpMessage = "Lock level for the cell")]
+        public int? LockLevel { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether the control is hidden.
+        /// </summary>
+        [Parameter(HelpMessage = "Whether the control is hidden")]
+        public SwitchParameter Hidden { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -436,6 +454,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
 
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
+                {
+                    if (Hidden.IsPresent)
+                    {
+                        control.SetAttributeValue("visible", "false");
+                    }
+                    else
+                    {
+                        control.SetAttributeValue("visible", null);
+                    }
+                }
+
                 if (MyInvocation.BoundParameters.ContainsKey(nameof(ShowLabel)))
                 {
                     if (!ShowLabel.IsPresent)
@@ -520,6 +550,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             else if (cell.Attribute("id") == null)
             {
                 cell.SetAttributeValue("id", Guid.NewGuid().ToString());
+            }
+
+            // Set cell Auto attribute
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(Auto)))
+            {
+                if (Auto.IsPresent)
+                {
+                    cell.SetAttributeValue("auto", "true");
+                }
+                else
+                {
+                    cell.SetAttributeValue("auto", null);
+                }
+            }
+
+            // Set cell LockLevel attribute
+            if (LockLevel.HasValue)
+            {
+                cell.SetAttributeValue("locklevel", LockLevel.Value.ToString());
             }
 
             // Confirm action

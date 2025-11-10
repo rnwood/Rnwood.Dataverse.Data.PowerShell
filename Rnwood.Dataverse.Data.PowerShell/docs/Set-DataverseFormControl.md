@@ -12,12 +12,22 @@ Creates or updates a control in a Dataverse form section or header.
 
 ## SYNTAX
 
+### Standard (Default)
 ```
-Set-DataverseFormControl -FormId <Guid> -SectionName <String> -TabName <String> [-ControlId <String>]
- -DataField <String> -ControlXml <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>]
- [-Disabled] [-Visible] [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired]
- [-Parameters <Hashtable>] [-PassThru] [-Row <Int32>] [-Column <Int32>] [-CellId <String>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
+ -DataField <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Visible]
+ [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>]
+ [-PassThru] [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### RawXml
+```
+Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
+ -ControlXml <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Visible]
+ [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>]
+ [-PassThru] [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -348,7 +358,7 @@ Raw XML for the control element. Use this for advanced control configurations th
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: RawXml
 Aliases:
 
 Required: True
@@ -363,7 +373,7 @@ Data field name (attribute logical name) for the control. This binds the control
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: Standard
 Aliases:
 
 Required: True
@@ -531,7 +541,7 @@ Type: String
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
