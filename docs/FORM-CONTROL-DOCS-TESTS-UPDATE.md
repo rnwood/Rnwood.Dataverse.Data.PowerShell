@@ -1,3 +1,37 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [Documentation and Testing Updates Summary](#documentation-and-testing-updates-summary)
+  - [Documentation Updates](#documentation-updates)
+    - [Get-DataverseFormControl.md](#get-dataverseformcontrolmd)
+    - [Set-DataverseFormControl.md](#set-dataverseformcontrolmd)
+  - [Test Coverage](#test-coverage)
+    - [New Test File: FormControlManagement-New.Tests.ps1](#new-test-file-formcontrolmanagement-newtestsps1)
+      - [Test Contexts:](#test-contexts)
+      - [Test Statistics:](#test-statistics)
+    - [Existing Test File: FormControlManagement.Tests.ps1](#existing-test-file-formcontrolmanagementtestsps1)
+  - [Key Improvements Documented](#key-improvements-documented)
+    - [1. Control Visibility Default](#1-control-visibility-default)
+    - [2. New Control Types](#2-new-control-types)
+    - [3. Cell Attributes](#3-cell-attributes)
+    - [4. Update Capability](#4-update-capability)
+    - [5. Hidden Controls Support](#5-hidden-controls-support)
+  - [Validation Checklist](#validation-checklist)
+  - [Files Modified](#files-modified)
+    - [Documentation](#documentation)
+    - [Tests](#tests)
+    - [Code (Previously Updated)](#code-previously-updated)
+  - [Testing Instructions](#testing-instructions)
+    - [Run New Tests](#run-new-tests)
+    - [Run All Form Control Tests](#run-all-form-control-tests)
+    - [Expected Results](#expected-results)
+  - [Next Steps](#next-steps)
+  - [Notes](#notes)
+  - [Conclusion](#conclusion)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Documentation and Testing Updates Summary
 
 This document summarizes all updates made to documentation and tests for the Get-DataverseFormControl and Set-DataverseFormControl cmdlets following the control parsing and generation improvements.
