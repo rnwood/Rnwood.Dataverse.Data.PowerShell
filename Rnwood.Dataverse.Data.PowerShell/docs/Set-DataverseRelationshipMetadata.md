@@ -18,7 +18,7 @@ Set-DataverseRelationshipMetadata [-SchemaName] <String> -RelationshipType <Stri
  [-LookupAttributeDescription <String>] [-LookupAttributeRequiredLevel <String>]
  [-IntersectEntitySchemaName <String>] [-CascadeAssign <String>] [-CascadeShare <String>]
  [-CascadeUnshare <String>] [-CascadeReparent <String>] [-CascadeDelete <String>] [-CascadeMerge <String>]
- [-IsHierarchical] [-IsSearchable] [-PassThru] [-Connection <ServiceClient>]
+ [-IsHierarchical] [-IsSearchable] [-PassThru] [-Publish] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -368,6 +368,21 @@ Aliases:
 Required: False
 Position: Named
 Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Publish
+If specified, publishes the relationship after creating or updating
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
