@@ -23,15 +23,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Guid FormId { get; set; }
 
         /// <summary>
-        /// Gets or sets the tab name to filter controls.
+        /// Gets or sets the tab name to filter controls. Use '[Header]' to get controls from the form header.
         /// </summary>
-        [Parameter(HelpMessage = "Name of the tab containing the section")]
+        [Parameter(HelpMessage = "Name of the tab containing the section. Use '[Header]' to get header controls.")]
         public string TabName { get; set; }
 
         /// <summary>
-        /// Gets or sets the section name to filter controls. TabName must be provided when using SectionName.
+        /// Gets or sets the section name to filter controls. TabName must be provided when using SectionName (except for header).
         /// </summary>
-        [Parameter(HelpMessage = "Name of the section containing the controls. TabName is required when using SectionName.")]
+        [Parameter(HelpMessage = "Name of the section containing the controls. TabName is required when using SectionName (not applicable for header).")]
         public string SectionName { get; set; }
 
         /// <summary>
@@ -53,7 +53,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            // Validate that TabName is provided when SectionName is specified
+            // Special handling for header controls
+            bool isHeaderRequest = !string.IsNullOrEmpty(TabName) && TabName.Equals("[Header]", StringComparison.OrdinalIgnoreCase);
+            
+            // Validate that TabName is provided when SectionName is specified (unless it's header)
             if (!string.IsNullOrEmpty(SectionName) && string.IsNullOrEmpty(TabName))
             {
                 throw new ArgumentException("TabName is required when SectionName is specified. Section names are only unique within a tab.");
@@ -64,11 +67,37 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             foreach (var (tabName, sectionName, control) in FormXmlHelper.GetControls(systemForm, TabName, SectionName, ControlId, DataField))
             {
-                PSObject controlObj = FormXmlHelper.ParseControl(control);
+                // Find the parent cell for cell attributes
+                XElement parentCell = control.Parent;
+                if (parentCell == null || parentCell.Name.LocalName != "cell")
+                {
+                    parentCell = null;
+                }
+                
+                PSObject controlObj = FormXmlHelper.ParseControl(control, parentCell);
                 // Add form and location context
                 controlObj.Properties.Add(new PSNoteProperty("FormId", FormId));
                 controlObj.Properties.Add(new PSNoteProperty("TabName", tabName));
                 controlObj.Properties.Add(new PSNoteProperty("SectionName", sectionName));
+
+                // Calculate Row and Column
+                if (parentCell != null)
+                {
+                    XElement row = parentCell.Parent;
+                    if (row != null && row.Name.LocalName == "row")
+                    {
+                        XElement rows = row.Parent;
+                        if (rows != null && rows.Name.LocalName == "rows")
+                        {
+                            var rowList = rows.Elements("row").ToList();
+                            int rowIndex = rowList.IndexOf(row);
+                            var cellList = row.Elements("cell").ToList();
+                            int columnIndex = cellList.IndexOf(parentCell);
+                            controlObj.Properties.Add(new PSNoteProperty("Row", rowIndex));
+                            controlObj.Properties.Add(new PSNoteProperty("Column", columnIndex));
+                        }
+                    }
+                }
 
                 WriteObject(controlObj);
             }

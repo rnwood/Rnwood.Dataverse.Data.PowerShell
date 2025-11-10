@@ -45,8 +45,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the data field name (attribute) for the control.
         /// </summary>
-        [Parameter(Mandatory = true, ParameterSetName = "Default", HelpMessage = "Data field name (attribute) for the control")]
-        [Parameter(Mandatory = false, ParameterSetName = "RawXml", HelpMessage = "Data field name (attribute) for the control")]
+        [Parameter(Mandatory = true, HelpMessage = "Data field name (attribute) for the control")]
         public string DataField { get; set; }
 
         /// <summary>
@@ -58,8 +57,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the control type.
         /// </summary>
-        [Parameter(HelpMessage = "Control type (Standard, Lookup, OptionSet, DateTime, Boolean, Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch, Notes)")]
-        [ValidateSet("Standard", "Lookup", "OptionSet", "DateTime", "Boolean", "Subgrid", "WebResource", "QuickForm", "Spacer", "IFrame", "Timer", "KBSearch", "Notes")]
+        [Parameter(HelpMessage = "Control type (Standard, Lookup, OptionSet, DateTime, Boolean, Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch, Notes, Email, Memo, Money, Data)")]
+        [ValidateSet("Standard", "Lookup", "OptionSet", "DateTime", "Boolean", "Subgrid", "WebResource", "QuickForm", "Spacer", "IFrame", "Timer", "KBSearch", "Notes", "Email", "Memo", "Money", "Data")]
         public string ControlType { get; set; } = "Standard";
 
         /// <summary>
@@ -81,10 +80,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter Disabled { get; set; }
 
         /// <summary>
-        /// Gets or sets whether the control is hidden.
+        /// Gets or sets whether the control is visible.
         /// </summary>
-        [Parameter(HelpMessage = "Whether the control is hidden")]
-        public SwitchParameter Hidden { get; set; } = true;
+        [Parameter(HelpMessage = "Whether the control is visible")]
+        public SwitchParameter Visible { get; set; } = true;
 
         /// <summary>
         /// Gets or sets the number of rows (for multiline text).
@@ -123,28 +122,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public System.Collections.Hashtable Parameters { get; set; }
 
         /// <summary>
-        /// Gets or sets the zero-based index position where the control should be inserted in the section.
-        /// </summary>
-        [Parameter(HelpMessage = "Zero-based index position to insert the control")]
-        public int? Index { get; set; }
-
-        /// <summary>
-        /// Gets or sets the ID or data field name of the control before which to insert this control.
-        /// </summary>
-        [Parameter(HelpMessage = "ID or data field name of the control before which to insert")]
-        public string InsertBefore { get; set; }
-
-        /// <summary>
-        /// Gets or sets the ID or data field name of the control after which to insert this control.
-        /// </summary>
-        [Parameter(HelpMessage = "ID or data field name of the control after which to insert")]
-        public string InsertAfter { get; set; }
-
-        /// <summary>
         /// Gets or sets whether to return the control ID.
         /// </summary>
         [Parameter(HelpMessage = "Return the control ID")]
         public SwitchParameter PassThru { get; set; }
+
+        /// <summary>
+        /// Gets or sets the zero-based row index where the control should be placed.
+        /// </summary>
+        [Parameter(HelpMessage = "Zero-based row index where the control should be placed")]
+        public int? Row { get; set; }
+
+        /// <summary>
+        /// Gets or sets the zero-based column index where the control should be placed.
+        /// </summary>
+        [Parameter(HelpMessage = "Zero-based column index where the control should be placed")]
+        public int? Column { get; set; }
+
+        /// <summary>
+        /// Gets or sets the ID of the cell that will contain the control.
+        /// </summary>
+        [Parameter(HelpMessage = "ID of the cell that will contain the control")]
+        public string CellId { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -165,10 +164,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             XElement targetSection = sectionResult.Section;
+            XElement targetTab = sectionResult.Tab;
             XElement rowsElement = FormXmlHelper.GetOrCreateRowsElement(targetSection);
+
+            // Get column count
+            var columnsElement = targetTab.Element("columns");
+            int columnCount = columnsElement?.Elements("column").Count() ?? 1;
+
+            // Determine target position
+            int targetRow = Row ?? -1;
+            int targetColumn = Column ?? 0;
+
+            if (targetColumn >= columnCount)
+            {
+                throw new InvalidOperationException($"Column {targetColumn} is out of range. Valid range is 0-{columnCount - 1}");
+            }
+
+            var rows = rowsElement.Elements("row").ToList();
 
             XElement control = null;
             XElement cell = null;
+            XElement existingCell = null;
             string controlId = ControlId;
             bool isUpdate = false;
 
@@ -191,64 +207,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     control.SetAttributeValue("id", controlId);
                     
                     // Check if control with same ID already exists
-                    var (existingControl, existingCell) = FormXmlHelper.FindControlById(systemForm, TabName, SectionName, controlId);
+                    var (existingControl, tempExistingCell) = FormXmlHelper.FindControlById(systemForm, TabName, SectionName, controlId);
                     if (existingControl != null)
                     {
-                        // Update existing control by replacing it
-                        existingControl.ReplaceWith(control);
-                        cell = existingCell;
+                        // Remove from existing position
+                        existingControl.Remove();
+                        existingCell = tempExistingCell;
                         isUpdate = true;
-                    }
-                    else
-                    {
-                        // Create new control
-                        cell = new XElement("cell", control);
-                        XElement row = new XElement("row", cell);
-                        
-                        // Handle positioning
-                        if (Index.HasValue)
-                        {
-                            var rows = rowsElement.Elements("row").ToList();
-                            if (Index.Value >= 0 && Index.Value <= rows.Count)
-                            {
-                                if (Index.Value == rows.Count)
-                                {
-                                    rowsElement.Add(row);
-                                }
-                                else
-                                {
-                                    rows[Index.Value].AddBeforeSelf(row);
-                                }
-                            }
-                            else
-                            {
-                                throw new InvalidOperationException($"Index {Index.Value} is out of range. Valid range is 0-{rows.Count}");
-                            }
-                        }
-                        else if (!string.IsNullOrEmpty(InsertBefore))
-                        {
-                            // Insert before specified control
-                            var referenceRow = FormXmlHelper.FindControlRowForPositioning(systemForm, TabName, SectionName, InsertBefore);
-                            if (referenceRow == null)
-                            {
-                                throw new InvalidOperationException($"Reference control '{InsertBefore}' not found");
-                            }
-                            referenceRow.AddBeforeSelf(row);
-                        }
-                        else if (!string.IsNullOrEmpty(InsertAfter))
-                        {
-                            // Insert after specified control
-                            var referenceRow = FormXmlHelper.FindControlRowForPositioning(systemForm, TabName, SectionName, InsertAfter);
-                            if (referenceRow == null)
-                            {
-                                throw new InvalidOperationException($"Reference control '{InsertAfter}' not found");
-                            }
-                            referenceRow.AddAfterSelf(row);
-                        }
-                        else
-                        {
-                            rowsElement.Add(row);
-                        }
                     }
                 }
                 else
@@ -258,124 +223,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     if (!string.IsNullOrEmpty(dataFieldName))
                     {
                         // Check if control with same DataField already exists in section
-                        var (existingControl, existingCell) = FormXmlHelper.FindControlByDataField(systemForm, TabName, SectionName, dataFieldName);
+                        var (existingControl, tempExistingCell) = FormXmlHelper.FindControlByDataField(systemForm, TabName, SectionName, dataFieldName);
                         if (existingControl != null)
                         {
-                            // Update existing control by replacing it
+                            // Remove from existing position
+                            existingControl.Remove();
                             controlId = existingControl.Attribute("id")?.Value;
                             control.SetAttributeValue("id", controlId);
-                            existingControl.ReplaceWith(control);
-                            cell = existingCell;
+                            existingCell = tempExistingCell;
                             isUpdate = true;
                         }
                         else
                         {
-                            // Create new control
+                            // Generate new ID
                             controlId = Guid.NewGuid().ToString();
                             control.SetAttributeValue("id", controlId);
-                            cell = new XElement("cell", control);
-                            XElement row = new XElement("row", cell);
-                            
-                            // Handle positioning
-                            if (Index.HasValue)
-                            {
-                                var rows = rowsElement.Elements("row").ToList();
-                                if (Index.Value >= 0 && Index.Value <= rows.Count)
-                                {
-                                    if (Index.Value == rows.Count)
-                                    {
-                                        rowsElement.Add(row);
-                                    }
-                                    else
-                                    {
-                                        rows[Index.Value].AddBeforeSelf(row);
-                                    }
-                                }
-                                else
-                                {
-                                    throw new InvalidOperationException($"Index {Index.Value} is out of range. Valid range is 0-{rows.Count}");
-                                }
-                            }
-                            else if (!string.IsNullOrEmpty(InsertBefore))
-                            {
-                                // Insert before specified control
-                                var referenceRow = FormXmlHelper.FindControlRowForPositioning(systemForm, TabName, SectionName, InsertBefore);
-                                if (referenceRow == null)
-                                {
-                                    throw new InvalidOperationException($"Reference control '{InsertBefore}' not found");
-                                }
-                                referenceRow.AddBeforeSelf(row);
-                            }
-                            else if (!string.IsNullOrEmpty(InsertAfter))
-                            {
-                                // Insert after specified control
-                                var referenceRow = FormXmlHelper.FindControlRowForPositioning(systemForm, TabName, SectionName, InsertAfter);
-                                if (referenceRow == null)
-                                {
-                                    throw new InvalidOperationException($"Reference control '{InsertAfter}' not found");
-                                }
-                                referenceRow.AddAfterSelf(row);
-                            }
-                            else
-                            {
-                                rowsElement.Add(row);
-                            }
                         }
                     }
                     else
                     {
-                        // No datafieldname in XML, generate new ID
+                        // No datafieldname, generate new ID
                         controlId = Guid.NewGuid().ToString();
                         control.SetAttributeValue("id", controlId);
-                        cell = new XElement("cell", control);
-                        XElement row = new XElement("row", cell);
-                        
-                        // Handle positioning
-                        if (Index.HasValue)
-                        {
-                            var rows = rowsElement.Elements("row").ToList();
-                            if (Index.Value >= 0 && Index.Value <= rows.Count)
-                            {
-                                if (Index.Value == rows.Count)
-                                {
-                                    rowsElement.Add(row);
-                                }
-                                else
-                                {
-                                    rows[Index.Value].AddBeforeSelf(row);
-                                }
-                            }
-                            else
-                            {
-                                throw new InvalidOperationException($"Index {Index.Value} is out of range. Valid range is 0-{rows.Count}");
-                            }
-                        }
-                        else if (!string.IsNullOrEmpty(InsertBefore))
-                        {
-                            // Insert before specified control
-                            var referenceRow = FormXmlHelper.FindControlRowForPositioning(systemForm, TabName, SectionName, InsertBefore);
-                            if (referenceRow == null)
-                            {
-                                throw new InvalidOperationException($"Reference control '{InsertBefore}' not found");
-                            }
-                            referenceRow.AddBeforeSelf(row);
-                        }
-                        else if (!string.IsNullOrEmpty(InsertAfter))
-                        {
-                            // Insert after specified control
-                            var referenceRow = FormXmlHelper.FindControlRowForPositioning(systemForm, TabName, SectionName, InsertAfter);
-                            if (referenceRow == null)
-                            {
-                                throw new InvalidOperationException($"Reference control '{InsertAfter}' not found");
-                            }
-                            referenceRow.AddAfterSelf(row);
-                        }
-                        else
-                        {
-                            rowsElement.Add(row);
-                        }
                     }
                 }
+
+                // Position the control
+                PositionControl(rows, rowsElement, columnCount, ref targetRow, ref targetColumn, isUpdate, existingCell, control, out cell);
             }
             else
             {
@@ -383,11 +257,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (!string.IsNullOrEmpty(ControlId))
                 {
                     // Find by ID
-                    var (existingControl, existingCell) = FormXmlHelper.FindControlById(systemForm, TabName, SectionName, ControlId);
+                    var (existingControl, tempExistingCell) = FormXmlHelper.FindControlById(systemForm, TabName, SectionName, ControlId);
                     if (existingControl != null)
                     {
                         control = existingControl;
-                        cell = existingCell;
+                        existingCell = tempExistingCell;
                         isUpdate = true;
                         controlId = ControlId;
                     }
@@ -395,14 +269,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 else
                 {
                     // Find by DataField
-                    var (existingControl, existingCell) = FormXmlHelper.FindControlByDataField(systemForm, TabName, SectionName, DataField);
+                    var (existingControl, tempExistingCell) = FormXmlHelper.FindControlByDataField(systemForm, TabName, SectionName, DataField);
                     if (existingControl != null)
                     {
                         control = existingControl;
-                        cell = existingCell;
+                        existingCell = tempExistingCell;
                         isUpdate = true;
                         controlId = existingControl.Attribute("id")?.Value;
                     }
+                }
+
+                // For new controls, ControlType is mandatory unless RawXml
+                if (!isUpdate && ParameterSetName != "RawXml" && !MyInvocation.BoundParameters.ContainsKey(nameof(ControlType)))
+                {
+                    ThrowTerminatingError(new ErrorRecord(new ArgumentException("ControlType is required when creating a new control."), "ControlTypeRequired", ErrorCategory.InvalidArgument, null));
                 }
 
                 if (!isUpdate)
@@ -410,60 +290,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     // Create new control
                     controlId = !string.IsNullOrEmpty(ControlId) ? ControlId : Guid.NewGuid().ToString();
                     control = new XElement("control");
-                    cell = new XElement("cell", control);
-                    XElement row = new XElement("row", cell);
-                    
-                    // Handle positioning
-                    if (Index.HasValue)
+                    // Position the control
+                    PositionControl(rows, rowsElement, columnCount, ref targetRow, ref targetColumn, isUpdate, null, control, out cell);
+                }
+                else
+                {
+                    // For update, if position specified, move it
+                    if (Row.HasValue && Column.HasValue)
                     {
-                        // Insert at specific index (row-level)
-                        var rows = rowsElement.Elements("row").ToList();
-                        if (Index.Value >= 0 && Index.Value <= rows.Count)
-                        {
-                            if (Index.Value == rows.Count)
-                            {
-                                rowsElement.Add(row);
-                            }
-                            else
-                            {
-                                rows[Index.Value].AddBeforeSelf(row);
-                            }
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException($"Index {Index.Value} is out of range. Valid range is 0-{rows.Count}");
-                        }
-                    }
-                    else if (!string.IsNullOrEmpty(InsertBefore))
-                    {
-                        // Find reference control and insert before its row
-                        var referenceRow = FormXmlHelper.FindControlRowForPositioning(systemForm, TabName, SectionName, InsertBefore);
-                        if (referenceRow == null)
-                        {
-                            throw new InvalidOperationException($"Reference control '{InsertBefore}' not found");
-                        }
-                        referenceRow.AddBeforeSelf(row);
-                    }
-                    else if (!string.IsNullOrEmpty(InsertAfter))
-                    {
-                        // Find reference control and insert after its row
-                        var referenceRow = FormXmlHelper.FindControlRowForPositioning(systemForm, TabName, SectionName, InsertAfter);
-                        if (referenceRow == null)
-                        {
-                            throw new InvalidOperationException($"Reference control '{InsertAfter}' not found");
-                        }
-                        referenceRow.AddAfterSelf(row);
+                        // Remove from current position
+                        control.Remove();
+                        // Position at new location
+                        PositionControl(rows, rowsElement, columnCount, ref targetRow, ref targetColumn, isUpdate, null, control, out cell);
                     }
                     else
                     {
-                        // Add at the end (default)
-                        rowsElement.Add(row);
+                        // Keep in current position
+                        cell = existingCell;
                     }
                 }
             }
 
             // Update control attributes (only for non-RawXml parameter sets)
-            if (!isUpdate)
+            if (ParameterSetName != "RawXml")
             {
                 control.SetAttributeValue("id", controlId);
                 control.SetAttributeValue("datafieldname", DataField);
@@ -485,18 +334,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
 
-                if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
                 {
-                    control.SetAttributeValue("visible", Hidden.IsPresent ? "false" : "true");
-                }
-                else
-                {
-                    control.SetAttributeValue("visible", "true");
+                    if (!Visible.IsPresent)
+                    {
+                        control.SetAttributeValue("visible", "false");
+                    }
+                    else
+                    {
+                        control.SetAttributeValue("visible", null);
+                    }
                 }
 
                 if (MyInvocation.BoundParameters.ContainsKey(nameof(ShowLabel)))
                 {
-                    control.SetAttributeValue("showlabel", ShowLabel.IsPresent ? "true" : "false");
+                    if (!ShowLabel.IsPresent)
+                    {
+                        control.SetAttributeValue("showlabel", "false");
+                    }
+                    else
+                    {
+                        control.SetAttributeValue("showlabel", null);
+                    }
                 }
 
                 if (MyInvocation.BoundParameters.ContainsKey(nameof(IsRequired)))
@@ -563,6 +422,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
+            // Set cell ID
+            if (!string.IsNullOrEmpty(CellId))
+            {
+                cell.SetAttributeValue("id", CellId);
+            }
+            else if (cell.Attribute("id") == null)
+            {
+                cell.SetAttributeValue("id", Guid.NewGuid().ToString());
+            }
+
             // Confirm action
             string action = isUpdate ? "Update" : "Create";
             string controlDescriptor = isUpdate ? $"control '{ControlId}'" : $"control '{DataField}'";
@@ -581,6 +450,58 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             WriteVerbose($"{action}d {controlDescriptor} (ID: {controlId}) in form '{FormId}'");
+        }
+
+        private void PositionControl(System.Collections.Generic.List<XElement> rows, XElement rowsElement, int columnCount, ref int targetRow, ref int targetColumn, bool isUpdate, XElement existingCell, XElement control, out XElement cell)
+        {
+            // If targetRow is -1, determine based on update status
+            if (targetRow == -1)
+            {
+                if (isUpdate && existingCell != null)
+                {
+                    // Find current position
+                    XElement currentRow = existingCell.Parent;
+                    var currentRowList = rows;
+                    targetRow = currentRowList.IndexOf(currentRow);
+                    var currentCellList = currentRow.Elements("cell").ToList();
+                    targetColumn = currentCellList.IndexOf(existingCell);
+                }
+                else
+                {
+                    targetRow = rows.Count;
+                }
+            }
+
+            // Add rows if necessary
+            while (rows.Count <= targetRow)
+            {
+                var newRow = new XElement("row");
+                for (int i = 0; i < columnCount; i++)
+                {
+                    newRow.Add(new XElement("cell"));
+                }
+                rowsElement.Add(newRow);
+                rows.Add(newRow);
+            }
+
+            var targetRowElement = rows[targetRow];
+            var cells = targetRowElement.Elements("cell").ToList();
+
+            // Add cells if necessary
+            while (cells.Count <= targetColumn)
+            {
+                var newCell = new XElement("cell");
+                cells.Add(newCell);
+                targetRowElement.Add(newCell);
+            }
+
+            cell = cells[targetColumn];
+
+            // Remove any existing control
+            cell.Elements("control").Remove();
+
+            // Add the new control
+            cell.Add(control);
         }
 
         private string GetClassId(string controlType)
@@ -607,13 +528,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 case "Spacer":
                     return "{5546E6CD-394C-4BEE-94A8-4B09EB3A5C4A}"; // Spacer
                 case "IFrame":
-                    return "{5C5600E0-1D6E-4205-A272-BE80DA87FD42}"; // IFrame
+                    return "{FD2A7985-3187-444e-908D-6624B21F69C0}"; // IFrame
                 case "Timer":
                     return "{B0C6723A-8503-4FD7-BB28-C8A06AC933C2}"; // Timer control
                 case "KBSearch":
                     return "{5C5600E0-1D6E-4205-A272-BE80DA87FD42}"; // Knowledge base search
                 case "Notes":
                     return "{06375649-c143-495e-a496-c962e5b4488e}"; // Notes control
+                case "Email":
+                    return "{ADA2203E-B4CD-49BE-9DDF-234642B43B52}"; // Email control
+                case "Memo":
+                    return "{E0DECE4B-6FC8-4A8F-A065-082708572369}"; // Memo control
+                case "Money":
+                    return "{533B9E00-756B-4312-95A0-DC888637AC78}"; // Money control
+                case "Data":
+                    return "{5546E6CD-394C-4BEE-94A8-4425E17EF6C6}"; // Data control
                 default:
                     return "{4273EDBD-AC1D-40D3-9FB2-095C621B552D}"; // Default to standard
             }

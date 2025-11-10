@@ -41,7 +41,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
                     ColumnSet = columnSet
                 };
                 var response = (RetrieveUnpublishedResponse)connection.Execute(retrieveUnpublishedRequest);
-                
                 return response.Entity;
             }
             catch (FaultException<OrganizationServiceFault> ex)
@@ -55,15 +54,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
                 {
                     throw;
                 }
-            }
-            catch (Exception ex) when (ex.Message.Contains("not been implemented") || 
-                                       ex.Message.Contains("not supported") || 
-                                       ex.Message.Contains("not yet supported") ||
-                                       ex.GetType().Name.Contains("UnsupportedException"))
-            {
-                // Fallback for mock/test environments that don't support RetrieveUnpublishedRequest
-                // (e.g., FakeXrmEasy)
-                return connection.Retrieve("systemform", formId, columnSet);
             }
         }
 
@@ -91,33 +81,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             }
 
             XDocument doc = XDocument.Parse(formXml);
-            XElement root = doc.Root;
+            XElement systemForm = doc.Root;
 
-            if (root == null)
+            if (systemForm == null)
             {
-                throw new InvalidOperationException($"Form '{form.Id}' has invalid FormXml structure - missing form element");
-            }
-
-            // Handle both <SystemForm><form>...</form></SystemForm> and direct <form>...</form> structures
-            XElement formElement;
-            if (root.Name.LocalName.Equals("SystemForm", StringComparison.OrdinalIgnoreCase))
-            {
-                formElement = root.Element("form");
-                if (formElement == null)
-                {
-                    throw new InvalidOperationException($"Form '{form.Id}' has invalid FormXml structure - SystemForm element has no form child");
-                }
-            }
-            else if (root.Name.LocalName.Equals("form", StringComparison.OrdinalIgnoreCase))
-            {
-                formElement = root;
-            }
-            else
-            {
-                throw new InvalidOperationException($"Form '{form.Id}' has invalid FormXml structure - root element must be SystemForm or form");
+                throw new InvalidOperationException($"Form '{form.Id}' has invalid FormXml structure - missing SystemForm element");
             }
 
-            return (doc, formElement);
+            return (doc, systemForm);
         }
 
         /// <summary>
@@ -455,6 +426,86 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             }
         }
 
+        /// <summary>
+        /// Parses the complete form structure into a PowerShell object.
+        /// </summary>
+        /// <param name="document">The form XML document.</param>
+        /// <returns>A PSObject containing the parsed form structure.</returns>
+        public static PSObject ParseFormStructure(XDocument document)
+        {
+            if (document == null)
+                throw new ArgumentNullException(nameof(document));
+
+            PSObject parsed = new PSObject();
+            XElement formElement = document.Root;
+            
+            if (formElement == null)
+            {
+                return parsed;
+            }
+
+            // Parse form root attributes
+            if (formElement.Name.LocalName == "form")
+            {
+                var formAttributes = new PSObject();
+                foreach (var attr in formElement.Attributes())
+                {
+                    formAttributes.Properties.Add(new PSNoteProperty(attr.Name.LocalName, attr.Value));
+                }
+                parsed.Properties.Add(new PSNoteProperty("FormAttributes", formAttributes));
+            }
+
+            // Parse hidden controls
+            var hiddenControlsElement = formElement.Element("hiddencontrols");
+            if (hiddenControlsElement != null)
+            {
+                var hiddenControls = hiddenControlsElement.Elements("data").Select(data => new PSObject(new
+                {
+                    Id = data.Attribute("id")?.Value,
+                    DataFieldName = data.Attribute("datafieldname")?.Value,
+                    ClassId = data.Attribute("classid")?.Value
+                })).ToArray();
+                parsed.Properties.Add(new PSNoteProperty("HiddenControls", hiddenControls));
+            }
+
+            // Parse tabs
+            var tabsElement = formElement.Element("tabs");
+            if (tabsElement != null)
+            {
+                var tabs = tabsElement.Elements("tab").Select(tab => ParseTab(tab)).ToArray();
+                parsed.Properties.Add(new PSNoteProperty("Tabs", tabs));
+            }
+
+            // Parse header
+            var headerElement = formElement.Element("header");
+            if (headerElement != null)
+            {
+                parsed.Properties.Add(new PSNoteProperty("Header", ParseHeader(headerElement)));
+            }
+
+            // Parse client resources
+            var clientResourcesElement = formElement.Element("clientresources");
+            if (clientResourcesElement != null)
+            {
+                parsed.Properties.Add(new PSNoteProperty("ClientResources", ParseClientResources(clientResourcesElement)));
+            }
+
+            // Parse events
+            var eventsElement = formElement.Element("events");
+            if (eventsElement != null)
+            {
+                parsed.Properties.Add(new PSNoteProperty("Events", ParseEvents(eventsElement)));
+            }
+
+            // Parse navigation
+            var navElement = formElement.Element("Navigation");
+            if (navElement != null)
+            {
+                parsed.Properties.Add(new PSNoteProperty("Navigation", ParseNavigation(navElement)));
+            }
+
+            return parsed;
+        }
 
         /// <summary>
         /// Parses a tab element into a PowerShell object.
@@ -470,9 +521,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             tabObj.Properties.Add(new PSNoteProperty("Id", tab.Attribute("id")?.Value));
             tabObj.Properties.Add(new PSNoteProperty("Name", tab.Attribute("name")?.Value));
             tabObj.Properties.Add(new PSNoteProperty("Expanded", tab.Attribute("expanded")?.Value == "true"));
-            tabObj.Properties.Add(new PSNoteProperty("Hidden", tab.Attribute("visible")?.Value == "false"));
-            tabObj.Properties.Add(new PSNoteProperty("VerticalLayout", tab.Attribute("verticallayout")?.Value == "true"));
-            tabObj.Properties.Add(new PSNoteProperty("ShowLabel", tab.Attribute("showlabel")?.Value != "false"));
+            tabObj.Properties.Add(new PSNoteProperty("Visible", tab.Attribute("visible")?.Value != "false"));
 
             // Parse labels
             var labelsElement = tab.Element("labels");
@@ -568,37 +617,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             secObj.Properties.Add(new PSNoteProperty("Id", section.Attribute("id")?.Value));
             secObj.Properties.Add(new PSNoteProperty("Name", section.Attribute("name")?.Value));
             secObj.Properties.Add(new PSNoteProperty("ShowLabel", section.Attribute("showlabel")?.Value != "false"));
-            secObj.Properties.Add(new PSNoteProperty("Hidden", section.Attribute("visible")?.Value == "false"));
-            secObj.Properties.Add(new PSNoteProperty("ShowBar", section.Attribute("showbar")?.Value != "false"));
-            secObj.Properties.Add(new PSNoteProperty("LabelWidth", section.Attribute("labelwidth")?.Value));
-
-            // Parse columns attribute
-            var columnsAttr = section.Attribute("columns")?.Value;
-            if (!string.IsNullOrEmpty(columnsAttr) && int.TryParse(columnsAttr, out int cols))
-            {
-                secObj.Properties.Add(new PSNoteProperty("Columns", cols));
-            }
-            else
-            {
-                secObj.Properties.Add(new PSNoteProperty("Columns", columnsAttr));
-            }
-
-            // Parse cell label alignment and position
-            var cellLabelAlignmentStr = section.Attribute("celllabelalignment")?.Value;
-            CellLabelAlignment? cellLabelAlignment = null;
-            if (!string.IsNullOrEmpty(cellLabelAlignmentStr) && Enum.TryParse<CellLabelAlignment>(cellLabelAlignmentStr, out var parsedAlignment))
-            {
-                cellLabelAlignment = parsedAlignment;
-            }
-            secObj.Properties.Add(new PSNoteProperty("CellLabelAlignment", cellLabelAlignment));
-
-            var cellLabelPositionStr = section.Attribute("celllabelposition")?.Value;
-            CellLabelPosition? cellLabelPosition = null;
-            if (!string.IsNullOrEmpty(cellLabelPositionStr) && Enum.TryParse<CellLabelPosition>(cellLabelPositionStr, out var parsedPosition))
-            {
-                cellLabelPosition = parsedPosition;
-            }
-            secObj.Properties.Add(new PSNoteProperty("CellLabelPosition", cellLabelPosition));
+            secObj.Properties.Add(new PSNoteProperty("Visible", section.Attribute("visible")?.Value != "false"));
 
             // Parse labels
             var labelsElement = section.Element("labels");
@@ -631,8 +650,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
         /// Parses a control element into a PowerShell object.
         /// </summary>
         /// <param name="control">The control XElement to parse.</param>
+        /// <param name="parentCell">The parent cell XElement for cell-level attributes.</param>
         /// <returns>A PSObject representing the control.</returns>
-        public static PSObject ParseControl(XElement control)
+        public static PSObject ParseControl(XElement control, XElement parentCell = null)
         {
             if (control == null)
                 throw new ArgumentNullException(nameof(control));
@@ -642,7 +662,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             ctrlObj.Properties.Add(new PSNoteProperty("DataField", control.Attribute("datafieldname")?.Value));
             ctrlObj.Properties.Add(new PSNoteProperty("ClassId", control.Attribute("classid")?.Value));
             ctrlObj.Properties.Add(new PSNoteProperty("Disabled", control.Attribute("disabled")?.Value == "true"));
-            ctrlObj.Properties.Add(new PSNoteProperty("Hidden", control.Attribute("visible")?.Value == "false"));
+            ctrlObj.Properties.Add(new PSNoteProperty("Visible", control.Attribute("visible")?.Value != "false"));
             ctrlObj.Properties.Add(new PSNoteProperty("ShowLabel", control.Attribute("showlabel")?.Value != "false"));
             ctrlObj.Properties.Add(new PSNoteProperty("IsRequired", control.Attribute("isrequired")?.Value == "true"));
 
@@ -675,6 +695,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
                     parameters.Properties.Add(new PSNoteProperty(param.Name.LocalName, param.Value));
                 }
                 ctrlObj.Properties.Add(new PSNoteProperty("Parameters", parameters));
+            }
+
+            // Parse cell-level attributes if parentCell is provided
+            if (parentCell != null)
+            {
+                ctrlObj.Properties.Add(new PSNoteProperty("CellId", parentCell.Attribute("id")?.Value));
+                ctrlObj.Properties.Add(new PSNoteProperty("ColSpan", parentCell.Attribute("colspan") != null ? (int?)int.Parse(parentCell.Attribute("colspan").Value) : null));
+                ctrlObj.Properties.Add(new PSNoteProperty("RowSpan", parentCell.Attribute("rowspan") != null ? (int?)int.Parse(parentCell.Attribute("rowspan").Value) : null));
+                ctrlObj.Properties.Add(new PSNoteProperty("Auto", parentCell.Attribute("auto")?.Value == "true"));
+                ctrlObj.Properties.Add(new PSNoteProperty("LockLevel", parentCell.Attribute("locklevel")?.Value));
+
+                // Parse cell labels
+                var cellLabelsElement = parentCell.Element("labels");
+                if (cellLabelsElement != null)
+                {
+                    var cellLabels = cellLabelsElement.Elements("label").Select(l => new PSObject(new
+                    {
+                        Description = l.Attribute("description")?.Value,
+                        LanguageCode = l.Attribute("languagecode")?.Value
+                    })).ToArray();
+                    ctrlObj.Properties.Add(new PSNoteProperty("CellLabels", cellLabels));
+                }
             }
 
             return ctrlObj;
@@ -950,29 +992,49 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             
             return (null, null);
         }
-    }
 
-    /// <summary>
-    /// Cell label alignment enumeration.
-    /// </summary>
-    public enum CellLabelAlignment
-    {
-        /// <summary>Center alignment.</summary>
-        Center,
-        /// <summary>Left alignment.</summary>
-        Left,
-        /// <summary>Right alignment.</summary>
-        Right
-    }
+        /// <summary>
+        /// Finds a control element by ID or data field name in the form header.
+        /// </summary>
+        /// <param name="systemForm">The SystemForm element to search.</param>
+        /// <param name="controlId">The control ID to search for (optional).</param>
+        /// <param name="dataField">The data field name to search for (optional).</param>
+        /// <returns>A tuple containing the found control element and its parent cell, or (null, null) if not found.</returns>
+        /// <exception cref="ArgumentException">Thrown when both controlId and dataField are null or empty.</exception>
+        public static (XElement Control, XElement ParentCell) FindControlInHeader(XElement systemForm, string controlId = null, string dataField = null)
+        {
+            var header = systemForm.Element("header");
+            if (header == null)
+            {
+                return (null, null);
+            }
 
-    /// <summary>
-    /// Cell label position enumeration.
-    /// </summary>
-    public enum CellLabelPosition
-    {
-        /// <summary>Top position.</summary>
-        Top,
-        /// <summary>Left position.</summary>
-        Left
-}
+            var rows = header.Element("rows");
+            if (rows == null)
+            {
+                return (null, null);
+            }
+
+            foreach (var row in rows.Elements("row"))
+            {
+                foreach (var cell in row.Elements("cell"))
+                {
+                    var control = cell.Element("control");
+                    if (control != null)
+                    {
+                        if (!string.IsNullOrEmpty(controlId) && control.Attribute("id")?.Value == controlId)
+                        {
+                            return (control, cell);
+                        }
+                        if (!string.IsNullOrEmpty(dataField) && control.Attribute("datafieldname")?.Value == dataField)
+                        {
+                            return (control, cell);
+                        }
+                    }
+                }
+            }
+
+            return (null, null);
+        }
+    }
 }

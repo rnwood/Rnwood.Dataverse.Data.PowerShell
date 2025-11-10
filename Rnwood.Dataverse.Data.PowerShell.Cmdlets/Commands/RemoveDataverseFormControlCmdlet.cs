@@ -38,13 +38,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the section name to limit the search.
         /// </summary>
-        [Parameter(ParameterSetName = "ByDataField", HelpMessage = "Section name to limit the search")]
+        [Parameter(ParameterSetName = "ByDataField", HelpMessage = "Section name to limit the search. Not used for header controls.")]
         public string SectionName { get; set; }
 
         /// <summary>
-        /// Gets or sets the tab name where the section is located.
+        /// Gets or sets the tab name where the section is located. Use '[Header]' for header controls.
         /// </summary>
-        [Parameter(Mandatory = true, ParameterSetName = "ByDataField", HelpMessage = "Name of the tab containing the section")]
+        [Parameter(Mandatory = true, ParameterSetName = "ByDataField", HelpMessage = "Name of the tab containing the section. Use '[Header]' for header controls.")]
         public string TabName { get; set; }
 
         /// <summary>
@@ -54,6 +54,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
+            // Check if this is a header control operation
+            bool isHeaderControl = TabName != null && TabName.Equals("[Header]", StringComparison.OrdinalIgnoreCase);
+
             // Retrieve the form
             Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml", "objecttypecode"));
             var (doc, systemForm) = FormXmlHelper.ParseFormXml(form);
@@ -61,14 +64,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Find the control to remove
             XElement controlToRemove = null;
             XElement parentCell = null;
+            
             if (ParameterSetName == "ById")
             {
-                (controlToRemove, parentCell) = FormXmlHelper.FindControl(systemForm, controlId: ControlId);
+                // Try header first
+                (controlToRemove, parentCell) = FormXmlHelper.FindControlInHeader(systemForm, controlId: ControlId);
+                
+                // If not in header, search in regular sections
+                if (controlToRemove == null)
+                {
+                    (controlToRemove, parentCell) = FormXmlHelper.FindControl(systemForm, controlId: ControlId);
+                }
             }
             else
             {
                 // ByDataField parameter set
-                if (!string.IsNullOrEmpty(SectionName))
+                if (isHeaderControl)
+                {
+                    // Search in header
+                    (controlToRemove, parentCell) = FormXmlHelper.FindControlInHeader(systemForm, dataField: DataField);
+                }
+                else if (!string.IsNullOrEmpty(SectionName))
                 {
                     // Search in specific section
                     (controlToRemove, parentCell) = FormXmlHelper.FindControlByDataField(systemForm, TabName, SectionName, DataField);
@@ -111,13 +127,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (controlToRemove == null)
             {
                 string identifier = ParameterSetName == "ById" ? ControlId : DataField;
-                throw new InvalidOperationException($"Control '{identifier}' not found in form");
+                string location = isHeaderControl ? "header" : (string.IsNullOrEmpty(SectionName) ? $"tab '{TabName}'" : $"section '{SectionName}'");
+                throw new InvalidOperationException($"Control '{identifier}' not found in {location}");
             }
 
             string targetName = ParameterSetName == "ById" ? ControlId : DataField;
+            string locationDescriptor = isHeaderControl ? "header" : (string.IsNullOrEmpty(SectionName) ? $"tab '{TabName}'" : $"section '{SectionName}'");
 
             // Confirm action
-            if (!ShouldProcess($"form '{FormId}'", $"Remove control '{targetName}'"))
+            if (!ShouldProcess($"form '{FormId}', {locationDescriptor}", $"Remove control '{targetName}'"))
             {
                 return;
             }
@@ -137,7 +155,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Update form
             FormXmlHelper.UpdateFormXml(Connection, FormId, doc);
-            WriteVerbose($"Removed control '{targetName}' from form '{FormId}'");
+            WriteVerbose($"Removed control '{targetName}' from form '{FormId}' {locationDescriptor}");
         }
     }
 }

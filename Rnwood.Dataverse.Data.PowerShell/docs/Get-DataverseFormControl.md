@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseFormControl
 
 ## SYNOPSIS
-Retrieves control information from a Dataverse form.
+Retrieves control information from a Dataverse form including controls from tabs, sections, and the form header.
 
 ## SYNTAX
 
@@ -20,6 +20,11 @@ Get-DataverseFormControl -FormId <Guid> [-TabName <String>] [-SectionName <Strin
 ## DESCRIPTION
 The Get-DataverseFormControl cmdlet retrieves control information from a Dataverse form. It parses the FormXML to extract control details including ID, data field, class ID, labels, events, parameters, and visibility settings. You can retrieve all controls from a form or filter by tab, section, control ID, or data field name.
 
+The cmdlet supports retrieving controls from:
+- Form tabs and sections (standard controls)
+- Form header (use TabName='[Header]')
+- Hidden controls section
+
 ## EXAMPLES
 
 ### Example 1: Get all controls from a form
@@ -28,7 +33,7 @@ PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Inform
 PS C:\> Get-DataverseFormControl -Connection $c -FormId $form.FormId
 ```
 
-Retrieves all controls from all tabs and sections in the contact Information form.
+Retrieves all controls from all tabs, sections, and the header in the contact Information form.
 
 ### Example 2: Get controls from a specific section (requires TabName)
 ```powershell
@@ -59,7 +64,7 @@ PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId -TabName 'Detail
 
 Retrieves controls from the 'ContactInfo' section within the 'Details' tab.
 
-### Example 6: Explore control properties
+### Example 6: Explore control and cell properties
 ```powershell
 PS C:\> $control = Get-DataverseFormControl -Connection $c -FormId $formId -DataField 'firstname'
 PS C:\> $control.Id              # Control ID
@@ -68,9 +73,16 @@ PS C:\> $control.ClassId         # Control class identifier
 PS C:\> $control.Labels          # Localized labels
 PS C:\> $control.Events          # Event handlers
 PS C:\> $control.Parameters      # Custom parameters
+PS C:\> $control.ColSpan         # Cell column span
+PS C:\> $control.RowSpan         # Cell row span
+PS C:\> $control.CellId          # Cell identifier
+PS C:\> $control.Auto            # Cell auto-sizing
+PS C:\> $control.LockLevel       # Cell lock level
+PS C:\> $control.CellLabels      # Cell-level labels (if different from control)
+PS C:\> $control.CellEvents      # Cell-level events
 ```
 
-Explores the structure and properties of a specific control.
+Explores the structure and properties of a specific control including cell-level attributes.
 
 ### Example 7: Find controls with specific properties
 ```powershell
@@ -91,6 +103,29 @@ PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId |
 ```
 
 Gets controls with their location information and sorts by hierarchy.
+
+### Example 9: Get all header controls
+```powershell
+PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId -TabName '[Header]'
+```
+
+Retrieves all controls from the form header. Header controls are commonly used for displaying key information at the top of forms.
+
+### Example 10: Get specific header control by data field
+```powershell
+PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId -TabName '[Header]' -DataField 'emailaddress1'
+```
+
+Retrieves the email address control from the form header.
+
+### Example 11: Find all email controls across the entire form
+```powershell
+PS C:\> $controls = Get-DataverseFormControl -Connection $c -FormId $formId
+PS C:\> $emailControls = $controls | Where-Object { $_.ClassId -match 'ADA2203E-B4CD' }
+PS C:\> $emailControls | Select-Object TabName, SectionName, DataField
+```
+
+Finds all email-type controls in the form, including those in the header and regular sections.
 
 ## PARAMETERS
 
@@ -172,7 +207,7 @@ Accept wildcard characters: False
 ```
 
 ### -TabName
-Name of the tab containing the sections. If not specified, controls from all tabs are returned.
+Name of the tab containing the sections. If not specified, controls from all tabs are returned. Use '[Header]' to retrieve controls from the form header.
 
 ```yaml
 Type: String
@@ -215,7 +250,18 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 **Form Structure Hierarchy:**  
 Form -> Header -> Tabs -> Tab Columns -> Sections -> Rows -> Cells -> Controls
 
-Controls are the finest level of detail in a form structure. Each control is contained in a cell within a row, which is within a section, within a tab column.
+The form header is a special section at the top of forms that typically displays key fields in a condensed format. Header controls are displayed on all form tabs and cannot be hidden by tab navigation.
+
+Controls are the finest level of detail in a form structure. Each control is contained in a cell within a row, which can be either:
+- In a section within a tab column (regular controls)
+- In the form header (header controls)
+
+**Working with Header Controls:**
+- Use TabName='[Header]' to get controls from the form header
+- Header controls are returned with TabName and SectionName both set to "[Header]"
+- When no filters are applied, the cmdlet returns controls from tabs, sections, header, and hidden controls
+
+The cmdlet also searches the form's `hiddencontrols` section when no tab/section filters are applied. Hidden controls are returned with TabName and SectionName set to "[HiddenControls]".
 
 **Control Types:**
 Controls are identified by their ClassId attribute which determines behavior:
@@ -237,6 +283,17 @@ Controls are identified by their ClassId attribute which determines behavior:
 - **Hidden**: Whether the control is visible on the form
 - **ShowLabel**: Whether to display the field label
 - **IsRequired**: Whether the control enforces required field validation
+
+**Cell Properties (New):**
+Controls are contained within cells, which have their own properties:
+- **CellId**: Unique identifier for the cell
+- **ColSpan**: Number of columns the cell spans (1-4 typically)
+- **RowSpan**: Number of rows the cell spans
+- **Auto**: Whether the cell auto-sizes to fit content
+- **LockLevel**: Cell-level edit restrictions (0=None, 1=Form, 2=System)
+- **CellLabels**: Labels defined at cell level (can override control labels)
+- **CellEvents**: Events attached to the cell (separate from control events)
+- **CellShowLabel**: Cell-level override for label display
 
 **Common Use Cases:**
 - Form control auditing and analysis

@@ -8,30 +8,33 @@ schema: 2.0.0
 # Set-DataverseFormControl
 
 ## SYNOPSIS
-Creates or updates a control in a Dataverse form section.
+Creates or updates a control in a Dataverse form section or header.
 
 ## SYNTAX
 
 ### Default
 ```
-Set-DataverseFormControl -FormId <Guid> -SectionName <String> -TabName <String> [-ControlId <String>]
+Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
  -DataField <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Hidden]
  [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>]
- [-Index <Int32>] [-InsertBefore <String>] [-InsertAfter <String>] [-PassThru] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Row <Int32>] [-Column <Int32>] [-PassThru] [-CellId <String>] [-Auto] [-LockLevel <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### RawXml
 ```
-Set-DataverseFormControl -FormId <Guid> -SectionName <String> -TabName <String> [-ControlId <String>]
+Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
  [-DataField <String>] -ControlXml <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>]
  [-Disabled] [-Hidden] [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired]
- [-Parameters <Hashtable>] [-Index <Int32>] [-InsertBefore <String>] [-InsertAfter <String>] [-PassThru]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Parameters <Hashtable>] [-Row <Int32>] [-Column <Int32>] [-PassThru] [-CellId <String>] [-Auto]
+ [-LockLevel <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-The Set-DataverseFormControl cmdlet creates new controls or updates existing controls in Dataverse form sections. Controls are the individual form elements (text boxes, dropdowns, lookups, etc.) that users interact with. The cmdlet supports all standard control types and allows raw XML for advanced scenarios.
+The Set-DataverseFormControl cmdlet creates new controls or updates existing controls in Dataverse form sections and headers. Controls are the individual form elements (text boxes, dropdowns, lookups, etc.) that users interact with. The cmdlet supports all standard control types and allows raw XML for advanced scenarios.
+
+Header controls appear at the top of forms and are visible across all tabs. To work with header controls, use TabName='[Header]' and omit the SectionName parameter.
 
 You can specify control properties like data binding, positioning, visibility, labels, and behavior. When creating controls, you can specify their position using Index, InsertBefore, or InsertAfter parameters. For advanced scenarios, use the RawXml parameter set to provide complete control XML.
 
@@ -130,7 +133,47 @@ PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'Cu
 
 Creates a datetime control using raw XML for full control over configuration.
 
-### Example 9: Bulk control creation with error handling
+### Example 9: Create control with cell-level attributes
+```powershell
+PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+    -TabName 'General' -SectionName 'Details' `
+    -DataField 'description' -ControlType 'Memo' `
+    -Label 'Notes' -ColSpan 2 -RowSpan 2 `
+    -Auto -LockLevel 0 -CellId 'cell_description' -PassThru
+```
+
+Creates a memo control with cell-level attributes including auto-sizing and custom cell ID.
+
+### Example 10: Update existing control to make it required
+```powershell
+PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+    -TabName 'General' -SectionName 'ContactInfo' `
+    -DataField 'telephone1' -IsRequired -ShowLabel
+```
+
+Updates an existing control to make it required. The cmdlet now supports updating existing controls without recreating them.
+
+### Example 11: Create Email control with validation
+```powershell
+PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+    -TabName 'General' -SectionName 'ContactInfo' `
+    -DataField 'emailaddress1' -ControlType 'Email' `
+    -Label 'Primary Email' -IsRequired -ColSpan 2 -PassThru
+```
+
+Creates an email control with built-in email validation.
+
+### Example 12: Create Money control for currency field
+```powershell
+PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+    -TabName 'Financial' -SectionName 'Pricing' `
+    -DataField 'revenue' -ControlType 'Money' `
+    -Label 'Annual Revenue' -ColSpan 1 -PassThru
+```
+
+Creates a currency control with proper formatting.
+
+### Example 13: Bulk control creation with error handling
 ```powershell
 PS C:\> $controls = @(
     @{ DataField = 'firstname'; Label = 'First Name'; ColSpan = 1 }
@@ -164,6 +207,42 @@ PS C:\> foreach ($ctrl in $controls) {
 ```
 
 Creates multiple controls with error handling and conditional parameters.
+
+### Example 14: Create header control (form header)
+```powershell
+PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+    -TabName '[Header]' -DataField 'emailaddress1' `
+    -ControlType 'Email' -Label 'Email' -Disabled -PassThru
+```
+
+Creates a read-only email control in the form header. Header controls are displayed at the top of the form across all tabs. The header section is automatically created if it doesn't exist.
+
+### Example 15: Create multiple header controls
+```powershell
+PS C:\> # Create email control in header
+PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+    -TabName '[Header]' -DataField 'emailaddress1' `
+    -ControlType 'Email' -Label 'Email' -ColSpan 1 -Disabled
+
+PS C:\> # Create owner control in header
+PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+    -TabName '[Header]' -DataField 'ownerid' `
+    -ControlType 'Lookup' -Label 'Owner' -ColSpan 1 -Disabled
+
+PS C:\> # Get all header controls
+PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId -TabName '[Header]'
+```
+
+Creates multiple controls in the form header with specific positioning.
+
+### Example 16: Update existing header control
+```powershell
+PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+    -TabName '[Header]' -DataField 'emailaddress1' `
+    -Label 'Primary Email' -ColSpan 2
+```
+
+Updates an existing header control's label and cell span without recreating it.
 
 ## PARAMETERS
 
@@ -230,7 +309,7 @@ Accept wildcard characters: False
 ```
 
 ### -ControlType
-Control type for specialized behaviors. Valid values: Standard, Lookup, OptionSet, DateTime, Boolean, Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch, Notes.
+Control type for specialized behaviors. Valid values: Standard, Lookup, OptionSet, DateTime, Boolean, Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch, Notes, Email, Memo, Money, Data.
 
 ```yaml
 Type: String
@@ -240,7 +319,7 @@ Accepted values: Standard, Lookup, OptionSet, DateTime, Boolean, Subgrid, WebRes
 
 Required: False
 Position: Named
-Default value: None
+Default value: Standard
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -318,7 +397,7 @@ Accept wildcard characters: False
 ```
 
 ### -Hidden
-Whether the control is hidden
+Whether the control is hidden from users. Hidden controls are present in the form but not visible.
 
 ```yaml
 Type: SwitchParameter
@@ -327,52 +406,7 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Index
-Zero-based index position to insert the control within the section. If not specified, the control is added at the end.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -InsertAfter
-ID or data field name of the control after which to insert the new control. Cannot be used with Index or InsertBefore.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -InsertBefore
-ID or data field name of the control before which to insert the new control. Cannot be used with Index or InsertAfter.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -483,14 +517,14 @@ Accept wildcard characters: False
 ```
 
 ### -SectionName
-Name of the section containing the control. The section must exist in the form.
+Name of the section containing the control. The section must exist in the form. Not required when working with header controls (TabName='[Header]').
 
 ```yaml
 Type: String
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -513,7 +547,7 @@ Accept wildcard characters: False
 ```
 
 ### -TabName
-Name of the tab containing the section
+Name of the tab containing the section. Use '[Header]' to create or update controls in the form header.
 
 ```yaml
 Type: String
@@ -558,6 +592,81 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Auto
+Whether the cell is auto-sized to fit content. Used for responsive form layouts.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CellId
+ID of the cell that will contain the control. Used for advanced form customization scenarios.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Column
+Zero-based column index where the control should be placed. Must not exceed section column count.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -LockLevel
+Lock level for the cell (0=None, 1=Form, 2=System). Controls edit permissions at the cell level.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Row
+Zero-based row index where the control should be placed. New rows are added if needed.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -573,7 +682,10 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 | ControlType | Purpose | Common Parameters |
 |-------------|---------|-------------------|
-| **Standard** | Basic input fields | Rows (for multiline) |
+| **Standard** | Basic text/numeric input | Rows (for multiline) |
+| **Email** | Email address fields | None (validates email format) |
+| **Memo** | Multiline text areas | Rows (height in lines) |
+| **Money** | Currency fields | None (inherits from attribute) |
 | **Lookup** | Entity references | None (uses default lookup behavior) |
 | **OptionSet** | Choice/Picklist fields | None (inherits from attribute) |
 | **DateTime** | Date/time fields | DateAndTimeStyle, HideTimeForDate |
@@ -582,10 +694,15 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 | **WebResource** | Custom HTML/images | src, height, width, scrolling |
 | **QuickForm** | Embedded forms | EntityName, FormId |
 | **Spacer** | Layout spacing | Height |
+| **Data** | Hidden data fields | None (stores data without UI) |
 | **IFrame** | External content | src, height, width, scrolling |
 | **Timer** | Date/time tracking | None |
 | **KBSearch** | Knowledge base | None |
 | **Notes** | Attachments | None |
+| **Email** | Email fields | None |
+| **Memo** | Multiline text areas | Rows |
+| **Money** | Currency fields | None |
+| **Data** | Generic data fields | None |
 
 **Parameter Sets:**
 - **Create**: For creating new controls (no ControlId required)
@@ -632,6 +749,18 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - Use appropriate ColSpan values for content
 - Validate required field combinations
 - Test with different user roles and permissions
+- Header controls should be read-only (Disabled) in most cases
+- Keep header simple with only key fields (3-5 controls recommended)
+- Use ColSpan to balance header control widths
+
+**Working with Header Controls:**
+- Use TabName='[Header]' to create or update header controls
+- SectionName parameter is not required for header controls
+- Header is automatically created if it doesn't exist
+- Header controls are visible across all form tabs
+- Header controls typically should be Disabled to prevent editing
+- Common header controls: Owner, Modified By, Modified On, Status, Email
+- Position header controls using Index, InsertBefore, or InsertAfter parameters
 
 ## RELATED LINKS
 
