@@ -74,14 +74,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
         /// <summary>
         /// Gets the components from the Dataverse environment.
         /// </summary>
-        public List<SolutionComponent> GetComponents(bool includeSubcomponents)
+        public List<SolutionComponent> GetComponents(bool includeImpliedSubcomponents)
         {
             var components = ExtractRootComponents();
 
-            if (includeSubcomponents)
-            {
-                components = ExpandWithSubcomponents(components);
-            }
+                components = ExpandWithSubcomponents(components, includeImpliedSubcomponents);
+            
 
             return components;
         }
@@ -215,7 +213,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
         /// <summary>
         /// Expands components with their subcomponents.
         /// </summary>
-        private List<SolutionComponent> ExpandWithSubcomponents(List<SolutionComponent> components)
+        private List<SolutionComponent> ExpandWithSubcomponents(List<SolutionComponent> components, bool includeImpliedSubcomponents)
         {
             var expandedComponents = new List<SolutionComponent>();
 
@@ -231,8 +229,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                     RootComponentBehavior = component.RootComponentBehavior
                 });
 
-                var subcomponents = GetSubcomponents(component);
-                expandedComponents.AddRange(subcomponents);
+                if (includeImpliedSubcomponents || component.RootComponentBehavior != (int)RootComponentBehavior.IncludeSubcomponents)
+                {
+                    var subcomponents = GetSubcomponents(component);
+                    expandedComponents.AddRange(subcomponents);
+                }
             }
 
             return expandedComponents;
@@ -395,57 +396,70 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
             var displayStringIds = subcomponents.Where(sc => sc.ComponentType == 22).Select(sc => sc.ObjectId.Value).ToList();
             if (displayStringIds.Any())
             {
-                var idsFilter = string.Join(" or ", displayStringIds.Select(id => $"displaystringid eq {id:B}"));
-                var queryString = $"filter={Uri.EscapeDataString(idsFilter)}&select=displaystringid,displaystringkey";
-
-                string nextLink = null;
-                do
+                foreach (var displayStringIdsChunk in ChunkList(displayStringIds, 20))
                 {
-                    var uri = nextLink ?? $"displaystrings?{queryString}";
-                    var response = _connection.ExecuteWebRequest(HttpMethod.Get, uri, null, null);
 
-                    response.EnsureSuccessStatusCode();
+                    var idsFilter = string.Join(" or ", displayStringIdsChunk.Select(id => $"displaystringid eq {id:B}"));
+                    var queryString = $"$filter={Uri.EscapeDataString(idsFilter)}&$select=displaystringid,displaystringkey";
 
-                    var jsonResponse = response.Content.ReadAsStringAsync().Result;
-                    using (var doc = JsonDocument.Parse(jsonResponse))
+                    string nextLink = null;
+                    do
                     {
-                        var root = doc.RootElement;
-                        if (root.TryGetProperty("value", out var valueArray))
-                        {
-                            foreach (var item in valueArray.EnumerateArray())
-                            {
-                                var displaystringid = Guid.Parse(item.GetProperty("displaystringid").GetString());
-                                var displaystringkey = item.GetProperty("displaystringkey").GetString();
+                        var uri = nextLink ?? $"displaystrings?{queryString}";
+                        var response = _connection.ExecuteWebRequest(HttpMethod.Get, uri, null, null);
 
-                                var subcomponent = subcomponents.FirstOrDefault(sc => sc.ObjectId == displaystringid && sc.ComponentType == 22);
-                                if (subcomponent != null)
+                        response.EnsureSuccessStatusCode();
+
+                        var jsonResponse = response.Content.ReadAsStringAsync().Result;
+                        using (var doc = JsonDocument.Parse(jsonResponse))
+                        {
+                            var root = doc.RootElement;
+                            if (root.TryGetProperty("value", out var valueArray))
+                            {
+                                foreach (var item in valueArray.EnumerateArray())
                                 {
-                                    subcomponent.UniqueName = displaystringkey;
+                                    var displaystringid = Guid.Parse(item.GetProperty("displaystringid").GetString());
+                                    var displaystringkey = item.GetProperty("displaystringkey").GetString();
+
+                                    var subcomponent = subcomponents.FirstOrDefault(sc => sc.ObjectId == displaystringid && sc.ComponentType == 22);
+                                    if (subcomponent != null)
+                                    {
+                                        subcomponent.UniqueName = displaystringkey;
+                                    }
+                                }
+                            }
+
+                            nextLink = root.TryGetProperty("@odata.nextLink", out var nl) ? nl.GetString() : null;
+                            if (nextLink != null)
+                            {
+                                // Extract the query part after the entity set
+                                var uriObj = new Uri(nextLink);
+                                var pathAndQuery = uriObj.PathAndQuery;
+                                var index = pathAndQuery.IndexOf("displaystrings");
+                                if (index >= 0)
+                                {
+                                    nextLink = pathAndQuery.Substring(index);
+                                }
+                                else
+                                {
+                                    nextLink = null; // Fallback
                                 }
                             }
                         }
-
-                        nextLink = root.TryGetProperty("@odata.nextLink", out var nl) ? nl.GetString() : null;
-                        if (nextLink != null)
-                        {
-                            // Extract the query part after the entity set
-                            var uriObj = new Uri(nextLink);
-                            var pathAndQuery = uriObj.PathAndQuery;
-                            var index = pathAndQuery.IndexOf("displaystrings");
-                            if (index >= 0)
-                            {
-                                nextLink = pathAndQuery.Substring(index);
-                            }
-                            else
-                            {
-                                nextLink = null; // Fallback
-                            }
-                        }
-                    }
-                } while (nextLink != null);
+                    } while (nextLink != null);
+                }
             }
 
             return subcomponents;
+        }
+
+        // Add this helper method to the EnvironmentComponentExtractor class
+        private static IEnumerable<List<T>> ChunkList<T>(List<T> source, int chunkSize)
+        {
+            for (int i = 0; i < source.Count; i += chunkSize)
+            {
+                yield return source.GetRange(i, Math.Min(chunkSize, source.Count - i));
+            }
         }
     }
 }
