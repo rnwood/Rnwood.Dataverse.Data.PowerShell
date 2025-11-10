@@ -129,7 +129,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
 
                             var component = new SolutionComponent
                             {
-                                UniqueName = logicalName.ToLower(),
+                                UniqueName = logicalName?.ToLower(),
                                 ObjectId = objectId,
                                 ComponentType = componentType,
                                 ComponentTypeName = componentTypeName,
@@ -229,7 +229,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                     RootComponentBehavior = component.RootComponentBehavior
                 });
 
-                if (includeImpliedSubcomponents || component.RootComponentBehavior != (int)RootComponentBehavior.IncludeSubcomponents)
+                if (component.ComponentType == 1 && (includeImpliedSubcomponents || component.RootComponentBehavior != (int)RootComponentBehavior.IncludeSubcomponents))
                 {
                     var subcomponents = GetSubcomponents(component);
                     expandedComponents.AddRange(subcomponents);
@@ -254,7 +254,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
         {
             var subcomponents = new List<SolutionComponent>();
 
-            var subcomponentTypes = new[] { 2, 10, 14, 22, 26, 59, 60, 10192, 29 };
+            var subcomponentTypes = new[] { 2, 10, 14, 22, 26, 59, 60, 29 };
 
             foreach (var componentTypeFilter in subcomponentTypes)
             {
@@ -276,7 +276,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                 do
                 {
                     var uri = nextLink ?? $"msdyn_solutioncomponentsummaries?{queryString}";
-                    var response = _connection.ExecuteWebRequest(HttpMethod.Get, uri, null, null);
+                    HttpResponseMessage response;
+
+                    try
+                    {
+                        response = _connection.ExecuteWebRequest(HttpMethod.Get, uri, null, null);
+                    } catch (Exception ex)
+                    {
+                        throw new Exception($"Error retrieving subcomponents for parent component {parentComponent.UniqueName} (Type {parentComponent.ComponentType}): {ex.Message}\n{uri}", ex);
+                    }
 
                     response.EnsureSuccessStatusCode();
 
@@ -288,39 +296,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                         {
                             foreach (var item in valueArray.EnumerateArray())
                             {
-                                var objectId = Guid.Parse(item.GetProperty("msdyn_objectid").GetString());
-                                var componentType = item.GetProperty("msdyn_componenttype").GetInt32();
-
-                                var schemaName = item.TryGetProperty("msdyn_schemaname", out var sn) ? sn.GetString() : null;
-                                var uniqueName = item.TryGetProperty("msdyn_uniquename", out var un) ? un.GetString() : null;
-                                var componentTypeName = item.TryGetProperty("msdyn_componenttypename", out var ctn) ? ctn.GetString() : null;
-                                var isDefault = item.TryGetProperty("msdyn_isdefault", out var d) && d.ValueKind != JsonValueKind.Null ? d.GetBoolean() : (bool?)null;
-                                var isCustom = item.TryGetProperty("msdyn_iscustom", out var c) && (c.ValueKind == JsonValueKind.True || c.ValueKind == JsonValueKind.False) ? c.GetBoolean() : (bool?)null;
-                                var isCustomized = item.TryGetProperty("msdyn_hasactivecustomization", out var cz) && (cz.ValueKind == JsonValueKind.True || cz.ValueKind == JsonValueKind.False) ? cz.GetBoolean() : (bool?)null;
-                                var isManaged = item.TryGetProperty("msdyn_ismanaged", out var m) && (m.ValueKind == JsonValueKind.True || m.ValueKind == JsonValueKind.False) ? m.GetBoolean() : (bool?)null;
-
-                                // Use msdyn_uniquename if available, otherwise use msdyn_schemaname
-                                string logicalName = schemaName ?? uniqueName;
-
-                                subcomponents.Add(new SolutionComponent
-                                {
-                                    UniqueName = logicalName,
-                                    ObjectId = objectId,
-                                    ComponentType = componentType,
-                                    ComponentTypeName = componentTypeName,
-                                    RootComponentBehavior = 0, // Will be updated from solutioncomponent query
-                                    IsSubcomponent = true,
-                                    ParentComponentType = parentComponent.ComponentType,
-                                    ParentTableName = parentComponent.UniqueName,
-                                    ParentIsCustom = parentComponent.IsCustom,
-                                    ParentIsCustomized = parentComponent.IsCustomized,
-                                    ParentIsDefault = parentComponent.IsDefault,
-                                    ParentIsManaged = parentComponent.IsManaged,
-                                    IsDefault = isDefault,
-                                    IsCustom = isCustom,
-                                    IsCustomized = isCustomized,
-                                    IsManaged = isManaged
-                                });
+                                ExtractSubcomponentDetails(parentComponent, subcomponents, item);
                             }
                         }
 
@@ -343,6 +319,54 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                     }
                 } while (nextLink != null);
             }
+            LoadRootComponentBehaviors(subcomponents);
+
+            RetrieveDisplayStrings(subcomponents);
+            _cmdlet.WriteVerbose($"Found {subcomponents.Count} subcomponents from msdyn_solutioncomponentsummary");
+
+
+            return subcomponents;
+        }
+
+        private static void ExtractSubcomponentDetails(SolutionComponent parentComponent, List<SolutionComponent> subcomponents, JsonElement item)
+        {
+            var objectId = Guid.Parse(item.GetProperty("msdyn_objectid").GetString());
+            var componentType = item.GetProperty("msdyn_componenttype").GetInt32();
+
+            var schemaName = item.TryGetProperty("msdyn_schemaname", out var sn) ? sn.GetString() : null;
+            var uniqueName = item.TryGetProperty("msdyn_uniquename", out var un) ? un.GetString() : null;
+            var componentTypeName = item.TryGetProperty("msdyn_componenttypename", out var ctn) ? ctn.GetString() : null;
+            var isDefault = item.TryGetProperty("msdyn_isdefault", out var d) && d.ValueKind != JsonValueKind.Null ? d.GetBoolean() : (bool?)null;
+            var isCustom = item.TryGetProperty("msdyn_iscustom", out var c) && (c.ValueKind == JsonValueKind.True || c.ValueKind == JsonValueKind.False) ? c.GetBoolean() : (bool?)null;
+            var isCustomized = item.TryGetProperty("msdyn_hasactivecustomization", out var cz) && (cz.ValueKind == JsonValueKind.True || cz.ValueKind == JsonValueKind.False) ? cz.GetBoolean() : (bool?)null;
+            var isManaged = item.TryGetProperty("msdyn_ismanaged", out var m) && (m.ValueKind == JsonValueKind.True || m.ValueKind == JsonValueKind.False) ? m.GetBoolean() : (bool?)null;
+
+            // Use msdyn_uniquename if available, otherwise use msdyn_schemaname
+            string logicalName = schemaName ?? uniqueName;
+
+            subcomponents.Add(new SolutionComponent
+            {
+                UniqueName = logicalName,
+                ObjectId = objectId,
+                ComponentType = componentType,
+                ComponentTypeName = componentTypeName,
+                RootComponentBehavior = 0, // Will be updated from solutioncomponent query
+                IsSubcomponent = true,
+                ParentComponentType = parentComponent.ComponentType,
+                ParentTableName = parentComponent.UniqueName,
+                ParentIsCustom = parentComponent.IsCustom,
+                ParentIsCustomized = parentComponent.IsCustomized,
+                ParentIsDefault = parentComponent.IsDefault,
+                ParentIsManaged = parentComponent.IsManaged,
+                IsDefault = isDefault,
+                IsCustom = isCustom,
+                IsCustomized = isCustomized,
+                IsManaged = isManaged
+            });
+        }
+
+        private void LoadRootComponentBehaviors(List<SolutionComponent> subcomponents)
+        {
 
             // Query solutioncomponent table to get rootcomponentbehavior for each subcomponent
             if (subcomponents.Count > 0 && _solutionId != Guid.Empty)
@@ -389,8 +413,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                     }
                 }
             }
+        }
 
-            _cmdlet.WriteVerbose($"Found {subcomponents.Count} subcomponents from msdyn_solutioncomponentsummary");
+        private void RetrieveDisplayStrings(List<SolutionComponent> subcomponents)
+        {
 
             // Retrieve displaystringkey for component type 22 (Display String)
             var displayStringIds = subcomponents.Where(sc => sc.ComponentType == 22).Select(sc => sc.ObjectId.Value).ToList();
@@ -449,8 +475,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                     } while (nextLink != null);
                 }
             }
-
-            return subcomponents;
         }
 
         // Add this helper method to the EnvironmentComponentExtractor class
