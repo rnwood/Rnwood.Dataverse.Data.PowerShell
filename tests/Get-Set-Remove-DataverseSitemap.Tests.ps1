@@ -22,7 +22,6 @@ Describe 'Get-DataverseSitemap' {
             $sitemap1["sitemapname"] = "TestSitemap1"
             $sitemap1["sitemapnameunique"] = "testsitemap1"
             $sitemap1["sitemapxml"] = "<SiteMap></SiteMap>"
-            $sitemap1["ismanaged"] = $false
             $sitemap1["createdon"] = [DateTime]::Now.AddDays(-30)
             $sitemap1["modifiedon"] = [DateTime]::Now.AddDays(-5)
             $sitemap1Id = $connection.Create($sitemap1)
@@ -31,7 +30,6 @@ Describe 'Get-DataverseSitemap' {
             $sitemap2["sitemapname"] = "TestSitemap2"
             $sitemap2["sitemapnameunique"] = "testsitemap2"
             $sitemap2["sitemapxml"] = "<SiteMap><Area Id='TestArea' /></SiteMap>"
-            $sitemap2["ismanaged"] = $true
             $sitemap2["createdon"] = [DateTime]::Now.AddDays(-60)
             $sitemap2["modifiedon"] = [DateTime]::Now.AddDays(-10)
             $connection.Create($sitemap2) | Out-Null
@@ -48,7 +46,6 @@ Describe 'Get-DataverseSitemap' {
             $sitemap | Should -Not -BeNullOrEmpty
             $sitemap.Name | Should -Be "TestSitemap1"
             $sitemap.UniqueName | Should -Be "testsitemap1"
-            $sitemap.IsManaged | Should -Be $false
         }
 
         It "Can retrieve sitemap by unique name" {
@@ -56,7 +53,6 @@ Describe 'Get-DataverseSitemap' {
             $sitemap | Should -Not -BeNullOrEmpty
             $sitemap.Name | Should -Be "TestSitemap2"
             $sitemap.UniqueName | Should -Be "testsitemap2"
-            $sitemap.IsManaged | Should -Be $true
         }
 
         It "Can retrieve sitemap by ID" {
@@ -80,7 +76,6 @@ Describe 'Get-DataverseSitemap' {
             $sitemap.Name | Should -Be "TestSitemap1"
             $sitemap.UniqueName | Should -Be "testsitemap1"
             $sitemap.SitemapXml | Should -Be "<SiteMap></SiteMap>"
-            $sitemap.IsManaged | Should -Be $false
             $sitemap.CreatedOn | Should -Not -BeNullOrEmpty
             $sitemap.ModifiedOn | Should -Not -BeNullOrEmpty
         }
@@ -192,7 +187,6 @@ Describe 'Set-DataverseSitemap' {
             $existingSitemap["sitemapname"] = "ExistingSitemap"
             $existingSitemap["sitemapnameunique"] = "existingsitemap"
             $existingSitemap["sitemapxml"] = "<SiteMap></SiteMap>"
-            $existingSitemap["ismanaged"] = $false
             $script:existingSitemapId = $connection.Create($existingSitemap)
         }
 
@@ -211,7 +205,6 @@ Describe 'Set-DataverseSitemap' {
             $anotherSitemap["sitemapname"] = "AnotherSitemap"
             $anotherSitemap["sitemapnameunique"] = "anothersitemap"
             $anotherSitemap["sitemapxml"] = "<SiteMap></SiteMap>"
-            $anotherSitemap["ismanaged"] = $false
             $connection.Create($anotherSitemap) | Out-Null
             
             $newXml = "<SiteMap><Area Id='AnotherUpdatedArea' /></SiteMap>"
@@ -220,6 +213,22 @@ Describe 'Set-DataverseSitemap' {
             # Verify update
             $updatedSitemap = Get-DataverseSitemap -Connection $connection -UniqueName "anothersitemap"
             $updatedSitemap.Name | Should -Be "AnotherUpdatedName"
+            $updatedSitemap.SitemapXml | Should -Be $newXml
+        }
+
+        It "Can update sitemap XML without changing Name" {
+            $testSitemap = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $testSitemap["sitemapname"] = "OriginalName"
+            $testSitemap["sitemapnameunique"] = "originalname"
+            $testSitemap["sitemapxml"] = "<SiteMap></SiteMap>"
+            $testSitemapId = $connection.Create($testSitemap)
+            
+            $newXml = "<SiteMap><Area Id='NewArea' /></SiteMap>"
+            Set-DataverseSitemap -Connection $connection -Id $testSitemapId -SitemapXml $newXml
+            
+            # Verify update - Name should remain unchanged
+            $updatedSitemap = Get-DataverseSitemap -Connection $connection -Id $testSitemapId
+            $updatedSitemap.Name | Should -Be "OriginalName"
             $updatedSitemap.SitemapXml | Should -Be $newXml
         }
     }
@@ -235,6 +244,10 @@ Describe 'Set-DataverseSitemap' {
 
         It "Throws error when updating non-existent sitemap by ID" {
             { Set-DataverseSitemap -Connection $connection -Id ([Guid]::NewGuid()) -Name "NonExistent" } | Should -Throw
+        }
+
+        It "Throws error when Name is not provided for creation" {
+            { Set-DataverseSitemap -Connection $connection -SitemapXml "<SiteMap></SiteMap>" } | Should -Throw
         }
     }
 }
@@ -324,9 +337,11 @@ Describe 'SitemapInfo Class' {
             $properties | Should -Contain 'Name'
             $properties | Should -Contain 'UniqueName'
             $properties | Should -Contain 'SitemapXml'
-            $properties | Should -Contain 'IsManaged'
             $properties | Should -Contain 'CreatedOn'
             $properties | Should -Contain 'ModifiedOn'
+            
+            # Check that IsManaged property does not exist
+            $properties | Should -Not -Contain 'IsManaged'
         }
 
         It "Can create SitemapInfo instance" {
@@ -335,12 +350,10 @@ Describe 'SitemapInfo Class' {
             $sitemap.Name = "TestSitemap"
             $sitemap.UniqueName = "testsitemap"
             $sitemap.SitemapXml = "<SiteMap></SiteMap>"
-            $sitemap.IsManaged = $false
             
             $sitemap.Name | Should -Be "TestSitemap"
             $sitemap.UniqueName | Should -Be "testsitemap"
             $sitemap.SitemapXml | Should -Be "<SiteMap></SiteMap>"
-            $sitemap.IsManaged | Should -Be $false
         }
     }
 }

@@ -21,9 +21,9 @@ Get-DataverseSitemap [[-Name] <String>] [-UniqueName <String>] [-Id <Guid>] [-Un
 
 This cmdlet retrieves sitemap information from a Dataverse environment. Sitemaps define the navigation structure for model-driven apps.
 
-You can retrieve all sitemaps or filter by name, ID, solution, app, or managed status.
+You can retrieve all sitemaps or filter by name, ID, or unique name.
 
-The cmdlet returns SitemapInfo objects with metadata about each sitemap including name, XML definition, solution association, and more.
+The cmdlet returns SitemapInfo objects with metadata about each sitemap including name, XML definition, and timestamps.
 
 ## EXAMPLES
 
@@ -31,10 +31,10 @@ The cmdlet returns SitemapInfo objects with metadata about each sitemap includin
 ```powershell
 PS C:\> Get-DataverseSitemap
 
-Name              Id                                   IsManaged
-----              --                                   ---------
-MySitemap         a1b2c3d4-5678-90ab-cdef-1234567890ab False
-DefaultSitemap    f1e2d3c4-b5a6-9087-6543-210fedcba987 True
+Name              Id                                   UniqueName
+----              --                                   ----------
+MySitemap         a1b2c3d4-5678-90ab-cdef-1234567890ab mysitemap
+DefaultSitemap    f1e2d3c4-b5a6-9087-6543-210fedcba987 defaultsitemap
 ```
 
 Retrieves all sitemaps from the Dataverse environment.
@@ -45,8 +45,7 @@ PS C:\> Get-DataverseSitemap -Name "MySitemap"
 
 Name              : MySitemap
 Id                : a1b2c3d4-5678-90ab-cdef-1234567890ab
-UniqueName        : MySitemap
-IsManaged         : False
+UniqueName        : mysitemap
 CreatedOn         : 1/15/2024 10:30:00 AM
 ModifiedOn        : 1/20/2024 2:45:00 PM
 SitemapXml        : <SiteMap>...</SiteMap>
@@ -58,9 +57,9 @@ Retrieves a specific sitemap by its name with full details.
 ```powershell
 PS C:\> Get-DataverseSitemap -UniqueName "mysitemap_unique"
 
-Name              Id                                   IsManaged  UniqueName
-----              --                                   ---------  ----------
-MySitemap         a1b2c3d4-5678-90ab-cdef-1234567890ab False      mysitemap_unique
+Name              Id                                   UniqueName
+----              --                                   ----------
+MySitemap         a1b2c3d4-5678-90ab-cdef-1234567890ab mysitemap_unique
 ```
 
 Retrieves a specific sitemap by its unique name.
@@ -69,9 +68,9 @@ Retrieves a specific sitemap by its unique name.
 ```powershell
 PS C:\> Get-DataverseSitemap -Id "a1b2c3d4-5678-90ab-cdef-1234567890ab"
 
-Name              Id                                   IsManaged  CreatedOn            ModifiedOn
-----              --                                   ---------  ---------            ----------
-MySitemap         a1b2c3d4-5678-90ab-cdef-1234567890ab False      1/15/2024 10:30:00 AM 1/20/2024 2:45:00 PM
+Name              Id                                   CreatedOn             ModifiedOn
+----              --                                   ---------             ----------
+MySitemap         a1b2c3d4-5678-90ab-cdef-1234567890ab 1/15/2024 10:30:00 AM 1/20/2024 2:45:00 PM
 ```
 
 Retrieves a sitemap by its unique identifier.

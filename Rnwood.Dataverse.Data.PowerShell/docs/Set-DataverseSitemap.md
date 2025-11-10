@@ -13,7 +13,7 @@ Creates or updates a sitemap in Dataverse.
 ## SYNTAX
 
 ```
-Set-DataverseSitemap [-Name] <String> [-Id <Guid>] [-UniqueName <String>] [-SitemapXml <String>] [-PassThru]
+Set-DataverseSitemap [[-Name] <String>] [-Id <Guid>] [-UniqueName <String>] [-SitemapXml <String>] [-PassThru]
  [-Publish] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
  [<CommonParameters>]
 ```
@@ -22,9 +22,7 @@ Set-DataverseSitemap [-Name] <String> [-Id <Guid>] [-UniqueName <String>] [-Site
 
 This cmdlet creates a new sitemap or updates an existing sitemap in a Dataverse environment. Sitemaps define the navigation structure for model-driven apps.
 
-When creating a new sitemap, only the Name and SitemapXml parameters are required. When updating an existing sitemap, specify the Id parameter to identify which sitemap to update.
-
-Only unmanaged sitemaps can be created or updated. Managed sitemaps (deployed via managed solutions) cannot be modified directly.
+When creating a new sitemap, the Name parameter is required. When updating an existing sitemap, specify the Id or UniqueName parameter to identify which sitemap to update. The Name parameter is optional when updating.
 
 ## EXAMPLES
 
@@ -168,14 +166,14 @@ Accept wildcard characters: False
 ```
 
 ### -Name
-The name of the sitemap to create or update.
+The name property of the sitemap. Required when creating a new sitemap, optional when updating.
 
 ```yaml
 Type: String
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: 0
 Default value: None
 Accept pipeline input: True (ByPropertyName)
@@ -228,7 +226,7 @@ Accept wildcard characters: False
 ```
 
 ### -UniqueName
-The unique name of the sitemap to update. If a sitemap with this unique name exists, it will be updated; otherwise, a new sitemap is created with this unique name.
+The unique name (key) of the sitemap to update. If a sitemap with this unique name exists, it will be updated; otherwise, a new sitemap is created with this unique name.
 
 ```yaml
 Type: String
@@ -285,8 +283,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 This cmdlet requires an active connection to a Dataverse environment.
-
-Only unmanaged sitemaps can be created or modified. Managed sitemaps are deployed via managed solutions and cannot be updated directly through this cmdlet.
 
 The sitemap XML must conform to the SiteMap schema. A sitemap typically contains Area elements (top-level navigation areas), which contain Group elements (groupings within an area), which contain SubArea elements (individual navigation items).
 

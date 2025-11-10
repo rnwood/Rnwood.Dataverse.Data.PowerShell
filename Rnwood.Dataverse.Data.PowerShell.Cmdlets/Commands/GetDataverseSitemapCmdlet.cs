@@ -54,7 +54,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     "sitemapname",
                     "sitemapnameunique",
                     "sitemapxml",
-                    "ismanaged",
                     "createdby",
                     "createdon",
                     "modifiedby",
@@ -96,7 +95,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     Name = sitemap.GetAttributeValue<string>("sitemapname"),
                     UniqueName = sitemap.GetAttributeValue<string>("sitemapnameunique"),
                     SitemapXml = sitemap.GetAttributeValue<string>("sitemapxml"),
-                    IsManaged = sitemap.GetAttributeValue<bool>("ismanaged"),
                     CreatedOn = sitemap.GetAttributeValue<DateTime?>("createdon"),
                     ModifiedOn = sitemap.GetAttributeValue<DateTime?>("modifiedon")
                 };
