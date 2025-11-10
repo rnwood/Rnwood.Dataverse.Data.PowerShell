@@ -262,7 +262,19 @@ contact         Contact
 
 Finds entities with change tracking enabled for data synchronization.
 
-### Example 15: Work with default connection
+### Example 15: Access icon properties from entity metadata
+```powershell
+PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName account
+PS C:\> $metadata | Select-Object LogicalName, IconVectorName, IconLargeName, IconMediumName, IconSmallName
+
+LogicalName IconVectorName    IconLargeName      IconMediumName     IconSmallName
+----------- --------------    -------------      --------------     -------------
+account     svg_account       Entity/account.png Entity/account.png Entity/account.png
+```
+
+Retrieves and displays icon properties for an entity. Icon properties specify the visual representation of the entity in the UI.
+
+### Example 16: Work with default connection
 ```powershell
 PS C:\> # Set a default connection
 PS C:\> $conn = Get-DataverseConnection -Url "https://myorg.crm.dynamics.com" -Interactive
