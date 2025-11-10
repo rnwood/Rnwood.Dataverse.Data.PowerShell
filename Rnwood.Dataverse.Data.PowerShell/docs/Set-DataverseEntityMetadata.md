@@ -16,7 +16,7 @@ Creates or updates an entity (table) in Dataverse.
 Set-DataverseEntityMetadata [-EntityName] <String> [-SchemaName <String>] [-DisplayName <String>]
  [-DisplayCollectionName <String>] [-Description <String>] [-OwnershipType <String>] [-HasActivities]
  [-HasNotes] [-IsAuditEnabled] [-ChangeTrackingEnabled] [-PrimaryAttributeSchemaName <String>]
- [-PrimaryAttributeDisplayName <String>] [-PrimaryAttributeMaxLength <Int32>] [-PassThru]
+ [-PrimaryAttributeDisplayName <String>] [-PrimaryAttributeMaxLength <Int32>] [-PassThru] [-Publish]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -512,6 +512,21 @@ Must follow naming conventions with publisher prefix (e.g., `new_name`, `new_pro
 
 ```yaml
 Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Publish
+If specified, publishes the entity after creating or updating
+
+```yaml
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 
