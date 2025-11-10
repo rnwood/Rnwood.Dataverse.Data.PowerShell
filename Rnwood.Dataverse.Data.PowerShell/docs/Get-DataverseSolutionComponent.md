@@ -14,14 +14,14 @@ Retrieves the components of a solution from a Dataverse environment.
 
 ### ByUniqueName
 ```
-Get-DataverseSolutionComponent [-SolutionName] <String> [-IncludeImpliedSubcomponents] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseSolutionComponent [-SolutionName] <String> [-IncludeImpliedSubcomponents]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### BySolutionId
 ```
-Get-DataverseSolutionComponent [-SolutionId] <Guid> [-IncludeImpliedSubcomponents] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseSolutionComponent [-SolutionId] <Guid> [-IncludeImpliedSubcomponents]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -160,10 +160,13 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.String
+
 ### System.Guid
+
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
+
 ## NOTES
 - **Component Types**: The cmdlet returns components with numeric ComponentType values. Common types include:
   - 1: Entity
