@@ -226,7 +226,7 @@ Describe 'Form Control Management - New Features' {
             $updatedControl.IsRequired | Should -Be $true
             
             # Remove
-            Remove-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "fax"
+            Remove-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "fax" -Confirm:$false
             
             # Verify removal
             { Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "fax" } | Should -Throw

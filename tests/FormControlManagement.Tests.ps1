@@ -126,7 +126,7 @@ Describe 'Form Control Management' {
             $control | Should -Not -BeNull
             
             # Remove it
-            Remove-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -ControlId "{control-to-remove}"
+            Remove-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -ControlId "{control-to-remove}" -Confirm:$false
             
             # Verify it's gone
             { Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -ControlId "{control-to-remove}" } | Should -Throw
@@ -142,7 +142,7 @@ Describe 'Form Control Management' {
             $control | Should -Not -BeNull
             
             # Remove it
-            Remove-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -DataField "department" -SectionName "section1"
+            Remove-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -DataField "department" -SectionName "section1" -Confirm:$false
             
             # Verify it's gone
             { Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "department" } | Should -Throw

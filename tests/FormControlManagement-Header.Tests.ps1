@@ -302,7 +302,7 @@ Describe 'Form Control Management - Header Section' {
 
         It "Removes header control by DataField" {
             Remove-DataverseFormControl -Connection $connection -FormId $script:RemoveFormId `
-                -TabName '[Header]' -DataField 'emailaddress1'
+                -TabName '[Header]' -DataField 'emailaddress1' -Confirm:$false
             
             # Verify removal
             $controls = Get-DataverseFormControl -Connection $connection -FormId $script:RemoveFormId -TabName '[Header]'
@@ -311,7 +311,7 @@ Describe 'Form Control Management - Header Section' {
 
         It "Removes header control by ControlId" {
             Remove-DataverseFormControl -Connection $connection -FormId $script:RemoveFormId `
-                -ControlId 'header_owner'
+                -ControlId 'header_owner' -Confirm:$false
             
             # Verify removal
             $controls = Get-DataverseFormControl -Connection $connection -FormId $script:RemoveFormId -TabName '[Header]'
@@ -353,7 +353,7 @@ Describe 'Form Control Management - Header Section' {
             
             # Remove header control
             Remove-DataverseFormControl -Connection $connection -FormId $formId `
-                -TabName '[Header]' -DataField 'telephone1'
+                -TabName '[Header]' -DataField 'telephone1' -Confirm:$false
             
             # Verify removal
             $controls = Get-DataverseFormControl -Connection $connection -FormId $formId -TabName '[Header]'
