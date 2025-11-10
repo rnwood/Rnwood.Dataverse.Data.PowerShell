@@ -1,3 +1,4 @@
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -102,6 +103,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter PassThru { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to publish the entity after creating or updating.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, publishes the entity after creating or updating")]
+        public SwitchParameter Publish { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet.
         /// </summary>
         protected override void ProcessRecord()
@@ -118,7 +125,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     LogicalName = EntityName,
                     EntityFilters = EntityFilters.Entity,
-                    RetrieveAsIfPublished = false
+                    RetrieveAsIfPublished = true
                 };
 
                 var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
@@ -269,6 +276,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Invalidate cache for this entity
             InvalidateEntityCache();
 
+            // Publish the entity if specified
+            if (Publish && ShouldProcess($"Entity '{EntityName}'", "Publish"))
+            {
+                var publishRequest = new PublishXmlRequest
+                {
+                    ParameterXml = $"<importexportxml><entities><entity>{EntityName}</entity></entities></importexportxml>"
+                };
+                Connection.Execute(publishRequest);
+                WriteVerbose($"Published entity '{EntityName}'");
+            }
+
             if (PassThru)
             {
                 // Retrieve and return the created entity
@@ -276,7 +294,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     LogicalName = EntityName,
                     EntityFilters = EntityFilters.Entity | EntityFilters.Attributes,
-                    RetrieveAsIfPublished = false
+                    RetrieveAsIfPublished = true
                 };
 
                 var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
@@ -368,6 +386,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Invalidate cache for this entity
             InvalidateEntityCache();
 
+            // Publish the entity if specified
+            if (Publish && ShouldProcess($"Entity '{EntityName}'", "Publish"))
+            {
+                var publishRequest = new PublishXmlRequest
+                {
+                    ParameterXml = $"<importexportxml><entities><entity>{EntityName}</entity></entities></importexportxml>"
+                };
+                Connection.Execute(publishRequest);
+                WriteVerbose($"Published entity '{EntityName}'");
+            }
+
             if (PassThru)
             {
                 // Retrieve and return the updated entity
@@ -375,7 +404,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     LogicalName = EntityName,
                     EntityFilters = EntityFilters.Entity | EntityFilters.Attributes,
-                    RetrieveAsIfPublished = false
+                    RetrieveAsIfPublished = true
                 };
 
                 var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
