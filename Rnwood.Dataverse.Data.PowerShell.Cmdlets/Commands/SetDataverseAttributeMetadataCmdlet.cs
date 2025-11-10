@@ -313,6 +313,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
+            // Special handling for lookup attributes - they use a different creation method
+            if (AttributeType?.ToLowerInvariant() == "lookup")
+            {
+                CreateLookupAttributeWithRelationship();
+                return;
+            }
+
             AttributeMetadata attributeMetadata = CreateAttributeMetadata();
 
             var request = new CreateAttributeRequest
@@ -331,6 +338,132 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var response = (CreateAttributeResponse)Connection.Execute(request);
 
             WriteVerbose($"Attribute created successfully with MetadataId: {response.AttributeId}");
+
+            // Invalidate cache for this entity
+            InvalidateEntityCache();
+
+            // Publish the attribute if specified
+            if (Publish && ShouldProcess($"Entity '{EntityName}'", "Publish"))
+            {
+                var publishRequest = new PublishXmlRequest
+                {
+                    ParameterXml = $"<importexportxml><entities><entity>{EntityName}</entity></entities></importexportxml>"
+                };
+                Connection.Execute(publishRequest);
+                WriteVerbose($"Published entity '{EntityName}'");
+            }
+
+            if (PassThru)
+            {
+                // Retrieve and return the created attribute
+                var retrieveRequest = new RetrieveAttributeRequest
+                {
+                    EntityLogicalName = EntityName,
+                    LogicalName = AttributeName,
+                    RetrieveAsIfPublished = true
+                };
+
+                var retrieveResponse = (RetrieveAttributeResponse)Connection.Execute(retrieveRequest);
+                var result = ConvertAttributeMetadataToPSObject(retrieveResponse.AttributeMetadata);
+                WriteObject(result);
+            }
+        }
+
+        private void CreateLookupAttributeWithRelationship()
+        {
+            if (Targets == null || Targets.Length == 0)
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new ArgumentException("Targets must be specified for Lookup attributes"),
+                    "TargetsRequired",
+                    ErrorCategory.InvalidArgument,
+                    null));
+                return;
+            }
+
+            // For single-target lookups, we can create using CreateOneToManyRequest
+            // For multi-target (polymorphic) lookups, we need more complex logic
+            if (Targets.Length > 1)
+            {
+                // Multi-target lookups require special handling
+                ThrowTerminatingError(new ErrorRecord(
+                    new NotImplementedException("Multi-target (polymorphic) lookup creation is not yet supported. Please use Set-DataverseRelationshipMetadata to create the relationship and lookup together, or create each single-target relationship separately."),
+                    "PolymorphicLookupNotSupported",
+                    ErrorCategory.NotImplemented,
+                    null));
+                return;
+            }
+
+            string targetEntity = Targets[0];
+            string referencingEntity = EntityName;
+            
+            // Generate relationship schema name if not provided
+            string relationshipSchemaName = RelationshipSchemaName;
+            if (string.IsNullOrWhiteSpace(relationshipSchemaName))
+            {
+                // Generate default: referenced_referencing_attributeschemaname
+                relationshipSchemaName = $"{targetEntity}_{referencingEntity}_{SchemaName}";
+            }
+
+            if (!ShouldProcess($"Entity '{EntityName}'", $"Create lookup attribute '{SchemaName}' with relationship '{relationshipSchemaName}' to '{targetEntity}'"))
+            {
+                return;
+            }
+
+            var lookup = new LookupAttributeMetadata
+            {
+                SchemaName = SchemaName,
+                LogicalName = AttributeName,
+                DisplayName = new Label(DisplayName ?? SchemaName, _baseLanguageCode),
+                Description = string.IsNullOrWhiteSpace(Description) 
+                    ? new Label(string.Empty, _baseLanguageCode) 
+                    : new Label(Description, _baseLanguageCode)
+            };
+
+            // Set required level
+            if (!string.IsNullOrWhiteSpace(RequiredLevel))
+            {
+                lookup.RequiredLevel = new AttributeRequiredLevelManagedProperty(
+                    (AttributeRequiredLevel)Enum.Parse(typeof(AttributeRequiredLevel), RequiredLevel));
+            }
+            else
+            {
+                lookup.RequiredLevel = new AttributeRequiredLevelManagedProperty(AttributeRequiredLevel.None);
+            }
+
+            // Set searchable
+            if (IsSearchable.IsPresent)
+            {
+                lookup.IsValidForAdvancedFind = new BooleanManagedProperty(IsSearchable.ToBool());
+            }
+
+            var relationship = new OneToManyRelationshipMetadata
+            {
+                SchemaName = relationshipSchemaName,
+                ReferencedEntity = targetEntity,
+                ReferencingEntity = referencingEntity,
+                CascadeConfiguration = new CascadeConfiguration
+                {
+                    Assign = ParseCascadeType(CascadeAssign ?? "NoCascade"),
+                    Share = ParseCascadeType(CascadeShare ?? "NoCascade"),
+                    Unshare = ParseCascadeType(CascadeUnshare ?? "NoCascade"),
+                    Reparent = ParseCascadeType(CascadeReparent ?? "NoCascade"),
+                    Delete = ParseCascadeType(CascadeDelete ?? "RemoveLink"),
+                    Merge = ParseCascadeType(CascadeMerge ?? "NoCascade")
+                }
+            };
+
+            var request = new CreateOneToManyRequest
+            {
+                Lookup = lookup,
+                OneToManyRelationship = relationship
+            };
+
+            WriteVerbose($"Creating lookup attribute '{SchemaName}' with relationship '{relationshipSchemaName}' from {targetEntity} to {referencingEntity}");
+
+            var response = (CreateOneToManyResponse)Connection.Execute(request);
+
+            WriteVerbose($"Lookup attribute and relationship created successfully with AttributeId: {response.AttributeId}, RelationshipId: {response.RelationshipId}");
 
             // Invalidate cache for this entity
             InvalidateEntityCache();
@@ -401,9 +534,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 case "multiselectpicklist":
                     attribute = CreateMultiSelectPicklistAttribute();
                     break;
-                case "lookup":
-                    attribute = CreateLookupAttribute();
-                    break;
                 case "file":
                     attribute = CreateFileAttribute();
                     break;
@@ -413,6 +543,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 case "uniqueidentifier":
                     attribute = CreateUniqueIdentifierAttribute();
                     break;
+                case "lookup":
+                    // Lookup attributes are handled separately in CreateLookupAttributeWithRelationship()
+                    // This case should not be reached because CreateAttribute() redirects lookup creation
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException("Lookup attributes should be created via CreateLookupAttributeWithRelationship()"),
+                        "UnexpectedLookupFlow",
+                        ErrorCategory.InvalidOperation,
+                        AttributeType));
+                    return null;
                 default:
                     ThrowTerminatingError(new ErrorRecord(
                         new ArgumentException($"Unsupported attribute type: {AttributeType}"),
@@ -719,111 +858,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             return attr;
-        }
-
-        private LookupAttributeMetadata CreateLookupAttribute()
-        {
-            if (Targets == null || Targets.Length == 0)
-            {
-                ThrowTerminatingError(new ErrorRecord(
-                    new ArgumentException("Targets must be specified for Lookup attributes"),
-                    "TargetsRequired",
-                    ErrorCategory.InvalidArgument,
-                    null));
-                return null;
-            }
-
-            // For single-target lookups, we can create using CreateOneToManyRequest
-            // For multi-target (polymorphic) lookups, we need more complex logic
-            if (Targets.Length == 1)
-            {
-                return CreateSingleTargetLookup();
-            }
-            else
-            {
-                // Multi-target lookups require special handling
-                ThrowTerminatingError(new ErrorRecord(
-                    new NotImplementedException("Multi-target (polymorphic) lookup creation is not yet supported. Please use Set-DataverseRelationshipMetadata to create the relationship and lookup together, or create each single-target relationship separately."),
-                    "PolymorphicLookupNotSupported",
-                    ErrorCategory.NotImplemented,
-                    null));
-                return null;
-            }
-        }
-
-        private LookupAttributeMetadata CreateSingleTargetLookup()
-        {
-            // For single-target lookups, we create a OneToMany relationship
-            // which automatically creates the lookup attribute
-            
-            string targetEntity = Targets[0];
-            string referencingEntity = EntityName;
-            
-            // Generate relationship schema name if not provided
-            string relationshipSchemaName = RelationshipSchemaName;
-            if (string.IsNullOrWhiteSpace(relationshipSchemaName))
-            {
-                // Generate default: referenced_referencing or new_referenced_referencing
-                relationshipSchemaName = $"{targetEntity}_{referencingEntity}_{SchemaName}";
-            }
-
-            var lookup = new LookupAttributeMetadata
-            {
-                SchemaName = SchemaName,
-                LogicalName = AttributeName,
-                DisplayName = new Label(DisplayName ?? SchemaName, _baseLanguageCode),
-                Description = string.IsNullOrWhiteSpace(Description) 
-                    ? new Label(string.Empty, _baseLanguageCode) 
-                    : new Label(Description, _baseLanguageCode)
-            };
-
-            // Set required level
-            if (!string.IsNullOrWhiteSpace(RequiredLevel))
-            {
-                lookup.RequiredLevel = new AttributeRequiredLevelManagedProperty(
-                    (AttributeRequiredLevel)Enum.Parse(typeof(AttributeRequiredLevel), RequiredLevel));
-            }
-            else
-            {
-                lookup.RequiredLevel = new AttributeRequiredLevelManagedProperty(AttributeRequiredLevel.None);
-            }
-
-            // Set searchable
-            if (IsSearchable.IsPresent)
-            {
-                lookup.IsValidForAdvancedFind = new BooleanManagedProperty(IsSearchable.ToBool());
-            }
-
-            var relationship = new OneToManyRelationshipMetadata
-            {
-                SchemaName = relationshipSchemaName,
-                ReferencedEntity = targetEntity,
-                ReferencingEntity = referencingEntity,
-                CascadeConfiguration = new CascadeConfiguration
-                {
-                    Assign = ParseCascadeType(CascadeAssign ?? "NoCascade"),
-                    Share = ParseCascadeType(CascadeShare ?? "NoCascade"),
-                    Unshare = ParseCascadeType(CascadeUnshare ?? "NoCascade"),
-                    Reparent = ParseCascadeType(CascadeReparent ?? "NoCascade"),
-                    Delete = ParseCascadeType(CascadeDelete ?? "RemoveLink"),
-                    Merge = ParseCascadeType(CascadeMerge ?? "NoCascade")
-                }
-            };
-
-            var request = new CreateOneToManyRequest
-            {
-                Lookup = lookup,
-                OneToManyRelationship = relationship
-            };
-
-            WriteVerbose($"Creating lookup attribute '{SchemaName}' with relationship '{relationshipSchemaName}' from {targetEntity} to {referencingEntity}");
-
-            var response = (CreateOneToManyResponse)Connection.Execute(request);
-
-            WriteVerbose($"Lookup attribute and relationship created successfully with AttributeId: {response.AttributeId}, RelationshipId: {response.RelationshipId}");
-
-            // Return the lookup metadata (though it won't be used by the caller in the create flow)
-            return lookup;
         }
 
         private CascadeType ParseCascadeType(string cascadeType)
