@@ -25,22 +25,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string EntityName { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to include attribute metadata in the output.
+        /// Gets or sets whether to exclude attribute metadata from the output.
         /// </summary>
-        [Parameter(HelpMessage = "Include attribute (column) metadata in the output")]
-        public SwitchParameter IncludeAttributes { get; set; }
+        [Parameter(HelpMessage = "Exclude attribute (column) metadata from the output")]
+        public SwitchParameter ExcludeAttributes { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to include relationship metadata in the output.
+        /// Gets or sets whether to exclude relationship metadata from the output.
         /// </summary>
-        [Parameter(HelpMessage = "Include relationship metadata in the output")]
-        public SwitchParameter IncludeRelationships { get; set; }
+        [Parameter(HelpMessage = "Exclude relationship metadata from the output")]
+        public SwitchParameter ExcludeRelationships { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to include privilege metadata in the output.
+        /// Gets or sets whether to exclude privilege metadata from the output.
         /// </summary>
-        [Parameter(HelpMessage = "Include privilege metadata in the output")]
-        public SwitchParameter IncludePrivileges { get; set; }
+        [Parameter(HelpMessage = "Exclude privilege metadata from the output")]
+        public SwitchParameter ExcludePrivileges { get; set; }
 
         /// <summary>
         /// Gets or sets whether to use the shared metadata cache.
@@ -76,21 +76,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void RetrieveAllEntities()
         {
-            EntityFilters filters = EntityFilters.Entity;
+            EntityFilters filters = EntityFilters.Entity | EntityFilters.Attributes | EntityFilters.Relationships | EntityFilters.Privileges;
 
-            if (IncludeAttributes)
+            if (ExcludeAttributes)
             {
-                filters |= EntityFilters.Attributes;
+                filters &= ~EntityFilters.Attributes;
             }
 
-            if (IncludeRelationships)
+            if (ExcludeRelationships)
             {
-                filters |= EntityFilters.Relationships;
+                filters &= ~EntityFilters.Relationships;
             }
 
-            if (IncludePrivileges)
+            if (ExcludePrivileges)
             {
-                filters |= EntityFilters.Privileges;
+                filters &= ~EntityFilters.Privileges;
             }
 
             EntityMetadata[] entities;
@@ -149,21 +149,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void RetrieveSingleEntity(string entityName)
         {
-            EntityFilters filters = EntityFilters.Entity;
+            EntityFilters filters = EntityFilters.Entity | EntityFilters.Attributes | EntityFilters.Relationships | EntityFilters.Privileges;
 
-            if (IncludeAttributes)
+            if (ExcludeAttributes)
             {
-                filters |= EntityFilters.Attributes;
+                filters &= ~EntityFilters.Attributes;
             }
 
-            if (IncludeRelationships)
+            if (ExcludeRelationships)
             {
-                filters |= EntityFilters.Relationships;
+                filters &= ~EntityFilters.Relationships;
             }
 
-            if (IncludePrivileges)
+            if (ExcludePrivileges)
             {
-                filters |= EntityFilters.Privileges;
+                filters &= ~EntityFilters.Privileges;
             }
 
             EntityMetadata entityMetadata;

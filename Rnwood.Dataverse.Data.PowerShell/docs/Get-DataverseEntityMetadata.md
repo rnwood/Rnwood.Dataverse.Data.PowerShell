@@ -13,8 +13,8 @@ Retrieves entity (table) metadata from Dataverse.
 ## SYNTAX
 
 ```
-Get-DataverseEntityMetadata [[-EntityName] <String>] [-IncludeAttributes] [-IncludeRelationships]
- [-IncludePrivileges] [-UseMetadataCache] [-Published] [-Connection <ServiceClient>] 
+Get-DataverseEntityMetadata [[-EntityName] <String>] [-ExcludeAttributes] [-ExcludeRelationships]
+ [-ExcludePrivileges] [-UseMetadataCache] [-Published] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -28,7 +28,7 @@ The cmdlet returns comprehensive entity information including:
 - Ownership type (User, Team, Organization)
 - Entity capabilities (activities, notes, audit, change tracking)
 - Custom vs system entity status
-- Optionally: attributes, relationships, and privileges
+- By default: attributes, relationships, and privileges (use -Exclude* switches to omit)
 
 Metadata is essential for:
 - Understanding entity structure and capabilities
@@ -58,46 +58,38 @@ IsCustomEntity       : False
 
 Retrieves basic metadata for the `contact` entity.
 
-### Example 2: Get metadata with attributes included
+### Example 2: Get metadata with attributes excluded
 ```powershell
-PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName account -IncludeAttributes
+PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName account -ExcludeAttributes
+PS C:\> $metadata.Attributes
+# Attributes will be null or minimal when excluded
+
+PS C:\> # By default, attributes are included
+PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName account
 PS C:\> $metadata.Attributes.Count
 150
-
-PS C:\> $metadata.Attributes | Select-Object -First 5 LogicalName, AttributeType
-
-LogicalName     AttributeType
------------     -------------
-accountid       Uniqueidentifier
-accountname     String
-accountnumber   String
-address1_city   String
-address1_country String
 ```
 
-Retrieves entity metadata including all attributes.
+Gets entity metadata without attributes, then shows the default behavior includes them.
 
-### Example 3: Get metadata with relationships
+### Example 3: Get metadata with relationships excluded
 ```powershell
-PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName account -IncludeRelationships
+PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName account -ExcludeRelationships
+PS C:\> $metadata.OneToManyRelationships
+# Relationships will be null or minimal when excluded
+
+PS C:\> # By default, relationships are included
+PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName account
 PS C:\> $metadata.OneToManyRelationships.Count
 45
-
-PS C:\> $metadata.OneToManyRelationships | Select-Object -First 3 SchemaName, ReferencingEntity
-
-SchemaName                  ReferencingEntity
-----------                  -----------------
-account_primary_contact     contact
-account_customer_accounts   account
-account_parent_account      account
 ```
 
-Retrieves entity metadata including all relationships.
+Gets entity metadata without relationships, then shows the default behavior includes them.
 
-### Example 4: Get comprehensive metadata (all options)
+### Example 4: Get comprehensive metadata (all options by default)
 ```powershell
-PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName contact `
-    -IncludeAttributes -IncludeRelationships -IncludePrivileges
+PS C:\> # By default, all metadata is included
+PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName contact
 
 PS C:\> [PSCustomObject]@{
     Entity = $metadata.LogicalName
@@ -116,7 +108,7 @@ ManyToMany : 5
 Privileges : 8
 ```
 
-Retrieves complete entity metadata including attributes, relationships, and privileges.
+Retrieves complete entity metadata - all details are included by default.
 
 ### Example 5: List all entities in the organization
 ```powershell
@@ -336,8 +328,8 @@ Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 
-### -IncludeAttributes
-Include attribute (column) metadata in the output
+### -ExcludeAttributes
+Exclude attribute (column) metadata from the output. By default, attributes are included.
 
 ```yaml
 Type: SwitchParameter
@@ -346,13 +338,13 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -IncludePrivileges
-Include privilege metadata in the output
+### -ExcludePrivileges
+Exclude privilege metadata from the output. By default, privileges are included.
 
 ```yaml
 Type: SwitchParameter
@@ -361,13 +353,13 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -IncludeRelationships
-Include relationship metadata in the output
+### -ExcludeRelationships
+Exclude relationship metadata from the output. By default, relationships are included.
 
 ```yaml
 Type: SwitchParameter
@@ -376,22 +368,7 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -UseMetadataCache
-Use the shared global metadata cache for improved performance
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -411,13 +388,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -UseMetadataCache
+Use the shared global metadata cache for improved performance
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named
@@ -426,13 +403,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Published
-Retrieve only published metadata instead of the default behavior that includes both published and unpublished metadata
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: SwitchParameter
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases:
+Aliases: proga
 
 Required: False
 Position: Named
