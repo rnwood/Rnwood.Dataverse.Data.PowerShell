@@ -18,9 +18,10 @@ Set-DataverseAttributeMetadata [-EntityName] <String> [-AttributeName] <String> 
  [-IsSearchable] [-IsSecured] [-IsAuditEnabled] [-MaxLength <Int32>] [-StringFormat <String>]
  [-MinValue <Object>] [-MaxValue <Object>] [-Precision <Int32>] [-DateTimeFormat <String>]
  [-DateTimeBehavior <String>] [-TrueLabel <String>] [-FalseLabel <String>] [-DefaultValue <Boolean>]
- [-OptionSetName <String>] [-Options <Hashtable[]>] [-Targets <String[]>] [-MaxSizeInKB <Int32>] [-PassThru]
- [-Publish] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+ [-OptionSetName <String>] [-Options <Hashtable[]>] [-Targets <String[]>] [-RelationshipSchemaName <String>]
+ [-CascadeAssign <String>] [-CascadeShare <String>] [-CascadeUnshare <String>] [-CascadeReparent <String>]
+ [-CascadeDelete <String>] [-CascadeMerge <String>] [-MaxSizeInKB <Int32>] [-PassThru] [-Publish]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -377,6 +378,102 @@ Type: String
 Parameter Sets: (All)
 Aliases:
 Accepted values: String, Memo, Integer, BigInt, Decimal, Double, Money, DateTime, Boolean, Picklist, MultiSelectPicklist, Lookup, File, Image, UniqueIdentifier
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CascadeAssign
+Cascade behavior for Assign: NoCascade, Cascade, Active, UserOwned, RemoveLink (Lookup only)
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: NoCascade, Cascade, Active, UserOwned, RemoveLink
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CascadeDelete
+Cascade behavior for Delete: NoCascade, RemoveLink, Restrict, Cascade (Lookup only)
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: NoCascade, RemoveLink, Restrict, Cascade
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CascadeMerge
+Cascade behavior for Merge: NoCascade, Cascade (Lookup only)
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: NoCascade, Cascade
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CascadeReparent
+Cascade behavior for Reparent: NoCascade, Cascade, Active, UserOwned, RemoveLink (Lookup only)
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: NoCascade, Cascade, Active, UserOwned, RemoveLink
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CascadeShare
+Cascade behavior for Share: NoCascade, Cascade, Active, UserOwned (Lookup only)
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: NoCascade, Cascade, Active, UserOwned
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CascadeUnshare
+Cascade behavior for Unshare: NoCascade, Cascade, Active, UserOwned (Lookup only)
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: NoCascade, Cascade, Active, UserOwned
 
 Required: False
 Position: Named
@@ -742,6 +839,21 @@ If specified, publishes the attribute after creating or updating
 
 ```yaml
 Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RelationshipSchemaName
+Schema name for the relationship created with the Lookup attribute (e.g., 'new_project_contact'). If not specified, generates from entity names.
+
+```yaml
+Type: String
 Parameter Sets: (All)
 Aliases:
 
