@@ -29,9 +29,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <param name="connection">The organization service connection</param>
         /// <param name="writeVerbose">Action to write verbose messages</param>
         /// <returns>Enumerable of entities from all pages</returns>
-        public static IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query, IOrganizationService connection, Action<string> writeVerbose, bool unpublished = false)
+        public static IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query, IOrganizationService connection, Action<string> writeVerbose, bool publishedOnly = false)
         {
-            return ExecuteQueryWithPaging(query, connection, writeVerbose, null, null, unpublished);
+            return ExecuteQueryWithPaging(query, connection, writeVerbose, null, null, publishedOnly);
         }
 
         /// <summary>
@@ -42,9 +42,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <param name="writeVerbose">Action to write verbose messages</param>
         /// <param name="isStopping">Function to check if the cmdlet is stopping</param>
         /// <param name="cancellationToken">Cancellation token to check during IO operations</param>
-        /// <param name="unpublished">Whether to include unpublished entities</param>
+        /// <param name="publishedOnly">Whether to retrieve only published entities</param>
         /// <returns>Enumerable of entities from all pages</returns>
-        public static IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query, IOrganizationService connection, Action<string> writeVerbose, Func<bool> isStopping, System.Threading.CancellationToken? cancellationToken, bool unpublished = false)
+        public static IEnumerable<Entity> ExecuteQueryWithPaging(QueryBase query, IOrganizationService connection, Action<string> writeVerbose, Func<bool> isStopping, System.Threading.CancellationToken? cancellationToken, bool publishedOnly = false)
         {
             writeVerbose($"Executing query: {QueryToVerboseString(query)}");
 
@@ -60,7 +60,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 qe.PageInfo = pageInfo;
 
-                OrganizationRequest request = unpublished ? (OrganizationRequest)new RetrieveUnpublishedMultipleRequest() { Query = qe } : new RetrieveMultipleRequest() { Query = qe };
+                OrganizationRequest request = publishedOnly ? new RetrieveMultipleRequest() { Query = qe } : (OrganizationRequest)new RetrieveUnpublishedMultipleRequest() { Query = qe };
 
                 OrganizationResponse response;
                 EntityCollection entityCollection;
@@ -105,7 +105,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // When TopCount is set (e.g., from FetchXML), execute without PageInfo
                 string topCountStr = query is QueryExpression qe2 ? qe2.TopCount?.ToString() : (query is QueryByAttribute qba2 ? qba2.TopCount?.ToString() : "null");
                 writeVerbose($"Executing query with TopCount={topCountStr}");
-                OrganizationRequest request = unpublished ? (OrganizationRequest)new RetrieveUnpublishedMultipleRequest() { Query = query } : new RetrieveMultipleRequest() { Query = query };
+                OrganizationRequest request = publishedOnly ? new RetrieveMultipleRequest() { Query = query } : (OrganizationRequest)new RetrieveUnpublishedMultipleRequest() { Query = query };
 
                 OrganizationResponse response = connection.Execute(request);
                 EntityCollection entityCollection = GetEntityCollectionFromResponse(response);

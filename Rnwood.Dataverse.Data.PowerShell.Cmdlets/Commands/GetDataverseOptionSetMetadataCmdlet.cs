@@ -41,6 +41,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string Name { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to retrieve published metadata only.
+        /// </summary>
+        [Parameter(HelpMessage = "Retrieve only published metadata instead of the default behavior that includes both published and unpublished metadata")]
+        public SwitchParameter Published { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet.
         /// </summary>
         protected override void ProcessRecord()
@@ -56,7 +62,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     EntityLogicalName = EntityName,
                     LogicalName = AttributeName,
-                    RetrieveAsIfPublished = false
+                    RetrieveAsIfPublished = !Published.IsPresent
                 };
 
                 WriteVerbose($"Retrieving attribute metadata for '{EntityName}.{AttributeName}'");
@@ -111,7 +117,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var optionSetRequest = new RetrieveOptionSetRequest
                     {
                         Name = Name,
-                        RetrieveAsIfPublished = false
+                        RetrieveAsIfPublished = !Published.IsPresent
                     };
 
                     WriteVerbose($"Retrieving global option set '{Name}'");
@@ -148,7 +154,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             var request = new RetrieveAllOptionSetsRequest
             {
-                RetrieveAsIfPublished = false
+                RetrieveAsIfPublished = !Published.IsPresent
             };
 
             WriteVerbose("Retrieving all global option sets");

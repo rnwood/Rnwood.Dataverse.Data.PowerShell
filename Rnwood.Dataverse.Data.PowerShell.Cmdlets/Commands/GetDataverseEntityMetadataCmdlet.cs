@@ -49,6 +49,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter UseMetadataCache { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to retrieve published metadata only.
+        /// </summary>
+        [Parameter(HelpMessage = "Retrieve only published metadata instead of the default behavior that includes both published and unpublished metadata")]
+        public SwitchParameter Published { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet.
         /// </summary>
         protected override void ProcessRecord()
@@ -102,7 +108,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var request = new RetrieveAllEntitiesRequest
                     {
                         EntityFilters = filters,
-                        RetrieveAsIfPublished = false
+                        RetrieveAsIfPublished = !Published.IsPresent
                     };
 
                     WriteVerbose($"Retrieving all entity metadata with filters: {filters}");
@@ -121,7 +127,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var request = new RetrieveAllEntitiesRequest
                 {
                     EntityFilters = filters,
-                    RetrieveAsIfPublished = false
+                    RetrieveAsIfPublished = !Published.IsPresent
                 };
 
                 WriteVerbose($"Retrieving all entity metadata with filters: {filters}");
@@ -174,7 +180,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         LogicalName = entityName,
                         EntityFilters = filters,
-                        RetrieveAsIfPublished = false
+                        RetrieveAsIfPublished = !Published.IsPresent
                     };
 
                     WriteVerbose($"Retrieving entity metadata for '{entityName}' with filters: {filters}");
@@ -192,7 +198,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     LogicalName = entityName,
                     EntityFilters = filters,
-                    RetrieveAsIfPublished = false
+                    RetrieveAsIfPublished = !Published.IsPresent
                 };
 
                 WriteVerbose($"Retrieving entity metadata for '{entityName}' with filters: {filters}");
