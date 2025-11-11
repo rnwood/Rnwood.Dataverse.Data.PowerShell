@@ -14,8 +14,8 @@ Retrieves entity (table) metadata from Dataverse.
 
 ```
 Get-DataverseEntityMetadata [[-EntityName] <String>] [-IncludeAttributes] [-IncludeRelationships]
- [-IncludePrivileges] [-UseMetadataCache] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [-IncludePrivileges] [-UseMetadataCache] [-Published] [-Connection <ServiceClient>] 
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -288,6 +288,19 @@ account
 
 Demonstrates using the default connection for simplified commands.
 
+### Example 17: Query only published metadata
+```powershell
+PS C:\> # Get only published metadata (excludes unpublished changes)
+PS C:\> $publishedMetadata = Get-DataverseEntityMetadata -EntityName account -Published
+PS C:\> $publishedMetadata.LogicalName
+account
+
+PS C:\> # Default behavior retrieves unpublished metadata (includes draft changes)
+PS C:\> $unpublishedMetadata = Get-DataverseEntityMetadata -EntityName account
+```
+
+Demonstrates the difference between querying published vs unpublished (draft) metadata. By default, the cmdlet retrieves unpublished metadata which includes all changes. Use the -Published switch to retrieve only published metadata.
+
 ## PARAMETERS
 
 ### -Connection
@@ -379,6 +392,21 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Published
+Retrieve only published metadata. By default (when this switch is not specified), unpublished (draft) metadata is retrieved which includes all changes that have not yet been published.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
