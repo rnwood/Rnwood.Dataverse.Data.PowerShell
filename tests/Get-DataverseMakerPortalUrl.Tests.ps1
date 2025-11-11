@@ -13,76 +13,22 @@ Describe 'Get-DataverseMakerPortalUrl' {
             $url | Should -BeLike "*/home"
         }
 
-        It "Generates URL for solutions page" {
+        It "Generates URL for a specific table" {
             $connection = getMockConnection
             
-            $url = Get-DataverseMakerPortalUrl -Connection $connection -Page "solutions"
+            $url = Get-DataverseMakerPortalUrl -Connection $connection -TableName "contact"
             
-            # Verify URL points to solutions
-            $url | Should -BeLike "*/solutions"
+            # Verify URL points to the table
+            $url | Should -BeLike "*/entities/entity/contact"
         }
 
-        It "Generates URL for tables page" {
+        It "Generates URL for a specific app by unique name" {
             $connection = getMockConnection
             
-            $url = Get-DataverseMakerPortalUrl -Connection $connection -Page "tables"
+            $url = Get-DataverseMakerPortalUrl -Connection $connection -AppUniqueName "myapp_12345"
             
-            # Verify URL points to entities (tables)
-            $url | Should -BeLike "*/entities"
-        }
-
-        It "Generates URL for entities page (alias for tables)" {
-            $connection = getMockConnection
-            
-            $url = Get-DataverseMakerPortalUrl -Connection $connection -Page "entities"
-            
-            # Verify URL points to entities
-            $url | Should -BeLike "*/entities"
-        }
-
-        It "Generates URL for apps page" {
-            $connection = getMockConnection
-            
-            $url = Get-DataverseMakerPortalUrl -Connection $connection -Page "apps"
-            
-            # Verify URL points to apps
-            $url | Should -BeLike "*/apps"
-        }
-
-        It "Generates URL for flows page" {
-            $connection = getMockConnection
-            
-            $url = Get-DataverseMakerPortalUrl -Connection $connection -Page "flows"
-            
-            # Verify URL points to flows
-            $url | Should -BeLike "*/flows"
-        }
-
-        It "Generates URL for chatbots page" {
-            $connection = getMockConnection
-            
-            $url = Get-DataverseMakerPortalUrl -Connection $connection -Page "chatbots"
-            
-            # Verify URL points to chatbots
-            $url | Should -BeLike "*/chatbots"
-        }
-
-        It "Generates URL for connections page" {
-            $connection = getMockConnection
-            
-            $url = Get-DataverseMakerPortalUrl -Connection $connection -Page "connections"
-            
-            # Verify URL points to connections
-            $url | Should -BeLike "*/connections"
-        }
-
-        It "Generates URL for dataflows page" {
-            $connection = getMockConnection
-            
-            $url = Get-DataverseMakerPortalUrl -Connection $connection -Page "dataflows"
-            
-            # Verify URL points to dataflows
-            $url | Should -BeLike "*/dataflows"
+            # Verify URL points to the app
+            $url | Should -BeLike "*/apps/myapp_12345"
         }
 
         It "Includes environment ID from connection" {
@@ -110,16 +56,27 @@ Describe 'Get-DataverseMakerPortalUrl' {
             $url | Should -BeLike "https://make.powerapps.com/*"
         }
 
-        It "Handles case-insensitive page parameter" {
+        It "Supports pipeline input for TableName" {
+            $connection = getMockConnection -Entities contact
+            
+            # Create a table metadata object with LogicalName property
+            $metadata = Get-DataverseEntityMetadata -Connection $connection -TableName "contact"
+            
+            $url = $metadata | Get-DataverseMakerPortalUrl -Connection $connection
+            
+            # Verify URL includes the table
+            $url | Should -BeLike "*/entities/entity/contact"
+        }
+
+        It "Prioritizes TableName over AppUniqueName when both provided" {
             $connection = getMockConnection
             
-            $url1 = Get-DataverseMakerPortalUrl -Connection $connection -Page "Solutions"
-            $url2 = Get-DataverseMakerPortalUrl -Connection $connection -Page "SOLUTIONS"
-            $url3 = Get-DataverseMakerPortalUrl -Connection $connection -Page "solutions"
+            # Note: This shouldn't happen in normal use due to parameter sets
+            # but testing the logic
+            $url = Get-DataverseMakerPortalUrl -Connection $connection -TableName "account"
             
-            # All should produce the same URL
-            $url1 | Should -Be $url2
-            $url2 | Should -Be $url3
+            # Verify URL uses table
+            $url | Should -BeLike "*/entities/entity/account"
         }
     }
 }

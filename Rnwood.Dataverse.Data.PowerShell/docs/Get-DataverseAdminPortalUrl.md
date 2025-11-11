@@ -13,7 +13,7 @@ Generates a URL to open the Power Platform Admin Center for the current environm
 ## SYNTAX
 
 ```
-Get-DataverseAdminPortalUrl [-Page <String>] [-Connection <ServiceClient>] 
+Get-DataverseAdminPortalUrl [-Connection <ServiceClient>] 
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -22,61 +22,36 @@ Get-DataverseAdminPortalUrl [-Page <String>] [-Connection <ServiceClient>]
 This cmdlet generates a URL that opens the Power Platform Admin Center for the Dataverse environment associated with the current connection.
 
 The Admin Center is where administrators can:
-- Manage environments
-- View analytics and reports
-- Configure data integration
-- Manage resources and capacity
-- Set up data policies
-- Access help and support
-
-You can optionally specify which section of the Admin Center to navigate to directly.
+- Manage environment settings
+- View environment details
+- Configure environment resources
+- Monitor environment health
+- Manage environment access and security
 
 ## EXAMPLES
 
-### Example 1: Get URL for specific environment in Admin Center
+### Example 1: Get URL for environment in Admin Center
 ```powershell
 PS C:\> Get-DataverseAdminPortalUrl -Connection $c
 ```
 
-Returns a URL to open the Admin Center for the connected environment (defaults to environments page).
+Returns a URL to open the Admin Center for the connected environment.
 
-### Example 2: Get URL for analytics page
+### Example 2: Open Admin Center directly in browser
 ```powershell
-PS C:\> Get-DataverseAdminPortalUrl -Connection $c -Page "analytics"
+PS C:\> Start-Process (Get-DataverseAdminPortalUrl -Connection $c)
 ```
 
-Returns a URL to open the Analytics page in the Admin Center.
+Opens the Admin Center for the environment directly in the default web browser.
 
-### Example 3: Get URL for data policies page
+### Example 3: Get Admin URLs for multiple connections
 ```powershell
-PS C:\> Get-DataverseAdminPortalUrl -Connection $c -Page "datapolicies"
+PS C:\> $connections | ForEach-Object { Get-DataverseAdminPortalUrl -Connection $_ }
 ```
 
-Returns a URL to open the Data Policies page in the Admin Center.
-
-### Example 4: Open Admin Center directly in browser
-```powershell
-PS C:\> Start-Process (Get-DataverseAdminPortalUrl -Connection $c -Page "resources")
-```
-
-Opens the Resources page of the Admin Center directly in the default web browser.
+Generates Admin Center URLs for multiple connections.
 
 ## PARAMETERS
-
-### -Page
-Specific page to navigate to in the admin portal. Valid values are: home, environments, analytics, resources, dataintegration, datapolicies, helpandsupport.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: environments
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
@@ -121,11 +96,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## NOTES
 
-The Admin Center URL format varies by page:
-- For environments: https://admin.powerplatform.microsoft.com/environments/{environmentId}/hub
-- For other pages: https://admin.powerplatform.microsoft.com/{page}
+The Admin Center URL format is: https://admin.powerplatform.microsoft.com/environments/{environmentId}/hub
 
-Administrative permissions may be required to access certain sections of the Admin Center.
+Administrative permissions may be required to access the Admin Center.
 
 ## RELATED LINKS
 [Power Platform Admin Center](https://admin.powerplatform.microsoft.com)

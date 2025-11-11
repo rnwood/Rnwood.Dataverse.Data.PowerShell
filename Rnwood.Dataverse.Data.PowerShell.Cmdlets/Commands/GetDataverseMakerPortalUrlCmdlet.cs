@@ -13,11 +13,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	public class GetDataverseMakerPortalUrlCmdlet : OrganizationServiceCmdlet
 	{
 		/// <summary>
-		/// Gets or sets the specific page to navigate to in the maker portal.
+		/// Gets or sets the logical name of the table to open in the maker portal.
 		/// </summary>
-		[Parameter(Mandatory = false, HelpMessage = "Specific page to navigate to in the maker portal (e.g., 'solutions', 'tables', 'apps').")]
-		[ValidateSet("home", "solutions", "tables", "apps", "flows", "chatbots", "connections", "dataflows", "entities")]
-		public string Page { get; set; } = "home";
+		[Parameter(Mandatory = false, ParameterSetName = "Table", ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of the table to open in the maker portal (e.g., 'account', 'contact').")]
+		[Alias("EntityName", "LogicalName")]
+		public string TableName { get; set; }
+
+		/// <summary>
+		/// Gets or sets the unique name of the app to open in the maker portal.
+		/// </summary>
+		[Parameter(Mandatory = false, ParameterSetName = "App", ValueFromPipelineByPropertyName = true, HelpMessage = "Unique name of the app to open in the maker portal.")]
+		[Alias("UniqueName")]
+		public string AppUniqueName { get; set; }
 
 		/// <summary>
 		/// Processes the cmdlet to generate the maker portal URL.
@@ -45,35 +52,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			string baseUrl = "https://make.powerapps.com";
 			string url = $"{baseUrl}/environments/{orgId:D}";
 
-			// Add page-specific path
-			switch (Page.ToLowerInvariant())
+			// If table name is provided, navigate to that table
+			if (!string.IsNullOrEmpty(TableName))
 			{
-				case "solutions":
-					url += "/solutions";
-					break;
-				case "tables":
-				case "entities":
-					url += "/entities";
-					break;
-				case "apps":
-					url += "/apps";
-					break;
-				case "flows":
-					url += "/flows";
-					break;
-				case "chatbots":
-					url += "/chatbots";
-					break;
-				case "connections":
-					url += "/connections";
-					break;
-				case "dataflows":
-					url += "/dataflows";
-					break;
-				case "home":
-				default:
-					url += "/home";
-					break;
+				url += $"/entities/entity/{TableName}";
+			}
+			// If app unique name is provided, navigate to that app
+			else if (!string.IsNullOrEmpty(AppUniqueName))
+			{
+				url += $"/apps/{AppUniqueName}";
+			}
+			else
+			{
+				url += "/home";
 			}
 
 			WriteObject(url);
