@@ -61,9 +61,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public EntityMetadata GetMetadata(string entityName)
 		{
 			EntityMetadata result;
+			bool retrieveAsIfPublished = true; // Default to unpublished metadata
 
 			// Try shared cache first if enabled
-			if (UseSharedCache && MetadataCache.TryGetEntityMetadata(ConnectionKey, entityName, EntityFilters.All, out result))
+			if (UseSharedCache && MetadataCache.TryGetEntityMetadata(ConnectionKey, entityName, EntityFilters.All, retrieveAsIfPublished, out result))
 			{
 				return result;
 			}
@@ -75,7 +76,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				RetrieveEntityRequest request = new RetrieveEntityRequest()
 				{
 					EntityFilters = EntityFilters.All,
-					RetrieveAsIfPublished = false,
+					RetrieveAsIfPublished = true,
 					LogicalName = entityName
 				};
 
@@ -86,7 +87,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				// Add to shared cache if enabled
 				if (UseSharedCache)
 				{
-					MetadataCache.AddEntityMetadata(ConnectionKey, entityName, EntityFilters.All, result);
+					MetadataCache.AddEntityMetadata(ConnectionKey, entityName, EntityFilters.All, retrieveAsIfPublished, result);
 				}
 			}
 			return result;
@@ -100,8 +101,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <returns>Collection of EntityMetadata objects.</returns>
 		public IEnumerable<EntityMetadata> GetAllEntityMetadata()
 		{
+			bool retrieveAsIfPublished = true; // Default to unpublished metadata
+
 			// Try shared cache first if enabled
-			if (UseSharedCache && MetadataCache.TryGetAllEntities(ConnectionKey, EntityFilters.Entity, out var cachedEntities))
+			if (UseSharedCache && MetadataCache.TryGetAllEntities(ConnectionKey, EntityFilters.Entity, retrieveAsIfPublished, out var cachedEntities))
 			{
 				return cachedEntities;
 			}
@@ -111,7 +114,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				var request = new RetrieveAllEntitiesRequest()
 				{
 					EntityFilters = EntityFilters.Entity,
-					RetrieveAsIfPublished = false
+					RetrieveAsIfPublished = true
 				};
 
 				var response = (RetrieveAllEntitiesResponse)this.Connection.Execute(request);
@@ -120,7 +123,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				// Add to shared cache if enabled
 				if (UseSharedCache)
 				{
-					MetadataCache.AddAllEntities(ConnectionKey, EntityFilters.Entity, _allEntityMetadata);
+					MetadataCache.AddAllEntities(ConnectionKey, EntityFilters.Entity, retrieveAsIfPublished, _allEntityMetadata);
 				}
 			}
 
