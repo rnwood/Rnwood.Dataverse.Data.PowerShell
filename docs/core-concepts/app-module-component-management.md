@@ -24,7 +24,6 @@
     - [Preview removal](#preview-removal)
   - [Component Types](#component-types)
   - [Root Component Behavior](#root-component-behavior)
-  - [Tips & Best Practices](#tips--best-practices)
   - [See Also](#see-also)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
