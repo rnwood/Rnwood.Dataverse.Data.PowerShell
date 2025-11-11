@@ -84,6 +84,7 @@ For more advanced scenarios including view management and app module management,
 - [Working with Metadata](docs/core-concepts/metadata.md) - Reading and managing schema (entities, attributes, relationships, option sets)
 - [Error Handling and Batch Operations](docs/core-concepts/error-handling.md) - Error handling and retry logic
 - [Environment Variables and Connection References](docs/core-concepts/environment-variables-connection-references.md) - Managing configuration and connections
+- [URL Generation](docs/core-concepts/url-generation.md) - Generate URLs for records, maker portal, and admin center
 
 ### Advanced Topics
 - [Parallelization](docs/advanced/parallelization.md) - Parallel processing for best performance

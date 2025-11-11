@@ -15,16 +15,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Gets or sets the logical name of the table to open in the maker portal.
 		/// </summary>
-		[Parameter(Mandatory = false, ParameterSetName = "Table", ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of the table to open in the maker portal (e.g., 'account', 'contact').")]
+		[Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of the table to open in the maker portal (e.g., 'account', 'contact').")]
 		[Alias("EntityName", "LogicalName")]
 		public string TableName { get; set; }
-
-		/// <summary>
-		/// Gets or sets the unique name of the app to open in the maker portal.
-		/// </summary>
-		[Parameter(Mandatory = false, ParameterSetName = "App", ValueFromPipelineByPropertyName = true, HelpMessage = "Unique name of the app to open in the maker portal.")]
-		[Alias("UniqueName")]
-		public string AppUniqueName { get; set; }
 
 		/// <summary>
 		/// Processes the cmdlet to generate the maker portal URL.
@@ -56,11 +49,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			if (!string.IsNullOrEmpty(TableName))
 			{
 				url += $"/entities/entity/{TableName}";
-			}
-			// If app unique name is provided, navigate to that app
-			else if (!string.IsNullOrEmpty(AppUniqueName))
-			{
-				url += $"/apps/{AppUniqueName}";
 			}
 			else
 			{

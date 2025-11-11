@@ -12,15 +12,8 @@ Generates a URL to open the Power Apps Maker Portal for the current environment.
 
 ## SYNTAX
 
-### Table
 ```
 Get-DataverseMakerPortalUrl [-TableName <String>] [-Connection <ServiceClient>] 
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
-### App
-```
-Get-DataverseMakerPortalUrl [-AppUniqueName <String>] [-Connection <ServiceClient>] 
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -35,7 +28,7 @@ The Maker Portal is where you can:
 - Create and manage flows
 - Work with connections and data sources
 
-Optionally, you can specify a table name or app unique name to open that specific resource's detail page in the Maker Portal.
+Optionally, you can specify a table name to open that specific table's detail page in the Maker Portal.
 
 ## EXAMPLES
 
@@ -53,28 +46,14 @@ PS C:\> Get-DataverseMakerPortalUrl -Connection $c -TableName "contact"
 
 Returns a URL to open the contact table's detail page in the Maker Portal.
 
-### Example 3: Get URL for a specific app in Maker Portal
-```powershell
-PS C:\> Get-DataverseMakerPortalUrl -Connection $c -AppUniqueName "myapp_12345"
-```
-
-Returns a URL to open the app with unique name "myapp_12345" in the Maker Portal.
-
-### Example 4: Open table from pipeline
+### Example 3: Open table from pipeline
 ```powershell
 PS C:\> Get-DataverseEntityMetadata -Connection $c -TableName "account" | Get-DataverseMakerPortalUrl -Connection $c
 ```
 
 Gets the account table metadata and generates a URL to open it in the Maker Portal.
 
-### Example 5: Open app from pipeline
-```powershell
-PS C:\> Get-DataverseAppModule -Connection $c -Name "Sales Hub" | Get-DataverseMakerPortalUrl -Connection $c
-```
-
-Gets the Sales Hub app and generates a URL to open it in the Maker Portal.
-
-### Example 6: Open Maker Portal directly in browser
+### Example 4: Open Maker Portal directly in browser
 ```powershell
 PS C:\> Start-Process (Get-DataverseMakerPortalUrl -Connection $c -TableName "contact")
 ```
@@ -88,23 +67,8 @@ The logical name of the table to open in the maker portal (e.g., 'account', 'con
 
 ```yaml
 Type: String
-Parameter Sets: Table
+Parameter Sets: (All)
 Aliases: EntityName, LogicalName
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -AppUniqueName
-The unique name of the app to open in the maker portal. If not provided, opens the Maker Portal home page.
-
-```yaml
-Type: String
-Parameter Sets: App
-Aliases: UniqueName
 
 Required: False
 Position: Named
@@ -159,7 +123,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 The Maker Portal URL format is:
 - Home page: https://make.powerapps.com/environments/{environmentId}/home
 - Table page: https://make.powerapps.com/environments/{environmentId}/entities/entity/{tableName}
-- App page: https://make.powerapps.com/environments/{environmentId}/apps/{appUniqueName}
 
 ## RELATED LINKS
 [Power Apps Maker Portal](https://make.powerapps.com)

@@ -1,7 +1,9 @@
 using System;
+using System.Linq;
 using System.Management.Automation;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -27,9 +29,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public Guid? Id { get; set; }
 
 		/// <summary>
-		/// Gets or sets the app ID to open the record in a specific app.
+		/// Gets or sets the unique name of the app to open the record in a specific model-driven app.
 		/// </summary>
-		[Parameter(Mandatory = false, HelpMessage = "App ID to open the record in a specific model-driven app.")]
+		[Parameter(Mandatory = false, ParameterSetName = "ByAppUniqueName", ValueFromPipelineByPropertyName = true, HelpMessage = "Unique name of the app to open the record in a specific model-driven app. The app ID will be looked up (including unpublished apps).")]
+		[Alias("UniqueName")]
+		public string AppUniqueName { get; set; }
+
+		/// <summary>
+		/// Gets or sets the app ID to open the record in a specific model-driven app.
+		/// </summary>
+		[Parameter(Mandatory = false, ParameterSetName = "ByAppId", HelpMessage = "App ID to open the record in a specific model-driven app.")]
 		public Guid? AppId { get; set; }
 
 		/// <summary>
@@ -70,6 +79,37 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			// Remove trailing slash
 			baseUrl = baseUrl.TrimEnd('/');
 
+			// Resolve AppId from AppUniqueName if provided
+			Guid? resolvedAppId = AppId;
+			if (!string.IsNullOrEmpty(AppUniqueName))
+			{
+				WriteVerbose($"Looking up app module by unique name: {AppUniqueName}");
+				
+				var query = new QueryExpression("appmodule")
+				{
+					ColumnSet = new ColumnSet("appmoduleid"),
+					Criteria = new FilterExpression()
+				};
+				query.Criteria.AddCondition("uniquename", ConditionOperator.Equal, AppUniqueName);
+
+				// Query including unpublished apps
+				var appModules = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, unpublished: true);
+				var appModule = appModules.FirstOrDefault();
+
+				if (appModule == null)
+				{
+					ThrowTerminatingError(new ErrorRecord(
+						new InvalidOperationException($"App module with unique name '{AppUniqueName}' not found."),
+						"AppModuleNotFound",
+						ErrorCategory.ObjectNotFound,
+						AppUniqueName));
+					return;
+				}
+
+				resolvedAppId = appModule.Id;
+				WriteVerbose($"Resolved app module ID: {resolvedAppId}");
+			}
+
 			// Build the URL
 			string url;
 			if (Id.HasValue)
@@ -84,9 +124,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 
 			// Add optional parameters
-			if (AppId.HasValue)
+			if (resolvedAppId.HasValue)
 			{
-				url += $"&appid={AppId.Value:D}";
+				url += $"&appid={resolvedAppId.Value:D}";
 			}
 
 			if (FormId.HasValue)
