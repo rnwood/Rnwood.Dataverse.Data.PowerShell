@@ -22,15 +22,6 @@ Describe 'Get-DataverseMakerPortalUrl' {
             $url | Should -BeLike "*/entities/entity/contact"
         }
 
-        It "Generates URL for a specific app by unique name" {
-            $connection = getMockConnection
-            
-            $url = Get-DataverseMakerPortalUrl -Connection $connection -AppUniqueName "myapp_12345"
-            
-            # Verify URL points to the app
-            $url | Should -BeLike "*/apps/myapp_12345"
-        }
-
         It "Includes environment ID from connection" {
             $connection = getMockConnection
             
@@ -66,17 +57,6 @@ Describe 'Get-DataverseMakerPortalUrl' {
             
             # Verify URL includes the table
             $url | Should -BeLike "*/entities/entity/contact"
-        }
-
-        It "Prioritizes TableName over AppUniqueName when both provided" {
-            $connection = getMockConnection
-            
-            # Note: This shouldn't happen in normal use due to parameter sets
-            # but testing the logic
-            $url = Get-DataverseMakerPortalUrl -Connection $connection -TableName "account"
-            
-            # Verify URL uses table
-            $url | Should -BeLike "*/entities/entity/account"
         }
     }
 }

@@ -42,6 +42,24 @@ Describe 'Get-DataverseRecordUrl' {
             $url | Should -BeLike "*appid=$appId*"
         }
 
+        It "Resolves AppUniqueName to AppId" {
+            $connection = getMockConnection
+            
+            # Create a mock app module
+            $appId = [Guid]::NewGuid()
+            $appModule = @{
+                appmoduleid = $appId
+                uniquename = "testapp_123"
+                name = "Test App"
+            } | Set-DataverseRecord -Connection $connection -TableName appmodule -CreateOnly -PassThru
+            
+            $recordId = [Guid]::NewGuid()
+            $url = Get-DataverseRecordUrl -Connection $connection -TableName "contact" -Id $recordId -AppUniqueName "testapp_123"
+            
+            # Verify URL includes the resolved appid
+            $url | Should -BeLike "*appid=$appId*"
+        }
+
         It "Includes FormId parameter when provided" {
             $connection = getMockConnection
             
