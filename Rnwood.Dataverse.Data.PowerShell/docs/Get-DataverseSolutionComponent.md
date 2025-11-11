@@ -94,6 +94,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -IncludeImpliedSubcomponents
+Include subcomponents (attributes, relationships, forms, views, etc.) implied each root table component if the whole table is included in solution.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -SolutionId
 The ID of the solution.
 
@@ -131,21 +146,6 @@ Accept wildcard characters: False
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IncludeImpliedSubcomponents
-Include subcomponents (attributes, relationships, forms, views, etc.) implied each root table component if the whole table is included in solution.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
 
 Required: False
 Position: Named

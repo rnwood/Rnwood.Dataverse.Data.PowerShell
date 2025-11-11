@@ -372,6 +372,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Publish
+If specified, publishes the relationship after creating or updating
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ReferencedEntity
 Primary/referenced entity name (OneToMany) or first entity name (ManyToMany).
 For OneToMany relationships, this is the "parent" or "one" side of the relationship.
@@ -460,21 +475,6 @@ Accept wildcard characters: False
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Publish
-If specified, publishes the relationship after creating or updating
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
 
 Required: False
 Position: Named
