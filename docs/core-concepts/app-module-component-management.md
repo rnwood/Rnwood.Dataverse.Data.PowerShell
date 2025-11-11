@@ -160,14 +160,6 @@ Remove-DataverseAppModuleComponent -Connection $c -AppModuleUniqueName "my_app" 
 | DoNotIncludeSubcomponents | 1 | Only main component |
 | IncludeAsShell | 2 | Shell only |
 
-## Tips & Best Practices
-- Prefer AppModuleUniqueName for environment-independent scripts.
-- Use PassThru to capture created component Ids.
-- Combine ComponentType + ObjectId filters for precise queries.
-- Use -NoCreate / -NoUpdate to enforce idempotent deployment semantics.
-- Pipeline scenarios: supply PSCustomObject with matching property names (AppModuleId / AppModuleUniqueName, ObjectId, ComponentType, etc.).
-- Retrieval uses published app modules first; creation prefers unique name resolution (unpublished first).
-
 ## See Also
 - Get-DataverseAppModuleComponent
 - Set-DataverseAppModuleComponent

@@ -14,13 +14,13 @@ Retrieves option set (choice) metadata from Dataverse.
 
 ### EntityAttribute
 ```
-Get-DataverseOptionSetMetadata [-EntityName] <String> [-AttributeName] <String> [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseOptionSetMetadata [-EntityName] <String> [-AttributeName] <String> [-Published]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Global
 ```
-Get-DataverseOptionSetMetadata [-Name <String>] [-Connection <ServiceClient>]
+Get-DataverseOptionSetMetadata [-Name <String>] [-Published] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -332,13 +332,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Published
-Retrieve only published metadata instead of the default behavior that includes both published and unpublished metadata
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: SwitchParameter
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases:
+Aliases: proga
 
 Required: False
 Position: Named
@@ -347,13 +347,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -Published
+Retrieve only published metadata instead of the default behavior that includes both published and unpublished metadata
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named

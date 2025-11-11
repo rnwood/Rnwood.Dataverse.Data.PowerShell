@@ -519,7 +519,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     WriteVerbose($"Retrieving records by MatchOn ({matchColumn}) in batch");
 
                     // Match back to items using streaming to avoid buffering all records
-                    foreach (var entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, () => Stopping, _userCancellationCts?.Token, !Unpublished.IsPresent))
+                    foreach (var entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, () => Stopping, _userCancellationCts?.Token, Unpublished.IsPresent))
                     {
                         foreach (var item in itemsNeedingMatch)
                         {
@@ -577,7 +577,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     WriteVerbose($"Retrieving records by MatchOn ({string.Join(",", matchOnColumnList)}) in batch");
 
                     // Match back to items using streaming to avoid buffering all records
-                    foreach (var entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, () => Stopping, _userCancellationCts?.Token, !Unpublished.IsPresent))
+                    foreach (var entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, () => Stopping, _userCancellationCts?.Token, Unpublished.IsPresent))
                     {
                         foreach (var item in itemsNeedingMatch)
                         {
@@ -854,7 +854,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private IEnumerable<Entity> GetRecords(QueryExpression query)
         {
-            return QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, () => Stopping, _userCancellationCts?.Token, !Unpublished.IsPresent);
+            return QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, () => Stopping, _userCancellationCts?.Token, Unpublished.IsPresent);
         }
 
 

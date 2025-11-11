@@ -14,8 +14,8 @@ Retrieves entity (table) metadata from Dataverse.
 
 ```
 Get-DataverseEntityMetadata [[-EntityName] <String>] [-IncludeAttributes] [-IncludeRelationships]
- [-IncludePrivileges] [-UseMetadataCache] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [-IncludePrivileges] [-UseMetadataCache] [-Published] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -383,13 +383,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Published
-Retrieve only published metadata instead of the default behavior that includes both published and unpublished metadata
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: SwitchParameter
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases:
+Aliases: proga
 
 Required: False
 Position: Named
@@ -398,13 +398,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -Published
+Retrieve only published metadata instead of the default behavior that includes both published and unpublished metadata
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named

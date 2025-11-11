@@ -82,7 +82,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Execute query with paging
-            var sitemaps = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, !Published.IsPresent).ToList();
+            var sitemaps = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose).ToList();
+
+            if (!Published.IsPresent)
+            {
+                sitemaps.AddRange(QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, true));
+            }
 
             WriteVerbose($"Found {sitemaps.Count} sitemap(s)");
 

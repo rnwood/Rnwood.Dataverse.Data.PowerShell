@@ -8,7 +8,7 @@ Describe 'Get-DataverseSitemap' {
             $command.Parameters.Keys | Should -Contain 'Name'
             $command.Parameters.Keys | Should -Contain 'UniqueName'
             $command.Parameters.Keys | Should -Contain 'Id'
-            $command.Parameters.Keys | Should -Contain 'Unpublished'
+            $command.Parameters.Keys | Should -Contain 'Published'
             $command.Parameters.Keys | Should -Contain 'Connection'
         }
     }

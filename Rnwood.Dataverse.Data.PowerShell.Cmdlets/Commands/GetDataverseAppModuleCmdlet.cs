@@ -93,7 +93,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Execute query with paging
             WriteVerbose("Executing query for appmodule");
-            var appModules = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, !Published.IsPresent);
+            var appModules = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose);
+            if (!Published.IsPresent)
+            {
+                appModules = appModules.Concat(QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, true));
+            }
 
             WriteVerbose($"Found {appModules.Count()} app module(s)");
 
