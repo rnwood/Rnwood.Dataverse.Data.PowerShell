@@ -80,6 +80,42 @@ Describe 'Get-DataverseEntityMetadata' {
             $withAttributes | Should -Not -BeNullOrEmpty
         }
     }
+
+    Context 'Published Metadata Retrieval' {
+        It "Retrieves unpublished metadata by default" {
+            $connection = getMockConnection
+            
+            # Get metadata without -Published flag (should include unpublished)
+            $result = Get-DataverseEntityMetadata -Connection $connection -EntityName contact
+            
+            # Verify result exists (default behavior should work)
+            $result | Should -Not -BeNullOrEmpty
+            $result.LogicalName | Should -Be "contact"
+        }
+
+        It "Retrieves published metadata with -Published flag" {
+            $connection = getMockConnection
+            
+            # Get only published metadata
+            $result = Get-DataverseEntityMetadata -Connection $connection -EntityName contact -Published
+            
+            # Verify result exists
+            $result | Should -Not -BeNullOrEmpty
+            $result.LogicalName | Should -Be "contact"
+        }
+
+        It "Supports -Published with -IncludeAttributes" {
+            $connection = getMockConnection
+            
+            # Get published metadata with attributes
+            $result = Get-DataverseEntityMetadata -Connection $connection -EntityName contact -Published -IncludeAttributes
+            
+            # Verify result
+            $result | Should -Not -BeNullOrEmpty
+            $result.LogicalName | Should -Be "contact"
+            $result.Attributes | Should -Not -BeNullOrEmpty
+        }
+    }
 }
 
 Describe 'Get-DataverseEntityMetadata' {
@@ -227,6 +263,41 @@ Describe 'Get-DataverseAttributeMetadata' {
             $isSorted | Should -Be $true
         }
     }
+
+    Context 'Published Metadata Retrieval' {
+        It "Retrieves unpublished metadata by default" {
+            $connection = getMockConnection
+            
+            # Get metadata without -Published flag
+            $result = Get-DataverseAttributeMetadata -Connection $connection -EntityName contact -AttributeName firstname
+            
+            # Verify result
+            $result | Should -Not -BeNullOrEmpty
+            $result.LogicalName | Should -Be "firstname"
+        }
+
+        It "Retrieves published metadata with -Published flag" {
+            $connection = getMockConnection
+            
+            # Get only published metadata
+            $result = Get-DataverseAttributeMetadata -Connection $connection -EntityName contact -AttributeName firstname -Published
+            
+            # Verify result
+            $result | Should -Not -BeNullOrEmpty
+            $result.LogicalName | Should -Be "firstname"
+        }
+
+        It "Retrieves all attributes with -Published flag" {
+            $connection = getMockConnection
+            
+            # Get all published attributes
+            $results = Get-DataverseAttributeMetadata -Connection $connection -EntityName contact -Published
+            
+            # Verify results
+            $results | Should -Not -BeNullOrEmpty
+            $results.Count | Should -BeGreaterThan 0
+        }
+    }
 }
 
 Describe 'Get-DataverseOptionSetMetadata' {
@@ -267,6 +338,30 @@ Describe 'Get-DataverseOptionSetMetadata' {
             # Try to get option set for a string field
             { Get-DataverseOptionSetMetadata -Connection $connection -EntityName contact -AttributeName firstname -ErrorAction Stop } |
                 Should -Throw
+        }
+    }
+
+    Context 'Published Metadata Retrieval' {
+        It "Retrieves unpublished metadata by default" {
+            $connection = getMockConnection
+            
+            # Get option set without -Published flag
+            $result = Get-DataverseOptionSetMetadata -Connection $connection -EntityName contact -AttributeName gendercode
+            
+            # Verify result
+            $result | Should -Not -BeNullOrEmpty
+            $result.Options | Should -Not -BeNullOrEmpty
+        }
+
+        It "Retrieves published metadata with -Published flag" {
+            $connection = getMockConnection
+            
+            # Get only published option set
+            $result = Get-DataverseOptionSetMetadata -Connection $connection -EntityName contact -AttributeName gendercode -Published
+            
+            # Verify result
+            $result | Should -Not -BeNullOrEmpty
+            $result.Options | Should -Not -BeNullOrEmpty
         }
     }
 }
