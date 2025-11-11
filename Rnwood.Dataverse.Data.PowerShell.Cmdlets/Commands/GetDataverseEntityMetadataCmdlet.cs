@@ -49,6 +49,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter UseMetadataCache { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to retrieve only published metadata.
+        /// When not specified (default), retrieves unpublished (draft) metadata which includes all changes.
+        /// </summary>
+        [Parameter(HelpMessage = "Retrieve only published metadata. By default, unpublished (draft) metadata is retrieved which includes all changes.")]
+        public SwitchParameter Published { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet.
         /// </summary>
         protected override void ProcessRecord()
@@ -121,7 +128,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var request = new RetrieveAllEntitiesRequest
                 {
                     EntityFilters = filters,
-                    RetrieveAsIfPublished = false
+                    RetrieveAsIfPublished = !Published.IsPresent
                 };
 
                 WriteVerbose($"Retrieving all entity metadata with filters: {filters}");
@@ -174,7 +181,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         LogicalName = entityName,
                         EntityFilters = filters,
-                        RetrieveAsIfPublished = false
+                        RetrieveAsIfPublished = !Published.IsPresent
                     };
 
                     WriteVerbose($"Retrieving entity metadata for '{entityName}' with filters: {filters}");
@@ -192,7 +199,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     LogicalName = entityName,
                     EntityFilters = filters,
-                    RetrieveAsIfPublished = false
+                    RetrieveAsIfPublished = !Published.IsPresent
                 };
 
                 WriteVerbose($"Retrieving entity metadata for '{entityName}' with filters: {filters}");
