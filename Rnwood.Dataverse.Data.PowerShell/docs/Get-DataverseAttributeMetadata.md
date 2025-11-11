@@ -301,6 +301,21 @@ PS C:\> foreach ($attr in $attrs) {
 
 Generates comprehensive field documentation for an entity.
 
+### Example 18: Query only published metadata
+```powershell
+PS C:\> # Get only published attribute metadata
+PS C:\> $publishedAttrs = Get-DataverseAttributeMetadata -EntityName account -Published
+PS C:\> $publishedAttrs.Count
+145
+
+PS C:\> # Default behavior includes unpublished (draft) attributes
+PS C:\> $unpublishedAttrs = Get-DataverseAttributeMetadata -EntityName account
+PS C:\> $unpublishedAttrs.Count
+150
+```
+
+Demonstrates retrieving only published metadata vs unpublished (draft) metadata. By default, the cmdlet retrieves unpublished metadata which may include attributes that have been created or modified but not yet published.
+
 ## PARAMETERS
 
 ### -AttributeName
@@ -362,6 +377,21 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Published
+Retrieve only published metadata. By default (when this switch is not specified), unpublished (draft) metadata is retrieved which includes all changes that have not yet been published.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

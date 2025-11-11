@@ -41,9 +41,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to retrieve published metadata only.
+        /// Gets or sets whether to retrieve only published metadata.
+        /// When not specified (default), retrieves unpublished (draft) metadata which includes all changes.
         /// </summary>
-        [Parameter(HelpMessage = "Retrieve only published metadata instead of the default behavior that includes both published and unpublished metadata")]
+        [Parameter(HelpMessage = "Retrieve only published metadata. By default, unpublished (draft) metadata is retrieved which includes all changes.")]
         public SwitchParameter Published { get; set; }
 
         /// <summary>

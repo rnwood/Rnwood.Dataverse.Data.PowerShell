@@ -14,8 +14,8 @@ Retrieves relationship metadata from Dataverse.
 
 ```
 Get-DataverseRelationshipMetadata [[-EntityName] <String>] [[-RelationshipName] <String>]
- [-RelationshipType <String>] [-Published] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [-RelationshipType <String>] [-Published] [-Connection <ServiceClient>] 
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -295,6 +295,21 @@ lead_qualifying_lead          OneToMany        lead             lead
 
 Processes multiple relationship names through the pipeline.
 
+### Example 16: Query only published metadata
+```powershell
+PS C:\> # Get only published relationships
+PS C:\> $publishedRels = Get-DataverseRelationshipMetadata -EntityName account -Published
+PS C:\> $publishedRels.Count
+42
+
+PS C:\> # Default behavior includes unpublished (draft) relationships
+PS C:\> $unpublishedRels = Get-DataverseRelationshipMetadata -EntityName account
+PS C:\> $unpublishedRels.Count
+45
+```
+
+Demonstrates retrieving only published relationship metadata vs unpublished (draft) metadata. Use -Published to query only relationships that have been published.
+
 ## PARAMETERS
 
 ### -Connection
@@ -369,6 +384,21 @@ Accepted values: OneToMany, ManyToOne, ManyToMany
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Published
+Retrieve only published metadata. By default (when this switch is not specified), unpublished (draft) metadata is retrieved which includes all changes that have not yet been published.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

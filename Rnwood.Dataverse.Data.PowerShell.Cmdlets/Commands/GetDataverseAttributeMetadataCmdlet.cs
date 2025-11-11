@@ -38,9 +38,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter UseMetadataCache { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to retrieve published metadata only.
+        /// Gets or sets whether to retrieve only published metadata.
+        /// When not specified (default), retrieves unpublished (draft) metadata which includes all changes.
         /// </summary>
-        [Parameter(HelpMessage = "Retrieve only published metadata instead of the default behavior that includes both published and unpublished metadata")]
+        [Parameter(HelpMessage = "Retrieve only published metadata. By default, unpublished (draft) metadata is retrieved which includes all changes.")]
         public SwitchParameter Published { get; set; }
 
         /// <summary>
@@ -70,9 +71,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (UseMetadataCache)
             {
                 var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
-                if (MetadataCache.TryGetEntityMetadata(connectionKey, EntityName, EntityFilters.Attributes, out var cachedEntity))
+                var retrieveAsIfPublished = !Published.IsPresent;
+                if (MetadataCache.TryGetEntityMetadata(connectionKey, EntityName, EntityFilters.Attributes, retrieveAsIfPublished, out var cachedEntity))
                 {
-                    WriteVerbose($"Retrieved entity '{EntityName}' from cache with {cachedEntity.Attributes?.Length ?? 0} attributes");
+                    WriteVerbose($"Retrieved entity '{EntityName}' from cache with {cachedEntity.Attributes?.Length ?? 0} attributes (retrieveAsIfPublished: {retrieveAsIfPublished})");
                     entityMetadata = cachedEntity;
                 }
             }
@@ -96,7 +98,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (UseMetadataCache)
                 {
                     var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
-                    MetadataCache.AddEntityMetadata(connectionKey, EntityName, EntityFilters.Attributes, entityMetadata);
+                    var retrieveAsIfPublished = !Published.IsPresent;
+                    MetadataCache.AddEntityMetadata(connectionKey, EntityName, EntityFilters.Attributes, retrieveAsIfPublished, entityMetadata);
                 }
             }
 
