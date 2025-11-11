@@ -14,13 +14,13 @@ Removes a control from a Dataverse form section.
 
 ### ById
 ```
-Remove-DataverseFormControl -FormId <Guid> -ControlId <String> [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Remove-DataverseFormControl -FormId <Guid> -ControlId <String> [-SectionName <String>] [-TabName <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### ByDataField
 ```
-Remove-DataverseFormControl -FormId <Guid> -DataField <String> [-SectionName <String>] -TabName <String>
+Remove-DataverseFormControl -FormId <Guid> -DataField <String> [-SectionName <String>] [-TabName <String>]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -230,7 +230,7 @@ Name of the section containing the control to remove. Required when using the By
 
 ```yaml
 Type: String
-Parameter Sets: ByDataField
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -245,10 +245,10 @@ Name of the tab containing the section with the control to remove. Required when
 
 ```yaml
 Type: String
-Parameter Sets: ByDataField
+Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

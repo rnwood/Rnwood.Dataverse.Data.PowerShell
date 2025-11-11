@@ -65,8 +65,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml"));
             var (doc, systemForm) = FormXmlHelper.ParseFormXml(form);
 
+            bool foundAny = false;
             foreach (var (tabName, sectionName, control) in FormXmlHelper.GetControls(systemForm, TabName, SectionName, ControlId, DataField))
             {
+                foundAny = true;
                 // Find the parent cell for cell attributes
                 XElement parentCell = control.Parent;
                 if (parentCell == null || parentCell.Name.LocalName != "cell")
@@ -100,6 +102,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 WriteObject(controlObj);
+            }
+
+            // If a specific control was requested and not found, throw an error
+            if (!foundAny && (!string.IsNullOrEmpty(ControlId) || !string.IsNullOrEmpty(DataField)))
+            {
+                string identifier = !string.IsNullOrEmpty(ControlId) ? $"ControlId '{ControlId}'" : $"DataField '{DataField}'";
+                string location = !string.IsNullOrEmpty(SectionName) ? $"section '{SectionName}'" : "form";
+                throw new InvalidOperationException($"Control with {identifier} not found in {location}");
             }
         }
     }

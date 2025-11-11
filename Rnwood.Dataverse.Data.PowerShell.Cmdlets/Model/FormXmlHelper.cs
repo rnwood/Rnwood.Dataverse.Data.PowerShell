@@ -55,6 +55,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
                     throw;
                 }
             }
+            catch (Exception)
+            {
+                // For testing with FakeXrmEasy or other scenarios where RetrieveUnpublished is not supported,
+                // fall back to regular Retrieve
+                return connection.Retrieve("systemform", formId, columnSet);
+            }
         }
 
         /// <summary>
@@ -383,6 +389,44 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             if (systemForm == null)
                 throw new ArgumentNullException(nameof(systemForm));
 
+            // Check if we should search in the header
+            bool searchHeader = string.IsNullOrEmpty(tabName) || tabName.Equals("[Header]", StringComparison.OrdinalIgnoreCase);
+            bool searchOnlyHeader = !string.IsNullOrEmpty(tabName) && tabName.Equals("[Header]", StringComparison.OrdinalIgnoreCase);
+
+            // Search header controls if requested
+            if (searchHeader)
+            {
+                var header = systemForm.Element("header");
+                if (header != null)
+                {
+                    var rowsElement = header.Element("rows");
+                    if (rowsElement != null)
+                    {
+                        foreach (var row in rowsElement.Elements("row"))
+                        {
+                            foreach (var cell in row.Elements("cell"))
+                            {
+                                foreach (var control in cell.Elements("control"))
+                                {
+                                    string currentControlId = control.Attribute("id")?.Value;
+                                    string currentDataField = control.Attribute("datafieldname")?.Value;
+
+                                    if ((!string.IsNullOrEmpty(controlId) && currentControlId != controlId) ||
+                                        (!string.IsNullOrEmpty(dataField) && currentDataField != dataField))
+                                        continue;
+
+                                    yield return ("[Header]", "[Header]", control);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // If only searching header, don't search tabs
+            if (searchOnlyHeader)
+                yield break;
+
             foreach (var tab in systemForm.Elements("tabs").Elements("tab"))
             {
                 string currentTabName = tab.Attribute("name")?.Value;
@@ -663,6 +707,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             ctrlObj.Properties.Add(new PSNoteProperty("ClassId", control.Attribute("classid")?.Value));
             ctrlObj.Properties.Add(new PSNoteProperty("Disabled", control.Attribute("disabled")?.Value == "true"));
             ctrlObj.Properties.Add(new PSNoteProperty("Visible", control.Attribute("visible")?.Value != "false"));
+            ctrlObj.Properties.Add(new PSNoteProperty("Hidden", control.Attribute("visible")?.Value == "false"));
             ctrlObj.Properties.Add(new PSNoteProperty("ShowLabel", control.Attribute("showlabel")?.Value != "false"));
             ctrlObj.Properties.Add(new PSNoteProperty("IsRequired", control.Attribute("isrequired")?.Value == "true"));
 

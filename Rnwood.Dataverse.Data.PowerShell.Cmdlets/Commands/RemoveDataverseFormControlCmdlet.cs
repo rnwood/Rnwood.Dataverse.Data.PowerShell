@@ -39,12 +39,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the section name to limit the search.
         /// </summary>
         [Parameter(ParameterSetName = "ByDataField", HelpMessage = "Section name to limit the search. Not used for header controls.")]
+        [Parameter(ParameterSetName = "ById", HelpMessage = "Section name to limit the search. Not used for header controls.")]
         public string SectionName { get; set; }
 
         /// <summary>
         /// Gets or sets the tab name where the section is located. Use '[Header]' for header controls.
         /// </summary>
-        [Parameter(Mandatory = true, ParameterSetName = "ByDataField", HelpMessage = "Name of the tab containing the section. Use '[Header]' for header controls.")]
+        [Parameter(ParameterSetName = "ByDataField", HelpMessage = "Name of the tab containing the section. Use '[Header]' for header controls.")]
+        [Parameter(ParameterSetName = "ById", HelpMessage = "Name of the tab containing the section. Use '[Header]' for header controls.")]
         public string TabName { get; set; }
 
         /// <summary>

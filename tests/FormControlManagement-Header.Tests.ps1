@@ -44,7 +44,7 @@ Describe 'Form Control Management - Header Section' {
 </form>
 '@
         }
-        Set-DataverseRecord -Connection $connection -TableName systemform -Record $formRecord
+        $script:InitialFormId = $formRecord | Set-DataverseRecord -Connection $connection -TableName systemform -CreateOnly -PassThru | Select-Object -ExpandProperty Id
     }
 
     Context 'Get-DataverseFormControl - Header Section' {
@@ -95,8 +95,7 @@ Describe 'Form Control Management - Header Section' {
 </form>
 '@
             }
-            Set-DataverseRecord -Connection $connection -TableName systemform -Record $formWithHeader
-            $script:FormWithHeaderId = $formWithHeader.formid
+            $script:FormWithHeaderId = $formWithHeader | Set-DataverseRecord -Connection $connection -TableName systemform -CreateOnly -PassThru | Select-Object -ExpandProperty formid
         }
 
         It "Returns header controls when TabName is '[Header]'" {
@@ -177,7 +176,7 @@ Describe 'Form Control Management - Header Section' {
                 objecttypecode = 'contact'
                 formxml = '<form showImage="true"><tabs><tab name="general" id="{tab-1}"><labels><label description="General" languagecode="1033" /></labels><columns><column width="100%"><sections><section name="s1" id="{s-1}"><labels><label description="S1" languagecode="1033" /></labels><rows /></section></sections></column></columns></tab></tabs></form>'
             }
-            Set-DataverseRecord -Connection $connection -TableName systemform -Record $newForm
+            $newForm | Set-DataverseRecord -Connection $connection -TableName systemform -CreateOnly | Out-Null
             
             $result = Set-DataverseFormControl -Connection $connection -FormId $formId `
                 -TabName '[Header]' -DataField 'telephone1' `
@@ -232,7 +231,7 @@ Describe 'Form Control Management - Header Section' {
 </form>
 '@
             }
-            Set-DataverseRecord -Connection $connection -TableName systemform -Record $updateForm
+            $updateForm | Set-DataverseRecord -Connection $connection -TableName systemform -CreateOnly | Out-Null
         }
 
         It "Updates existing header control by DataField" {
@@ -298,12 +297,12 @@ Describe 'Form Control Management - Header Section' {
 </form>
 '@
             }
-            Set-DataverseRecord -Connection $connection -TableName systemform -Record $removeForm
+            $removeForm | Set-DataverseRecord -Connection $connection -TableName systemform -CreateOnly | Out-Null
         }
 
         It "Removes header control by DataField" {
             Remove-DataverseFormControl -Connection $connection -FormId $script:RemoveFormId `
-                -TabName '[Header]' -DataField 'emailaddress1'
+                -TabName '[Header]' -DataField 'emailaddress1' -Confirm:$false
             
             # Verify removal
             $controls = Get-DataverseFormControl -Connection $connection -FormId $script:RemoveFormId -TabName '[Header]'
@@ -312,7 +311,7 @@ Describe 'Form Control Management - Header Section' {
 
         It "Removes header control by ControlId" {
             Remove-DataverseFormControl -Connection $connection -FormId $script:RemoveFormId `
-                -ControlId 'header_owner'
+                -ControlId 'header_owner' -Confirm:$false
             
             # Verify removal
             $controls = Get-DataverseFormControl -Connection $connection -FormId $script:RemoveFormId -TabName '[Header]'
@@ -328,7 +327,7 @@ Describe 'Form Control Management - Header Section' {
                 objecttypecode = 'contact'
                 formxml = '<form showImage="true"><tabs><tab name="general" id="{tab-1}"><labels><label description="General" languagecode="1033" /></labels><columns><column width="100%"><sections><section name="s1" id="{s-1}"><labels><label description="S1" languagecode="1033" /></labels><rows /></section></sections></column></columns></tab></tabs></form>'
             }
-            Set-DataverseRecord -Connection $connection -TableName systemform -Record $form
+            $form | Set-DataverseRecord -Connection $connection -TableName systemform -CreateOnly | Out-Null
             
             # Create header control
             $controlId = Set-DataverseFormControl -Connection $connection -FormId $formId `
@@ -354,7 +353,7 @@ Describe 'Form Control Management - Header Section' {
             
             # Remove header control
             Remove-DataverseFormControl -Connection $connection -FormId $formId `
-                -TabName '[Header]' -DataField 'telephone1'
+                -TabName '[Header]' -DataField 'telephone1' -Confirm:$false
             
             # Verify removal
             $controls = Get-DataverseFormControl -Connection $connection -FormId $formId -TabName '[Header]'

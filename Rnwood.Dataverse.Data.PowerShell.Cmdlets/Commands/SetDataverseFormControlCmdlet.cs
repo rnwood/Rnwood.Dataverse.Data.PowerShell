@@ -14,7 +14,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Creates or updates a control in a Dataverse form section.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "DataverseFormControl", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
+    [Cmdlet(VerbsCommon.Set, "DataverseFormControl", DefaultParameterSetName = "Standard", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     [OutputType(typeof(string))]
     public class SetDataverseFormControlCmdlet : OrganizationServiceCmdlet
     {
@@ -26,8 +26,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         /// <summary>
         /// Gets or sets the section name where the control is located.
+        /// Not required for header controls (when TabName is '[Header]').
         /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "Name of the section containing the control")]
+        [Parameter(Mandatory = false, HelpMessage = "Name of the section containing the control. Not required for header controls.")]
         public string SectionName { get; set; }
 
         /// <summary>
@@ -45,7 +46,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the data field name (attribute) for the control.
         /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "Data field name (attribute) for the control")]
+        [Parameter(Mandatory = true, ParameterSetName = "Standard", HelpMessage = "Data field name (attribute) for the control")]
         public string DataField { get; set; }
 
         /// <summary>
@@ -146,30 +147,96 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string CellId { get; set; }
 
         /// <summary>
+        /// Gets or sets whether the cell should be auto-sized.
+        /// </summary>
+        [Parameter(HelpMessage = "Whether the cell should be auto-sized")]
+        public SwitchParameter Auto { get; set; }
+
+        /// <summary>
+        /// Gets or sets the lock level for the cell.
+        /// </summary>
+        [Parameter(HelpMessage = "Lock level for the cell")]
+        public int? LockLevel { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether the control is hidden.
+        /// </summary>
+        [Parameter(HelpMessage = "Whether the control is hidden")]
+        public SwitchParameter Hidden { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
 
+            // Check if this is a header control operation
+            bool isHeaderControl = TabName != null && TabName.Equals("[Header]", StringComparison.OrdinalIgnoreCase);
+            
+            // For header controls, SectionName is not needed (header acts as both tab and section)
+            if (isHeaderControl && string.IsNullOrEmpty(SectionName))
+            {
+                SectionName = "[Header]";
+            }
+            
+            // Validate that SectionName is provided for non-header controls
+            if (!isHeaderControl && string.IsNullOrEmpty(SectionName))
+            {
+                throw new ArgumentException("SectionName is required for non-header controls.");
+            }
+
             // Retrieve the form
             Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml", "objecttypecode"));
             var (doc, systemForm) = FormXmlHelper.ParseFormXml(form);
 
-            // Find the section
-            var sectionResult = FormXmlHelper.FindTargetSection(systemForm, TabName, SectionName);
-            if (sectionResult.Section == null)
+            XElement targetSection;
+            XElement targetTab;
+            XElement rowsElement;
+            int columnCount;
+
+            if (isHeaderControl)
             {
-                throw new InvalidOperationException($"Section '{SectionName}' not found in form");
+                // Handle header controls
+                var header = systemForm.Element("header");
+                if (header == null)
+                {
+                    // Create header element if it doesn't exist
+                    header = new XElement("header",
+                        new XAttribute("id", Guid.NewGuid().ToString("B")),
+                        new XAttribute("celllabelposition", "Top"));
+                    systemForm.AddFirst(header);
+                }
+
+                rowsElement = header.Element("rows");
+                if (rowsElement == null)
+                {
+                    rowsElement = new XElement("rows");
+                    header.Add(rowsElement);
+                }
+
+                // For header, use the header element as both section and tab
+                targetSection = header;
+                targetTab = header;
+                columnCount = 1; // Header typically has one column
             }
+            else
+            {
+                // Find the section
+                var sectionResult = FormXmlHelper.FindTargetSection(systemForm, TabName, SectionName);
+                if (sectionResult.Section == null)
+                {
+                    throw new InvalidOperationException($"Section '{SectionName}' not found in form");
+                }
 
-            XElement targetSection = sectionResult.Section;
-            XElement targetTab = sectionResult.Tab;
-            XElement rowsElement = FormXmlHelper.GetOrCreateRowsElement(targetSection);
+                targetSection = sectionResult.Section;
+                targetTab = sectionResult.Tab;
+                rowsElement = FormXmlHelper.GetOrCreateRowsElement(targetSection);
 
-            // Get column count
-            var columnsElement = targetTab.Element("columns");
-            int columnCount = columnsElement?.Elements("column").Count() ?? 1;
+                // Get column count
+                var columnsElement = targetTab.Element("columns");
+                columnCount = columnsElement?.Elements("column").Count() ?? 1;
+            }
 
             // Determine target position
             int targetRow = Row ?? -1;
@@ -207,7 +274,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     control.SetAttributeValue("id", controlId);
                     
                     // Check if control with same ID already exists
-                    var (existingControl, tempExistingCell) = FormXmlHelper.FindControlById(systemForm, TabName, SectionName, controlId);
+                    XElement existingControl;
+                    XElement tempExistingCell;
+                    
+                    if (isHeaderControl)
+                    {
+                        (existingControl, tempExistingCell) = FormXmlHelper.FindControlInHeader(systemForm, controlId: controlId);
+                    }
+                    else
+                    {
+                        (existingControl, tempExistingCell) = FormXmlHelper.FindControlById(systemForm, TabName, SectionName, controlId);
+                    }
+                    
                     if (existingControl != null)
                     {
                         // Remove from existing position
@@ -223,7 +301,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     if (!string.IsNullOrEmpty(dataFieldName))
                     {
                         // Check if control with same DataField already exists in section
-                        var (existingControl, tempExistingCell) = FormXmlHelper.FindControlByDataField(systemForm, TabName, SectionName, dataFieldName);
+                        XElement existingControl;
+                        XElement tempExistingCell;
+                        
+                        if (isHeaderControl)
+                        {
+                            (existingControl, tempExistingCell) = FormXmlHelper.FindControlInHeader(systemForm, dataField: dataFieldName);
+                        }
+                        else
+                        {
+                            (existingControl, tempExistingCell) = FormXmlHelper.FindControlByDataField(systemForm, TabName, SectionName, dataFieldName);
+                        }
+                        
                         if (existingControl != null)
                         {
                             // Remove from existing position
@@ -257,7 +346,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (!string.IsNullOrEmpty(ControlId))
                 {
                     // Find by ID
-                    var (existingControl, tempExistingCell) = FormXmlHelper.FindControlById(systemForm, TabName, SectionName, ControlId);
+                    XElement existingControl;
+                    XElement tempExistingCell;
+                    
+                    if (isHeaderControl)
+                    {
+                        (existingControl, tempExistingCell) = FormXmlHelper.FindControlInHeader(systemForm, controlId: ControlId);
+                    }
+                    else
+                    {
+                        (existingControl, tempExistingCell) = FormXmlHelper.FindControlById(systemForm, TabName, SectionName, ControlId);
+                    }
+                    
                     if (existingControl != null)
                     {
                         control = existingControl;
@@ -269,7 +369,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 else
                 {
                     // Find by DataField
-                    var (existingControl, tempExistingCell) = FormXmlHelper.FindControlByDataField(systemForm, TabName, SectionName, DataField);
+                    XElement existingControl;
+                    XElement tempExistingCell;
+                    
+                    if (isHeaderControl)
+                    {
+                        (existingControl, tempExistingCell) = FormXmlHelper.FindControlInHeader(systemForm, dataField: DataField);
+                    }
+                    else
+                    {
+                        (existingControl, tempExistingCell) = FormXmlHelper.FindControlByDataField(systemForm, TabName, SectionName, DataField);
+                    }
+                    
                     if (existingControl != null)
                     {
                         control = existingControl;
@@ -279,11 +390,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
 
-                // For new controls, ControlType is mandatory unless RawXml
-                if (!isUpdate && ParameterSetName != "RawXml" && !MyInvocation.BoundParameters.ContainsKey(nameof(ControlType)))
-                {
-                    ThrowTerminatingError(new ErrorRecord(new ArgumentException("ControlType is required when creating a new control."), "ControlTypeRequired", ErrorCategory.InvalidArgument, null));
-                }
+                // For new controls, we'll use the default ControlType if not specified
+                // (ControlType has a default value of "Standard")
 
                 if (!isUpdate)
                 {
@@ -337,6 +445,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
                 {
                     if (!Visible.IsPresent)
+                    {
+                        control.SetAttributeValue("visible", "false");
+                    }
+                    else
+                    {
+                        control.SetAttributeValue("visible", null);
+                    }
+                }
+
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
+                {
+                    if (Hidden.IsPresent)
                     {
                         control.SetAttributeValue("visible", "false");
                     }
@@ -430,6 +550,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             else if (cell.Attribute("id") == null)
             {
                 cell.SetAttributeValue("id", Guid.NewGuid().ToString());
+            }
+
+            // Set cell Auto attribute
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(Auto)))
+            {
+                if (Auto.IsPresent)
+                {
+                    cell.SetAttributeValue("auto", "true");
+                }
+                else
+                {
+                    cell.SetAttributeValue("auto", null);
+                }
+            }
+
+            // Set cell LockLevel attribute
+            if (LockLevel.HasValue)
+            {
+                cell.SetAttributeValue("locklevel", LockLevel.Value.ToString());
             }
 
             // Confirm action
