@@ -43,11 +43,22 @@ $contact = Get-DataverseEntityMetadata -EntityName contact
 $displayName = $contact.DisplayName.UserLocalizedLabel.Label
 $primaryKey = $contact.PrimaryIdAttribute
 
+# Access icon properties
+$vectorIcon = $contact.IconVectorName
+$largeIcon = $contact.IconLargeName
+$mediumIcon = $contact.IconMediumName
+$smallIcon = $contact.IconSmallName
+
 # Get entity with attributes included
 $contactFull = Get-DataverseEntityMetadata -EntityName contact -IncludeAttributes
 
 # List all custom entities
 Get-DataverseEntityMetadata | Where-Object { $_.IsCustomEntity -eq $true }
+
+# View entities with their icon properties
+Get-DataverseEntityMetadata |
+    Select-Object LogicalName, DisplayName, IconVectorName, IconLargeName |
+    Format-Table -AutoSize
 ```
 
 ### Attribute Metadata
@@ -156,9 +167,59 @@ Set-DataverseEntityMetadata `
     -EntityName new_project `
     -SchemaName new_Project `
     -DisplayName "Project" `
+    -DisplayCollectionName "Projects" `
     -PrimaryAttributeSchemaName new_name `
     -OwnershipType UserOwned `
     -HasActivities
+```
+
+**Setting Icon Properties**
+
+Customize entity icons for better visual identification in the UI:
+
+```powershell
+# Create entity with custom icons
+Set-DataverseEntityMetadata `
+    -EntityName new_product `
+    -SchemaName new_Product `
+    -DisplayName "Product" `
+    -DisplayCollectionName "Products" `
+    -PrimaryAttributeSchemaName new_name `
+    -OwnershipType UserOwned `
+    -IconVectorName "svg_product" `
+    -IconLargeName "Entity/product_large.png" `
+    -IconMediumName "Entity/product_medium.png" `
+    -IconSmallName "Entity/product_small.png"
+
+# Update icons on existing entity
+Set-DataverseEntityMetadata `
+    -EntityName account `
+    -IconVectorName "svg_custom_account"
+```
+
+**Using EntityMetadata Objects**
+
+For complex updates, retrieve and modify the EntityMetadata object directly:
+
+```powershell
+# Get entity metadata
+$metadata = Get-DataverseEntityMetadata -EntityName account
+
+# Modify multiple properties
+$metadata.IconVectorName = "svg_updated_account"
+$metadata.ChangeTrackingEnabled = $true
+
+# Update entity
+Set-DataverseEntityMetadata -EntityMetadata $metadata
+
+# Pipeline example - update multiple entities
+Get-DataverseEntityMetadata |
+    Where-Object { $_.IsCustomEntity } |
+    ForEach-Object {
+        $_.IconVectorName = "svg_custom_icon"
+        $_
+    } |
+    Set-DataverseEntityMetadata
 ```
 
 ### Creating Attributes

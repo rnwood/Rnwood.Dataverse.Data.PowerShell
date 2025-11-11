@@ -25,22 +25,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
              AvailableOffline=""true"" PassParams=""false"" Sku=""All,OnPremise,Live,SPLA"" 
              /></Group></Area></SiteMap>";
         /// <summary>
-        /// Gets or sets the name of the sitemap to create or update.
+        /// Gets or sets the name property of the sitemap. Required when creating a new sitemap, optional when updating.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, HelpMessage = "The name of the sitemap to create or update.", ValueFromPipelineByPropertyName = true)]
-        [ValidateNotNullOrEmpty]
+        [Parameter(Mandatory = false, Position = 0, HelpMessage = "The name property of the sitemap. Required when creating a new sitemap, optional when updating.", ValueFromPipelineByPropertyName = true)]
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets or sets the unique identifier of the sitemap to update. If not specified, a new sitemap is created.
+        /// Gets or sets the unique identifier (key) of the sitemap to update. If not specified along with UniqueName, a new sitemap is created.
         /// </summary>
-        [Parameter(HelpMessage = "The unique identifier of the sitemap to update. If not specified, a new sitemap is created.", ValueFromPipelineByPropertyName = true)]
+        [Parameter(HelpMessage = "The unique identifier (key) of the sitemap to update. If not specified along with UniqueName, a new sitemap is created.", ValueFromPipelineByPropertyName = true)]
         public Guid? Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the unique name of the sitemap to update. If a sitemap with this unique name exists, it will be updated; otherwise, a new sitemap is created with this unique name.
+        /// Gets or sets the unique name (key) of the sitemap to update. If a sitemap with this unique name exists, it will be updated; otherwise, a new sitemap is created with this unique name.
         /// </summary>
-        [Parameter(HelpMessage = "The unique name of the sitemap to update. If a sitemap with this unique name exists, it will be updated; otherwise, a new sitemap is created with this unique name.", ValueFromPipelineByPropertyName = true)]
+        [Parameter(HelpMessage = "The unique name (key) of the sitemap to update. If a sitemap with this unique name exists, it will be updated; otherwise, a new sitemap is created with this unique name.", ValueFromPipelineByPropertyName = true)]
         public string UniqueName { get; set; }
 
         /// <summary>
@@ -84,7 +83,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Try to find existing sitemap by UniqueName
                 var query = new QueryExpression("sitemap")
                 {
-                    ColumnSet = new ColumnSet("sitemapid", "sitemapname", "ismanaged"),
+                    ColumnSet = new ColumnSet("sitemapid", "sitemapname"),
                     Criteria = new FilterExpression
                     {
                         Conditions =
@@ -95,15 +94,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     TopCount = 1
                 };
 
-                var results = Connection.RetrieveMultiple(query);
+                // Try unpublished first
+                var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
+                {
+                    Query = query
+                };
+                var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                var results = unpublishedResponse.EntityCollection;
+                
                 if (results.Entities.Count == 0)
                 {
-                    var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
-                    {
-                        Query = query
-                    };
-                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
-                    results = unpublishedResponse.EntityCollection;
+                    // If not found in unpublished, try published
+                    results = Connection.RetrieveMultiple(query);
                 }
 
                 if (results.Entities.Count > 0)
@@ -119,7 +121,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (isUpdate)
             {
                 // Update existing sitemap
-                if (!ShouldProcess($"Sitemap '{Name}' (ID: {sitemapId})", "Update"))
+                string sitemapDescription = !string.IsNullOrEmpty(Name) ? $"Sitemap '{Name}' (ID: {sitemapId})" : $"Sitemap (ID: {sitemapId})";
+                if (!ShouldProcess(sitemapDescription, "Update"))
                 {
                     return;
                 }
@@ -131,7 +134,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     var existingQuery = new QueryExpression("sitemap")
                     {
-                        ColumnSet = new ColumnSet("sitemapid", "sitemapname", "ismanaged"),
+                        ColumnSet = new ColumnSet("sitemapid", "sitemapname"),
                         Criteria = new FilterExpression
                         {
                             Conditions =
@@ -142,16 +145,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         TopCount = 1
                     };
 
-                    var existingSitemaps = Connection.RetrieveMultiple(existingQuery);
+                    // Try unpublished first
+                    var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
+                    {
+                        Query = existingQuery
+                    };
+                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                    var existingSitemaps = unpublishedResponse.EntityCollection;
 
                     if (existingSitemaps.Entities.Count == 0)
                     {
-                        var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
-                        {
-                            Query = existingQuery
-                        };
-                        var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
-                        existingSitemaps = unpublishedResponse.EntityCollection;
+                        // If not found in unpublished, try published
+                        existingSitemaps = Connection.RetrieveMultiple(existingQuery);
                     }
 
                     if (existingSitemaps.Entities.Count == 0)
@@ -167,22 +172,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     existingSitemap = existingSitemaps.Entities[0];
                 }
 
-                var isManaged = existingSitemap.GetAttributeValue<bool>("ismanaged");
-
-                if (isManaged)
-                {
-                    ThrowTerminatingError(new ErrorRecord(
-                        new InvalidOperationException("Cannot update a managed sitemap. Only unmanaged sitemaps can be modified."),
-                        "ManagedSitemapUpdateNotAllowed",
-                        ErrorCategory.InvalidOperation,
-                        sitemapId));
-                    return;
-                }
-
-                WriteVerbose($"Updating sitemap '{Name}'...");
+                WriteVerbose($"Updating sitemap...");
 
                 var updateEntity = new Entity("sitemap", sitemapId);
-                updateEntity["sitemapname"] = Name;
+                if (!string.IsNullOrEmpty(Name))
+                {
+                    updateEntity["sitemapname"] = Name;
+                }
                 if (!string.IsNullOrEmpty(UniqueName))
                 {
                     updateEntity["sitemapnameunique"] = UniqueName;
@@ -212,7 +208,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             else
             {
-                // Create new sitemap
+                // Create new sitemap - Name is required
+                if (string.IsNullOrEmpty(Name))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new ArgumentException("Name is required when creating a new sitemap."),
+                        "NameRequired",
+                        ErrorCategory.InvalidArgument,
+                        null));
+                    return;
+                }
+
                 if (!ShouldProcess($"Sitemap '{Name}'", "Create"))
                 {
                     return;

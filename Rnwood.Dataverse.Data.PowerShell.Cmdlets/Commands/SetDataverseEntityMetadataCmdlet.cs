@@ -1,3 +1,4 @@
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -11,88 +12,118 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Creates or updates an entity (table) in Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "DataverseEntityMetadata", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
+    [Cmdlet(VerbsCommon.Set, "DataverseEntityMetadata", DefaultParameterSetName = "ByProperties", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     [OutputType(typeof(PSObject))]
     public class SetDataverseEntityMetadataCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
         /// Gets or sets the logical name of the entity.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, HelpMessage = "Logical name of the entity (table)")]
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "ByProperties", HelpMessage = "Logical name of the entity (table)")]
         [Alias("TableName")]
         public string EntityName { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the entity metadata object to update. When provided, all property values from the metadata object are used.
+        /// </summary>
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "ByEntityMetadata", ValueFromPipeline = true, HelpMessage = "EntityMetadata object to update")]
+        public EntityMetadata EntityMetadata { get; set; }
 
         /// <summary>
         /// Gets or sets the schema name of the entity (used for create).
         /// </summary>
-        [Parameter(HelpMessage = "Schema name of the entity (required for create, e.g., 'new_CustomEntity')")]
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Schema name of the entity (required for create, e.g., 'new_CustomEntity')")]
         public string SchemaName { get; set; }
 
         /// <summary>
         /// Gets or sets the display name of the entity.
         /// </summary>
-        [Parameter(HelpMessage = "Display name of the entity (required for create)")]
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Display name of the entity (required for create)")]
         public string DisplayName { get; set; }
 
         /// <summary>
         /// Gets or sets the display collection name of the entity.
         /// </summary>
-        [Parameter(HelpMessage = "Display collection name (plural) of the entity (required for create)")]
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Display collection name (plural) of the entity (required for create)")]
         public string DisplayCollectionName { get; set; }
 
         /// <summary>
         /// Gets or sets the description of the entity.
         /// </summary>
-        [Parameter(HelpMessage = "Description of the entity")]
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Description of the entity")]
         public string Description { get; set; }
 
         /// <summary>
         /// Gets or sets the ownership type of the entity.
         /// </summary>
-        [Parameter(HelpMessage = "Ownership type: UserOwned, TeamOwned, OrganizationOwned")]
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Ownership type: UserOwned, TeamOwned, OrganizationOwned")]
         [ValidateSet("UserOwned", "TeamOwned", "OrganizationOwned")]
         public string OwnershipType { get; set; }
 
         /// <summary>
         /// Gets or sets whether the entity supports activities.
         /// </summary>
-        [Parameter(HelpMessage = "Whether the entity supports activities")]
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Whether the entity supports activities")]
         public SwitchParameter HasActivities { get; set; }
 
         /// <summary>
         /// Gets or sets whether the entity supports notes.
         /// </summary>
-        [Parameter(HelpMessage = "Whether the entity supports notes (annotations)")]
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Whether the entity supports notes (annotations)")]
         public SwitchParameter HasNotes { get; set; }
 
         /// <summary>
         /// Gets or sets whether audit is enabled.
         /// </summary>
-        [Parameter(HelpMessage = "Whether audit is enabled for this entity")]
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Whether audit is enabled for this entity")]
         public SwitchParameter IsAuditEnabled { get; set; }
 
         /// <summary>
         /// Gets or sets whether change tracking is enabled.
         /// </summary>
-        [Parameter(HelpMessage = "Whether change tracking is enabled")]
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Whether change tracking is enabled")]
         public SwitchParameter ChangeTrackingEnabled { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the vector icon name for the entity (SVG icon identifier).
+        /// </summary>
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Vector icon name (SVG icon identifier) for the entity")]
+        public string IconVectorName { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the large icon name for the entity.
+        /// </summary>
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Large icon name for the entity")]
+        public string IconLargeName { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the medium icon name for the entity.
+        /// </summary>
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Medium icon name for the entity")]
+        public string IconMediumName { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the small icon name for the entity.
+        /// </summary>
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Small icon name for the entity")]
+        public string IconSmallName { get; set; }
 
         /// <summary>
         /// Gets or sets the primary attribute schema name (for create).
         /// </summary>
-        [Parameter(HelpMessage = "Schema name for the primary name attribute (required for create, e.g., 'new_name')")]
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Schema name for the primary name attribute (required for create, e.g., 'new_name')")]
         public string PrimaryAttributeSchemaName { get; set; }
 
         /// <summary>
         /// Gets or sets the primary attribute display name (for create).
         /// </summary>
-        [Parameter(HelpMessage = "Display name for the primary name attribute")]
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Display name for the primary name attribute")]
         public string PrimaryAttributeDisplayName { get; set; }
 
         /// <summary>
         /// Gets or sets the primary attribute max length (for create).
         /// </summary>
-        [Parameter(HelpMessage = "Maximum length for the primary name attribute (default 100)")]
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Maximum length for the primary name attribute (default 100)")]
         public int? PrimaryAttributeMaxLength { get; set; }
 
         /// <summary>
@@ -102,11 +133,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter PassThru { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to publish the entity after creating or updating.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, publishes the entity after creating or updating")]
+        public SwitchParameter Publish { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet.
         /// </summary>
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
+            
+            // If using EntityMetadata parameter set, delegate to UpdateEntityFromMetadata
+            if (ParameterSetName == "ByEntityMetadata")
+            {
+                UpdateEntityFromMetadata();
+                return;
+            }
 
             // Check if entity exists
             EntityMetadata existingEntity = null;
@@ -118,7 +162,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     LogicalName = EntityName,
                     EntityFilters = EntityFilters.Entity,
-                    RetrieveAsIfPublished = false
+                    RetrieveAsIfPublished = true
                 };
 
                 var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
@@ -238,6 +282,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 entity.ChangeTrackingEnabled = ChangeTrackingEnabled.ToBool();
             }
+            
+            // Set icon properties if provided
+            if (!string.IsNullOrWhiteSpace(IconVectorName))
+            {
+                entity.IconVectorName = IconVectorName;
+            }
+            
+            if (!string.IsNullOrWhiteSpace(IconLargeName))
+            {
+                entity.IconLargeName = IconLargeName;
+            }
+            
+            if (!string.IsNullOrWhiteSpace(IconMediumName))
+            {
+                entity.IconMediumName = IconMediumName;
+            }
+            
+            if (!string.IsNullOrWhiteSpace(IconSmallName))
+            {
+                entity.IconSmallName = IconSmallName;
+            }
 
             // Create primary attribute
             var primaryAttribute = new StringAttributeMetadata
@@ -269,6 +334,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Invalidate cache for this entity
             InvalidateEntityCache();
 
+            // Publish the entity if specified
+            if (Publish && ShouldProcess($"Entity '{EntityName}'", "Publish"))
+            {
+                var publishRequest = new PublishXmlRequest
+                {
+                    ParameterXml = $"<importexportxml><entities><entity>{EntityName}</entity></entities></importexportxml>"
+                };
+                Connection.Execute(publishRequest);
+                WriteVerbose($"Published entity '{EntityName}'");
+            }
+
             if (PassThru)
             {
                 // Retrieve and return the created entity
@@ -276,7 +352,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     LogicalName = EntityName,
                     EntityFilters = EntityFilters.Entity | EntityFilters.Attributes,
-                    RetrieveAsIfPublished = false
+                    RetrieveAsIfPublished = true
                 };
 
                 var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
@@ -335,6 +411,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 entityToUpdate.ChangeTrackingEnabled = ChangeTrackingEnabled.ToBool();
                 hasChanges = true;
             }
+            
+            // Update icon vector name
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(IconVectorName)))
+            {
+                entityToUpdate.IconVectorName = IconVectorName;
+                hasChanges = true;
+            }
+            
+            // Update icon large name
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(IconLargeName)))
+            {
+                entityToUpdate.IconLargeName = IconLargeName;
+                hasChanges = true;
+            }
+            
+            // Update icon medium name
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(IconMediumName)))
+            {
+                entityToUpdate.IconMediumName = IconMediumName;
+                hasChanges = true;
+            }
+            
+            // Update icon small name
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(IconSmallName)))
+            {
+                entityToUpdate.IconSmallName = IconSmallName;
+                hasChanges = true;
+            }
 
             if (!hasChanges)
             {
@@ -368,6 +472,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Invalidate cache for this entity
             InvalidateEntityCache();
 
+            // Publish the entity if specified
+            if (Publish && ShouldProcess($"Entity '{EntityName}'", "Publish"))
+            {
+                var publishRequest = new PublishXmlRequest
+                {
+                    ParameterXml = $"<importexportxml><entities><entity>{EntityName}</entity></entities></importexportxml>"
+                };
+                Connection.Execute(publishRequest);
+                WriteVerbose($"Published entity '{EntityName}'");
+            }
+
             if (PassThru)
             {
                 // Retrieve and return the updated entity
@@ -375,7 +490,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     LogicalName = EntityName,
                     EntityFilters = EntityFilters.Entity | EntityFilters.Attributes,
-                    RetrieveAsIfPublished = false
+                    RetrieveAsIfPublished = true
                 };
 
                 var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
@@ -472,6 +587,91 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             PrimaryAttributeMaxLength));
                     }
                 }
+            }
+        }
+
+        private void UpdateEntityFromMetadata()
+        {
+            if (EntityMetadata == null)
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new ArgumentNullException(nameof(EntityMetadata)),
+                    "EntityMetadataNull",
+                    ErrorCategory.InvalidArgument,
+                    null));
+                return;
+            }
+
+            // Ensure we have the MetadataId and LogicalName
+            if (EntityMetadata.MetadataId == null || EntityMetadata.MetadataId == Guid.Empty)
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new ArgumentException("EntityMetadata must have a valid MetadataId"),
+                    "InvalidMetadataId",
+                    ErrorCategory.InvalidArgument,
+                    EntityMetadata));
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(EntityMetadata.LogicalName))
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new ArgumentException("EntityMetadata must have a LogicalName"),
+                    "InvalidLogicalName",
+                    ErrorCategory.InvalidArgument,
+                    EntityMetadata));
+                return;
+            }
+
+            var request = new UpdateEntityRequest
+            {
+                Entity = EntityMetadata,
+                MergeLabels = true
+            };
+
+            if (!ShouldProcess($"Entity '{EntityMetadata.LogicalName}'", "Update entity metadata from EntityMetadata object"))
+            {
+                return;
+            }
+
+            WriteVerbose($"Updating entity '{EntityMetadata.LogicalName}' from EntityMetadata object");
+
+            Connection.Execute(request);
+
+            WriteVerbose($"Entity updated successfully");
+
+            // Invalidate cache for this entity
+            var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
+            if (connectionKey != null)
+            {
+                MetadataCache.InvalidateEntity(connectionKey, EntityMetadata.LogicalName);
+                WriteVerbose($"Invalidated metadata cache for entity '{EntityMetadata.LogicalName}'");
+            }
+
+            // Publish the entity if specified
+            if (Publish && ShouldProcess($"Entity '{EntityMetadata.LogicalName}'", "Publish"))
+            {
+                var publishRequest = new PublishXmlRequest
+                {
+                    ParameterXml = $"<importexportxml><entities><entity>{EntityMetadata.LogicalName}</entity></entities></importexportxml>"
+                };
+                Connection.Execute(publishRequest);
+                WriteVerbose($"Published entity '{EntityMetadata.LogicalName}'");
+            }
+
+            if (PassThru)
+            {
+                // Retrieve and return the updated entity
+                var retrieveRequest = new RetrieveEntityRequest
+                {
+                    LogicalName = EntityMetadata.LogicalName,
+                    EntityFilters = EntityFilters.Entity | EntityFilters.Attributes,
+                    RetrieveAsIfPublished = true
+                };
+
+                var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
+                var result = ConvertEntityMetadataToPSObject(retrieveResponse.EntityMetadata);
+                WriteObject(result);
             }
         }
 

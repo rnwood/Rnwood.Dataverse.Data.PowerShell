@@ -158,8 +158,8 @@ Retrieves components from a solution in a Dataverse environment:
 # Get components by solution name
 Get-DataverseSolutionComponent -Connection $c -SolutionName "MySolution"
 
-# Include subcomponents
-Get-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" -IncludeSubcomponents
+# Include implied subcomponents
+Get-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" -IncludeImpliedSubcomponents
 ```
 
 ##### Get-DataverseSolutionFileComponent

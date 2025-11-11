@@ -12,6 +12,7 @@
       - [Advanced Filtering with FetchXML](#advanced-filtering-with-fetchxml)
     - [Querying with SQL](#querying-with-sql)
       - [Using SDK Requests with Invoke-DataverseRequest](#using-sdk-requests-with-invoke-dataverserequest)
+        - [Parameter Sets and Response Conversion](#parameter-sets-and-response-conversion)
         - [Usage Pattern](#usage-pattern)
         - [When to Use SDK Requests](#when-to-use-sdk-requests)
     - [Getting total record count](#getting-total-record-count)
@@ -404,12 +405,36 @@ When to prefer which approach:
 
 For operations not covered by the core cmdlets, use [`Invoke-DataverseRequest`](../../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) with SDK request objects. This provides direct access to all Dataverse SDK operations like bulk operations, metadata queries, and administrative tasks.
 
+##### Parameter Sets and Response Conversion
+
+`Invoke-DataverseRequest` supports two parameter sets with different response handling:
+
+1. **Request parameter set** (pass SDK request objects): Returns raw SDK response objects. Use when you need full control or are working with existing SDK code.
+   ```powershell
+   $request = New-Object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
+   $response = Invoke-DataverseRequest -Connection $c -Request $request
+   # Access via SDK properties: $response.UserId, $response.Results["UserId"]
+   ```
+
+2. **NameAndInputs parameter set** (request name + hashtable): Returns converted PSObject by default for easier property access. Use `-Raw` switch for raw response.
+   ```powershell
+   # Converted response (default)
+   $response = Invoke-DataverseRequest -Connection $c -RequestName "WhoAmI" -Parameters @{}
+   # Access properties directly: $response.UserId
+   
+   # Raw response (with -Raw switch)
+   $response = Invoke-DataverseRequest -Connection $c -RequestName "WhoAmI" -Parameters @{} -Raw
+   # Access via Results: $response.Results["UserId"]
+   ```
+
+The examples below use the **Request parameter set** which returns raw SDK responses.
+
 ##### Usage Pattern
 
 1. Create an SDK request object using `New-Object`
 2. Set the required properties on the request
 3. Pass the request to `Invoke-DataverseRequest`
-4. Access the response properties
+4. Access the response properties (using SDK response structure)
 
 **Example: Retrieve entity metadata**
 ```powershell
@@ -418,6 +443,7 @@ $request.LogicalName = 'contact'
 $request.EntityFilters = [Microsoft.Xrm.Sdk.Metadata.EntityFilters]::Attributes
 
 $response = Invoke-DataverseRequest -Connection $c -Request $request
+# Raw SDK response - access via typed properties
 $response.EntityMetadata.Attributes | Where-Object { $_.IsPrimaryId } | Select-Object LogicalName
 ```
 
@@ -438,6 +464,7 @@ $request.RecurrencePattern = ""
 $request.StartDateTime = [DateTime]::Now
 
 $response = Invoke-DataverseRequest -Connection $c -Request $request
+# Raw SDK response - access via typed properties
 Write-Host "Bulk delete job created with ID: $($response.JobId)"
 ```
 

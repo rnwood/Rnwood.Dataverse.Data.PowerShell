@@ -92,15 +92,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 };
 
-                // Try published appmodules first
-                var response = Connection.Execute(new RetrieveMultipleRequest { Query = appModuleQuery });
-                var entities = ((RetrieveMultipleResponse)response).EntityCollection.Entities;
+                // Try unpublished appmodules first
+                var response = Connection.Execute(new RetrieveUnpublishedMultipleRequest { Query = appModuleQuery });
+                var entities = ((RetrieveUnpublishedMultipleResponse)response).EntityCollection.Entities;
 
-                // If not found, try unpublished appmodules
+                // If not found, try published appmodules
                 if (entities.Count == 0)
                 {
-                    response = Connection.Execute(new RetrieveUnpublishedMultipleRequest { Query = appModuleQuery });
-                    entities = ((RetrieveUnpublishedMultipleResponse)response).EntityCollection.Entities;
+                    response = Connection.Execute(new RetrieveMultipleRequest { Query = appModuleQuery });
+                    entities = ((RetrieveMultipleResponse)response).EntityCollection.Entities;
                 }
 
                 if (entities.Count == 0)
@@ -127,15 +127,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 };
 
-                // Try published appmodules first
-                var response = Connection.Execute(new RetrieveMultipleRequest { Query = appModuleQuery });
-                var entities = ((RetrieveMultipleResponse)response).EntityCollection.Entities;
+                // Try unpublished appmodules first
+                var response = Connection.Execute(new RetrieveUnpublishedMultipleRequest { Query = appModuleQuery });
+                var entities = ((RetrieveUnpublishedMultipleResponse)response).EntityCollection.Entities;
 
-                // If not found, try unpublished appmodules
+                // If not found, try published appmodules
                 if (entities.Count == 0)
                 {
-                    response = Connection.Execute(new RetrieveUnpublishedMultipleRequest { Query = appModuleQuery });
-                    entities = ((RetrieveUnpublishedMultipleResponse)response).EntityCollection.Entities;
+                    response = Connection.Execute(new RetrieveMultipleRequest { Query = appModuleQuery });
+                    entities = ((RetrieveMultipleResponse)response).EntityCollection.Entities;
                 }
 
                 if (entities.Count == 0)

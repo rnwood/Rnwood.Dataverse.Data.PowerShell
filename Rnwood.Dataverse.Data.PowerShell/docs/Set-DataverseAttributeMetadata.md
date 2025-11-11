@@ -19,7 +19,8 @@ Set-DataverseAttributeMetadata [-EntityName] <String> [-AttributeName] <String> 
  [-MinValue <Object>] [-MaxValue <Object>] [-Precision <Int32>] [-DateTimeFormat <String>]
  [-DateTimeBehavior <String>] [-TrueLabel <String>] [-FalseLabel <String>] [-DefaultValue <Boolean>]
  [-OptionSetName <String>] [-Options <Hashtable[]>] [-Targets <String[]>] [-MaxSizeInKB <Int32>] [-PassThru]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Publish] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -726,6 +727,21 @@ For **Decimal/Double** attributes: Choose precision based on your data requireme
 
 ```yaml
 Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Publish
+If specified, publishes the attribute after creating or updating
+
+```yaml
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 

@@ -18,7 +18,7 @@ This module works in PowerShell Desktop and PowerShell Core, supporting Windows,
 - Multiple query methods with full support for automatic paging
 - Concise hashtable-based filters with grouped logical expressions (and/or/not/xor) and arbitrary nesting
 - Batching support for efficient bulk operations
-- **Comprehensive metadata CRUD operations** — Create, read, update, and delete entities, attributes, option sets, and relationships with full coverage of all attribute types and relationship types (OneToMany, ManyToMany)
+- **Comprehensive metadata CRUD operations** — Create, read, update, and delete entities, attributes, option sets, and relationships with full coverage of all attribute types and relationship types (OneToMany, ManyToMany). Includes support for entity icon properties (IconVectorName, IconLargeName, IconMediumName, IconSmallName) and bulk updates via EntityMetadata objects.
 - **Global metadata caching** — Optional shared cache for improved performance when working with metadata
 - Wide variety of auth options for interactive and unattended use
 - **XrmToolbox Plugin**: Embedded PowerShell console with automatic connection bridging. See [XrmToolbox Plugin README](Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/README.md)
@@ -179,7 +179,11 @@ For more advanced scenarios including view management and app module management,
 - [`Remove-DataverseFormControl`] — delete controls from forms
 
 ### Additional Operations
-For operations not covered by the cmdlets above, use [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) with SDK request objects to execute any Dataverse SDK operation directly.
+For operations not covered by the cmdlets above, use [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) with SDK request objects to execute any Dataverse SDK operation directly. The cmdlet supports two main approaches:
+- **Request parameter set**: Pass SDK request objects directly (returns raw SDK response objects)
+- **NameAndInputs parameter set**: Specify request name and parameters as hashtable (returns converted PSObject by default, use `-Raw` for raw response)
+
+See the [Invoke-DataverseRequest documentation](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) for details on response conversion and parameter sets.
 
 ## Testing
 

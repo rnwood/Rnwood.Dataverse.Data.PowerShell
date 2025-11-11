@@ -12,16 +12,30 @@ Creates or updates an entity (table) in Dataverse.
 
 ## SYNTAX
 
+### ByProperties (Default)
 ```
 Set-DataverseEntityMetadata [-EntityName] <String> [-SchemaName <String>] [-DisplayName <String>]
  [-DisplayCollectionName <String>] [-Description <String>] [-OwnershipType <String>] [-HasActivities]
- [-HasNotes] [-IsAuditEnabled] [-ChangeTrackingEnabled] [-PrimaryAttributeSchemaName <String>]
- [-PrimaryAttributeDisplayName <String>] [-PrimaryAttributeMaxLength <Int32>] [-PassThru]
+ [-HasNotes] [-IsAuditEnabled] [-ChangeTrackingEnabled] [-IconVectorName <String>] [-IconLargeName <String>]
+ [-IconMediumName <String>] [-IconSmallName <String>] [-PrimaryAttributeSchemaName <String>]
+ [-PrimaryAttributeDisplayName <String>] [-PrimaryAttributeMaxLength <Int32>] [-PassThru] [-Publish]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### ByEntityMetadata
+```
+Set-DataverseEntityMetadata [-EntityMetadata] <EntityMetadata> [-PassThru] [-Publish]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-The `Set-DataverseEntityMetadata` cmdlet creates new entities (tables) or updates existing ones in Dataverse. It allows you to configure entity properties such as display names, ownership type, and features like activities and notes support.
+The `Set-DataverseEntityMetadata` cmdlet creates new entities (tables) or updates existing ones in Dataverse. It allows you to configure entity properties such as display names, ownership type, features like activities and notes support, and icon properties.
+
+The cmdlet supports two parameter sets:
+- **ByProperties**: Specify individual properties to create or update an entity
+- **ByEntityMetadata**: Pass a complete EntityMetadata object (retrieved from Get-DataverseEntityMetadata) to update an entity
+
+Icon properties (IconVectorName, IconLargeName, IconMediumName, IconSmallName) control the visual representation of the entity in the Dataverse UI.
 
 When creating a new entity, the `-SchemaName` and `-PrimaryAttributeSchemaName` parameters are required. The cmdlet automatically creates a primary name attribute for the entity.
 
@@ -251,6 +265,76 @@ PS C:\> Set-DataverseEntityMetadata -Connection $conn `
 
 Creates an entity using a specific connection instead of the default connection.
 
+### Example 16: Create entity with icon properties
+```powershell
+PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
+    -SchemaName new_Product `
+    -DisplayName "Product" `
+    -DisplayCollectionName "Products" `
+    -OwnershipType UserOwned `
+    -PrimaryAttributeSchemaName new_name `
+    -PrimaryAttributeDisplayName "Product Name" `
+    -IconVectorName "svg_product" `
+    -IconLargeName "Entity/product_large.png" `
+    -IconMediumName "Entity/product_medium.png" `
+    -IconSmallName "Entity/product_small.png"
+```
+
+Creates an entity with custom icon properties. Icons control the visual appearance of the entity in the Dataverse UI.
+
+### Example 17: Update icon properties on existing entity
+```powershell
+PS C:\> Set-DataverseEntityMetadata -EntityName account `
+    -IconVectorName "svg_custom_account" `
+    -IconLargeName "Custom/account_large.png"
+```
+
+Updates only the icon properties of an existing entity without changing other properties.
+
+### Example 18: Update entity using EntityMetadata object
+```powershell
+PS C:\> # Get existing metadata
+PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName account
+
+PS C:\> # Modify properties
+PS C:\> $metadata.IconVectorName = "svg_updated_account"
+PS C:\> $metadata.ChangeTrackingEnabled = $true
+
+PS C:\> # Update the entity with modified metadata
+PS C:\> Set-DataverseEntityMetadata -EntityMetadata $metadata
+```
+
+Retrieves an EntityMetadata object, modifies properties, and updates the entity using the modified object. This is useful for complex updates or bulk modifications.
+
+### Example 19: Pipeline EntityMetadata for batch updates
+```powershell
+PS C:\> # Update icons for multiple custom entities
+PS C:\> Get-DataverseEntityMetadata | 
+    Where-Object { $_.IsCustomEntity -eq $true } |
+    ForEach-Object {
+        $_.IconVectorName = "svg_custom_icon"
+        $_
+    } |
+    Set-DataverseEntityMetadata -Publish
+```
+
+Retrieves all custom entities, updates their icon properties, and publishes the changes using the pipeline.
+
+### Example 20: Copy entity metadata properties to another entity
+```powershell
+PS C:\> # Get source entity metadata
+PS C:\> $sourceMetadata = Get-DataverseEntityMetadata -EntityName account
+
+PS C:\> # Copy icon properties to target entity
+PS C:\> Set-DataverseEntityMetadata -EntityName new_customer `
+    -IconVectorName $sourceMetadata.IconVectorName `
+    -IconLargeName $sourceMetadata.IconLargeName `
+    -IconMediumName $sourceMetadata.IconMediumName `
+    -IconSmallName $sourceMetadata.IconSmallName
+```
+
+Copies icon properties from one entity to another entity.
+
 ## PARAMETERS
 
 ### -ChangeTrackingEnabled
@@ -260,7 +344,7 @@ When enabled, Dataverse maintains a log of changes (creates, updates, deletes) t
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: (All)
+Parameter Sets: ByProperties
 Aliases:
 
 Required: False
@@ -307,7 +391,7 @@ Description of the entity that appears as tooltip text in the UI. This helps use
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: ByProperties
 Aliases:
 
 Required: False
@@ -324,7 +408,7 @@ For example, if DisplayName is "Product", DisplayCollectionName should be "Produ
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: ByProperties
 Aliases:
 
 Required: False
@@ -339,13 +423,37 @@ Display name of the entity shown in the UI. This is the user-friendly name that 
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: ByProperties
 Aliases:
 
 Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EntityMetadata
+EntityMetadata object to update. When provided, all property values from the metadata object are used to update the entity.
+
+This parameter is useful for:
+- Making complex updates by modifying a retrieved EntityMetadata object
+- Batch updates using pipeline processing
+- Copying properties between entities
+
+The EntityMetadata object must have a valid MetadataId and LogicalName.
+
+**Tip**: Retrieve EntityMetadata using `Get-DataverseEntityMetadata`, modify properties, then pass to this cmdlet.
+
+```yaml
+Type: EntityMetadata
+Parameter Sets: ByEntityMetadata
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
@@ -358,7 +466,7 @@ For existing entities, this identifies which entity to update.
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: ByProperties
 Aliases: TableName
 
 Required: True
@@ -380,7 +488,7 @@ When enabled, users can:
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: (All)
+Parameter Sets: ByProperties
 Aliases:
 
 Required: False
@@ -402,7 +510,73 @@ When enabled, users can:
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: (All)
+Parameter Sets: ByProperties
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IconLargeName
+Large icon name for the entity. Specifies the filename or identifier for the large icon image used in the Dataverse UI.
+
+Icon files are typically stored in web resources. The value should reference the web resource name (e.g., "Entity/account_large.png").
+
+```yaml
+Type: String
+Parameter Sets: ByProperties
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IconMediumName
+Medium icon name for the entity. Specifies the filename or identifier for the medium icon image used in the Dataverse UI.
+
+```yaml
+Type: String
+Parameter Sets: ByProperties
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IconSmallName
+Small icon name for the entity. Specifies the filename or identifier for the small icon image used in the Dataverse UI.
+
+```yaml
+Type: String
+Parameter Sets: ByProperties
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IconVectorName
+Vector icon name (SVG icon identifier) for the entity. Modern Dataverse UI uses vector icons for scalable, resolution-independent display.
+
+The value typically starts with "svg_" followed by the icon identifier (e.g., "svg_account", "svg_contact").
+
+Vector icons provide the best visual quality across different display resolutions and zoom levels.
+
+```yaml
+Type: String
+Parameter Sets: ByProperties
 Aliases:
 
 Required: False
@@ -419,7 +593,7 @@ Whether audit is enabled for this entity. When enabled, changes to records are t
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: (All)
+Parameter Sets: ByProperties
 Aliases:
 
 Required: False
@@ -441,7 +615,7 @@ Valid values:
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: ByProperties
 Aliases:
 Accepted values: UserOwned, TeamOwned, OrganizationOwned
 
@@ -476,7 +650,7 @@ Required when creating a new entity. For example: "Product Name", "Customer Name
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: ByProperties
 Aliases:
 
 Required: False
@@ -493,7 +667,7 @@ Valid range is 1-4000 characters. Consider your naming conventions when setting 
 
 ```yaml
 Type: Int32
-Parameter Sets: (All)
+Parameter Sets: ByProperties
 Aliases:
 
 Required: False
@@ -512,6 +686,21 @@ Must follow naming conventions with publisher prefix (e.g., `new_name`, `new_pro
 
 ```yaml
 Type: String
+Parameter Sets: ByProperties
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Publish
+If specified, publishes the entity after creating or updating
+
+```yaml
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 
@@ -531,7 +720,7 @@ This is the unique name that includes your solution publisher's prefix. It becom
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: ByProperties
 Aliases:
 
 Required: False
@@ -576,7 +765,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
+### Microsoft.Xrm.Sdk.Metadata.EntityMetadata
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject

@@ -14,20 +14,20 @@ Retrieves the components of a solution from a Dataverse environment.
 
 ### ByUniqueName
 ```
-Get-DataverseSolutionComponent [-SolutionName] <String> [-IncludeSubcomponents] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseSolutionComponent [-SolutionName] <String> [-IncludeImpliedSubcomponents]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### BySolutionId
 ```
-Get-DataverseSolutionComponent [-SolutionId] <Guid> [-IncludeSubcomponents] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseSolutionComponent [-SolutionId] <Guid> [-IncludeImpliedSubcomponents]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 The Get-DataverseSolutionComponent cmdlet retrieves the root components of a solution from a Dataverse environment. It can retrieve components by solution unique name or solution ID.
 
-When the IncludeSubcomponents parameter is specified, it also retrieves subcomponents for entity components (type 1), such as attributes, relationships, forms, and views.
+When the IncludeImpliedSubcomponents parameter is specified, it also retrieves subcomponents for entity components (type 1), such as attributes, relationships, forms, and views that are implied if the whole entity has been added to the solution.
 
 The cmdlet outputs PowerShell objects representing each component with properties including ObjectId, ComponentType, ComponentTypeName, Behavior, MetadataId, and IsSubcomponent.
 
@@ -52,7 +52,7 @@ This example retrieves all root components from the solution with the specified 
 ### Example 3: Get components including subcomponents
 ```powershell
 PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
-PS C:\> Get-DataverseSolutionComponent -Connection $conn -SolutionName "MySolution" -IncludeSubcomponents
+PS C:\> Get-DataverseSolutionComponent -Connection $conn -SolutionName "MySolution" -IncludeImpliedSubcomponents
 ```
 
 This example retrieves all root components and their subcomponents from the solution named "MySolution".
@@ -94,8 +94,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -IncludeSubcomponents
-Include subcomponents (attributes, relationships, forms, views, etc.) for each root component.
+### -IncludeImpliedSubcomponents
+Include subcomponents (attributes, relationships, forms, views, etc.) implied each root table component if the whole table is included in solution.
 
 ```yaml
 Type: SwitchParameter
@@ -181,7 +181,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
   - Do Not Include Subcomponents (1): Component without subcomponents
   - Include As Shell (2): Shell only, no subcomponents
 
-- **Subcomponents**: When IncludeSubcomponents is used, only entity subcomponents are retrieved. Subcomponents have IsSubcomponent set to true and include ParentComponentType and ParentObjectId properties.
+- **Subcomponents**: When IncludeImpliedSubcomponents is used, only entity subcomponents are retrieved. Subcomponents have IsSubcomponent set to true and include ParentComponentType and ParentObjectId properties.
 
 - **Performance**: Retrieving subcomponents can significantly increase the number of results and processing time for solutions with many entities.
 

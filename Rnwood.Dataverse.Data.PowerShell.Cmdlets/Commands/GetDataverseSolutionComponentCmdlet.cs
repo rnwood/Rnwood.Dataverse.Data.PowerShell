@@ -35,8 +35,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets whether to include subcomponents in the output.
         /// </summary>
-        [Parameter(Mandatory = false, HelpMessage = "Include subcomponents (attributes, relationships, forms, views, etc.) for each root component.")]
-        public SwitchParameter IncludeSubcomponents { get; set; }
+        [Parameter(Mandatory = false, HelpMessage = "Include subcomponents (attributes, relationships, forms, views, etc.) implied each root table component if the whole table is included in solution.")]
+        public SwitchParameter IncludeImpliedSubcomponents { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -74,7 +74,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Extract components from the environment
             var extractor = new EnvironmentComponentExtractor(Connection, this, solutionid);
-            var components = extractor.GetComponents(IncludeSubcomponents.IsPresent);
+            var components = extractor.GetComponents(IncludeImpliedSubcomponents.IsPresent);
 
             WriteVerbose($"Found {components.Count} components in the solution.");
 
