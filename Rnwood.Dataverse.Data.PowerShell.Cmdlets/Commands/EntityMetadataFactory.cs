@@ -61,7 +61,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		public EntityMetadata GetMetadata(string entityName)
 		{
 			EntityMetadata result;
-			bool retrieveAsIfPublished = true; // Default to unpublished metadata
+			bool retrieveAsIfPublished = false; // Use published metadata for CRUD operations
 
 			// Try shared cache first if enabled
 			if (UseSharedCache && MetadataCache.TryGetEntityMetadata(ConnectionKey, entityName, EntityFilters.All, retrieveAsIfPublished, out result))
@@ -76,7 +76,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				RetrieveEntityRequest request = new RetrieveEntityRequest()
 				{
 					EntityFilters = EntityFilters.All,
-					RetrieveAsIfPublished = true,
+					RetrieveAsIfPublished = false,
 					LogicalName = entityName
 				};
 
@@ -101,7 +101,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <returns>Collection of EntityMetadata objects.</returns>
 		public IEnumerable<EntityMetadata> GetAllEntityMetadata()
 		{
-			bool retrieveAsIfPublished = true; // Default to unpublished metadata
+			bool retrieveAsIfPublished = false; // Use published metadata for CRUD operations
 
 			// Try shared cache first if enabled
 			if (UseSharedCache && MetadataCache.TryGetAllEntities(ConnectionKey, EntityFilters.Entity, retrieveAsIfPublished, out var cachedEntities))
@@ -114,7 +114,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				var request = new RetrieveAllEntitiesRequest()
 				{
 					EntityFilters = EntityFilters.Entity,
-					RetrieveAsIfPublished = true
+					RetrieveAsIfPublished = false
 				};
 
 				var response = (RetrieveAllEntitiesResponse)this.Connection.Execute(request);
