@@ -9,13 +9,14 @@
     - [Get all app modules](#get-all-app-modules)
     - [Find app modules by name with wildcards](#find-app-modules-by-name-with-wildcards)
     - [Get raw attribute values](#get-raw-attribute-values)
-    - [Get unpublished app modules](#get-unpublished-app-modules)
+    - [Get published app modules only](#get-published-app-modules-only)
   - [Creating and Updating App Modules](#creating-and-updating-app-modules)
     - [Create a new app module](#create-a-new-app-module)
     - [Update an existing app module by ID](#update-an-existing-app-module-by-id)
     - [Update an app module by UniqueName](#update-an-app-module-by-uniquename)
     - [Create with icon and form factor](#create-with-icon-and-form-factor)
     - [Validate and publish an app](#validate-and-publish-an-app)
+    - [Upsert pattern with NoCreate](#upsert-pattern-with-nocreate)
     - [Safe update with NoUpdate](#safe-update-with-noupdate)
     - [Publish an app after creation/update](#publish-an-app-after-creationupdate)
     - [Validate an app before publishing](#validate-an-app-before-publishing)
@@ -74,10 +75,10 @@ $app = Get-DataverseAppModule -Connection $c -Id $appId -Raw
 
 Returns all raw attributes from the appmodule record instead of parsed properties.
 
-### Get unpublished app modules
+### Get published app modules only
 
 ```powershell
-$unpublishedApps = Get-DataverseAppModule -Connection $c -Unpublished
+$publishedApps = Get-DataverseAppModule -Connection $c -Published
 ```
 
 ## Creating and Updating App Modules
@@ -138,7 +139,6 @@ Set-DataverseAppModule -Connection $c -PassThru `
     -Name "Ready App" `
     -Validate `
     -Publish
-```
 ```
 
 ### Upsert pattern with NoCreate
@@ -282,4 +282,4 @@ When working with app modules, you'll encounter these key properties:
 - [Connection Management](connections.md) � Managing Dataverse connections
 - [Get-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseAppModule.md)
 - [Set-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseAppModule.md)
-- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)
+- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)

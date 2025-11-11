@@ -234,11 +234,6 @@ Describe "AppModule Management Cmdlets" {
             $appModule | Should -Not -BeNullOrEmpty
         }
 
-        It "Supports -Unpublished switch without error" {
-            $connection = getMockConnection -Entities @("appmodule", "appmodulecomponent")
-
-            { Get-DataverseAppModule -Connection $connection -Unpublished } | Should -Not -Throw
-        }
     }
 
     Context "Remove-DataverseAppModule - Basic Removal" {

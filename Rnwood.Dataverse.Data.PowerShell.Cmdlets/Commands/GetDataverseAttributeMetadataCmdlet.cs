@@ -38,6 +38,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter UseMetadataCache { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to retrieve published metadata only.
+        /// </summary>
+        [Parameter(HelpMessage = "Retrieve only published metadata instead of the default behavior that includes both published and unpublished metadata")]
+        public SwitchParameter Published { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet.
         /// </summary>
         protected override void ProcessRecord()
@@ -78,7 +84,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     EntityFilters = EntityFilters.Attributes,
                     LogicalName = EntityName,
-                    RetrieveAsIfPublished = false
+                    RetrieveAsIfPublished = !Published.IsPresent
                 };
 
                 WriteVerbose($"Retrieving all attributes for entity '{EntityName}'");
@@ -115,7 +121,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 EntityLogicalName = EntityName,
                 LogicalName = AttributeName,
-                RetrieveAsIfPublished = false
+                RetrieveAsIfPublished = !Published.IsPresent
             };
 
             WriteVerbose($"Retrieving attribute metadata for '{EntityName}.{AttributeName}'");

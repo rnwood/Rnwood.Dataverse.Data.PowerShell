@@ -38,6 +38,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string RelationshipType { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to retrieve published metadata only.
+        /// </summary>
+        [Parameter(HelpMessage = "Retrieve only published metadata instead of the default behavior that includes both published and unpublished metadata")]
+        public SwitchParameter Published { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet.
         /// </summary>
         protected override void ProcessRecord()
@@ -89,7 +95,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 LogicalName = EntityName,
                 EntityFilters = EntityFilters.Relationships,
-                RetrieveAsIfPublished = false
+                RetrieveAsIfPublished = !Published.IsPresent
             };
 
             WriteVerbose($"Retrieving relationships for entity '{EntityName}'");
@@ -140,7 +146,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var allEntitiesRequest = new RetrieveAllEntitiesRequest
             {
                 EntityFilters = EntityFilters.Relationships,
-                RetrieveAsIfPublished = false
+                RetrieveAsIfPublished = !Published.IsPresent
             };
 
             var allEntitiesResponse = (RetrieveAllEntitiesResponse)Connection.Execute(allEntitiesRequest);

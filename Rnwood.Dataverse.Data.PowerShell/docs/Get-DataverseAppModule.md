@@ -13,7 +13,7 @@ Retrieves app module (model-driven app) information from a Dataverse environment
 ## SYNTAX
 
 ```
-Get-DataverseAppModule [[-Id] <Guid>] [-UniqueName <String>] [-Name <String>] [-Raw] [-Unpublished]
+Get-DataverseAppModule [[-Id] <Guid>] [-UniqueName <String>] [-Name <String>] [-Raw] [-Published]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -69,12 +69,12 @@ PS C:\> $components = Get-DataverseAppModuleComponent -Connection $c -AppModuleI
 
 Gets an app module and then retrieves all its components. (Parameter name corrected: use -AppModuleId not -AppModuleIdValue.)
 
-### Example 7: Retrieve unpublished versions of apps
+### Example 7: Retrieve published versions of apps only
 ```powershell
-PS C:\> Get-DataverseAppModule -Connection $c -Unpublished -UniqueName "myapp"
+PS C:\> Get-DataverseAppModule -Connection $c -Published -UniqueName "myapp"
 ```
 
-Retrieves the unpublished definition if present (falls back to published when unpublished not found).
+Retrieves only the published definition (does not include unpublished changes when -Published is specified).
 
 ### Example 8: Create and then verify navigation type & featured flag
 ```powershell
@@ -164,13 +164,13 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -Unpublished
-Allows unpublished records to be retrieved instead of the default published
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: SwitchParameter
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases:
+Aliases: proga
 
 Required: False
 Position: Named
@@ -179,13 +179,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -Published
+Allows published records to be retrieved instead of the default behavior that includes both published and unpublished records
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named
