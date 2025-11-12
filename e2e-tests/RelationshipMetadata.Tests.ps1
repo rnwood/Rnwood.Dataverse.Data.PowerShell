@@ -37,53 +37,46 @@ Describe "Relationship Metadata E2E Tests" {
                 
                 # Cleanup any previous failed attempts
                 Write-Host "Cleaning up any previous failed attempts..."
-                $existingEntities = Get-DataverseEntityMetadata | Where-Object { $_.LogicalName -like "new_e2erel*" }
+                $existingEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { $_.LogicalName -like "new_e2erel*" }
                 foreach ($entity in $existingEntities) {
                     try {
                         Write-Host "  Removing leftover entity: $($entity.LogicalName)"
-                        Remove-DataverseEntityMetadata -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
+                        Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
                     } catch {
                         Write-Host "  Could not remove $($entity.LogicalName): $_"
                     }
                 }
                 
                 Write-Host "Step 1: Creating first test entity..."
-                Set-DataverseEntityMetadata `
+                Set-DataverseEntityMetadata -Connection $connection `
                     -EntityName $entity1Name `
                     -SchemaName $entity1Schema `
                     -DisplayName "Relationship Test Entity 1" `
                     -DisplayCollectionName "Relationship Test Entities 1" `
                     -PrimaryAttributeSchemaName "new_name" `
                     -OwnershipType UserOwned `
+                    -Publish `
                     -Confirm:$false
-                
-                Invoke-DataverseRequest -Connection $connection -Request @{
-                    '@odata.type' = 'Microsoft.Crm.Sdk.Messages.PublishXmlRequest'
-                    ParameterXml = "<importexportxml><entities><entity>$entity1Name</entity></entities></importexportxml>"
-                }
-                Write-Host "✓ Entity 1 created"
+                Write-Host "✓ Entity 1 created and published"
                 
                 Write-Host "Step 2: Creating second test entity..."
-                Set-DataverseEntityMetadata `
+                Set-DataverseEntityMetadata -Connection $connection `
                     -EntityName $entity2Name `
                     -SchemaName $entity2Schema `
                     -DisplayName "Relationship Test Entity 2" `
                     -DisplayCollectionName "Relationship Test Entities 2" `
                     -PrimaryAttributeSchemaName "new_name" `
                     -OwnershipType UserOwned `
+                    -Publish `
                     -Confirm:$false
-                
-                Invoke-DataverseRequest -Connection $connection -Request @{
-                    '@odata.type' = 'Microsoft.Crm.Sdk.Messages.PublishXmlRequest'
-                    ParameterXml = "<importexportxml><entities><entity>$entity2Name</entity></entities></importexportxml>"
-                }
-                Write-Host "✓ Entity 2 created"
+                Write-Host "✓ Entity 2 created and published"
                 
                 Write-Host "Step 3: Creating OneToMany relationship with lookup..."
                 $relName1 = "${entity1Name}_${entity2Name}_rel1"
                 $lookupSchemaName = "new_Entity1Id"
                 
                 Set-DataverseRelationshipMetadata `
+                    -Connection $connection `
                     -SchemaName $relName1 `
                     -RelationshipType OneToMany `
                     -ReferencedEntity $entity1Name `
@@ -99,21 +92,17 @@ Describe "Relationship Metadata E2E Tests" {
                     -CascadeReparent NoCascade `
                     -CascadeMerge NoCascade `
                     -IsSearchable `
+                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ OneToMany relationship created"
-                
-                # Publish relationship
-                Invoke-DataverseRequest -Connection $connection -Request @{
-                    '@odata.type' = 'Microsoft.Crm.Sdk.Messages.PublishXmlRequest'
-                    ParameterXml = "<importexportxml><entities><entity>$entity1Name</entity><entity>$entity2Name</entity></entities></importexportxml>"
-                }
+                Write-Host "✓ OneToMany relationship created and published"
                 
                 Write-Host "Step 4: Creating self-referencing OneToMany relationship..."
                 $selfRelName = "${entity1Name}_parent_rel"
                 $parentLookupSchemaName = "new_ParentId"
                 
                 Set-DataverseRelationshipMetadata `
+                    -Connection $connection `
                     -SchemaName $selfRelName `
                     -RelationshipType OneToMany `
                     -ReferencedEntity $entity1Name `
@@ -123,37 +112,28 @@ Describe "Relationship Metadata E2E Tests" {
                     -LookupAttributeRequiredLevel None `
                     -CascadeDelete RemoveLink `
                     -IsHierarchical `
+                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Self-referencing relationship created"
-                
-                # Publish
-                Invoke-DataverseRequest -Connection $connection -Request @{
-                    '@odata.type' = 'Microsoft.Crm.Sdk.Messages.PublishXmlRequest'
-                    ParameterXml = "<importexportxml><entities><entity>$entity1Name</entity></entities></importexportxml>"
-                }
+                Write-Host "✓ Self-referencing relationship created and published"
                 
                 Write-Host "Step 5: Creating ManyToMany relationship..."
                 $m2mRelName = "${entity1Name}_${entity2Name}_m2m"
                 
                 Set-DataverseRelationshipMetadata `
+                    -Connection $connection `
                     -SchemaName $m2mRelName `
                     -RelationshipType ManyToMany `
                     -ReferencedEntity $entity1Name `
                     -ReferencingEntity $entity2Name `
                     -IntersectEntitySchemaName "${m2mRelName}_intersect" `
+                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ ManyToMany relationship created"
-                
-                # Publish
-                Invoke-DataverseRequest -Connection $connection -Request @{
-                    '@odata.type' = 'Microsoft.Crm.Sdk.Messages.PublishXmlRequest'
-                    ParameterXml = "<importexportxml><entities><entity>$entity1Name</entity><entity>$entity2Name</entity></entities></importexportxml>"
-                }
+                Write-Host "✓ ManyToMany relationship created and published"
                 
                 Write-Host "Step 6: Reading and verifying relationships..."
-                $relationships = Get-DataverseRelationshipMetadata -EntityName $entity1Name
+                $relationships = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name
                 
                 $ourRelationships = $relationships | Where-Object { 
                     $_.SchemaName -eq $relName1 -or 
@@ -167,7 +147,7 @@ Describe "Relationship Metadata E2E Tests" {
                 Write-Host "✓ All relationships verified"
                 
                 Write-Host "Step 7: Reading specific OneToMany relationship..."
-                $rel1 = Get-DataverseRelationshipMetadata -SchemaName $relName1
+                $rel1 = Get-DataverseRelationshipMetadata -Connection $connection -SchemaName $relName1
                 
                 if ($rel1.RelationshipType -ne 'OneToManyRelationship') {
                     throw "Wrong relationship type for OneToMany"
@@ -181,7 +161,7 @@ Describe "Relationship Metadata E2E Tests" {
                 Write-Host "✓ OneToMany relationship details verified"
                 
                 Write-Host "Step 8: Reading specific ManyToMany relationship..."
-                $m2mRel = Get-DataverseRelationshipMetadata -SchemaName $m2mRelName
+                $m2mRel = Get-DataverseRelationshipMetadata -Connection $connection -SchemaName $m2mRelName
                 
                 if ($m2mRel.RelationshipType -ne 'ManyToManyRelationship') {
                     throw "Wrong relationship type for ManyToMany"
@@ -190,24 +170,20 @@ Describe "Relationship Metadata E2E Tests" {
                 
                 Write-Host "Step 9: Updating OneToMany relationship cascade behaviors..."
                 Set-DataverseRelationshipMetadata `
+                    -Connection $connection `
                     -SchemaName $relName1 `
                     -RelationshipType OneToMany `
                     -ReferencedEntity $entity1Name `
                     -ReferencingEntity $entity2Name `
                     -CascadeDelete Cascade `
                     -CascadeAssign Cascade `
+                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Relationship updated"
-                
-                # Publish updates
-                Invoke-DataverseRequest -Connection $connection -Request @{
-                    '@odata.type' = 'Microsoft.Crm.Sdk.Messages.PublishXmlRequest'
-                    ParameterXml = "<importexportxml><entities><entity>$entity1Name</entity><entity>$entity2Name</entity></entities></importexportxml>"
-                }
+                Write-Host "✓ Relationship updated and published"
                 
                 Write-Host "Step 10: Verifying relationship update..."
-                $updatedRel = Get-DataverseRelationshipMetadata -SchemaName $relName1
+                $updatedRel = Get-DataverseRelationshipMetadata -Connection $connection -SchemaName $relName1
                 
                 if ($updatedRel.CascadeConfiguration.Delete -ne 'Cascade') {
                     throw "Cascade delete not updated"
@@ -218,8 +194,8 @@ Describe "Relationship Metadata E2E Tests" {
                 Write-Host "✓ Relationship updates verified"
                 
                 Write-Host "Step 11: Testing relationship retrieval with filters..."
-                $oneToManyRels = Get-DataverseRelationshipMetadata -EntityName $entity1Name -RelationshipType OneToMany
-                $manyToManyRels = Get-DataverseRelationshipMetadata -EntityName $entity1Name -RelationshipType ManyToMany
+                $oneToManyRels = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name -RelationshipType OneToMany
+                $manyToManyRels = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name -RelationshipType ManyToMany
                 
                 Write-Host "  OneToMany: $($oneToManyRels.Count), ManyToMany: $($manyToManyRels.Count)"
                 Write-Host "✓ Filtered retrieval successful"
@@ -228,15 +204,15 @@ Describe "Relationship Metadata E2E Tests" {
                 # Note: Relationships are deleted when entities are deleted
                 
                 Write-Host "Step 13: Cleanup - Deleting test entities..."
-                Remove-DataverseEntityMetadata -EntityName $entity2Name -Confirm:$false
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity2Name -Confirm:$false
                 Write-Host "✓ Entity 2 deleted"
                 
-                Remove-DataverseEntityMetadata -EntityName $entity1Name -Confirm:$false
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity1Name -Confirm:$false
                 Write-Host "✓ Entity 1 deleted"
                 
                 Write-Host "Step 14: Verifying cleanup..."
                 Start-Sleep -Seconds 2
-                $remainingEntities = Get-DataverseEntityMetadata | Where-Object { 
+                $remainingEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
                     $_.LogicalName -eq $entity1Name -or $_.LogicalName -eq $entity2Name 
                 }
                 if ($remainingEntities) {

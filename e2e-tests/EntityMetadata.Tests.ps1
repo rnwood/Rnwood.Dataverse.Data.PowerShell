@@ -35,11 +35,11 @@ Describe "Entity Metadata E2E Tests" {
                 
                 # Cleanup any previous failed attempts with similar names
                 Write-Host "Cleaning up any previous failed attempts..."
-                $existingEntities = Get-DataverseEntityMetadata | Where-Object { $_.LogicalName -like "new_e2etest_*" }
+                $existingEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { $_.LogicalName -like "new_e2etest_*" }
                 foreach ($entity in $existingEntities) {
                     try {
                         Write-Host "  Removing leftover entity: $($entity.LogicalName)"
-                        Remove-DataverseEntityMetadata -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
+                        Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
                     } catch {
                         Write-Host "  Could not remove $($entity.LogicalName): $_"
                     }
@@ -47,6 +47,7 @@ Describe "Entity Metadata E2E Tests" {
                 
                 Write-Host "Step 1: Creating custom entity with all features..."
                 Set-DataverseEntityMetadata `
+                    -Connection $connection `
                     -EntityName $entityName `
                     -SchemaName $schemaName `
                     -DisplayName "E2E Test Entity" `
@@ -61,20 +62,13 @@ Describe "Entity Metadata E2E Tests" {
                     -IsAuditEnabled `
                     -ChangeTrackingEnabled `
                     -IconVectorName "svg_test" `
+                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Entity created"
-                
-                # Publish the entity
-                Write-Host "Publishing entity..."
-                Invoke-DataverseRequest -Connection $connection -Request @{
-                    '@odata.type' = 'Microsoft.Crm.Sdk.Messages.PublishXmlRequest'
-                    ParameterXml = "<importexportxml><entities><entity>$entityName</entity></entities></importexportxml>"
-                }
-                Write-Host "✓ Entity published"
+                Write-Host "✓ Entity created and published"
                 
                 Write-Host "Step 2: Reading entity metadata..."
-                $entity = Get-DataverseEntityMetadata -EntityName $entityName -IncludeAttributes
+                $entity = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName -IncludeAttributes
                 
                 if (-not $entity) {
                     throw "Failed to retrieve entity metadata"
@@ -92,22 +86,18 @@ Describe "Entity Metadata E2E Tests" {
                 
                 Write-Host "Step 3: Updating entity metadata..."
                 Set-DataverseEntityMetadata `
+                    -Connection $connection `
                     -EntityName $entityName `
                     -DisplayName "E2E Test Entity (Updated)" `
                     -Description "Updated description" `
                     -IconVectorName "svg_test_updated" `
+                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Entity updated"
-                
-                # Publish the updates
-                Invoke-DataverseRequest -Connection $connection -Request @{
-                    '@odata.type' = 'Microsoft.Crm.Sdk.Messages.PublishXmlRequest'
-                    ParameterXml = "<importexportxml><entities><entity>$entityName</entity></entities></importexportxml>"
-                }
+                Write-Host "✓ Entity updated and published"
                 
                 Write-Host "Step 4: Verifying update..."
-                $updatedEntity = Get-DataverseEntityMetadata -EntityName $entityName
+                $updatedEntity = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName
                 
                 if ($updatedEntity.DisplayName.UserLocalizedLabel.Label -ne "E2E Test Entity (Updated)") {
                     throw "Display name not updated"
@@ -118,20 +108,20 @@ Describe "Entity Metadata E2E Tests" {
                 Write-Host "✓ Updates verified"
                 
                 Write-Host "Step 5: Testing EntityMetadata object update..."
-                $entityObj = Get-DataverseEntityMetadata -EntityName $entityName
+                $entityObj = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName
                 $entityObj.Description = New-Object Microsoft.Xrm.Sdk.Label
                 $entityObj.Description.UserLocalizedLabel = New-Object Microsoft.Xrm.Sdk.LocalizedLabel("Bulk update test", 1033)
                 
-                Set-DataverseEntityMetadata -EntityMetadata $entityObj -Confirm:$false
-                Write-Host "✓ EntityMetadata object update complete"
+                Set-DataverseEntityMetadata -Connection $connection -EntityMetadata $entityObj -Publish -Confirm:$false
+                Write-Host "✓ EntityMetadata object update complete and published"
                 
                 Write-Host "Step 6: Cleanup - Deleting entity..."
-                Remove-DataverseEntityMetadata -EntityName $entityName -Confirm:$false
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
                 Write-Host "✓ Entity deleted"
                 
                 Write-Host "Step 7: Verifying deletion..."
                 Start-Sleep -Seconds 2  # Give it time to process
-                $deletedEntity = Get-DataverseEntityMetadata | Where-Object { $_.LogicalName -eq $entityName }
+                $deletedEntity = Get-DataverseEntityMetadata -Connection $connection | Where-Object { $_.LogicalName -eq $entityName }
                 if ($deletedEntity) {
                     throw "Entity still exists after deletion"
                 }

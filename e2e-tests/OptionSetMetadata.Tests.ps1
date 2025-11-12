@@ -51,18 +51,18 @@ Describe "OptionSet Metadata E2E Tests" {
                 }
                 
                 # Cleanup entities
-                $existingEntities = Get-DataverseEntityMetadata | Where-Object { $_.LogicalName -like "new_e2eoptent_*" }
+                $existingEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { $_.LogicalName -like "new_e2eoptent_*" }
                 foreach ($entity in $existingEntities) {
                     try {
                         Write-Host "  Removing leftover entity: $($entity.LogicalName)"
-                        Remove-DataverseEntityMetadata -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
+                        Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
                     } catch {
                         Write-Host "  Could not remove $($entity.LogicalName): $_"
                     }
                 }
                 
                 Write-Host "Step 1: Creating first global option set..."
-                Set-DataverseOptionSetMetadata `
+                Set-DataverseOptionSetMetadata -Connection $connection `
                     -Name $optionSetName1 `
                     -DisplayName "E2E Test Priority" `
                     -Description "Priority levels for E2E testing" `
@@ -77,7 +77,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 Write-Host "✓ Option set 1 created"
                 
                 Write-Host "Step 2: Creating second global option set..."
-                Set-DataverseOptionSetMetadata `
+                Set-DataverseOptionSetMetadata -Connection $connection `
                     -Name $optionSetName2 `
                     -DisplayName "E2E Test Status" `
                     -Description "Status values for E2E testing" `
@@ -92,7 +92,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 Write-Host "✓ Option set 2 created"
                 
                 Write-Host "Step 3: Reading global option set..."
-                $optionSet1 = Get-DataverseOptionSetMetadata -Name $optionSetName1
+                $optionSet1 = Get-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName1
                 
                 if (-not $optionSet1) {
                     throw "Failed to retrieve option set"
@@ -106,7 +106,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 Write-Host "✓ Option set 1 verified (4 options)"
                 
                 Write-Host "Step 4: Listing all global option sets..."
-                $allOptionSets = Get-DataverseOptionSetMetadata
+                $allOptionSets = Get-DataverseOptionSetMetadata -Connection $connection
                 
                 $ourOptionSets = $allOptionSets | Where-Object { 
                     $_.Name -eq $optionSetName1 -or $_.Name -eq $optionSetName2 
@@ -118,23 +118,19 @@ Describe "OptionSet Metadata E2E Tests" {
                 Write-Host "✓ Found both option sets in list ($($allOptionSets.Count) total)"
                 
                 Write-Host "Step 5: Creating test entity to use option sets..."
-                Set-DataverseEntityMetadata `
+                Set-DataverseEntityMetadata -Connection $connection `
                     -EntityName $entityName `
                     -SchemaName $entitySchema `
                     -DisplayName "Option Set Test Entity" `
                     -DisplayCollectionName "Option Set Test Entities" `
                     -PrimaryAttributeSchemaName "new_name" `
                     -OwnershipType UserOwned `
+                    -Publish `
                     -Confirm:$false
-                
-                Invoke-DataverseRequest -Connection $connection -Request @{
-                    '@odata.type' = 'Microsoft.Crm.Sdk.Messages.PublishXmlRequest'
-                    ParameterXml = "<importexportxml><entities><entity>$entityName</entity></entities></importexportxml>"
-                }
-                Write-Host "✓ Test entity created"
+                Write-Host "✓ Test entity created and published"
                 
                 Write-Host "Step 6: Creating picklist attribute using global option set..."
-                Set-DataverseAttributeMetadata `
+                Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
                     -AttributeName "new_priority" `
                     -SchemaName "new_Priority" `
@@ -146,25 +142,20 @@ Describe "OptionSet Metadata E2E Tests" {
                 Write-Host "✓ Picklist attribute created with global option set"
                 
                 Write-Host "Step 7: Creating another attribute using second option set..."
-                Set-DataverseAttributeMetadata `
+                Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
                     -AttributeName "new_status" `
                     -SchemaName "new_Status" `
                     -AttributeType Picklist `
                     -DisplayName "Current Status" `
                     -OptionSetName $optionSetName2 `
+                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Second picklist attribute created"
-                
-                # Publish
-                Invoke-DataverseRequest -Connection $connection -Request @{
-                    '@odata.type' = 'Microsoft.Crm.Sdk.Messages.PublishXmlRequest'
-                    ParameterXml = "<importexportxml><entities><entity>$entityName</entity></entities></importexportxml>"
-                }
+                Write-Host "✓ Second picklist attribute created and published"
                 
                 Write-Host "Step 8: Reading option set from attribute..."
-                $priorityAttr = Get-DataverseAttributeMetadata -EntityName $entityName -AttributeName "new_priority"
+                $priorityAttr = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_priority"
                 
                 if ($priorityAttr.OptionSet.Name -ne $optionSetName1) {
                     throw "Attribute not using correct global option set"
@@ -172,7 +163,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 Write-Host "✓ Attribute correctly references global option set"
                 
                 Write-Host "Step 9: Getting option set values for entity attribute..."
-                $priorityOptions = Get-DataverseOptionSetMetadata -EntityName $entityName -AttributeName "new_priority"
+                $priorityOptions = Get-DataverseOptionSetMetadata -Connection $connection -EntityName $entityName -AttributeName "new_priority"
                 
                 if ($priorityOptions.Options.Count -ne 4) {
                     throw "Expected 4 options from attribute, found $($priorityOptions.Options.Count)"
@@ -180,7 +171,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 Write-Host "✓ Retrieved option values from entity attribute"
                 
                 Write-Host "Step 10: Updating global option set (adding new option)..."
-                Set-DataverseOptionSetMetadata `
+                Set-DataverseOptionSetMetadata -Connection $connection `
                     -Name $optionSetName1 `
                     -DisplayName "E2E Test Priority (Updated)" `
                     -Options @(
@@ -195,7 +186,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 Write-Host "✓ Option set updated with new option"
                 
                 Write-Host "Step 11: Verifying option set update..."
-                $updatedOptionSet = Get-DataverseOptionSetMetadata -Name $optionSetName1
+                $updatedOptionSet = Get-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName1
                 
                 if ($updatedOptionSet.DisplayName.UserLocalizedLabel.Label -ne "E2E Test Priority (Updated)") {
                     throw "Display name not updated"
@@ -211,7 +202,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 Write-Host "✓ Update verified (5 options including new 'Emergency')"
                 
                 Write-Host "Step 12: Testing local option set (created with attribute)..."
-                Set-DataverseAttributeMetadata `
+                Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
                     -AttributeName "new_category" `
                     -SchemaName "new_Category" `
@@ -222,17 +213,13 @@ Describe "OptionSet Metadata E2E Tests" {
                         @{Value=2; Label='Type B'}
                         @{Value=3; Label='Type C'}
                     ) `
+                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Local option set created with attribute"
-                
-                Invoke-DataverseRequest -Connection $connection -Request @{
-                    '@odata.type' = 'Microsoft.Crm.Sdk.Messages.PublishXmlRequest'
-                    ParameterXml = "<importexportxml><entities><entity>$entityName</entity></entities></importexportxml>"
-                }
+                Write-Host "✓ Local option set created with attribute and published"
                 
                 Write-Host "Step 13: Verifying local option set..."
-                $categoryAttr = Get-DataverseAttributeMetadata -EntityName $entityName -AttributeName "new_category"
+                $categoryAttr = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_category"
                 
                 if ($categoryAttr.OptionSet.IsGlobal -eq $true) {
                     throw "Option set should be local, not global"
@@ -243,7 +230,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 Write-Host "✓ Local option set verified"
                 
                 Write-Host "Step 14: Cleanup - Deleting test entity (and local option set)..."
-                Remove-DataverseEntityMetadata -EntityName $entityName -Confirm:$false
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
                 Write-Host "✓ Test entity deleted"
                 
                 Write-Host "Step 15: Note on global option set cleanup..."
