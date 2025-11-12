@@ -83,7 +83,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Try to find existing sitemap by UniqueName
                 var query = new QueryExpression("sitemap")
                 {
-                    ColumnSet = new ColumnSet("sitemapid", "sitemapname"),
+                    ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapxml"),
                     Criteria = new FilterExpression
                     {
                         Conditions =
@@ -134,7 +134,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     var existingQuery = new QueryExpression("sitemap")
                     {
-                        ColumnSet = new ColumnSet("sitemapid", "sitemapname"),
+                        ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapxml"),
                         Criteria = new FilterExpression
                         {
                             Conditions =
@@ -200,6 +200,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         return;
                     }
                     updateEntity["sitemapxml"] = SitemapXml;
+                }
+                else
+                {
+                    // If no SitemapXml provided, include the existing XML to ensure Dataverse can validate
+                    if (existingSitemap != null && existingSitemap.Contains("sitemapxml"))
+                    {
+                        updateEntity["sitemapxml"] = existingSitemap["sitemapxml"];
+                        WriteVerbose("Including existing sitemap XML in update to maintain sitemap structure.");
+                    }
                 }
 
                 Connection.Update(updateEntity);
