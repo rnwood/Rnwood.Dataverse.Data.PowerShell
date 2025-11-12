@@ -115,11 +115,13 @@ For more advanced scenarios including view management and app module management,
 
 ### Sitemap Management
 
+**Multilingual Support:** Sitemap cmdlets support multilingual titles and descriptions using LCID-based dictionaries, enabling proper localization for Areas, Groups, and SubAreas.
+
 - [`Get-DataverseSitemap`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSitemap.md) — retrieve sitemap navigation definitions
 - [`Set-DataverseSitemap`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSitemap.md) — create or update sitemap navigation
 - [`Remove-DataverseSitemap`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseSitemap.md) — delete sitemap navigation
-- [`Get-DataverseSitemapEntry`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSitemapEntry.md) — retrieve sitemap entries (Areas, Groups, SubAreas)
-- [`Set-DataverseSitemapEntry`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSitemapEntry.md) — create or update navigation entries
+- [`Get-DataverseSitemapEntry`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSitemapEntry.md) — retrieve sitemap entries (Areas, Groups, SubAreas) with multilingual titles
+- [`Set-DataverseSitemapEntry`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSitemapEntry.md) — create or update navigation entries with multilingual support
 - [`Remove-DataverseSitemapEntry`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseSitemapEntry.md) — remove navigation entries from sitemap
 
 ### Environment Variables

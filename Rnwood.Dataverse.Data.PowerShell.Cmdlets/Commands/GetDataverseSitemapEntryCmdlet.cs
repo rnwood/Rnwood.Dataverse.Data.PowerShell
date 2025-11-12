@@ -240,8 +240,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 EntryType = SitemapEntryType.Area,
                                 Id = areaId,
                                 ResourceId = area.Attribute("ResourceId")?.Value,
-                                Title = area.Attribute("Title")?.Value,
-                                Description = area.Attribute("Description")?.Value,
+                                Titles = ParseTitles(area),
+                                Descriptions = ParseDescriptions(area),
                                 DescriptionResourceId = area.Attribute("DescriptionResourceId")?.Value,
                                 ToolTipResourceId = area.Attribute("ToolTipResourceId")?.Value ?? area.Attribute("ToolTipResourseId")?.Value,
                                 Icon = area.Attribute("Icon")?.Value,
@@ -286,8 +286,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             Id = groupId,
                             ParentAreaId = areaId,
                             ResourceId = group.Attribute("ResourceId")?.Value,
-                            Title = group.Attribute("Title")?.Value,
-                            Description = group.Attribute("Description")?.Value,
+                            Titles = ParseTitles(group),
+                            Descriptions = ParseDescriptions(group),
                             DescriptionResourceId = group.Attribute("DescriptionResourceId")?.Value,
                             ToolTipResourceId = group.Attribute("ToolTipResourceId")?.Value ?? group.Attribute("ToolTipResourseId")?.Value,
                             IsDefault = ParseBool(group.Attribute("IsProfile")?.Value)
@@ -323,8 +323,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         ParentAreaId = areaId,
                         ParentGroupId = groupId,
                         ResourceId = subArea.Attribute("ResourceId")?.Value,
-                        Title = subArea.Attribute("Title")?.Value,
-                        Description = subArea.Attribute("Description")?.Value,
+                        Titles = ParseTitles(subArea),
+                        Descriptions = ParseDescriptions(subArea),
                         DescriptionResourceId = subArea.Attribute("DescriptionResourceId")?.Value,
                         ToolTipResourceId = subArea.Attribute("ToolTipResourceId")?.Value ?? subArea.Attribute("ToolTipResourseId")?.Value,
                         Icon = subArea.Attribute("Icon")?.Value,
@@ -358,6 +358,66 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return result;
 
             return null;
+        }
+
+        private Dictionary<int, string> ParseTitles(XElement element)
+        {
+            var titles = new Dictionary<int, string>();
+            
+            // First check for new format: <Titles><Title LCID="..." Title="..." /></Titles>
+            var titlesElement = element.Element("Titles");
+            if (titlesElement != null)
+            {
+                foreach (var titleElement in titlesElement.Elements("Title"))
+                {
+                    var lcidAttr = titleElement.Attribute("LCID")?.Value;
+                    var titleAttr = titleElement.Attribute("Title")?.Value;
+                    
+                    if (int.TryParse(lcidAttr, out int lcid) && !string.IsNullOrEmpty(titleAttr))
+                    {
+                        titles[lcid] = titleAttr;
+                    }
+                }
+            }
+            
+            // Fallback to old format: Title attribute
+            var oldTitle = element.Attribute("Title")?.Value;
+            if (!string.IsNullOrEmpty(oldTitle) && titles.Count == 0)
+            {
+                titles[1033] = oldTitle; // Default to English LCID
+            }
+            
+            return titles.Count > 0 ? titles : null;
+        }
+
+        private Dictionary<int, string> ParseDescriptions(XElement element)
+        {
+            var descriptions = new Dictionary<int, string>();
+            
+            // First check for new format: <Descriptions><Description LCID="..." Description="..." /></Descriptions>
+            var descriptionsElement = element.Element("Descriptions");
+            if (descriptionsElement != null)
+            {
+                foreach (var descElement in descriptionsElement.Elements("Description"))
+                {
+                    var lcidAttr = descElement.Attribute("LCID")?.Value;
+                    var descAttr = descElement.Attribute("Description")?.Value;
+                    
+                    if (int.TryParse(lcidAttr, out int lcid) && !string.IsNullOrEmpty(descAttr))
+                    {
+                        descriptions[lcid] = descAttr;
+                    }
+                }
+            }
+            
+            // Fallback to old format: Description attribute
+            var oldDescription = element.Attribute("Description")?.Value;
+            if (!string.IsNullOrEmpty(oldDescription) && descriptions.Count == 0)
+            {
+                descriptions[1033] = oldDescription; // Default to English LCID
+            }
+            
+            return descriptions.Count > 0 ? descriptions : null;
         }
 
         private void PopulatePrivileges(XElement subAreaElement, SitemapEntryInfo subAreaEntry)
@@ -411,8 +471,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             psObject.Properties.Add(new PSNoteProperty("Id", entry.Id));
 
             if (!string.IsNullOrEmpty(entry.ResourceId)) psObject.Properties.Add(new PSNoteProperty("ResourceId", entry.ResourceId));
-            if (!string.IsNullOrEmpty(entry.Title)) psObject.Properties.Add(new PSNoteProperty("Title", entry.Title));
-            if (!string.IsNullOrEmpty(entry.Description)) psObject.Properties.Add(new PSNoteProperty("Description", entry.Description));
+            
+            // Add Titles and Descriptions as dictionaries
+            if (entry.Titles != null && entry.Titles.Count > 0)
+                psObject.Properties.Add(new PSNoteProperty("Titles", entry.Titles));
+            if (entry.Descriptions != null && entry.Descriptions.Count > 0)
+                psObject.Properties.Add(new PSNoteProperty("Descriptions", entry.Descriptions));
+            
             if (!string.IsNullOrEmpty(entry.DescriptionResourceId)) psObject.Properties.Add(new PSNoteProperty("DescriptionResourceId", entry.DescriptionResourceId));
             if (!string.IsNullOrEmpty(entry.ToolTipResourceId)) psObject.Properties.Add(new PSNoteProperty("ToolTipResourceId", entry.ToolTipResourceId));
             if (!string.IsNullOrEmpty(entry.Icon)) psObject.Properties.Add(new PSNoteProperty("Icon", entry.Icon));

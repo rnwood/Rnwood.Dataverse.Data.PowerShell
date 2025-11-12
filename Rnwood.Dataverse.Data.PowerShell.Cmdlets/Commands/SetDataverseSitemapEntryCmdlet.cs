@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 using System.Xml.Linq;
@@ -94,16 +95,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string ToolTipResourceId { get; set; }
 
         /// <summary>
-        /// Gets or sets the title/label of the entry.
+        /// Gets or sets the titles of the entry keyed by LCID.
+        /// Null values for a specific LCID will remove that LCID's title.
         /// </summary>
-        [Parameter(HelpMessage = "The title/label of the entry.")]
-        public string Title { get; set; }
+        [Parameter(HelpMessage = "The titles of the entry as a dictionary keyed by LCID. Null values for a specific LCID will remove that LCID's title.")]
+        public Dictionary<int, string> Titles { get; set; }
 
         /// <summary>
-        /// Gets or sets the description of the entry.
+        /// Gets or sets the descriptions of the entry keyed by LCID.
+        /// Null values for a specific LCID will remove that LCID's description.
         /// </summary>
-        [Parameter(HelpMessage = "The description of the entry.")]
-        public string Description { get; set; }
+        [Parameter(HelpMessage = "The descriptions of the entry as a dictionary keyed by LCID. Null values for a specific LCID will remove that LCID's description.")]
+        public Dictionary<int, string> Descriptions { get; set; }
 
         /// <summary>
         /// Gets or sets the icon path (for Areas and SubAreas).
@@ -575,15 +578,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     updated = true;
                 }
 
-                if (!string.IsNullOrEmpty(Title))
+                // Handle Titles (new format) - merge with existing and update
+                if (Titles != null)
                 {
-                    entryElement.SetAttributeValue("Title", Title);
+                    var mergedTitles = MergeTitles(entryElement, Titles);
+                    UpdateTitlesElement(entryElement, mergedTitles);
+                    // Remove old Title attribute if it exists
+                    entryElement.Attribute("Title")?.Remove();
                     updated = true;
                 }
 
-                if (!string.IsNullOrEmpty(Description))
+                // Handle Descriptions (new format) - merge with existing and update
+                if (Descriptions != null)
                 {
-                    entryElement.SetAttributeValue("Description", Description);
+                    var mergedDescriptions = MergeDescriptions(entryElement, Descriptions);
+                    UpdateDescriptionsElement(entryElement, mergedDescriptions);
+                    // Remove old Description attribute if it exists
+                    entryElement.Attribute("Description")?.Remove();
                     updated = true;
                 }
 
@@ -850,8 +861,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     ResourceId = ResourceId,
                     DescriptionResourceId = DescriptionResourceId,
                     ToolTipResourceId = ToolTipResourceId,
-                    Title = Title,
-                    Description = Description,
+                    Titles = Titles,
+                    Descriptions = Descriptions,
                     Icon = Icon,
                     Entity = Entity,
                     Url = Url,
@@ -894,11 +905,35 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Note: Dataverse uses "ToolTipResourseId" with a typo in the XML
                 element.SetAttributeValue("ToolTipResourseId", ToolTipResourceId);
 
-            if (!string.IsNullOrEmpty(Title))
-                element.SetAttributeValue("Title", Title);
+            // Handle Titles (new format)
+            if (Titles != null)
+            {
+                var titlesToSet = new Dictionary<int, string>();
+                
+                // Add titles from Titles dictionary
+                foreach (var kvp in Titles)
+                {
+                    if (kvp.Value != null) // Skip null values
+                        titlesToSet[kvp.Key] = kvp.Value;
+                }
+                
+                UpdateTitlesElement(element, titlesToSet);
+            }
 
-            if (!string.IsNullOrEmpty(Description))
-                element.SetAttributeValue("Description", Description);
+            // Handle Descriptions (new format)
+            if (Descriptions != null)
+            {
+                var descriptionsToSet = new Dictionary<int, string>();
+                
+                // Add descriptions from Descriptions dictionary
+                foreach (var kvp in Descriptions)
+                {
+                    if (kvp.Value != null) // Skip null values
+                        descriptionsToSet[kvp.Key] = kvp.Value;
+                }
+                
+                UpdateDescriptionsElement(element, descriptionsToSet);
+            }
 
             if (!string.IsNullOrEmpty(Icon))
                 element.SetAttributeValue("Icon", Icon);
@@ -992,6 +1027,140 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 return;
             }
+        }
+
+        private void UpdateTitlesElement(XElement entryElement, Dictionary<int, string> titles)
+        {
+            // Remove existing Titles element
+            entryElement.Element("Titles")?.Remove();
+            
+            // If titles is null or empty, we're done (removal only)
+            if (titles == null || titles.Count == 0)
+                return;
+                
+            // Create new Titles element
+            var titlesElement = new XElement("Titles");
+            foreach (var kvp in titles.OrderBy(x => x.Key))
+            {
+                if (kvp.Value != null) // Skip null values (they indicate removal)
+                {
+                    titlesElement.Add(new XElement("Title",
+                        new XAttribute("LCID", kvp.Key),
+                        new XAttribute("Title", kvp.Value)));
+                }
+            }
+            
+            // Only add Titles element if it has children
+            if (titlesElement.HasElements)
+                entryElement.Add(titlesElement);
+        }
+
+        private void UpdateDescriptionsElement(XElement entryElement, Dictionary<int, string> descriptions)
+        {
+            // Remove existing Descriptions element
+            entryElement.Element("Descriptions")?.Remove();
+            
+            // If descriptions is null or empty, we're done (removal only)
+            if (descriptions == null || descriptions.Count == 0)
+                return;
+                
+            // Create new Descriptions element
+            var descriptionsElement = new XElement("Descriptions");
+            foreach (var kvp in descriptions.OrderBy(x => x.Key))
+            {
+                if (kvp.Value != null) // Skip null values (they indicate removal)
+                {
+                    descriptionsElement.Add(new XElement("Description",
+                        new XAttribute("LCID", kvp.Key),
+                        new XAttribute("Description", kvp.Value)));
+                }
+            }
+            
+            // Only add Descriptions element if it has children
+            if (descriptionsElement.HasElements)
+                entryElement.Add(descriptionsElement);
+        }
+
+        private Dictionary<int, string> MergeTitles(XElement entryElement, Dictionary<int, string> newTitles)
+        {
+            var result = new Dictionary<int, string>();
+            
+            // First, load existing titles from the element
+            var existingTitlesElement = entryElement.Element("Titles");
+            if (existingTitlesElement != null)
+            {
+                foreach (var titleElement in existingTitlesElement.Elements("Title"))
+                {
+                    if (int.TryParse(titleElement.Attribute("LCID")?.Value, out int lcid))
+                    {
+                        var titleValue = titleElement.Attribute("Title")?.Value;
+                        if (!string.IsNullOrEmpty(titleValue))
+                            result[lcid] = titleValue;
+                    }
+                }
+            }
+            else
+            {
+                // Fallback to old Title attribute
+                var oldTitle = entryElement.Attribute("Title")?.Value;
+                if (!string.IsNullOrEmpty(oldTitle))
+                    result[1033] = oldTitle;
+            }
+            
+            // Apply new titles (additive, null removes)
+            if (newTitles != null)
+            {
+                foreach (var kvp in newTitles)
+                {
+                    if (kvp.Value == null)
+                        result.Remove(kvp.Key);
+                    else
+                        result[kvp.Key] = kvp.Value;
+                }
+            }
+            
+            return result.Count > 0 ? result : null;
+        }
+
+        private Dictionary<int, string> MergeDescriptions(XElement entryElement, Dictionary<int, string> newDescriptions)
+        {
+            var result = new Dictionary<int, string>();
+            
+            // First, load existing descriptions from the element
+            var existingDescriptionsElement = entryElement.Element("Descriptions");
+            if (existingDescriptionsElement != null)
+            {
+                foreach (var descElement in existingDescriptionsElement.Elements("Description"))
+                {
+                    if (int.TryParse(descElement.Attribute("LCID")?.Value, out int lcid))
+                    {
+                        var descValue = descElement.Attribute("Description")?.Value;
+                        if (!string.IsNullOrEmpty(descValue))
+                            result[lcid] = descValue;
+                    }
+                }
+            }
+            else
+            {
+                // Fallback to old Description attribute
+                var oldDescription = entryElement.Attribute("Description")?.Value;
+                if (!string.IsNullOrEmpty(oldDescription))
+                    result[1033] = oldDescription;
+            }
+            
+            // Apply new descriptions (additive, null removes)
+            if (newDescriptions != null)
+            {
+                foreach (var kvp in newDescriptions)
+                {
+                    if (kvp.Value == null)
+                        result.Remove(kvp.Key);
+                    else
+                        result[kvp.Key] = kvp.Value;
+                }
+            }
+            
+            return result.Count > 0 ? result : null;
         }
     }
 }
