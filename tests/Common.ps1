@@ -104,6 +104,22 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
                 return New-Object Microsoft.Crm.Sdk.Messages.PublishXmlResponse
             }
             
+            # Handle UpdateEntityRequest - return empty response
+            if ($request.GetType().Name -eq 'UpdateEntityRequest') {
+                return New-Object Microsoft.Xrm.Sdk.Messages.UpdateEntityResponse
+            }
+            
+            # Handle RetrieveEntityRequest - return entity metadata from cache
+            if ($request.GetType().Name -eq 'RetrieveEntityRequest') {
+                $entityName = $request.LogicalName
+                if ($global:TestMetadataCache.ContainsKey($entityName)) {
+                    $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveEntityResponse
+                    $response.Results.Add("EntityMetadata", $global:TestMetadataCache[$entityName])
+                    return $response
+                }
+                # If entity not found, let FakeXrmEasy throw appropriate exception
+            }
+            
             # Handle AddAppComponentsRequest and RemoveAppComponentsRequest
             if ($request.GetType().Name -eq 'AddAppComponentsRequest' -or 
                 $request.GetType().Name -eq 'RemoveAppComponentsRequest') {
@@ -157,6 +173,22 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
             # Handle PublishXmlRequest - return empty response
             if ($request.GetType().Name -eq 'PublishXmlRequest') {
                 return New-Object Microsoft.Crm.Sdk.Messages.PublishXmlResponse
+            }
+            
+            # Handle UpdateEntityRequest - return empty response
+            if ($request.GetType().Name -eq 'UpdateEntityRequest') {
+                return New-Object Microsoft.Xrm.Sdk.Messages.UpdateEntityResponse
+            }
+            
+            # Handle RetrieveEntityRequest - return entity metadata from cache
+            if ($request.GetType().Name -eq 'RetrieveEntityRequest') {
+                $entityName = $request.LogicalName
+                if ($global:TestMetadataCache.ContainsKey($entityName)) {
+                    $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveEntityResponse
+                    $response.Results.Add("EntityMetadata", $global:TestMetadataCache[$entityName])
+                    return $response
+                }
+                # If entity not found, let FakeXrmEasy throw appropriate exception
             }
             
             # Handle AddAppComponentsRequest and RemoveAppComponentsRequest

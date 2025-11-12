@@ -2,6 +2,7 @@ using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Linq;
 using System.Management.Automation;
@@ -137,6 +138,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(HelpMessage = "If specified, publishes the entity after creating or updating")]
         public SwitchParameter Publish { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether to skip validation of icon properties against webresources.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, skips validation that icon properties reference valid webresources")]
+        public SwitchParameter SkipIconValidation { get; set; }
 
         /// <summary>
         /// Processes the cmdlet.
@@ -283,7 +290,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 entity.ChangeTrackingEnabled = ChangeTrackingEnabled.ToBool();
             }
             
-            // Set icon properties if provided
+            // Validate and set icon properties if provided
+            if (!SkipIconValidation)
+            {
+                if (!string.IsNullOrWhiteSpace(IconVectorName))
+                {
+                    ValidateIconWebResource(IconVectorName, nameof(IconVectorName), 11); // 11 = SVG
+                }
+                
+                // Note: IconLargeName, IconMediumName, IconSmallName can be any image format
+                // but we're not enforcing specific types for these legacy properties
+            }
+            
             if (!string.IsNullOrWhiteSpace(IconVectorName))
             {
                 entity.IconVectorName = IconVectorName;
@@ -410,6 +428,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 entityToUpdate.ChangeTrackingEnabled = ChangeTrackingEnabled.ToBool();
                 hasChanges = true;
+            }
+            
+            // Validate icon properties before updating
+            if (!SkipIconValidation)
+            {
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(IconVectorName)))
+                {
+                    ValidateIconWebResource(IconVectorName, nameof(IconVectorName), 11); // 11 = SVG
+                }
+                
+                // Note: IconLargeName, IconMediumName, IconSmallName can be any image format
+                // but we're not enforcing specific types for these legacy properties
             }
             
             // Update icon vector name
@@ -695,6 +725,69 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             result.Properties.Add(new PSNoteProperty("OwnershipType", metadata.OwnershipType?.ToString()));
             result.Properties.Add(new PSNoteProperty("IsCustomEntity", metadata.IsCustomEntity));
             return result;
+        }
+
+        /// <summary>
+        /// Validates that an icon property references a valid webresource.
+        /// </summary>
+        /// <param name="iconName">The name of the icon/webresource to validate</param>
+        /// <param name="propertyName">The name of the property being validated (for error messages)</param>
+        /// <param name="requiredWebResourceType">The required webresource type (e.g., 11 for SVG)</param>
+        private void ValidateIconWebResource(string iconName, string propertyName, int requiredWebResourceType)
+        {
+            if (string.IsNullOrWhiteSpace(iconName))
+            {
+                return; // Empty values are allowed (clears the icon)
+            }
+
+            WriteVerbose($"Validating {propertyName} '{iconName}' references a valid webresource of type {requiredWebResourceType}");
+
+            // Query for the webresource by name (including unpublished)
+            var query = new QueryExpression("webresource")
+            {
+                ColumnSet = new ColumnSet("name", "webresourcetype"),
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression("name", ConditionOperator.Equal, iconName)
+                    }
+                }
+            };
+
+            // Query both published and unpublished webresources
+            var publishedResults = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose).ToList();
+            var unpublishedResults = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, unpublished: true).ToList();
+            
+            // Combine results (unpublished takes precedence if both exist)
+            var allResults = unpublishedResults.Any() ? unpublishedResults : publishedResults;
+
+            if (!allResults.Any())
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new ArgumentException($"{propertyName} '{iconName}' does not reference a valid webresource. No webresource with name '{iconName}' was found (checked both published and unpublished)."),
+                    "InvalidIconWebResource",
+                    ErrorCategory.InvalidArgument,
+                    iconName));
+                return;
+            }
+
+            // Validate webresource type
+            var webResource = allResults.First();
+            var webResourceType = webResource.GetAttributeValue<OptionSetValue>("webresourcetype");
+            
+            if (webResourceType == null || webResourceType.Value != requiredWebResourceType)
+            {
+                var actualType = webResourceType?.Value.ToString() ?? "unknown";
+                ThrowTerminatingError(new ErrorRecord(
+                    new ArgumentException($"{propertyName} '{iconName}' references a webresource with type {actualType}, but type {requiredWebResourceType} is required."),
+                    "InvalidIconWebResourceType",
+                    ErrorCategory.InvalidArgument,
+                    iconName));
+                return;
+            }
+
+            WriteVerbose($"{propertyName} '{iconName}' validated successfully");
         }
     }
 }
