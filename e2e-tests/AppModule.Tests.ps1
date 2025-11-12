@@ -151,7 +151,7 @@ Describe "AppModule Manipulation" {
                         </entity>
                     </fetch>
 "@
-                $contactEntity = Get-DataverseRecord -Connection $connection -TableName entity -FetchXml $contactEntityQuery
+                $contactEntity = Get-DataverseRecord -Connection $connection -FetchXml $contactEntityQuery
                 if (-not $contactEntity) {
                     throw "Failed to find contact entity"
                 }
@@ -181,7 +181,7 @@ Describe "AppModule Manipulation" {
                         </entity>
                     </fetch>
 "@
-                $accountEntity = Get-DataverseRecord -Connection $connection -TableName entity -FetchXml $accountEntityQuery
+                $accountEntity = Get-DataverseRecord -Connection $connection -FetchXml $accountEntityQuery
                 if (-not $accountEntity) {
                     throw "Failed to find account entity"
                 }
