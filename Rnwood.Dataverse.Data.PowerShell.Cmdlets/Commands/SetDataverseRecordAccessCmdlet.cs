@@ -84,6 +84,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         WriteVerbose($"No existing access found, using specified rights: {AccessRights}");
                     }
                 }
+                else
+                {
+                    WriteVerbose($"Replace mode: setting access to exactly {AccessRights}");
+                }
 
                 // Try to grant access. If access already exists, modify it.
                 try
@@ -104,6 +108,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 catch (Exception ex) when (ex.Message.Contains("already has access"))
                 {
                     // If access already exists, modify it
+                    // ModifyAccessRequest replaces the entire access mask
                     var modifyRequest = new ModifyAccessRequest
                     {
                         Target = target,

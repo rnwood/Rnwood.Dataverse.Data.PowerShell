@@ -102,13 +102,21 @@ Describe "RecordAccess E2E Tests" {
                 Write-Host "Verified: Second user in access list"
                 
                 Write-Host "`n=== Testing Set-DataverseRecordAccess with -Replace ==="
-                Set-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -Principal $secondUserId -AccessRights ([Microsoft.Crm.Sdk.Messages.AccessRights]::DeleteAccess) -Replace -Confirm:$false
+                Set-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -Principal $secondUserId -AccessRights ([Microsoft.Crm.Sdk.Messages.AccessRights]::DeleteAccess) -Replace -Confirm:$false -Verbose
                 Write-Host "Replaced access with only DeleteAccess"
                 
+                # Add a small delay to ensure the change is propagated
+                Start-Sleep -Milliseconds 500
+                
                 $replacedAccessRights = Test-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -Principal $secondUserId
+                Write-Host "Actual access after replace: $replacedAccessRights"
                 $hasDelete = ($replacedAccessRights -band [Microsoft.Crm.Sdk.Messages.AccessRights]::DeleteAccess) -ne 0
                 $hasReadAfter = ($replacedAccessRights -band [Microsoft.Crm.Sdk.Messages.AccessRights]::ReadAccess) -ne 0
                 $hasWriteAfter = ($replacedAccessRights -band [Microsoft.Crm.Sdk.Messages.AccessRights]::WriteAccess) -ne 0
+                
+                Write-Host "  Has Delete: $hasDelete"
+                Write-Host "  Has Read: $hasReadAfter"
+                Write-Host "  Has Write: $hasWriteAfter"
                 
                 if (-not $hasDelete) { throw "Expected DeleteAccess" }
                 if ($hasReadAfter) { throw "Should not have ReadAccess after Replace" }
