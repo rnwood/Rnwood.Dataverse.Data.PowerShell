@@ -56,7 +56,7 @@ Describe "RecordAccess E2E Tests" {
                 
                 Write-Host "Creating test contact..."
                 $testContact = $testContactData | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
-                $contactId = $testContact.contactid
+                $contactId = $testContact.Id
                 Write-Host "Created test contact: $contactId"
                 
                 # Cleanup any existing access from prior failed attempts
