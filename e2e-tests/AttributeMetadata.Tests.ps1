@@ -135,8 +135,9 @@ Describe "Attribute Metadata E2E Tests" {
                         @{Value=2; Label='Medium'}
                         @{Value=3; Label='High'}
                     ) `
+                    -Publish `
                     -Confirm:$false
-                Write-Host "✓ Picklist attribute created"
+                Write-Host "✓ Picklist attribute created and attributes 2-7 published"
                 
                 Write-Host "Step 8: Creating Lookup attribute with relationship..."
                 Set-DataverseAttributeMetadata -Connection $connection `
@@ -151,8 +152,9 @@ Describe "Attribute Metadata E2E Tests" {
                     -CascadeDelete RemoveLink `
                     -CascadeAssign NoCascade `
                     -RequiredLevel Recommended `
+                    -Publish `
                     -Confirm:$false
-                Write-Host "✓ Lookup attribute created with relationship"
+                Write-Host "✓ Lookup attribute created with relationship and published"
                 
                 Write-Host "Step 9: Creating Memo attribute..."
                 Set-DataverseAttributeMetadata -Connection $connection `
