@@ -13,7 +13,7 @@ Retrieves all principals (users or teams) who have shared access to a specific r
 ## SYNTAX
 
 ```
-Get-DataverseRecordAccess [-Target] <EntityReference> [-Connection <ServiceClient>] 
+Get-DataverseRecordAccess [-TableName] <String> [-Id] <Guid> [-Connection <ServiceClient>] 
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -29,8 +29,7 @@ Note: This cmdlet only returns explicitly shared access. It does not return acce
 
 ### Example 1: Get all principals with access to a record
 ```powershell
-PS C:\> $accountRef = New-Object Microsoft.Xrm.Sdk.EntityReference("account", "12345678-1234-1234-1234-123456789012")
-PS C:\> $accessList = Get-DataverseRecordAccess -Target $accountRef
+PS C:\> $accessList = Get-DataverseRecordAccess -TableName account -Id "12345678-1234-1234-1234-123456789012"
 PS C:\> $accessList | Format-Table @{Label="Principal ID"; Expression={$_.Principal.Id}}, @{Label="Principal Type"; Expression={$_.Principal.LogicalName}}, AccessMask
 
 Principal ID                         Principal Type AccessMask
@@ -43,8 +42,7 @@ Retrieves all principals who have shared access to the account record.
 
 ### Example 2: Find users with write access
 ```powershell
-PS C:\> $contactRef = New-Object Microsoft.Xrm.Sdk.EntityReference("contact", "11111111-1111-1111-1111-111111111111")
-PS C:\> $accessList = Get-DataverseRecordAccess -Target $contactRef
+PS C:\> $accessList = Get-DataverseRecordAccess -TableName contact -Id "11111111-1111-1111-1111-111111111111"
 PS C:\> $writeAccess = $accessList | Where-Object { 
 >>     ($_.AccessMask -band [Microsoft.Crm.Sdk.Messages.AccessRights]::WriteAccess) -ne 0 
 >> }
@@ -59,8 +57,7 @@ Finds all principals who have write access to the contact record.
 ```powershell
 PS C:\> $opportunities = Get-DataverseRecord -TableName opportunity -FilterValues @{statecode=0} -Columns opportunityid
 PS C:\> $opportunities | ForEach-Object {
->>     $ref = New-Object Microsoft.Xrm.Sdk.EntityReference("opportunity", $_.opportunityid)
->>     Get-DataverseRecordAccess -Target $ref
+>>     Get-DataverseRecordAccess -TableName opportunity -Id $_.opportunityid
 >> } | Group-Object {$_.Principal.Id} | Select-Object Count, Name
 
 Count Name
@@ -73,23 +70,38 @@ Gets shared access information for multiple opportunity records and groups by pr
 
 ## PARAMETERS
 
-### -Target
-The record for which to retrieve access information. Must be an EntityReference object with the entity logical name and record ID.
+### -TableName
+Logical name of the table.
 
 ```yaml
-Type: EntityReference
+Type: String
 Parameter Sets: (All)
-Aliases:
+Aliases: EntityName
 
 Required: True
 Position: 0
 Default value: None
-Accept pipeline input: True (ByValue)
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Id
+Id of the record.
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 
 If not provided, uses the default connection set via `Get-DataverseConnection -SetAsDefault`.
 
@@ -125,7 +137,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### Microsoft.Xrm.Sdk.EntityReference
+### System.String
+### System.Guid
 ## OUTPUTS
 
 ### Microsoft.Crm.Sdk.Messages.PrincipalAccess

@@ -13,7 +13,7 @@ Revokes access rights for a security principal (user or team) on a specific reco
 ## SYNTAX
 
 ```
-Remove-DataverseRecordAccess [-Target] <EntityReference> [-Principal] <Guid> [-IsTeam] 
+Remove-DataverseRecordAccess [-TableName] <String> [-Id] <Guid> [-Principal] <Guid> [-IsTeam] 
  [-Connection <ServiceClient>] [-WhatIf] [-Confirm] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -27,35 +27,30 @@ After revocation, the principal will no longer have explicit shared access to th
 - Team membership
 - Hierarchy security
 
-This cmdlet requires confirmation by default due to its high impact.
+This cmdlet has ConfirmImpact.Medium and prompts for confirmation by default.
 
 ## EXAMPLES
 
 ### Example 1: Revoke access from a user
 ```powershell
-PS C:\> $accountRef = New-Object Microsoft.Xrm.Sdk.EntityReference("account", "12345678-1234-1234-1234-123456789012")
-PS C:\> $userId = [Guid]"87654321-4321-4321-4321-210987654321"
-PS C:\> Remove-DataverseRecordAccess -Target $accountRef -Principal $userId
+PS C:\> Remove-DataverseRecordAccess -TableName account -Id "12345678-1234-1234-1234-123456789012" -Principal "87654321-4321-4321-4321-210987654321"
 ```
 
 Revokes all access from the specified user for the account record. Prompts for confirmation.
 
 ### Example 2: Revoke access from a team without confirmation
 ```powershell
-PS C:\> $contactRef = New-Object Microsoft.Xrm.Sdk.EntityReference("contact", "11111111-1111-1111-1111-111111111111")
-PS C:\> $teamId = [Guid]"22222222-2222-2222-2222-222222222222"
-PS C:\> Remove-DataverseRecordAccess -Target $contactRef -Principal $teamId -IsTeam -Confirm:$false
+PS C:\> Remove-DataverseRecordAccess -TableName contact -Id "11111111-1111-1111-1111-111111111111" -Principal "22222222-2222-2222-2222-222222222222" -IsTeam -Confirm:$false
 ```
 
 Revokes all access from the specified team for the contact record without prompting for confirmation.
 
 ### Example 3: Remove access from multiple principals
 ```powershell
-PS C:\> $opportunityRef = New-Object Microsoft.Xrm.Sdk.EntityReference("opportunity", "33333333-3333-3333-3333-333333333333")
-PS C:\> $accessList = Get-DataverseRecordAccess -Target $opportunityRef
+PS C:\> $accessList = Get-DataverseRecordAccess -TableName opportunity -Id "33333333-3333-3333-3333-333333333333"
 PS C:\> $whoAmI = Get-DataverseWhoAmI
 PS C:\> $accessList | Where-Object { $_.Principal.Id -ne $whoAmI.UserId } | ForEach-Object {
->>     Remove-DataverseRecordAccess -Target $opportunityRef -Principal $_.Principal.Id -Confirm:$false
+>>     Remove-DataverseRecordAccess -TableName opportunity -Id "33333333-3333-3333-3333-333333333333" -Principal $_.Principal.Id -Confirm:$false
 >> }
 ```
 
@@ -63,10 +58,8 @@ Removes shared access from all principals except the current user.
 
 ### Example 4: Verify access was removed
 ```powershell
-PS C:\> $contactRef = New-Object Microsoft.Xrm.Sdk.EntityReference("contact", "11111111-1111-1111-1111-111111111111")
-PS C:\> $userId = [Guid]"44444444-4444-4444-4444-444444444444"
-PS C:\> Remove-DataverseRecordAccess -Target $contactRef -Principal $userId -Confirm:$false
-PS C:\> $access = Test-DataverseRecordAccess -Target $contactRef -Principal $userId
+PS C:\> Remove-DataverseRecordAccess -TableName contact -Id "11111111-1111-1111-1111-111111111111" -Principal "44444444-4444-4444-4444-444444444444" -Confirm:$false
+PS C:\> $access = Test-DataverseRecordAccess -TableName contact -Id "11111111-1111-1111-1111-111111111111" -Principal "44444444-4444-4444-4444-444444444444"
 PS C:\> Write-Host "Access after removal: $access"
 Access after removal: None
 ```
@@ -75,18 +68,33 @@ Removes access and verifies it was removed successfully.
 
 ## PARAMETERS
 
-### -Target
-The record for which to revoke access rights. Must be an EntityReference object with the entity logical name and record ID.
+### -TableName
+Logical name of the table.
 
 ```yaml
-Type: EntityReference
+Type: String
 Parameter Sets: (All)
-Aliases:
+Aliases: EntityName
 
 Required: True
 Position: 0
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Id
+Id of the record.
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
@@ -99,7 +107,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: 1
+Position: 2
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -121,7 +129,7 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 
 If not provided, uses the default connection set via `Get-DataverseConnection -SetAsDefault`.
 
@@ -153,7 +161,7 @@ Accept wildcard characters: False
 ```
 
 ### -Confirm
-Prompts you for confirmation before running the cmdlet. This is enabled by default due to the high impact of this operation.
+Prompts you for confirmation before running the cmdlet. This is enabled by default (ConfirmImpact.Medium).
 
 ```yaml
 Type: SwitchParameter
@@ -187,7 +195,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
+### System.String
+### System.Guid
 ## OUTPUTS
 
 ### None
