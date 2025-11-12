@@ -64,12 +64,14 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
             # Handle unsupported requests that FakeXrmEasy doesn't support
             # Only do this if custom interceptor didn't handle it
             
-            # Handle RetrieveUnpublishedRequest - return null entity (not found)
-            if ($request.GetType().Name -eq 'RetrieveUnpublishedRequest') {
-                return $null
-            }
+            # Handle RetrieveUnpublishedRequest - let it throw exception so cmdlets fall back
+            # FormXmlHelper and other cmdlets catch exceptions from RetrieveUnpublished
+            # and fall back to regular Retrieve. Don't intercept this - let FakeXrmEasy throw.
+            # (No handler needed - FakeXrmEasy will throw OpenSourceUnsupportedException)
             
             # Handle RetrieveUnpublishedMultipleRequest - return empty collection
+            # Cmdlets query unpublished first to get uncommitted changes, then query published
+            # Returning empty here means they won't find unpublished data and will use published queries
             if ($request.GetType().Name -eq 'RetrieveUnpublishedMultipleRequest') {
                 $response = New-Object Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse
                 $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
@@ -100,6 +102,22 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
             # Handle PublishXmlRequest - return empty response
             if ($request.GetType().Name -eq 'PublishXmlRequest') {
                 return New-Object Microsoft.Crm.Sdk.Messages.PublishXmlResponse
+            }
+            
+            # Handle UpdateEntityRequest - return empty response
+            if ($request.GetType().Name -eq 'UpdateEntityRequest') {
+                return New-Object Microsoft.Xrm.Sdk.Messages.UpdateEntityResponse
+            }
+            
+            # Handle RetrieveEntityRequest - return entity metadata from cache
+            if ($request.GetType().Name -eq 'RetrieveEntityRequest') {
+                $entityName = $request.LogicalName
+                if ($global:TestMetadataCache.ContainsKey($entityName)) {
+                    $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveEntityResponse
+                    $response.Results.Add("EntityMetadata", $global:TestMetadataCache[$entityName])
+                    return $response
+                }
+                # If entity not found, let FakeXrmEasy throw appropriate exception
             }
             
             # Handle AddAppComponentsRequest and RemoveAppComponentsRequest
@@ -117,12 +135,14 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
             
             # Handle unsupported requests that FakeXrmEasy doesn't support
             
-            # Handle RetrieveUnpublishedRequest - return null entity (not found)
-            if ($request.GetType().Name -eq 'RetrieveUnpublishedRequest') {
-                return $null
-            }
+            # Handle RetrieveUnpublishedRequest - let it throw exception so cmdlets fall back
+            # FormXmlHelper and other cmdlets catch exceptions from RetrieveUnpublished
+            # and fall back to regular Retrieve. Don't intercept this - let FakeXrmEasy throw.
+            # (No handler needed - FakeXrmEasy will throw OpenSourceUnsupportedException)
             
             # Handle RetrieveUnpublishedMultipleRequest - return empty collection
+            # Cmdlets query unpublished first to get uncommitted changes, then query published
+            # Returning empty here means they won't find unpublished data and will use published queries
             if ($request.GetType().Name -eq 'RetrieveUnpublishedMultipleRequest') {
                 $response = New-Object Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse
                 $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
@@ -153,6 +173,22 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
             # Handle PublishXmlRequest - return empty response
             if ($request.GetType().Name -eq 'PublishXmlRequest') {
                 return New-Object Microsoft.Crm.Sdk.Messages.PublishXmlResponse
+            }
+            
+            # Handle UpdateEntityRequest - return empty response
+            if ($request.GetType().Name -eq 'UpdateEntityRequest') {
+                return New-Object Microsoft.Xrm.Sdk.Messages.UpdateEntityResponse
+            }
+            
+            # Handle RetrieveEntityRequest - return entity metadata from cache
+            if ($request.GetType().Name -eq 'RetrieveEntityRequest') {
+                $entityName = $request.LogicalName
+                if ($global:TestMetadataCache.ContainsKey($entityName)) {
+                    $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveEntityResponse
+                    $response.Results.Add("EntityMetadata", $global:TestMetadataCache[$entityName])
+                    return $response
+                }
+                # If entity not found, let FakeXrmEasy throw appropriate exception
             }
             
             # Handle AddAppComponentsRequest and RemoveAppComponentsRequest

@@ -794,7 +794,7 @@ $newFetchXml = @"
        $viewId1 = Set-DataverseView -PassThru -Connection $connection `
         -Name "View 1" `
     -TableName contact `
-    -ViewType "Personal" ```
+    -ViewType "Personal" `
     -Columns @("firstname")
   
             $viewId2 = Set-DataverseView -PassThru -Connection $connection `

@@ -252,9 +252,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter IncludeSystemColumns { get; set; }
 
         /// <summary>
-        /// If specified, retrieves unpublished records instead of published ones.
+        /// If specified, retrieves unpublished records instead of including published ones.
         /// </summary>
-        [Parameter(HelpMessage = "If specified, retrieves unpublished records instead of published ones.")]
+        [Parameter(HelpMessage = "If specified, retrieves unpublished records instead of including published ones.")]
         public SwitchParameter Unpublished { get; set; }
 
         private EntityMetadataFactory entiyMetadataFactory;

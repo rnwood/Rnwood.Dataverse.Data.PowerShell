@@ -34,14 +34,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string ToolTipResourceId { get; set; }
 
         /// <summary>
-        /// Gets or sets the title/label of the entry.
+        /// Gets or sets the titles of the entry keyed by LCID.
         /// </summary>
-        public string Title { get; set; }
+        public Dictionary<int, string> Titles { get; set; }
 
         /// <summary>
-        /// Gets or sets the description of the entry.
+        /// Gets or sets the descriptions of the entry keyed by LCID.
         /// </summary>
-        public string Description { get; set; }
+        public Dictionary<int, string> Descriptions { get; set; }
 
         /// <summary>
         /// Gets or sets the icon path (for Areas and SubAreas).

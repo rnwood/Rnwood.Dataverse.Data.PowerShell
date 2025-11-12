@@ -334,7 +334,7 @@ Found a bug or have a feature request? Please open an issue on the [GitHub repos
 ### Prerequisites for Development
 
 - Visual Studio 2022 or VS Code
-- .NET SDK 6.0 or later
+- .NET SDK 8.0 or later
 - .NET Framework 4.8 Developer Pack
 - PowerShell 7+ (for scripts)
 

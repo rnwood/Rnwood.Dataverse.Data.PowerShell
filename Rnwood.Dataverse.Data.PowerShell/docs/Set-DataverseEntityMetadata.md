@@ -19,12 +19,13 @@ Set-DataverseEntityMetadata [-EntityName] <String> [-SchemaName <String>] [-Disp
  [-HasNotes] [-IsAuditEnabled] [-ChangeTrackingEnabled] [-IconVectorName <String>] [-IconLargeName <String>]
  [-IconMediumName <String>] [-IconSmallName <String>] [-PrimaryAttributeSchemaName <String>]
  [-PrimaryAttributeDisplayName <String>] [-PrimaryAttributeMaxLength <Int32>] [-PassThru] [-Publish]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-SkipIconValidation] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### ByEntityMetadata
 ```
-Set-DataverseEntityMetadata [-EntityMetadata] <EntityMetadata> [-PassThru] [-Publish]
+Set-DataverseEntityMetadata [-EntityMetadata] <EntityMetadata> [-PassThru] [-Publish] [-SkipIconValidation]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -35,7 +36,11 @@ The cmdlet supports two parameter sets:
 - **ByProperties**: Specify individual properties to create or update an entity
 - **ByEntityMetadata**: Pass a complete EntityMetadata object (retrieved from Get-DataverseEntityMetadata) to update an entity
 
-Icon properties (IconVectorName, IconLargeName, IconMediumName, IconSmallName) control the visual representation of the entity in the Dataverse UI.
+Icon properties (IconVectorName, IconLargeName, IconMediumName, IconSmallName) control the visual representation of the entity in the Dataverse UI. By default, the cmdlet validates that icon properties reference valid webresources:
+- **IconVectorName** must reference an SVG webresource (type 11)
+- **IconLargeName, IconMediumName, IconSmallName** must reference PNG (type 5), JPG (type 6), or GIF (type 7) webresources
+- The webresource must exist (including unpublished webresources)
+- Use `-SkipIconValidation` to bypass these checks
 
 When creating a new entity, the `-SchemaName` and `-PrimaryAttributeSchemaName` parameters are required. The cmdlet automatically creates a primary name attribute for the entity.
 
@@ -46,6 +51,7 @@ When updating an existing entity, only the properties you specify will be change
 - Creating entities requires System Administrator or System Customizer security role
 - The metadata cache is automatically invalidated after changes
 - Some properties cannot be changed after entity creation
+- Icon validation is performed by default but can be skipped with `-SkipIconValidation`
 
 ## EXAMPLES
 
@@ -334,6 +340,46 @@ PS C:\> Set-DataverseEntityMetadata -EntityName new_customer `
 ```
 
 Copies icon properties from one entity to another entity.
+
+### Example 21: Create entity with validated icon webresources
+```powershell
+PS C:\> # Create an entity with all icon properties that reference valid webresources
+PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
+    -SchemaName new_Product `
+    -DisplayName "Product" `
+    -DisplayCollectionName "Products" `
+    -OwnershipType UserOwned `
+    -PrimaryAttributeSchemaName new_name `
+    -PrimaryAttributeDisplayName "Product Name" `
+    -IconVectorName "new_product_svg" `
+    -IconLargeName "new_product_large.png" `
+    -IconMediumName "new_product_medium.png" `
+    -IconSmallName "new_product_small.png"
+```
+
+Creates an entity with icon validation enabled (default). The cmdlet validates that:
+- "new_product_svg" references an SVG webresource (type 11)
+- "new_product_large.png" references a PNG, JPG, or GIF webresource (type 5, 6, or 7)
+- "new_product_medium.png" references a PNG, JPG, or GIF webresource (type 5, 6, or 7)
+- "new_product_small.png" references a PNG, JPG, or GIF webresource (type 5, 6, or 7)
+
+If any webresource doesn't exist or has the wrong type, an error is thrown.
+
+### Example 22: Skip icon webresource validation
+```powershell
+PS C:\> # Create an entity without validating icon webresource existence
+PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
+    -SchemaName new_Product `
+    -DisplayName "Product" `
+    -DisplayCollectionName "Products" `
+    -OwnershipType UserOwned `
+    -PrimaryAttributeSchemaName new_name `
+    -PrimaryAttributeDisplayName "Product Name" `
+    -IconVectorName "new_product_icon" `
+    -SkipIconValidation
+```
+
+Creates an entity with icon validation disabled. The cmdlet will not check if "new_product_icon" webresource exists or has the correct type. Use this when you plan to create the webresource later or want to bypass validation for development/testing.
 
 ## PARAMETERS
 
@@ -726,6 +772,32 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SkipIconValidation
+If specified, skips validation that icon properties reference valid webresources.
+
+By default, when setting icon properties (IconVectorName, IconLargeName, IconMediumName, IconSmallName), the cmdlet validates that the specified webresource exists and has the correct type:
+- IconVectorName must reference an SVG webresource (type 11)
+- IconLargeName, IconMediumName, IconSmallName must reference PNG (type 5), JPG (type 6), or GIF (type 7) webresources
+
+Use this switch to:
+- Skip validation during development/testing
+- Set icon names before creating the corresponding webresources
+- Override validation in automated scripts where webresources may not exist yet
+
+**Note**: If validation is skipped and the webresource doesn't exist or has the wrong type, the entity may not display correctly in the Dataverse UI.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

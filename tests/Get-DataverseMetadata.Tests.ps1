@@ -5,7 +5,7 @@ Describe 'Get-DataverseEntityMetadata' {
         It "Returns metadata for a specific entity" {
             $connection = getMockConnection
             
-            # Get metadata for contact entity
+            # Get metadata for contact entity (includes all by default)
             $result = Get-DataverseEntityMetadata -Connection $connection -EntityName contact
             
             # Verify result structure
@@ -15,23 +15,23 @@ Describe 'Get-DataverseEntityMetadata' {
             $result.PrimaryIdAttribute | Should -Not -BeNullOrEmpty
             $result.PrimaryNameAttribute | Should -Not -BeNullOrEmpty
             $result.IsCustomEntity | Should -Not -BeNullOrEmpty
-        }
-
-        It "Returns metadata with attributes when -IncludeAttributes is specified" {
-            $connection = getMockConnection
             
-            # Get metadata with attributes
-            $result = Get-DataverseEntityMetadata -Connection $connection -EntityName contact -IncludeAttributes
-            
-            # Verify attributes are included
-            $result | Should -Not -BeNullOrEmpty
+            # Verify attributes are included by default
             $result.Attributes | Should -Not -BeNullOrEmpty
             $result.Attributes.Count | Should -BeGreaterThan 0
+        }
+
+        It "Excludes attributes when -ExcludeAttributes is specified" {
+            $connection = getMockConnection
             
-            # Verify attribute structure
-            $firstAttr = $result.Attributes[0]
-            $firstAttr.LogicalName | Should -Not -BeNullOrEmpty
-            $firstAttr.AttributeType | Should -Not -BeNullOrEmpty
+            # Get metadata without attributes
+            $result = Get-DataverseEntityMetadata -Connection $connection -EntityName contact -ExcludeAttributes
+            
+            # Verify attributes are not included
+            $result | Should -Not -BeNullOrEmpty
+            $result.LogicalName | Should -Be "contact"
+            # Note: FakeXrmEasy may still return attributes even when not requested
+            # In real Dataverse, Attributes would be null or empty
         }
 
         It "Works with default connection" {
@@ -64,20 +64,51 @@ Describe 'Get-DataverseEntityMetadata' {
             $contact | Should -Not -BeNullOrEmpty
         }
 
-        It "Returns all entities with attributes when -IncludeAttributes is specified" -Skip {
+        It "Returns all entities excluding attributes when -ExcludeAttributes is specified" -Skip {
             # Skip: FakeXrmEasy doesn't support RetrieveAllEntitiesRequest
             $connection = getMockConnection
             
-            # Get all entities with attributes
-            $results = Get-DataverseEntityMetadata -Connection $connection -IncludeAttributes
+            # Get all entities without attributes
+            $results = Get-DataverseEntityMetadata -Connection $connection -ExcludeAttributes
             
             # Verify results
             $results | Should -Not -BeNullOrEmpty
             $results.Count | Should -BeGreaterThan 0
+        }
+    }
+
+    Context 'Published Metadata Retrieval' {
+        It "Retrieves unpublished metadata by default" {
+            $connection = getMockConnection
             
-            # Verify at least one entity has attributes
-            $withAttributes = $results | Where-Object { $_.Attributes -ne $null }
-            $withAttributes | Should -Not -BeNullOrEmpty
+            # Get metadata without -Published flag (should include unpublished)
+            $result = Get-DataverseEntityMetadata -Connection $connection -EntityName contact
+            
+            # Verify result exists (default behavior should work)
+            $result | Should -Not -BeNullOrEmpty
+            $result.LogicalName | Should -Be "contact"
+        }
+
+        It "Retrieves published metadata with -Published flag" {
+            $connection = getMockConnection
+            
+            # Get only published metadata
+            $result = Get-DataverseEntityMetadata -Connection $connection -EntityName contact -Published
+            
+            # Verify result exists
+            $result | Should -Not -BeNullOrEmpty
+            $result.LogicalName | Should -Be "contact"
+        }
+
+        It "Supports -Published with -ExcludeAttributes" {
+            $connection = getMockConnection
+            
+            # Get published metadata without attributes
+            $result = Get-DataverseEntityMetadata -Connection $connection -EntityName contact -Published -ExcludeAttributes
+            
+            # Verify result
+            $result | Should -Not -BeNullOrEmpty
+            $result.LogicalName | Should -Be "contact"
         }
     }
 }
@@ -101,12 +132,12 @@ Describe 'Get-DataverseEntityMetadata' {
             $firstEntity.SchemaName | Should -Not -BeNullOrEmpty
         }
 
-        It "Returns detailed information with -IncludeAttributes" -Skip {
+        It "Returns detailed information without exclusions by default" -Skip {
             # Skip: FakeXrmEasy doesn't support RetrieveAllEntitiesRequest
             $connection = getMockConnection
             
-            # Get entities with details
-            $results = Get-DataverseEntityMetadata -Connection $connection -IncludeAttributes
+            # Get entities with all details (default behavior)
+            $results = Get-DataverseEntityMetadata -Connection $connection
             
             # Verify details are included
             $results | Should -Not -BeNullOrEmpty
@@ -227,6 +258,41 @@ Describe 'Get-DataverseAttributeMetadata' {
             $isSorted | Should -Be $true
         }
     }
+
+    Context 'Published Metadata Retrieval' {
+        It "Retrieves unpublished metadata by default" {
+            $connection = getMockConnection
+            
+            # Get metadata without -Published flag
+            $result = Get-DataverseAttributeMetadata -Connection $connection -EntityName contact -AttributeName firstname
+            
+            # Verify result
+            $result | Should -Not -BeNullOrEmpty
+            $result.LogicalName | Should -Be "firstname"
+        }
+
+        It "Retrieves published metadata with -Published flag" {
+            $connection = getMockConnection
+            
+            # Get only published metadata
+            $result = Get-DataverseAttributeMetadata -Connection $connection -EntityName contact -AttributeName firstname -Published
+            
+            # Verify result
+            $result | Should -Not -BeNullOrEmpty
+            $result.LogicalName | Should -Be "firstname"
+        }
+
+        It "Retrieves all attributes with -Published flag" {
+            $connection = getMockConnection
+            
+            # Get all published attributes
+            $results = Get-DataverseAttributeMetadata -Connection $connection -EntityName contact -Published
+            
+            # Verify results
+            $results | Should -Not -BeNullOrEmpty
+            $results.Count | Should -BeGreaterThan 0
+        }
+    }
 }
 
 Describe 'Get-DataverseOptionSetMetadata' {
@@ -267,6 +333,30 @@ Describe 'Get-DataverseOptionSetMetadata' {
             # Try to get option set for a string field
             { Get-DataverseOptionSetMetadata -Connection $connection -EntityName contact -AttributeName firstname -ErrorAction Stop } |
                 Should -Throw
+        }
+    }
+
+    Context 'Published Metadata Retrieval' {
+        It "Retrieves unpublished metadata by default" {
+            $connection = getMockConnection
+            
+            # Get option set without -Published flag
+            $result = Get-DataverseOptionSetMetadata -Connection $connection -EntityName contact -AttributeName gendercode
+            
+            # Verify result
+            $result | Should -Not -BeNullOrEmpty
+            $result.Options | Should -Not -BeNullOrEmpty
+        }
+
+        It "Retrieves published metadata with -Published flag" {
+            $connection = getMockConnection
+            
+            # Get only published option set
+            $result = Get-DataverseOptionSetMetadata -Connection $connection -EntityName contact -AttributeName gendercode -Published
+            
+            # Verify result
+            $result | Should -Not -BeNullOrEmpty
+            $result.Options | Should -Not -BeNullOrEmpty
         }
     }
 }

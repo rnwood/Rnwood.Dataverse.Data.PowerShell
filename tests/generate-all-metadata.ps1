@@ -30,7 +30,8 @@ $entities = @(
     "connection",
     "connectionreference",
     "environmentvariabledefinition",
-    "environmentvariablevalue"
+    "environmentvariablevalue",
+    "systemform"
 )
 
 Write-Host "Will generate metadata for $($entities.Count) entities:" -ForegroundColor Yellow
@@ -94,7 +95,7 @@ if ($successCount -gt 0) {
     Write-Host ""
     Write-Host "Next steps:" -ForegroundColor Yellow
     Write-Host "  1. Run tests: Invoke-Pester -Path tests/Examples.Tests.ps1 -Output Detailed" -ForegroundColor Gray
-    Write-Host "  2. Commit files: git add tests/*.xml && git commit -m 'Add entity metadata'" -ForegroundColor Gray
+    Write-Host "  2. Commit files: git add tests/*.xml git commit -m 'Add entity metadata'" -ForegroundColor Gray
     Write-Host ""
 }
 
