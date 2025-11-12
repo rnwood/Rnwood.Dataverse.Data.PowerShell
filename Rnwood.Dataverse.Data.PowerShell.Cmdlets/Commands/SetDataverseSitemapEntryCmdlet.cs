@@ -938,6 +938,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (!string.IsNullOrEmpty(Icon))
                 element.SetAttributeValue("Icon", Icon);
 
+            // Set required attributes for Area elements
+            if (entryType == SitemapEntryType.Area)
+            {
+                element.SetAttributeValue("ShowGroups", "true");
+                element.SetAttributeValue("IntroducedVersion", "7.0.0.0");
+            }
+
+            // Set required attributes for Group elements
+            if (entryType == SitemapEntryType.Group)
+            {
+                element.SetAttributeValue("IntroducedVersion", "7.0.0.0");
+                element.SetAttributeValue("IsProfile", "false");
+            }
+
             if (entryType == SitemapEntryType.SubArea)
             {
                 if (!string.IsNullOrEmpty(Entity))
