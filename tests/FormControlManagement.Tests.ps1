@@ -2,7 +2,7 @@
 
 Describe 'Form Control Management' {
     BeforeAll {
-        $connection = getMockConnection -Entities @("systemform")
+        $connection = getMockConnection -Entities @("systemform", "contact")
         
         # Create a test form with a simple structure
         $formXml = @'

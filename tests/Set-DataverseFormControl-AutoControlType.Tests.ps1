@@ -10,7 +10,7 @@ Describe 'Set-DataverseFormControl - Automatic Control Type Determination' {
         # Create test form for contact
         $contactForm = @{
             formid = $script:FormId
-            objecttypecode = 2  # contact entity type code
+            objecttypecode = "contact"  # entity logical name
             formxml = @'
 <form showImage="true">
     <tabs>
@@ -95,7 +95,7 @@ Describe 'Set-DataverseFormControl - Automatic Control Type Determination' {
     Context 'Field Existence Validation' {
         It 'Should throw error when attribute does not exist' {
             # Try to create control for non-existent field
-            { Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "nonexistentfield" -PassThru } | Should -Throw "*not found*"
+            { Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "nonexistentfield" -PassThru } | Should -Throw "*wasn't found*"
         }
 
         It 'Should handle relationship navigation fields gracefully' {

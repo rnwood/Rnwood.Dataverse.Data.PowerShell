@@ -98,10 +98,10 @@ Describe 'Form Control Management - New Features' {
 
         It "Creates Data control type (hidden data)" {
             $result = Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -DataField "hidden_field" -ControlType "Data" -Label "Hidden Field" -PassThru
+                -DataField "fullname" -ControlType "Data" -Label "Hidden Field" -PassThru
             
             $result | Should -Not -BeNullOrEmpty
-            $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "hidden_field"
+            $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "fullname"
             $control.ClassId.ToUpper() | Should -Be "{5546E6CD-394C-4BEE-94A8-4425E17EF6C6}"
         }
     }

@@ -99,6 +99,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // Add the zero-based index of the parent column within the tab
                         sectionObj.Properties.Add(new PSNoteProperty("ColumnIndex", colInfo.Index));
 
+                        // Add CellLabelAlignment and CellLabelPosition attributes if present
+                        var cellLabelAlignment = section.Attribute("celllabelalignment")?.Value;
+                        sectionObj.Properties.Add(new PSNoteProperty("CellLabelAlignment", cellLabelAlignment));
+                        
+                        var cellLabelPosition = section.Attribute("celllabelposition")?.Value;
+                        sectionObj.Properties.Add(new PSNoteProperty("CellLabelPosition", cellLabelPosition));
+
                         WriteObject(sectionObj);
                     }
                 }
