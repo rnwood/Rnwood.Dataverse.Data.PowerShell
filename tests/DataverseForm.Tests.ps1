@@ -170,7 +170,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["formactivationstate"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(1)
             $form["formpresentation"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(0)
             $form["isdefault"] = $true
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $connection.Create($form)
             
             $result = Get-DataverseForm -Connection $connection -Entity 'contact'
@@ -195,7 +195,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["formactivationstate"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(1)
             $form["formpresentation"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(0)
             $form["isdefault"] = $true
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $connection.Create($form)
             
             $result = Get-DataverseForm -Connection $connection -Entity 'contact' -IncludeFormXml
@@ -216,7 +216,7 @@ Describe 'Dataverse Form Cmdlets' {
             $mainForm["name"] = "Main Form"
             $mainForm["objecttypecode"] = "contact"
             $mainForm["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2) # Main form
-            $mainForm["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $mainForm["formxml"] = [string]$global:testFormXml
             $connection.Create($mainForm)
             
             # Create a quick create form (should be filtered out)
@@ -225,7 +225,7 @@ Describe 'Dataverse Form Cmdlets' {
             $quickForm["name"] = "Quick Create Form"
             $quickForm["objecttypecode"] = "contact"
             $quickForm["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(7) # Quick Create form
-            $quickForm["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $quickForm["formxml"] = [string]$global:testFormXml
             $connection.Create($quickForm)
             
             $result = Get-DataverseForm -Connection $connection -Entity 'contact' -FormType Main
@@ -244,7 +244,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["name"] = "Test Form"
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $connection.Create($form)
 
             $result = Get-DataverseForm -Connection $connection -Id $formId
@@ -261,7 +261,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -280,7 +280,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -298,7 +298,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -318,7 +318,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -335,7 +335,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -353,7 +353,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -371,7 +371,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -389,7 +389,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -409,7 +409,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -426,7 +426,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -444,7 +444,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -462,7 +462,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -482,7 +482,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -496,7 +496,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -510,7 +510,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -525,7 +525,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -539,7 +539,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -553,7 +553,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -567,7 +567,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -583,7 +583,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -597,7 +597,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -611,7 +611,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -625,7 +625,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -641,7 +641,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -655,7 +655,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -669,7 +669,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -685,7 +685,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -699,7 +699,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -713,7 +713,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -729,7 +729,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -743,7 +743,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -759,7 +759,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -773,7 +773,7 @@ Describe 'Dataverse Form Cmdlets' {
             $formId = [System.Guid]::NewGuid()
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -790,7 +790,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
             $form["name"] = "Contact Information"
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -805,7 +805,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
             $form["name"] = "Contact Information"
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
@@ -822,7 +822,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $form["formid"] = $form.Id = $formId
             $form["name"] = "Contact Information"
-            $form["formxml"] = [string]("<SystemForm>" + $global:testFormXml + "</SystemForm>")
+            $form["formxml"] = [string]$global:testFormXml
             $form["objecttypecode"] = "contact"
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
