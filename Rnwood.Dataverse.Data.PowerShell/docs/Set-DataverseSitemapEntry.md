@@ -63,44 +63,64 @@ Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapIn
 ## DESCRIPTION
 The Set-DataverseSitemapEntry cmdlet creates or updates navigation entries (Areas, Groups, SubAreas) in a Dataverse sitemap. It automatically detects whether an entry exists and either creates a new entry or updates the existing one. The cmdlet supports precise positioning control when creating entries.
 
+**Multilingual Support:** Use the `-Titles` and `-Descriptions` parameters to specify multilingual labels keyed by LCID (Locale ID). Common LCIDs include:
+- 1033: English (US)
+- 1036: French
+- 1031: German
+- 1034: Spanish
+- 1041: Japanese
+
 ## EXAMPLES
 
-### Example 1: Create a new Area
+### Example 1: Create a new Area with multilingual titles
 ```powershell
-PS C:\> Set-DataverseSitemapEntry -SitemapName "MySitemap" -EntryType Area -EntryId "SalesArea" -Title "Sales" -Icon "/_imgs/area/sales_24x24.gif"
+PS C:\> $titles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+PS C:\> $titles.Add(1033, "Sales")
+PS C:\> $titles.Add(1036, "Ventes")
+PS C:\> Set-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -Area -EntryId "SalesArea" -Titles $titles -Icon "/_imgs/area/sales_24x24.gif"
 ```
 
-Creates a new Area entry in the sitemap.
+Creates a new Area entry with titles in English and French.
 
-### Example 2: Create a Group with position control
+### Example 2: Create a Group with descriptions
 ```powershell
-PS C:\> Set-DataverseSitemapEntry -SitemapName "MySitemap" -EntryType Group -EntryId "LeadsGroup" -ParentAreaId "SalesArea" -Title "Leads" -Index 0
+PS C:\> $titles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+PS C:\> $titles.Add(1033, "Leads")
+PS C:\> $descriptions = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+PS C:\> $descriptions.Add(1033, "Manage potential customers")
+PS C:\> Set-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -Group -EntryId "LeadsGroup" -ParentAreaId "SalesArea" -Titles $titles -Descriptions $descriptions -Index 0
 ```
 
-Creates a new Group at the first position (index 0) within the SalesArea.
+Creates a new Group at the first position (index 0) within the SalesArea with titles and descriptions.
 
-### Example 3: Create a SubArea before another entry
+### Example 3: Create a SubArea with entity reference
 ```powershell
-PS C:\> Set-DataverseSitemapEntry -SitemapName "MySitemap" -EntryType SubArea -EntryId "AccountsSubarea" `
+PS C:\> $titles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+PS C:\> $titles.Add(1033, "Accounts")
+PS C:\> Set-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -SubArea -EntryId "AccountsSubarea" `
     -ParentAreaId "SalesArea" -ParentGroupId "CustomersGroup" `
-    -Entity "account" -Title "Accounts" -Before "ContactsSubarea"
+    -Entity "account" -Titles $titles -Before "ContactsSubarea"
 ```
 
 Creates a new SubArea positioned before the "ContactsSubarea" entry.
 
-### Example 4: Update an existing entry
+### Example 4: Add French translation to existing entry
 ```powershell
-PS C:\> Set-DataverseSitemapEntry -SitemapName "MySitemap" -EntryType Area -EntryId "SalesArea" -Title "Sales & Marketing"
+PS C:\> $frenchTitles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+PS C:\> $frenchTitles.Add(1036, "Ventes et Marketing")
+PS C:\> Set-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -Area -EntryId "SalesArea" -Titles $frenchTitles
 ```
 
-Updates the title of an existing Area entry.
+Adds a French title to an existing Area entry (additively - English title is preserved).
 
-### Example 5: Use pipeline to update entry
+### Example 5: Remove a language translation
 ```powershell
-PS C:\> Get-DataverseSitemapEntry -SitemapName "MySitemap" -EntryId "SalesArea" | Set-DataverseSitemapEntry -Title "Updated Sales"
+PS C:\> $removeFrench = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+PS C:\> $removeFrench.Add(1036, $null)
+PS C:\> Set-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -Area -EntryId "SalesArea" -Titles $removeFrench
 ```
 
-Retrieves an entry and updates its title using the pipeline.
+Removes the French translation from an Area entry (setting a language to $null removes it).
 
 ## PARAMETERS
 
@@ -181,21 +201,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Description
-The new description of the entry.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -DescriptionResourceId
 The resource ID for localized descriptions.
 
@@ -212,7 +217,9 @@ Accept wildcard characters: False
 ```
 
 ### -Descriptions
-The descriptions of the entry as a dictionary keyed by LCID. Null values for a specific LCID will remove that LCID's description.
+The descriptions of the entry as a dictionary keyed by LCID (Locale ID). Null values for a specific LCID will remove that LCID's description. Updates are additive - existing LCIDs are preserved unless explicitly set to null.
+
+Common LCIDs: 1033 (English), 1036 (French), 1031 (German), 1034 (Spanish), 1041 (Japanese)
 
 ```yaml
 Type: System.Collections.Generic.Dictionary`2[System.Int32,System.String]
@@ -524,23 +531,10 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Title
-The new title/label of the entry.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Titles
-The titles of the entry as a dictionary keyed by LCID. Null values for a specific LCID will remove that LCID's title.
+The titles of the entry as a dictionary keyed by LCID (Locale ID). Null values for a specific LCID will remove that LCID's title. Updates are additive - existing LCIDs are preserved unless explicitly set to null.
+
+Common LCIDs: 1033 (English), 1036 (French), 1031 (German), 1034 (Spanish), 1041 (Japanese)
 
 ```yaml
 Type: System.Collections.Generic.Dictionary`2[System.Int32,System.String]
