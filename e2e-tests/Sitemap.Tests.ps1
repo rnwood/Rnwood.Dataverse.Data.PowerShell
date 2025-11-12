@@ -110,7 +110,12 @@ Describe "Sitemap Manipulation" {
                 # --- TEST 4: Update the sitemap ---
                 Write-Host "`nTest 4: Updating sitemap..."
                 $updatedName = "Updated $sitemapName"
-                Set-DataverseSitemap -Connection $connection -Id $sitemapId -Name $updatedName -Confirm:$false
+                
+                # Fetch current sitemap to get the XML
+                $currentSitemap = Get-DataverseSitemap -Connection $connection -Id $sitemapId
+                
+                # Update with both name and XML to avoid validation issues
+                Set-DataverseSitemap -Connection $connection -Id $sitemapId -Name $updatedName -SitemapXml $currentSitemap.SitemapXml -Confirm:$false
                 
                 $updatedSitemap = Get-DataverseSitemap -Connection $connection -Id $sitemapId
                 if ($updatedSitemap.Name -ne $updatedName) {
