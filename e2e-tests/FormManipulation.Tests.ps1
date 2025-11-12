@@ -258,12 +258,12 @@ Describe "Form Manipulation E2E Tests" {
                     -SectionName "TestSection" `
                     -ControlId "name" `
                     -DataField "name" `
-                    -ControlType Text `
+                    -ControlType Standard `
                     -Label "Account Name" `
                     -Required `
                     -Confirm:$false
                 
-                Write-Host "  Created control: name (Text, Required)"
+                Write-Host "  Created control: name (Standard, Required)"
                 
                 # Create a lookup control
                 Write-Host "  Creating lookup control for 'primarycontactid' field..."
@@ -489,7 +489,7 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "  - Published form immediately after creation"
                 Write-Host "  - Created and updated tabs with multi-column layouts"
                 Write-Host "  - Created multiple sections within tabs"
-                Write-Host "  - Created controls of different types (Text, Lookup, Email)"
+                Write-Host "  - Created controls of different types (Standard, Lookup, Email)"
                 Write-Host "  - Updated control properties"
                 Write-Host "  - Tested publishing form after modifications"
                 Write-Host "  - Successfully removed controls, sections, tabs"

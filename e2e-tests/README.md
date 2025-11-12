@@ -60,7 +60,7 @@ Comprehensive form manipulation test that exercises all form-related cmdlets:
 - Section creation and removal (Set-DataverseFormSection, Get-DataverseFormSection, Remove-DataverseFormSection)
 - Control creation, updates, and removal (Set-DataverseFormControl, Get-DataverseFormControl, Remove-DataverseFormControl)
 - Multi-column tab layouts (OneColumn, TwoColumns, ThreeColumns)
-- Different control types (Text, Lookup, Email)
+- Different control types (Standard, Lookup, Email)
 - Control properties (Required, Disabled)
 
 **Features:**
