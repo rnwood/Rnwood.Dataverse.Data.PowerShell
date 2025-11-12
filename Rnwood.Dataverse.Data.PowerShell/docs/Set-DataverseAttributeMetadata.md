@@ -737,6 +737,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Publish
+If specified, publishes the attribute after creating or updating
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -RequiredLevel
 Required level for the attribute that controls whether the field is required.
 
@@ -863,21 +878,6 @@ Accept wildcard characters: False
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Publish
-If specified, publishes the attribute after creating or updating
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
 
 Required: False
 Position: Named
