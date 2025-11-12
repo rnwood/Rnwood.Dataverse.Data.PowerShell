@@ -34,8 +34,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets whether to retrieve unpublished sitemaps instead of the default published ones.
         /// </summary>
-        [Parameter(HelpMessage = "Allows unpublished records to be retrieved instead of the default published")]
-        public SwitchParameter Unpublished { get; set; }
+        [Parameter(HelpMessage = "Allows published records to be retrieved instead of the default published")]
+        public SwitchParameter Published { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -82,7 +82,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Execute query with paging
-            var sitemaps = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, Unpublished.IsPresent).ToList();
+            var sitemaps = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose).ToList();
+
+            if (!Published.IsPresent)
+            {
+                sitemaps.AddRange(QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, true));
+            }
 
             WriteVerbose($"Found {sitemaps.Count} sitemap(s)");
 
