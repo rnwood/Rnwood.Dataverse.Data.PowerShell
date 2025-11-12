@@ -52,7 +52,9 @@ General module functionality tests including:
 Comprehensive form manipulation test that exercises all form-related cmdlets:
 
 **Test Coverage:**
-- Form creation and retrieval (Set-DataverseForm, Get-DataverseForm)
+- Form creation with publishing (Set-DataverseForm with -Publish flag)
+- Form retrieval and verification (Get-DataverseForm)
+- Publishing after modifications (Set-DataverseForm -Publish on existing form)
 - Tab creation, updates, and removal (Set-DataverseFormTab, Get-DataverseFormTab, Remove-DataverseFormTab)
 - Section creation and removal (Set-DataverseFormSection, Get-DataverseFormSection, Remove-DataverseFormSection)
 - Control creation, updates, and removal (Set-DataverseFormControl, Get-DataverseFormControl, Remove-DataverseFormControl)

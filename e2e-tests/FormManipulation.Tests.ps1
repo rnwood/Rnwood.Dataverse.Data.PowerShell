@@ -63,10 +63,10 @@ Describe "Form Manipulation E2E Tests" {
                 }
                 
                 # ============================================================
-                # STEP 1: CREATE FORM
+                # STEP 1: CREATE FORM WITH PUBLISH
                 # ============================================================
                 Write-Host ""
-                Write-Host "Step 1: Creating new form..."
+                Write-Host "Step 1: Creating and publishing new form..."
                 
                 $formId = Set-DataverseForm -Connection $connection `
                     -Entity $entityName `
@@ -74,15 +74,16 @@ Describe "Form Manipulation E2E Tests" {
                     -FormType Main `
                     -Description "E2E test form for comprehensive feature testing - Run $testRunId" `
                     -IsActive `
+                    -Publish `
                     -PassThru
                 
                 if (-not $formId) {
                     throw "Failed to create form - no form ID returned"
                 }
                 
-                Write-Host "  Created form with ID: $formId"
+                Write-Host "  Created and published form with ID: $formId"
                 
-                # Verify form was created
+                # Verify form was created and published
                 $createdForm = Get-DataverseForm -Connection $connection -Id $formId
                 if (-not $createdForm) {
                     throw "Failed to retrieve created form"
@@ -92,7 +93,7 @@ Describe "Form Manipulation E2E Tests" {
                     throw "Form name mismatch. Expected: $formName, Got: $($createdForm.name)"
                 }
                 
-                Write-Host "  Verified: Form created successfully with correct properties"
+                Write-Host "  Verified: Form created and published successfully with correct properties"
                 
                 # ============================================================
                 # STEP 2: GET FORM AND VERIFY INITIAL STRUCTURE
@@ -329,6 +330,32 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "  Verified: Control properties updated"
                 
                 # ============================================================
+                # STEP 6.5: TEST PUBLISHING AFTER MODIFICATIONS
+                # ============================================================
+                Write-Host ""
+                Write-Host "Step 6.5: Testing form publish after modifications..."
+                
+                # Update the form with publish flag
+                Set-DataverseForm -Connection $connection `
+                    -Id $formId `
+                    -Publish `
+                    -Confirm:$false
+                
+                Write-Host "  Published form after modifications"
+                
+                # Verify the form can still be retrieved after publish
+                $publishedForm = Get-DataverseForm -Connection $connection -Id $formId
+                if (-not $publishedForm) {
+                    throw "Failed to retrieve form after publish"
+                }
+                
+                if (-not $publishedForm.formxml) {
+                    throw "Form XML is empty after publish"
+                }
+                
+                Write-Host "  Verified: Form published successfully and formxml is available"
+                
+                # ============================================================
                 # STEP 7: REMOVE CONTROL
                 # ============================================================
                 Write-Host ""
@@ -437,11 +464,12 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "=========================================="
                 Write-Host ""
                 Write-Host "Summary:"
-                Write-Host "  - Created form with unique name"
+                Write-Host "  - Created and published form with unique name"
                 Write-Host "  - Created and updated tabs with multi-column layouts"
                 Write-Host "  - Created multiple sections within tabs"
                 Write-Host "  - Created controls of different types (Text, Lookup, Email)"
                 Write-Host "  - Updated control properties"
+                Write-Host "  - Tested publishing form after modifications"
                 Write-Host "  - Successfully removed controls, sections, tabs"
                 Write-Host "  - Cleaned up test form"
                 Write-Host "  - Handled cleanup of leftover test forms from previous runs"
