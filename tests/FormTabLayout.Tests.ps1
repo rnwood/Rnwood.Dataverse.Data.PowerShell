@@ -2,7 +2,7 @@
 
 Describe 'FormTab Layout Management' {
     BeforeAll {
-        $connection = getMockConnection -Entities @("systemform")
+        $connection = getMockConnection -Entities @("systemform", "contact")
         
         # Create a test form with a simple tab structure
         $formXml = @'
@@ -53,8 +53,8 @@ Describe 'FormTab Layout Management' {
             $tab | Should -Not -BeNullOrEmpty
             $tab.Layout | Should -Be "OneColumn"
             $tab.Column1Width | Should -Be 100
-            $tab | Should -Not -HaveProperty "Column2Width"
-            $tab | Should -Not -HaveProperty "Column3Width"
+            $tab.PSObject.Properties.Name | Should -Not -Contain "Column2Width"
+            $tab.PSObject.Properties.Name | Should -Not -Contain "Column3Width"
         }
     }
 
