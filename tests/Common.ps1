@@ -64,18 +64,11 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
             # Handle unsupported requests that FakeXrmEasy doesn't support
             # Only do this if custom interceptor didn't handle it
             
-            # Handle RetrieveUnpublishedRequest - return null entity (not found)
-            if ($request.GetType().Name -eq 'RetrieveUnpublishedRequest') {
-                return $null
-            }
+            # Handle RetrieveUnpublishedRequest - let it fall through to FakeXrmEasy
+            # which will throw OpenSourceUnsupportedException
+            # FormXmlHelper will catch this and fall back to regular Retrieve
+            # (Don't return anything - let FakeXrmEasy handle it and throw its own exception)
             
-            # Handle RetrieveUnpublishedMultipleRequest - return empty collection
-            if ($request.GetType().Name -eq 'RetrieveUnpublishedMultipleRequest') {
-                $response = New-Object Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse
-                $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
-                $response.Results.Add("EntityCollection", $entityCollection)
-                return $response
-            }
             
             # Handle ValidateAppRequest - return success response
             if ($request.GetType().Name -eq 'ValidateAppRequest') {
@@ -117,18 +110,11 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
             
             # Handle unsupported requests that FakeXrmEasy doesn't support
             
-            # Handle RetrieveUnpublishedRequest - return null entity (not found)
-            if ($request.GetType().Name -eq 'RetrieveUnpublishedRequest') {
-                return $null
-            }
+            # Handle RetrieveUnpublishedRequest - let it fall through to FakeXrmEasy
+            # which will throw OpenSourceUnsupportedException
+            # FormXmlHelper will catch this and fall back to regular Retrieve
+            # (Don't return anything - let FakeXrmEasy handle it and throw its own exception)
             
-            # Handle RetrieveUnpublishedMultipleRequest - return empty collection
-            if ($request.GetType().Name -eq 'RetrieveUnpublishedMultipleRequest') {
-                $response = New-Object Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse
-                $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
-                $response.Results.Add("EntityCollection", $entityCollection)
-                return $response
-            }
             
             # Handle ValidateAppRequest - return success response
             if ($request.GetType().Name -eq 'ValidateAppRequest') {
