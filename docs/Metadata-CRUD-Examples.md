@@ -26,6 +26,7 @@
     - [Clone Entity Structure](#clone-entity-structure)
     - [Audit Metadata Changes](#audit-metadata-changes)
   - [Notes](#notes)
+    - [Lookup Attribute Notes](#lookup-attribute-notes)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
