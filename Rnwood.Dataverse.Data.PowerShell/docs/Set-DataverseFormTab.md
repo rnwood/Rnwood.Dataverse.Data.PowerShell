@@ -14,7 +14,7 @@ Creates or updates a tab on a Dataverse form with support for column layouts.
 
 ```
 Set-DataverseFormTab -FormId <Guid> [-TabId <String>] [-Name <String>] [-Label <String>]
- [-LanguageCode <Int32>] [-Expanded] [-Visible] [-ShowLabel] [-VerticalLayout] [-Layout <String>]
+ [-LanguageCode <Int32>] [-Expanded] [-Hidden] [-ShowLabel] [-VerticalLayout] [-Layout <String>]
  [-Column1Width <Int32>] [-Column2Width <Int32>] [-Column3Width <Int32>] [-Index <Int32>]
  [-InsertBefore <String>] [-InsertAfter <String>] [-PassThru] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
@@ -203,6 +203,21 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
+### -Hidden
+Whether the tab is hidden
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Index
 Zero-based index position to insert the tab. Used only when creating new tabs.
 
@@ -369,21 +384,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Visible
-Whether the tab is visible
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -WhatIf
 Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
@@ -420,11 +420,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
-
 ## OUTPUTS
 
 ### System.String
-
 ## NOTES
 
 **Column Layout Management:**

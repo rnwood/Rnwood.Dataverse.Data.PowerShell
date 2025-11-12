@@ -151,7 +151,7 @@ The unique name of the sitemap to retrieve.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named
@@ -160,13 +160,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Unpublished
-Allows unpublished records to be retrieved instead of the default published
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: SwitchParameter
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases:
+Aliases: proga
 
 Required: False
 Position: Named
