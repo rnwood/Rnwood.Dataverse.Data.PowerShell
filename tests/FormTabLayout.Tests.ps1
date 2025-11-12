@@ -52,7 +52,7 @@ Describe 'FormTab Layout Management' {
             
             $tab | Should -Not -BeNullOrEmpty
             $tab.Layout | Should -Be "OneColumn"
-            $tab.Column1Width | Should -Be "100%"
+            $tab.Column1Width | Should -Be 100
             $tab | Should -Not -HaveProperty "Column2Width"
             $tab | Should -Not -HaveProperty "Column3Width"
         }

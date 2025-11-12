@@ -2,6 +2,8 @@ using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Sdk.Messages;
+using Microsoft.Xrm.Sdk.Metadata;
 using Rnwood.Dataverse.Data.PowerShell.Model;
 using System;
 using System.Linq;
@@ -57,10 +59,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         /// <summary>
         /// Gets or sets the control type.
+        /// If not specified, will be automatically determined based on the attribute metadata.
         /// </summary>
-        [Parameter(HelpMessage = "Control type (Standard, Lookup, OptionSet, DateTime, Boolean, Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch, Notes, Email, Memo, Money, Data)")]
+        [Parameter(HelpMessage = "Control type (Standard, Lookup, OptionSet, DateTime, Boolean, Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch, Notes, Email, Memo, Money, Data). If not specified, will be automatically determined based on attribute metadata.")]
         [ValidateSet("Standard", "Lookup", "OptionSet", "DateTime", "Boolean", "Subgrid", "WebResource", "QuickForm", "Spacer", "IFrame", "Timer", "KBSearch", "Notes", "Email", "Memo", "Money", "Data")]
-        public string ControlType { get; set; } = "Standard";
+        public string ControlType { get; set; }
 
         /// <summary>
         /// Gets or sets the label for the control.
@@ -164,6 +167,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "Whether the control is hidden")]
         public SwitchParameter Hidden { get; set; }
 
+        private string _entityName;
+
         /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
@@ -186,9 +191,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 throw new ArgumentException("SectionName is required for non-header controls.");
             }
 
-            // Retrieve the form
+            // Retrieve the form and determine entity name
             Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml", "objecttypecode"));
             var (doc, systemForm) = FormXmlHelper.ParseFormXml(form);
+
+            // Get the entity name for metadata lookups
+            _entityName = (string) form["objecttypecode"];
 
             XElement targetSection;
             XElement targetTab;
@@ -257,6 +265,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (ParameterSetName == "RawXml")
             {
+                WriteVerbose("DEBUG: Using RawXml parameter set");
                 // Parse the raw XML
                 try
                 {
@@ -342,6 +351,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             else
             {
+                // Standard parameter set - determine control type if not provided and validate metadata
+                string finalControlType = DetermineAndValidateControlType();
+
                 // Determine control ID and check if exists
                 if (!string.IsNullOrEmpty(ControlId))
                 {
@@ -390,11 +402,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
 
-                // For new controls, we'll use the default ControlType if not specified
-                // (ControlType has a default value of "Standard")
-
                 if (!isUpdate)
                 {
+                    WriteVerbose("DEBUG: Creating new control");
                     // Create new control
                     controlId = !string.IsNullOrEmpty(ControlId) ? ControlId : Guid.NewGuid().ToString();
                     control = new XElement("control");
@@ -403,6 +413,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 else
                 {
+                    WriteVerbose("DEBUG: Updating existing control");
                     // For update, if position specified, move it
                     if (Row.HasValue && Column.HasValue)
                     {
@@ -417,129 +428,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         cell = existingCell;
                     }
                 }
-            }
 
-            // Update control attributes (only for non-RawXml parameter sets)
-            if (ParameterSetName != "RawXml")
-            {
-                control.SetAttributeValue("id", controlId);
-                control.SetAttributeValue("datafieldname", DataField);
-                
-                if (MyInvocation.BoundParameters.ContainsKey(nameof(ControlType)))
-                {
-                    control.SetAttributeValue("classid", GetClassId(ControlType));
-                }
-
-                if (MyInvocation.BoundParameters.ContainsKey(nameof(Disabled)))
-                {
-                    if (Disabled.IsPresent)
-                    {
-                        control.SetAttributeValue("disabled", "true");
-                    }
-                    else
-                    {
-                        control.SetAttributeValue("disabled", null);
-                    }
-                }
-
-                if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
-                {
-                    if (!Visible.IsPresent)
-                    {
-                        control.SetAttributeValue("visible", "false");
-                    }
-                    else
-                    {
-                        control.SetAttributeValue("visible", null);
-                    }
-                }
-
-                if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
-                {
-                    if (Hidden.IsPresent)
-                    {
-                        control.SetAttributeValue("visible", "false");
-                    }
-                    else
-                    {
-                        control.SetAttributeValue("visible", null);
-                    }
-                }
-
-                if (MyInvocation.BoundParameters.ContainsKey(nameof(ShowLabel)))
-                {
-                    if (!ShowLabel.IsPresent)
-                    {
-                        control.SetAttributeValue("showlabel", "false");
-                    }
-                    else
-                    {
-                        control.SetAttributeValue("showlabel", null);
-                    }
-                }
-
-                if (MyInvocation.BoundParameters.ContainsKey(nameof(IsRequired)))
-                {
-                    if (IsRequired.IsPresent)
-                    {
-                        control.SetAttributeValue("isrequired", "true");
-                    }
-                    else
-                    {
-                        control.SetAttributeValue("isrequired", null);
-                    }
-                }
-
-                // Update cell attributes
-                if (ColSpan.HasValue)
-                {
-                    cell.SetAttributeValue("colspan", ColSpan.Value);
-                }
-
-                if (RowSpan.HasValue)
-                {
-                    cell.SetAttributeValue("rowspan", RowSpan.Value);
-                }
-
-                // Update or add labels
-                if (!string.IsNullOrEmpty(Label))
-                {
-                    XElement labelsElement = control.Element("labels");
-                    if (labelsElement == null)
-                    {
-                        labelsElement = new XElement("labels");
-                        control.Add(labelsElement);
-                    }
-                    else
-                    {
-                        labelsElement.RemoveAll();
-                    }
-                    
-                    labelsElement.Add(new XElement("label",
-                        new XAttribute("description", Label),
-                        new XAttribute("languagecode", LanguageCode)
-                    ));
-                }
-
-                // Add parameters for special controls
-                if (Parameters != null && Parameters.Count > 0)
-                {
-                    XElement paramsElement = control.Element("parameters");
-                    if (paramsElement == null)
-                    {
-                        paramsElement = new XElement("parameters");
-                        control.Add(paramsElement);
-                    }
-                    else
-                    {
-                        paramsElement.RemoveAll();
-                    }
-
-                    foreach (System.Collections.DictionaryEntry param in Parameters)
-                    {
-                        paramsElement.Add(new XElement(param.Key.ToString(), param.Value?.ToString()));
-                    }
-                }
+                WriteVerbose("DEBUG: About to call UpdateControlAttributes");
+                // Update control attributes with determined control type
+                UpdateControlAttributes(control, finalControlType, controlId, cell);
+                WriteVerbose("DEBUG: UpdateControlAttributes completed");
             }
 
             // Set cell ID
@@ -576,9 +469,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             string controlDescriptor = isUpdate ? $"control '{ControlId}'" : $"control '{DataField}'";
             if (!ShouldProcess($"form '{FormId}', section '{SectionName}'", $"{action} {controlDescriptor}"))
             {
+                WriteVerbose("DEBUG: ShouldProcess returned false, returning early");
                 return;
             }
 
+            WriteVerbose("DEBUG: About to update form");
             // Update the form
             FormXmlHelper.UpdateFormXml(Connection, FormId, doc);
 
@@ -588,7 +483,415 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteObject(controlId);
             }
 
-            WriteVerbose($"{action}d {controlDescriptor} (ID: {controlId}) in form '{FormId}'");
+            WriteVerbose($"TEMP DEBUG: {action}d {controlDescriptor} (ID: {controlId}) in form '{FormId}' - UpdateControlAttributes was called: {(string.IsNullOrEmpty(control?.Attribute("classid")?.Value) ? "NO" : "YES")}");
+            WriteVerbose("DEBUG: ProcessRecord completed");
+        }
+
+        /// <summary>
+        /// Determines the appropriate control type based on attribute metadata if not specified, and validates that the metadata exists.
+        /// </summary>
+        private string DetermineAndValidateControlType()
+        {
+            if (string.IsNullOrEmpty(DataField))
+            {
+                throw new ArgumentException("DataField is required for standard controls");
+            }
+
+            // First check if this is a virtual/computed field or relationship
+            if (DataField.Contains('.'))
+            {
+                // This might be a relationship navigation (e.g., "primarycontactid.fullname")
+                return ValidateAndDetermineRelationshipControlType();
+            }
+
+            // Retrieve attribute metadata using unpublished metadata
+            AttributeMetadata attributeMetadata = GetAttributeMetadata(DataField);
+
+            if (attributeMetadata == null)
+            {
+                // Maybe it's a relationship field, try to find it
+                var relationshipControlType = TryDetermineRelationshipControlType(DataField);
+                if (relationshipControlType != null)
+                {
+                    return relationshipControlType;
+                }
+
+                throw new InvalidOperationException($"Attribute or relationship '{DataField}' not found in entity '{_entityName}'. Please verify the field exists and try again.");
+            }
+
+            // If ControlType is specified, validate it's appropriate for the attribute type
+            if (!string.IsNullOrEmpty(ControlType))
+            {
+                ValidateControlTypeForAttribute(ControlType, attributeMetadata);
+                return ControlType;
+            }
+
+            // Auto-determine control type based on attribute metadata
+            return DetermineControlTypeFromAttribute(attributeMetadata);
+        }
+
+        /// <summary>
+        /// Gets attribute metadata using unpublished metadata.
+        /// </summary>
+        private AttributeMetadata GetAttributeMetadata(string attributeName)
+        {
+            try
+            {
+                var request = new RetrieveAttributeRequest
+                {
+                    EntityLogicalName = _entityName,
+                    LogicalName = attributeName,
+                    RetrieveAsIfPublished = false  // Use unpublished metadata
+                };
+
+                var response = (RetrieveAttributeResponse)Connection.Execute(request);
+                return response.AttributeMetadata;
+            }
+            catch (FaultException<OrganizationServiceFault> ex)
+            {
+                if (QueryHelpers.IsNotFoundException(ex))
+                {
+                    return null;
+                }
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Validates and determines control type for relationship navigation fields.
+        /// </summary>
+        private string ValidateAndDetermineRelationshipControlType()
+        {
+            // For relationship navigation fields (e.g., "primarycontactid.fullname"),
+            // we'll default to "Standard" as they're typically display-only
+            WriteVerbose($"DataField '{DataField}' appears to be a relationship navigation field. Using Standard control type.");
+            return ControlType ?? "Standard";
+        }
+
+        /// <summary>
+        /// Tries to determine if DataField is a relationship field (lookup) and return appropriate control type.
+        /// </summary>
+        private string TryDetermineRelationshipControlType(string fieldName)
+        {
+            try
+            {
+                // Get entity metadata with relationships
+                var request = new RetrieveEntityRequest
+                {
+                    LogicalName = _entityName,
+                    EntityFilters = EntityFilters.Relationships,
+                    RetrieveAsIfPublished = false
+                };
+
+                var response = (RetrieveEntityResponse)Connection.Execute(request);
+                var entityMetadata = response.EntityMetadata;
+
+                // Check if this field name matches a lookup attribute from relationships
+                var relationship = entityMetadata.ManyToOneRelationships
+                    .FirstOrDefault(r => r.ReferencingAttribute == fieldName);
+
+                if (relationship != null)
+                {
+                    WriteVerbose($"Field '{fieldName}' identified as lookup relationship to '{relationship.ReferencedEntity}'");
+                    return ControlType ?? "Lookup";
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                WriteVerbose($"Failed to check relationship metadata: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Validates that the specified control type is appropriate for the attribute type.
+        /// </summary>
+        private void ValidateControlTypeForAttribute(string controlType, AttributeMetadata attributeMetadata)
+        {
+            string attributeTypeName = attributeMetadata.AttributeType?.ToString() ?? "Unknown";
+            
+            // Define valid control types for each attribute type
+            var validControlTypes = GetValidControlTypesForAttribute(attributeMetadata);
+            
+            if (!validControlTypes.Contains(controlType, StringComparer.OrdinalIgnoreCase))
+            {
+                var validTypesString = string.Join(", ", validControlTypes);
+                WriteWarning($"Control type '{controlType}' may not be appropriate for attribute type '{attributeTypeName}'. " +
+                           $"Recommended control types: {validTypesString}");
+            }
+        }
+
+        /// <summary>
+        /// Determines the appropriate control type based on attribute metadata.
+        /// </summary>
+        private string DetermineControlTypeFromAttribute(AttributeMetadata attributeMetadata)
+        {
+            WriteVerbose($"Auto-determining control type for attribute '{attributeMetadata.LogicalName}' of type '{attributeMetadata.AttributeType}'");
+
+            switch (attributeMetadata.AttributeType)
+            {
+                case AttributeTypeCode.Boolean:
+                    return "Boolean";
+
+                case AttributeTypeCode.DateTime:
+                    return "DateTime";
+
+                case AttributeTypeCode.Decimal:
+                case AttributeTypeCode.Double:
+                case AttributeTypeCode.Integer:
+                case AttributeTypeCode.BigInt:
+                    return "Standard";
+
+                case AttributeTypeCode.Money:
+                    return "Money";
+
+                case AttributeTypeCode.Memo:
+                    return "Memo";
+
+                case AttributeTypeCode.String:
+                    if (attributeMetadata is StringAttributeMetadata stringAttr)
+                    {
+                        switch (stringAttr.Format)
+                        {
+                            case Microsoft.Xrm.Sdk.Metadata.StringFormat.Email:
+                                return "Email";
+                            case Microsoft.Xrm.Sdk.Metadata.StringFormat.Url:
+                            case Microsoft.Xrm.Sdk.Metadata.StringFormat.TextArea:
+                                return "Standard";
+                            default:
+                                return "Standard";
+                        }
+                    }
+                    return "Standard";
+
+                case AttributeTypeCode.Picklist:
+                    return "OptionSet";
+
+                case AttributeTypeCode.Lookup:
+                case AttributeTypeCode.Customer:
+                case AttributeTypeCode.Owner:
+                    return "Lookup";
+
+                case AttributeTypeCode.Uniqueidentifier:
+                    return "Standard";
+
+                case AttributeTypeCode.State:
+                case AttributeTypeCode.Status:
+                    return "OptionSet";
+
+                default:
+                    // Check for MultiSelectPicklist by type name since it doesn't have a specific AttributeTypeCode
+                    if (attributeMetadata is MultiSelectPicklistAttributeMetadata)
+                    {
+                        return "OptionSet";
+                    }
+                    
+                    WriteVerbose($"Unknown attribute type '{attributeMetadata.AttributeType}', defaulting to Standard control");
+                    return "Standard";
+            }
+        }
+
+        /// <summary>
+        /// Gets the list of valid control types for the given attribute.
+        /// </summary>
+        private string[] GetValidControlTypesForAttribute(AttributeMetadata attributeMetadata)
+        {
+            switch (attributeMetadata.AttributeType)
+            {
+                case AttributeTypeCode.Boolean:
+                    return new[] { "Boolean", "Standard" };
+
+                case AttributeTypeCode.DateTime:
+                    return new[] { "DateTime", "Standard" };
+
+                case AttributeTypeCode.Decimal:
+                case AttributeTypeCode.Double:
+                case AttributeTypeCode.Integer:
+                case AttributeTypeCode.BigInt:
+                    return new[] { "Standard" };
+
+                case AttributeTypeCode.Money:
+                    return new[] { "Money", "Standard" };
+
+                case AttributeTypeCode.Memo:
+                    return new[] { "Memo", "Standard", "Notes" };
+
+                case AttributeTypeCode.String:
+                    if (attributeMetadata is StringAttributeMetadata stringAttr && 
+                        stringAttr.Format == Microsoft.Xrm.Sdk.Metadata.StringFormat.Email)
+                    {
+                        return new[] { "Email", "Standard" };
+                    }
+                    return new[] { "Standard", "Email" };
+
+                case AttributeTypeCode.Picklist:
+                case AttributeTypeCode.State:
+                case AttributeTypeCode.Status:
+                    return new[] { "OptionSet", "Standard" };
+
+                case AttributeTypeCode.Lookup:
+                case AttributeTypeCode.Customer:
+                case AttributeTypeCode.Owner:
+                    return new[] { "Lookup", "Standard" };
+
+                case AttributeTypeCode.Uniqueidentifier:
+                    return new[] { "Standard" };
+
+                default:
+                    // Check for MultiSelectPicklist by type name
+                    if (attributeMetadata is MultiSelectPicklistAttributeMetadata)
+                    {
+                        return new[] { "OptionSet", "Standard" };
+                    }
+                    
+                    return new[] { "Standard" };
+            }
+        }
+
+        /// <summary>
+        /// Updates control attributes with the determined control type.
+        /// </summary>
+        private void UpdateControlAttributes(XElement control, string finalControlType, string controlId, XElement cell)
+        {
+            WriteVerbose($"DEBUG: UpdateControlAttributes called - finalControlType='{finalControlType}', controlId='{controlId}'");
+            
+            control.SetAttributeValue("id", controlId);
+            control.SetAttributeValue("datafieldname", DataField);
+
+            // Set the class ID based on the determined control type
+            var classId = GetClassId(finalControlType);
+            WriteVerbose($"DEBUG: GetClassId returned '{classId}' for finalControlType '{finalControlType}'");
+            
+            control.SetAttributeValue("classid", classId);
+            WriteVerbose($"DEBUG: Set classid attribute, control now has classid='{control.Attribute("classid")?.Value}'");
+
+            // TEMPORARY DEBUG: Verify the classid was set
+            var actualClassId = control.Attribute("classid")?.Value;
+            if (string.IsNullOrEmpty(actualClassId))
+            {
+                throw new InvalidOperationException($"TEMP DEBUG: Failed to set classid. finalControlType='{finalControlType}', expectedClassId='{classId}'");
+            }
+            if (actualClassId != classId)
+            {
+                throw new InvalidOperationException($"TEMP DEBUG: classid mismatch. Expected='{classId}', Actual='{actualClassId}'");
+            }
+            WriteVerbose($"DEBUG: classid validation passed");
+
+            // Set other control attributes as before...
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(Disabled)))
+            {
+                if (Disabled.IsPresent)
+                {
+                    control.SetAttributeValue("disabled", "true");
+                }
+                else
+                {
+                    control.SetAttributeValue("disabled", null);
+                }
+            }
+
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
+            {
+                if (!Visible.IsPresent)
+                {
+                    control.SetAttributeValue("visible", "false");
+                }
+                else
+                {
+                    control.SetAttributeValue("visible", null);
+                }
+            }
+
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
+            {
+                if (Hidden.IsPresent)
+                {
+                    control.SetAttributeValue("visible", "false");
+                }
+                else
+                {
+                    control.SetAttributeValue("visible", null);
+                }
+            }
+
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(ShowLabel)))
+            {
+                if (!ShowLabel.IsPresent)
+                {
+                    control.SetAttributeValue("showlabel", "false");
+                }
+                else
+                {
+                    control.SetAttributeValue("showlabel", null);
+                }
+            }
+
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(IsRequired)))
+            {
+                if (IsRequired.IsPresent)
+                {
+                    control.SetAttributeValue("isrequired", "true");
+                }
+                else
+                {
+                    control.SetAttributeValue("isrequired", null);
+                }
+            }
+
+            // Update cell attributes
+            if (ColSpan.HasValue)
+            {
+                cell.SetAttributeValue("colspan", ColSpan.Value);
+            }
+
+            if (RowSpan.HasValue)
+            {
+                cell.SetAttributeValue("rowspan", RowSpan.Value);
+            }
+
+            // Update or add labels
+            if (!string.IsNullOrEmpty(Label))
+            {
+                XElement labelsElement = control.Element("labels");
+                if (labelsElement == null)
+                {
+                    labelsElement = new XElement("labels");
+                    control.Add(labelsElement);
+                }
+                else
+                {
+                    labelsElement.RemoveAll();
+                }
+                
+                labelsElement.Add(new XElement("label",
+                    new XAttribute("description", Label),
+                    new XAttribute("languagecode", LanguageCode)
+                ));
+            }
+
+            // Add parameters for special controls
+            if (Parameters != null && Parameters.Count > 0)
+            {
+                XElement paramsElement = control.Element("parameters");
+                if (paramsElement == null)
+                {
+                    paramsElement = new XElement("parameters");
+                    control.Add(paramsElement);
+                }
+                else
+                {
+                    paramsElement.RemoveAll();
+                }
+
+                foreach (System.Collections.DictionaryEntry param in Parameters)
+                {
+                    paramsElement.Add(new XElement(param.Key.ToString(), param.Value?.ToString()));
+                }
+            }
+            
+            WriteVerbose($"DEBUG: UpdateControlAttributes completed, final control XML: {control}");
         }
 
         private void PositionControl(System.Collections.Generic.List<XElement> rows, XElement rowsElement, int columnCount, ref int targetRow, ref int targetColumn, bool isUpdate, XElement existingCell, XElement control, out XElement cell)
