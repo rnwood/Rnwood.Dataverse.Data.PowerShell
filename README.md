@@ -73,6 +73,7 @@ For more advanced scenarios including view management and app module management,
 - [Querying Records](docs/core-concepts/querying.md) - Filtering, paging, sorting, linking, SQL queries
 - [Creating and Updating Records](docs/core-concepts/creating-updating.md) - Create, update, upsert operations
 - [Deleting Records](docs/core-concepts/deleting.md) - Delete operations and SQL alternatives
+- [Record Access Management](docs/core-concepts/record-access-management.md) - Test, grant, list, and revoke record-level access rights
 - [View Management](docs/core-concepts/view-management.md) - Create, update, and manage system and personal views
 - [App Module Management](docs/core-concepts/app-module-management.md) - Create, update, and manage model-driven apps
 - [Working with Metadata](docs/core-concepts/metadata.md) - Reading and managing schema (entities, attributes, relationships, option sets)
@@ -93,6 +94,12 @@ For more advanced scenarios including view management and app module management,
 - [`Get-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) — query and retrieve records
 - [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) — create, update or upsert records
 - [`Remove-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) — delete records
+
+### Record Access Management
+- [`Test-DataverseRecordAccess`](Rnwood.Dataverse.Data.PowerShell/docs/Test-DataverseRecordAccess.md) — test access rights a principal has for a record
+- [`Get-DataverseRecordAccess`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecordAccess.md) — list all principals with shared access to a record
+- [`Set-DataverseRecordAccess`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecordAccess.md) — grant or modify access rights for a principal on a record
+- [`Remove-DataverseRecordAccess`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecordAccess.md) — revoke access rights from a principal on a record
 
 ### View Management
 - [`Get-DataverseView`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseView.md) — retrieve system and personal views
