@@ -13,11 +13,11 @@ Creates or updates a tab on a Dataverse form with support for column layouts.
 ## SYNTAX
 
 ```
-Set-DataverseFormTab -FormId <Guid> [-TabId <String>] -Name <String> [-Label <String>] [-LanguageCode <Int32>]
- [-Expanded] [-Visible] [-ShowLabel] [-VerticalLayout] [-Layout <String>] [-Column1Width <Int32>]
- [-Column2Width <Int32>] [-Column3Width <Int32>] [-Index <Int32>] [-InsertBefore <String>]
- [-InsertAfter <String>] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataverseFormTab -FormId <Guid> [-TabId <String>] [-Name <String>] [-Label <String>]
+ [-LanguageCode <Int32>] [-Expanded] [-Visible] [-ShowLabel] [-VerticalLayout] [-Layout <String>]
+ [-Column1Width <Int32>] [-Column2Width <Int32>] [-Column3Width <Int32>] [-Index <Int32>]
+ [-InsertBefore <String>] [-InsertAfter <String>] [-PassThru] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -302,7 +302,7 @@ Type: String
 Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
