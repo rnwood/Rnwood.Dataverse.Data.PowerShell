@@ -220,19 +220,8 @@ Describe "Sitemap Manipulation" {
                 }
                 Write-Host "Successfully updated SubArea entry"
                 
-                # --- TEST 10: Remove SubArea entry ---
-                Write-Host "`nTest 10: Removing SubArea entry..."
-                Remove-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea -EntryId $newSubAreaId -Confirm:$false
-                
-                # Verify deletion
-                $deletedSubArea = Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea -EntryId $newSubAreaId
-                if ($deletedSubArea) {
-                    throw "SubArea entry still exists after deletion"
-                }
-                Write-Host "Successfully removed SubArea entry"
-                
-                # --- TEST 11: Publish sitemap ---
-                Write-Host "`nTest 11: Publishing sitemap..."
+                # --- TEST 10: Publish sitemap ---
+                Write-Host "`nTest 10: Publishing sitemap..."
                 Set-DataverseSitemap -Connection $connection -Id $sitemapId -Name $updatedName -Publish -Confirm:$false
                 Write-Host "Successfully published sitemap"
                 
@@ -242,6 +231,17 @@ Describe "Sitemap Manipulation" {
                     throw "Failed to retrieve published sitemap"
                 }
                 Write-Host "Verified published sitemap is retrievable"
+                
+                # --- TEST 11: Remove SubArea entry ---
+                Write-Host "`nTest 11: Removing SubArea entry..."
+                Remove-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea -EntryId $newSubAreaId -Confirm:$false
+                
+                # Verify deletion
+                $deletedSubArea = Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea -EntryId $newSubAreaId
+                if ($deletedSubArea) {
+                    throw "SubArea entry still exists after deletion"
+                }
+                Write-Host "Successfully removed SubArea entry"
                 
                 # --- CLEANUP: Remove the test sitemap ---
                 Write-Host "`nCleaning up: Removing test sitemap..."
