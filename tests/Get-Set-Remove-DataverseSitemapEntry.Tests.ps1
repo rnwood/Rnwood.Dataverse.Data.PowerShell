@@ -144,8 +144,8 @@ Describe 'Set-DataverseSitemapEntry' {
             $command.Parameters.Keys | Should -Contain 'ResourceId'
             $command.Parameters.Keys | Should -Contain 'DescriptionResourceId'
             $command.Parameters.Keys | Should -Contain 'ToolTipResourceId'
-            $command.Parameters.Keys | Should -Contain 'Title'
-            $command.Parameters.Keys | Should -Contain 'Description'
+            $command.Parameters.Keys | Should -Contain 'Titles'
+            $command.Parameters.Keys | Should -Contain 'Descriptions'
             $command.Parameters.Keys | Should -Contain 'Icon'
             $command.Parameters.Keys | Should -Contain 'Entity'
             $command.Parameters.Keys | Should -Contain 'Url'
@@ -374,8 +374,8 @@ Describe 'SitemapEntryInfo Class' {
             $properties | Should -Contain 'EntryType'
             $properties | Should -Contain 'Id'
             $properties | Should -Contain 'ResourceId'
-            $properties | Should -Contain 'Title'
-            $properties | Should -Contain 'Description'
+            $properties | Should -Contain 'Titles'
+            $properties | Should -Contain 'Descriptions'
             $properties | Should -Contain 'DescriptionResourceId'
             $properties | Should -Contain 'ToolTipResourceId'
             $properties | Should -Contain 'Icon'
@@ -567,6 +567,231 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
             $removedPrivilege = $subAreaAfter.Privileges | Where-Object { $_.Entity -eq "account" -and $_.Privilege -eq "Delete" }
             $removedPrivilege | Should -BeNullOrEmpty
             $subAreaAfter.Privileges.Count | Should -Be ($initialCount - 1)
+        }
+    }
+}
+
+Describe 'Sitemap Titles and Descriptions with LCID' {
+    Context 'Parsing Titles and Descriptions Elements' {
+        BeforeAll {
+            $connection = getMockConnection -Entities @('sitemap')
+            
+            # Sitemap XML with new Titles and Descriptions format
+            $sitemapXmlWithLCID = @"
+<SiteMap IntroducedVersion="7.0.0.0">
+    <Area Id="TestArea" ResourceId="Area_Test" ShowGroups="true" Icon="/_imgs/test.gif" IntroducedVersion="7.0.0.0">
+        <Titles>
+            <Title LCID="1033" Title="Test Area English" />
+            <Title LCID="1036" Title="Zone de test français" />
+            <Title LCID="1031" Title="Testbereich Deutsch" />
+        </Titles>
+        <Descriptions>
+            <Description LCID="1033" Description="This is a test area in English" />
+            <Description LCID="1036" Description="Ceci est une zone de test en français" />
+        </Descriptions>
+        <Group Id="TestGroup" ResourceId="Group_Test" IntroducedVersion="7.0.0.0">
+            <Titles>
+                <Title LCID="1033" Title="Test Group" />
+                <Title LCID="1036" Title="Groupe de test" />
+            </Titles>
+            <Descriptions>
+                <Description LCID="1033" Description="Test group description" />
+            </Descriptions>
+            <SubArea Id="TestSubArea" Icon="/_imgs/test_16.gif" Entity="contact" IntroducedVersion="7.0.0.0">
+                <Titles>
+                    <Title LCID="1033" Title="Contacts" />
+                    <Title LCID="1036" Title="Contacts français" />
+                </Titles>
+            </SubArea>
+        </Group>
+    </Area>
+</SiteMap>
+"@
+            
+            # Add mock sitemap to FakeXrmEasy
+            $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $sitemapEntity["sitemapname"] = "MultilingualSitemap"
+            $sitemapEntity["sitemapnameunique"] = "MultilingualSitemap"
+            $sitemapEntity["sitemapxml"] = $sitemapXmlWithLCID
+            $connection.Create($sitemapEntity) | Out-Null
+        }
+
+        It "Parses Titles element with multiple LCIDs" {
+            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "MultilingualSitemap" -EntryId "TestArea"
+            $area | Should -Not -BeNullOrEmpty
+            $area.Titles | Should -Not -BeNullOrEmpty
+            $area.Titles.Count | Should -Be 3
+            $area.Titles[1033] | Should -Be "Test Area English"
+            $area.Titles[1036] | Should -Be "Zone de test français"
+            $area.Titles[1031] | Should -Be "Testbereich Deutsch"
+        }
+
+        It "Parses Descriptions element with multiple LCIDs" {
+            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "MultilingualSitemap" -EntryId "TestArea"
+            $area.Descriptions | Should -Not -BeNullOrEmpty
+            $area.Descriptions.Count | Should -Be 2
+            $area.Descriptions[1033] | Should -Be "This is a test area in English"
+            $area.Descriptions[1036] | Should -Be "Ceci est une zone de test en français"
+        }
+
+        It "Parses Group Titles with multiple LCIDs" {
+            $group = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "MultilingualSitemap" -EntryId "TestGroup"
+            $group.Titles | Should -Not -BeNullOrEmpty
+            $group.Titles.Count | Should -Be 2
+            $group.Titles[1033] | Should -Be "Test Group"
+            $group.Titles[1036] | Should -Be "Groupe de test"
+        }
+
+        It "Parses SubArea Titles with multiple LCIDs" {
+            $subArea = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "MultilingualSitemap" -EntryId "TestSubArea"
+            $subArea.Titles | Should -Not -BeNullOrEmpty
+            $subArea.Titles.Count | Should -Be 2
+            $subArea.Titles[1033] | Should -Be "Contacts"
+            $subArea.Titles[1036] | Should -Be "Contacts français"
+        }
+    }
+
+    Context 'Setting Titles and Descriptions with LCID' {
+        BeforeEach {
+            $connection = getMockConnection -Entities @('sitemap')
+            
+            # Create a simple sitemap for testing
+            $baseSitemapXml = @"
+<SiteMap IntroducedVersion="7.0.0.0">
+    <Area Id="TestSetArea" ResourceId="Area_Test" ShowGroups="true" IntroducedVersion="7.0.0.0" />
+</SiteMap>
+"@
+            
+            $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $sitemapEntity["sitemapname"] = "TestSetSitemap"
+            $sitemapEntity["sitemapnameunique"] = "TestSetSitemap"
+            $sitemapEntity["sitemapxml"] = $baseSitemapXml
+            $connection.Create($sitemapEntity) | Out-Null
+        }
+
+        It "Creates Area with Titles dictionary" {
+            $titles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+            $titles.Add(1033, "English Title")
+            $titles.Add(1036, "Titre français")
+            $titles.Add(1031, "Deutscher Titel")
+            
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" `
+                -Area -EntryId "NewMultilingualArea" -Titles $titles -Confirm:$false
+            
+            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" -EntryId "NewMultilingualArea"
+            $area | Should -Not -BeNullOrEmpty
+            $area.Titles | Should -Not -BeNullOrEmpty
+            $area.Titles.Count | Should -Be 3
+            $area.Titles[1033] | Should -Be "English Title"
+            $area.Titles[1036] | Should -Be "Titre français"
+            $area.Titles[1031] | Should -Be "Deutscher Titel"
+        }
+
+        It "Creates Area with Descriptions dictionary" {
+            $descriptions = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+            $descriptions.Add(1033, "English Description")
+            $descriptions.Add(1036, "Description française")
+            
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" `
+                -Area -EntryId "NewDescArea" -Descriptions $descriptions -Confirm:$false
+            
+            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" -EntryId "NewDescArea"
+            $area | Should -Not -BeNullOrEmpty
+            $area.Descriptions | Should -Not -BeNullOrEmpty
+            $area.Descriptions.Count | Should -Be 2
+            $area.Descriptions[1033] | Should -Be "English Description"
+            $area.Descriptions[1036] | Should -Be "Description française"
+        }
+
+        It "Updates existing Titles additively" {
+            # First create with English title
+            $initialTitles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+            $initialTitles.Add(1033, "Initial English")
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" `
+                -Area -EntryId "AdditiveArea" -Titles $initialTitles -Confirm:$false
+            
+            # Now add French title
+            $frenchTitle = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+            $frenchTitle.Add(1036, "Titre français ajouté")
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" `
+                -Area -EntryId "AdditiveArea" -Titles $frenchTitle -Confirm:$false
+            
+            # Verify both titles exist
+            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" -EntryId "AdditiveArea"
+            $area.Titles.Count | Should -Be 2
+            $area.Titles[1033] | Should -Be "Initial English"
+            $area.Titles[1036] | Should -Be "Titre français ajouté"
+        }
+
+        It "Removes LCID when null value is provided" {
+            # Create with multiple titles
+            $initialTitles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+            $initialTitles.Add(1033, "English")
+            $initialTitles.Add(1036, "Français")
+            $initialTitles.Add(1031, "Deutsch")
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" `
+                -Area -EntryId "RemoveArea" -Titles $initialTitles -Confirm:$false
+            
+            # Remove French title
+            $removeTitle = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+            $removeTitle.Add(1036, $null)
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" `
+                -Area -EntryId "RemoveArea" -Titles $removeTitle -Confirm:$false
+            
+            # Verify French title is removed
+            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" -EntryId "RemoveArea"
+            $area.Titles.Count | Should -Be 2
+            $area.Titles.ContainsKey(1033) | Should -Be $true
+            $area.Titles.ContainsKey(1031) | Should -Be $true
+            $area.Titles.ContainsKey(1036) | Should -Be $false
+        }
+    }
+
+    Context 'Backward Compatibility with Old Format' {
+        BeforeAll {
+            $connection = getMockConnection -Entities @('sitemap')
+            
+            # Sitemap XML with old Title/Description attributes
+            $oldFormatXml = @"
+<SiteMap IntroducedVersion="7.0.0.0">
+    <Area Id="OldFormatArea" Title="Old Style Title" Description="Old style description" ShowGroups="true" IntroducedVersion="7.0.0.0">
+        <Group Id="OldFormatGroup" Title="Old Group Title" Description="Old group description" IntroducedVersion="7.0.0.0">
+            <SubArea Id="OldFormatSubArea" Title="Old SubArea Title" Entity="contact" IntroducedVersion="7.0.0.0" />
+        </Group>
+    </Area>
+</SiteMap>
+"@
+            
+            $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $sitemapEntity["sitemapname"] = "OldFormatSitemap"
+            $sitemapEntity["sitemapnameunique"] = "OldFormatSitemap"
+            $sitemapEntity["sitemapxml"] = $oldFormatXml
+            $connection.Create($sitemapEntity) | Out-Null
+        }
+
+        It "Parses old Title attribute as LCID 1033" {
+            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "OldFormatSitemap" -EntryId "OldFormatArea"
+            $area.Titles | Should -Not -BeNullOrEmpty
+            $area.Titles.Count | Should -Be 1
+            $area.Titles[1033] | Should -Be "Old Style Title"
+        }
+
+        It "Parses old Description attribute as LCID 1033" {
+            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "OldFormatSitemap" -EntryId "OldFormatArea"
+            $area.Descriptions | Should -Not -BeNullOrEmpty
+            $area.Descriptions.Count | Should -Be 1
+            $area.Descriptions[1033] | Should -Be "Old style description"
+        }
+
+        It "Parses old format for Group" {
+            $group = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "OldFormatSitemap" -EntryId "OldFormatGroup"
+            $group.Titles[1033] | Should -Be "Old Group Title"
+            $group.Descriptions[1033] | Should -Be "Old group description"
+        }
+
+        It "Parses old format for SubArea" {
+            $subArea = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "OldFormatSitemap" -EntryId "OldFormatSubArea"
+            $subArea.Titles[1033] | Should -Be "Old SubArea Title"
         }
     }
 }

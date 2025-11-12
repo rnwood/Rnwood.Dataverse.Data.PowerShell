@@ -102,9 +102,14 @@ Using the metadata cache can significantly reduce API calls and improve performa
 ### Get-DataverseEntityMetadata
 Retrieves entity metadata with detailed information.
 
+**Note:** By default, these cmdlets retrieve unpublished (draft) metadata which includes all changes. Use the `-Published` switch to retrieve only published metadata.
+
 ```powershell
 # Get metadata for a specific entity
 Get-DataverseEntityMetadata -EntityName contact
+
+# Get only published metadata
+Get-DataverseEntityMetadata -EntityName contact -Published
 
 # Include attribute metadata
 Get-DataverseEntityMetadata -EntityName contact -IncludeAttributes

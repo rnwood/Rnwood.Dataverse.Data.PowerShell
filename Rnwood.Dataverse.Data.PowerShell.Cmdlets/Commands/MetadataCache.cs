@@ -31,28 +31,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
-        /// Creates a cache key that includes entity filters to ensure correct cached data is returned.
+        /// Creates a cache key that includes entity filters and published state to ensure correct cached data is returned.
         /// </summary>
-        private static string GetEntityCacheKey(string entityName, EntityFilters filters)
+        private static string GetEntityCacheKey(string entityName, EntityFilters filters, bool retrieveAsIfPublished)
         {
-            return $"{entityName}|{(int)filters}";
+            return $"{entityName}|{(int)filters}|{retrieveAsIfPublished}";
         }
 
         /// <summary>
-        /// Creates a cache key for all entities that includes entity filters.
+        /// Creates a cache key for all entities that includes entity filters and published state.
         /// </summary>
-        private static string GetAllEntitiesCacheKey(string connectionKey, EntityFilters filters)
+        private static string GetAllEntitiesCacheKey(string connectionKey, EntityFilters filters, bool retrieveAsIfPublished)
         {
-            return $"{connectionKey}|{(int)filters}";
+            return $"{connectionKey}|{(int)filters}|{retrieveAsIfPublished}";
         }
 
         /// <summary>
         /// Tries to get entity metadata from the cache.
         /// </summary>
-        public static bool TryGetEntityMetadata(string connectionKey, string entityName, EntityFilters filters, out EntityMetadata metadata)
+        public static bool TryGetEntityMetadata(string connectionKey, string entityName, EntityFilters filters, bool retrieveAsIfPublished, out EntityMetadata metadata)
         {
             metadata = null;
-            var cacheKey = GetEntityCacheKey(entityName, filters);
+            var cacheKey = GetEntityCacheKey(entityName, filters, retrieveAsIfPublished);
 
             if (_cache.TryGetValue(connectionKey, out var entityCache))
             {
@@ -65,9 +65,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Adds entity metadata to the cache.
         /// </summary>
-        public static void AddEntityMetadata(string connectionKey, string entityName, EntityFilters filters, EntityMetadata metadata)
+        public static void AddEntityMetadata(string connectionKey, string entityName, EntityFilters filters, bool retrieveAsIfPublished, EntityMetadata metadata)
         {
-            var cacheKey = GetEntityCacheKey(entityName, filters);
+            var cacheKey = GetEntityCacheKey(entityName, filters, retrieveAsIfPublished);
             var entityCache = _cache.GetOrAdd(connectionKey, _ => new ConcurrentDictionary<string, EntityMetadata>(StringComparer.OrdinalIgnoreCase));
             entityCache[cacheKey] = metadata;
         }
@@ -75,18 +75,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Tries to get all entities metadata from the cache.
         /// </summary>
-        public static bool TryGetAllEntities(string connectionKey, EntityFilters filters, out List<EntityMetadata> allEntities)
+        public static bool TryGetAllEntities(string connectionKey, EntityFilters filters, bool retrieveAsIfPublished, out List<EntityMetadata> allEntities)
         {
-            var cacheKey = GetAllEntitiesCacheKey(connectionKey, filters);
+            var cacheKey = GetAllEntitiesCacheKey(connectionKey, filters, retrieveAsIfPublished);
             return _allEntitiesCache.TryGetValue(cacheKey, out allEntities);
         }
 
         /// <summary>
         /// Adds all entities metadata to the cache.
         /// </summary>
-        public static void AddAllEntities(string connectionKey, EntityFilters filters, List<EntityMetadata> allEntities)
+        public static void AddAllEntities(string connectionKey, EntityFilters filters, bool retrieveAsIfPublished, List<EntityMetadata> allEntities)
         {
-            var cacheKey = GetAllEntitiesCacheKey(connectionKey, filters);
+            var cacheKey = GetAllEntitiesCacheKey(connectionKey, filters, retrieveAsIfPublished);
             _allEntitiesCache[cacheKey] = allEntities;
         }
 

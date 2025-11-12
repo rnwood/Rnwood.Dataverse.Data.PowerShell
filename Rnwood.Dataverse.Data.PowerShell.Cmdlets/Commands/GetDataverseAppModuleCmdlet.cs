@@ -39,10 +39,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "Return raw values instead of display values")]
         public SwitchParameter Raw { get; set; }
 
-
-        [Parameter(HelpMessage = "Allows unpublished records to be retrieved instead of the default published")]
-        public SwitchParameter Unpublished { get; set; }
-
+        [Parameter(HelpMessage = "Allows published records to be retrieved instead of the default behavior that includes both published and unpublished records")]
+        public SwitchParameter Published { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -95,7 +93,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Execute query with paging
             WriteVerbose("Executing query for appmodule");
-            var appModules = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, Unpublished.IsPresent);
+            var appModules = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose);
+            if (!Published.IsPresent)
+            {
+                appModules = appModules.Concat(QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, true));
+            }
 
             WriteVerbose($"Found {appModules.Count()} app module(s)");
 
@@ -136,8 +138,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     WriteObject(psObject);
                 }
-
-
             }
         }
     }

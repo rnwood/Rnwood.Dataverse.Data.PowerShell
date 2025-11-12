@@ -170,7 +170,7 @@ $config.Filter.FullName = '*Get-DataverseRecord - Basic*' # Basic Get tests
 - MarkMpn.Sql4Cds.Engine 10.1.0
 - PowerShellStandard.Library 5.1.1
 - System.ServiceModel.Primitives/Http 4.10.3
-- FakeXrmEasy.v9 3.7.0 (net6.0) or 2.8.0 (net462)
+- FakeXrmEasy.v9 3.7.0 (net8.0) or 2.8.0 (net462)
 
 ### Project 2: Rnwood.Dataverse.Data.PowerShell.Loader/
 **Purpose:** Assembly loading for both .NET runtimes (multi-targeting net6.0;net462)  
