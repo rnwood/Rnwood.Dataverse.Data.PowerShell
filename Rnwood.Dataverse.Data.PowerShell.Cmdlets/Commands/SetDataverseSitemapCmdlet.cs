@@ -201,15 +201,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                     updateEntity["sitemapxml"] = SitemapXml;
                 }
-                else
-                {
-                    // If no SitemapXml provided, include the existing XML to ensure Dataverse can validate
-                    if (existingSitemap != null && existingSitemap.Contains("sitemapxml"))
-                    {
-                        updateEntity["sitemapxml"] = existingSitemap["sitemapxml"];
-                        WriteVerbose("Including existing sitemap XML in update to maintain sitemap structure.");
-                    }
-                }
 
                 Connection.Update(updateEntity);
 
