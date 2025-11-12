@@ -51,11 +51,11 @@ Describe "RecordAccess E2E Tests" {
                 $testContactData = @{
                     firstname = "E2ETest"
                     lastname = "RecordAccess_$testIdentifier"
-                    description = "E2E test for record access - created at $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+                    description = "E2E test for record access"
                 }
                 
                 Write-Host "Creating test contact..."
-                $testContact = Set-DataverseRecord -Connection $connection -TableName contact -Data $testContactData -CreateOnly -PassThru
+                $testContact = $testContactData | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
                 $contactId = $testContact.contactid
                 Write-Host "Created test contact: $contactId"
                 
