@@ -224,8 +224,8 @@ Describe "Attribute Metadata E2E Tests" {
                 Write-Host "✓ Updates verified"
                 
                 Write-Host "Step 14: Testing attribute deletion..."
-                Remove-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_notes" -Publish -Confirm:$false
-                Write-Host "✓ Memo attribute deleted and published"
+                Remove-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_notes" -Confirm:$false
+                Write-Host "✓ Memo attribute deleted"
                 
                 Start-Sleep -Seconds 2
                 $remainingAttrs = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName | Where-Object { $_.LogicalName -eq 'new_notes' }
