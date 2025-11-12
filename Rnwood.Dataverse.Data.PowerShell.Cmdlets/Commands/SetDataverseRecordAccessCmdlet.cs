@@ -63,34 +63,53 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (ShouldProcess($"{TableName} {Id}", $"Set access {AccessRights} for {principalType} {Principal}"))
             {
                 AccessRights effectiveAccessRights = AccessRights;
+                bool hasExistingAccess = false;
 
-                // If not replacing, get current access and add new rights
-                if (!Replace.IsPresent)
+                // Check if principal already has access
+                try
                 {
-                    try
+                    var retrieveRequest = new RetrievePrincipalAccessRequest
                     {
-                        var retrieveRequest = new RetrievePrincipalAccessRequest
-                        {
-                            Target = target,
-                            Principal = principalRef
-                        };
-                        var retrieveResponse = (RetrievePrincipalAccessResponse)Connection.Execute(retrieveRequest);
+                        Target = target,
+                        Principal = principalRef
+                    };
+                    var retrieveResponse = (RetrievePrincipalAccessResponse)Connection.Execute(retrieveRequest);
+                    hasExistingAccess = true;
+                    
+                    // If not replacing, add new rights to existing rights
+                    if (!Replace.IsPresent)
+                    {
                         effectiveAccessRights = retrieveResponse.AccessRights | AccessRights;
                         WriteVerbose($"Current access: {retrieveResponse.AccessRights}, adding: {AccessRights}, effective: {effectiveAccessRights}");
                     }
-                    catch
+                    else
                     {
-                        // If no existing access, use the specified rights
-                        WriteVerbose($"No existing access found, using specified rights: {AccessRights}");
+                        WriteVerbose($"Replace mode: replacing {retrieveResponse.AccessRights} with {AccessRights}");
                     }
                 }
-                else
+                catch
                 {
-                    WriteVerbose($"Replace mode: setting access to exactly {AccessRights}");
+                    // No existing access
+                    WriteVerbose($"No existing access found, granting: {AccessRights}");
                 }
 
-                // Try to grant access. If access already exists, modify it.
-                try
+                // If access exists, use ModifyAccessRequest. Otherwise use GrantAccessRequest.
+                if (hasExistingAccess)
+                {
+                    var modifyRequest = new ModifyAccessRequest
+                    {
+                        Target = target,
+                        PrincipalAccess = new PrincipalAccess
+                        {
+                            Principal = principalRef,
+                            AccessMask = effectiveAccessRights
+                        }
+                    };
+
+                    Connection.Execute(modifyRequest);
+                    WriteVerbose($"Modified access to {effectiveAccessRights} for {principalType} {Principal} on {TableName} {Id}");
+                }
+                else
                 {
                     var grantRequest = new GrantAccessRequest
                     {
@@ -104,23 +123,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     Connection.Execute(grantRequest);
                     WriteVerbose($"Granted access {effectiveAccessRights} to {principalType} {Principal} on {TableName} {Id}");
-                }
-                catch (Exception ex) when (ex.Message.Contains("already has access"))
-                {
-                    // If access already exists, modify it
-                    // ModifyAccessRequest replaces the entire access mask
-                    var modifyRequest = new ModifyAccessRequest
-                    {
-                        Target = target,
-                        PrincipalAccess = new PrincipalAccess
-                        {
-                            Principal = principalRef,
-                            AccessMask = effectiveAccessRights
-                        }
-                    };
-
-                    Connection.Execute(modifyRequest);
-                    WriteVerbose($"Modified access to {effectiveAccessRights} for {principalType} {Principal} on {TableName} {Id}");
                 }
             }
         }
