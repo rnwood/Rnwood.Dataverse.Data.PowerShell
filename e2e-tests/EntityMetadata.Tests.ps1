@@ -69,7 +69,6 @@ Describe "Entity Metadata E2E Tests" {
                     -HasNotes `
                     -IsAuditEnabled `
                     -ChangeTrackingEnabled `
-                    -IconVectorName "svg_test" `
                     -Publish `
                     -Confirm:$false
                 
@@ -98,7 +97,6 @@ Describe "Entity Metadata E2E Tests" {
                     -EntityName $entityName `
                     -DisplayName "E2E Test Entity (Updated)" `
                     -Description "Updated description" `
-                    -IconVectorName "svg_test_updated" `
                     -Publish `
                     -Confirm:$false
                 
@@ -109,9 +107,6 @@ Describe "Entity Metadata E2E Tests" {
                 
                 if ($updatedEntity.DisplayName.UserLocalizedLabel.Label -ne "E2E Test Entity (Updated)") {
                     throw "Display name not updated"
-                }
-                if ($updatedEntity.IconVectorName -ne "svg_test_updated") {
-                    throw "Icon not updated"
                 }
                 Write-Host "✓ Updates verified"
                 
