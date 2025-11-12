@@ -34,14 +34,52 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string ToolTipResourceId { get; set; }
 
         /// <summary>
-        /// Gets or sets the title/label of the entry.
+        /// Gets or sets the title/label of the entry (deprecated - use Titles).
+        /// For backward compatibility, returns the title for LCID 1033 if Titles is set.
         /// </summary>
-        public string Title { get; set; }
+        [Obsolete("Use Titles property instead. This property is maintained for backward compatibility.")]
+        public string Title
+        {
+            get => Titles != null && Titles.ContainsKey(1033) ? Titles[1033] : null;
+            set
+            {
+                if (Titles == null)
+                    Titles = new Dictionary<int, string>();
+                if (value != null)
+                    Titles[1033] = value;
+                else
+                    Titles.Remove(1033);
+            }
+        }
 
         /// <summary>
-        /// Gets or sets the description of the entry.
+        /// Gets or sets the description of the entry (deprecated - use Descriptions).
+        /// For backward compatibility, returns the description for LCID 1033 if Descriptions is set.
         /// </summary>
-        public string Description { get; set; }
+        [Obsolete("Use Descriptions property instead. This property is maintained for backward compatibility.")]
+        public string Description
+        {
+            get => Descriptions != null && Descriptions.ContainsKey(1033) ? Descriptions[1033] : null;
+            set
+            {
+                if (Descriptions == null)
+                    Descriptions = new Dictionary<int, string>();
+                if (value != null)
+                    Descriptions[1033] = value;
+                else
+                    Descriptions.Remove(1033);
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the titles of the entry keyed by LCID.
+        /// </summary>
+        public Dictionary<int, string> Titles { get; set; }
+
+        /// <summary>
+        /// Gets or sets the descriptions of the entry keyed by LCID.
+        /// </summary>
+        public Dictionary<int, string> Descriptions { get; set; }
 
         /// <summary>
         /// Gets or sets the icon path (for Areas and SubAreas).
