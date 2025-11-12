@@ -108,8 +108,8 @@ Describe "Form Manipulation E2E Tests" {
                 
                 Write-Host "  Published form successfully"
                 
-                # Verify formxml is now available after publish
-                $publishedForm = Get-DataverseForm -Connection $connection -Id $formId
+                # Verify formxml is now available after publish (need -IncludeFormXml to retrieve it)
+                $publishedForm = Get-DataverseForm -Connection $connection -Id $formId -IncludeFormXml
                 if (-not $publishedForm.formxml) {
                     throw "Form XML is empty after publish"
                 }
@@ -122,7 +122,7 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host ""
                 Write-Host "Step 2: Verifying initial form structure..."
                 
-                $form = Get-DataverseForm -Connection $connection -Id $formId
+                $form = Get-DataverseForm -Connection $connection -Id $formId -IncludeFormXml
                 
                 if (-not $form.formxml) {
                     throw "Form XML is empty"
@@ -364,8 +364,8 @@ Describe "Form Manipulation E2E Tests" {
                 
                 Write-Host "  Published form after modifications"
                 
-                # Verify the form can still be retrieved after publish
-                $publishedForm = Get-DataverseForm -Connection $connection -Id $formId
+                # Verify the form can still be retrieved after publish (need -IncludeFormXml to retrieve formxml)
+                $publishedForm = Get-DataverseForm -Connection $connection -Id $formId -IncludeFormXml
                 if (-not $publishedForm) {
                     throw "Failed to retrieve form after publish"
                 }
