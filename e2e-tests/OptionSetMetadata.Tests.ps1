@@ -20,6 +20,8 @@ Describe "OptionSet Metadata E2E Tests" {
     It "Can create, read, update, and delete global option sets comprehensively" {
         pwsh -noninteractive -noprofile -command {
             $env:PSModulePath = $env:ChildProcessPSModulePath
+            $ErrorActionPreference = "Stop"
+            $ConfirmPreference = 'None'  # Suppress all confirmation prompts in non-interactive mode
             
             Import-Module Rnwood.Dataverse.Data.PowerShell
             
@@ -39,7 +41,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 Write-Host "Cleaning up any previous failed attempts..."
                 
                 # Cleanup option sets
-                $existingOptionSets = Get-DataverseOptionSetMetadata | Where-Object { $_.Name -like "new_e2eoption*" }
+                $existingOptionSets = Get-DataverseOptionSetMetadata -Connection $connection | Where-Object { $_.Name -like "new_e2eoption*" }
                 foreach ($optionSet in $existingOptionSets) {
                     try {
                         Write-Host "  Removing leftover option set: $($optionSet.Name)"
@@ -59,6 +61,12 @@ Describe "OptionSet Metadata E2E Tests" {
                     } catch {
                         Write-Host "  Could not remove $($entity.LogicalName): $_"
                     }
+                }
+                
+                # Add a delay after cleanup to allow Dataverse to process deletions
+                if ($existingEntities.Count -gt 0) {
+                    Write-Host "Waiting for cleanup to complete..."
+                    Start-Sleep -Seconds 10
                 }
                 
                 Write-Host "Step 1: Creating first global option set..."

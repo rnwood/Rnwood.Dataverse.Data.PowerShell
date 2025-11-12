@@ -20,6 +20,8 @@ Describe "Relationship Metadata E2E Tests" {
     It "Can create, read, update, and delete OneToMany and ManyToMany relationships comprehensively" {
         pwsh -noninteractive -noprofile -command {
             $env:PSModulePath = $env:ChildProcessPSModulePath
+            $ErrorActionPreference = "Stop"
+            $ConfirmPreference = 'None'  # Suppress all confirmation prompts in non-interactive mode
             
             Import-Module Rnwood.Dataverse.Data.PowerShell
             
@@ -45,6 +47,12 @@ Describe "Relationship Metadata E2E Tests" {
                     } catch {
                         Write-Host "  Could not remove $($entity.LogicalName): $_"
                     }
+                }
+                
+                # Add a delay after cleanup to allow Dataverse to process deletions
+                if ($existingEntities.Count -gt 0) {
+                    Write-Host "Waiting for cleanup to complete..."
+                    Start-Sleep -Seconds 10
                 }
                 
                 Write-Host "Step 1: Creating first test entity..."
