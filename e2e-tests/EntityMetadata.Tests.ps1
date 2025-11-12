@@ -53,6 +53,106 @@ Describe "Entity Metadata E2E Tests" {
                     Start-Sleep -Seconds 10
                 }
                 
+                Write-Host "Step 0: Creating required web resources for icon testing..."
+                
+                # Create a simple SVG content for testing
+                $svgContent = @"
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <rect width="16" height="16" fill="#0078D4"/>
+</svg>
+"@
+                $svgBase64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($svgContent))
+                
+                # Create svg_test web resource
+                try {
+                    $webResource1 = @{
+                        name = "svg_test"
+                        displayname = "E2E Test Icon"
+                        webresourcetype = 11  # SVG
+                        content = $svgBase64
+                    }
+                    
+                    Invoke-DataverseRequest -Connection $connection -Request ([Microsoft.Xrm.Sdk.Messages.CreateRequest]@{
+                        Target = New-Object Microsoft.Xrm.Sdk.Entity("webresource", $null, @{
+                            name = $webResource1.name
+                            displayname = $webResource1.displayname
+                            webresourcetype = New-Object Microsoft.Xrm.Sdk.OptionSetValue($webResource1.webresourcetype)
+                            content = $webResource1.content
+                        })
+                    }) | Out-Null
+                    Write-Host "  ✓ Created web resource: svg_test"
+                } catch {
+                    # Web resource might already exist, try to update it
+                    try {
+                        $existing = Invoke-DataverseRequest -Connection $connection -Request ([Microsoft.Xrm.Sdk.Messages.RetrieveMultipleRequest]@{
+                            Query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression("webresource") -Property @{
+                                ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet("webresourceid")
+                                Criteria = New-Object Microsoft.Xrm.Sdk.Query.FilterExpression -Property @{
+                                    Conditions = @(
+                                        New-Object Microsoft.Xrm.Sdk.Query.ConditionExpression("name", [Microsoft.Xrm.Sdk.Query.ConditionOperator]::Equal, "svg_test")
+                                    )
+                                }
+                            }
+                        }) | Select-Object -ExpandProperty Results | Select-Object -ExpandProperty Entities | Select-Object -First 1
+                        
+                        if ($existing) {
+                            Write-Host "  ✓ Web resource svg_test already exists"
+                        }
+                    } catch {
+                        Write-Host "  ! Could not create or find svg_test: $_"
+                    }
+                }
+                
+                # Create svg_test_updated web resource
+                try {
+                    $webResource2 = @{
+                        name = "svg_test_updated"
+                        displayname = "E2E Test Icon Updated"
+                        webresourcetype = 11  # SVG
+                        content = $svgBase64
+                    }
+                    
+                    Invoke-DataverseRequest -Connection $connection -Request ([Microsoft.Xrm.Sdk.Messages.CreateRequest]@{
+                        Target = New-Object Microsoft.Xrm.Sdk.Entity("webresource", $null, @{
+                            name = $webResource2.name
+                            displayname = $webResource2.displayname
+                            webresourcetype = New-Object Microsoft.Xrm.Sdk.OptionSetValue($webResource2.webresourcetype)
+                            content = $webResource2.content
+                        })
+                    }) | Out-Null
+                    Write-Host "  ✓ Created web resource: svg_test_updated"
+                } catch {
+                    # Web resource might already exist
+                    try {
+                        $existing = Invoke-DataverseRequest -Connection $connection -Request ([Microsoft.Xrm.Sdk.Messages.RetrieveMultipleRequest]@{
+                            Query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression("webresource") -Property @{
+                                ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet("webresourceid")
+                                Criteria = New-Object Microsoft.Xrm.Sdk.Query.FilterExpression -Property @{
+                                    Conditions = @(
+                                        New-Object Microsoft.Xrm.Sdk.Query.ConditionExpression("name", [Microsoft.Xrm.Sdk.Query.ConditionOperator]::Equal, "svg_test_updated")
+                                    )
+                                }
+                            }
+                        }) | Select-Object -ExpandProperty Results | Select-Object -ExpandProperty Entities | Select-Object -First 1
+                        
+                        if ($existing) {
+                            Write-Host "  ✓ Web resource svg_test_updated already exists"
+                        }
+                    } catch {
+                        Write-Host "  ! Could not create or find svg_test_updated: $_"
+                    }
+                }
+                
+                # Publish web resources
+                try {
+                    $publishRequest = New-Object Microsoft.Crm.Sdk.Messages.PublishXmlRequest
+                    $publishRequest.ParameterXml = "<importexportxml><webresources><webresource>svg_test</webresource><webresource>svg_test_updated</webresource></webresources></importexportxml>"
+                    Invoke-DataverseRequest -Connection $connection -Request $publishRequest | Out-Null
+                    Write-Host "  ✓ Published web resources"
+                } catch {
+                    Write-Host "  ! Could not publish web resources: $_"
+                }
+                
                 Write-Host "Step 1: Creating custom entity with all features..."
                 Set-DataverseEntityMetadata `
                     -Connection $connection `
@@ -69,6 +169,7 @@ Describe "Entity Metadata E2E Tests" {
                     -HasNotes `
                     -IsAuditEnabled `
                     -ChangeTrackingEnabled `
+                    -IconVectorName "svg_test" `
                     -Publish `
                     -Confirm:$false
                 
@@ -97,6 +198,7 @@ Describe "Entity Metadata E2E Tests" {
                     -EntityName $entityName `
                     -DisplayName "E2E Test Entity (Updated)" `
                     -Description "Updated description" `
+                    -IconVectorName "svg_test_updated" `
                     -Publish `
                     -Confirm:$false
                 
@@ -107,6 +209,9 @@ Describe "Entity Metadata E2E Tests" {
                 
                 if ($updatedEntity.DisplayName.UserLocalizedLabel.Label -ne "E2E Test Entity (Updated)") {
                     throw "Display name not updated"
+                }
+                if ($updatedEntity.IconVectorName -ne "svg_test_updated") {
+                    throw "Icon not updated"
                 }
                 Write-Host "✓ Updates verified"
                 
