@@ -215,3 +215,255 @@ Describe 'Get-DataverseEntityMetadata - Icon Properties Access' {
         }
     }
 }
+
+Describe 'Set-DataverseEntityMetadata - Icon Validation' {
+    Context 'Icon WebResource Validation - Valid WebResources' {
+        It "Validates IconVectorName references valid SVG webresource" -Skip {
+            # Skip: FakeXrmEasy doesn't support UpdateEntityRequest fully
+            # This test validates behavior that works in real Dataverse environments
+            # Create request interceptor that returns valid SVG webresource
+            $requestInterceptor = {
+                param($request)
+                
+                if ($request.GetType().Name -eq 'RetrieveMultipleRequest') {
+                    $query = $request.Query
+                    if ($query.EntityName -eq 'webresource') {
+                        # Return a valid SVG webresource (type 11)
+                        $webResource = New-Object Microsoft.Xrm.Sdk.Entity("webresource")
+                        $webResource.Id = [Guid]::NewGuid()
+                        $webResource["name"] = "new_validsvgicon"
+                        $webResource["webresourcetype"] = New-Object Microsoft.Xrm.Sdk.OptionSetValue(11) # SVG type
+                        
+                        $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
+                        $entityCollection.Entities.Add($webResource)
+                        
+                        $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveMultipleResponse
+                        $response.Results.Add("EntityCollection", $entityCollection)
+                        return $response
+                    }
+                }
+                
+                return $null
+            }
+            
+            $connection = getMockConnection -RequestInterceptor $requestInterceptor
+            
+            # Update contact entity with valid SVG icon (should not throw)
+            { Set-DataverseEntityMetadata -Connection $connection `
+                -EntityName contact `
+                -IconVectorName "new_validsvgicon" `
+                -ErrorAction Stop } | Should -Not -Throw
+        }
+        
+        It "Allows empty IconVectorName to clear icon" -Skip {
+            # Skip: FakeXrmEasy doesn't support UpdateEntityRequest fully
+            $connection = getMockConnection
+            
+            # Empty string should be allowed (clears the icon) without validation
+            { Set-DataverseEntityMetadata -Connection $connection `
+                -EntityName contact `
+                -IconVectorName "" `
+                -ErrorAction Stop } | Should -Not -Throw
+        }
+        
+        It "Allows null IconVectorName to skip icon update" -Skip {
+            # Skip: FakeXrmEasy doesn't support UpdateEntityRequest fully
+            $connection = getMockConnection
+            
+            # Not providing IconVectorName should work fine
+            { Set-DataverseEntityMetadata -Connection $connection `
+                -EntityName contact `
+                -DisplayName "Contact Updated" `
+                -ErrorAction Stop } | Should -Not -Throw
+        }
+    }
+    
+    Context 'Icon WebResource Validation - Invalid WebResources' {
+        It "Throws error when IconVectorName references non-existent webresource" -Skip {
+            # Skip: FakeXrmEasy doesn't support UpdateEntityRequest fully
+            # Create request interceptor that returns no webresources
+            $requestInterceptor = {
+                param($request)
+                
+                if ($request.GetType().Name -eq 'RetrieveMultipleRequest') {
+                    $query = $request.Query
+                    if ($query.EntityName -eq 'webresource') {
+                        # Return empty collection (no webresource found)
+                        $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
+                        
+                        $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveMultipleResponse
+                        $response.Results.Add("EntityCollection", $entityCollection)
+                        return $response
+                    }
+                }
+                
+                return $null
+            }
+            
+            $connection = getMockConnection -RequestInterceptor $requestInterceptor
+            
+            # Should throw error about non-existent webresource
+            { Set-DataverseEntityMetadata -Connection $connection `
+                -EntityName contact `
+                -IconVectorName "nonexistent_icon" `
+                -ErrorAction Stop } | Should -Throw "*does not reference a valid webresource*"
+        }
+        
+        It "Throws error when IconVectorName references webresource with wrong type" -Skip {
+            # Skip: FakeXrmEasy doesn't support UpdateEntityRequest fully
+            # Create request interceptor that returns webresource with wrong type
+            $requestInterceptor = {
+                param($request)
+                
+                if ($request.GetType().Name -eq 'RetrieveMultipleRequest') {
+                    $query = $request.Query
+                    if ($query.EntityName -eq 'webresource') {
+                        # Return a PNG webresource (type 5) instead of SVG (type 11)
+                        $webResource = New-Object Microsoft.Xrm.Sdk.Entity("webresource")
+                        $webResource.Id = [Guid]::NewGuid()
+                        $webResource["name"] = "new_pngicon"
+                        $webResource["webresourcetype"] = New-Object Microsoft.Xrm.Sdk.OptionSetValue(5) # PNG type
+                        
+                        $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
+                        $entityCollection.Entities.Add($webResource)
+                        
+                        $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveMultipleResponse
+                        $response.Results.Add("EntityCollection", $entityCollection)
+                        return $response
+                    }
+                }
+                
+                return $null
+            }
+            
+            $connection = getMockConnection -RequestInterceptor $requestInterceptor
+            
+            # Should throw error about wrong webresource type
+            { Set-DataverseEntityMetadata -Connection $connection `
+                -EntityName contact `
+                -IconVectorName "new_pngicon" `
+                -ErrorAction Stop } | Should -Throw "*type 5*type 11*required*"
+        }
+    }
+    
+    Context 'Icon WebResource Validation - SkipIconValidation Switch' {
+        It "Skips validation when SkipIconValidation is specified" -Skip {
+            # Skip: FakeXrmEasy doesn't support UpdateEntityRequest fully
+            # Create request interceptor that would normally cause validation to fail
+            # No webresource interceptor - queries will return empty
+            $requestInterceptor = {
+                param($request)
+                
+                if ($request.GetType().Name -eq 'RetrieveMultipleRequest') {
+                    $query = $request.Query
+                    if ($query.EntityName -eq 'webresource') {
+                        # Return empty collection
+                        $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
+                        
+                        $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveMultipleResponse
+                        $response.Results.Add("EntityCollection", $entityCollection)
+                        return $response
+                    }
+                }
+                
+                return $null
+            }
+            
+            $connection = getMockConnection -RequestInterceptor $requestInterceptor
+            
+            # Should NOT throw error because validation is skipped
+            { Set-DataverseEntityMetadata -Connection $connection `
+                -EntityName contact `
+                -IconVectorName "any_icon_name" `
+                -SkipIconValidation `
+                -ErrorAction Stop } | Should -Not -Throw
+        }
+        
+        It "Skips validation for wrong type when SkipIconValidation is specified" -Skip {
+            # Skip: FakeXrmEasy doesn't support UpdateEntityRequest fully
+            # Create request interceptor that returns webresource with wrong type
+            $requestInterceptor = {
+                param($request)
+                
+                if ($request.GetType().Name -eq 'RetrieveMultipleRequest') {
+                    $query = $request.Query
+                    if ($query.EntityName -eq 'webresource') {
+                        # Return PNG instead of SVG
+                        $webResource = New-Object Microsoft.Xrm.Sdk.Entity("webresource")
+                        $webResource.Id = [Guid]::NewGuid()
+                        $webResource["name"] = "wrong_type_icon"
+                        $webResource["webresourcetype"] = New-Object Microsoft.Xrm.Sdk.OptionSetValue(5) # PNG
+                        
+                        $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
+                        $entityCollection.Entities.Add($webResource)
+                        
+                        $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveMultipleResponse
+                        $response.Results.Add("EntityCollection", $entityCollection)
+                        return $response
+                    }
+                }
+                
+                return $null
+            }
+            
+            $connection = getMockConnection -RequestInterceptor $requestInterceptor
+            
+            # Should NOT throw error because validation is skipped
+            { Set-DataverseEntityMetadata -Connection $connection `
+                -EntityName contact `
+                -IconVectorName "wrong_type_icon" `
+                -SkipIconValidation `
+                -ErrorAction Stop } | Should -Not -Throw
+        }
+    }
+    
+    Context 'Icon WebResource Validation - Unpublished WebResources' {
+        It "Validates IconVectorName against unpublished webresource" -Skip {
+            # Skip: FakeXrmEasy doesn't support UpdateEntityRequest fully
+            # Create request interceptor that returns unpublished webresource
+            $requestInterceptor = {
+                param($request)
+                
+                if ($request.GetType().Name -eq 'RetrieveUnpublishedMultipleRequest') {
+                    $query = $request.Query
+                    if ($query.EntityName -eq 'webresource') {
+                        # Return unpublished SVG webresource
+                        $webResource = New-Object Microsoft.Xrm.Sdk.Entity("webresource")
+                        $webResource.Id = [Guid]::NewGuid()
+                        $webResource["name"] = "new_unpublishedsvg"
+                        $webResource["webresourcetype"] = New-Object Microsoft.Xrm.Sdk.OptionSetValue(11) # SVG
+                        
+                        $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
+                        $entityCollection.Entities.Add($webResource)
+                        
+                        $response = New-Object Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse
+                        $response.Results.Add("EntityCollection", $entityCollection)
+                        return $response
+                    }
+                }
+                
+                if ($request.GetType().Name -eq 'RetrieveMultipleRequest') {
+                    $query = $request.Query
+                    if ($query.EntityName -eq 'webresource') {
+                        # Published query returns empty (only unpublished exists)
+                        $entityCollection = New-Object Microsoft.Xrm.Sdk.EntityCollection
+                        
+                        $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveMultipleResponse
+                        $response.Results.Add("EntityCollection", $entityCollection)
+                        return $response
+                    }
+                }
+                
+                return $null
+            }
+            
+            $connection = getMockConnection -RequestInterceptor $requestInterceptor
+            
+            # Should validate successfully against unpublished webresource
+            { Set-DataverseEntityMetadata -Connection $connection `
+                -EntityName contact `
+                -IconVectorName "new_unpublishedsvg" `
+                -ErrorAction Stop } | Should -Not -Throw
+        }
+    }
+}
