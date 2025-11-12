@@ -33,7 +33,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the name of the tab.
         /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "Name of the tab")]
+        [Parameter(Mandatory = false, HelpMessage = "Name of the tab")]
         public string Name { get; set; }
 
         /// <summary>
@@ -55,10 +55,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter Expanded { get; set; }
 
         /// <summary>
-        /// Gets or sets whether the tab is visible.
+        /// Gets or sets whether the tab is hidden.
         /// </summary>
-        [Parameter(HelpMessage = "Whether the tab is visible")]
-        public SwitchParameter Visible { get; set; } = true;
+        [Parameter(HelpMessage = "Whether the tab is hidden")]
+        public SwitchParameter Hidden { get; set; }
 
         /// <summary>
         /// Gets or sets whether to show the tab label.
@@ -157,7 +157,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     tabId = TabId;
                 }
             }
-            else
+            else if (!string.IsNullOrEmpty(Name))
             {
                 // Find by Name
                 tab = tabsElement.Elements("tab").FirstOrDefault(t => t.Attribute("name")?.Value == Name);
@@ -175,6 +175,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             else
             {
                 // Tab does not exist - create new
+                // Validate that Name is provided when creating a new tab
+                if (string.IsNullOrEmpty(Name))
+                {
+                    throw new InvalidOperationException("Name parameter is required when creating a new tab.");
+                }
+                
                 tabId = !string.IsNullOrEmpty(TabId) ? TabId : Guid.NewGuid().ToString();
                 tab = new XElement("tab");
                 
@@ -231,7 +237,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Update tab attributes
-            tab.SetAttributeValue("name", Name);
+            if (!string.IsNullOrEmpty(Name))
+            {
+                tab.SetAttributeValue("name", Name);
+            }
             tab.SetAttributeValue("id", tabId);
             
             if (MyInvocation.BoundParameters.ContainsKey(nameof(Expanded)))
@@ -239,9 +248,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 tab.SetAttributeValue("expanded", Expanded.IsPresent ? "true" : "false");
             }
             
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
             {
-                tab.SetAttributeValue("visible", Visible.IsPresent ? "true" : "false");
+                tab.SetAttributeValue("visible", Hidden.IsPresent ? "false" : "true");
             }
             
             if (MyInvocation.BoundParameters.ContainsKey(nameof(ShowLabel)))
@@ -279,7 +288,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Confirm action
             string action = isUpdate ? "Update" : "Create";
-            if (!ShouldProcess($"form '{FormId}'", $"{action} tab '{Name}'"))
+            string tabIdentifier = !string.IsNullOrEmpty(Name) ? Name : tabId;
+            if (!ShouldProcess($"form '{FormId}'", $"{action} tab '{tabIdentifier}'"))
             {
                 return;
             }
@@ -293,7 +303,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteObject(tabId);
             }
 
-            WriteVerbose($"{action}d tab '{Name}' (ID: {tabId}) in form '{FormId}'");
+            WriteVerbose($"{action}d tab '{tabIdentifier}' (ID: {tabId}) in form '{FormId}'");
         }
 
         private void UpdateColumnLayout(XElement tab, bool isUpdate)
