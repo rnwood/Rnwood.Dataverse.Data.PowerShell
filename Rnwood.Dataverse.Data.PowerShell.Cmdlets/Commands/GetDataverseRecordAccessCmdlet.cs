@@ -13,10 +13,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     public class GetDataverseRecordAccessCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
-        /// Gets or sets the target entity reference for which to retrieve access.
+        /// Gets or sets the logical name of the table.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, ValueFromPipeline = true, HelpMessage = "The record for which to retrieve access rights.")]
-        public EntityReference Target { get; set; }
+        [Parameter(Mandatory = true, Position = 0, ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of table")]
+        [Alias("EntityName")]
+        [ArgumentCompleter(typeof(TableNameArgumentCompleter))]
+        public string TableName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Id of the record.
+        /// </summary>
+        [Parameter(Mandatory = true, Position = 1, ValueFromPipelineByPropertyName = true, HelpMessage = "Id of record")]
+        public Guid Id { get; set; }
 
         /// <summary>
         /// Executes the RetrieveSharedPrincipalsAndAccess request.
@@ -25,9 +33,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
+            var target = new EntityReference(TableName, Id);
+
             var request = new RetrieveSharedPrincipalsAndAccessRequest
             {
-                Target = Target
+                Target = target
             };
 
             var response = (RetrieveSharedPrincipalsAndAccessResponse)Connection.Execute(request);

@@ -34,7 +34,7 @@ Describe "RecordAccess E2E Tests" {
                 $currentUserId = $whoAmI.UserId
                 Write-Host "Current user ID: $currentUserId"
                 
-                # Find or create a second user to share with (we'll use the system administrator as fallback)
+                # Find or create a second user to share with
                 Write-Host "Finding a second user to share with..."
                 $allUsers = Get-DataverseRecord -Connection $connection -TableName systemuser -FilterValues @{isdisabled=$false} -Columns systemuserid, fullname
                 $secondUser = $allUsers | Where-Object { $_.systemuserid -ne $currentUserId } | Select-Object -First 1
@@ -46,7 +46,7 @@ Describe "RecordAccess E2E Tests" {
                 $secondUserId = $secondUser.systemuserid
                 Write-Host "Second user ID: $secondUserId (Name: $($secondUser.fullname))"
                 
-                # Create a unique test contact to avoid conflicts with prior failed attempts
+                # Create a unique test contact
                 $testIdentifier = [Guid]::NewGuid().ToString().Substring(0, 8)
                 $testContactData = @{
                     firstname = "E2ETest"
@@ -59,92 +59,74 @@ Describe "RecordAccess E2E Tests" {
                 $contactId = $testContact.contactid
                 Write-Host "Created test contact: $contactId"
                 
-                $contactRef = New-Object Microsoft.Xrm.Sdk.EntityReference("contact", [Guid]$contactId)
-                
                 # Cleanup any existing access from prior failed attempts
-                Write-Host "Cleaning up any existing shared access from prior failed attempts..."
+                Write-Host "Cleaning up any existing shared access..."
                 try {
-                    $existingAccess = Get-DataverseRecordAccess -Connection $connection -Target $contactRef -ErrorAction SilentlyContinue
+                    $existingAccess = Get-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -ErrorAction SilentlyContinue
                     if ($existingAccess) {
                         foreach ($access in $existingAccess) {
                             if ($access.Principal.Id -ne $currentUserId) {
                                 Write-Host "  Removing existing access for principal: $($access.Principal.Id)"
-                                Remove-DataverseRecordAccess -Connection $connection -Target $contactRef -Principal $access.Principal.Id -Confirm:$false -ErrorAction SilentlyContinue
+                                Remove-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -Principal $access.Principal.Id -Confirm:$false -ErrorAction SilentlyContinue
                             }
                         }
                     }
                 } catch {
-                    Write-Host "  No existing access to clean up or cleanup failed (this is OK): $_"
+                    Write-Host "  No existing access to clean up: $_"
                 }
                 
-                Write-Host "`n=== Testing Set-DataverseRecordAccess ==="
-                # Grant read and write access to the second user
-                Set-DataverseRecordAccess -Connection $connection -Target $contactRef -Principal $secondUserId -AccessRights ([Microsoft.Crm.Sdk.Messages.AccessRights]::ReadAccess -bor [Microsoft.Crm.Sdk.Messages.AccessRights]::WriteAccess) -Confirm:$false
-                Write-Host "Successfully granted ReadAccess and WriteAccess to user $secondUserId"
+                Write-Host "`n=== Testing Set-DataverseRecordAccess (additive) ==="
+                Set-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -Principal $secondUserId -AccessRights ([Microsoft.Crm.Sdk.Messages.AccessRights]::ReadAccess) -Confirm:$false
+                Write-Host "Granted ReadAccess"
+                
+                Set-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -Principal $secondUserId -AccessRights ([Microsoft.Crm.Sdk.Messages.AccessRights]::WriteAccess) -Confirm:$false
+                Write-Host "Added WriteAccess (should have Read+Write now)"
                 
                 Write-Host "`n=== Testing Test-DataverseRecordAccess ==="
-                # Test the access that was just granted
-                $accessRights = Test-DataverseRecordAccess -Connection $connection -Target $contactRef -Principal $secondUserId
-                Write-Host "Access rights for user $secondUserId : $accessRights"
+                $accessRights = Test-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -Principal $secondUserId
+                Write-Host "Access rights: $accessRights"
                 
-                # Verify the access includes what we granted
                 $hasRead = ($accessRights -band [Microsoft.Crm.Sdk.Messages.AccessRights]::ReadAccess) -ne 0
                 $hasWrite = ($accessRights -band [Microsoft.Crm.Sdk.Messages.AccessRights]::WriteAccess) -ne 0
                 
-                if (-not $hasRead) {
-                    throw "Expected user to have ReadAccess but they don't"
-                }
-                if (-not $hasWrite) {
-                    throw "Expected user to have WriteAccess but they don't"
-                }
-                Write-Host "Verified: User has both ReadAccess and WriteAccess"
+                if (-not $hasRead) { throw "Expected ReadAccess" }
+                if (-not $hasWrite) { throw "Expected WriteAccess" }
+                Write-Host "Verified: User has Read and Write (additive worked)"
                 
                 Write-Host "`n=== Testing Get-DataverseRecordAccess ==="
-                # Get all users who have access to this record
-                $allAccess = Get-DataverseRecordAccess -Connection $connection -Target $contactRef
-                Write-Host "Found $($allAccess.Count) principals with access to the record"
+                $allAccess = Get-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId
+                Write-Host "Found $($allAccess.Count) principals with access"
                 
-                # Verify our second user is in the list
                 $secondUserAccess = $allAccess | Where-Object { $_.Principal.Id -eq $secondUserId }
-                if (-not $secondUserAccess) {
-                    throw "Expected to find second user in access list but didn't"
-                }
-                Write-Host "Verified: Second user found in access list with AccessMask: $($secondUserAccess.AccessMask)"
+                if (-not $secondUserAccess) { throw "Second user not found in access list" }
+                Write-Host "Verified: Second user in access list"
                 
-                Write-Host "`n=== Testing Set-DataverseRecordAccess (modify) ==="
-                # Modify the access to add DeleteAccess
-                Set-DataverseRecordAccess -Connection $connection -Target $contactRef -Principal $secondUserId -AccessRights ([Microsoft.Crm.Sdk.Messages.AccessRights]::ReadAccess -bor [Microsoft.Crm.Sdk.Messages.AccessRights]::WriteAccess -bor [Microsoft.Crm.Sdk.Messages.AccessRights]::DeleteAccess) -Confirm:$false
-                Write-Host "Successfully modified access to include DeleteAccess"
+                Write-Host "`n=== Testing Set-DataverseRecordAccess with -Replace ==="
+                Set-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -Principal $secondUserId -AccessRights ([Microsoft.Crm.Sdk.Messages.AccessRights]::DeleteAccess) -Replace -Confirm:$false
+                Write-Host "Replaced access with only DeleteAccess"
                 
-                # Verify the modification
-                $modifiedAccessRights = Test-DataverseRecordAccess -Connection $connection -Target $contactRef -Principal $secondUserId
-                $hasDelete = ($modifiedAccessRights -band [Microsoft.Crm.Sdk.Messages.AccessRights]::DeleteAccess) -ne 0
-                if (-not $hasDelete) {
-                    throw "Expected user to have DeleteAccess after modification but they don't"
-                }
-                Write-Host "Verified: User now has DeleteAccess"
+                $replacedAccessRights = Test-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -Principal $secondUserId
+                $hasDelete = ($replacedAccessRights -band [Microsoft.Crm.Sdk.Messages.AccessRights]::DeleteAccess) -ne 0
+                $hasReadAfter = ($replacedAccessRights -band [Microsoft.Crm.Sdk.Messages.AccessRights]::ReadAccess) -ne 0
+                $hasWriteAfter = ($replacedAccessRights -band [Microsoft.Crm.Sdk.Messages.AccessRights]::WriteAccess) -ne 0
+                
+                if (-not $hasDelete) { throw "Expected DeleteAccess" }
+                if ($hasReadAfter) { throw "Should not have ReadAccess after Replace" }
+                if ($hasWriteAfter) { throw "Should not have WriteAccess after Replace" }
+                Write-Host "Verified: Only DeleteAccess (Replace worked)"
                 
                 Write-Host "`n=== Testing Remove-DataverseRecordAccess ==="
-                # Remove the access
-                Remove-DataverseRecordAccess -Connection $connection -Target $contactRef -Principal $secondUserId -Confirm:$false
-                Write-Host "Successfully removed access from user $secondUserId"
+                Remove-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -Principal $secondUserId -Confirm:$false
+                Write-Host "Removed access"
                 
-                # Verify the access was removed
-                $accessAfterRemoval = Test-DataverseRecordAccess -Connection $connection -Target $contactRef -Principal $secondUserId
-                Write-Host "Access rights after removal: $accessAfterRemoval"
-                
-                # After removal, the user should have None or minimal access
-                if ($accessAfterRemoval -ne [Microsoft.Crm.Sdk.Messages.AccessRights]::None) {
-                    Write-Host "Warning: User still has some access after removal: $accessAfterRemoval (this might be expected due to security roles)"
-                }
+                $accessAfterRemoval = Test-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -Principal $secondUserId
+                Write-Host "Access after removal: $accessAfterRemoval"
                 
                 Write-Host "`n=== Cleanup ==="
-                # Clean up the test contact
-                Write-Host "Deleting test contact..."
                 Remove-DataverseRecord -Connection $connection -TableName contact -Id $contactId -Confirm:$false
-                Write-Host "Test contact deleted successfully"
+                Write-Host "Deleted test contact"
                 
-                Write-Host "`n=== All tests passed successfully! ==="
+                Write-Host "`n=== All tests passed! ==="
                 
             } catch {
                 $errorDetails = $_ | Format-List -Force * | Out-String
@@ -158,64 +140,57 @@ Describe "RecordAccess E2E Tests" {
         }
     }
 
-    It "Properly cleans up even when prior attempts failed (idempotent test)" {
+    It "Properly cleans up prior failed attempts" {
         pwsh -noninteractive -noprofile -command {
             $env:PSModulePath = $env:ChildProcessPSModulePath
-            $ErrorActionPreference = "Continue"  # Allow cleanup to continue on errors
+            $ErrorActionPreference = "Continue"
 
             Import-Module Rnwood.Dataverse.Data.PowerShell
 
             try {
-                Write-Host "Connecting to Dataverse for cleanup verification..."
+                Write-Host "Connecting for cleanup..."
                 $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
                 
-                Write-Host "Looking for any leftover E2E test contacts..."
+                Write-Host "Looking for leftover E2E test contacts..."
                 $oldTestContacts = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{firstname='E2ETest'} -Columns contactid, lastname, createdon -ErrorAction Continue
                 
                 if ($oldTestContacts) {
-                    Write-Host "Found $($oldTestContacts.Count) leftover test contact(s). Cleaning up..."
+                    Write-Host "Found $($oldTestContacts.Count) leftover contact(s). Cleaning up..."
                     foreach ($contact in $oldTestContacts) {
                         $contactId = $contact.contactid
-                        Write-Host "  Cleaning up contact: $contactId (Created: $($contact.createdon))"
+                        Write-Host "  Cleaning contact: $contactId"
                         
                         try {
-                            # First, remove any shared access
-                            $contactRef = New-Object Microsoft.Xrm.Sdk.EntityReference("contact", [Guid]$contactId)
-                            $accessList = Get-DataverseRecordAccess -Connection $connection -Target $contactRef -ErrorAction SilentlyContinue
+                            $accessList = Get-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -ErrorAction SilentlyContinue
                             
                             if ($accessList) {
                                 $whoAmI = Get-DataverseWhoAmI -Connection $connection
                                 foreach ($access in $accessList) {
                                     if ($access.Principal.Id -ne $whoAmI.UserId) {
-                                        Write-Host "    Removing access for principal: $($access.Principal.Id)"
-                                        Remove-DataverseRecordAccess -Connection $connection -Target $contactRef -Principal $access.Principal.Id -Confirm:$false -ErrorAction SilentlyContinue
+                                        Remove-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -Principal $access.Principal.Id -Confirm:$false -ErrorAction SilentlyContinue
                                     }
                                 }
                             }
                             
-                            # Then delete the contact
                             Remove-DataverseRecord -Connection $connection -TableName contact -Id $contactId -Confirm:$false -ErrorAction Continue
-                            Write-Host "  Successfully cleaned up contact: $contactId"
+                            Write-Host "  Cleaned up: $contactId"
                         } catch {
-                            Write-Host "  Warning: Could not fully clean up contact $contactId : $_"
+                            Write-Host "  Warning: $contactId : $_"
                         }
                     }
-                    Write-Host "Cleanup complete"
                 } else {
-                    Write-Host "No leftover test contacts found - cleanup verification passed"
+                    Write-Host "No leftover contacts found"
                 }
                 
-                Write-Host "`n=== Cleanup verification test passed ==="
+                Write-Host "`n=== Cleanup test passed ==="
                 
             } catch {
-                Write-Host "Warning during cleanup verification: $_"
-                # Don't fail the test for cleanup issues
+                Write-Host "Warning: $_"
             }
         }
 
-        # Cleanup test always passes - it's just for verification
         if ($LASTEXITCODE -ne 0) {
-            Write-Host "Warning: Cleanup verification exited with code $LASTEXITCODE but test continues"
+            Write-Host "Warning: Cleanup exited with code $LASTEXITCODE"
         }
     }
 }

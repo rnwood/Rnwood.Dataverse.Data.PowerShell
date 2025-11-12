@@ -14,11 +14,8 @@ Describe 'Test-DataverseRecordAccess' {
             # Get current user ID
             $whoAmI = Get-DataverseWhoAmI -Connection $connection
             
-            # Create entity reference
-            $targetRef = New-Object Microsoft.Xrm.Sdk.EntityReference("contact", $contact.Id)
-            
-            # Test access
-            $access = Test-DataverseRecordAccess -Connection $connection -Target $targetRef -Principal $whoAmI.UserId
+            # Test access using TableName and Id
+            $access = Test-DataverseRecordAccess -Connection $connection -TableName contact -Id $contact.Id -Principal $whoAmI.UserId
             
             # Verify result
             $access | Should -Not -BeNullOrEmpty
@@ -37,11 +34,8 @@ Describe 'Test-DataverseRecordAccess' {
             # Get current user ID
             $whoAmI = Get-DataverseWhoAmI -Connection $connection
             
-            # Create entity reference
-            $targetRef = New-Object Microsoft.Xrm.Sdk.EntityReference("contact", $contact.Id)
-            
-            # Test access
-            $access = Test-DataverseRecordAccess -Connection $connection -Target $targetRef -Principal $whoAmI.UserId
+            # Test access using TableName and Id
+            $access = Test-DataverseRecordAccess -Connection $connection -TableName contact -Id $contact.Id -Principal $whoAmI.UserId
             
             # Verify result is an AccessRights enum
             $access | Should -Not -BeNullOrEmpty
@@ -60,11 +54,8 @@ Describe 'Test-DataverseRecordAccess' {
             # Get current user ID
             $whoAmI = Get-DataverseWhoAmI -Connection $connection
             
-            # Create entity reference
-            $targetRef = New-Object Microsoft.Xrm.Sdk.EntityReference("contact", $contact.Id)
-            
-            # Test access
-            $access = Test-DataverseRecordAccess -Connection $connection -Target $targetRef -Principal $whoAmI.UserId
+            # Test access using TableName and Id
+            $access = Test-DataverseRecordAccess -Connection $connection -TableName contact -Id $contact.Id -Principal $whoAmI.UserId
             
             # Verify we can check for specific rights using bitwise AND
             # Note: The mock provider may return None or minimal access by default
@@ -86,11 +77,8 @@ Describe 'Test-DataverseRecordAccess' {
             # Get current user ID
             $whoAmI = Get-DataverseWhoAmI -Connection $connection
             
-            # Create entity reference
-            $targetRef = New-Object Microsoft.Xrm.Sdk.EntityReference("contact", $contact.Id)
-            
-            # Test access
-            $result = Test-DataverseRecordAccess -Connection $connection -Target $targetRef -Principal $whoAmI.UserId
+            # Test access using TableName and Id
+            $result = Test-DataverseRecordAccess -Connection $connection -TableName contact -Id $contact.Id -Principal $whoAmI.UserId
             
             # Verify contact was not affected
             $verifyContact = Get-DataverseRecord -Connection $connection -TableName contact -Id $contact.Id
@@ -117,11 +105,8 @@ Describe 'Test-DataverseRecordAccess' {
             # Get current user ID
             $whoAmI = Get-DataverseWhoAmI
             
-            # Create entity reference
-            $targetRef = New-Object Microsoft.Xrm.Sdk.EntityReference("contact", $contact.Id)
-            
-            # Call without explicit connection
-            $result = Test-DataverseRecordAccess -Target $targetRef -Principal $whoAmI.UserId
+            # Call without explicit connection using TableName and Id
+            $result = Test-DataverseRecordAccess -TableName contact -Id $contact.Id -Principal $whoAmI.UserId
             
             # Verify result
             $result | Should -Not -BeNullOrEmpty

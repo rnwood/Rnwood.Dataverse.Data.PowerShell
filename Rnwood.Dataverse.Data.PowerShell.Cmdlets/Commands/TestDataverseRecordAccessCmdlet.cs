@@ -13,15 +13,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     public class TestDataverseRecordAccessCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
-        /// Gets or sets the target entity reference for which to check access.
+        /// Gets or sets the logical name of the table.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, HelpMessage = "The record for which to check access rights.")]
-        public EntityReference Target { get; set; }
+        [Parameter(Mandatory = true, Position = 0, ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of table")]
+        [Alias("EntityName")]
+        [ArgumentCompleter(typeof(TableNameArgumentCompleter))]
+        public string TableName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Id of the record.
+        /// </summary>
+        [Parameter(Mandatory = true, Position = 1, ValueFromPipelineByPropertyName = true, HelpMessage = "Id of record")]
+        public Guid Id { get; set; }
 
         /// <summary>
         /// Gets or sets the security principal (user or team) for which to check access.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 1, HelpMessage = "The security principal (user or team) for which to check access rights.")]
+        [Parameter(Mandatory = true, Position = 2, HelpMessage = "The security principal (user or team) for which to check access rights.")]
         public Guid Principal { get; set; }
 
         /// <summary>
@@ -31,9 +39,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.BeginProcessing();
 
+            var target = new EntityReference(TableName, Id);
+
             var request = new RetrievePrincipalAccessRequest
             {
-                Target = Target,
+                Target = target,
                 Principal = new EntityReference("systemuser", Principal)
             };
 

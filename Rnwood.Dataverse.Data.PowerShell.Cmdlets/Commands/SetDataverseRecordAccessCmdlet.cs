@@ -8,25 +8,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Grants or modifies access rights for a security principal (user or team) on a specific record.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "DataverseRecordAccess", SupportsShouldProcess = true)]
+    [Cmdlet(VerbsCommon.Set, "DataverseRecordAccess", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     public class SetDataverseRecordAccessCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
-        /// Gets or sets the target entity reference for which to set access.
+        /// Gets or sets the logical name of the table.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, HelpMessage = "The record for which to set access rights.")]
-        public EntityReference Target { get; set; }
+        [Parameter(Mandatory = true, Position = 0, ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of table")]
+        [Alias("EntityName")]
+        [ArgumentCompleter(typeof(TableNameArgumentCompleter))]
+        public string TableName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Id of the record.
+        /// </summary>
+        [Parameter(Mandatory = true, Position = 1, ValueFromPipelineByPropertyName = true, HelpMessage = "Id of record")]
+        public Guid Id { get; set; }
 
         /// <summary>
         /// Gets or sets the security principal (user or team) for which to set access.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 1, HelpMessage = "The security principal (user or team) for which to set access rights.")]
+        [Parameter(Mandatory = true, Position = 2, HelpMessage = "The security principal (user or team) for which to set access rights.")]
         public Guid Principal { get; set; }
 
         /// <summary>
         /// Gets or sets the access rights to grant.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 2, HelpMessage = "The access rights to grant (e.g., ReadAccess, WriteAccess, DeleteAccess, ShareAccess, AssignAccess).")]
+        [Parameter(Mandatory = true, Position = 3, HelpMessage = "The access rights to grant (e.g., ReadAccess, WriteAccess, DeleteAccess, ShareAccess, AssignAccess).")]
         public AccessRights AccessRights { get; set; }
 
         /// <summary>
@@ -36,48 +44,78 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter IsTeam { get; set; }
 
         /// <summary>
+        /// If specified, replaces all existing access rights with the specified rights. Otherwise, adds the specified rights to existing access.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, replaces all existing access rights with the specified rights. Otherwise, adds the specified rights to existing access.")]
+        public SwitchParameter Replace { get; set; }
+
+        /// <summary>
         /// Executes the GrantAccess or ModifyAccess request.
         /// </summary>
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
 
+            var target = new EntityReference(TableName, Id);
             string principalType = IsTeam.IsPresent ? "team" : "systemuser";
             var principalRef = new EntityReference(principalType, Principal);
 
-            if (ShouldProcess($"{Target.LogicalName} {Target.Id}", $"Grant access {AccessRights} to {principalType} {Principal}"))
+            if (ShouldProcess($"{TableName} {Id}", $"Set access {AccessRights} for {principalType} {Principal}"))
             {
+                AccessRights effectiveAccessRights = AccessRights;
+
+                // If not replacing, get current access and add new rights
+                if (!Replace.IsPresent)
+                {
+                    try
+                    {
+                        var retrieveRequest = new RetrievePrincipalAccessRequest
+                        {
+                            Target = target,
+                            Principal = principalRef
+                        };
+                        var retrieveResponse = (RetrievePrincipalAccessResponse)Connection.Execute(retrieveRequest);
+                        effectiveAccessRights = retrieveResponse.AccessRights | AccessRights;
+                        WriteVerbose($"Current access: {retrieveResponse.AccessRights}, adding: {AccessRights}, effective: {effectiveAccessRights}");
+                    }
+                    catch
+                    {
+                        // If no existing access, use the specified rights
+                        WriteVerbose($"No existing access found, using specified rights: {AccessRights}");
+                    }
+                }
+
                 // Try to grant access. If access already exists, modify it.
                 try
                 {
                     var grantRequest = new GrantAccessRequest
                     {
-                        Target = Target,
+                        Target = target,
                         PrincipalAccess = new PrincipalAccess
                         {
                             Principal = principalRef,
-                            AccessMask = AccessRights
+                            AccessMask = effectiveAccessRights
                         }
                     };
 
                     Connection.Execute(grantRequest);
-                    WriteVerbose($"Granted access {AccessRights} to {principalType} {Principal} on {Target.LogicalName} {Target.Id}");
+                    WriteVerbose($"Granted access {effectiveAccessRights} to {principalType} {Principal} on {TableName} {Id}");
                 }
                 catch (Exception ex) when (ex.Message.Contains("already has access"))
                 {
                     // If access already exists, modify it
                     var modifyRequest = new ModifyAccessRequest
                     {
-                        Target = Target,
+                        Target = target,
                         PrincipalAccess = new PrincipalAccess
                         {
                             Principal = principalRef,
-                            AccessMask = AccessRights
+                            AccessMask = effectiveAccessRights
                         }
                     };
 
                     Connection.Execute(modifyRequest);
-                    WriteVerbose($"Modified access to {AccessRights} for {principalType} {Principal} on {Target.LogicalName} {Target.Id}");
+                    WriteVerbose($"Modified access to {effectiveAccessRights} for {principalType} {Principal} on {TableName} {Id}");
                 }
             }
         }
