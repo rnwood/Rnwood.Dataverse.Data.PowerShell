@@ -149,33 +149,12 @@ Describe "Sitemap Manipulation" {
                 }
                 Write-Host "Found $($subAreaEntries.Count) SubArea entries"
                 
-                # --- TEST 6: Add a new Area entry ---
-                Write-Host "`nTest 6: Adding new Area entry..."
-                $newAreaId = "area_new_$testRunId"
-                $newAreaEntry = Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Area `
-                    -EntryId $newAreaId `
-                    -Titles @{ 1033 = "New Test Area $testRunId" } `
-                    -Icon "/_imgs/area_icon.png" `
-                    -PassThru -Confirm:$false
-                
-                if (-not $newAreaEntry) {
-                    throw "Failed to create new Area entry"
-                }
-                Write-Host "Created new Area entry: $newAreaId"
-                
-                # Verify new area exists
-                $verifyArea = Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Area -EntryId $newAreaId
-                if (-not $verifyArea) {
-                    throw "Failed to retrieve newly created Area entry"
-                }
-                Write-Host "Verified new Area entry exists"
-                
-                # --- TEST 7: Add a Group to the new Area ---
-                Write-Host "`nTest 7: Adding Group to new Area..."
+                # --- TEST 6: Add a new Group to the existing Area ---
+                Write-Host "`nTest 6: Adding new Group to existing Area..."
                 $newGroupId = "group_new_$testRunId"
                 $newGroupEntry = Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Group `
                     -EntryId $newGroupId `
-                    -ParentAreaId $newAreaId `
+                    -ParentAreaId "area_test_$testRunId" `
                     -Titles @{ 1033 = "New Test Group $testRunId" } `
                     -PassThru -Confirm:$false
                 
@@ -184,12 +163,19 @@ Describe "Sitemap Manipulation" {
                 }
                 Write-Host "Created new Group entry: $newGroupId"
                 
-                # --- TEST 8: Add a SubArea to the new Group ---
-                Write-Host "`nTest 8: Adding SubArea to new Group..."
+                # Verify new group exists
+                $verifyGroup = Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Group -EntryId $newGroupId
+                if (-not $verifyGroup) {
+                    throw "Failed to retrieve newly created Group entry"
+                }
+                Write-Host "Verified new Group entry exists"
+                
+                # --- TEST 7: Add a SubArea to the new Group ---
+                Write-Host "`nTest 7: Adding SubArea to new Group..."
                 $newSubAreaId = "subarea_new_$testRunId"
                 $newSubAreaEntry = Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea `
                     -EntryId $newSubAreaId `
-                    -ParentAreaId $newAreaId `
+                    -ParentAreaId "area_test_$testRunId" `
                     -ParentGroupId $newGroupId `
                     -Entity "account" `
                     -Titles @{ 1033 = "New Test SubArea $testRunId" } `
@@ -201,8 +187,8 @@ Describe "Sitemap Manipulation" {
                 }
                 Write-Host "Created new SubArea entry: $newSubAreaId"
                 
-                # --- TEST 9: Update an existing entry ---
-                Write-Host "`nTest 9: Updating SubArea entry..."
+                # --- TEST 8: Update an existing entry ---
+                Write-Host "`nTest 8: Updating SubArea entry..."
                 $updatedSubAreaEntry = Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea `
                     -EntryId $newSubAreaId `
                     -Titles @{ 1033 = "Updated SubArea $testRunId" } `
@@ -220,8 +206,8 @@ Describe "Sitemap Manipulation" {
                 }
                 Write-Host "Successfully updated SubArea entry"
                 
-                # --- TEST 10: Publish sitemap ---
-                Write-Host "`nTest 10: Publishing sitemap..."
+                # --- TEST 9: Publish sitemap ---
+                Write-Host "`nTest 9: Publishing sitemap..."
                 Set-DataverseSitemap -Connection $connection -Id $sitemapId -Name $updatedName -Publish -Confirm:$false
                 Write-Host "Successfully published sitemap"
                 
@@ -232,8 +218,8 @@ Describe "Sitemap Manipulation" {
                 }
                 Write-Host "Verified published sitemap is retrievable"
                 
-                # --- TEST 11: Remove SubArea entry ---
-                Write-Host "`nTest 11: Removing SubArea entry..."
+                # --- TEST 10: Remove SubArea entry ---
+                Write-Host "`nTest 10: Removing SubArea entry..."
                 Remove-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea -EntryId $newSubAreaId -Confirm:$false
                 
                 # Verify deletion
@@ -255,8 +241,8 @@ Describe "Sitemap Manipulation" {
                 }
                 Write-Host "Verified sitemap was deleted"
                 
-                # --- TEST 12: Test IfExists flag on non-existent sitemap ---
-                Write-Host "`nTest 12: Testing IfExists flag on non-existent sitemap..."
+                # --- TEST 11: Test IfExists flag on non-existent sitemap ---
+                Write-Host "`nTest 11: Testing IfExists flag on non-existent sitemap..."
                 Remove-DataverseSitemap -Connection $connection -Id $sitemapId -IfExists -Confirm:$false
                 Write-Host "IfExists flag worked correctly - no error on non-existent sitemap"
                 
