@@ -260,7 +260,7 @@ Describe "Form Manipulation E2E Tests" {
                     -DataField "name" `
                     -ControlType Standard `
                     -Label "Account Name" `
-                    -Required `
+                    -IsRequired `
                     -Confirm:$false
                 
                 Write-Host "  Created control: name (Standard, Required)"
