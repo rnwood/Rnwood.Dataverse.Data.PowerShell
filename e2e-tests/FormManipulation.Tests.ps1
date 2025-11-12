@@ -63,10 +63,10 @@ Describe "Form Manipulation E2E Tests" {
                 }
                 
                 # ============================================================
-                # STEP 1: CREATE FORM WITH PUBLISH
+                # STEP 1: CREATE FORM
                 # ============================================================
                 Write-Host ""
-                Write-Host "Step 1: Creating and publishing new form..."
+                Write-Host "Step 1: Creating new form..."
                 
                 $formId = Set-DataverseForm -Connection $connection `
                     -Entity $entityName `
@@ -74,16 +74,15 @@ Describe "Form Manipulation E2E Tests" {
                     -FormType Main `
                     -Description "E2E test form for comprehensive feature testing - Run $testRunId" `
                     -IsActive `
-                    -Publish `
                     -PassThru
                 
                 if (-not $formId) {
                     throw "Failed to create form - no form ID returned"
                 }
                 
-                Write-Host "  Created and published form with ID: $formId"
+                Write-Host "  Created form with ID: $formId"
                 
-                # Verify form was created and published
+                # Verify form was created
                 $createdForm = Get-DataverseForm -Connection $connection -Id $formId
                 if (-not $createdForm) {
                     throw "Failed to retrieve created form"
@@ -93,7 +92,29 @@ Describe "Form Manipulation E2E Tests" {
                     throw "Form name mismatch. Expected: $formName, Got: $($createdForm.name)"
                 }
                 
-                Write-Host "  Verified: Form created and published successfully with correct properties"
+                Write-Host "  Verified: Form created successfully with correct properties"
+                
+                # ============================================================
+                # STEP 1.5: PUBLISH FORM AFTER CREATION
+                # ============================================================
+                Write-Host ""
+                Write-Host "Step 1.5: Publishing newly created form..."
+                
+                # Publish the form as a separate operation
+                Set-DataverseForm -Connection $connection `
+                    -Id $formId `
+                    -Publish `
+                    -Confirm:$false
+                
+                Write-Host "  Published form successfully"
+                
+                # Verify formxml is now available after publish
+                $publishedForm = Get-DataverseForm -Connection $connection -Id $formId
+                if (-not $publishedForm.formxml) {
+                    throw "Form XML is empty after publish"
+                }
+                
+                Write-Host "  Verified: Form XML is available after publish"
                 
                 # ============================================================
                 # STEP 2: GET FORM AND VERIFY INITIAL STRUCTURE
@@ -464,7 +485,8 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "=========================================="
                 Write-Host ""
                 Write-Host "Summary:"
-                Write-Host "  - Created and published form with unique name"
+                Write-Host "  - Created form with unique name"
+                Write-Host "  - Published form immediately after creation"
                 Write-Host "  - Created and updated tabs with multi-column layouts"
                 Write-Host "  - Created multiple sections within tabs"
                 Write-Host "  - Created controls of different types (Text, Lookup, Email)"
