@@ -472,17 +472,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (!string.IsNullOrEmpty(entry.ResourceId)) psObject.Properties.Add(new PSNoteProperty("ResourceId", entry.ResourceId));
             
-            // Add Titles and Descriptions as dictionaries (new format)
+            // Add Titles and Descriptions as dictionaries
             if (entry.Titles != null && entry.Titles.Count > 0)
                 psObject.Properties.Add(new PSNoteProperty("Titles", entry.Titles));
             if (entry.Descriptions != null && entry.Descriptions.Count > 0)
                 psObject.Properties.Add(new PSNoteProperty("Descriptions", entry.Descriptions));
-            
-            // Add Title and Description for backward compatibility (deprecated)
-#pragma warning disable CS0618 // Type or member is obsolete
-            if (!string.IsNullOrEmpty(entry.Title)) psObject.Properties.Add(new PSNoteProperty("Title", entry.Title));
-            if (!string.IsNullOrEmpty(entry.Description)) psObject.Properties.Add(new PSNoteProperty("Description", entry.Description));
-#pragma warning restore CS0618 // Type or member is obsolete
             
             if (!string.IsNullOrEmpty(entry.DescriptionResourceId)) psObject.Properties.Add(new PSNoteProperty("DescriptionResourceId", entry.DescriptionResourceId));
             if (!string.IsNullOrEmpty(entry.ToolTipResourceId)) psObject.Properties.Add(new PSNoteProperty("ToolTipResourceId", entry.ToolTipResourceId));

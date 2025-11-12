@@ -95,22 +95,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string ToolTipResourceId { get; set; }
 
         /// <summary>
-        /// Gets or sets the title/label of the entry (deprecated - use Titles).
-        /// For backward compatibility, sets the title for LCID 1033.
-        /// </summary>
-        [Parameter(HelpMessage = "The title/label of the entry (deprecated - use Titles parameter instead). Sets the title for LCID 1033.")]
-        [Obsolete("Use Titles parameter instead. This parameter is maintained for backward compatibility.")]
-        public string Title { get; set; }
-
-        /// <summary>
-        /// Gets or sets the description of the entry (deprecated - use Descriptions).
-        /// For backward compatibility, sets the description for LCID 1033.
-        /// </summary>
-        [Parameter(HelpMessage = "The description of the entry (deprecated - use Descriptions parameter instead). Sets the description for LCID 1033.")]
-        [Obsolete("Use Descriptions parameter instead. This parameter is maintained for backward compatibility.")]
-        public string Description { get; set; }
-
-        /// <summary>
         /// Gets or sets the titles of the entry keyed by LCID.
         /// Null values for a specific LCID will remove that LCID's title.
         /// </summary>
@@ -595,9 +579,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 // Handle Titles (new format) - merge with existing and update
-                if (Titles != null || !string.IsNullOrEmpty(Title))
+                if (Titles != null)
                 {
-                    var mergedTitles = MergeTitles(entryElement, Titles, Title);
+                    var mergedTitles = MergeTitles(entryElement, Titles);
                     UpdateTitlesElement(entryElement, mergedTitles);
                     // Remove old Title attribute if it exists
                     entryElement.Attribute("Title")?.Remove();
@@ -605,9 +589,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 // Handle Descriptions (new format) - merge with existing and update
-                if (Descriptions != null || !string.IsNullOrEmpty(Description))
+                if (Descriptions != null)
                 {
-                    var mergedDescriptions = MergeDescriptions(entryElement, Descriptions, Description);
+                    var mergedDescriptions = MergeDescriptions(entryElement, Descriptions);
                     UpdateDescriptionsElement(entryElement, mergedDescriptions);
                     // Remove old Description attribute if it exists
                     entryElement.Attribute("Description")?.Remove();
@@ -870,27 +854,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     finalParentGroupId = ParentGroupId ?? finalParentGroupId;
                 }
 
-                // Prepare Titles and Descriptions for output
-                var outputTitles = Titles;
-                var outputDescriptions = Descriptions;
-                
-                // If using backward-compatible single Title/Description, convert to dictionaries
-#pragma warning disable CS0618 // Type or member is obsolete
-                if (!string.IsNullOrEmpty(Title) && (outputTitles == null || !outputTitles.ContainsKey(1033)))
-                {
-                    if (outputTitles == null)
-                        outputTitles = new Dictionary<int, string>();
-                    outputTitles[1033] = Title;
-                }
-                
-                if (!string.IsNullOrEmpty(Description) && (outputDescriptions == null || !outputDescriptions.ContainsKey(1033)))
-                {
-                    if (outputDescriptions == null)
-                        outputDescriptions = new Dictionary<int, string>();
-                    outputDescriptions[1033] = Description;
-                }
-#pragma warning restore CS0618 // Type or member is obsolete
-
                 var entry = new SitemapEntryInfo
                 {
                     EntryType = entryType,
@@ -898,8 +861,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     ResourceId = ResourceId,
                     DescriptionResourceId = DescriptionResourceId,
                     ToolTipResourceId = ToolTipResourceId,
-                    Titles = outputTitles,
-                    Descriptions = outputDescriptions,
+                    Titles = Titles,
+                    Descriptions = Descriptions,
                     Icon = Icon,
                     Entity = Entity,
                     Url = Url,
@@ -943,53 +906,31 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 element.SetAttributeValue("ToolTipResourseId", ToolTipResourceId);
 
             // Handle Titles (new format)
-            if (Titles != null || !string.IsNullOrEmpty(Title))
+            if (Titles != null)
             {
                 var titlesToSet = new Dictionary<int, string>();
                 
                 // Add titles from Titles dictionary
-                if (Titles != null)
+                foreach (var kvp in Titles)
                 {
-                    foreach (var kvp in Titles)
-                    {
-                        if (kvp.Value != null) // Skip null values
-                            titlesToSet[kvp.Key] = kvp.Value;
-                    }
+                    if (kvp.Value != null) // Skip null values
+                        titlesToSet[kvp.Key] = kvp.Value;
                 }
-                
-                // Add title from Title parameter (backward compatibility)
-#pragma warning disable CS0618 // Type or member is obsolete
-                if (!string.IsNullOrEmpty(Title))
-                {
-                    titlesToSet[1033] = Title;
-                }
-#pragma warning restore CS0618 // Type or member is obsolete
                 
                 UpdateTitlesElement(element, titlesToSet);
             }
 
             // Handle Descriptions (new format)
-            if (Descriptions != null || !string.IsNullOrEmpty(Description))
+            if (Descriptions != null)
             {
                 var descriptionsToSet = new Dictionary<int, string>();
                 
                 // Add descriptions from Descriptions dictionary
-                if (Descriptions != null)
+                foreach (var kvp in Descriptions)
                 {
-                    foreach (var kvp in Descriptions)
-                    {
-                        if (kvp.Value != null) // Skip null values
-                            descriptionsToSet[kvp.Key] = kvp.Value;
-                    }
+                    if (kvp.Value != null) // Skip null values
+                        descriptionsToSet[kvp.Key] = kvp.Value;
                 }
-                
-                // Add description from Description parameter (backward compatibility)
-#pragma warning disable CS0618 // Type or member is obsolete
-                if (!string.IsNullOrEmpty(Description))
-                {
-                    descriptionsToSet[1033] = Description;
-                }
-#pragma warning restore CS0618 // Type or member is obsolete
                 
                 UpdateDescriptionsElement(element, descriptionsToSet);
             }
@@ -1140,7 +1081,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 entryElement.Add(descriptionsElement);
         }
 
-        private Dictionary<int, string> MergeTitles(XElement entryElement, Dictionary<int, string> newTitles, string singleTitle)
+        private Dictionary<int, string> MergeTitles(XElement entryElement, Dictionary<int, string> newTitles)
         {
             var result = new Dictionary<int, string>();
             
@@ -1178,18 +1119,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
             
-            // Apply single title to LCID 1033 for backward compatibility
-#pragma warning disable CS0618 // Type or member is obsolete
-            if (!string.IsNullOrEmpty(singleTitle))
-            {
-                result[1033] = singleTitle;
-            }
-#pragma warning restore CS0618 // Type or member is obsolete
-            
             return result.Count > 0 ? result : null;
         }
 
-        private Dictionary<int, string> MergeDescriptions(XElement entryElement, Dictionary<int, string> newDescriptions, string singleDescription)
+        private Dictionary<int, string> MergeDescriptions(XElement entryElement, Dictionary<int, string> newDescriptions)
         {
             var result = new Dictionary<int, string>();
             
@@ -1226,14 +1159,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         result[kvp.Key] = kvp.Value;
                 }
             }
-            
-            // Apply single description to LCID 1033 for backward compatibility
-#pragma warning disable CS0618 // Type or member is obsolete
-            if (!string.IsNullOrEmpty(singleDescription))
-            {
-                result[1033] = singleDescription;
-            }
-#pragma warning restore CS0618 // Type or member is obsolete
             
             return result.Count > 0 ? result : null;
         }

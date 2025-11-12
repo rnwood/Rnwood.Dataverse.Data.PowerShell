@@ -17,9 +17,11 @@ Creates or updates an entry (Area, Group, or SubArea) in a Dataverse sitemap.
 Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
  [[-SitemapUniqueName] <String>] [-SitemapId <Guid>] [-Area] -EntryId <String> [-ResourceId <String>]
  [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Title <String>] [-Description <String>]
- [-Icon <String>] [-Entity <String>] [-Url <String>] [-Index <Int32>] [-Before <String>] [-After <String>]
- [-IsDefault] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
+ [-Titles <System.Collections.Generic.Dictionary`2[System.Int32,System.String]>]
+ [-Descriptions <System.Collections.Generic.Dictionary`2[System.Int32,System.String]>] [-Icon <String>]
+ [-Entity <String>] [-Url <String>] [-Index <Int32>] [-Before <String>] [-After <String>] [-IsDefault]
+ [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### Group
@@ -27,9 +29,11 @@ Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapIn
 Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
  [[-SitemapUniqueName] <String>] [-SitemapId <Guid>] [-Group] -EntryId <String> [-ResourceId <String>]
  [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Title <String>] [-Description <String>]
- [-Icon <String>] [-Entity <String>] [-Url <String>] [-ParentAreaId <String>] [-Index <Int32>]
- [-Before <String>] [-After <String>] [-IsDefault] [-PassThru] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Titles <System.Collections.Generic.Dictionary`2[System.Int32,System.String]>]
+ [-Descriptions <System.Collections.Generic.Dictionary`2[System.Int32,System.String]>] [-Icon <String>]
+ [-Entity <String>] [-Url <String>] [-ParentAreaId <String>] [-Index <Int32>] [-Before <String>]
+ [-After <String>] [-IsDefault] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### SubArea
@@ -37,8 +41,10 @@ Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapIn
 Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
  [[-SitemapUniqueName] <String>] [-SitemapId <Guid>] [-SubArea] -EntryId <String> [-ResourceId <String>]
  [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Title <String>] [-Description <String>]
- [-Icon <String>] [-Entity <String>] [-Url <String>] [-ParentAreaId <String>] [-ParentGroupId <String>]
- [-Index <Int32>] [-Before <String>] [-After <String>] [-IsDefault] [-PassThru] [-Connection <ServiceClient>]
+ [-Titles <System.Collections.Generic.Dictionary`2[System.Int32,System.String]>]
+ [-Descriptions <System.Collections.Generic.Dictionary`2[System.Int32,System.String]>] [-Icon <String>]
+ [-Entity <String>] [-Url <String>] [-ParentAreaId <String>] [-ParentGroupId <String>] [-Index <Int32>]
+ [-Before <String>] [-After <String>] [-IsDefault] [-PassThru] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -47,9 +53,11 @@ Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapIn
 Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
  [[-SitemapUniqueName] <String>] [-SitemapId <Guid>] [-Privilege] [-EntryId <String>] [-ResourceId <String>]
  [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Title <String>] [-Description <String>]
- [-Icon <String>] [-Entity <String>] [-Url <String>] -ParentSubAreaId <String> -PrivilegeEntity <String>
- -PrivilegeName <String> [-Index <Int32>] [-Before <String>] [-After <String>] [-IsDefault] [-PassThru]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Titles <System.Collections.Generic.Dictionary`2[System.Int32,System.String]>]
+ [-Descriptions <System.Collections.Generic.Dictionary`2[System.Int32,System.String]>] [-Icon <String>]
+ [-Entity <String>] [-Url <String>] -ParentSubAreaId <String> -PrivilegeEntity <String> -PrivilegeName <String>
+ [-Index <Int32>] [-Before <String>] [-After <String>] [-IsDefault] [-PassThru] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -193,6 +201,21 @@ The resource ID for localized descriptions.
 
 ```yaml
 Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Descriptions
+The descriptions of the entry as a dictionary keyed by LCID. Null values for a specific LCID will remove that LCID's description.
+
+```yaml
+Type: System.Collections.Generic.Dictionary`2[System.Int32,System.String]
 Parameter Sets: (All)
 Aliases:
 
@@ -506,6 +529,21 @@ The new title/label of the entry.
 
 ```yaml
 Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Titles
+The titles of the entry as a dictionary keyed by LCID. Null values for a specific LCID will remove that LCID's title.
+
+```yaml
+Type: System.Collections.Generic.Dictionary`2[System.Int32,System.String]
 Parameter Sets: (All)
 Aliases:
 

@@ -144,8 +144,8 @@ Describe 'Set-DataverseSitemapEntry' {
             $command.Parameters.Keys | Should -Contain 'ResourceId'
             $command.Parameters.Keys | Should -Contain 'DescriptionResourceId'
             $command.Parameters.Keys | Should -Contain 'ToolTipResourceId'
-            $command.Parameters.Keys | Should -Contain 'Title'
-            $command.Parameters.Keys | Should -Contain 'Description'
+            $command.Parameters.Keys | Should -Contain 'Titles'
+            $command.Parameters.Keys | Should -Contain 'Descriptions'
             $command.Parameters.Keys | Should -Contain 'Icon'
             $command.Parameters.Keys | Should -Contain 'Entity'
             $command.Parameters.Keys | Should -Contain 'Url'
@@ -374,8 +374,8 @@ Describe 'SitemapEntryInfo Class' {
             $properties | Should -Contain 'EntryType'
             $properties | Should -Contain 'Id'
             $properties | Should -Contain 'ResourceId'
-            $properties | Should -Contain 'Title'
-            $properties | Should -Contain 'Description'
+            $properties | Should -Contain 'Titles'
+            $properties | Should -Contain 'Descriptions'
             $properties | Should -Contain 'DescriptionResourceId'
             $properties | Should -Contain 'ToolTipResourceId'
             $properties | Should -Contain 'Icon'
@@ -634,16 +634,6 @@ Describe 'Sitemap Titles and Descriptions with LCID' {
             $area.Descriptions[1036] | Should -Be "Ceci est une zone de test en français"
         }
 
-        It "Provides backward-compatible Title property for LCID 1033" {
-            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "MultilingualSitemap" -EntryId "TestArea"
-            $area.Title | Should -Be "Test Area English"
-        }
-
-        It "Provides backward-compatible Description property for LCID 1033" {
-            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "MultilingualSitemap" -EntryId "TestArea"
-            $area.Description | Should -Be "This is a test area in English"
-        }
-
         It "Parses Group Titles with multiple LCIDs" {
             $group = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "MultilingualSitemap" -EntryId "TestGroup"
             $group.Titles | Should -Not -BeNullOrEmpty
@@ -755,29 +745,6 @@ Describe 'Sitemap Titles and Descriptions with LCID' {
             $area.Titles.ContainsKey(1031) | Should -Be $true
             $area.Titles.ContainsKey(1036) | Should -Be $false
         }
-
-        It "Backward-compatible Title parameter sets LCID 1033" {
-            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" `
-                -Area -EntryId "BackCompatArea" -Title "Backward Compatible Title" -Confirm:$false
-            
-            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" -EntryId "BackCompatArea"
-            $area.Titles | Should -Not -BeNullOrEmpty
-            $area.Titles.Count | Should -Be 1
-            $area.Titles[1033] | Should -Be "Backward Compatible Title"
-            $area.Title | Should -Be "Backward Compatible Title"
-        }
-
-        It "Combines Title parameter with Titles dictionary" {
-            $titles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
-            $titles.Add(1036, "Titre français")
-            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" `
-                -Area -EntryId "CombinedArea" -Title "English Title" -Titles $titles -Confirm:$false
-            
-            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" -EntryId "CombinedArea"
-            $area.Titles.Count | Should -Be 2
-            $area.Titles[1033] | Should -Be "English Title"
-            $area.Titles[1036] | Should -Be "Titre français"
-        }
     }
 
     Context 'Backward Compatibility with Old Format' {
@@ -807,7 +774,6 @@ Describe 'Sitemap Titles and Descriptions with LCID' {
             $area.Titles | Should -Not -BeNullOrEmpty
             $area.Titles.Count | Should -Be 1
             $area.Titles[1033] | Should -Be "Old Style Title"
-            $area.Title | Should -Be "Old Style Title"
         }
 
         It "Parses old Description attribute as LCID 1033" {
@@ -815,7 +781,6 @@ Describe 'Sitemap Titles and Descriptions with LCID' {
             $area.Descriptions | Should -Not -BeNullOrEmpty
             $area.Descriptions.Count | Should -Be 1
             $area.Descriptions[1033] | Should -Be "Old style description"
-            $area.Description | Should -Be "Old style description"
         }
 
         It "Parses old format for Group" {
