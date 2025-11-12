@@ -19,7 +19,7 @@ Set-DataverseEntityMetadata [-EntityName] <String> [-SchemaName <String>] [-Disp
  [-HasNotes] [-IsAuditEnabled] [-ChangeTrackingEnabled] [-IconVectorName <String>] [-IconLargeName <String>]
  [-IconMediumName <String>] [-IconSmallName <String>] [-PrimaryAttributeSchemaName <String>]
  [-PrimaryAttributeDisplayName <String>] [-PrimaryAttributeMaxLength <Int32>] [-PassThru] [-Publish]
- [-SkipIconValidation] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] 
+ [-SkipIconValidation] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
  [<CommonParameters>]
 ```
 
@@ -38,6 +38,7 @@ The cmdlet supports two parameter sets:
 
 Icon properties (IconVectorName, IconLargeName, IconMediumName, IconSmallName) control the visual representation of the entity in the Dataverse UI. By default, the cmdlet validates that icon properties reference valid webresources:
 - **IconVectorName** must reference an SVG webresource (type 11)
+- **IconLargeName, IconMediumName, IconSmallName** must reference PNG (type 5), JPG (type 6), or GIF (type 7) webresources
 - The webresource must exist (including unpublished webresources)
 - Use `-SkipIconValidation` to bypass these checks
 
@@ -340,9 +341,9 @@ PS C:\> Set-DataverseEntityMetadata -EntityName new_customer `
 
 Copies icon properties from one entity to another entity.
 
-### Example 21: Create entity with validated icon webresource
+### Example 21: Create entity with validated icon webresources
 ```powershell
-PS C:\> # Create an entity with IconVectorName that references an SVG webresource
+PS C:\> # Create an entity with all icon properties that reference valid webresources
 PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
     -SchemaName new_Product `
     -DisplayName "Product" `
@@ -350,10 +351,19 @@ PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
     -OwnershipType UserOwned `
     -PrimaryAttributeSchemaName new_name `
     -PrimaryAttributeDisplayName "Product Name" `
-    -IconVectorName "new_product_icon"
+    -IconVectorName "new_product_svg" `
+    -IconLargeName "new_product_large.png" `
+    -IconMediumName "new_product_medium.png" `
+    -IconSmallName "new_product_small.png"
 ```
 
-Creates an entity with icon validation enabled (default). The cmdlet validates that "new_product_icon" references an existing SVG webresource (type 11). If the webresource doesn't exist or has the wrong type, an error is thrown.
+Creates an entity with icon validation enabled (default). The cmdlet validates that:
+- "new_product_svg" references an SVG webresource (type 11)
+- "new_product_large.png" references a PNG, JPG, or GIF webresource (type 5, 6, or 7)
+- "new_product_medium.png" references a PNG, JPG, or GIF webresource (type 5, 6, or 7)
+- "new_product_small.png" references a PNG, JPG, or GIF webresource (type 5, 6, or 7)
+
+If any webresource doesn't exist or has the wrong type, an error is thrown.
 
 ### Example 22: Skip icon webresource validation
 ```powershell
@@ -769,7 +779,9 @@ Accept wildcard characters: False
 ### -SkipIconValidation
 If specified, skips validation that icon properties reference valid webresources.
 
-By default, when setting icon properties (IconVectorName, IconLargeName, IconMediumName, IconSmallName), the cmdlet validates that the specified webresource exists and has the correct type. For IconVectorName, it must reference an SVG webresource (type 11).
+By default, when setting icon properties (IconVectorName, IconLargeName, IconMediumName, IconSmallName), the cmdlet validates that the specified webresource exists and has the correct type:
+- IconVectorName must reference an SVG webresource (type 11)
+- IconLargeName, IconMediumName, IconSmallName must reference PNG (type 5), JPG (type 6), or GIF (type 7) webresources
 
 Use this switch to:
 - Skip validation during development/testing
@@ -780,7 +792,7 @@ Use this switch to:
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: ByProperties
+Parameter Sets: (All)
 Aliases:
 
 Required: False

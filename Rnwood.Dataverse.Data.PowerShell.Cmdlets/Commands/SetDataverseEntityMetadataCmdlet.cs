@@ -298,8 +298,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     ValidateIconWebResource(IconVectorName, nameof(IconVectorName), 11); // 11 = SVG
                 }
                 
-                // Note: IconLargeName, IconMediumName, IconSmallName can be any image format
-                // but we're not enforcing specific types for these legacy properties
+                if (!string.IsNullOrWhiteSpace(IconLargeName))
+                {
+                    ValidateIconWebResource(IconLargeName, nameof(IconLargeName), 5, 6, 7); // 5=PNG, 6=JPG, 7=GIF
+                }
+                
+                if (!string.IsNullOrWhiteSpace(IconMediumName))
+                {
+                    ValidateIconWebResource(IconMediumName, nameof(IconMediumName), 5, 6, 7); // 5=PNG, 6=JPG, 7=GIF
+                }
+                
+                if (!string.IsNullOrWhiteSpace(IconSmallName))
+                {
+                    ValidateIconWebResource(IconSmallName, nameof(IconSmallName), 5, 6, 7); // 5=PNG, 6=JPG, 7=GIF
+                }
             }
             
             if (!string.IsNullOrWhiteSpace(IconVectorName))
@@ -438,8 +450,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     ValidateIconWebResource(IconVectorName, nameof(IconVectorName), 11); // 11 = SVG
                 }
                 
-                // Note: IconLargeName, IconMediumName, IconSmallName can be any image format
-                // but we're not enforcing specific types for these legacy properties
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(IconLargeName)))
+                {
+                    ValidateIconWebResource(IconLargeName, nameof(IconLargeName), 5, 6, 7); // 5=PNG, 6=JPG, 7=GIF
+                }
+                
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(IconMediumName)))
+                {
+                    ValidateIconWebResource(IconMediumName, nameof(IconMediumName), 5, 6, 7); // 5=PNG, 6=JPG, 7=GIF
+                }
+                
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(IconSmallName)))
+                {
+                    ValidateIconWebResource(IconSmallName, nameof(IconSmallName), 5, 6, 7); // 5=PNG, 6=JPG, 7=GIF
+                }
             }
             
             // Update icon vector name
@@ -732,15 +756,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         /// <param name="iconName">The name of the icon/webresource to validate</param>
         /// <param name="propertyName">The name of the property being validated (for error messages)</param>
-        /// <param name="requiredWebResourceType">The required webresource type (e.g., 11 for SVG)</param>
-        private void ValidateIconWebResource(string iconName, string propertyName, int requiredWebResourceType)
+        /// <param name="allowedWebResourceTypes">The allowed webresource types (e.g., 11 for SVG, 5 for PNG, 6 for JPG, 7 for GIF)</param>
+        private void ValidateIconWebResource(string iconName, string propertyName, params int[] allowedWebResourceTypes)
         {
             if (string.IsNullOrWhiteSpace(iconName))
             {
                 return; // Empty values are allowed (clears the icon)
             }
 
-            WriteVerbose($"Validating {propertyName} '{iconName}' references a valid webresource of type {requiredWebResourceType}");
+            string typesDescription = allowedWebResourceTypes.Length == 1 
+                ? $"type {allowedWebResourceTypes[0]}" 
+                : $"one of types {string.Join(", ", allowedWebResourceTypes)}";
+            WriteVerbose($"Validating {propertyName} '{iconName}' references a valid webresource of {typesDescription}");
 
             // Query for the webresource by name (including unpublished)
             var query = new QueryExpression("webresource")
@@ -776,11 +803,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var webResource = allResults.First();
             var webResourceType = webResource.GetAttributeValue<OptionSetValue>("webresourcetype");
             
-            if (webResourceType == null || webResourceType.Value != requiredWebResourceType)
+            if (webResourceType == null || !allowedWebResourceTypes.Contains(webResourceType.Value))
             {
                 var actualType = webResourceType?.Value.ToString() ?? "unknown";
+                var expectedTypes = allowedWebResourceTypes.Length == 1
+                    ? $"type {allowedWebResourceTypes[0]}"
+                    : $"one of types {string.Join(", ", allowedWebResourceTypes)}";
                 ThrowTerminatingError(new ErrorRecord(
-                    new ArgumentException($"{propertyName} '{iconName}' references a webresource with type {actualType}, but type {requiredWebResourceType} is required."),
+                    new ArgumentException($"{propertyName} '{iconName}' references a webresource with type {actualType}, but {expectedTypes} is required."),
                     "InvalidIconWebResourceType",
                     ErrorCategory.InvalidArgument,
                     iconName));
