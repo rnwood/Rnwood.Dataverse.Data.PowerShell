@@ -482,7 +482,22 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "ERROR: Form Manipulation E2E Test FAILED"
                 Write-Host "=========================================="
                 Write-Host ""
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                Write-Host "Error Details:"
+                Write-Host "  Exception Type: $($_.Exception.GetType().FullName)"
+                Write-Host "  Message: $($_.Exception.Message)"
+                if ($_.Exception.InnerException) {
+                    Write-Host "  Inner Exception: $($_.Exception.InnerException.Message)"
+                }
+                Write-Host "  Script Line: $($_.InvocationInfo.ScriptLineNumber)"
+                Write-Host "  Script Name: $($_.InvocationInfo.ScriptName)"
+                Write-Host ""
+                Write-Host "Full Error Record:"
+                Write-Host ($_ | Out-String)
+                Write-Host ""
+                Write-Host "Stack Trace:"
+                Write-Host $_.ScriptStackTrace
+                Write-Host ""
+                throw "Failed: $($_.Exception.Message)"
             }
         }
 
