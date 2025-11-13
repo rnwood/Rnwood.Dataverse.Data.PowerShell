@@ -206,7 +206,7 @@ Describe "Entity Metadata E2E Tests" {
                 Write-Host "✓ EntityMetadata object update complete and published"
                 
                 Write-Host "Step 6: Cleanup - Deleting entity..."
-                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Force -Confirm:$false
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
                 Write-Host "✓ Entity deleted"
                 
                 Write-Host "Step 7: Verifying deletion..."
@@ -227,7 +227,7 @@ Describe "Entity Metadata E2E Tests" {
                     foreach ($entity in $oldEntities) {
                         try {
                             Write-Host "  Removing old entity: $($entity.LogicalName)"
-                            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Force -Confirm:$false -ErrorAction SilentlyContinue
+                            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
                         } catch {
                             Write-Host "  Could not remove $($entity.LogicalName): $_"
                         }

@@ -206,7 +206,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 Write-Host "✓ Local option set verified"
                 
                 Write-Host "Step 14: Cleanup - Deleting test entity (and local option set)..."
-                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Force -Confirm:$false
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
                 Write-Host "✓ Test entity deleted"
                 
                 Write-Host "Step 15: Cleanup any old test entities from previous failed runs..."
@@ -219,7 +219,7 @@ Describe "OptionSet Metadata E2E Tests" {
                     foreach ($entity in $oldEntities) {
                         try {
                             Write-Host "  Removing old entity: $($entity.LogicalName)"
-                            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Force -Confirm:$false -ErrorAction SilentlyContinue
+                            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
                         } catch {
                             Write-Host "  Could not remove $($entity.LogicalName): $_"
                         }

@@ -207,7 +207,7 @@ Describe "Attribute Metadata E2E Tests" {
                 Write-Host "✓ Updates verified"
                 
                 Write-Host "Step 14: Testing attribute deletion..."
-                Remove-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_notes" -Force -Confirm:$false
+                Remove-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_notes" -Confirm:$false
                 Write-Host "✓ Memo attribute deleted"
                 
                 Start-Sleep -Seconds 2
@@ -218,7 +218,7 @@ Describe "Attribute Metadata E2E Tests" {
                 Write-Host "✓ Deletion verified"
                 
                 Write-Host "Step 15: Cleanup - Deleting test entity..."
-                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Force -Confirm:$false
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
                 Write-Host "✓ Test entity deleted"
                 
                 Write-Host "Step 16: Cleanup any old test entities from previous failed runs..."
@@ -231,7 +231,7 @@ Describe "Attribute Metadata E2E Tests" {
                     foreach ($entity in $oldEntities) {
                         try {
                             Write-Host "  Removing old entity: $($entity.LogicalName)"
-                            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Force -Confirm:$false -ErrorAction SilentlyContinue
+                            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
                         } catch {
                             Write-Host "  Could not remove $($entity.LogicalName): $_"
                         }

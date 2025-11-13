@@ -194,10 +194,10 @@ Describe "Relationship Metadata E2E Tests" {
                 # Note: Relationships are deleted when entities are deleted
                 
                 Write-Host "Step 13: Cleanup - Deleting test entities..."
-                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity2Name -Force -Confirm:$false
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity2Name -Confirm:$false
                 Write-Host "✓ Entity 2 deleted"
                 
-                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity1Name -Force -Confirm:$false
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity1Name -Confirm:$false
                 Write-Host "✓ Entity 1 deleted"
                 
                 Write-Host "Step 14: Verifying cleanup..."
@@ -221,7 +221,7 @@ Describe "Relationship Metadata E2E Tests" {
                     foreach ($entity in $oldEntities) {
                         try {
                             Write-Host "  Removing old entity: $($entity.LogicalName)"
-                            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Force -Confirm:$false -ErrorAction SilentlyContinue
+                            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
                         } catch {
                             Write-Host "  Could not remove $($entity.LogicalName): $_"
                         }

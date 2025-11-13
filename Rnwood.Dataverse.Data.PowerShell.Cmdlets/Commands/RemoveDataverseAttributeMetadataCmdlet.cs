@@ -7,7 +7,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Deletes an attribute (column) from Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "DataverseAttributeMetadata", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
+    [Cmdlet(VerbsCommon.Remove, "DataverseAttributeMetadata", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
     public class RemoveDataverseAttributeMetadataCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
@@ -27,12 +27,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string AttributeName { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether to bypass confirmation prompts.
-        /// </summary>
-        [Parameter(Mandatory = false, HelpMessage = "Bypass confirmation prompts")]
-        public SwitchParameter Force { get; set; }
-
-        /// <summary>
         /// Processes the cmdlet.
         /// </summary>
         protected override void ProcessRecord()
@@ -40,11 +34,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.ProcessRecord();
 
             if (!ShouldProcess($"Entity '{EntityName}'", $"Delete attribute '{AttributeName}'"))
-            {
-                return;
-            }
-
-            if (!Force && !ShouldContinue($"Are you sure you want to delete attribute '{AttributeName}' from entity '{EntityName}'? This action cannot be undone.", "Confirm Deletion"))
             {
                 return;
             }
