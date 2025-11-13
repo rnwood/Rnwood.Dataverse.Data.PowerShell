@@ -207,7 +207,7 @@ Describe "Attribute Metadata E2E Tests" {
                 Write-Host "✓ Updates verified"
                 
                 Write-Host "Step 14: Testing attribute deletion..."
-                Remove-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_notes" -Confirm:$false
+                Remove-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_notes" -Force -Confirm:$false
                 Write-Host "✓ Memo attribute deleted"
                 
                 Start-Sleep -Seconds 2
