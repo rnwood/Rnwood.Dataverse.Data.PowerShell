@@ -48,9 +48,10 @@ Describe "OptionSet Metadata E2E Tests" {
                         @{Value=3; Label='High'; Description='High priority'}
                         @{Value=4; Label='Critical'; Description='Critical priority'}
                     ) `
+                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Option set 1 created"
+                Write-Host "✓ Option set 1 created and published"
                 
                 Write-Host "Step 2: Creating second global option set..."
                 Set-DataverseOptionSetMetadata -Connection $connection `
@@ -63,9 +64,10 @@ Describe "OptionSet Metadata E2E Tests" {
                         @{Value=300; Label='Completed'}
                         @{Value=400; Label='Cancelled'}
                     ) `
+                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Option set 2 created"
+                Write-Host "✓ Option set 2 created and published"
                 
                 Write-Host "Step 3: Reading global option set..."
                 $optionSet1 = Get-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName1
@@ -157,9 +159,10 @@ Describe "OptionSet Metadata E2E Tests" {
                         @{Value=4; Label='Critical'}
                         @{Value=5; Label='Emergency'}
                     ) `
+                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Option set updated with new option"
+                Write-Host "✓ Option set updated with new option and published"
                 
                 Write-Host "Step 11: Verifying option set update..."
                 $updatedOptionSet = Get-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName1
