@@ -53,15 +53,14 @@ Comprehensive form manipulation test that exercises all form-related cmdlets:
 
 **Test Coverage:**
 - Form creation (Set-DataverseForm)
-- Publishing immediately after creation (Set-DataverseForm -Publish on new form)
-- Form retrieval and verification with FormXml (Get-DataverseForm -IncludeFormXml)
-- Publishing after modifications (Set-DataverseForm -Publish on existing form)
+- Form retrieval and verification (Get-DataverseForm)
 - Tab creation, updates, and removal (Set-DataverseFormTab, Get-DataverseFormTab, Remove-DataverseFormTab)
 - Section creation and removal (Set-DataverseFormSection, Get-DataverseFormSection, Remove-DataverseFormSection)
 - Control creation, updates, and removal (Set-DataverseFormControl, Get-DataverseFormControl, Remove-DataverseFormControl)
+- Publishing after all modifications (Set-DataverseForm -Publish tests the -Publish parameter)
 - Multi-column tab layouts (OneColumn, TwoColumns, ThreeColumns)
 - Different control types (Standard, Lookup, Email)
-- Control properties (Required, Disabled)
+- Control properties (IsRequired, Disabled)
 
 **Features:**
 - Uses unique test identifiers to avoid conflicts with concurrent test runs
