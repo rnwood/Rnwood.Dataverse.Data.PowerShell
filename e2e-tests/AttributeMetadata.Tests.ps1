@@ -194,8 +194,9 @@ Describe "Attribute Metadata E2E Tests" {
                     -DisplayName "Email Address (Updated)" `
                     -Description "Updated email field" `
                     -MaxLength 150 `
+                    -Publish `
                     -Confirm:$false
-                Write-Host "✓ String attribute updated"
+                Write-Host "✓ String attribute updated and published"
                 
                 Write-Host "Step 12: Updating Lookup attribute..."
                 Set-DataverseAttributeMetadata -Connection $connection `
