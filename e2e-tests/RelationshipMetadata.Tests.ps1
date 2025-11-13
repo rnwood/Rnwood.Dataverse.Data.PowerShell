@@ -49,6 +49,10 @@ Describe "Relationship Metadata E2E Tests" {
                     -Confirm:$false
                 Write-Host "✓ Entity 1 created and published"
                 
+                # Additional wait to ensure customization lock is released
+                Write-Host "Waiting for customization lock to be released..."
+                Start-Sleep -Seconds 3
+                
                 Write-Host "Step 2: Creating second test entity..."
                 Set-DataverseEntityMetadata -Connection $connection `
                     -EntityName $entity2Name `

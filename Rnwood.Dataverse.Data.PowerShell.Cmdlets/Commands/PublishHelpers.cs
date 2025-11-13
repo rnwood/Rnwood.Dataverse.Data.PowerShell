@@ -13,7 +13,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     {
         /// <summary>
         /// Waits for any in-progress publish or solution operations to complete.
-        /// Polls the msdyn_solutionhistory table for records with null msdyn_endtime (indicating in-progress operations).
+        /// Polls the msdyn_solutionhistory table for the most recent record by msdyn_starttime
+        /// and checks if msdyn_status is Started (0) or Queued (2), indicating in-progress operations.
         /// </summary>
         /// <param name="connection">The organization service connection</param>
         /// <param name="writeVerbose">Action to write verbose messages</param>
@@ -41,18 +42,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     break;
                 }
 
-                // Query for in-progress operations (where msdyn_endtime is null)
+                // Query for the most recent operation by msdyn_starttime and check its status
+                // msdyn_status: 0 = Started, 1 = Completed, 2 = Queued
                 var query = new QueryExpression("msdyn_solutionhistory")
                 {
-                    ColumnSet = new ColumnSet("msdyn_solutionhistoryid", "msdyn_starttime"),
-                    Criteria = new FilterExpression
+                    ColumnSet = new ColumnSet("msdyn_solutionhistoryid", "msdyn_starttime", "msdyn_status"),
+                    Orders =
                     {
-                        Conditions =
-                        {
-                            new ConditionExpression("msdyn_endtime", ConditionOperator.Null)
-                        }
+                        new OrderExpression("msdyn_starttime", OrderType.Descending)
                     },
-                    TopCount = 1 // We only need to know if any exist
+                    TopCount = 1 // Get only the most recent record
                 };
 
                 try
@@ -61,13 +60,43 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     
                     if (results.Entities == null || !results.Entities.Any())
                     {
-                        writeVerbose?.Invoke("No in-progress publish or solution operations detected. Continuing...");
+                        writeVerbose?.Invoke("No solution history records found. Continuing...");
                         break;
                     }
 
-                    var inProgressCount = results.TotalRecordCount;
-                    writeVerbose?.Invoke($"Found {inProgressCount} in-progress operation(s). Waiting {pollIntervalSeconds} seconds before checking again...");
-                    Thread.Sleep(pollInterval);
+                    var mostRecentRecord = results.Entities.First();
+                    
+                    // Check if the most recent operation is still in progress
+                    if (mostRecentRecord.Contains("msdyn_status"))
+                    {
+                        var status = mostRecentRecord.GetAttributeValue<Microsoft.Xrm.Sdk.OptionSetValue>("msdyn_status");
+                        var statusValue = status?.Value ?? -1;
+                        
+                        // 0 = Started, 2 = Queued (both indicate in-progress)
+                        // 1 = Completed
+                        if (statusValue == 0 || statusValue == 2)
+                        {
+                            var statusText = statusValue == 0 ? "Started" : "Queued";
+                            writeVerbose?.Invoke($"Most recent operation status: {statusText}. Waiting {pollIntervalSeconds} seconds before checking again...");
+                            Thread.Sleep(pollInterval);
+                            continue;
+                        }
+                        else if (statusValue == 1)
+                        {
+                            writeVerbose?.Invoke("Most recent operation completed. Continuing...");
+                            break;
+                        }
+                        else
+                        {
+                            writeVerbose?.Invoke($"Unknown status value: {statusValue}. Continuing...");
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        writeVerbose?.Invoke("No status information available in most recent record. Continuing...");
+                        break;
+                    }
                 }
                 catch (Exception ex)
                 {

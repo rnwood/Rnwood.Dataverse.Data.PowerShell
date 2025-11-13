@@ -18,7 +18,7 @@ Describe "Attribute Metadata E2E Tests" {
     }
 
     It "Can create, read, update, and delete all attribute types comprehensively" {
-        pwsh -noninteractive -noprofile -command {
+        $output = pwsh -noprofile -command {
             $env:PSModulePath = $env:ChildProcessPSModulePath
             $ErrorActionPreference = "Stop"
             $ConfirmPreference = 'None'  # Suppress all confirmation prompts in non-interactive mode
@@ -210,7 +210,8 @@ Describe "Attribute Metadata E2E Tests" {
                 Remove-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_notes" -Confirm:$false
                 Write-Host "✓ Memo attribute deleted"
                 
-                Start-Sleep -Seconds 2
+                # Wait longer for deletion to propagate
+                Start-Sleep -Seconds 5
                 $remainingAttrs = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName | Where-Object { $_.LogicalName -eq 'new_notes' }
                 if ($remainingAttrs) {
                     throw "Deleted attribute still exists"
@@ -247,6 +248,9 @@ Describe "Attribute Metadata E2E Tests" {
                 throw "Failed: " + ($_ | Format-Table -force * | Out-String)
             }
         }
+        
+        # Display the output from pwsh
+        Write-Host $output
 
         if ($LASTEXITCODE -ne 0) {
             throw "Failed"

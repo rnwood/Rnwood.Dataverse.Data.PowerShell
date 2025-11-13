@@ -18,7 +18,7 @@ Describe "Entity Metadata E2E Tests" {
     }
 
     It "Can create, read, update, and delete custom entity with all features" {
-        pwsh -noninteractive -noprofile -command {
+        $output = pwsh -noprofile -command {
             $env:PSModulePath = $env:ChildProcessPSModulePath
             $ErrorActionPreference = "Stop"
             $ConfirmPreference = 'None'  # Suppress all confirmation prompts in non-interactive mode
@@ -243,6 +243,9 @@ Describe "Entity Metadata E2E Tests" {
                 throw "Failed: " + ($_ | Format-Table -force * | Out-String)
             }
         }
+        
+        # Display the output from pwsh
+        Write-Host $output
 
         if ($LASTEXITCODE -ne 0) {
             throw "Failed"

@@ -53,6 +53,10 @@ Describe "OptionSet Metadata E2E Tests" {
                 
                 Write-Host "✓ Option set 1 created and published"
                 
+                # Additional wait to ensure customization lock is released
+                Write-Host "Waiting for customization lock to be released..."
+                Start-Sleep -Seconds 3
+                
                 Write-Host "Step 2: Creating second global option set..."
                 Set-DataverseOptionSetMetadata -Connection $connection `
                     -Name $optionSetName2 `
@@ -94,6 +98,10 @@ Describe "OptionSet Metadata E2E Tests" {
                     throw "Expected 2 option sets, found $($ourOptionSets.Count)"
                 }
                 Write-Host "✓ Found both option sets in list ($($allOptionSets.Count) total)"
+                
+                # Additional wait to ensure customization lock is released
+                Write-Host "Waiting for customization lock to be released..."
+                Start-Sleep -Seconds 3
                 
                 Write-Host "Step 5: Creating test entity to use option sets..."
                 Set-DataverseEntityMetadata -Connection $connection `
