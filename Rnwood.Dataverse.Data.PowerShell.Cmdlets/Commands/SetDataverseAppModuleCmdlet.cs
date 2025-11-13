@@ -451,6 +451,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     };
                     Connection.Execute(publishRequest);
                     WriteVerbose($"Published app module with ID: {appModuleId}");
+                
+                // Wait for publish to complete
+                PublishHelpers.WaitForPublishComplete(Connection, WriteVerbose);
                 }
         }
     }

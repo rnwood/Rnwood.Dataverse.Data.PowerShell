@@ -199,6 +199,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
                 Connection.Execute(publishRequest);
                 WriteVerbose($"Published global option set '{Name}'");
+                
+                // Wait for publish to complete
+                PublishHelpers.WaitForPublishComplete(Connection, WriteVerbose);
             }
 
             if (PassThru)
@@ -390,6 +393,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
                 Connection.Execute(publishRequest);
                 WriteVerbose($"Published global option set '{Name}'");
+                
+                // Wait for publish to complete
+                PublishHelpers.WaitForPublishComplete(Connection, WriteVerbose);
             }
 
             if (PassThru)
