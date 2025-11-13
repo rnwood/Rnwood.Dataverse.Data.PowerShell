@@ -63,7 +63,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     EntityLogicalName = EntityName,
                     LogicalName = AttributeName,
-                    RetrieveAsIfPublished = !Published.IsPresent
+                    RetrieveAsIfPublished = Published.IsPresent
                 };
 
                 WriteVerbose($"Retrieving attribute metadata for '{EntityName}.{AttributeName}'");
@@ -118,7 +118,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var optionSetRequest = new RetrieveOptionSetRequest
                     {
                         Name = Name,
-                        RetrieveAsIfPublished = !Published.IsPresent
+                        RetrieveAsIfPublished = Published.IsPresent
                     };
 
                     WriteVerbose($"Retrieving global option set '{Name}'");
@@ -155,7 +155,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             var request = new RetrieveAllOptionSetsRequest
             {
-                RetrieveAsIfPublished = !Published.IsPresent
+                RetrieveAsIfPublished = Published.IsPresent
             };
 
             WriteVerbose("Retrieving all global option sets");
