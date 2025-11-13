@@ -152,10 +152,9 @@ Describe "Entity Metadata E2E Tests" {
                     -IsAuditEnabled `
                     -ChangeTrackingEnabled `
                     -IconVectorName "svg_test" `
-                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Entity created and published"
+                Write-Host "✓ Entity created"
                 
                 Write-Host "Step 2: Reading entity metadata..."
                 $entity = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName -IncludeAttributes
@@ -181,10 +180,9 @@ Describe "Entity Metadata E2E Tests" {
                     -DisplayName "E2E Test Entity (Updated)" `
                     -Description "Updated description" `
                     -IconVectorName "svg_test_updated" `
-                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Entity updated and published"
+                Write-Host "✓ Entity updated"
                 
                 Write-Host "Step 4: Verifying update..."
                 $updatedEntity = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName
@@ -202,8 +200,8 @@ Describe "Entity Metadata E2E Tests" {
                 $entityObj.Description = New-Object Microsoft.Xrm.Sdk.Label
                 $entityObj.Description.UserLocalizedLabel = New-Object Microsoft.Xrm.Sdk.LocalizedLabel("Bulk update test", 1033)
                 
-                Set-DataverseEntityMetadata -Connection $connection -EntityMetadata $entityObj -Publish -Confirm:$false
-                Write-Host "✓ EntityMetadata object update complete and published"
+                Set-DataverseEntityMetadata -Connection $connection -EntityMetadata $entityObj -Confirm:$false
+                Write-Host "✓ EntityMetadata object update complete"
                 
                 Write-Host "Step 6: Cleanup - Deleting entity..."
                 Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false

@@ -43,9 +43,8 @@ Describe "Attribute Metadata E2E Tests" {
                     -DisplayCollectionName "Attribute Test Entities" `
                     -PrimaryAttributeSchemaName "new_name" `
                     -OwnershipType UserOwned `
-                    -Publish `
                     -Confirm:$false
-                Write-Host "✓ Test entity created and published"
+                Write-Host "✓ Test entity created"
                 
                 Write-Host "Step 2: Creating String attribute..."
                 Set-DataverseAttributeMetadata -Connection $connection `
@@ -125,7 +124,6 @@ Describe "Attribute Metadata E2E Tests" {
                         @{Value=2; Label='Medium'}
                         @{Value=3; Label='High'}
                     ) `
-                    -Publish `
                     -Confirm:$false
                 Write-Host "✓ Picklist attribute created and attributes 2-7 published"
                 
@@ -142,9 +140,8 @@ Describe "Attribute Metadata E2E Tests" {
                     -CascadeDelete RemoveLink `
                     -CascadeAssign NoCascade `
                     -RequiredLevel Recommended `
-                    -Publish `
                     -Confirm:$false
-                Write-Host "✓ Lookup attribute created with relationship and published"
+                Write-Host "✓ Lookup attribute created with relationship"
                 
                 Write-Host "Step 9: Creating Memo attribute..."
                 Set-DataverseAttributeMetadata -Connection $connection `
@@ -154,7 +151,6 @@ Describe "Attribute Metadata E2E Tests" {
                     -AttributeType Memo `
                     -DisplayName "Notes" `
                     -MaxLength 2000 `
-                    -Publish `
                     -Confirm:$false
                 Write-Host "✓ Memo attribute created and all attributes published"
                 
@@ -176,9 +172,8 @@ Describe "Attribute Metadata E2E Tests" {
                     -DisplayName "Email Address (Updated)" `
                     -Description "Updated email field" `
                     -MaxLength 150 `
-                    -Publish `
                     -Confirm:$false
-                Write-Host "✓ String attribute updated and published"
+                Write-Host "✓ String attribute updated"
                 
                 Write-Host "Step 12: Updating Lookup attribute..."
                 Set-DataverseAttributeMetadata -Connection $connection `
@@ -187,9 +182,8 @@ Describe "Attribute Metadata E2E Tests" {
                     -DisplayName "Primary Account" `
                     -Description "Updated lookup description" `
                     -RequiredLevel ApplicationRequired `
-                    -Publish `
                     -Confirm:$false
-                Write-Host "✓ Lookup attribute updated and published"
+                Write-Host "✓ Lookup attribute updated"
                 
                 Write-Host "Step 13: Verifying updates..."
                 $updatedEmail = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_email"

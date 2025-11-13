@@ -48,10 +48,9 @@ Describe "OptionSet Metadata E2E Tests" {
                         @{Value=3; Label='High'; Description='High priority'}
                         @{Value=4; Label='Critical'; Description='Critical priority'}
                     ) `
-                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Option set 1 created and published"
+                Write-Host "✓ Option set 1 created"
                 
                 # Additional wait to ensure customization lock is released
                 Write-Host "Waiting for customization lock to be released..."
@@ -68,10 +67,9 @@ Describe "OptionSet Metadata E2E Tests" {
                         @{Value=300; Label='Completed'}
                         @{Value=400; Label='Cancelled'}
                     ) `
-                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Option set 2 created and published"
+                Write-Host "✓ Option set 2 created"
                 
                 Write-Host "Step 3: Reading global option set..."
                 $optionSet1 = Get-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName1
@@ -111,9 +109,8 @@ Describe "OptionSet Metadata E2E Tests" {
                     -DisplayCollectionName "Option Set Test Entities" `
                     -PrimaryAttributeSchemaName "new_name" `
                     -OwnershipType UserOwned `
-                    -Publish `
                     -Confirm:$false
-                Write-Host "✓ Test entity created and published"
+                Write-Host "✓ Test entity created"
                 
                 Write-Host "Step 6: Creating picklist attribute using global option set..."
                 Set-DataverseAttributeMetadata -Connection $connection `
@@ -135,10 +132,9 @@ Describe "OptionSet Metadata E2E Tests" {
                     -AttributeType Picklist `
                     -DisplayName "Current Status" `
                     -OptionSetName $optionSetName2 `
-                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Second picklist attribute created and published"
+                Write-Host "✓ Second picklist attribute created"
                 
                 Write-Host "Step 8: Reading option set from attribute..."
                 $priorityAttr = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_priority"
@@ -167,10 +163,9 @@ Describe "OptionSet Metadata E2E Tests" {
                         @{Value=4; Label='Critical'}
                         @{Value=5; Label='Emergency'}
                     ) `
-                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Option set updated with new option and published"
+                Write-Host "✓ Option set updated with new option"
                 
                 Write-Host "Step 11: Verifying option set update..."
                 $updatedOptionSet = Get-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName1
@@ -200,10 +195,9 @@ Describe "OptionSet Metadata E2E Tests" {
                         @{Value=2; Label='Type B'}
                         @{Value=3; Label='Type C'}
                     ) `
-                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Local option set created with attribute and published"
+                Write-Host "✓ Local option set created with attribute"
                 
                 Write-Host "Step 13: Verifying local option set..."
                 $categoryAttr = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_category"

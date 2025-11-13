@@ -45,9 +45,8 @@ Describe "Relationship Metadata E2E Tests" {
                     -DisplayCollectionName "Relationship Test Entities 1" `
                     -PrimaryAttributeSchemaName "new_name" `
                     -OwnershipType UserOwned `
-                    -Publish `
                     -Confirm:$false
-                Write-Host "✓ Entity 1 created and published"
+                Write-Host "✓ Entity 1 created"
                 
                 # Additional wait to ensure customization lock is released
                 Write-Host "Waiting for customization lock to be released..."
@@ -61,9 +60,8 @@ Describe "Relationship Metadata E2E Tests" {
                     -DisplayCollectionName "Relationship Test Entities 2" `
                     -PrimaryAttributeSchemaName "new_name" `
                     -OwnershipType UserOwned `
-                    -Publish `
                     -Confirm:$false
-                Write-Host "✓ Entity 2 created and published"
+                Write-Host "✓ Entity 2 created"
                 
                 Write-Host "Step 3: Creating OneToMany relationship with lookup..."
                 $relName1 = "${entity1Name}_${entity2Name}_rel1"
@@ -86,10 +84,9 @@ Describe "Relationship Metadata E2E Tests" {
                     -CascadeReparent NoCascade `
                     -CascadeMerge NoCascade `
                     -IsSearchable `
-                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ OneToMany relationship created and published"
+                Write-Host "✓ OneToMany relationship created"
                 
                 Write-Host "Step 4: Creating self-referencing OneToMany relationship..."
                 $selfRelName = "${entity1Name}_parent_rel"
@@ -106,10 +103,9 @@ Describe "Relationship Metadata E2E Tests" {
                     -LookupAttributeRequiredLevel None `
                     -CascadeDelete RemoveLink `
                     -IsHierarchical `
-                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Self-referencing relationship created and published"
+                Write-Host "✓ Self-referencing relationship created"
                 
                 Write-Host "Step 5: Creating ManyToMany relationship..."
                 $m2mRelName = "${entity1Name}_${entity2Name}_m2m"
@@ -121,10 +117,9 @@ Describe "Relationship Metadata E2E Tests" {
                     -ReferencedEntity $entity1Name `
                     -ReferencingEntity $entity2Name `
                     -IntersectEntitySchemaName "${m2mRelName}_intersect" `
-                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ ManyToMany relationship created and published"
+                Write-Host "✓ ManyToMany relationship created"
                 
                 Write-Host "Step 6: Reading and verifying relationships..."
                 $relationships = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name
@@ -171,10 +166,9 @@ Describe "Relationship Metadata E2E Tests" {
                     -ReferencingEntity $entity2Name `
                     -CascadeDelete Cascade `
                     -CascadeAssign Cascade `
-                    -Publish `
                     -Confirm:$false
                 
-                Write-Host "✓ Relationship updated and published"
+                Write-Host "✓ Relationship updated"
                 
                 Write-Host "Step 10: Verifying relationship update..."
                 $updatedRel = Get-DataverseRelationshipMetadata -Connection $connection -SchemaName $relName1
