@@ -37,24 +37,6 @@ Describe "Relationship Metadata E2E Tests" {
                 
                 Write-Host "Test entities: $entity1Name, $entity2Name"
                 
-                # Cleanup any previous failed attempts
-                Write-Host "Cleaning up any previous failed attempts..."
-                $existingEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { $_.LogicalName -like "new_e2erel*" }
-                foreach ($entity in $existingEntities) {
-                    try {
-                        Write-Host "  Removing leftover entity: $($entity.LogicalName)"
-                        Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
-                    } catch {
-                        Write-Host "  Could not remove $($entity.LogicalName): $_"
-                    }
-                }
-                
-                # Add a delay after cleanup to allow Dataverse to process deletions
-                if ($existingEntities.Count -gt 0) {
-                    Write-Host "Waiting for cleanup to complete..."
-                    Start-Sleep -Seconds 30
-                }
-                
                 Write-Host "Step 1: Creating first test entity..."
                 Set-DataverseEntityMetadata -Connection $connection `
                     -EntityName $entity1Name `
@@ -212,10 +194,10 @@ Describe "Relationship Metadata E2E Tests" {
                 # Note: Relationships are deleted when entities are deleted
                 
                 Write-Host "Step 13: Cleanup - Deleting test entities..."
-                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity2Name -Confirm:$false
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity2Name -Force -Confirm:$false
                 Write-Host "✓ Entity 2 deleted"
                 
-                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity1Name -Confirm:$false
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity1Name -Force -Confirm:$false
                 Write-Host "✓ Entity 1 deleted"
                 
                 Write-Host "Step 14: Verifying cleanup..."
@@ -227,6 +209,26 @@ Describe "Relationship Metadata E2E Tests" {
                     throw "Entities still exist after deletion"
                 }
                 Write-Host "✓ Cleanup verified"
+                
+                Write-Host "Step 15: Cleanup any old test entities from previous failed runs..."
+                $oldEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
+                    $_.LogicalName -like "new_e2erel*" -and 
+                    $_.LogicalName -ne $entity1Name -and 
+                    $_.LogicalName -ne $entity2Name 
+                }
+                if ($oldEntities.Count -gt 0) {
+                    Write-Host "  Found $($oldEntities.Count) old test entities to clean up"
+                    foreach ($entity in $oldEntities) {
+                        try {
+                            Write-Host "  Removing old entity: $($entity.LogicalName)"
+                            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Force -Confirm:$false -ErrorAction SilentlyContinue
+                        } catch {
+                            Write-Host "  Could not remove $($entity.LogicalName): $_"
+                        }
+                    }
+                } else {
+                    Write-Host "  No old test entities found"
+                }
                 
                 Write-Host "SUCCESS: All relationship metadata operations completed successfully"
                 

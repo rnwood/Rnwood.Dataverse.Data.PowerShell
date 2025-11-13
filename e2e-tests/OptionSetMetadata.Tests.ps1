@@ -37,38 +37,6 @@ Describe "OptionSet Metadata E2E Tests" {
                 
                 Write-Host "Test option sets: $optionSetName1, $optionSetName2"
                 
-                # Cleanup any previous failed attempts
-                Write-Host "Cleaning up any previous failed attempts..."
-                
-                # Cleanup option sets
-                $existingOptionSets = Get-DataverseOptionSetMetadata -Connection $connection | Where-Object { $_.Name -like "new_e2eoption*" }
-                foreach ($optionSet in $existingOptionSets) {
-                    try {
-                        Write-Host "  Removing leftover option set: $($optionSet.Name)"
-                        # Note: We can't easily remove option sets, so we'll just log
-                        # In a real scenario, you'd use Remove-DataverseOptionSetMetadata if it existed
-                    } catch {
-                        Write-Host "  Could not remove $($optionSet.Name): $_"
-                    }
-                }
-                
-                # Cleanup entities
-                $existingEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { $_.LogicalName -like "new_e2eoptent_*" }
-                foreach ($entity in $existingEntities) {
-                    try {
-                        Write-Host "  Removing leftover entity: $($entity.LogicalName)"
-                        Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
-                    } catch {
-                        Write-Host "  Could not remove $($entity.LogicalName): $_"
-                    }
-                }
-                
-                # Add a delay after cleanup to allow Dataverse to process deletions
-                if ($existingEntities.Count -gt 0) {
-                    Write-Host "Waiting for cleanup to complete..."
-                    Start-Sleep -Seconds 30
-                }
-                
                 Write-Host "Step 1: Creating first global option set..."
                 Set-DataverseOptionSetMetadata -Connection $connection `
                     -Name $optionSetName1 `
@@ -238,10 +206,29 @@ Describe "OptionSet Metadata E2E Tests" {
                 Write-Host "✓ Local option set verified"
                 
                 Write-Host "Step 14: Cleanup - Deleting test entity (and local option set)..."
-                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Force -Confirm:$false
                 Write-Host "✓ Test entity deleted"
                 
-                Write-Host "Step 15: Note on global option set cleanup..."
+                Write-Host "Step 15: Cleanup any old test entities from previous failed runs..."
+                $oldEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
+                    $_.LogicalName -like "new_e2eoptent_*" -and 
+                    $_.LogicalName -ne $entityName 
+                }
+                if ($oldEntities.Count -gt 0) {
+                    Write-Host "  Found $($oldEntities.Count) old test entities to clean up"
+                    foreach ($entity in $oldEntities) {
+                        try {
+                            Write-Host "  Removing old entity: $($entity.LogicalName)"
+                            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Force -Confirm:$false -ErrorAction SilentlyContinue
+                        } catch {
+                            Write-Host "  Could not remove $($entity.LogicalName): $_"
+                        }
+                    }
+                } else {
+                    Write-Host "  No old test entities found"
+                }
+                
+                Write-Host "Step 16: Note on global option set cleanup..."
                 Write-Host "  Global option sets ($optionSetName1, $optionSetName2) created"
                 Write-Host "  Note: Global option sets typically require manual cleanup or solution management"
                 Write-Host "  In production, they would be part of managed solutions"

@@ -35,24 +35,6 @@ Describe "Attribute Metadata E2E Tests" {
                 
                 Write-Host "Test entity: $entityName"
                 
-                # Cleanup any previous failed attempts
-                Write-Host "Cleaning up any previous failed attempts..."
-                $existingEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { $_.LogicalName -like "new_e2eattr_*" }
-                foreach ($entity in $existingEntities) {
-                    try {
-                        Write-Host "  Removing leftover entity: $($entity.LogicalName)"
-                        Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
-                    } catch {
-                        Write-Host "  Could not remove $($entity.LogicalName): $_"
-                    }
-                }
-                
-                # Add a delay after cleanup to allow Dataverse to process deletions
-                if ($existingEntities.Count -gt 0) {
-                    Write-Host "Waiting for cleanup to complete..."
-                    Start-Sleep -Seconds 30
-                }
-                
                 Write-Host "Step 1: Creating test entity..."
                 Set-DataverseEntityMetadata -Connection $connection `
                     -EntityName $entityName `
@@ -236,8 +218,27 @@ Describe "Attribute Metadata E2E Tests" {
                 Write-Host "✓ Deletion verified"
                 
                 Write-Host "Step 15: Cleanup - Deleting test entity..."
-                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Force -Confirm:$false
                 Write-Host "✓ Test entity deleted"
+                
+                Write-Host "Step 16: Cleanup any old test entities from previous failed runs..."
+                $oldEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
+                    $_.LogicalName -like "new_e2eattr_*" -and 
+                    $_.LogicalName -ne $entityName 
+                }
+                if ($oldEntities.Count -gt 0) {
+                    Write-Host "  Found $($oldEntities.Count) old test entities to clean up"
+                    foreach ($entity in $oldEntities) {
+                        try {
+                            Write-Host "  Removing old entity: $($entity.LogicalName)"
+                            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Force -Confirm:$false -ErrorAction SilentlyContinue
+                        } catch {
+                            Write-Host "  Could not remove $($entity.LogicalName): $_"
+                        }
+                    }
+                } else {
+                    Write-Host "  No old test entities found"
+                }
                 
                 Write-Host "SUCCESS: All attribute metadata operations completed successfully"
                 

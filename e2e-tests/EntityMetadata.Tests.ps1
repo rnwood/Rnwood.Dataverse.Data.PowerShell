@@ -35,24 +35,6 @@ Describe "Entity Metadata E2E Tests" {
                 
                 Write-Host "Test entity: $entityName"
                 
-                # Cleanup any previous failed attempts with similar names
-                Write-Host "Cleaning up any previous failed attempts..."
-                $existingEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { $_.LogicalName -like "new_e2etest_*" }
-                foreach ($entity in $existingEntities) {
-                    try {
-                        Write-Host "  Removing leftover entity: $($entity.LogicalName)"
-                        Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
-                    } catch {
-                        Write-Host "  Could not remove $($entity.LogicalName): $_"
-                    }
-                }
-                
-                # Add a delay after cleanup to allow Dataverse to process deletions
-                if ($existingEntities.Count -gt 0) {
-                    Write-Host "Waiting for cleanup to complete..."
-                    Start-Sleep -Seconds 30
-                }
-                
                 Write-Host "Step 0: Creating required web resources for icon testing..."
                 
                 # Create a simple SVG content for testing
@@ -224,7 +206,7 @@ Describe "Entity Metadata E2E Tests" {
                 Write-Host "✓ EntityMetadata object update complete and published"
                 
                 Write-Host "Step 6: Cleanup - Deleting entity..."
-                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Force -Confirm:$false
                 Write-Host "✓ Entity deleted"
                 
                 Write-Host "Step 7: Verifying deletion..."
@@ -234,6 +216,25 @@ Describe "Entity Metadata E2E Tests" {
                     throw "Entity still exists after deletion"
                 }
                 Write-Host "✓ Deletion verified"
+                
+                Write-Host "Step 8: Cleanup any old test entities from previous failed runs..."
+                $oldEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
+                    $_.LogicalName -like "new_e2etest_*" -and 
+                    $_.LogicalName -ne $entityName 
+                }
+                if ($oldEntities.Count -gt 0) {
+                    Write-Host "  Found $($oldEntities.Count) old test entities to clean up"
+                    foreach ($entity in $oldEntities) {
+                        try {
+                            Write-Host "  Removing old entity: $($entity.LogicalName)"
+                            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Force -Confirm:$false -ErrorAction SilentlyContinue
+                        } catch {
+                            Write-Host "  Could not remove $($entity.LogicalName): $_"
+                        }
+                    }
+                } else {
+                    Write-Host "  No old test entities found"
+                }
                 
                 Write-Host "SUCCESS: All entity metadata operations completed successfully"
                 

@@ -18,6 +18,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string EntityName { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether to bypass confirmation prompts.
+        /// </summary>
+        [Parameter(Mandatory = false, HelpMessage = "Bypass confirmation prompts")]
+        public SwitchParameter Force { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet.
         /// </summary>
         protected override void ProcessRecord()
@@ -29,7 +35,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
-            if (!ShouldContinue($"Are you sure you want to delete entity '{EntityName}'? This will delete all data and cannot be undone.", "Confirm Deletion"))
+            if (!Force && !ShouldContinue($"Are you sure you want to delete entity '{EntityName}'? This will delete all data and cannot be undone.", "Confirm Deletion"))
             {
                 return;
             }
