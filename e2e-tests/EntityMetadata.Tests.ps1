@@ -50,7 +50,7 @@ Describe "Entity Metadata E2E Tests" {
                 # Add a delay after cleanup to allow Dataverse to process deletions
                 if ($existingEntities.Count -gt 0) {
                     Write-Host "Waiting for cleanup to complete..."
-                    Start-Sleep -Seconds 10
+                    Start-Sleep -Seconds 30
                 }
                 
                 Write-Host "Step 0: Creating required web resources for icon testing..."
