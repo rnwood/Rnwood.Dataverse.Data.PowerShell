@@ -17,6 +17,10 @@ Describe "Entity Metadata E2E Tests" {
         $env:ChildProcessPSModulePath = $tempmodulefolder
     }
 
+    BeforeEach {
+        [console]::InputEncoding = [console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+    }
+
     It "Can create, read, update, and delete custom entity with all features" {
         pwsh -noprofile -noninteractive -command {
             

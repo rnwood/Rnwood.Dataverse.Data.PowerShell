@@ -2,6 +2,10 @@ $ErrorActionPreference = "Stop"
 
 Describe "Relationship Metadata E2E Tests" {
 
+    BeforeEach {
+        [console]::InputEncoding = [console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+    }
+
     BeforeAll {
         if ($env:TESTMODULEPATH) {
             $source = $env:TESTMODULEPATH

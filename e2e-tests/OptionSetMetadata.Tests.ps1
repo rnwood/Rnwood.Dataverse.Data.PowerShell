@@ -17,6 +17,10 @@ Describe "OptionSet Metadata E2E Tests" {
         $env:ChildProcessPSModulePath = $tempmodulefolder
     }
 
+    BeforeEach {
+        [console]::InputEncoding = [console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+    }
+
     It "Can create, read, update, and delete global option sets comprehensively" {
         pwsh -noprofile -noninteractive -command {
             
