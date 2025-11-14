@@ -65,8 +65,11 @@ Describe "Entity Metadata E2E Tests" {
             $testRunId = [guid]::NewGuid().ToString("N").Substring(0, 8)
             $entityName = "new_e2etest_$testRunId"
             $schemaName = "new_E2ETest_$testRunId"
+            $webResourceName1 = "svg_test_$testRunId"
+            $webResourceName2 = "svg_test_updated_$testRunId"
                 
             Write-Host "Test entity: $entityName"
+            Write-Host "Web resources: $webResourceName1, $webResourceName2"
                 
             Write-Host "Step 0: Creating required web resources for icon testing..."
                 
@@ -78,33 +81,33 @@ Describe "Entity Metadata E2E Tests" {
 "@
             $svgBase64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($svgContent))
                 
-            # Create svg_test web resource
+            # Create web resource 1
     
             $webResource1 = @{
-                name            = "svg_test"
-                displayname     = "E2E Test Icon"
+                name            = $webResourceName1
+                displayname     = "E2E Test Icon $testRunId"
                 webresourcetype = 11  # SVG
                 content         = $svgBase64
             } | set-dataverserecord -Connection $connection -TableName webresource -Verbose
                     
-            Write-Host "  ✓ Created web resource: svg_test"
+            Write-Host "  ✓ Created web resource: $webResourceName1"
                  
-            # Create svg_test_updated web resource
+            # Create web resource 2
 
             $webResource2 = @{
-                name            = "svg_test_updated"
-                displayname     = "E2E Test Icon Updated"
+                name            = $webResourceName2
+                displayname     = "E2E Test Icon Updated $testRunId"
                 webresourcetype = 11  # SVG
                 content         = $svgBase64
             } | set-dataverserecord -Connection $connection -TableName webresource -Verbose
                   
-            Write-Host "  ✓ Created web resource: svg_test_updated"
+            Write-Host "  ✓ Created web resource: $webResourceName2"
           
                 
             # Publish web resources
 
             $publishRequest = New-Object Microsoft.Crm.Sdk.Messages.PublishXmlRequest
-            $publishRequest.ParameterXml = "<importexportxml><webresources><webresource>svg_test</webresource><webresource>svg_test_updated</webresource></webresources></importexportxml>"
+            $publishRequest.ParameterXml = "<importexportxml><webresources><webresource>$webResourceName1</webresource><webresource>$webResourceName2</webresource></webresources></importexportxml>"
             Invoke-DataverseRequest -Connection $connection -Request $publishRequest | Out-Null
             Write-Host "  ✓ Published web resources"
           
@@ -128,7 +131,7 @@ Describe "Entity Metadata E2E Tests" {
                     -HasNotes `
                     -IsAuditEnabled `
                     -ChangeTrackingEnabled `
-                    -IconVectorName "svg_test" `
+                    -IconVectorName $webResourceName1 `
                     -Confirm:$false
             }
             Write-Host "✓ Entity created"
@@ -162,7 +165,7 @@ Describe "Entity Metadata E2E Tests" {
                     -EntityName $entityName `
                     -DisplayName "E2E Test Entity (Updated)" `
                     -Description "Updated description" `
-                    -IconVectorName "svg_test_updated" `
+                    -IconVectorName $webResourceName2 `
                     -Confirm:$false
             }
             Write-Host "✓ Entity updated"
@@ -175,7 +178,7 @@ Describe "Entity Metadata E2E Tests" {
                 if ($script:updatedEntity.DisplayName.UserLocalizedLabel.Label -ne "E2E Test Entity (Updated)") {
                     throw "Display name not updated"
                 }
-                if ($script:updatedEntity.IconVectorName -ne "svg_test_updated") {
+                if ($script:updatedEntity.IconVectorName -ne $webResourceName2) {
                     throw "Icon not updated"
                 }
             }
@@ -236,6 +239,43 @@ Describe "Entity Metadata E2E Tests" {
                 else {
                     Write-Host "  No old test entities found"
                 }
+            }
+            
+            Write-Host "Step 9: Cleanup web resources..."
+            try {
+                # Delete web resource 1
+                Get-DataverseRecord -Connection $connection -TableName webresource -Filter "name eq '$webResourceName1'" | 
+                    ForEach-Object { 
+                        Remove-DataverseRecord -Connection $connection -TableName webresource -Id $_.webresourceid -Confirm:$false 
+                        Write-Host "  ✓ Deleted web resource: $webResourceName1"
+                    }
+                
+                # Delete web resource 2
+                Get-DataverseRecord -Connection $connection -TableName webresource -Filter "name eq '$webResourceName2'" | 
+                    ForEach-Object { 
+                        Remove-DataverseRecord -Connection $connection -TableName webresource -Id $_.webresourceid -Confirm:$false 
+                        Write-Host "  ✓ Deleted web resource: $webResourceName2"
+                    }
+                    
+                # Cleanup old web resources from previous failed runs
+                $oldWebResources = Get-DataverseRecord -Connection $connection -TableName webresource -Filter "startswith(name, 'svg_test')" | 
+                    Where-Object { $_.name -notin @($webResourceName1, $webResourceName2) }
+                
+                if ($oldWebResources) {
+                    Write-Host "  Found $(@($oldWebResources).Count) old test web resources to clean up"
+                    foreach ($wr in $oldWebResources) {
+                        try {
+                            Remove-DataverseRecord -Connection $connection -TableName webresource -Id $wr.webresourceid -Confirm:$false -ErrorAction SilentlyContinue
+                            Write-Host "  ✓ Deleted old web resource: $($wr.name)"
+                        }
+                        catch {
+                            Write-Host "  Could not remove web resource $($wr.name): $_"
+                        }
+                    }
+                }
+            }
+            catch {
+                Write-Warning "Could not cleanup web resources: $_"
             }
                 
             Write-Host "SUCCESS: All entity metadata operations completed successfully"
