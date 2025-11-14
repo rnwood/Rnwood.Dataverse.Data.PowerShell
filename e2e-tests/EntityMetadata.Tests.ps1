@@ -216,23 +216,25 @@ Describe "Entity Metadata E2E Tests" {
                     Wait-DataversePublish -Connection $connection
                     
                     Set-DataverseEntityMetadata `
-                    -Connection $connection `
-                    -EntityName $entityName `
-                    -DisplayName "E2E Test Entity (Updated)" `
-                    -Description "Updated description" `
-                    -IconVectorName "svg_test_updated" `
-                    -Confirm:$false
-                
+                        -Connection $connection `
+                        -EntityName $entityName `
+                        -DisplayName "E2E Test Entity (Updated)" `
+                        -Description "Updated description" `
+                        -IconVectorName "svg_test_updated" `
+                        -Confirm:$false
+                }
                 Write-Host "✓ Entity updated"
                 
                 Write-Host "Step 4: Verifying update..."
-                $updatedEntity = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName
-                
-                if ($updatedEntity.DisplayName.UserLocalizedLabel.Label -ne "E2E Test Entity (Updated)") {
-                    throw "Display name not updated"
-                }
-                if ($updatedEntity.IconVectorName -ne "svg_test_updated") {
-                    throw "Icon not updated"
+                Invoke-WithRetry {
+                    $script:updatedEntity = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName
+                    
+                    if ($script:updatedEntity.DisplayName.UserLocalizedLabel.Label -ne "E2E Test Entity (Updated)") {
+                        throw "Display name not updated"
+                    }
+                    if ($script:updatedEntity.IconVectorName -ne "svg_test_updated") {
+                        throw "Icon not updated"
+                    }
                 }
                 Write-Host "✓ Updates verified"
                 
