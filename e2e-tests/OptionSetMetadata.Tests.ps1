@@ -59,7 +59,8 @@ Describe "OptionSet Metadata E2E Tests" {
             
         try {
             $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
-                
+            $connection.EnableAffinityCookie = $true    
+
             # Generate unique test identifiers
             $testRunId = [guid]::NewGuid().ToString("N").Substring(0, 8)
             $optionSetName1 = "new_e2eoption1_$testRunId"
