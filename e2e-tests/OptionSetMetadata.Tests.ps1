@@ -18,12 +18,44 @@ Describe "OptionSet Metadata E2E Tests" {
     }
 
     It "Can create, read, update, and delete global option sets comprehensively" {
-        pwsh -noninteractive -noprofile -command {
+        $output = pwsh -noprofile -command {
             $env:PSModulePath = $env:ChildProcessPSModulePath
             $ErrorActionPreference = "Stop"
             $ConfirmPreference = 'None'  # Suppress all confirmation prompts in non-interactive mode
             
             Import-Module Rnwood.Dataverse.Data.PowerShell
+            
+            # Retry helper function with exponential backoff
+            function Invoke-WithRetry {
+                param(
+                    [Parameter(Mandatory=$true)]
+                    [scriptblock]$ScriptBlock,
+                    [int]$MaxRetries = 3,
+                    [int]$InitialDelaySeconds = 2
+                )
+                
+                $attempt = 0
+                $delay = $InitialDelaySeconds
+                
+                while ($attempt -lt $MaxRetries) {
+                    try {
+                        $attempt++
+                        Write-Verbose "Attempt $attempt of $MaxRetries"
+                        & $ScriptBlock
+                        return  # Success, exit function
+                    }
+                    catch {
+                        if ($attempt -eq $MaxRetries) {
+                            Write-Error "All $MaxRetries attempts failed. Last error: $_"
+                            throw
+                        }
+                        
+                        Write-Warning "Attempt $attempt failed: $_. Retrying in $delay seconds..."
+                        Start-Sleep -Seconds $delay
+                        $delay = $delay * 2  # Exponential backoff
+                    }
+                }
+            }
             
             try {
                 $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
@@ -38,148 +70,169 @@ Describe "OptionSet Metadata E2E Tests" {
                 Write-Host "Test option sets: $optionSetName1, $optionSetName2"
                 
                 Write-Host "Step 1: Creating first global option set..."
-                Set-DataverseOptionSetMetadata -Connection $connection `
-                    -Name $optionSetName1 `
-                    -DisplayName "E2E Test Priority" `
-                    -Description "Priority levels for E2E testing" `
-                    -Options @(
-                        @{Value=1; Label='Low'; Description='Low priority'}
-                        @{Value=2; Label='Medium'; Description='Medium priority'}
-                        @{Value=3; Label='High'; Description='High priority'}
-                        @{Value=4; Label='Critical'; Description='Critical priority'}
-                    ) `
-                    -Confirm:$false
-                
+                Invoke-WithRetry {
+                    Set-DataverseOptionSetMetadata -Connection $connection `
+                        -Name $optionSetName1 `
+                        -DisplayName "E2E Test Priority" `
+                        -Description "Priority levels for E2E testing" `
+                        -Options @(
+                            @{Value=1; Label='Low'; Description='Low priority'}
+                            @{Value=2; Label='Medium'; Description='Medium priority'}
+                            @{Value=3; Label='High'; Description='High priority'}
+                            @{Value=4; Label='Critical'; Description='Critical priority'}
+                        ) `
+                        -Confirm:$false
+                    
+                    Wait-DataversePublish -Connection $connection
+                }
                 Write-Host "✓ Option set 1 created"
                 
-                # Additional wait to ensure customization lock is released
-                Write-Host "Waiting for customization lock to be released..."
-                Start-Sleep -Seconds 3
-                
                 Write-Host "Step 2: Creating second global option set..."
-                Set-DataverseOptionSetMetadata -Connection $connection `
-                    -Name $optionSetName2 `
-                    -DisplayName "E2E Test Status" `
-                    -Description "Status values for E2E testing" `
-                    -Options @(
-                        @{Value=100; Label='New'}
-                        @{Value=200; Label='In Progress'}
-                        @{Value=300; Label='Completed'}
-                        @{Value=400; Label='Cancelled'}
-                    ) `
-                    -Confirm:$false
-                
+                Invoke-WithRetry {
+                    Set-DataverseOptionSetMetadata -Connection $connection `
+                        -Name $optionSetName2 `
+                        -DisplayName "E2E Test Status" `
+                        -Description "Status values for E2E testing" `
+                        -Options @(
+                            @{Value=100; Label='New'}
+                            @{Value=200; Label='In Progress'}
+                            @{Value=300; Label='Completed'}
+                            @{Value=400; Label='Cancelled'}
+                        ) `
+                        -Confirm:$false
+                    
+                    Wait-DataversePublish -Connection $connection
+                }
                 Write-Host "✓ Option set 2 created"
                 
                 Write-Host "Step 3: Reading global option set..."
-                $optionSet1 = Get-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName1
-                
-                if (-not $optionSet1) {
-                    throw "Failed to retrieve option set"
-                }
-                if ($optionSet1.DisplayName.UserLocalizedLabel.Label -ne "E2E Test Priority") {
-                    throw "Option set display name mismatch"
-                }
-                if ($optionSet1.Options.Count -ne 4) {
-                    throw "Expected 4 options, found $($optionSet1.Options.Count)"
+                Invoke-WithRetry {
+                    $script:optionSet1 = Get-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName1
+                    
+                    if (-not $script:optionSet1) {
+                        throw "Failed to retrieve option set"
+                    }
+                    if ($script:optionSet1.DisplayName.UserLocalizedLabel.Label -ne "E2E Test Priority") {
+                        throw "Option set display name mismatch"
+                    }
+                    if ($script:optionSet1.Options.Count -ne 4) {
+                        throw "Expected 4 options, found $($script:optionSet1.Options.Count)"
+                    }
                 }
                 Write-Host "✓ Option set 1 verified (4 options)"
                 
                 Write-Host "Step 4: Listing all global option sets..."
-                $allOptionSets = Get-DataverseOptionSetMetadata -Connection $connection
-                
-                $ourOptionSets = $allOptionSets | Where-Object { 
-                    $_.Name -eq $optionSetName1 -or $_.Name -eq $optionSetName2 
+                Invoke-WithRetry {
+                    $script:allOptionSets = Get-DataverseOptionSetMetadata -Connection $connection
+                    
+                    $ourOptionSets = $script:allOptionSets | Where-Object { 
+                        $_.Name -eq $optionSetName1 -or $_.Name -eq $optionSetName2 
+                    }
+                    
+                    if ($ourOptionSets.Count -ne 2) {
+                        throw "Expected 2 option sets, found $($ourOptionSets.Count)"
+                    }
                 }
-                
-                if ($ourOptionSets.Count -ne 2) {
-                    throw "Expected 2 option sets, found $($ourOptionSets.Count)"
-                }
-                Write-Host "✓ Found both option sets in list ($($allOptionSets.Count) total)"
-                
-                # Additional wait to ensure customization lock is released
-                Write-Host "Waiting for customization lock to be released..."
-                Start-Sleep -Seconds 3
+                Write-Host "✓ Found both option sets in list ($($script:allOptionSets.Count) total)"
                 
                 Write-Host "Step 5: Creating test entity to use option sets..."
-                Set-DataverseEntityMetadata -Connection $connection `
-                    -EntityName $entityName `
-                    -SchemaName $entitySchema `
-                    -DisplayName "Option Set Test Entity" `
-                    -DisplayCollectionName "Option Set Test Entities" `
-                    -PrimaryAttributeSchemaName "new_name" `
-                    -OwnershipType UserOwned `
-                    -Confirm:$false
+                Invoke-WithRetry {
+                    Set-DataverseEntityMetadata -Connection $connection `
+                        -EntityName $entityName `
+                        -SchemaName $entitySchema `
+                        -DisplayName "Option Set Test Entity" `
+                        -DisplayCollectionName "Option Set Test Entities" `
+                        -PrimaryAttributeSchemaName "new_name" `
+                        -OwnershipType UserOwned `
+                        -Confirm:$false
+                    
+                    Wait-DataversePublish -Connection $connection
+                }
                 Write-Host "✓ Test entity created"
                 
                 Write-Host "Step 6: Creating picklist attribute using global option set..."
-                Set-DataverseAttributeMetadata -Connection $connection `
-                    -EntityName $entityName `
-                    -AttributeName "new_priority" `
-                    -SchemaName "new_Priority" `
-                    -AttributeType Picklist `
-                    -DisplayName "Priority Level" `
-                    -OptionSetName $optionSetName1 `
-                    -Confirm:$false
-                
+                Invoke-WithRetry {
+                    Set-DataverseAttributeMetadata -Connection $connection `
+                        -EntityName $entityName `
+                        -AttributeName "new_priority" `
+                        -SchemaName "new_Priority" `
+                        -AttributeType Picklist `
+                        -DisplayName "Priority Level" `
+                        -OptionSetName $optionSetName1 `
+                        -Confirm:$false
+                    
+                    Wait-DataversePublish -Connection $connection
+                }
                 Write-Host "✓ Picklist attribute created with global option set"
                 
                 Write-Host "Step 7: Creating another attribute using second option set..."
-                Set-DataverseAttributeMetadata -Connection $connection `
-                    -EntityName $entityName `
-                    -AttributeName "new_status" `
-                    -SchemaName "new_Status" `
-                    -AttributeType Picklist `
-                    -DisplayName "Current Status" `
-                    -OptionSetName $optionSetName2 `
-                    -Confirm:$false
-                
+                Invoke-WithRetry {
+                    Set-DataverseAttributeMetadata -Connection $connection `
+                        -EntityName $entityName `
+                        -AttributeName "new_status" `
+                        -SchemaName "new_Status" `
+                        -AttributeType Picklist `
+                        -DisplayName "Current Status" `
+                        -OptionSetName $optionSetName2 `
+                        -Confirm:$false
+                    
+                    Wait-DataversePublish -Connection $connection
+                }
                 Write-Host "✓ Second picklist attribute created"
                 
                 Write-Host "Step 8: Reading option set from attribute..."
-                $priorityAttr = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_priority"
-                
-                if ($priorityAttr.OptionSet.Name -ne $optionSetName1) {
-                    throw "Attribute not using correct global option set"
+                Invoke-WithRetry {
+                    $script:priorityAttr = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_priority"
+                    
+                    if ($script:priorityAttr.OptionSet.Name -ne $optionSetName1) {
+                        throw "Attribute not using correct global option set"
+                    }
                 }
                 Write-Host "✓ Attribute correctly references global option set"
                 
                 Write-Host "Step 9: Getting option set values for entity attribute..."
-                $priorityOptions = Get-DataverseOptionSetMetadata -Connection $connection -EntityName $entityName -AttributeName "new_priority"
-                
-                if ($priorityOptions.Options.Count -ne 4) {
-                    throw "Expected 4 options from attribute, found $($priorityOptions.Options.Count)"
+                Invoke-WithRetry {
+                     $script:priorityOptions = Get-DataverseOptionSetMetadata -Connection $connection -EntityName $entityName -AttributeName "new_priority"
+                    
+                    if ($script:priorityOptions.Options.Count -ne 4) {
+                        throw "Expected 4 options from attribute, found $($script:priorityOptions.Options.Count)"
+                    }
                 }
                 Write-Host "✓ Retrieved option values from entity attribute"
                 
                 Write-Host "Step 10: Updating global option set (adding new option)..."
-                Set-DataverseOptionSetMetadata -Connection $connection `
-                    -Name $optionSetName1 `
-                    -DisplayName "E2E Test Priority (Updated)" `
-                    -Options @(
-                        @{Value=1; Label='Low'}
-                        @{Value=2; Label='Medium'}
-                        @{Value=3; Label='High'}
-                        @{Value=4; Label='Critical'}
-                        @{Value=5; Label='Emergency'}
-                    ) `
-                    -Confirm:$false
-                
+                Invoke-WithRetry {
+                    Set-DataverseOptionSetMetadata -Connection $connection `
+                        -Name $optionSetName1 `
+                        -DisplayName "E2E Test Priority (Updated)" `
+                        -Options @(
+                            @{Value=1; Label='Low'}
+                            @{Value=2; Label='Medium'}
+                            @{Value=3; Label='High'}
+                            @{Value=4; Label='Critical'}
+                            @{Value=5; Label='Emergency'}
+                        ) `
+                        -Confirm:$false
+                    
+                    Wait-DataversePublish -Connection $connection
+                }
                 Write-Host "✓ Option set updated with new option"
                 
                 Write-Host "Step 11: Verifying option set update..."
-                $updatedOptionSet = Get-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName1
-                
-                if ($updatedOptionSet.DisplayName.UserLocalizedLabel.Label -ne "E2E Test Priority (Updated)") {
-                    throw "Display name not updated"
-                }
-                if ($updatedOptionSet.Options.Count -ne 5) {
-                    throw "Expected 5 options after update, found $($updatedOptionSet.Options.Count)"
-                }
-                
-                $emergencyOption = $updatedOptionSet.Options | Where-Object { $_.Value -eq 5 }
-                if (-not $emergencyOption) {
-                    throw "New 'Emergency' option not found"
+                Invoke-WithRetry {
+                    $script:updatedOptionSet = Get-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName1
+                    
+                    if ($script:updatedOptionSet.DisplayName.UserLocalizedLabel.Label -ne "E2E Test Priority (Updated)") {
+                        throw "Display name not updated"
+                    }
+                    if ($script:updatedOptionSet.Options.Count -ne 5) {
+                        throw "Expected 5 options after update, found $($script:updatedOptionSet.Options.Count)"
+                    }
+                    
+                    $emergencyOption = $script:updatedOptionSet.Options | Where-Object { $_.Value -eq 5 }
+                    if (-not $emergencyOption) {
+                        throw "New 'Emergency' option not found"
+                    }
                 }
                 Write-Host "✓ Update verified (5 options including new 'Emergency')"
                 
@@ -245,6 +298,9 @@ Describe "OptionSet Metadata E2E Tests" {
                 throw "Failed: " + ($_ | Format-Table -force * | Out-String)
             }
         }
+        
+        # Display the output from pwsh
+        Write-Host $output
 
         if ($LASTEXITCODE -ne 0) {
             throw "Failed"
