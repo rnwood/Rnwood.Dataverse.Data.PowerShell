@@ -244,21 +244,21 @@ Describe "Entity Metadata E2E Tests" {
             Write-Host "Step 9: Cleanup web resources..."
             try {
                 # Delete web resource 1
-                Get-DataverseRecord -Connection $connection -TableName webresource -Filter "name eq '$webResourceName1'" | 
+                Get-DataverseRecord -Connection $connection -TableName webresource -FilterValues @{ name = $webResourceName1 } | 
                     ForEach-Object { 
                         Remove-DataverseRecord -Connection $connection -TableName webresource -Id $_.webresourceid -Confirm:$false 
                         Write-Host "  ✓ Deleted web resource: $webResourceName1"
                     }
                 
                 # Delete web resource 2
-                Get-DataverseRecord -Connection $connection -TableName webresource -Filter "name eq '$webResourceName2'" | 
+                Get-DataverseRecord -Connection $connection -TableName webresource -FilterValues @{ name = $webResourceName2 } | 
                     ForEach-Object { 
                         Remove-DataverseRecord -Connection $connection -TableName webresource -Id $_.webresourceid -Confirm:$false 
                         Write-Host "  ✓ Deleted web resource: $webResourceName2"
                     }
                     
                 # Cleanup old web resources from previous failed runs
-                $oldWebResources = Get-DataverseRecord -Connection $connection -TableName webresource -Filter "startswith(name, 'svg_test')" | 
+                $oldWebResources = Get-DataverseRecord -Connection $connection -TableName webresource -FilterValues @{ "name:Like" = "svg_test_%" } | 
                     Where-Object { $_.name -notin @($webResourceName1, $webResourceName2) }
                 
                 if ($oldWebResources) {
