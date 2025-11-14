@@ -19,6 +19,7 @@ Describe "Entity Metadata E2E Tests" {
 
     It "Can create, read, update, and delete custom entity with all features" {
         $output = pwsh -noprofile -command {
+            [console]::InputEncoding = [console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
             $env:PSModulePath = $env:ChildProcessPSModulePath
             $ErrorActionPreference = "Stop"
             $ConfirmPreference = 'None'  # Suppress all confirmation prompts in non-interactive mode
