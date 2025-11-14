@@ -6,7 +6,7 @@ Cross-platform PowerShell module (~206MB, 1339 files) for Microsoft Dataverse da
 ## Build Instructions - VALIDATED AND WORKING
 
 ### Prerequisites
-- .NET SDK 6.0+ (tested with 9.0.305)
+- .NET SDK 8.0+ (tested with 9.0.305)
 - PowerShell 5.1+ or PowerShell 7+
 - Pester module for testing
 
@@ -148,7 +148,7 @@ $config.Filter.FullName = '*Get-DataverseRecord - Basic*' # Basic Get tests
 - `renovate.json` - Automated dependency updates
 
 ### Project 1: Rnwood.Dataverse.Data.PowerShell.Cmdlets/
-**Purpose:** C# cmdlet implementations (multi-targeting net6.0;net462)  
+**Purpose:** C# cmdlet implementations (multi-targeting net8.0;net462)  
 **Key Files:**
 - `Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj` - Multi-target project, CopyLocalLockFileAssemblies=true
 - `Commands/GetDataverseConnectionCmdlet.cs` - Creates ServiceClient with 5 auth modes: Interactive, UsernamePassword, ClientSecret, DeviceCode, Mock
@@ -173,10 +173,10 @@ $config.Filter.FullName = '*Get-DataverseRecord - Basic*' # Basic Get tests
 - FakeXrmEasy.v9 3.7.0 (net8.0) or 2.8.0 (net462)
 
 ### Project 2: Rnwood.Dataverse.Data.PowerShell.Loader/
-**Purpose:** Assembly loading for both .NET runtimes (multi-targeting net6.0;net462)  
+**Purpose:** Assembly loading for both .NET runtimes (multi-targeting net8.0;net462)  
 **Key Files:**
 - `ModuleInitProvider.cs` - Implements IModuleAssemblyInitializer.OnImport()
-  - For net6.0: Creates CmdletsLoadContext : AssemblyLoadContext, loads from cmdlets/net6.0/
+  - For net8.0: Creates CmdletsLoadContext : AssemblyLoadContext, loads from cmdlets/net8.0/
   - For net462: Hooks AppDomain.AssemblyResolve, loads from cmdlets/net462/
   - Ensures Microsoft.Xrm.Sdk and other SDK assemblies load from correct location
 

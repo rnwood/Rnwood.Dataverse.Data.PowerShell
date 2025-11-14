@@ -18,8 +18,8 @@ Describe "OptionSet Metadata E2E Tests" {
     }
 
     It "Can create, read, update, and delete global option sets comprehensively" {
-        $output = pwsh -noprofile -command {
-            [console]::InputEncoding = [console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+        $output = pwsh -noprofile -noninteractive -command {
+            
             $env:PSModulePath = $env:ChildProcessPSModulePath
             $ErrorActionPreference = "Stop"
             $ConfirmPreference = 'None'  # Suppress all confirmation prompts in non-interactive mode
@@ -299,7 +299,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 Write-Host "ERROR: $($_ | Out-String)"
                 throw "Failed: " + ($_ | Format-Table -force * | Out-String)
             }
-        }
+        } 2>&1
         
         # Display the output from pwsh
         Write-Host $output
