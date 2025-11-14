@@ -22,6 +22,7 @@ Describe "OptionSet Metadata E2E Tests" {
             $env:PSModulePath = $env:ChildProcessPSModulePath
             $ErrorActionPreference = "Stop"
             $ConfirmPreference = 'None'  # Suppress all confirmation prompts in non-interactive mode
+            $VerbosePreference = 'Continue'  # Enable verbose output
             
             Import-Module Rnwood.Dataverse.Data.PowerShell
             
@@ -71,6 +72,8 @@ Describe "OptionSet Metadata E2E Tests" {
                 
                 Write-Host "Step 1: Creating first global option set..."
                 Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection
+                    
                     Set-DataverseOptionSetMetadata -Connection $connection `
                         -Name $optionSetName1 `
                         -DisplayName "E2E Test Priority" `
@@ -82,13 +85,13 @@ Describe "OptionSet Metadata E2E Tests" {
                             @{Value=4; Label='Critical'; Description='Critical priority'}
                         ) `
                         -Confirm:$false
-                    
-                    Wait-DataversePublish -Connection $connection
                 }
                 Write-Host "✓ Option set 1 created"
                 
                 Write-Host "Step 2: Creating second global option set..."
                 Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection
+                    
                     Set-DataverseOptionSetMetadata -Connection $connection `
                         -Name $optionSetName2 `
                         -DisplayName "E2E Test Status" `
@@ -100,8 +103,6 @@ Describe "OptionSet Metadata E2E Tests" {
                             @{Value=400; Label='Cancelled'}
                         ) `
                         -Confirm:$false
-                    
-                    Wait-DataversePublish -Connection $connection
                 }
                 Write-Host "✓ Option set 2 created"
                 
@@ -137,6 +138,8 @@ Describe "OptionSet Metadata E2E Tests" {
                 
                 Write-Host "Step 5: Creating test entity to use option sets..."
                 Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection
+                    
                     Set-DataverseEntityMetadata -Connection $connection `
                         -EntityName $entityName `
                         -SchemaName $entitySchema `
@@ -145,13 +148,13 @@ Describe "OptionSet Metadata E2E Tests" {
                         -PrimaryAttributeSchemaName "new_name" `
                         -OwnershipType UserOwned `
                         -Confirm:$false
-                    
-                    Wait-DataversePublish -Connection $connection
                 }
                 Write-Host "✓ Test entity created"
                 
                 Write-Host "Step 6: Creating picklist attribute using global option set..."
                 Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection
+                    
                     Set-DataverseAttributeMetadata -Connection $connection `
                         -EntityName $entityName `
                         -AttributeName "new_priority" `
@@ -160,13 +163,13 @@ Describe "OptionSet Metadata E2E Tests" {
                         -DisplayName "Priority Level" `
                         -OptionSetName $optionSetName1 `
                         -Confirm:$false
-                    
-                    Wait-DataversePublish -Connection $connection
                 }
                 Write-Host "✓ Picklist attribute created with global option set"
                 
                 Write-Host "Step 7: Creating another attribute using second option set..."
                 Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection
+                    
                     Set-DataverseAttributeMetadata -Connection $connection `
                         -EntityName $entityName `
                         -AttributeName "new_status" `
@@ -175,8 +178,6 @@ Describe "OptionSet Metadata E2E Tests" {
                         -DisplayName "Current Status" `
                         -OptionSetName $optionSetName2 `
                         -Confirm:$false
-                    
-                    Wait-DataversePublish -Connection $connection
                 }
                 Write-Host "✓ Second picklist attribute created"
                 
@@ -202,6 +203,8 @@ Describe "OptionSet Metadata E2E Tests" {
                 
                 Write-Host "Step 10: Updating global option set (adding new option)..."
                 Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection
+                    
                     Set-DataverseOptionSetMetadata -Connection $connection `
                         -Name $optionSetName1 `
                         -DisplayName "E2E Test Priority (Updated)" `
@@ -213,8 +216,6 @@ Describe "OptionSet Metadata E2E Tests" {
                             @{Value=5; Label='Emergency'}
                         ) `
                         -Confirm:$false
-                    
-                    Wait-DataversePublish -Connection $connection
                 }
                 Write-Host "✓ Option set updated with new option"
                 

@@ -18,12 +18,45 @@ Describe "Relationship Metadata E2E Tests" {
     }
 
     It "Can create, read, update, and delete OneToMany and ManyToMany relationships comprehensively" {
-        pwsh -noninteractive -noprofile -command {
+        $output = pwsh -noprofile -command {
             $env:PSModulePath = $env:ChildProcessPSModulePath
             $ErrorActionPreference = "Stop"
             $ConfirmPreference = 'None'  # Suppress all confirmation prompts in non-interactive mode
+            $VerbosePreference = 'Continue'  # Enable verbose output
             
             Import-Module Rnwood.Dataverse.Data.PowerShell
+            
+            # Retry helper function with exponential backoff
+            function Invoke-WithRetry {
+                param(
+                    [Parameter(Mandatory=$true)]
+                    [scriptblock]$ScriptBlock,
+                    [int]$MaxRetries = 3,
+                    [int]$InitialDelaySeconds = 2
+                )
+                
+                $attempt = 0
+                $delay = $InitialDelaySeconds
+                
+                while ($attempt -lt $MaxRetries) {
+                    try {
+                        $attempt++
+                        Write-Verbose "Attempt $attempt of $MaxRetries"
+                        & $ScriptBlock
+                        return  # Success, exit function
+                    }
+                    catch {
+                        if ($attempt -eq $MaxRetries) {
+                            Write-Error "All $MaxRetries attempts failed. Last error: $_"
+                            throw
+                        }
+                        
+                        Write-Warning "Attempt $attempt failed: $_. Retrying in $delay seconds..."
+                        Start-Sleep -Seconds $delay
+                        $delay = $delay * 2  # Exponential backoff
+                    }
+                }
+            }
             
             try {
                 $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
