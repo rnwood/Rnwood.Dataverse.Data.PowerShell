@@ -18,7 +18,7 @@ Describe "Attribute Metadata E2E Tests" {
     }
 
     It "Can create, read, update, and delete all attribute types comprehensively" {
-        $output = pwsh -noprofile -noninteractive -command {
+        pwsh -noprofile -noninteractive -command {
             
             $env:PSModulePath = $env:ChildProcessPSModulePath
             $ErrorActionPreference = "Stop"
@@ -275,10 +275,7 @@ Describe "Attribute Metadata E2E Tests" {
                 Write-Host "ERROR: $($_ | Out-String)"
                 throw "Failed: " + ($_ | Format-Table -force * | Out-String)
             }
-        } 2>&1
-        
-        # Display the output from pwsh
-        Write-Host $output
+        }
 
         if ($LASTEXITCODE -ne 0) {
             throw "Failed"

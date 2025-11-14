@@ -18,7 +18,7 @@ Describe "Relationship Metadata E2E Tests" {
     }
 
     It "Can create, read, update, and delete OneToMany and ManyToMany relationships comprehensively" {
-        $output = pwsh -noprofile -noninteractive -command {
+        pwsh -noprofile -noninteractive -command {
             
             $env:PSModulePath = $env:ChildProcessPSModulePath
             $ErrorActionPreference = "Stop"
