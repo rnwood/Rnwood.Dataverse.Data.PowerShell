@@ -72,196 +72,235 @@ Describe "Relationship Metadata E2E Tests" {
             Write-Host "Test entities: $entity1Name, $entity2Name"
                 
             Write-Host "Step 1: Creating first test entity..."
-            Set-DataverseEntityMetadata -Connection $connection `
-                -EntityName $entity1Name `
-                -SchemaName $entity1Schema `
-                -DisplayName "Relationship Test Entity 1" `
-                -DisplayCollectionName "Relationship Test Entities 1" `
-                -PrimaryAttributeSchemaName "new_name" `
-                -OwnershipType UserOwned `
-                -Confirm:$false
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                Set-DataverseEntityMetadata -Connection $connection `
+                    -EntityName $entity1Name `
+                    -SchemaName $entity1Schema `
+                    -DisplayName "Relationship Test Entity 1" `
+                    -DisplayCollectionName "Relationship Test Entities 1" `
+                    -PrimaryAttributeSchemaName "new_name" `
+                    -OwnershipType UserOwned `
+                    -Confirm:$false
+            }
             Write-Host "✓ Entity 1 created"
                 
-            # Additional wait to ensure customization lock is released
-            Write-Host "Waiting for customization lock to be released..."
-            Start-Sleep -Seconds 3
-                
             Write-Host "Step 2: Creating second test entity..."
-            Set-DataverseEntityMetadata -Connection $connection `
-                -EntityName $entity2Name `
-                -SchemaName $entity2Schema `
-                -DisplayName "Relationship Test Entity 2" `
-                -DisplayCollectionName "Relationship Test Entities 2" `
-                -PrimaryAttributeSchemaName "new_name" `
-                -OwnershipType UserOwned `
-                -Confirm:$false
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                Set-DataverseEntityMetadata -Connection $connection `
+                    -EntityName $entity2Name `
+                    -SchemaName $entity2Schema `
+                    -DisplayName "Relationship Test Entity 2" `
+                    -DisplayCollectionName "Relationship Test Entities 2" `
+                    -PrimaryAttributeSchemaName "new_name" `
+                    -OwnershipType UserOwned `
+                    -Confirm:$false
+            }
             Write-Host "✓ Entity 2 created"
                 
             Write-Host "Step 3: Creating OneToMany relationship with lookup..."
             $relName1 = "${entity1Name}_${entity2Name}_rel1"
             $lookupSchemaName = "new_Entity1Id"
-                
-            Set-DataverseRelationshipMetadata `
-                -Connection $connection `
-                -SchemaName $relName1 `
-                -RelationshipType OneToMany `
-                -ReferencedEntity $entity1Name `
-                -ReferencingEntity $entity2Name `
-                -LookupAttributeSchemaName $lookupSchemaName `
-                -LookupAttributeDisplayName "Related Entity 1" `
-                -LookupAttributeDescription "Lookup to entity 1" `
-                -LookupAttributeRequiredLevel None `
-                -CascadeDelete RemoveLink `
-                -CascadeAssign NoCascade `
-                -CascadeShare NoCascade `
-                -CascadeUnshare NoCascade `
-                -CascadeReparent NoCascade `
-                -CascadeMerge NoCascade `
-                -IsSearchable `
-                -Confirm:$false
-                
+            
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                Set-DataverseRelationshipMetadata `
+                    -Connection $connection `
+                    -SchemaName $relName1 `
+                    -RelationshipType OneToMany `
+                    -ReferencedEntity $entity1Name `
+                    -ReferencingEntity $entity2Name `
+                    -LookupAttributeSchemaName $lookupSchemaName `
+                    -LookupAttributeDisplayName "Related Entity 1" `
+                    -LookupAttributeDescription "Lookup to entity 1" `
+                    -LookupAttributeRequiredLevel None `
+                    -CascadeDelete RemoveLink `
+                    -CascadeAssign NoCascade `
+                    -CascadeShare NoCascade `
+                    -CascadeUnshare NoCascade `
+                    -CascadeReparent NoCascade `
+                    -CascadeMerge NoCascade `
+                    -IsSearchable `
+                    -Confirm:$false
+            }
             Write-Host "✓ OneToMany relationship created"
                 
             Write-Host "Step 4: Creating self-referencing OneToMany relationship..."
             $selfRelName = "${entity1Name}_parent_rel"
             $parentLookupSchemaName = "new_ParentId"
-                
-            Set-DataverseRelationshipMetadata `
-                -Connection $connection `
-                -SchemaName $selfRelName `
-                -RelationshipType OneToMany `
-                -ReferencedEntity $entity1Name `
-                -ReferencingEntity $entity1Name `
-                -LookupAttributeSchemaName $parentLookupSchemaName `
-                -LookupAttributeDisplayName "Parent Record" `
-                -LookupAttributeRequiredLevel None `
-                -CascadeDelete RemoveLink `
-                -IsHierarchical `
-                -Confirm:$false
-                
+            
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                Set-DataverseRelationshipMetadata `
+                    -Connection $connection `
+                    -SchemaName $selfRelName `
+                    -RelationshipType OneToMany `
+                    -ReferencedEntity $entity1Name `
+                    -ReferencingEntity $entity1Name `
+                    -LookupAttributeSchemaName $parentLookupSchemaName `
+                    -LookupAttributeDisplayName "Parent Record" `
+                    -LookupAttributeRequiredLevel None `
+                    -CascadeDelete RemoveLink `
+                    -IsHierarchical `
+                    -Confirm:$false
+            }
             Write-Host "✓ Self-referencing relationship created"
                 
             Write-Host "Step 5: Creating ManyToMany relationship..."
             $m2mRelName = "${entity1Name}_${entity2Name}_m2m"
-                
-            Set-DataverseRelationshipMetadata `
-                -Connection $connection `
-                -SchemaName $m2mRelName `
-                -RelationshipType ManyToMany `
-                -ReferencedEntity $entity1Name `
-                -ReferencingEntity $entity2Name `
-                -IntersectEntitySchemaName "${m2mRelName}_intersect" `
-                -Confirm:$false
-                
+            
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                Set-DataverseRelationshipMetadata `
+                    -Connection $connection `
+                    -SchemaName $m2mRelName `
+                    -RelationshipType ManyToMany `
+                    -ReferencedEntity $entity1Name `
+                    -ReferencingEntity $entity2Name `
+                    -IntersectEntitySchemaName "${m2mRelName}_intersect" `
+                    -Confirm:$false
+            }
             Write-Host "✓ ManyToMany relationship created"
                 
             Write-Host "Step 6: Reading and verifying relationships..."
-            $relationships = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                $relationships = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name
                 
-            $ourRelationships = $relationships | Where-Object { 
-                $_.SchemaName -eq $relName1 -or 
-                $_.SchemaName -eq $selfRelName -or 
-                $_.SchemaName -eq $m2mRelName 
-            }
+                $ourRelationships = $relationships | Where-Object { 
+                    $_.SchemaName -eq $relName1 -or 
+                    $_.SchemaName -eq $selfRelName -or 
+                    $_.SchemaName -eq $m2mRelName 
+                }
                 
-            if ($ourRelationships.Count -ne 3) {
-                throw "Expected 3 relationships, found $($ourRelationships.Count)"
+                if ($ourRelationships.Count -ne 3) {
+                    throw "Expected 3 relationships, found $($ourRelationships.Count)"
+                }
             }
             Write-Host "✓ All relationships verified"
                 
             Write-Host "Step 7: Reading specific OneToMany relationship..."
-            $rel1 = Get-DataverseRelationshipMetadata -Connection $connection -SchemaName $relName1
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                $rel1 = Get-DataverseRelationshipMetadata -Connection $connection -SchemaName $relName1
                 
-            if ($rel1.RelationshipType -ne 'OneToManyRelationship') {
-                throw "Wrong relationship type for OneToMany"
-            }
-            if ($rel1.ReferencedEntity -ne $entity1Name) {
-                throw "Wrong referenced entity"
-            }
-            if ($rel1.ReferencingEntity -ne $entity2Name) {
-                throw "Wrong referencing entity"
+                if ($rel1.RelationshipType -ne 'OneToManyRelationship') {
+                    throw "Wrong relationship type for OneToMany"
+                }
+                if ($rel1.ReferencedEntity -ne $entity1Name) {
+                    throw "Wrong referenced entity"
+                }
+                if ($rel1.ReferencingEntity -ne $entity2Name) {
+                    throw "Wrong referencing entity"
+                }
             }
             Write-Host "✓ OneToMany relationship details verified"
                 
             Write-Host "Step 8: Reading specific ManyToMany relationship..."
-            $m2mRel = Get-DataverseRelationshipMetadata -Connection $connection -SchemaName $m2mRelName
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                $m2mRel = Get-DataverseRelationshipMetadata -Connection $connection -SchemaName $m2mRelName
                 
-            if ($m2mRel.RelationshipType -ne 'ManyToManyRelationship') {
-                throw "Wrong relationship type for ManyToMany"
+                if ($m2mRel.RelationshipType -ne 'ManyToManyRelationship') {
+                    throw "Wrong relationship type for ManyToMany"
+                }
             }
             Write-Host "✓ ManyToMany relationship details verified"
                 
             Write-Host "Step 9: Updating OneToMany relationship cascade behaviors..."
-            Set-DataverseRelationshipMetadata `
-                -Connection $connection `
-                -SchemaName $relName1 `
-                -RelationshipType OneToMany `
-                -ReferencedEntity $entity1Name `
-                -ReferencingEntity $entity2Name `
-                -CascadeDelete Cascade `
-                -CascadeAssign Cascade `
-                -Confirm:$false
-                
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                Set-DataverseRelationshipMetadata `
+                    -Connection $connection `
+                    -SchemaName $relName1 `
+                    -RelationshipType OneToMany `
+                    -ReferencedEntity $entity1Name `
+                    -ReferencingEntity $entity2Name `
+                    -CascadeDelete Cascade `
+                    -CascadeAssign Cascade `
+                    -Confirm:$false
+            }
             Write-Host "✓ Relationship updated"
                 
             Write-Host "Step 10: Verifying relationship update..."
-            $updatedRel = Get-DataverseRelationshipMetadata -Connection $connection -SchemaName $relName1
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                $updatedRel = Get-DataverseRelationshipMetadata -Connection $connection -SchemaName $relName1
                 
-            if ($updatedRel.CascadeConfiguration.Delete -ne 'Cascade') {
-                throw "Cascade delete not updated"
-            }
-            if ($updatedRel.CascadeConfiguration.Assign -ne 'Cascade') {
-                throw "Cascade assign not updated"
+                if ($updatedRel.CascadeConfiguration.Delete -ne 'Cascade') {
+                    throw "Cascade delete not updated"
+                }
+                if ($updatedRel.CascadeConfiguration.Assign -ne 'Cascade') {
+                    throw "Cascade assign not updated"
+                }
             }
             Write-Host "✓ Relationship updates verified"
                 
             Write-Host "Step 11: Testing relationship retrieval with filters..."
-            $oneToManyRels = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name -RelationshipType OneToMany
-            $manyToManyRels = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name -RelationshipType ManyToMany
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                $oneToManyRels = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name -RelationshipType OneToMany
+                $manyToManyRels = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name -RelationshipType ManyToMany
                 
-            Write-Host "  OneToMany: $($oneToManyRels.Count), ManyToMany: $($manyToManyRels.Count)"
+                Write-Host "  OneToMany: $($oneToManyRels.Count), ManyToMany: $($manyToManyRels.Count)"
+            }
             Write-Host "✓ Filtered retrieval successful"
                 
             Write-Host "Step 12: Cleanup - Deleting relationships (implicit via entity deletion)..."
             # Note: Relationships are deleted when entities are deleted
                 
             Write-Host "Step 13: Cleanup - Deleting test entities..."
-            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity2Name -Confirm:$false
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity2Name -Confirm:$false
+            }
             Write-Host "✓ Entity 2 deleted"
-                
-            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity1Name -Confirm:$false
+            
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity1Name -Confirm:$false
+            }
             Write-Host "✓ Entity 1 deleted"
                 
             Write-Host "Step 14: Verifying cleanup..."
-            Start-Sleep -Seconds 2
-            $remainingEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
-                $_.LogicalName -eq $entity1Name -or $_.LogicalName -eq $entity2Name 
-            }
-            if ($remainingEntities) {
-                throw "Entities still exist after deletion"
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                $remainingEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
+                    $_.LogicalName -eq $entity1Name -or $_.LogicalName -eq $entity2Name 
+                }
+                if ($remainingEntities) {
+                    throw "Entities still exist after deletion"
+                }
             }
             Write-Host "✓ Cleanup verified"
                 
             Write-Host "Step 15: Cleanup any old test entities from previous failed runs..."
-            $oldEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
-                $_.LogicalName -like "new_e2erel*" -and 
-                $_.LogicalName -ne $entity1Name -and 
-                $_.LogicalName -ne $entity2Name 
-            }
-            if ($oldEntities.Count -gt 0) {
-                Write-Host "  Found $($oldEntities.Count) old test entities to clean up"
-                foreach ($entity in $oldEntities) {
-                    try {
-                        Write-Host "  Removing old entity: $($entity.LogicalName)"
-                        Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
-                    }
-                    catch {
-                        Write-Host "  Could not remove $($entity.LogicalName): $_"
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                $oldEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
+                    $_.LogicalName -like "new_e2erel*" -and 
+                    $_.LogicalName -ne $entity1Name -and 
+                    $_.LogicalName -ne $entity2Name 
+                }
+                if ($oldEntities.Count -gt 0) {
+                    Write-Host "  Found $($oldEntities.Count) old test entities to clean up"
+                    foreach ($entity in $oldEntities) {
+                        try {
+                            Write-Host "  Removing old entity: $($entity.LogicalName)"
+                            Invoke-WithRetry {
+                                Wait-DataversePublish -Connection $connection -Verbose
+                                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
+                            }
+                        }
+                        catch {
+                            Write-Host "  Could not remove $($entity.LogicalName): $_"
+                        }
                     }
                 }
-            }
-            else {
-                Write-Host "  No old test entities found"
+                else {
+                    Write-Host "  No old test entities found"
+                }
             }
                 
             Write-Host "SUCCESS: All relationship metadata operations completed successfully"

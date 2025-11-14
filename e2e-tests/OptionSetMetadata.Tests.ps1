@@ -71,7 +71,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 1: Creating first global option set..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection
+                Wait-DataversePublish -Connection $connection -Verbose
                     
                 Set-DataverseOptionSetMetadata -Connection $connection `
                     -Name $optionSetName1 `
@@ -89,7 +89,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 2: Creating second global option set..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection
+                Wait-DataversePublish -Connection $connection -Verbose
                     
                 Set-DataverseOptionSetMetadata -Connection $connection `
                     -Name $optionSetName2 `
@@ -107,6 +107,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 3: Reading global option set..."
             Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
                 $script:optionSet1 = Get-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName1
                     
                 if (-not $script:optionSet1) {
@@ -123,6 +124,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 4: Listing all global option sets..."
             Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
                 $script:allOptionSets = Get-DataverseOptionSetMetadata -Connection $connection
                     
                 $ourOptionSets = $script:allOptionSets | Where-Object { 
@@ -137,7 +139,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 5: Creating test entity to use option sets..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection
+                Wait-DataversePublish -Connection $connection -Verbose
                     
                 Set-DataverseEntityMetadata -Connection $connection `
                     -EntityName $entityName `
@@ -152,7 +154,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 6: Creating picklist attribute using global option set..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection
+                Wait-DataversePublish -Connection $connection -Verbose
                     
                 Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
@@ -167,7 +169,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 7: Creating another attribute using second option set..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection
+                Wait-DataversePublish -Connection $connection -Verbose
                     
                 Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
@@ -182,6 +184,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 8: Reading option set from attribute..."
             Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
                 $script:priorityAttr = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_priority"
                     
                 if ($script:priorityAttr.OptionSet.Name -ne $optionSetName1) {
@@ -192,6 +195,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 9: Getting option set values for entity attribute..."
             Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
                 $script:priorityOptions = Get-DataverseOptionSetMetadata -Connection $connection -EntityName $entityName -AttributeName "new_priority"
                     
                 if ($script:priorityOptions.Options.Count -ne 4) {
@@ -202,7 +206,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 10: Updating global option set (adding new option)..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection
+                Wait-DataversePublish -Connection $connection -Verbose
                     
                 Set-DataverseOptionSetMetadata -Connection $connection `
                     -Name $optionSetName1 `
@@ -220,6 +224,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 11: Verifying option set update..."
             Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
                 $script:updatedOptionSet = Get-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName1
                     
                 if ($script:updatedOptionSet.DisplayName.UserLocalizedLabel.Label -ne "E2E Test Priority (Updated)") {
@@ -237,55 +242,69 @@ Describe "OptionSet Metadata E2E Tests" {
             Write-Host "✓ Update verified (5 options including new 'Emergency')"
                 
             Write-Host "Step 12: Testing local option set (created with attribute)..."
-            Set-DataverseAttributeMetadata -Connection $connection `
-                -EntityName $entityName `
-                -AttributeName "new_category" `
-                -SchemaName "new_Category" `
-                -AttributeType Picklist `
-                -DisplayName "Category" `
-                -Options @(
-                @{Value = 1; Label = 'Type A' }
-                @{Value = 2; Label = 'Type B' }
-                @{Value = 3; Label = 'Type C' }
-            ) `
-                -Confirm:$false
-                
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                Set-DataverseAttributeMetadata -Connection $connection `
+                    -EntityName $entityName `
+                    -AttributeName "new_category" `
+                    -SchemaName "new_Category" `
+                    -AttributeType Picklist `
+                    -DisplayName "Category" `
+                    -Options @(
+                    @{Value = 1; Label = 'Type A' }
+                    @{Value = 2; Label = 'Type B' }
+                    @{Value = 3; Label = 'Type C' }
+                ) `
+                    -Confirm:$false
+            }
             Write-Host "✓ Local option set created with attribute"
                 
             Write-Host "Step 13: Verifying local option set..."
-            $categoryAttr = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_category"
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                $categoryAttr = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_category"
                 
-            if ($categoryAttr.OptionSet.IsGlobal -eq $true) {
-                throw "Option set should be local, not global"
-            }
-            if ($categoryAttr.OptionSet.Options.Count -ne 3) {
-                throw "Expected 3 local options, found $($categoryAttr.OptionSet.Options.Count)"
+                if ($categoryAttr.OptionSet.IsGlobal -eq $true) {
+                    throw "Option set should be local, not global"
+                }
+                if ($categoryAttr.OptionSet.Options.Count -ne 3) {
+                    throw "Expected 3 local options, found $($categoryAttr.OptionSet.Options.Count)"
+                }
             }
             Write-Host "✓ Local option set verified"
                 
             Write-Host "Step 14: Cleanup - Deleting test entity (and local option set)..."
-            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
+            }
             Write-Host "✓ Test entity deleted"
                 
             Write-Host "Step 15: Cleanup any old test entities from previous failed runs..."
-            $oldEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
-                $_.LogicalName -like "new_e2eoptent_*" -and 
-                $_.LogicalName -ne $entityName 
-            }
-            if ($oldEntities.Count -gt 0) {
-                Write-Host "  Found $($oldEntities.Count) old test entities to clean up"
-                foreach ($entity in $oldEntities) {
-                    try {
-                        Write-Host "  Removing old entity: $($entity.LogicalName)"
-                        Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
-                    }
-                    catch {
-                        Write-Host "  Could not remove $($entity.LogicalName): $_"
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                $oldEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
+                    $_.LogicalName -like "new_e2eoptent_*" -and 
+                    $_.LogicalName -ne $entityName 
+                }
+                if ($oldEntities.Count -gt 0) {
+                    Write-Host "  Found $($oldEntities.Count) old test entities to clean up"
+                    foreach ($entity in $oldEntities) {
+                        try {
+                            Write-Host "  Removing old entity: $($entity.LogicalName)"
+                            Invoke-WithRetry {
+                                Wait-DataversePublish -Connection $connection -Verbose
+                                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
+                            }
+                        }
+                        catch {
+                            Write-Host "  Could not remove $($entity.LogicalName): $_"
+                        }
                     }
                 }
-            }
-            else {
-                Write-Host "  No old test entities found"
+                else {
+                    Write-Host "  No old test entities found"
+                }
             }
                 
             Write-Host "Step 16: Note on global option set cleanup..."
@@ -302,8 +321,4 @@ Describe "OptionSet Metadata E2E Tests" {
         }
     }
         
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed"
-    }
 }
