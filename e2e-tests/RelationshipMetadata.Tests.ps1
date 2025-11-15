@@ -73,33 +73,25 @@ Describe "Relationship Metadata E2E Tests" {
             Write-Host "Test entities: $entity1Name, $entity2Name"
             
             Write-Host "Step 0: Cleanup any old test entities from previous failed runs..."
-            Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
-                $oldEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
-                    $_.LogicalName -like "new_e2erel*"
-                }
-                if ($oldEntities.Count -gt 0) {
-                    Write-Host "  Found $($oldEntities.Count) old test entities to clean up"
-                    foreach ($entity in $oldEntities) {
-                        try {
-                            Write-Host "  Removing old entity: $($entity.LogicalName)"
-                            Wait-DataversePublish -Connection $connection -Verbose
-                            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction Stop
-                        }
-                        catch {
-                            # Ignore "entity not found" errors during cleanup - the entity may have been deleted already
-                            if ($_.Exception.Message -notmatch "Could not find an entity") {
-                                Write-Host "  Could not remove $($entity.LogicalName): $_"
-                            }
-                            else {
-                                Write-Host "  Entity $($entity.LogicalName) already deleted"
-                            }
-                        }
+            Wait-DataversePublish -Connection $connection -Verbose
+            $oldEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
+                $_.LogicalName -like "new_e2erel*"
+            }
+            if ($oldEntities.Count -gt 0) {
+                Write-Host "  Found $($oldEntities.Count) old test entities to clean up"
+                foreach ($entity in $oldEntities) {
+                    try {
+                        Write-Host "  Removing old entity: $($entity.LogicalName)"
+                        Wait-DataversePublish -Connection $connection -Verbose
+                        Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction Stop
+                    }
+                    catch {
+                        Write-Host "  Could not remove $($entity.LogicalName): $_"
                     }
                 }
-                else {
-                    Write-Host "  No old test entities found"
-                }
+            }
+            else {
+                Write-Host "  No old test entities found"
             }
                 
             Write-Host "Step 1: Creating first test entity..."
