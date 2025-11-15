@@ -83,7 +83,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Try to find existing sitemap by UniqueName
                 var query = new QueryExpression("sitemap")
                 {
-                    ColumnSet = new ColumnSet("sitemapid", "sitemapname"),
+                    ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapxml"),
                     Criteria = new FilterExpression
                     {
                         Conditions =
@@ -134,7 +134,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     var existingQuery = new QueryExpression("sitemap")
                     {
-                        ColumnSet = new ColumnSet("sitemapid", "sitemapname"),
+                        ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapxml"),
                         Criteria = new FilterExpression
                         {
                             Conditions =
