@@ -193,9 +193,14 @@ Describe "Relationship Metadata E2E Tests" {
             Write-Host "Step 6: Reading and verifying relationships..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
-                $script:relationships = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name
+                $allRelationships = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name
                 
-                Write-Verbose "Retrieved $($script:relationships.Count) relationships"
+                Write-Verbose "Retrieved $($allRelationships.Count) relationships"
+                
+                # Deduplicate self-referencing relationships (they appear in both OneToMany and ManyToOne collections)
+                $script:relationships = $allRelationships | Group-Object -Property SchemaName | ForEach-Object { $_.Group | Select-Object -First 1 }
+                
+                Write-Verbose "After deduplication: $($script:relationships.Count) unique relationships"
                 
                 $script:ourRelationships = $script:relationships | Where-Object { 
                     $_.SchemaName -eq $relName1 -or 
