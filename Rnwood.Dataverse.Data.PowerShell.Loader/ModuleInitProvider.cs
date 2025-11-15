@@ -2,7 +2,7 @@
 using System.IO;
 using System.Management.Automation;
 using System.Reflection;
-
+using System.Threading;
 #if NETCOREAPP
 using System.Runtime.Loader;
 #endif
@@ -22,13 +22,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 			var loaderPath = Assembly.GetExecutingAssembly().Location;
 			var targetFramework = Path.GetFileName(Path.GetDirectoryName(loaderPath));
 			basePath = Path.Combine(basePath, targetFramework);
-			
+
 			var alc = new CmdletsLoadContext(basePath);
 
 			AssemblyLoadContext.Default.Resolving += (s, args) =>
 			{
 				AssemblyName assemblyName = new AssemblyName(args.Name);
-				if (assemblyName.Name == "Rnwood.Dataverse.Data.PowerShell.Cmdlets" || assemblyName.Name == "Microsoft.ApplicationInsights") {
+				if (assemblyName.Name == "Rnwood.Dataverse.Data.PowerShell.Cmdlets" || assemblyName.Name == "Microsoft.ApplicationInsights")
+				{
 					return alc.LoadFromAssemblyName(assemblyName);
 				}
 
@@ -53,6 +54,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 			};
 #endif
 
+			// Bump up the min threads reserved for this app to ramp connections faster - minWorkerThreads defaults to 4, minIOCP defaults to 4 
+			ThreadPool.SetMinThreads(100, 100);
+			// Change max connections from .NET to a remote service default: 2
+			System.Net.ServicePointManager.DefaultConnectionLimit = 65000;
+			// Turn off the Expect 100 to continue message - 'true' will cause the caller to wait until it round-trip confirms a connection to the server 
+			System.Net.ServicePointManager.Expect100Continue = false;
+			// Can decrease overall transmission overhead but can cause delay in data packet arrival
+			System.Net.ServicePointManager.UseNagleAlgorithm = false;
 
 		}
 
@@ -75,7 +84,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 				{
 					//Console.WriteLine("Assembly " + assemblyName.Name + " redirected");
 					return LoadFromAssemblyPath(path);
-				} else {
+				}
+				else
+				{
 					//Console.WriteLine("Assembly " + assemblyName.Name + " not resolved");
 				}
 

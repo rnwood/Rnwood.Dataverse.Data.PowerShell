@@ -6,7 +6,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Deletes an entity (table) from Dataverse.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "DataverseEntityMetadata", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
+    [Cmdlet(VerbsCommon.Remove, "DataverseEntityMetadata", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
     public class RemoveDataverseEntityMetadataCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
@@ -25,11 +25,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.ProcessRecord();
 
             if (!ShouldProcess($"Entity '{EntityName}'", "Delete entity and all its data"))
-            {
-                return;
-            }
-
-            if (!ShouldContinue($"Are you sure you want to delete entity '{EntityName}'? This will delete all data and cannot be undone.", "Confirm Deletion"))
             {
                 return;
             }

@@ -154,7 +154,7 @@ This PR adds support for batch operations and fixes a connection timeout issue.
 
 ### Prerequisites
 
-- .NET SDK 6.0+
+- .NET SDK 8.0+
 - PowerShell 7+ or PowerShell 5.1+
 - Pester 5.x
 

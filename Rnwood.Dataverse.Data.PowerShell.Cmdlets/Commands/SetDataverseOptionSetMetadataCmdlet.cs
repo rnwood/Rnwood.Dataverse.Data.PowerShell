@@ -1,3 +1,4 @@
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -54,6 +55,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(HelpMessage = "Return the created or updated option set metadata")]
         public SwitchParameter PassThru { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether to publish the option set after creation or update.
+        /// </summary>
+        [Parameter(HelpMessage = "Publish the option set after creation or update")]
+        public SwitchParameter Publish { get; set; }
 
         /// <summary>
         /// Processes the cmdlet.
@@ -183,13 +190,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Option set created successfully with MetadataId: {response.OptionSetId}");
 
+            // Publish the option set if specified
+            if (Publish && ShouldProcess($"Global option set '{Name}'", "Publish"))
+            {
+                var publishRequest = new PublishXmlRequest
+                {
+                    ParameterXml = $"<importexportxml><optionsets><optionset>{Name}</optionset></optionsets></importexportxml>"
+                };
+                Connection.Execute(publishRequest);
+                WriteVerbose($"Published global option set '{Name}'");
+                
+                // Wait for publish to complete
+                PublishHelpers.WaitForPublishComplete(Connection, WriteVerbose);
+            }
+
             if (PassThru)
             {
                 // Retrieve and return the created option set
                 var retrieveRequest = new RetrieveOptionSetRequest
                 {
                     Name = Name,
-                    RetrieveAsIfPublished = false
+                    RetrieveAsIfPublished = true
                 };
 
                 var retrieveResponse = (RetrieveOptionSetResponse)Connection.Execute(retrieveRequest);
@@ -363,13 +384,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Updated global option set '{Name}'");
 
+            // Publish the option set if specified
+            if (Publish && ShouldProcess($"Global option set '{Name}'", "Publish"))
+            {
+                var publishRequest = new PublishXmlRequest
+                {
+                    ParameterXml = $"<importexportxml><optionsets><optionset>{Name}</optionset></optionsets></importexportxml>"
+                };
+                Connection.Execute(publishRequest);
+                WriteVerbose($"Published global option set '{Name}'");
+                
+                // Wait for publish to complete
+                PublishHelpers.WaitForPublishComplete(Connection, WriteVerbose);
+            }
+
             if (PassThru)
             {
                 // Retrieve and return the updated option set
                 var retrieveRequest = new RetrieveOptionSetRequest
                 {
                     Name = Name,
-                    RetrieveAsIfPublished = false
+                    RetrieveAsIfPublished = true
                 };
 
                 var retrieveResponse = (RetrieveOptionSetResponse)Connection.Execute(retrieveRequest);

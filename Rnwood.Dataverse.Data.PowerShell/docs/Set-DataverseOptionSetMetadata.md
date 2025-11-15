@@ -14,7 +14,7 @@ Creates or updates a global option set in Dataverse.
 
 ```
 Set-DataverseOptionSetMetadata [-Name] <String> [-DisplayName <String>] [-Description <String>]
- -Options <Hashtable[]> [-NoRemoveMissingOptions] [-PassThru] [-Connection <ServiceClient>]
+ -Options <Hashtable[]> [-NoRemoveMissingOptions] [-PassThru] [-Publish] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -183,6 +183,21 @@ Accept wildcard characters: False
 
 ### -PassThru
 Return the created/updated option set metadata.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Publish
+Publish the option set after creation or update
 
 ```yaml
 Type: SwitchParameter

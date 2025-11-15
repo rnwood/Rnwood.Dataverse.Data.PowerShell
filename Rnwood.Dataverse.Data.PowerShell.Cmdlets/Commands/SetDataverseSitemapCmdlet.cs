@@ -269,6 +269,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
                 Connection.Execute(publishRequest);
                 WriteVerbose($"Published sitemap with ID: {sitemapId}");
+                
+                // Wait for publish to complete
+                PublishHelpers.WaitForPublishComplete(Connection, WriteVerbose);
             }
 
             if (PassThru.IsPresent)

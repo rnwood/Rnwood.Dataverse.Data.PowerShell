@@ -259,7 +259,38 @@ Set-DataverseAttributeMetadata `
         @{Value=2; Label='Active'}
         @{Value=3; Label='Completed'}
     )
+
+# Lookup field with automatic relationship creation
+Set-DataverseAttributeMetadata `
+    -EntityName contact `
+    -AttributeName new_accountid `
+    -SchemaName new_AccountId `
+    -AttributeType Lookup `
+    -DisplayName "Account" `
+    -Targets @('account') `
+    -RequiredLevel None
+
+# Lookup with custom relationship name and cascade behaviors
+Set-DataverseAttributeMetadata `
+    -EntityName new_task `
+    -AttributeName new_projectid `
+    -SchemaName new_ProjectId `
+    -AttributeType Lookup `
+    -DisplayName "Project" `
+    -Targets @('new_project') `
+    -RelationshipSchemaName new_project_task `
+    -CascadeDelete Cascade `
+    -CascadeAssign Cascade `
+    -RequiredLevel ApplicationRequired
 ```
+
+**Lookup Attribute Features:**
+- Creates both the lookup attribute and OneToMany relationship in a single operation
+- **RelationshipSchemaName**: Optional parameter to specify a custom relationship name. If not provided, auto-generates as `{target}_{referencing}_{attribute}`
+- **Cascade behaviors**: Configure Assign, Share, Unshare, Reparent, Delete, and Merge operations
+- **Single-target only**: Multi-target (polymorphic) lookups not yet supported - use `Set-DataverseRelationshipMetadata` for complex scenarios
+- **Update support**: Can update display name, description, and required level of existing lookups
+- **Immutable properties**: Target entities, relationship name, and cascade behaviors cannot be changed after creation
 
 ### Creating Relationships
 

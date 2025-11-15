@@ -172,6 +172,55 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "Array of target entity logical names for Lookup attributes")]
         public string[] Targets { get; set; }
 
+        /// <summary>
+        /// Gets or sets the relationship schema name for lookup attributes.
+        /// If not specified, a default name will be generated.
+        /// </summary>
+        [Parameter(HelpMessage = "Schema name for the relationship created with the Lookup attribute (e.g., 'new_project_contact'). If not specified, generates from entity names.")]
+        public string RelationshipSchemaName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cascading behavior for assign operations (Lookup only).
+        /// </summary>
+        [Parameter(HelpMessage = "Cascade behavior for Assign: NoCascade, Cascade, Active, UserOwned, RemoveLink (Lookup only)")]
+        [ValidateSet("NoCascade", "Cascade", "Active", "UserOwned", "RemoveLink")]
+        public string CascadeAssign { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cascading behavior for share operations (Lookup only).
+        /// </summary>
+        [Parameter(HelpMessage = "Cascade behavior for Share: NoCascade, Cascade, Active, UserOwned (Lookup only)")]
+        [ValidateSet("NoCascade", "Cascade", "Active", "UserOwned")]
+        public string CascadeShare { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cascading behavior for unshare operations (Lookup only).
+        /// </summary>
+        [Parameter(HelpMessage = "Cascade behavior for Unshare: NoCascade, Cascade, Active, UserOwned (Lookup only)")]
+        [ValidateSet("NoCascade", "Cascade", "Active", "UserOwned")]
+        public string CascadeUnshare { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cascading behavior for reparent operations (Lookup only).
+        /// </summary>
+        [Parameter(HelpMessage = "Cascade behavior for Reparent: NoCascade, Cascade, Active, UserOwned, RemoveLink (Lookup only)")]
+        [ValidateSet("NoCascade", "Cascade", "Active", "UserOwned", "RemoveLink")]
+        public string CascadeReparent { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cascading behavior for delete operations (Lookup only).
+        /// </summary>
+        [Parameter(HelpMessage = "Cascade behavior for Delete: NoCascade, RemoveLink, Restrict, Cascade (Lookup only)")]
+        [ValidateSet("NoCascade", "RemoveLink", "Restrict", "Cascade")]
+        public string CascadeDelete { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cascading behavior for merge operations (Lookup only).
+        /// </summary>
+        [Parameter(HelpMessage = "Cascade behavior for Merge: NoCascade, Cascade (Lookup only)")]
+        [ValidateSet("NoCascade", "Cascade")]
+        public string CascadeMerge { get; set; }
+
         // File/Image-specific properties
         /// <summary>
         /// Gets or sets the maximum size in KB for file/image attributes.
@@ -264,6 +313,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
+            // Special handling for lookup attributes - they use a different creation method
+            if (AttributeType?.ToLowerInvariant() == "lookup")
+            {
+                CreateLookupAttributeWithRelationship();
+                return;
+            }
+
             AttributeMetadata attributeMetadata = CreateAttributeMetadata();
 
             var request = new CreateAttributeRequest
@@ -295,6 +351,138 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
                 Connection.Execute(publishRequest);
                 WriteVerbose($"Published entity '{EntityName}'");
+                
+                // Wait for publish to complete
+                PublishHelpers.WaitForPublishComplete(Connection, WriteVerbose);
+            }
+
+            if (PassThru)
+            {
+                // Retrieve and return the created attribute
+                var retrieveRequest = new RetrieveAttributeRequest
+                {
+                    EntityLogicalName = EntityName,
+                    LogicalName = AttributeName,
+                    RetrieveAsIfPublished = true
+                };
+
+                var retrieveResponse = (RetrieveAttributeResponse)Connection.Execute(retrieveRequest);
+                var result = ConvertAttributeMetadataToPSObject(retrieveResponse.AttributeMetadata);
+                WriteObject(result);
+            }
+        }
+
+        private void CreateLookupAttributeWithRelationship()
+        {
+            if (Targets == null || Targets.Length == 0)
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new ArgumentException("Targets must be specified for Lookup attributes"),
+                    "TargetsRequired",
+                    ErrorCategory.InvalidArgument,
+                    null));
+                return;
+            }
+
+            // For single-target lookups, we can create using CreateOneToManyRequest
+            // For multi-target (polymorphic) lookups, we need more complex logic
+            if (Targets.Length > 1)
+            {
+                // Multi-target lookups require special handling
+                ThrowTerminatingError(new ErrorRecord(
+                    new NotImplementedException("Multi-target (polymorphic) lookup creation is not yet supported. Please use Set-DataverseRelationshipMetadata to create the relationship and lookup together, or create each single-target relationship separately."),
+                    "PolymorphicLookupNotSupported",
+                    ErrorCategory.NotImplemented,
+                    null));
+                return;
+            }
+
+            string targetEntity = Targets[0];
+            string referencingEntity = EntityName;
+            
+            // Generate relationship schema name if not provided
+            string relationshipSchemaName = RelationshipSchemaName;
+            if (string.IsNullOrWhiteSpace(relationshipSchemaName))
+            {
+                // Generate default: referenced_referencing_attributeschemaname
+                relationshipSchemaName = $"{targetEntity}_{referencingEntity}_{SchemaName}";
+            }
+
+            if (!ShouldProcess($"Entity '{EntityName}'", $"Create lookup attribute '{SchemaName}' with relationship '{relationshipSchemaName}' to '{targetEntity}'"))
+            {
+                return;
+            }
+
+            var lookup = new LookupAttributeMetadata
+            {
+                SchemaName = SchemaName,
+                LogicalName = AttributeName,
+                DisplayName = new Label(DisplayName ?? SchemaName, _baseLanguageCode),
+                Description = string.IsNullOrWhiteSpace(Description) 
+                    ? new Label(string.Empty, _baseLanguageCode) 
+                    : new Label(Description, _baseLanguageCode)
+            };
+
+            // Set required level
+            if (!string.IsNullOrWhiteSpace(RequiredLevel))
+            {
+                lookup.RequiredLevel = new AttributeRequiredLevelManagedProperty(
+                    (AttributeRequiredLevel)Enum.Parse(typeof(AttributeRequiredLevel), RequiredLevel));
+            }
+            else
+            {
+                lookup.RequiredLevel = new AttributeRequiredLevelManagedProperty(AttributeRequiredLevel.None);
+            }
+
+            // Set searchable
+            if (IsSearchable.IsPresent)
+            {
+                lookup.IsValidForAdvancedFind = new BooleanManagedProperty(IsSearchable.ToBool());
+            }
+
+            var relationship = new OneToManyRelationshipMetadata
+            {
+                SchemaName = relationshipSchemaName,
+                ReferencedEntity = targetEntity,
+                ReferencingEntity = referencingEntity,
+                CascadeConfiguration = new CascadeConfiguration
+                {
+                    Assign = ParseCascadeType(CascadeAssign ?? "NoCascade"),
+                    Share = ParseCascadeType(CascadeShare ?? "NoCascade"),
+                    Unshare = ParseCascadeType(CascadeUnshare ?? "NoCascade"),
+                    Reparent = ParseCascadeType(CascadeReparent ?? "NoCascade"),
+                    Delete = ParseCascadeType(CascadeDelete ?? "RemoveLink"),
+                    Merge = ParseCascadeType(CascadeMerge ?? "NoCascade")
+                }
+            };
+
+            var request = new CreateOneToManyRequest
+            {
+                Lookup = lookup,
+                OneToManyRelationship = relationship
+            };
+
+            WriteVerbose($"Creating lookup attribute '{SchemaName}' with relationship '{relationshipSchemaName}' from {targetEntity} to {referencingEntity}");
+
+            var response = (CreateOneToManyResponse)Connection.Execute(request);
+
+            WriteVerbose($"Lookup attribute and relationship created successfully with AttributeId: {response.AttributeId}, RelationshipId: {response.RelationshipId}");
+
+            // Invalidate cache for this entity
+            InvalidateEntityCache();
+
+            // Publish the attribute if specified
+            if (Publish && ShouldProcess($"Entity '{EntityName}'", "Publish"))
+            {
+                var publishRequest = new PublishXmlRequest
+                {
+                    ParameterXml = $"<importexportxml><entities><entity>{EntityName}</entity></entities></importexportxml>"
+                };
+                Connection.Execute(publishRequest);
+                WriteVerbose($"Published entity '{EntityName}'");
+                
+                // Wait for publish to complete
+                PublishHelpers.WaitForPublishComplete(Connection, WriteVerbose);
             }
 
             if (PassThru)
@@ -352,9 +540,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 case "multiselectpicklist":
                     attribute = CreateMultiSelectPicklistAttribute();
                     break;
-                case "lookup":
-                    attribute = CreateLookupAttribute();
-                    break;
                 case "file":
                     attribute = CreateFileAttribute();
                     break;
@@ -364,6 +549,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 case "uniqueidentifier":
                     attribute = CreateUniqueIdentifierAttribute();
                     break;
+                case "lookup":
+                    // Lookup attributes are handled separately in CreateLookupAttributeWithRelationship()
+                    // This case should not be reached because CreateAttribute() redirects lookup creation
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException("Lookup attributes should be created via CreateLookupAttributeWithRelationship()"),
+                        "UnexpectedLookupFlow",
+                        ErrorCategory.InvalidOperation,
+                        AttributeType));
+                    return null;
                 default:
                     ThrowTerminatingError(new ErrorRecord(
                         new ArgumentException($"Unsupported attribute type: {AttributeType}"),
@@ -672,26 +866,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return attr;
         }
 
-        private LookupAttributeMetadata CreateLookupAttribute()
+        private CascadeType ParseCascadeType(string cascadeType)
         {
-            if (Targets == null || Targets.Length == 0)
+            if (string.IsNullOrWhiteSpace(cascadeType))
             {
-                ThrowTerminatingError(new ErrorRecord(
-                    new ArgumentException("Targets must be specified for Lookup attributes"),
-                    "TargetsRequired",
-                    ErrorCategory.InvalidArgument,
-                    null));
-                return null;
+                return CascadeType.NoCascade;
             }
 
-            // Note: Creating lookup attributes requires additional relationship setup
-            // This is a simplified version - full implementation would use CreateOneToManyRequest
-            ThrowTerminatingError(new ErrorRecord(
-                new NotImplementedException("Creating Lookup attributes requires relationship setup. Use Invoke-DataverseCreateAttribute from the SDK cmdlets for full control."),
-                "LookupCreationNotSupported",
-                ErrorCategory.NotImplemented,
-                null));
-            return null;
+            switch (cascadeType)
+            {
+                case "NoCascade":
+                    return CascadeType.NoCascade;
+                case "Cascade":
+                    return CascadeType.Cascade;
+                case "Active":
+                    return CascadeType.Active;
+                case "UserOwned":
+                    return CascadeType.UserOwned;
+                case "RemoveLink":
+                    return CascadeType.RemoveLink;
+                case "Restrict":
+                    return CascadeType.Restrict;
+                default:
+                    return CascadeType.NoCascade;
+            }
         }
 
         private FileAttributeMetadata CreateFileAttribute()
@@ -805,6 +1003,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
                 Connection.Execute(publishRequest);
                 WriteVerbose($"Published entity '{EntityName}'");
+                
+                // Wait for publish to complete
+                PublishHelpers.WaitForPublishComplete(Connection, WriteVerbose);
             }
 
             if (PassThru)
@@ -947,6 +1148,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 PicklistAttributeMetadata picklistAttr = existingAttribute as PicklistAttributeMetadata;
                 MultiSelectPicklistAttributeMetadata multiPicklistAttr = existingAttribute as MultiSelectPicklistAttributeMetadata;
+                LookupAttributeMetadata lookupAttr = existingAttribute as LookupAttributeMetadata;
+                
                 if (picklistAttr != null || multiPicklistAttr != null)
                 {
                     var optionSet = picklistAttr?.OptionSet ?? multiPicklistAttr?.OptionSet;
@@ -967,6 +1170,42 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             "ImmutableOptions",
                             ErrorCategory.InvalidOperation,
                             null));
+                    }
+                }
+                else if (lookupAttr != null)
+                {
+                    // Validate immutable lookup properties
+                    if (MyInvocation.BoundParameters.ContainsKey(nameof(Targets)))
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Cannot change Targets after creation. The target entities of a lookup are immutable after creation."),
+                            "ImmutableTargets",
+                            ErrorCategory.InvalidOperation,
+                            null));
+                    }
+
+                    if (MyInvocation.BoundParameters.ContainsKey(nameof(RelationshipSchemaName)))
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Cannot change RelationshipSchemaName after creation. The relationship is immutable after creation."),
+                            "ImmutableRelationship",
+                            ErrorCategory.InvalidOperation,
+                            null));
+                    }
+
+                    // Cascade behaviors cannot be changed via UpdateAttribute - use Set-DataverseRelationshipMetadata
+                    var cascadeParams = new[] { nameof(CascadeAssign), nameof(CascadeShare), nameof(CascadeUnshare), 
+                                                nameof(CascadeReparent), nameof(CascadeDelete), nameof(CascadeMerge) };
+                    foreach (var param in cascadeParams)
+                    {
+                        if (MyInvocation.BoundParameters.ContainsKey(param))
+                        {
+                            ThrowTerminatingError(new ErrorRecord(
+                                new InvalidOperationException($"Cannot change cascade behaviors via Set-DataverseAttributeMetadata. Use Set-DataverseRelationshipMetadata to update the relationship's cascade configuration."),
+                                "CascadeBehaviorUpdateNotSupported",
+                                ErrorCategory.InvalidOperation,
+                                null));
+                        }
                     }
                 }
             }
@@ -1061,6 +1300,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 cloned = new PicklistAttributeMetadata
                 {
                     OptionSet = picklistAttr.OptionSet
+                };
+            }
+            else if (existing is LookupAttributeMetadata lookupAttr)
+            {
+                // Lookup attributes can have their display name, description, and required level updated
+                cloned = new LookupAttributeMetadata
+                {
+                    // Targets are immutable after creation
                 };
             }
             else
