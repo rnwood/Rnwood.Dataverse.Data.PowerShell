@@ -231,7 +231,7 @@ Describe 'Dataverse Form Cmdlets' {
             $result = Get-DataverseForm -Connection $connection -Entity 'contact' -FormType Main -Published
             
             $result | Should -Not -BeNullOrEmpty
-            $result.Count | Should -Be 1
+            @($result).Count | Should -Be 1
             $result.Type | Should -Be 'Main'
         }
 

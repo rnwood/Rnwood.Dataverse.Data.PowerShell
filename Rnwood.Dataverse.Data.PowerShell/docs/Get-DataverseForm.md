@@ -26,8 +26,8 @@ Get-DataverseForm -Entity <String> [-FormType <FormType>] [-UniqueNameFilter <St
 
 ### ByName
 ```
-Get-DataverseForm -Entity <String> -Name <String> [-IncludeFormXml] [-Published]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseForm -Entity <String> -Name <String> [-IncludeFormXml] [-Published] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### ByUniqueName
@@ -195,6 +195,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Published
+Include only published forms in the results
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -UniqueName
 Unique name of the form to retrieve
 
@@ -216,21 +231,6 @@ Unique name filter for forms
 ```yaml
 Type: String
 Parameter Sets: ByEntity
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Published
-Include only published forms in the results
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
 Aliases:
 
 Required: False
