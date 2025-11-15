@@ -102,16 +102,7 @@ Describe "Entity Metadata E2E Tests" {
             } | set-dataverserecord -Connection $connection -TableName webresource -Verbose
                   
             Write-Host "  ✓ Created web resource: $webResourceName2"
-          
-                
-            # Publish web resources
-
-            $publishRequest = New-Object Microsoft.Crm.Sdk.Messages.PublishXmlRequest
-            $publishRequest.ParameterXml = "<importexportxml><webresources><webresource>$webResourceName1</webresource><webresource>$webResourceName2</webresource></webresources></importexportxml>"
-            Invoke-DataverseRequest -Connection $connection -Request $publishRequest | Out-Null
-            Write-Host "  ✓ Published web resources"
-          
-                
+              
             Write-Host "Step 1: Creating custom entity with all features..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose

@@ -75,7 +75,7 @@ Describe "Relationship Metadata E2E Tests" {
             Write-Host "Step 0: Cleanup any old test entities from previous failed runs..."
             Wait-DataversePublish -Connection $connection -Verbose
             $oldEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
-                $_.LogicalName -like "new_e2erel*"
+                $_.LogicalName -like "new_e2erel*" -and $_.LogicalName -notlike "*m2m_intersect"
             }
             if ($oldEntities.Count -gt 0) {
                 Write-Host "  Found $($oldEntities.Count) old test entities to clean up"
