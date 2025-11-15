@@ -427,7 +427,7 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
             
             # Retrieve updated sitemap XML directly
             $updatedSitemap = $connection.Retrieve("sitemap", $sitemapId, [Microsoft.Xrm.Sdk.Query.ColumnSet]::new("sitemapxml"))
-            $xmlContent = $updatedSitemap.GetAttributeValue("sitemapxml")
+            $xmlContent = $updatedSitemap["sitemapxml"]
             
             # Verify the XML contains the typo attribute name
             $xmlContent | Should -Match 'ToolTipResourseId="Test_ToolTip"'
