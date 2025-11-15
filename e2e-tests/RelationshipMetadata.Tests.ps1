@@ -193,16 +193,23 @@ Describe "Relationship Metadata E2E Tests" {
             Write-Host "Step 6: Reading and verifying relationships..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
-                $relationships = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name
+                $script:relationships = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name
                 
-                $ourRelationships = $relationships | Where-Object { 
+                Write-Verbose "Retrieved $($script:relationships.Count) relationships"
+                
+                $script:ourRelationships = $script:relationships | Where-Object { 
                     $_.SchemaName -eq $relName1 -or 
                     $_.SchemaName -eq $selfRelName -or 
                     $_.SchemaName -eq $m2mRelName 
                 }
                 
-                if ($ourRelationships.Count -ne 3) {
-                    throw "Expected 3 relationships, found $($ourRelationships.Count)"
+                if ($script:ourRelationships.Count -ne 3) {
+                    Write-Host "Expected relationships: $relName1, $selfRelName, $m2mRelName"
+                    Write-Host "Found $($script:ourRelationships.Count) matching relationships:"
+                    foreach ($rel in $script:ourRelationships) {
+                        Write-Host "  - $($rel.SchemaName) (Type: $($rel.RelationshipType))"
+                    }
+                    throw "Expected 3 relationships, found $($script:ourRelationships.Count)"
                 }
             }
             Write-Host "✓ All relationships verified"
