@@ -2,10 +2,9 @@
 using System.IO;
 using System.Management.Automation;
 using System.Reflection;
-
+using System.Threading;
 #if NETCOREAPP
 using System.Runtime.Loader;
-using System.Threading;
 #endif
 
 namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
