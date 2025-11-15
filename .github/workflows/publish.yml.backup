@@ -656,72 +656,8 @@ jobs:
             ci-version.txt
           if-no-files-found: ignore
           retention-days: 1      
-      
-      # Upload test failure reports as artifacts
-      - name: Upload test failure report
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v5
-        with:
-          name: test-failures-${{ matrix.os }}-${{ matrix.powershell_version }}
-          path: test-failures-*.md
-          if-no-files-found: ignore
-      
-      # Comment on PR with test failures
-      - name: Comment on PR with test failures
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-            
-            // Find failure report file
-            const files = fs.readdirSync('.');
-            const failureFile = files.find(f => f.startsWith('test-failures-'));
-            
-            if (!failureFile) {
-              console.log('No test failure report found');
-              return;
-            }
-            
-            const failureContent = fs.readFileSync(failureFile, 'utf8');
-            
-            // Create comment body with @copilot mention
-            const commentBody = `@copilot please investigate these test failures:
-
-            ${failureContent}
-
-            **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            **Commit:** ${{ github.sha }}
-            `;
-            
-            // Post comment to PR
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: commentBody
-            });
-
-  # Publish job - runs after all test jobs complete successfully
-  publish:
-    needs: test
-    if: github.event_name == 'release' && github.event.action == 'published'
-    runs-on: windows-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-      
-      - name: Download build artifacts
-        uses: actions/download-artifact@v5
-        with:
-          name: module-windows-latest-5
-          path: .
-      
-      - name: Publish Release to PowerShell Gallery
+      - if: ${{ matrix.publish && github.event_name == 'release' && github.event.action == 'published' }}
+        name: Publish Release to PowerShell Gallery
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
         shell: pwsh
@@ -748,32 +684,17 @@ jobs:
           
           # Publish stable release to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
-  
-  # CI Build Publishing (main branch only)
-  publish-ci:
-    needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: windows-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
       
-      - name: Download build artifacts
-        uses: actions/download-artifact@v5
-        with:
-          name: module-windows-latest-5
-          path: .
-      
-      - name: Create CI Build Artifact
+      # CI Build Publishing (main branch only)
+      - if: ${{ matrix.publish && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        name: Create CI Build Artifact
         shell: pwsh
         run: |
           # Create a zip file of the module
           Compress-Archive -Path out/Rnwood.Dataverse.Data.PowerShell -DestinationPath Rnwood.Dataverse.Data.PowerShell-CI.zip -Force
       
-      - name: Create GitHub Release for CI Build
+      - if: ${{ matrix.publish && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        name: Create GitHub Release for CI Build
         uses: actions/github-script@v8
         with:
           script: |
@@ -840,7 +761,8 @@ jobs:
               data: assetData
             });
       
-      - name: Publish CI Build to PowerShell Gallery
+      - if: ${{ matrix.publish && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        name: Publish CI Build to PowerShell Gallery
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
         shell: pwsh
@@ -867,3 +789,49 @@ jobs:
           
           # Publish prerelease to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
+      
+      # Upload test failure reports as artifacts
+      - name: Upload test failure report
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-failures-${{ matrix.os }}-${{ matrix.powershell_version }}
+          path: test-failures-*.md
+          if-no-files-found: ignore
+      
+      # Comment on PR with test failures
+      - name: Comment on PR with test failures
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Find failure report file
+            const files = fs.readdirSync('.');
+            const failureFile = files.find(f => f.startsWith('test-failures-'));
+            
+            if (!failureFile) {
+              console.log('No test failure report found');
+              return;
+            }
+            
+            const failureContent = fs.readFileSync(failureFile, 'utf8');
+            
+            // Create comment body with @copilot mention
+            const commentBody = `@copilot please investigate these test failures:
+
+            ${failureContent}
+
+            **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            **Commit:** ${{ github.sha }}
+            `;
+            
+            // Post comment to PR
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
