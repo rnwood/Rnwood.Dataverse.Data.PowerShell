@@ -10,28 +10,20 @@ on:
     types: [published]
 
 jobs:
-  main:
-    permissions:
-      contents: write  # Required for creating GitHub releases
-      pull-requests: write
+  test:
     timeout-minutes: 60  # Fail fast if job exceeds 60 minutes
     strategy:
       matrix:
         include:
           - os: ubuntu-latest
-            publish: false
             powershell_version: "7.4.11"
           - os: windows-latest
-            publish: false
             powershell_version: "7.4.11"
           - os: ubuntu-latest
-            publish: false
             powershell_version: latest
           - os: windows-latest
-            publish: false
             powershell_version: latest
           - os: windows-latest
-            publish: true
             powershell_version: '5'
 
     runs-on: ${{ matrix.os }}
@@ -292,80 +284,159 @@ jobs:
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
       - if: ${{ matrix.powershell_version != '5' }}
-        name: Test - pwsh
+        name: Test - pwsh (Standard + E2E in parallel)
         id: test-pwsh
         timeout-minutes: 45  # Tests expected to complete in < 45 minutes
         shell: pwsh
+        env:
+          E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
+          E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
+          E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
         run: |
           Write-Host "Using PowerShell $($PSVersionTable.PSVersion)"    
           $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
 
           Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
           
-          # Run tests with CI-friendly output
-          # Each test file now includes Common.ps1 for setup, allowing Pester to run them independently
-          # Run test files in parallel using Start-Job for maximum performance
+          # Start standard tests and E2E tests in parallel
+          Write-Host "Starting standard tests and E2E tests in parallel..." -ForegroundColor Cyan
           
-          Write-Host "Discovering test files..."
-          $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
-          Write-Host "Found $($testFiles.Count) test files to run in parallel"
+          # Capture current working directory to pass to background jobs
+          $workingDir = Get-Location
           
-          # Start a job for each test file
-          $jobs = $testFiles | ForEach-Object {
-              $testFile = $_
-              Start-Job -ScriptBlock {
-                  param($testFilePath, $modulePath)
+          # Job 1: Standard tests
+          $standardTestsJob = Start-Job -ScriptBlock {
+              param($modulePath, $workDir)
+              
+              # Set working directory for this job
+              Set-Location $workDir
+              
+              $env:TESTMODULEPATH = $modulePath
+              
+              Write-Host "Discovering standard test files..."
+              $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
+              Write-Host "Found $($testFiles.Count) standard test files to run in parallel"
+              
+              # Start a job for each test file
+              $jobs = $testFiles | ForEach-Object {
+                  $testFile = $_
+                  Start-Job -ScriptBlock {
+                      param($testFilePath, $modulePath)
+                      
+                      $env:TESTMODULEPATH = $modulePath
+                      
+                      # Run each test file independently
+                      $config = New-PesterConfiguration
+                      $config.Run.Path = $testFilePath
+                      $config.Run.PassThru = $true
+                      $config.Output.Verbosity = 'Minimal'
+                      $config.Should.ErrorAction = 'Continue'
+                      
+                      $result = Invoke-Pester -Configuration $config
+                      
+                      # Return result with filename for aggregation
+                      [PSCustomObject]@{
+                          File = (Split-Path $testFilePath -Leaf)
+                          TotalCount = $result.TotalCount
+                          PassedCount = $result.PassedCount
+                          FailedCount = $result.FailedCount
+                          SkippedCount = $result.SkippedCount
+                          DurationSeconds = $result.Duration.TotalSeconds
+                          Failed = $result.Failed
+                      }
+                  } -ArgumentList $testFile, $modulePath
+              }
+              
+              # Wait for all test file jobs to complete
+              $results = $jobs | Wait-Job | Receive-Job
+              $jobs | Remove-Job
+              
+              return $results
+          } -ArgumentList $env:TESTMODULEPATH, $workingDir
+          
+          # Job 2: E2E tests (Module.Tests.ps1 for all matrix combinations)
+          $e2eTestsJob = Start-Job -ScriptBlock {
+              param($modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret, $osType, $psVersion, $workDir)
+              
+              # Set working directory for this job
+              Set-Location $workDir
+              
+              $env:TESTMODULEPATH = $modulePath
+              $env:E2ETESTS_URL = $e2eUrl
+              $env:E2ETESTS_CLIENTID = $e2eClientId
+              $env:E2ETESTS_CLIENTSECRET = $e2eClientSecret
+              
+              Write-Host "Running E2E tests (Module.Tests.ps1)..."
+              
+              $config = New-PesterConfiguration
+              $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
+              $config.Run.PassThru = $true
+              $config.Output.Verbosity = 'Minimal'
+              $config.Filter.ExcludeTag = 'LongRunning'
+              
+              $result = Invoke-Pester -Configuration $config
+              
+              # Check if we should also run metadata tests (Windows Latest only)
+              $shouldRunMetadataTests = ($osType -eq 'windows-latest' -and $psVersion -eq 'latest')
+              
+              if ($shouldRunMetadataTests) {
+                  Write-Host "Running E2E Metadata tests (Windows Latest only)..."
                   
-                  $env:TESTMODULEPATH = $modulePath
+                  $metadataConfig = New-PesterConfiguration
+                  $metadataConfig.Run.Path = @(
+                      'e2e-tests/EntityMetadata.Tests.ps1',
+                      'e2e-tests/AttributeMetadata.Tests.ps1', 
+                      'e2e-tests/RelationshipMetadata.Tests.ps1',
+                      'e2e-tests/OptionSetMetadata.Tests.ps1'
+                  )
+                  $metadataConfig.Run.PassThru = $true
+                  $metadataConfig.Output.Verbosity = 'Minimal'
+                  $metadataConfig.Filter.ExcludeTag = 'LongRunning'
                   
-                  # Run each test file independently
-                  $config = New-PesterConfiguration
-                  $config.Run.Path = $testFilePath
-                  $config.Run.PassThru = $true
-                  $config.Output.Verbosity = 'Minimal'  # Show minimal output with errors
-                  $config.Should.ErrorAction = 'Continue'
+                  $metadataResult = Invoke-Pester -Configuration $metadataConfig
                   
-                  $result = Invoke-Pester -Configuration $config
-                  
-                  # Return result with filename for aggregation
-                  [PSCustomObject]@{
-                      File = (Split-Path $testFilePath -Leaf)
-                      TotalCount = $result.TotalCount
-                      PassedCount = $result.PassedCount
-                      FailedCount = $result.FailedCount
-                      SkippedCount = $result.SkippedCount
-                      DurationSeconds = $result.Duration.TotalSeconds
-                      Failed = $result.Failed
+                  # Combine results
+                  return @{
+                      ModuleTests = $result
+                      MetadataTests = $metadataResult
                   }
-              } -ArgumentList $testFile, $env:TESTMODULEPATH
-          }
+              }
+              
+              return @{
+                  ModuleTests = $result
+                  MetadataTests = $null
+              }
+          } -ArgumentList $env:TESTMODULEPATH, $env:E2ETESTS_URL, $env:E2ETESTS_CLIENTID, $env:E2ETESTS_CLIENTSECRET, "${{ matrix.os }}", "${{ matrix.powershell_version }}", $workingDir
           
-          Write-Host "Running $($jobs.Count) test files in parallel..."
+          # Wait for both jobs to complete
+          Write-Host "Waiting for standard tests and E2E tests to complete..."
+          $standardResults = Wait-Job $standardTestsJob | Receive-Job
+          $e2eResults = Wait-Job $e2eTestsJob | Receive-Job
           
-          # Wait for all jobs to complete and collect results
-          $results = $jobs | Wait-Job | Receive-Job
-          $jobs | Remove-Job
+          Remove-Job $standardTestsJob, $e2eTestsJob
           
-          # Aggregate results
-          $totalTests = ($results | Measure-Object -Property TotalCount -Sum).Sum
-          $totalPassed = ($results | Measure-Object -Property PassedCount -Sum).Sum
-          $totalFailed = ($results | Measure-Object -Property FailedCount -Sum).Sum
-          $totalSkipped = ($results | Measure-Object -Property SkippedCount -Sum).Sum
-          $totalDurationSeconds = ($results | Measure-Object -Property DurationSeconds -Sum).Sum
-          
+          # Process standard test results
           Write-Host ""
-          Write-Host "Parallel Test Execution Summary:" -ForegroundColor Cyan
+          Write-Host "=== Standard Tests Results ===" -ForegroundColor Cyan
+          $totalTests = ($standardResults | Measure-Object -Property TotalCount -Sum).Sum
+          $totalPassed = ($standardResults | Measure-Object -Property PassedCount -Sum).Sum
+          $totalFailed = ($standardResults | Measure-Object -Property FailedCount -Sum).Sum
+          $totalSkipped = ($standardResults | Measure-Object -Property SkippedCount -Sum).Sum
+          $totalDurationSeconds = ($standardResults | Measure-Object -Property DurationSeconds -Sum).Sum
+          
           Write-Host "  Total:   $totalTests" -ForegroundColor White
           Write-Host "  Passed:  $totalPassed" -ForegroundColor Green
           Write-Host "  Failed:  $totalFailed" -ForegroundColor $(if ($totalFailed -gt 0) { "Red" } else { "Green" })
           Write-Host "  Skipped: $totalSkipped" -ForegroundColor Yellow
           Write-Host "  Duration: $($totalDurationSeconds)s" -ForegroundColor White
           
-          # Report failures if any
+          $hasFailures = $false
+          
           if ($totalFailed -gt 0) {
+              $hasFailures = $true
               Write-Host ""
-              Write-Host "Failed Tests:" -ForegroundColor Red
-              foreach ($result in $results | Where-Object { $_.FailedCount -gt 0 }) {
+              Write-Host "Failed Standard Tests:" -ForegroundColor Red
+              foreach ($result in $standardResults | Where-Object { $_.FailedCount -gt 0 }) {
                   Write-Host "  File: $($result.File)" -ForegroundColor Yellow
                   foreach ($test in $result.Failed) {
                       Write-Host "    - $($test.ExpandedPath)" -ForegroundColor Red
@@ -374,82 +445,184 @@ jobs:
                       }
                   }
               }
+          }
+          
+          # Process E2E test results
+          Write-Host ""
+          Write-Host "=== E2E Tests Results ===" -ForegroundColor Cyan
+          
+          $e2eModuleResult = $e2eResults.ModuleTests
+          Write-Host "Module.Tests.ps1:"
+          Write-Host "  Total:   $($e2eModuleResult.TotalCount)" -ForegroundColor White
+          Write-Host "  Passed:  $($e2eModuleResult.PassedCount)" -ForegroundColor Green
+          Write-Host "  Failed:  $($e2eModuleResult.FailedCount)" -ForegroundColor $(if ($e2eModuleResult.FailedCount -gt 0) { "Red" } else { "Green" })
+          Write-Host "  Skipped: $($e2eModuleResult.SkippedCount)" -ForegroundColor Yellow
+          Write-Host "  Duration: $($e2eModuleResult.Duration.TotalSeconds)s" -ForegroundColor White
+          
+          if ($e2eModuleResult.FailedCount -gt 0) {
+              $hasFailures = $true
+              Write-Host ""
+              Write-Host "Failed E2E Module Tests:" -ForegroundColor Red
+              foreach ($test in $e2eModuleResult.Failed) {
+                  Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
+                  if ($test.ErrorRecord) {
+                      Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+                  }
+              }
+          }
+          
+          if ($e2eResults.MetadataTests) {
+              Write-Host ""
+              Write-Host "Metadata Tests:"
+              Write-Host "  Total:   $($e2eResults.MetadataTests.TotalCount)" -ForegroundColor White
+              Write-Host "  Passed:  $($e2eResults.MetadataTests.PassedCount)" -ForegroundColor Green
+              Write-Host "  Failed:  $($e2eResults.MetadataTests.FailedCount)" -ForegroundColor $(if ($e2eResults.MetadataTests.FailedCount -gt 0) { "Red" } else { "Green" })
+              Write-Host "  Skipped: $($e2eResults.MetadataTests.SkippedCount)" -ForegroundColor Yellow
+              Write-Host "  Duration: $($e2eResults.MetadataTests.Duration.TotalSeconds)s" -ForegroundColor White
+              
+              if ($e2eResults.MetadataTests.FailedCount -gt 0) {
+                  $hasFailures = $true
+                  Write-Host ""
+                  Write-Host "Failed E2E Metadata Tests:" -ForegroundColor Red
+                  foreach ($test in $e2eResults.MetadataTests.Failed) {
+                      Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
+                      if ($test.ErrorRecord) {
+                          Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+                      }
+                  }
+              }
+          }
+          
+          if ($hasFailures) {
               exit 1
           }
+          
+          Write-Host ""
+          Write-Host "All tests passed!" -ForegroundColor Green
       - if:  ${{ matrix.powershell_version == '5' }}
-        name: Test - powershell
+        name: Test - powershell (Standard + E2E in parallel)
         id: test-powershell
         timeout-minutes: 45  # Tests expected to complete in < 45 minutes
         shell: powershell
+        env:
+          E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
+          E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
+          E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
         run: |  
             $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
   
             Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
             
-            # Run tests with CI-friendly output
-            # Each test file now includes Common.ps1 for setup, allowing Pester to run them independently
-            # Run test files in parallel using Start-Job for maximum performance
+            # Start standard tests and E2E tests in parallel
+            Write-Host "Starting standard tests and E2E tests in parallel..." -ForegroundColor Cyan
             
-            Write-Host "Discovering test files..."
-            $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
-            Write-Host "Found $($testFiles.Count) test files to run in parallel"
+            # Capture current working directory to pass to background jobs
+            $workingDir = Get-Location
             
-            # Start a job for each test file
-            $jobs = $testFiles | ForEach-Object {
-                $testFile = $_
-                Start-Job -ScriptBlock {
-                    param($testFilePath, $modulePath)
-                    
-                    $env:TESTMODULEPATH = $modulePath
-                    
-                    # Run each test file independently
-                    $config = New-PesterConfiguration
-                    $config.Run.Path = $testFilePath
-                    $config.Run.PassThru = $true
-                    $config.Output.Verbosity = 'Minimal'  # Show minimal output with errors
-                    $config.Should.ErrorAction = 'Continue'
-                    
-                    $result = Invoke-Pester -Configuration $config
-                    
-                    # Return result with filename for aggregation
-                    [PSCustomObject]@{
-                        File = (Split-Path $testFilePath -Leaf)
-                        TotalCount = $result.TotalCount
-                        PassedCount = $result.PassedCount
-                        FailedCount = $result.FailedCount
-                        SkippedCount = $result.SkippedCount
-                        DurationSeconds = $result.Duration.TotalSeconds
-                        Failed = $result.Failed
-                    }
-                } -ArgumentList $testFile, $env:TESTMODULEPATH
-            }
+            # Job 1: Standard tests
+            $standardTestsJob = Start-Job -ScriptBlock {
+                param($modulePath, $workDir)
+                
+                # Set working directory for this job
+                Set-Location $workDir
+                
+                $env:TESTMODULEPATH = $modulePath
+                
+                Write-Host "Discovering standard test files..."
+                $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
+                Write-Host "Found $($testFiles.Count) standard test files to run in parallel"
+                
+                # Start a job for each test file
+                $jobs = $testFiles | ForEach-Object {
+                    $testFile = $_
+                    Start-Job -ScriptBlock {
+                        param($testFilePath, $modulePath)
+                        
+                        $env:TESTMODULEPATH = $modulePath
+                        
+                        # Run each test file independently
+                        $config = New-PesterConfiguration
+                        $config.Run.Path = $testFilePath
+                        $config.Run.PassThru = $true
+                        $config.Output.Verbosity = 'Minimal'
+                        $config.Should.ErrorAction = 'Continue'
+                        
+                        $result = Invoke-Pester -Configuration $config
+                        
+                        # Return result with filename for aggregation
+                        [PSCustomObject]@{
+                            File = (Split-Path $testFilePath -Leaf)
+                            TotalCount = $result.TotalCount
+                            PassedCount = $result.PassedCount
+                            FailedCount = $result.FailedCount
+                            SkippedCount = $result.SkippedCount
+                            DurationSeconds = $result.Duration.TotalSeconds
+                            Failed = $result.Failed
+                        }
+                    } -ArgumentList $testFile, $modulePath
+                }
+                
+                # Wait for all test file jobs to complete
+                $results = $jobs | Wait-Job | Receive-Job
+                $jobs | Remove-Job
+                
+                return $results
+            } -ArgumentList $env:TESTMODULEPATH, $workingDir
             
-            Write-Host "Running $($jobs.Count) test files in parallel..."
+            # Job 2: E2E tests (Module.Tests.ps1 for PowerShell 5)
+            $e2eTestsJob = Start-Job -ScriptBlock {
+                param($modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret, $workDir)
+                
+                # Set working directory for this job
+                Set-Location $workDir
+                
+                $env:TESTMODULEPATH = $modulePath
+                $env:E2ETESTS_URL = $e2eUrl
+                $env:E2ETESTS_CLIENTID = $e2eClientId
+                $env:E2ETESTS_CLIENTSECRET = $e2eClientSecret
+                
+                Write-Host "Running E2E tests (Module.Tests.ps1)..."
+                
+                $config = New-PesterConfiguration
+                $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
+                $config.Run.PassThru = $true
+                $config.Output.Verbosity = 'Minimal'
+                $config.Filter.ExcludeTag = 'LongRunning'
+                
+                $result = Invoke-Pester -Configuration $config
+                
+                return $result
+            } -ArgumentList $env:TESTMODULEPATH, $env:E2ETESTS_URL, $env:E2ETESTS_CLIENTID, $env:E2ETESTS_CLIENTSECRET, $workingDir
             
-            # Wait for all jobs to complete and collect results
-            $results = $jobs | Wait-Job | Receive-Job
-            $jobs | Remove-Job
+            # Wait for both jobs to complete
+            Write-Host "Waiting for standard tests and E2E tests to complete..."
+            $standardResults = Wait-Job $standardTestsJob | Receive-Job
+            $e2eResult = Wait-Job $e2eTestsJob | Receive-Job
             
-            # Aggregate results
-            $totalTests = ($results | Measure-Object -Property TotalCount -Sum).Sum
-            $totalPassed = ($results | Measure-Object -Property PassedCount -Sum).Sum
-            $totalFailed = ($results | Measure-Object -Property FailedCount -Sum).Sum
-            $totalSkipped = ($results | Measure-Object -Property SkippedCount -Sum).Sum
-            $totalDurationSeconds = ($results | Measure-Object -Property DurationSeconds -Sum).Sum
+            Remove-Job $standardTestsJob, $e2eTestsJob
             
+            # Process standard test results
             Write-Host ""
-            Write-Host "Parallel Test Execution Summary:" -ForegroundColor Cyan
+            Write-Host "=== Standard Tests Results ===" -ForegroundColor Cyan
+            $totalTests = ($standardResults | Measure-Object -Property TotalCount -Sum).Sum
+            $totalPassed = ($standardResults | Measure-Object -Property PassedCount -Sum).Sum
+            $totalFailed = ($standardResults | Measure-Object -Property FailedCount -Sum).Sum
+            $totalSkipped = ($standardResults | Measure-Object -Property SkippedCount -Sum).Sum
+            $totalDurationSeconds = ($standardResults | Measure-Object -Property DurationSeconds -Sum).Sum
+            
             Write-Host "  Total:   $totalTests" -ForegroundColor White
             Write-Host "  Passed:  $totalPassed" -ForegroundColor Green
             Write-Host "  Failed:  $totalFailed" -ForegroundColor $(if ($totalFailed -gt 0) { "Red" } else { "Green" })
             Write-Host "  Skipped: $totalSkipped" -ForegroundColor Yellow
             Write-Host "  Duration: $($totalDurationSeconds)s" -ForegroundColor White
             
-            # Report failures if any
+            $hasFailures = $false
+            
             if ($totalFailed -gt 0) {
+                $hasFailures = $true
                 Write-Host ""
-                Write-Host "Failed Tests:" -ForegroundColor Red
-                foreach ($result in $results | Where-Object { $_.FailedCount -gt 0 }) {
+                Write-Host "Failed Standard Tests:" -ForegroundColor Red
+                foreach ($result in $standardResults | Where-Object { $_.FailedCount -gt 0 }) {
                     Write-Host "  File: $($result.File)" -ForegroundColor Yellow
                     foreach ($test in $result.Failed) {
                         Write-Host "    - $($test.ExpandedPath)" -ForegroundColor Red
@@ -458,89 +631,115 @@ jobs:
                         }
                     }
                 }
+            }
+            
+            # Process E2E test results
+            Write-Host ""
+            Write-Host "=== E2E Tests Results ===" -ForegroundColor Cyan
+            Write-Host "Module.Tests.ps1:"
+            Write-Host "  Total:   $($e2eResult.TotalCount)" -ForegroundColor White
+            Write-Host "  Passed:  $($e2eResult.PassedCount)" -ForegroundColor Green
+            Write-Host "  Failed:  $($e2eResult.FailedCount)" -ForegroundColor $(if ($e2eResult.FailedCount -gt 0) { "Red" } else { "Green" })
+            Write-Host "  Skipped: $($e2eResult.SkippedCount)" -ForegroundColor Yellow
+            Write-Host "  Duration: $($e2eResult.Duration.TotalSeconds)s" -ForegroundColor White
+            
+            if ($e2eResult.FailedCount -gt 0) {
+                $hasFailures = $true
+                Write-Host ""
+                Write-Host "Failed E2E Tests:" -ForegroundColor Red
+                foreach ($test in $e2eResult.Failed) {
+                    Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
+                    if ($test.ErrorRecord) {
+                        Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+                    }
+                }
+            }
+            
+            if ($hasFailures) {
                 exit 1
             }
-      - if: ${{ matrix.powershell_version != '5' }}
-        name: E2E Test - pwsh
-        shell: pwsh
-        env:
-          E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
-          E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
-          E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
-        run: |  
-          Write-Host "Using PowerShell $($PSVersionTable.PSVersion)"
-          $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
+            
+            Write-Host ""
+            Write-Host "All tests passed!" -ForegroundColor Green
+      
+      # Upload artifacts needed for publishing
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: module-${{ matrix.os }}-${{ matrix.powershell_version }}
+          path: |
+            out/Rnwood.Dataverse.Data.PowerShell/
+            release-notes.md
+            release-notes.txt
+            ci-version.txt
+          if-no-files-found: ignore
+          retention-days: 1      
+      
+      # Upload test failure reports as artifacts
+      - name: Upload test failure report
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-failures-${{ matrix.os }}-${{ matrix.powershell_version }}
+          path: test-failures-*.md
+          if-no-files-found: ignore
+      
+      # Comment on PR with test failures
+      - name: Comment on PR with test failures
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Find failure report file
+            const files = fs.readdirSync('.');
+            const failureFile = files.find(f => f.startsWith('test-failures-'));
+            
+            if (!failureFile) {
+              console.log('No test failure report found');
+              return;
+            }
+            
+            const failureContent = fs.readFileSync(failureFile, 'utf8');
+            
+            // Create comment body with @copilot mention
+            const commentBody = `@copilot please investigate these test failures:
 
-          Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
-          
-          # Run only Module.Tests.ps1 (contains WhoAmI test) across all matrix combinations
-          $config = New-PesterConfiguration
-          $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
-          $config.Run.PassThru = $true
-          $config.Output.Verbosity = 'Detailed'
-          $config.Filter.ExcludeTag = 'LongRunning'
-          
-          $result = Invoke-Pester -Configuration $config
-          
-          if ($result.FailedCount -gt 0) {
-            throw "Tests failed"
-          }
-      - if: ${{ matrix.powershell_version != '5' && matrix.os == 'windows-latest' && matrix.powershell_version == 'latest' }}
-        name: E2E Metadata Tests - pwsh (Windows Latest only)
-        shell: pwsh
-        env:
-          E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
-          E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
-          E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
-        run: |  
-          Write-Host "Using PowerShell $($PSVersionTable.PSVersion)"
-          $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
+            ${failureContent}
 
-          Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
-          
-          # Run metadata E2E tests only on Windows Latest to avoid concurrency issues
-          $config = New-PesterConfiguration
-          $config.Run.Path = @(
-            'e2e-tests/EntityMetadata.Tests.ps1',
-            'e2e-tests/AttributeMetadata.Tests.ps1', 
-            'e2e-tests/RelationshipMetadata.Tests.ps1',
-            'e2e-tests/OptionSetMetadata.Tests.ps1'
-          )
-          $config.Run.PassThru = $true
-          $config.Output.Verbosity = 'Detailed'
-          $config.Filter.ExcludeTag = 'LongRunning'
-          
-          $result = Invoke-Pester -Configuration $config
-          
-          if ($result.FailedCount -gt 0) {
-            throw "Tests failed"
-          }
-      - if:  ${{ matrix.powershell_version == '5' }}
-        name: E2E Test - powershell
-        shell: powershell
-        env:
-          E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
-          E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
-          E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
-        run: |  
-          $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
+            **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            **Commit:** ${{ github.sha }}
+            `;
+            
+            // Post comment to PR
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
 
-          Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
-          
-          # Run only Module.Tests.ps1 (contains WhoAmI test) for PowerShell 5
-          $config = New-PesterConfiguration
-          $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
-          $config.Run.PassThru = $true
-          $config.Output.Verbosity = 'Detailed'
-          $config.Filter.ExcludeTag = 'LongRunning'
-          
-          $result = Invoke-Pester -Configuration $config
-          
-          if ($result.FailedCount -gt 0) {
-            throw "Tests failed"
-          }      
-      - if: ${{ matrix.publish && github.event_name == 'release' && github.event.action == 'published' }}
-        name: Publish Release to PowerShell Gallery
+  # Publish job - runs after all test jobs complete successfully
+  publish:
+    needs: test
+    if: github.event_name == 'release' && github.event.action == 'published'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: module-windows-latest-5
+          path: .
+      
+      - name: Publish Release to PowerShell Gallery
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
         shell: pwsh
@@ -567,17 +766,32 @@ jobs:
           
           # Publish stable release to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
+  
+  # CI Build Publishing (main branch only)
+  publish-ci:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       
-      # CI Build Publishing (main branch only)
-      - if: ${{ matrix.publish && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-        name: Create CI Build Artifact
+      - name: Download build artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: module-windows-latest-5
+          path: .
+      
+      - name: Create CI Build Artifact
         shell: pwsh
         run: |
           # Create a zip file of the module
           Compress-Archive -Path out/Rnwood.Dataverse.Data.PowerShell -DestinationPath Rnwood.Dataverse.Data.PowerShell-CI.zip -Force
       
-      - if: ${{ matrix.publish && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-        name: Create GitHub Release for CI Build
+      - name: Create GitHub Release for CI Build
         uses: actions/github-script@v8
         with:
           script: |
@@ -644,8 +858,7 @@ jobs:
               data: assetData
             });
       
-      - if: ${{ matrix.publish && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-        name: Publish CI Build to PowerShell Gallery
+      - name: Publish CI Build to PowerShell Gallery
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
         shell: pwsh
@@ -672,49 +885,3 @@ jobs:
           
           # Publish prerelease to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
-      
-      # Upload test failure reports as artifacts
-      - name: Upload test failure report
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v5
-        with:
-          name: test-failures-${{ matrix.os }}-${{ matrix.powershell_version }}
-          path: test-failures-*.md
-          if-no-files-found: ignore
-      
-      # Comment on PR with test failures
-      - name: Comment on PR with test failures
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-            
-            // Find failure report file
-            const files = fs.readdirSync('.');
-            const failureFile = files.find(f => f.startsWith('test-failures-'));
-            
-            if (!failureFile) {
-              console.log('No test failure report found');
-              return;
-            }
-            
-            const failureContent = fs.readFileSync(failureFile, 'utf8');
-            
-            // Create comment body with @copilot mention
-            const commentBody = `@copilot please investigate these test failures:
-
-            ${failureContent}
-
-            **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            **Commit:** ${{ github.sha }}
-            `;
-            
-            // Post comment to PR
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: commentBody
-            });

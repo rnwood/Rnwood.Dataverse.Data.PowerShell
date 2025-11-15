@@ -173,7 +173,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["formxml"] = [string]$global:testFormXml
             $connection.Create($form)
             
-            $result = Get-DataverseForm -Connection $connection -Entity 'contact'
+            $result = Get-DataverseForm -Connection $connection -Entity 'contact' -published
             
             $result | Should -Not -BeNullOrEmpty
             $result.Entity | Should -Be 'contact'
@@ -198,7 +198,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["formxml"] = [string]$global:testFormXml
             $connection.Create($form)
             
-            $result = Get-DataverseForm -Connection $connection -Entity 'contact' -IncludeFormXml
+            $result = Get-DataverseForm -Connection $connection -Entity 'contact' -IncludeFormXml -Published
             
             $result | Should -Not -BeNullOrEmpty
             $result.FormXml | Should -Not -BeNullOrEmpty
@@ -228,7 +228,7 @@ Describe 'Dataverse Form Cmdlets' {
             $quickForm["formxml"] = [string]$global:testFormXml
             $connection.Create($quickForm)
             
-            $result = Get-DataverseForm -Connection $connection -Entity 'contact' -FormType Main
+            $result = Get-DataverseForm -Connection $connection -Entity 'contact' -FormType Main -Published
             
             $result | Should -Not -BeNullOrEmpty
             $result.Count | Should -Be 1
@@ -247,7 +247,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["formxml"] = [string]$global:testFormXml
             $connection.Create($form)
 
-            $result = Get-DataverseForm -Connection $connection -Id $formId
+            $result = Get-DataverseForm -Connection $connection -Id $formId -Published
             
             $result | Should -Not -BeNullOrEmpty
             $result.FormId | Should -Be $formId
