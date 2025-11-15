@@ -93,6 +93,10 @@ Describe "Relationship Metadata E2E Tests" {
             else {
                 Write-Host "  No old test entities found"
             }
+            
+            Write-Host "  Waiting for all cleanup operations to complete..."
+            Wait-DataversePublish -Connection $connection -Verbose
+            Write-Host "  Cleanup complete"
                 
             Write-Host "Step 1: Creating first test entity..."
             Invoke-WithRetry {
