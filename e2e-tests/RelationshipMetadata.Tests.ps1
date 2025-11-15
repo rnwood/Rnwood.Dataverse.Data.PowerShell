@@ -83,13 +83,17 @@ Describe "Relationship Metadata E2E Tests" {
                     foreach ($entity in $oldEntities) {
                         try {
                             Write-Host "  Removing old entity: $($entity.LogicalName)"
-                            Invoke-WithRetry {
-                                Wait-DataversePublish -Connection $connection -Verbose
-                                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
-                            }
+                            Wait-DataversePublish -Connection $connection -Verbose
+                            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction Stop
                         }
                         catch {
-                            Write-Host "  Could not remove $($entity.LogicalName): $_"
+                            # Ignore "entity not found" errors during cleanup - the entity may have been deleted already
+                            if ($_.Exception.Message -notmatch "Could not find an entity") {
+                                Write-Host "  Could not remove $($entity.LogicalName): $_"
+                            }
+                            else {
+                                Write-Host "  Entity $($entity.LogicalName) already deleted"
+                            }
                         }
                     }
                 }
