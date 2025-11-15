@@ -30,8 +30,8 @@ Describe "Entity Metadata E2E Tests" {
             param(
                 [Parameter(Mandatory = $true)]
                 [scriptblock]$ScriptBlock,
-                [int]$MaxRetries = 3,
-                [int]$InitialDelaySeconds = 2
+                [int]$MaxRetries = 5,
+                [int]$InitialDelaySeconds = 10
             )
                 
             $attempt = 0
