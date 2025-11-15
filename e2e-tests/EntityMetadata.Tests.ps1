@@ -130,7 +130,7 @@ Describe "Entity Metadata E2E Tests" {
             Write-Host "Step 2: Reading entity metadata..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
-                $script:entity = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName -IncludeAttributes
+                $script:entity = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName
                     
                 if (-not $script:entity) {
                     throw "Failed to retrieve entity metadata"
