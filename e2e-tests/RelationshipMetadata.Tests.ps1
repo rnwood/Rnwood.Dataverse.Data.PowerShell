@@ -198,7 +198,7 @@ Describe "Relationship Metadata E2E Tests" {
                 Write-Verbose "Retrieved $($allRelationships.Count) relationships"
                 
                 # Deduplicate self-referencing relationships (they appear in both OneToMany and ManyToOne collections)
-                $script:relationships = $allRelationships | Group-Object -Property SchemaName | ForEach-Object { $_.Group | Select-Object -First 1 }
+                $script:relationships = $allRelationships | Group-Object { $_.SchemaName } | ForEach-Object { $_.Group | Select-Object -First 1 }
                 
                 Write-Verbose "After deduplication: $($script:relationships.Count) unique relationships"
                 
