@@ -13,7 +13,7 @@ Retrieves all principals (users or teams) who have shared access to a specific r
 ## SYNTAX
 
 ```
-Get-DataverseRecordAccess [-TableName] <String> [-Id] <Guid> [-Connection <ServiceClient>] 
+Get-DataverseRecordAccess [-TableName] <String> [-Id] <Guid> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -70,18 +70,20 @@ Gets shared access information for multiple opportunity records and groups by pr
 
 ## PARAMETERS
 
-### -TableName
-Logical name of the table.
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
+
+If not provided, uses the default connection set via `Get-DataverseConnection -SetAsDefault`.
 
 ```yaml
-Type: String
+Type: ServiceClient
 Parameter Sets: (All)
-Aliases: EntityName
+Aliases:
 
-Required: True
-Position: 0
+Required: False
+Position: Named
 Default value: None
-Accept pipeline input: True (ByPropertyName)
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
@@ -100,20 +102,18 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
-
-If not provided, uses the default connection set via `Get-DataverseConnection -SetAsDefault`.
+### -TableName
+Logical name of the table.
 
 ```yaml
-Type: ServiceClient
+Type: String
 Parameter Sets: (All)
-Aliases:
+Aliases: EntityName
 
-Required: False
-Position: Named
+Required: True
+Position: 0
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 

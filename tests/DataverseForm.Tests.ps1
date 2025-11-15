@@ -36,9 +36,9 @@ Describe 'Dataverse Form Cmdlets' {
             $hiddenControls.Elements("data") | Should -HaveCount 3
             
             $firstHidden = $hiddenControls.Elements("data") | Select-Object -First 1
-            $firstHidden.Attribute("id")?.Value | Should -Be "fullname"
-            $firstHidden.Attribute("datafieldname")?.Value | Should -Be "fullname"
-            $firstHidden.Attribute("classid")?.Value | Should -Be "{5546E6CD-394C-4bee-94A8-4425E17EF6C6}"
+            $firstHidden.Attribute("id").Value | Should -Be "fullname"
+            $firstHidden.Attribute("datafieldname").Value | Should -Be "fullname"
+            $firstHidden.Attribute("classid").Value | Should -Be "{5546E6CD-394C-4bee-94A8-4425E17EF6C6}"
         }
 
         It "Parses tabs with all attributes" -Skip {
@@ -92,8 +92,8 @@ Describe 'Dataverse Form Cmdlets' {
             $header = $doc.Root.Element("header")
             
             $header | Should -Not -BeNullOrEmpty
-            $header.Attribute("id")?.Value | Should -Be "{59314f22-396d-45d8-baef-75b09c8dd512}"
-            $header.Attribute("celllabelposition")?.Value | Should -Be "Top"
+            $header.Attribute("id").Value | Should -Be "{59314f22-396d-45d8-baef-75b09c8dd512}"
+            $header.Attribute("celllabelposition").Value | Should -Be "Top"
             
             $headerRows = $header.Element("rows")
             $headerRows | Should -Not -BeNullOrEmpty
@@ -116,7 +116,7 @@ Describe 'Dataverse Form Cmdlets' {
             
             $jsFile = $clientIncludes.Element("internaljscriptfile")
             $jsFile | Should -Not -BeNullOrEmpty
-            $jsFile.Attribute("src")?.Value | Should -Be "`$webresource:AppCommon/Contact/Contact_main_system_library.js"
+            $jsFile.Attribute("src").Value | Should -Be "`$webresource:AppCommon/Contact/Contact_main_system_library.js"
         }
 
         It "Parses navigation section" {
@@ -131,8 +131,8 @@ Describe 'Dataverse Form Cmdlets' {
             $navItems | Should -HaveCount 5
             
             $firstNavItem = $navItems | Select-Object -First 1
-            $firstNavItem.Attribute("RelationshipName")?.Value | Should -Be "Contact_CustomerAddress"
-            $firstNavItem.Attribute("Id")?.Value | Should -Be "navAddresses"
+            $firstNavItem.Attribute("RelationshipName").Value | Should -Be "Contact_CustomerAddress"
+            $firstNavItem.Attribute("Id").Value | Should -Be "navAddresses"
         }
 
         It "Handles cell attributes including colspan, rowspan, auto" {
@@ -144,9 +144,9 @@ Describe 'Dataverse Form Cmdlets' {
             $cellsWithColspan | Should -Not -BeNullOrEmpty
             
             # Check the actual colspan value from description section
-            $descriptionCell = $cellsWithColspan | Where-Object { $_.Attribute("colspan")?.Value -eq "2" } | Select-Object -First 1
+            $descriptionCell = $cellsWithColspan | Where-Object { $_.Attribute("colspan").Value -eq "2" } | Select-Object -First 1
             $descriptionCell | Should -Not -BeNullOrEmpty
-            $descriptionCell.Attribute("colspan")?.Value | Should -Be "2"
+            $descriptionCell.Attribute("colspan").Value | Should -Be "2"
             
             # Find a cell with auto attribute
             $cellWithAuto = $doc.Root.Descendants("cell") | Where-Object { $_.Attribute("auto") -ne $null } | Select-Object -First 1
@@ -231,7 +231,7 @@ Describe 'Dataverse Form Cmdlets' {
             $result = Get-DataverseForm -Connection $connection -Entity 'contact' -FormType Main -Published
             
             $result | Should -Not -BeNullOrEmpty
-            $result.Count | Should -Be 1
+            @($result).Count | Should -Be 1
             $result.Type | Should -Be 'Main'
         }
 

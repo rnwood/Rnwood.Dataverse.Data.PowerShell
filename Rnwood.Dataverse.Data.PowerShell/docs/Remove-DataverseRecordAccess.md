@@ -13,8 +13,8 @@ Revokes access rights for a security principal (user or team) on a specific reco
 ## SYNTAX
 
 ```
-Remove-DataverseRecordAccess [-TableName] <String> [-Id] <Guid> [-Principal] <Guid> [-IsTeam] 
- [-Connection <ServiceClient>] [-WhatIf] [-Confirm] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Remove-DataverseRecordAccess [-TableName] <String> [-Id] <Guid> [-Principal] <Guid> [-IsTeam]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -68,62 +68,17 @@ Removes access and verifies it was removed successfully.
 
 ## PARAMETERS
 
-### -TableName
-Logical name of the table.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases: EntityName
-
-Required: True
-Position: 0
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -Id
-Id of the record.
-
-```yaml
-Type: Guid
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 1
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -Principal
-The security principal (user or team) for which to revoke access rights. Must be a Guid representing the systemuser or team record ID.
-
-```yaml
-Type: Guid
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 2
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IsTeam
-Specify if the principal is a team (default is systemuser).
+### -Confirm
+Prompts you for confirmation before running the cmdlet. This is enabled by default (ConfirmImpact.Medium).
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
+Aliases: cf
 
 Required: False
 Position: Named
-Default value: False
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -145,6 +100,66 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Id
+Id of the record.
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -IsTeam
+Specify if the principal is a team (default is systemuser).
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Principal
+The security principal (user or team) for which to revoke access rights. Must be a Guid representing the systemuser or team record ID.
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 2
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TableName
+Logical name of the table.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: EntityName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
 ### -WhatIf
 Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
@@ -152,21 +167,6 @@ Shows what would happen if the cmdlet runs. The cmdlet is not run.
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet. This is enabled by default (ConfirmImpact.Medium).
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
 
 Required: False
 Position: Named
@@ -199,7 +199,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Guid
 ## OUTPUTS
 
-### None
+### System.Object
 ## NOTES
 See https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.revokeaccessrequest?view=dataverse-sdk-latest
 

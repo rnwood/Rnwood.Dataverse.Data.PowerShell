@@ -13,7 +13,7 @@ Tests the access rights a security principal (user or team) has for a specific r
 ## SYNTAX
 
 ```
-Test-DataverseRecordAccess [-TableName] <String> [-Id] <Guid> [-Principal] <Guid> [-Connection <ServiceClient>] 
+Test-DataverseRecordAccess [-TableName] <String> [-Id] <Guid> [-Principal] <Guid> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -86,18 +86,20 @@ Checks write access for a user across multiple contact records.
 
 ## PARAMETERS
 
-### -TableName
-Logical name of the table.
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
+
+If not provided, uses the default connection set via `Get-DataverseConnection -SetAsDefault`.
 
 ```yaml
-Type: String
+Type: ServiceClient
 Parameter Sets: (All)
-Aliases: EntityName
+Aliases:
 
-Required: True
-Position: 0
+Required: False
+Position: Named
 Default value: None
-Accept pipeline input: True (ByPropertyName)
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
@@ -131,20 +133,18 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
-
-If not provided, uses the default connection set via `Get-DataverseConnection -SetAsDefault`.
+### -TableName
+Logical name of the table.
 
 ```yaml
-Type: ServiceClient
+Type: String
 Parameter Sets: (All)
-Aliases:
+Aliases: EntityName
 
-Required: False
-Position: Named
+Required: True
+Position: 0
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
