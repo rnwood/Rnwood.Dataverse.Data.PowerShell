@@ -121,10 +121,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter IncludeFormXml { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to include unpublished forms in the results.
+        /// Gets or sets whether to only return published forms in the results.
         /// </summary>
-        [Parameter(HelpMessage = "Include unpublished forms in the results")]
-        public SwitchParameter Unpublished { get; set; }
+        [Parameter(HelpMessage = "Only return published forms in the results")]
+        public SwitchParameter Published { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -173,7 +173,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     break;
             }
 
-            var results = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, Unpublished.IsPresent);
+            var results = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, !Published.IsPresent);
 
             foreach (Entity form in results)
             {

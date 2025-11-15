@@ -14,25 +14,25 @@ Retrieves forms from a Dataverse environment.
 
 ### ById
 ```
-Get-DataverseForm -Id <Guid> [-IncludeFormXml] [-Unpublished] [-Connection <ServiceClient>]
+Get-DataverseForm -Id <Guid> [-IncludeFormXml] [-Published] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### ByEntity
 ```
 Get-DataverseForm -Entity <String> [-FormType <FormType>] [-UniqueNameFilter <String>] [-IncludeFormXml]
- [-Unpublished] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Published] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### ByName
 ```
-Get-DataverseForm -Entity <String> -Name <String> [-IncludeFormXml] [-Unpublished]
+Get-DataverseForm -Entity <String> -Name <String> [-IncludeFormXml] [-Published]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### ByUniqueName
 ```
-Get-DataverseForm -Entity <String> -UniqueName <String> [-IncludeFormXml] [-Unpublished]
+Get-DataverseForm -Entity <String> -UniqueName <String> [-IncludeFormXml] [-Published]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -93,12 +93,12 @@ PS C:\> $controls = Get-DataverseFormControl -Connection $c -FormId $form.FormId
 
 Demonstrates how to explore form structure using the specialized form cmdlets.
 
-### Example 7: Get unpublished forms
+### Example 7: Get published forms
 ```powershell
-PS C:\> Get-DataverseForm -Connection $c -Entity 'contact' -Unpublished
+PS C:\> Get-DataverseForm -Connection $c -Entity 'contact' -Published
 ```
 
-Retrieves unpublished forms for the contact entity.
+Retrieves published forms for the contact entity.
 
 ## PARAMETERS
 
@@ -225,8 +225,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Unpublished
-Include unpublished forms in the results
+### -Published
+Include only published forms in the results
 
 ```yaml
 Type: SwitchParameter
