@@ -222,7 +222,7 @@ Describe "Relationship Metadata E2E Tests" {
             Write-Host "Step 7: Reading specific OneToMany relationship..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
-                $rel1 = Get-DataverseRelationshipMetadata -Connection $connection -SchemaName $relName1
+                $rel1 = Get-DataverseRelationshipMetadata -Connection $connection -RelationshipName $relName1
                 
                 if ($rel1.RelationshipType -ne 'OneToManyRelationship') {
                     throw "Wrong relationship type for OneToMany"
@@ -239,7 +239,7 @@ Describe "Relationship Metadata E2E Tests" {
             Write-Host "Step 8: Reading specific ManyToMany relationship..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
-                $m2mRel = Get-DataverseRelationshipMetadata -Connection $connection -SchemaName $m2mRelName
+                $m2mRel = Get-DataverseRelationshipMetadata -Connection $connection -RelationshipName $m2mRelName
                 
                 if ($m2mRel.RelationshipType -ne 'ManyToManyRelationship') {
                     throw "Wrong relationship type for ManyToMany"
@@ -265,7 +265,7 @@ Describe "Relationship Metadata E2E Tests" {
             Write-Host "Step 10: Verifying relationship update..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
-                $updatedRel = Get-DataverseRelationshipMetadata -Connection $connection -SchemaName $relName1
+                $updatedRel = Get-DataverseRelationshipMetadata -Connection $connection -RelationshipName $relName1
                 
                 if ($updatedRel.CascadeConfiguration.Delete -ne 'Cascade') {
                     throw "Cascade delete not updated"
