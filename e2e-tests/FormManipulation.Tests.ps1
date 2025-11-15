@@ -16,17 +16,52 @@ Describe "Form Manipulation E2E Tests" {
         copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Data.PowerShell
         $env:PSModulePath = $tempmodulefolder;
         $env:ChildProcessPSModulePath = $tempmodulefolder
+        Import-Module Rnwood.Dataverse.Data.PowerShell
     }
 
     It "Comprehensively exercises all form manipulation features with cleanup" {
         pwsh -noninteractive -noprofile -command {
-            $env:PSModulePath = $env:ChildProcessPSModulePath
-           
-            Import-Module Rnwood.Dataverse.Data.PowerShell
-
+         
             try {
                 # Connect to Dataverse
                 $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+
+                # Enable affinity cookie and set verbosity/confirm preferences for consistent test execution
+                $connection.EnableAffinityCookie = $true
+                $ConfirmPreference = 'None'
+                $VerbosePreference = 'Continue'
+
+                # Retry helper function with exponential backoff (kept consistent with other e2e tests)
+                function Invoke-WithRetry {
+                    param(
+                        [Parameter(Mandatory = $true)]
+                        [scriptblock]$ScriptBlock,
+                        [int]$MaxRetries = 3,
+                        [int]$InitialDelaySeconds = 2
+                    )
+
+                    $attempt = 0
+                    $delay = $InitialDelaySeconds
+
+                    while ($attempt -lt $MaxRetries) {
+                        try {
+                            $attempt++
+                            Write-Verbose "Attempt $attempt of $MaxRetries"
+                            & $ScriptBlock
+                            return  # Success, exit function
+                        }
+                        catch {
+                            if ($attempt -eq $MaxRetries) {
+                                Write-Error "All $MaxRetries attempts failed. Last error: $_"
+                                throw
+                            }
+
+                            Write-Warning "Attempt $attempt failed: $_. Retrying in $delay seconds..."
+                            Start-Sleep -Seconds $delay
+                            $delay = $delay * 2  # Exponential backoff
+                        }
+                    }
+                }
                 
                 # Generate unique test identifier to avoid conflicts
                 $testRunId = [guid]::NewGuid().ToString("N").Substring(0, 8)
@@ -46,19 +81,25 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "Step 0: Cleanup - Removing any leftover test forms from previous runs..."
                 
                 # Find and delete all E2E test forms (matching pattern E2ETestForm-*)
-                $existingTestForms = Get-DataverseRecord -Connection $connection -TableName systemform -FilterValues @{
-                    "name:Like" = "E2ETestForm-%"
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    $script:existingTestForms = Get-DataverseRecord -Connection $connection -TableName systemform -FilterValues @{
+                    "name:Like"      = "E2ETestForm-%"
                     "objecttypecode" = $entityName
                 } -Columns formid, name
                 
-                if ($existingTestForms -and $existingTestForms.Count -gt 0) {
+                if ($script:existingTestForms -and $script:existingTestForms.Count -gt 0) {
                     Write-Host "  Found $($existingTestForms.Count) leftover test form(s) to clean up"
                     foreach ($oldForm in $existingTestForms) {
                         Write-Host "  Deleting form: $($oldForm.name) (ID: $($oldForm.formid))"
-                        Remove-DataverseForm -Connection $connection -Id $oldForm.formid -Confirm:$false
+                        Invoke-WithRetry {
+                            Wait-DataversePublish -Connection $connection -Verbose
+                            Remove-DataverseForm -Connection $connection -Id $oldForm.formid -Confirm:$false
+                        }
                     }
                     Write-Host "  Cleanup complete"
-                } else {
+                }
+                else {
                     Write-Host "  No leftover test forms found"
                 }
                 
@@ -68,13 +109,16 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host ""
                 Write-Host "Step 1: Creating new form..."
                 
-                $formId = Set-DataverseForm -Connection $connection `
+                $formId = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Set-DataverseForm -Connection $connection `
                     -Entity $entityName `
                     -Name $formName `
                     -FormType Main `
                     -Description "E2E test form for comprehensive feature testing - Run $testRunId" `
                     -IsActive `
                     -PassThru
+                }
                 
                 if (-not $formId) {
                     throw "Failed to create form - no form ID returned"
@@ -83,7 +127,10 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "  Created form with ID: $formId"
                 
                 # Verify form was created
-                $createdForm = Get-DataverseForm -Connection $connection -Id $formId
+                $createdForm = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseForm -Connection $connection -Id $formId
+                }
                 if (-not $createdForm) {
                     throw "Failed to retrieve created form"
                 }
@@ -102,7 +149,10 @@ Describe "Form Manipulation E2E Tests" {
                 
                 # Note: Form is unpublished at this point - formxml may not be fully available
                 # We'll validate the full formxml after publishing
-                $form = Get-DataverseForm -Connection $connection -Id $formId
+                $form = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseForm -Connection $connection -Id $formId
+                }
                 
                 if (-not $form) {
                     throw "Failed to retrieve form"
@@ -120,7 +170,9 @@ Describe "Form Manipulation E2E Tests" {
                 $newTabId = "{" + [guid]::NewGuid().ToString().ToUpper() + "}"
                 Write-Host "  Creating new tab with ID: $newTabId"
                 
-                Set-DataverseFormTab -Connection $connection `
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Set-DataverseFormTab -Connection $connection `
                     -FormId $formId `
                     -TabId $newTabId `
                     -Name "CustomTab" `
@@ -135,7 +187,10 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "  Created tab: CustomTab"
                 
                 # Get the tab to verify it was created
-                $tab = Get-DataverseFormTab -Connection $connection -FormId $formId -TabName "CustomTab"
+                $tab = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseFormTab -Connection $connection -FormId $formId -TabName "CustomTab"
+                }
                 
                 if (-not $tab) {
                     throw "Failed to retrieve created tab"
@@ -150,7 +205,9 @@ Describe "Form Manipulation E2E Tests" {
                 # Update tab layout to three columns
                 Write-Host "  Updating tab layout to ThreeColumns..."
                 
-                Set-DataverseFormTab -Connection $connection `
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Set-DataverseFormTab -Connection $connection `
                     -FormId $formId `
                     -TabId $newTabId `
                     -Layout ThreeColumns `
@@ -159,7 +216,10 @@ Describe "Form Manipulation E2E Tests" {
                     -Column3Width 33 `
                     -Confirm:$false
                 
-                $updatedTab = Get-DataverseFormTab -Connection $connection -FormId $formId -TabName "CustomTab"
+                $updatedTab = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseFormTab -Connection $connection -FormId $formId -TabName "CustomTab"
+                }
                 
                 if ($updatedTab.Layout -ne "ThreeColumns") {
                     throw "Tab layout update failed. Expected: ThreeColumns, Got: $($updatedTab.Layout)"
@@ -177,7 +237,9 @@ Describe "Form Manipulation E2E Tests" {
                 $newSectionId = "{" + [guid]::NewGuid().ToString().ToUpper() + "}"
                 Write-Host "  Creating section with ID: $newSectionId"
                 
-                Set-DataverseFormSection -Connection $connection `
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Set-DataverseFormSection -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -SectionId $newSectionId `
@@ -191,7 +253,10 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "  Created section: TestSection"
                 
                 # Get the section to verify
-                $section = Get-DataverseFormSection -Connection $connection -FormId $formId -TabName "CustomTab" -SectionName "TestSection"
+                $section = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseFormSection -Connection $connection -FormId $formId -TabName "CustomTab" -SectionName "TestSection"
+                }
                 
                 if (-not $section) {
                     throw "Failed to retrieve created section"
@@ -202,7 +267,9 @@ Describe "Form Manipulation E2E Tests" {
                 # Create another section to test section management
                 $secondSectionId = "{" + [guid]::NewGuid().ToString().ToUpper() + "}"
                 
-                Set-DataverseFormSection -Connection $connection `
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Set-DataverseFormSection -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -SectionId $secondSectionId `
@@ -215,7 +282,10 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "  Created second section: SecondSection"
                 
                 # Get all sections in the tab
-                $allSections = Get-DataverseFormSection -Connection $connection -FormId $formId -TabName "CustomTab"
+                $allSections = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseFormSection -Connection $connection -FormId $formId -TabName "CustomTab"
+                }
                 
                 if (-not $allSections -or $allSections.Count -lt 2) {
                     throw "Expected at least 2 sections in CustomTab, got: $($allSections.Count)"
@@ -232,7 +302,9 @@ Describe "Form Manipulation E2E Tests" {
                 # Create a text control
                 Write-Host "  Creating text control for 'name' field..."
                 
-                Set-DataverseFormControl -Connection $connection `
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Set-DataverseFormControl -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -SectionName "TestSection" `
@@ -248,7 +320,9 @@ Describe "Form Manipulation E2E Tests" {
                 # Create a lookup control
                 Write-Host "  Creating lookup control for 'primarycontactid' field..."
                 
-                Set-DataverseFormControl -Connection $connection `
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Set-DataverseFormControl -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -SectionName "TestSection" `
@@ -263,7 +337,9 @@ Describe "Form Manipulation E2E Tests" {
                 # Create an email control in the second section
                 Write-Host "  Creating email control for 'emailaddress1' field..."
                 
-                Set-DataverseFormControl -Connection $connection `
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Set-DataverseFormControl -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -SectionName "SecondSection" `
@@ -276,7 +352,9 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "  Created control: emailaddress1 (Email)"
                 
                 # Get control to verify
-                $control = Get-DataverseFormControl -Connection $connection `
+                $control = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseFormControl -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -SectionName "TestSection" `
@@ -293,7 +371,9 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "  Verified: Control 'name' created successfully"
                 
                 # Get all controls in section
-                $allControls = Get-DataverseFormControl -Connection $connection `
+                $allControls = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseFormControl -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -SectionName "TestSection"
@@ -311,7 +391,9 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "Step 6: Updating control properties..."
                 
                 # Update the name control to make it not required and disabled
-                Set-DataverseFormControl -Connection $connection `
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Set-DataverseFormControl -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -SectionName "TestSection" `
@@ -322,7 +404,9 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "  Updated control 'name' to disabled"
                 
                 # Verify the update
-                $updatedControl = Get-DataverseFormControl -Connection $connection `
+                $updatedControl = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseFormControl -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -SectionName "TestSection" `
@@ -337,7 +421,9 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "Step 6.5: Publishing form after all modifications..."
                 
                 # Publish the form with all changes
-                Set-DataverseForm -Connection $connection `
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Set-DataverseForm -Connection $connection `
                     -Id $formId `
                     -Publish `
                     -Confirm:$false
@@ -345,7 +431,10 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "  Published form successfully"
                 
                 # Verify the form can be retrieved with formxml after publish
-                $publishedForm = Get-DataverseForm -Connection $connection -Id $formId -IncludeFormXml
+                $publishedForm = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseForm -Connection $connection -Id $formId -IncludeFormXml
+                }
                 if (-not $publishedForm) {
                     throw "Failed to retrieve form after publish"
                 }
@@ -363,7 +452,9 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "Step 7: Removing a control..."
                 
                 # Remove the email control
-                Remove-DataverseFormControl -Connection $connection `
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Remove-DataverseFormControl -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -SectionName "SecondSection" `
@@ -373,7 +464,9 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "  Removed control: emailaddress1"
                 
                 # Verify the control was removed
-                $removedControl = Get-DataverseFormControl -Connection $connection `
+                $removedControl = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseFormControl -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -SectionName "SecondSection" `
@@ -392,7 +485,9 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "Step 8: Removing a section..."
                 
                 # Remove the second section
-                Remove-DataverseFormSection -Connection $connection `
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Remove-DataverseFormSection -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -SectionName "SecondSection" `
@@ -401,7 +496,9 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "  Removed section: SecondSection"
                 
                 # Verify the section was removed
-                $removedSection = Get-DataverseFormSection -Connection $connection `
+                $removedSection = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseFormSection -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -SectionName "SecondSection"
@@ -419,7 +516,9 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "Step 9: Removing a tab..."
                 
                 # Remove the custom tab
-                Remove-DataverseFormTab -Connection $connection `
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Remove-DataverseFormTab -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -Confirm:$false
@@ -427,7 +526,9 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "  Removed tab: CustomTab"
                 
                 # Verify the tab was removed
-                $removedTab = Get-DataverseFormTab -Connection $connection `
+                $removedTab = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseFormTab -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab"
                 
@@ -444,17 +545,24 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "Step 10: Final cleanup - Removing test form..."
                 
                 # Remove the form
-                Remove-DataverseForm -Connection $connection -Id $formId -Confirm:$false
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Remove-DataverseForm -Connection $connection -Id $formId -Confirm:$false
+                }
                 
                 Write-Host "  Removed form: $formName (ID: $formId)"
                 
                 # Verify the form was removed
                 try {
-                    $removedForm = Get-DataverseForm -Connection $connection -Id $formId
-                    if ($removedForm) {
-                        throw "Form should have been removed but still exists"
+                    Invoke-WithRetry {
+                        Wait-DataversePublish -Connection $connection -Verbose
+                        $removedForm = Get-DataverseForm -Connection $connection -Id $formId
+                        if ($removedForm) {
+                            throw "Form should have been removed but still exists"
+                        }
                     }
-                } catch {
+                }
+                catch {
                     # Expected - form not found
                     Write-Host "  Verified: Form successfully removed (not found in query)"
                 }
@@ -476,7 +584,8 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "  - Handled cleanup of leftover test forms from previous runs"
                 Write-Host ""
                 
-            } catch {
+            }
+            catch {
                 Write-Host ""
                 Write-Host "=========================================="
                 Write-Host "ERROR: Form Manipulation E2E Test FAILED"
