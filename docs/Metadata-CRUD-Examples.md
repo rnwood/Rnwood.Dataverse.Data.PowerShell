@@ -1,7 +1,9 @@
 
-# Metadata CRUD Cmdlets - Usage Examples
+# Metadata CRUD Cmdlets - Removed
 
-This document provides examples of using the new comprehensive metadata CRUD cmdlets.
+This document was removed. Examples and usage information are now included in `docs/core-concepts/metadata.md`.
+
+If you need the original examples, please open an issue requesting restoration or migration of specific examples to the core concepts pages.
 
 ## Metadata Cache
 

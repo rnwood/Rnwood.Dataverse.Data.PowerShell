@@ -196,7 +196,7 @@ Get-DataverseEntityMetadata |
 
 ### Creating Attributes
 
-Different attribute types require different parameters. See [Metadata CRUD Examples](../Metadata-CRUD-Examples.md) for comprehensive examples of all attribute types.
+Different attribute types require different parameters. See the docs for comprehensive examples of all attribute types.
 
 ```powershell
 # String attribute with format
@@ -363,6 +363,6 @@ foreach ($def in $attributeDefinitions) {
 
 ## Related Resources
 
-- [Metadata CRUD Examples](../Metadata-CRUD-Examples.md) - Comprehensive examples for all attribute types and scenarios
+<!-- Link to Metadata CRUD examples removed. See the docs for comprehensive examples of all attribute types and scenarios -->
 - [Microsoft SDK Documentation](https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata) - SDK metadata object reference
 - [Dataverse Metadata Reference](https://docs.microsoft.com/en-us/power-apps/developer/data-platform/metadata-services) - Overview of metadata concepts

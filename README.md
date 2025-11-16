@@ -13,12 +13,14 @@ This module works in PowerShell Desktop and PowerShell Core, supporting Windows,
     - Automatic data type conversion using metadata - use friendly labels for choices and names for lookups
     - Automatic lookup conversion - use record names instead of GUIDs (when unique)
 - On behalf of (delegation) support for create/update operations
-- Multiple query methods with full support for automatic paging
-- Concise hashtable-based filters with grouped logical expressions (and/or/not/xor) and arbitrary nesting
-- Batching support for efficient bulk operations
-- **Comprehensive metadata CRUD operations** — Create, read, update, and delete entities, attributes, option sets, and relationships with full coverage of all attribute types and relationship types (OneToMany, ManyToMany).
-- **CRUD for model-driven apps, forms, views**
-- **CRUD for solutions and solution components**
+- Full support for automatic paging
+- Concise PowerShell friendly hashtable based filters with grouped logical expressions (and/or/not/xor) and arbitrary nesting
+- Batching and parallelisation support for efficient bulk operations
+- Auto retries support in many cmdlets
+- Comprehensive metadata operations
+    - Create, read, update, and delete entities, attributes, option sets, and relationships
+    - manipulate model-driven apps, forms, views
+    - manipulate solutions and solution components
 
 **Note**: On-premise Dataverse environments are not supported.
 
@@ -210,44 +212,12 @@ For operations not covered by the cmdlets above, use [`Invoke-DataverseRequest`]
 
 See the [Invoke-DataverseRequest documentation](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) for details on response conversion and parameter sets.
 
-## Testing
-
-This module has comprehensive test coverage using Pester and FakeXrmEasy. To understand test coverage and identify gaps:
-
-- **[Test Coverage Gap Analysis](TEST_COVERAGE_GAP_ANALYSIS.md)** — Detailed analysis of all documented features and test coverage
-- **[Test Coverage Quick Reference](TEST_COVERAGE_QUICK_REFERENCE.md)** — At-a-glance summary and implementation guide
-
-To run tests:
-
-```bash
-# Build the module
-dotnet build
-
-# Set module path
-export TESTMODULEPATH=$(pwd)/Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0
-
-# Run all tests (must use All.Tests.ps1 as entry point)
-pwsh -Command "Invoke-Pester -Path tests/All.Tests.ps1 -Output Normal"
-```
-
-**Note:** Tests must be run through `tests/All.Tests.ps1` which provides necessary setup (getMockConnection, module loading, metadata). Individual test files cannot be run directly.
-
 ## Support and Contributing
 
 - Report issues: [GitHub Issues](https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell/issues)
 - View source: [GitHub Repository](https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell)
-- Test coverage reports: See [TEST_COVERAGE_GAP_ANALYSIS.md](TEST_COVERAGE_GAP_ANALYSIS.md)
 
 ### Contributing
-
-When submitting pull requests, please use **Conventional Commits** format in your PR title to enable automatic versioning:
-
-**Format:** `<type>(<scope>): <description>`
-
-**Examples:**
-- `feat: add batch delete operation` — Minor version bump (1.4.0 → 1.5.0)
-- `fix: resolve connection timeout` — Patch version bump (1.4.0 → 1.4.1)
-- `feat!: remove deprecated parameters` — Major version bump (1.4.0 → 2.0.0)
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
