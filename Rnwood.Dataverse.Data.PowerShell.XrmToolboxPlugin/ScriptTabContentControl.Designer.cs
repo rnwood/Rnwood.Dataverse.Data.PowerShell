@@ -46,7 +46,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.panel.Controls.Add(webView);
 
             this.tabToolbar = new ToolStrip();
-            this.tabToolbar.ImageList = toolbarImages;
             this.tabToolbar.GripStyle = ToolStripGripStyle.Hidden;
             this.tabToolbar.Dock = DockStyle.Top;
 
@@ -54,13 +53,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.runButton.Text = "Run (F5)";
             this.runButton.ImageIndex = 0;
             this.runButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
-            this.runButton.Click += (s, e) => RunRequested?.Invoke(this, EventArgs.Empty);
+            // Use named event handler so designer can process this file
+            this.runButton.Click += new EventHandler(this.RunButton_Click);
 
             this.saveButton = new ToolStripButton();
             this.saveButton.Text = "Save";
             this.saveButton.ImageIndex = 3;
             this.saveButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
-            this.saveButton.Click += (s, e) => SaveRequested?.Invoke(this, EventArgs.Empty);
+            // Use named event handler so designer can process this file
+            this.saveButton.Click += new EventHandler(this.SaveButton_Click);
 
             this.tabToolbar.Items.AddRange(new ToolStripItem[] { runButton, saveButton });
 
@@ -69,9 +70,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.closeButton = new Button();
             this.closeButton.Text = "X";
             this.closeButton.Size = new Size(20, 20);
-            this.closeButton.Location = new Point(panel.Width - 25, tabToolbar.Height + 5);
+            // Use a fixed location (designer cannot process dynamic expressions like panel.Width - 25)
+            this.closeButton.Location = new Point(100, 5);
             this.closeButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            this.closeButton.Click += (s, e) => CloseRequested?.Invoke(this, EventArgs.Empty);
+            // Use named event handler so designer can process this file
+            this.closeButton.Click += new EventHandler(this.CloseButton_Click);
             this.panel.Controls.Add(closeButton);
             this.closeButton.BringToFront();
 
@@ -86,6 +89,5 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private ToolStripButton runButton;
         private ToolStripButton saveButton;
         private Button closeButton;
-        private ImageList toolbarImages;
     }
 }

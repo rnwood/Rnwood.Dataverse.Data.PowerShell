@@ -24,7 +24,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         public WebView2 WebView => webView;
         public string Path { get => _path; set => _path = value; }
-        public ImageList ToolbarImages { get => toolbarImages; set { toolbarImages = value; UpdateToolbarImages(); } }
+        public ImageList ToolbarImages
+        {
+            get => tabToolbar?.ImageList;
+            set
+            {
+                if (tabToolbar != null)
+                {
+                    tabToolbar.ImageList = value;
+                }
+            }
+        }
         public PowerShellCompletionService CompletionService { get => _completionService; set => _completionService = value; }
 
         public event EventHandler RunRequested;
@@ -36,12 +46,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             InitializeComponent();
         }
 
-        private void UpdateToolbarImages()
+        // Named event handlers referenced by designer
+        private void RunButton_Click(object sender, EventArgs e)
         {
-            if (toolbarImages != null)
-            {
-                tabToolbar.ImageList = toolbarImages;
-            }
+            RunRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void SaveButton_Click(object sender, EventArgs e)
+        {
+            SaveRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void CloseButton_Click(object sender, EventArgs e)
+        {
+            CloseRequested?.Invoke(this, EventArgs.Empty);
         }
 
         public async Task InitializeWebView()
