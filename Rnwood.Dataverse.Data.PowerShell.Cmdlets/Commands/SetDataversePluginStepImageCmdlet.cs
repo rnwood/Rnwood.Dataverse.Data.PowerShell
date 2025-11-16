@@ -30,10 +30,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string EntityAlias { get; set; }
 
         /// <summary>
-        /// Gets or sets the image type. 0=PreImage, 1=PostImage, 2=Both
+        /// Gets or sets the image type.
         /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "Image type: 0=PreImage, 1=PostImage, 2=Both")]
-        public int ImageType { get; set; }
+        [Parameter(Mandatory = true, HelpMessage = "Image type for the plugin step image")]
+        public PluginStepImageType ImageType { get; set; }
 
         /// <summary>
         /// Gets or sets the message property name.
@@ -75,7 +75,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             image["sdkmessageprocessingstepid"] = new EntityReference("sdkmessageprocessingstep", SdkMessageProcessingStepId);
             image["entityalias"] = EntityAlias;
-            image["imagetype"] = new OptionSetValue(ImageType);
+            image["imagetype"] = new OptionSetValue((int)ImageType);
             image["messagepropertyname"] = MessagePropertyName;
 
             if (Attributes != null && Attributes.Length > 0)

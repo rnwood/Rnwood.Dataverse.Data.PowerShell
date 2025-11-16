@@ -10,7 +10,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Retrieves plugin package records from a Dataverse environment.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "DataversePluginPackage")]
+    [Cmdlet(VerbsCommon.Get, "DataversePluginPackage", DefaultParameterSetName = "All")]
     [OutputType(typeof(PSObject))]
     public class GetDataversePluginPackageCmdlet : OrganizationServiceCmdlet
     {
@@ -25,12 +25,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(ParameterSetName = "ByName", Mandatory = true, HelpMessage = "Unique name of the plugin package to retrieve")]
         public string UniqueName { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether to return all plugin packages.
-        /// </summary>
-        [Parameter(ParameterSetName = "All", HelpMessage = "Return all plugin packages")]
-        public SwitchParameter All { get; set; }
 
         /// <summary>
         /// Process the cmdlet.
@@ -53,12 +47,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 query.Criteria.AddCondition("uniquename", ConditionOperator.Equal, UniqueName);
             }
 
-            EntityCollection results = Connection.RetrieveMultiple(query);
+            EntityMetadataFactory entityMetadataFactory = new EntityMetadataFactory(Connection);
+            DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
 
-            foreach (Entity entity in results.Entities)
+            foreach (Entity entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose))
             {
-                EntityMetadataFactory entityMetadataFactory = new EntityMetadataFactory(Connection);
-                DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
                 PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(true), _ => ValueType.Display);
                 WriteObject(psObject);
             }

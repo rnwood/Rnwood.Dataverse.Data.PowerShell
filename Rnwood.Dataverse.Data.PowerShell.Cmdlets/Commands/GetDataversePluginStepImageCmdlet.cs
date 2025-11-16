@@ -10,7 +10,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Retrieves SDK message processing step image records (plugin step images) from a Dataverse environment.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "DataversePluginStepImage")]
+    [Cmdlet(VerbsCommon.Get, "DataversePluginStepImage", DefaultParameterSetName = "All")]
     [OutputType(typeof(PSObject))]
     public class GetDataversePluginStepImageCmdlet : OrganizationServiceCmdlet
     {
@@ -32,12 +32,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(ParameterSetName = "ByStep", Mandatory = true, HelpMessage = "Plugin step ID to filter images by")]
         [Parameter(ParameterSetName = "All", HelpMessage = "Plugin step ID to filter images by")]
         public Guid? SdkMessageProcessingStepId { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether to return all plugin step images.
-        /// </summary>
-        [Parameter(ParameterSetName = "All", HelpMessage = "Return all plugin step images")]
-        public SwitchParameter All { get; set; }
 
         /// <summary>
         /// Process the cmdlet.
@@ -65,12 +59,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 query.Criteria.AddCondition("sdkmessageprocessingstepid", ConditionOperator.Equal, SdkMessageProcessingStepId.Value);
             }
 
-            EntityCollection results = Connection.RetrieveMultiple(query);
+            EntityMetadataFactory entityMetadataFactory = new EntityMetadataFactory(Connection);
+            DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
 
-            foreach (Entity entity in results.Entities)
+            foreach (Entity entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose))
             {
-                EntityMetadataFactory entityMetadataFactory = new EntityMetadataFactory(Connection);
-                DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
                 PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(true), _ => ValueType.Display);
                 WriteObject(psObject);
             }

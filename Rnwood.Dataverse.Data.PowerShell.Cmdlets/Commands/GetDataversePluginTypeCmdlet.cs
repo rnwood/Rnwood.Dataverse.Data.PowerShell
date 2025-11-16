@@ -10,7 +10,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Retrieves plugin type records from a Dataverse environment.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "DataversePluginType")]
+    [Cmdlet(VerbsCommon.Get, "DataversePluginType", DefaultParameterSetName = "All")]
     [OutputType(typeof(PSObject))]
     public class GetDataversePluginTypeCmdlet : OrganizationServiceCmdlet
     {
@@ -32,12 +32,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(ParameterSetName = "ByAssembly", Mandatory = true, HelpMessage = "Plugin assembly ID to filter types by")]
         [Parameter(ParameterSetName = "All", HelpMessage = "Plugin assembly ID to filter types by")]
         public Guid? PluginAssemblyId { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether to return all plugin types.
-        /// </summary>
-        [Parameter(ParameterSetName = "All", HelpMessage = "Return all plugin types")]
-        public SwitchParameter All { get; set; }
 
         /// <summary>
         /// Process the cmdlet.
@@ -65,12 +59,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 query.Criteria.AddCondition("pluginassemblyid", ConditionOperator.Equal, PluginAssemblyId.Value);
             }
 
-            EntityCollection results = Connection.RetrieveMultiple(query);
+            EntityMetadataFactory entityMetadataFactory = new EntityMetadataFactory(Connection);
+            DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
 
-            foreach (Entity entity in results.Entities)
+            foreach (Entity entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose))
             {
-                EntityMetadataFactory entityMetadataFactory = new EntityMetadataFactory(Connection);
-                DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
                 PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(true), _ => ValueType.Display);
                 WriteObject(psObject);
             }

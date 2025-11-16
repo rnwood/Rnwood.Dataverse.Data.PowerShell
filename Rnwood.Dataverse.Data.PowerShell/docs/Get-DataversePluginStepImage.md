@@ -12,6 +12,12 @@ Retrieves plugin step image records from a Dataverse environment.
 
 ## SYNTAX
 
+### All (Default)
+```
+Get-DataversePluginStepImage [-SdkMessageProcessingStepId <Guid>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ### ById
 ```
 Get-DataversePluginStepImage -Id <Guid> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
@@ -30,12 +36,6 @@ Get-DataversePluginStepImage -SdkMessageProcessingStepId <Guid> [-Connection <Se
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
-### All
-```
-Get-DataversePluginStepImage [-SdkMessageProcessingStepId <Guid>] [-All] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
 ## DESCRIPTION
 Retrieves plugin step images by ID, alias, step ID, or all images.
 
@@ -49,21 +49,6 @@ PS C:\> Get-DataversePluginStepImage -Connection $connection -SdkMessageProcessi
 Retrieves all step images for a specific plugin step.
 
 ## PARAMETERS
-
-### -All
-Return all plugin step images
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: All
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
@@ -115,10 +100,10 @@ Plugin step ID to filter images by
 
 ```yaml
 Type: Guid
-Parameter Sets: ByStep
+Parameter Sets: All
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -127,10 +112,10 @@ Accept wildcard characters: False
 
 ```yaml
 Type: Guid
-Parameter Sets: All
+Parameter Sets: ByStep
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False

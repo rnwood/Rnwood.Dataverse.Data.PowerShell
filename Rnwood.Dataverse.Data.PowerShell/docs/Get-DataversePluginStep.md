@@ -12,6 +12,12 @@ Retrieves plugin step (SDK message processing step) records from a Dataverse env
 
 ## SYNTAX
 
+### All (Default)
+```
+Get-DataversePluginStep [-PluginTypeId <Guid>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ### ById
 ```
 Get-DataversePluginStep -Id <Guid> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
@@ -30,12 +36,6 @@ Get-DataversePluginStep -PluginTypeId <Guid> [-Connection <ServiceClient>] [-Pro
  [<CommonParameters>]
 ```
 
-### All
-```
-Get-DataversePluginStep [-PluginTypeId <Guid>] [-All] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
 ## DESCRIPTION
 Retrieves plugin steps by ID, name, plugin type ID, or all steps.
 
@@ -49,21 +49,6 @@ PS C:\> Get-DataversePluginStep -Connection $connection -PluginTypeId 12345678-1
 Retrieves all plugin steps for a specific plugin type.
 
 ## PARAMETERS
-
-### -All
-Return all plugin steps
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: All
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
@@ -115,10 +100,10 @@ Plugin type ID to filter steps by
 
 ```yaml
 Type: Guid
-Parameter Sets: ByPluginType
+Parameter Sets: All
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -127,10 +112,10 @@ Accept wildcard characters: False
 
 ```yaml
 Type: Guid
-Parameter Sets: All
+Parameter Sets: ByPluginType
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False

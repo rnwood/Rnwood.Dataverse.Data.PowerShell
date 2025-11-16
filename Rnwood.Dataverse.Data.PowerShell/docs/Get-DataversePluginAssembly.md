@@ -12,6 +12,12 @@ Retrieves plugin assembly records from a Dataverse environment.
 
 ## SYNTAX
 
+### All (Default)
+```
+Get-DataversePluginAssembly [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
+```
+
 ### ById
 ```
 Get-DataversePluginAssembly -Id <Guid> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
@@ -21,12 +27,6 @@ Get-DataversePluginAssembly -Id <Guid> [-Connection <ServiceClient>] [-ProgressA
 ### ByName
 ```
 Get-DataversePluginAssembly -Name <String> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
-```
-
-### All
-```
-Get-DataversePluginAssembly [-All] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [<CommonParameters>]
 ```
 
@@ -57,21 +57,6 @@ PS C:\> Get-DataversePluginAssembly -Connection $connection -Name "MyPluginAssem
 Retrieves a plugin assembly by its name.
 
 ## PARAMETERS
-
-### -All
-If specified, retrieves all plugin assemblies.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: All
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### -Connection
 The Dataverse ServiceClient connection to use. If not specified, the default connection is used.

@@ -37,16 +37,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string FilePath { get; set; }
 
         /// <summary>
-        /// Gets or sets the isolation mode. 0=None, 1=Sandbox, 2=External
+        /// Gets or sets the isolation mode.
         /// </summary>
-        [Parameter(HelpMessage = "Isolation mode: 0=None, 1=Sandbox, 2=External. Default is 2 (External).")]
-        public int IsolationMode { get; set; } = 2;
+        [Parameter(HelpMessage = "Isolation mode for the plugin assembly. Default is Sandbox.")]
+        public PluginAssemblyIsolationMode IsolationMode { get; set; } = PluginAssemblyIsolationMode.Sandbox;
 
         /// <summary>
-        /// Gets or sets the source type. 0=Database, 1=Disk, 2=Normal, 3=AzureWebApp
+        /// Gets or sets the source type.
         /// </summary>
-        [Parameter(HelpMessage = "Source type: 0=Database, 1=Disk, 2=Normal, 3=AzureWebApp. Default is 0 (Database).")]
-        public int SourceType { get; set; } = 0;
+        [Parameter(HelpMessage = "Source type for the plugin assembly. Default is Database.")]
+        public PluginAssemblySourceType SourceType { get; set; } = PluginAssemblySourceType.Database;
 
         /// <summary>
         /// Gets or sets the version of the assembly.
@@ -103,8 +103,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             assembly["name"] = Name;
             assembly["content"] = Convert.ToBase64String(assemblyContent);
-            assembly["isolationmode"] = new OptionSetValue(IsolationMode);
-            assembly["sourcetype"] = new OptionSetValue(SourceType);
+            assembly["isolationmode"] = new OptionSetValue((int)IsolationMode);
+            assembly["sourcetype"] = new OptionSetValue((int)SourceType);
 
             if (!string.IsNullOrEmpty(Version))
             {

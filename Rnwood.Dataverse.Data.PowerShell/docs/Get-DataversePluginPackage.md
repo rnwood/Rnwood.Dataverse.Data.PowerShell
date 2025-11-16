@@ -12,6 +12,12 @@ Retrieves plugin package records from a Dataverse environment.
 
 ## SYNTAX
 
+### All (Default)
+```
+Get-DataversePluginPackage [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
+```
+
 ### ById
 ```
 Get-DataversePluginPackage -Id <Guid> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
@@ -22,12 +28,6 @@ Get-DataversePluginPackage -Id <Guid> [-Connection <ServiceClient>] [-ProgressAc
 ```
 Get-DataversePluginPackage -UniqueName <String> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
-### All
-```
-Get-DataversePluginPackage [-All] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -43,21 +43,6 @@ PS C:\> Get-DataversePluginPackage -Connection $connection -All
 Retrieves all plugin packages.
 
 ## PARAMETERS
-
-### -All
-Return all plugin packages
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: All
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.

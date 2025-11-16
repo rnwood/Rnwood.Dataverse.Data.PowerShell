@@ -42,16 +42,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Guid? SdkMessageFilterId { get; set; }
 
         /// <summary>
-        /// Gets or sets the stage of execution. 10=PreValidation, 20=PreOperation, 40=PostOperation, 50=PostOperationDeprecated
+        /// Gets or sets the stage of execution.
         /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "Stage of execution: 10=PreValidation, 20=PreOperation, 40=PostOperation, 50=PostOperationDeprecated")]
-        public int Stage { get; set; }
+        [Parameter(Mandatory = true, HelpMessage = "Stage of execution for the plugin step")]
+        public PluginStepStage Stage { get; set; }
 
         /// <summary>
-        /// Gets or sets the execution mode. 0=Synchronous, 1=Asynchronous
+        /// Gets or sets the execution mode.
         /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "Execution mode: 0=Synchronous, 1=Asynchronous")]
-        public int Mode { get; set; }
+        [Parameter(Mandatory = true, HelpMessage = "Execution mode for the plugin step")]
+        public PluginStepMode Mode { get; set; }
 
         /// <summary>
         /// Gets or sets the execution order (rank).
@@ -103,10 +103,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public int? StatusCode { get; set; }
 
         /// <summary>
-        /// Gets or sets the supported deployment. 0=ServerOnly, 1=MicrosoftDynamics365Client, 2=Both
+        /// Gets or sets the supported deployment.
         /// </summary>
-        [Parameter(HelpMessage = "Supported deployment: 0=ServerOnly, 1=MicrosoftDynamics365Client, 2=Both. Default is 0.")]
-        public int SupportedDeployment { get; set; } = 0;
+        [Parameter(HelpMessage = "Supported deployment for the plugin step. Default is ServerOnly.")]
+        public PluginStepDeployment SupportedDeployment { get; set; } = PluginStepDeployment.ServerOnly;
 
         /// <summary>
         /// If specified, the created/updated step is written to the pipeline as a PSObject.
@@ -130,10 +130,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             step["name"] = Name;
             step["plugintypeid"] = new EntityReference("plugintype", PluginTypeId);
             step["sdkmessageid"] = new EntityReference("sdkmessage", SdkMessageId);
-            step["stage"] = new OptionSetValue(Stage);
-            step["mode"] = new OptionSetValue(Mode);
+            step["stage"] = new OptionSetValue((int)Stage);
+            step["mode"] = new OptionSetValue((int)Mode);
             step["rank"] = Rank;
-            step["supporteddeployment"] = new OptionSetValue(SupportedDeployment);
+            step["supporteddeployment"] = new OptionSetValue((int)SupportedDeployment);
 
             if (SdkMessageFilterId.HasValue)
             {

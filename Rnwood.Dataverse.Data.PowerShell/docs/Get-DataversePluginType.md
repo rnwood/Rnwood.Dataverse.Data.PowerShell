@@ -12,6 +12,12 @@ Retrieves plugin type records from a Dataverse environment.
 
 ## SYNTAX
 
+### All (Default)
+```
+Get-DataversePluginType [-PluginAssemblyId <Guid>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ### ById
 ```
 Get-DataversePluginType -Id <Guid> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
@@ -30,12 +36,6 @@ Get-DataversePluginType -PluginAssemblyId <Guid> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
-### All
-```
-Get-DataversePluginType [-PluginAssemblyId <Guid>] [-All] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
 ## DESCRIPTION
 Retrieves plugin types by ID, type name, assembly ID, or all types.
 
@@ -49,21 +49,6 @@ PS C:\> Get-DataversePluginType -Connection $connection -PluginAssemblyId 123456
 Retrieves all plugin types for a specific assembly.
 
 ## PARAMETERS
-
-### -All
-Return all plugin types
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: All
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
@@ -100,10 +85,10 @@ Plugin assembly ID to filter types by
 
 ```yaml
 Type: Guid
-Parameter Sets: ByAssembly
+Parameter Sets: All
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -112,10 +97,10 @@ Accept wildcard characters: False
 
 ```yaml
 Type: Guid
-Parameter Sets: All
+Parameter Sets: ByAssembly
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
