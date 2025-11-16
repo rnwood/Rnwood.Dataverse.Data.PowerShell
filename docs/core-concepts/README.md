@@ -27,6 +27,7 @@ This section covers the core concepts and operations for working with Dataverse 
 - **[Deleting Records](deleting.md)** - Delete operations with confirmation, batching, and SQL alternatives
 - **[Working with Metadata](metadata.md)** - Reading and managing schema (entities, attributes, relationships, option sets)
 - **[Form Management](form-management.md)** - Managing forms, tabs, sections, and controls with positioning and FormXml manipulation
+- **[Solution Component Management](solution-component-management.md)** - Managing individual solution components (entities, attributes, forms, views) within solutions
 - **[Error Handling and Batch Operations](error-handling.md)** - Error handling, batch processing, and retry logic
 - **[Environment Variables and Connection References](environment-variables-connection-references.md)** - Managing configuration values and connection references across environments
 
@@ -40,6 +41,7 @@ This section covers the core concepts and operations for working with Dataverse 
 - Batch operations for efficiency
 - Working with metadata (schema management)
 - Managing forms, tabs, sections, and controls
+- Managing solution components within solutions
 
 ### Connection Features
 - Default connections for simplified scripting

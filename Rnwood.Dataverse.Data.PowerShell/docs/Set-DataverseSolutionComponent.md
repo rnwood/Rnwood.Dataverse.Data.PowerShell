@@ -14,9 +14,8 @@ Adds or updates a solution component in an unmanaged solution, with automatic ha
 
 ```
 Set-DataverseSolutionComponent [-SolutionName] <String> [-ComponentId] <Guid> [-ComponentType] <Int32>
- [-Behavior <Int32>] [-AddRequiredComponents] [-DoNotIncludeSubcomponents]
- [-IncludedComponentSettingsValues <String[]>] [-PassThru] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Behavior <Int32>] [-AddRequiredComponents] [-DoNotIncludeSubcomponents] [-PassThru]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -213,21 +212,6 @@ Aliases:
 Required: False
 Position: Named
 Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IncludedComponentSettingsValues
-Specifies if the component is added to the solution with its metadata.
-
-```yaml
-Type: String[]
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

@@ -78,10 +78,10 @@ Describe "Solution Component E2E Tests" {
                 Wait-DataversePublish -Connection $connection -Verbose
                 
                 # Check if solution already exists and delete it
-                $existingSolution = Get-DataverseRecord -Connection $connection -TableName solution -Filter @{ "uniquename" = $solutionName } -ErrorAction SilentlyContinue
+                $existingSolution = Get-DataverseSolution -Connection $connection -UniqueName $solutionName -ErrorAction SilentlyContinue
                 if ($existingSolution) {
                     Write-Host "  Removing existing test solution..."
-                    Remove-DataverseRecord -Connection $connection -TableName solution -Id $existingSolution.solutionid -Confirm:$false
+                    Remove-DataverseSolution -Connection $connection -UniqueName $solutionName -Confirm:$false
                 }
                 
                 # Get or create publisher
@@ -95,17 +95,16 @@ Describe "Solution Component E2E Tests" {
                     } | Set-DataverseRecord -Connection $connection -TableName publisher -PassThru
                 }
                 
-                # Create solution
-                $solution = @{
-                    "uniquename" = $solutionName
-                    "friendlyname" = $solutionDisplayName
-                    "version" = "1.0.0.0"
-                    "publisherid" = @{
-                        "LogicalName" = "publisher"
-                        "Id" = $publisher.publisherid
-                    }
-                } | Set-DataverseRecord -Connection $connection -TableName solution -PassThru
+                # Create solution using Set-DataverseSolution
+                Set-DataverseSolution -Connection $connection `
+                    -UniqueName $solutionName `
+                    -Name $solutionDisplayName `
+                    -Version "1.0.0.0" `
+                    -PublisherUniqueName $publisher.uniquename `
+                    -Confirm:$false
                 
+                # Get the solution to retrieve its ID
+                $solution = Get-DataverseSolution -Connection $connection -UniqueName $solutionName
                 $script:solutionId = $solution.solutionid
             }
         
@@ -295,7 +294,7 @@ Describe "Solution Component E2E Tests" {
             Write-Host "Step 11: Cleanup - Removing test solution (will cascade delete components)..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
-                Remove-DataverseRecord -Connection $connection -TableName solution -Id $script:solutionId -Confirm:$false
+                Remove-DataverseSolution -Connection $connection -UniqueName $solutionName -Confirm:$false
             }
             Write-Host "✓ Test solution deleted"
                 
@@ -309,7 +308,7 @@ Describe "Solution Component E2E Tests" {
             Write-Host "Step 13: Cleanup any old test solutions from previous failed runs..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
-                $oldSolutions = Get-DataverseRecord -Connection $connection -TableName solution | Where-Object { 
+                $oldSolutions = Get-DataverseSolution -Connection $connection | Where-Object { 
                     $_.uniquename -like "e2esolcomp_*" -and 
                     $_.uniquename -ne $solutionName 
                 }
@@ -318,7 +317,7 @@ Describe "Solution Component E2E Tests" {
                     foreach ($sol in $oldSolutions) {
                         try {
                             Write-Host "  Removing old solution: $($sol.uniquename)"
-                            Remove-DataverseRecord -Connection $connection -TableName solution -Id $sol.solutionid -Confirm:$false -ErrorAction SilentlyContinue
+                            Remove-DataverseSolution -Connection $connection -UniqueName $sol.uniquename -Confirm:$false -ErrorAction SilentlyContinue
                         }
                         catch {
                             Write-Host "  Could not remove $($sol.uniquename): $_"

@@ -60,12 +60,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter DoNotIncludeSubcomponents { get; set; }
 
         /// <summary>
-        /// Gets or sets a value that specifies if the component is added to the solution with its metadata.
-        /// </summary>
-        [Parameter(HelpMessage = "Specifies if the component is added to the solution with its metadata.")]
-        public string[] IncludedComponentSettingsValues { get; set; }
-
-        /// <summary>
         /// If specified, the InputObject with component details is written to the pipeline.
         /// </summary>
         [Parameter(HelpMessage = "If specified, outputs the component information to the pipeline.")]
@@ -96,7 +90,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (existingBehavior == Behavior)
                 {
                     WriteVerbose($"Component behavior is unchanged. No action needed.");
-                    OutputComponentInfo(solutionId, ComponentId, ComponentType, Behavior, wasUpdated: false);
+                    
+                    // Still output component info if PassThru is requested
+                    Guid? solutionComponentId = existingComponent.Id;
+                    OutputComponentInfo(solutionId, ComponentId, ComponentType, Behavior, solutionComponentId, wasUpdated: false);
                     return;
                 }
 
@@ -123,7 +120,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 AddComponent(solutionId, ComponentId, ComponentType, Behavior);
                 WriteVerbose("Component added successfully.");
-                OutputComponentInfo(solutionId, ComponentId, ComponentType, Behavior, wasUpdated: existingComponent != null);
+                
+                // Query for the solutioncomponentid
+                var componentEntity = GetExistingComponent(solutionId, ComponentId, ComponentType);
+                Guid? solutionComponentId = componentEntity?.Id;
+                
+                OutputComponentInfo(solutionId, ComponentId, ComponentType, Behavior, solutionComponentId, wasUpdated: existingComponent != null);
             }
         }
 
@@ -207,6 +209,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 doNotIncludeSubcomponents = true;
             }
             
+            // Map behavior to IncludedComponentSettingsValues
+            // When set to null, the component is added to the solution with metadata
+            // When set to empty array, no metadata settings are included with the component
+            string[] includedComponentSettingsValues = behavior == 1 ? new string[0] : null;
+            
             var request = new AddSolutionComponentRequest
             {
                 SolutionUniqueName = SolutionName,
@@ -214,17 +221,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ComponentType = componentType,
                 AddRequiredComponents = AddRequiredComponents.IsPresent,
                 DoNotIncludeSubcomponents = doNotIncludeSubcomponents,
-                IncludedComponentSettingsValues = IncludedComponentSettingsValues
+                IncludedComponentSettingsValues = includedComponentSettingsValues
             };
 
             Connection.Execute(request);
         }
 
-        private void OutputComponentInfo(Guid solutionId, Guid componentId, int componentType, int behavior, bool wasUpdated)
+        private void OutputComponentInfo(Guid solutionId, Guid componentId, int componentType, int behavior, Guid? solutionComponentId, bool wasUpdated)
         {
             if (PassThru.IsPresent)
             {
                 var result = new PSObject();
+                result.Properties.Add(new PSNoteProperty("SolutionComponentId", solutionComponentId));
                 result.Properties.Add(new PSNoteProperty("SolutionName", SolutionName));
                 result.Properties.Add(new PSNoteProperty("SolutionId", solutionId));
                 result.Properties.Add(new PSNoteProperty("ComponentId", componentId));
