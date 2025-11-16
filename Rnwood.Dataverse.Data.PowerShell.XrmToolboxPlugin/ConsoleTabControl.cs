@@ -15,5 +15,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             InitializeComponent();
         }
+
+        // Named event handler referenced by designer
+        private void CloseButton_Click(object sender, EventArgs e)
+        {
+            CloseRequested?.Invoke(this, EventArgs.Empty);
+        }
     }
 }

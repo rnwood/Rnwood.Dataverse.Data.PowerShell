@@ -50,9 +50,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // 
             this.closeButton.Text = "X";
             this.closeButton.Size = new Size(20, 20);
-            this.closeButton.Location = new Point(this.Width - 25, 5);
+            // Use a fixed location so the designer can process the file (avoid expressions using this.Width)
+            this.closeButton.Location = new Point(775, 5);
             this.closeButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            this.closeButton.Click += (s, e) => CloseRequested?.Invoke(this, EventArgs.Empty);
+            this.closeButton.Click += new EventHandler(this.CloseButton_Click);
             // 
             // ConsoleTabControl
             // 
