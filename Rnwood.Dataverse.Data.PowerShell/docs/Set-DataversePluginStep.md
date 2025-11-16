@@ -14,11 +14,11 @@ Creates or updates a plugin step (SDK message processing step) in a Dataverse en
 
 ```
 Set-DataversePluginStep [-Id <Guid>] -Name <String> -PluginTypeId <Guid> -SdkMessageId <Guid>
- [-SdkMessageFilterId <Guid>] -Stage <Int32> -Mode <Int32> [-Rank <Int32>] [-Description <String>]
- [-FilteringAttributes <String[]>] [-Configuration <String>] [-SecureConfigurationId <Guid>]
- [-ImpersonatingUserId <Guid>] [-StateCode <Int32>] [-StatusCode <Int32>] [-SupportedDeployment <Int32>]
- [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+ [-SdkMessageFilterId <Guid>] -Stage <PluginStepStage> -Mode <PluginStepMode> [-Rank <Int32>]
+ [-Description <String>] [-FilteringAttributes <String[]>] [-Configuration <String>]
+ [-SecureConfigurationId <Guid>] [-ImpersonatingUserId <Guid>] [-StateCode <Int32>] [-StatusCode <Int32>]
+ [-SupportedDeployment <PluginStepDeployment>] [-PassThru] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -154,9 +154,10 @@ Accept wildcard characters: False
 Execution mode: 0=Synchronous, 1=Asynchronous
 
 ```yaml
-Type: Int32
+Type: PluginStepMode
 Parameter Sets: (All)
 Aliases:
+Accepted values: Synchronous, Asynchronous
 
 Required: True
 Position: Named
@@ -274,9 +275,10 @@ Accept wildcard characters: False
 Stage of execution: 10=PreValidation, 20=PreOperation, 40=PostOperation, 50=PostOperationDeprecated
 
 ```yaml
-Type: Int32
+Type: PluginStepStage
 Parameter Sets: (All)
 Aliases:
+Accepted values: PreValidation, PreOperation, PostOperation, PostOperationDeprecated
 
 Required: True
 Position: Named
@@ -319,9 +321,10 @@ Accept wildcard characters: False
 Supported deployment: 0=ServerOnly, 1=MicrosoftDynamics365Client, 2=Both. Default is 0.
 
 ```yaml
-Type: Int32
+Type: PluginStepDeployment
 Parameter Sets: (All)
 Aliases:
+Accepted values: ServerOnly, MicrosoftDynamics365Client, Both
 
 Required: False
 Position: Named

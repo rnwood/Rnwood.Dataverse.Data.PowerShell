@@ -14,8 +14,9 @@ Creates or updates a plugin step image in a Dataverse environment.
 
 ```
 Set-DataversePluginStepImage [-Id <Guid>] -SdkMessageProcessingStepId <Guid> -EntityAlias <String>
- -ImageType <Int32> [-MessagePropertyName <String>] [-Attributes <String[]>] [-Name <String>] [-PassThru]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ -ImageType <PluginStepImageType> [-MessagePropertyName <String>] [-Attributes <String[]>] [-Name <String>]
+ [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -125,9 +126,10 @@ Accept wildcard characters: False
 Image type: 0=PreImage, 1=PostImage, 2=Both
 
 ```yaml
-Type: Int32
+Type: PluginStepImageType
 Parameter Sets: (All)
 Aliases:
+Accepted values: PreImage, PostImage, Both
 
 Required: True
 Position: Named

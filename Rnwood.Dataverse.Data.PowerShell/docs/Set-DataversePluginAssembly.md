@@ -14,18 +14,18 @@ Creates or updates a plugin assembly in a Dataverse environment.
 
 ### Content
 ```
-Set-DataversePluginAssembly [-Id <Guid>] -Name <String> -Content <Byte[]> [-IsolationMode <Int32>]
- [-SourceType <Int32>] [-Version <String>] [-Culture <String>] [-PublicKeyToken <String>]
- [-Description <String>] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataversePluginAssembly [-Id <Guid>] -Name <String> -Content <Byte[]>
+ [-IsolationMode <PluginAssemblyIsolationMode>] [-SourceType <PluginAssemblySourceType>] [-Version <String>]
+ [-Culture <String>] [-PublicKeyToken <String>] [-Description <String>] [-PassThru]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### FilePath
 ```
-Set-DataversePluginAssembly [-Id <Guid>] -Name <String> -FilePath <String> [-IsolationMode <Int32>]
- [-SourceType <Int32>] [-Version <String>] [-Culture <String>] [-PublicKeyToken <String>]
- [-Description <String>] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataversePluginAssembly [-Id <Guid>] -Name <String> -FilePath <String>
+ [-IsolationMode <PluginAssemblyIsolationMode>] [-SourceType <PluginAssemblySourceType>] [-Version <String>]
+ [-Culture <String>] [-PublicKeyToken <String>] [-Description <String>] [-PassThru]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -166,9 +166,10 @@ Accept wildcard characters: False
 The isolation mode: 0=None, 1=Sandbox, 2=External (default).
 
 ```yaml
-Type: Int32
+Type: PluginAssemblyIsolationMode
 Parameter Sets: (All)
 Aliases:
+Accepted values: None, Sandbox, External
 
 Required: False
 Position: Named
@@ -226,9 +227,10 @@ Accept wildcard characters: False
 The source type: 0=Database (default), 1=Disk, 2=Normal, 3=AzureWebApp.
 
 ```yaml
-Type: Int32
+Type: PluginAssemblySourceType
 Parameter Sets: (All)
 Aliases:
+Accepted values: Database, Disk, Normal, AzureWebApp, FileStore
 
 Required: False
 Position: Named
