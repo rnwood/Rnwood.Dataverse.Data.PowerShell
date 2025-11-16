@@ -2,21 +2,21 @@
 
 ![Rnwood.Dataverse.Data.PowerShell](logo.png)
 
-A PowerShell module for connecting to Microsoft Dataverse (used by Dynamics 365 and Power Apps) to query and manipulate data. 
+A PowerShell module for connecting to Microsoft Dataverse (used by Dynamics 365 and Power Apps) to query and manipulate data, solutions and customisations. 
 
 This module works in PowerShell Desktop and PowerShell Core, supporting Windows, Linux, and macOS.
 
 ## Features
 
-- Creating, updating, upserting and deleting records including M:M records
+- Creating, updating, upserting and deleting records, including M:M records
 - Simple PowerShell objects for input and output instead of complex SDK Entity classes
     - Automatic data type conversion using metadata - use friendly labels for choices and names for lookups
     - Automatic lookup conversion - use record names instead of GUIDs (when unique)
 - On behalf of (delegation) support for create/update operations
 - Full support for automatic paging
-- Concise PowerShell friendly hashtable based filters with grouped logical expressions (and/or/not/xor) and arbitrary nesting
+- Concise PowerShell-friendly hashtable-based filters with grouped logical expressions (and/or/not/xor) and arbitrary nesting
 - Batching and parallelisation support for efficient bulk operations
-- Auto retries support in many cmdlets
+- Auto-retries support in many cmdlets
 - Comprehensive metadata operations
     - Create, read, update, and delete entities, attributes, option sets, and relationships
     - manipulate model-driven apps, forms, views
@@ -36,7 +36,7 @@ Set-ExecutionPolicy –ExecutionPolicy RemoteSigned –Scope CurrentUser
 Install-Module Rnwood.Dataverse.Data.PowerShell -Scope CurrentUser
 ```
 
-For detailed installation instructions including versioning, see [Installation Guide](docs/getting-started/installation.md).
+For detailed installation instructions, including versioning, see [Installation Guide](docs/getting-started/installation.md).
 
 ### Basic Usage
 
@@ -86,22 +86,23 @@ For more advanced scenarios including view management and app module management,
 - [Authentication Methods](docs/getting-started/authentication.md) - All supported authentication methods
 
 ### Core Concepts
-- [Connection Management](docs/core-concepts/connections.md) - Default connections, named connections
+- [Connection Management](docs/core-concepts/connections.md) - Getting connected, default connections, named connections
 - [Querying Records](docs/core-concepts/querying.md) - Filtering, paging, sorting, linking, SQL queries
 - [Creating and Updating Records](docs/core-concepts/creating-updating.md) - Create, update, upsert operations
 - [Deleting Records](docs/core-concepts/deleting.md) - Delete operations and SQL alternatives
-- [Managing Web Resources](docs/core-concepts/web-resources.md) - Upload, download, and manage web resources with file system integration
 - [Record Access Management](docs/core-concepts/record-access-management.md) - Test, grant, list, and revoke record-level access rights
+- [Working with Metadata](docs/core-concepts/metadata.md) - Reading and managing schema (entities, attributes, relationships, option sets)
+- [Managing Web Resources](docs/core-concepts/web-resources.md) - Upload, download, and manage web resources with file system integration
+- [Managing Forms](docs/core-concepts/form-management.md) - Creat, update, and managed forms
 - [View Management](docs/core-concepts/view-management.md) - Create, update, and manage system and personal views
 - [App Module Management](docs/core-concepts/app-module-management.md) - Create, update, and manage model-driven apps
-- [Working with Metadata](docs/core-concepts/metadata.md) - Reading and managing schema (entities, attributes, relationships, option sets)
-- [Solution Component Management](docs/core-concepts/solution-component-management.md) - Managing individual components within solutions
-- [Error Handling and Batch Operations](docs/core-concepts/error-handling.md) - Error handling and retry logic
 - [Environment Variables and Connection References](docs/core-concepts/environment-variables-connection-references.md) - Managing configuration and connections
+- [Solution Management](docs/advanced/solution-management.md) - Import, export, and manage solutions
+- [Solution Component Management](docs/core-concepts/solution-component-management.md) - Managing individual components within solutions
 
 ### Advanced Topics
+- [Error Handling and Batch Operations](docs/core-concepts/error-handling.md) - Error handling and retry logic
 - [Parallelization](docs/advanced/parallelization.md) - Parallel processing for best performance
-- [Solution Management](docs/advanced/solution-management.md) - Import, export, and manage solutions
 
 ### Reference
 - [Cmdlet Documentation](Rnwood.Dataverse.Data.PowerShell/docs/) - Full cmdlet reference with parameters and examples
@@ -113,6 +114,16 @@ For more advanced scenarios including view management and app module management,
 - [`Get-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRecord.md) — query and retrieve records
 - [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) — create, update or upsert records
 - [`Remove-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRecord.md) — delete records
+
+
+### Advanced Operations
+- [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) — execute arbitrary SDK requests
+- [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) — run SQL queries against Dataverse
+
+ 
+### Advanced Operations
+- [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) — execute arbitrary SDK requests
+- [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) — run SQL queries against Dataverse
 
 ### Record Access Management
 - [`Test-DataverseRecordAccess`](Rnwood.Dataverse.Data.PowerShell/docs/Test-DataverseRecordAccess.md) — test access rights a principal has for a record
@@ -140,13 +151,8 @@ For more advanced scenarios including view management and app module management,
 - [`Set-DataverseWebResource`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseWebResource.md) — create or update web resources from files or folders
 - [`Remove-DataverseWebResource`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseWebResource.md) — delete web resources
 
-### Advanced Operations
-- [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) — execute arbitrary SDK requests
-- [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) — run SQL queries against Dataverse
 
 ### Sitemap Management
-
-**Multilingual Support:** Sitemap cmdlets support multilingual titles and descriptions using LCID-based dictionaries, enabling proper localization for Areas, Groups, and SubAreas.
 
 - [`Get-DataverseSitemap`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSitemap.md) — retrieve sitemap navigation definitions
 - [`Set-DataverseSitemap`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSitemap.md) — create or update sitemap navigation
