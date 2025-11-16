@@ -86,6 +86,7 @@ For more advanced scenarios including view management and app module management,
 - [Querying Records](docs/core-concepts/querying.md) - Filtering, paging, sorting, linking, SQL queries
 - [Creating and Updating Records](docs/core-concepts/creating-updating.md) - Create, update, upsert operations
 - [Deleting Records](docs/core-concepts/deleting.md) - Delete operations and SQL alternatives
+- [Managing Web Resources](docs/core-concepts/web-resources.md) - Upload, download, and manage web resources with file system integration
 - [Record Access Management](docs/core-concepts/record-access-management.md) - Test, grant, list, and revoke record-level access rights
 - [View Management](docs/core-concepts/view-management.md) - Create, update, and manage system and personal views
 - [App Module Management](docs/core-concepts/app-module-management.md) - Create, update, and manage model-driven apps
