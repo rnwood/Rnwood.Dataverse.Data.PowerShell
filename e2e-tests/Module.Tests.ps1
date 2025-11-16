@@ -390,8 +390,10 @@ Describe "Module" {
                     throw "Failed to download web resource to file"
                 }
                 $downloadedContent = Get-Content $downloadJsFile -Raw
-                if ($downloadedContent -ne "console.log('E2E test updated');") {
-                    throw "Downloaded content does not match expected value"
+                $expectedContent = "console.log('E2E test updated');"
+                if ($downloadedContent -ne $expectedContent) {
+                    $downloadedBytes = [System.IO.File]::ReadAllBytes($downloadJsFile)
+                    throw "Downloaded content does not match expected value. Expected length: $($expectedContent.Length), Got length: $($downloadedContent.Length), Bytes: $($downloadedBytes.Length). Expected: [$expectedContent], Got: [$downloadedContent]"
                 }
                 Write-Host "Downloaded and verified web resource content"
                 
