@@ -16,7 +16,9 @@ This module works in PowerShell Desktop and PowerShell Core, supporting Windows,
 - Multiple query methods with full support for automatic paging
 - Concise hashtable-based filters with grouped logical expressions (and/or/not/xor) and arbitrary nesting
 - Batching support for efficient bulk operations
-- **Comprehensive metadata CRUD operations** — Create, read, update, and delete entities, attributes, option sets, and relationships with full coverage of all attribute types and relationship types (OneToMany, ManyToMany). Includes support for entity icon properties (IconVectorName, IconLargeName, IconMediumName, IconSmallName) and bulk updates via EntityMetadata objects.
+- **Comprehensive metadata CRUD operations** — Create, read, update, and delete entities, attributes, option sets, and relationships with full coverage of all attribute types and relationship types (OneToMany, ManyToMany).
+- **CRUD for model-driven apps, forms, views**
+- **CRUD for solutions and solution components**
 
 **Note**: On-premise Dataverse environments are not supported.
 
