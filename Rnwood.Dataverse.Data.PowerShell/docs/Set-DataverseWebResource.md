@@ -22,7 +22,7 @@ Set-DataverseWebResource -InputObject <PSObject> [-Id <Guid>] [-Name <String>] [
 ### File
 ```
 Set-DataverseWebResource [-Id <Guid>] -Name <String> -Path <String> [-DisplayName <String>]
- [-Description <String>] [-WebResourceType <Int32>] [-Publish] [-PassThru] [-NoUpdate] [-NoCreate]
+ [-Description <String>] [-WebResourceType <WebResourceType>] [-Publish] [-PassThru] [-NoUpdate] [-NoCreate]
  [-PublisherPrefix <String>] [-IfNewer] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
@@ -312,9 +312,10 @@ Web resource type: 1=HTML, 2=CSS, 3=JS, 4=XML, 5=PNG, 6=JPG, 7=GIF, 8=XAP, 9=XSL
 Auto-detected from file extension if not specified.
 
 ```yaml
-Type: Int32
+Type: WebResourceType
 Parameter Sets: File
 Aliases:
+Accepted values: HTML, CSS, JavaScript, XML, PNG, JPG, GIF, XAP, XSL, ICO, SVG, RESX
 
 Required: False
 Position: Named

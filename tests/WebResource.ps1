@@ -9,7 +9,7 @@ Describe 'WebResource Cmdlets - Basic Functionality' {
         { Get-Command Get-DataverseWebResource -ParameterName Name } | Should -Not -Throw
         { Get-Command Get-DataverseWebResource -ParameterName WebResourceType } | Should -Not -Throw
         { Get-Command Get-DataverseWebResource -ParameterName DisplayName } | Should -Not -Throw
-        { Get-Command Get-DataverseWebResource -ParameterName IsManaged } | Should -Not -Throw
+        { Get-Command Get-DataverseWebResource -ParameterName Unmanaged } | Should -Not -Throw
         { Get-Command Get-DataverseWebResource -ParameterName Path } | Should -Not -Throw
         { Get-Command Get-DataverseWebResource -ParameterName Folder } | Should -Not -Throw
         { Get-Command Get-DataverseWebResource -ParameterName DecodeContent } | Should -Not -Throw

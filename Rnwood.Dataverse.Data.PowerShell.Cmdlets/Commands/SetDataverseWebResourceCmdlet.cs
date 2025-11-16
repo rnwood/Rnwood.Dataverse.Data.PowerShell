@@ -69,10 +69,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string Description { get; set; }
 
         /// <summary>
-        /// Gets or sets the web resource type (1=HTML, 2=CSS, 3=JS, 4=XML, 5=PNG, 6=JPG, 7=GIF, 8=XAP, 9=XSL, 10=ICO, 11=SVG, 12=RESX).
+        /// Gets or sets the web resource type. Auto-detected from file extension if not specified.
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_FILE, HelpMessage = "Web resource type: 1=HTML, 2=CSS, 3=JS, 4=XML, 5=PNG, 6=JPG, 7=GIF, 8=XAP, 9=XSL, 10=ICO, 11=SVG, 12=RESX. Auto-detected from file extension if not specified.")]
-        public int? WebResourceType { get; set; }
+        [Parameter(ParameterSetName = PARAMSET_FILE, HelpMessage = "Web resource type. Auto-detected from file extension if not specified.")]
+        public WebResourceType? WebResourceType { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether to publish the web resource after creation/update.
@@ -177,7 +177,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var contentBase64 = Convert.ToBase64String(fileBytes);
 
             // Auto-detect web resource type from extension if not specified
-            int resourceType = WebResourceType ?? DetectWebResourceType(filePath);
+            int resourceType = WebResourceType.HasValue ? (int)WebResourceType.Value : DetectWebResourceType(filePath);
 
             var entity = new Entity("webresource");
 

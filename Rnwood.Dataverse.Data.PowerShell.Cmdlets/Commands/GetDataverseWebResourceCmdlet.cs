@@ -33,10 +33,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets or sets the web resource type to filter by (1=HTML, 2=CSS, 3=JS, 4=XML, 5=PNG, 6=JPG, 7=GIF, 8=XAP, 9=XSL, 10=ICO, 11=SVG, 12=RESX).
+        /// Gets or sets the web resource type to filter by.
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_QUERY, HelpMessage = "Web resource type to filter by: 1=HTML, 2=CSS, 3=JS, 4=XML, 5=PNG, 6=JPG, 7=GIF, 8=XAP, 9=XSL, 10=ICO, 11=SVG, 12=RESX")]
-        public int? WebResourceType { get; set; }
+        [Parameter(ParameterSetName = PARAMSET_QUERY, HelpMessage = "Web resource type to filter by")]
+        public WebResourceType? WebResourceType { get; set; }
 
         /// <summary>
         /// Gets or sets the display name or pattern to filter by. Supports wildcards (* and ?).
@@ -45,10 +45,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string DisplayName { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether to include managed web resources.
+        /// Gets or sets a value indicating whether to filter to only unmanaged web resources.
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_QUERY, HelpMessage = "If set, includes managed web resources. Default is to include all.")]
-        public SwitchParameter? IsManaged { get; set; }
+        [Parameter(ParameterSetName = PARAMSET_QUERY, HelpMessage = "If set, filters to only unmanaged web resources")]
+        public SwitchParameter Unmanaged { get; set; }
 
         /// <summary>
         /// Gets or sets the file path to save the web resource content.
@@ -100,7 +100,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (WebResourceType.HasValue)
                     {
-                        query.Criteria.AddCondition("webresourcetype", ConditionOperator.Equal, WebResourceType.Value);
+                        query.Criteria.AddCondition("webresourcetype", ConditionOperator.Equal, (int)WebResourceType.Value);
                     }
 
                     if (!string.IsNullOrEmpty(DisplayName))
@@ -118,9 +118,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
                     }
 
-                    if (IsManaged.HasValue)
+                    if (Unmanaged)
                     {
-                        query.Criteria.AddCondition("ismanaged", ConditionOperator.Equal, IsManaged.Value);
+                        query.Criteria.AddCondition("ismanaged", ConditionOperator.Equal, false);
                     }
                     break;
             }

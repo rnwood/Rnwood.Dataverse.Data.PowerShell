@@ -20,8 +20,8 @@ Get-DataverseWebResource -Id <Guid> [-Path <String>] [-Folder <String>] [-Decode
 
 ### Query
 ```
-Get-DataverseWebResource [-Name <String>] [-WebResourceType <Int32>] [-DisplayName <String>] [-IsManaged]
- [-Path <String>] [-Folder <String>] [-DecodeContent] [-Connection <ServiceClient>]
+Get-DataverseWebResource [-Name <String>] [-WebResourceType <WebResourceType>] [-DisplayName <String>]
+ [-Unmanaged] [-Path <String>] [-Folder <String>] [-DecodeContent] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -118,22 +118,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -IsManaged
-If set, includes managed web resources.
-Default is to include all.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: Query
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Name
 Name or name pattern of the web resource.
 Supports wildcards (* and ?)
@@ -166,13 +150,29 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Unmanaged
+If set, filters to only unmanaged web resources
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Query
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -WebResourceType
 Web resource type to filter by: 1=HTML, 2=CSS, 3=JS, 4=XML, 5=PNG, 6=JPG, 7=GIF, 8=XAP, 9=XSL, 10=ICO, 11=SVG, 12=RESX
 
 ```yaml
-Type: Int32
+Type: WebResourceType
 Parameter Sets: Query
 Aliases:
+Accepted values: HTML, CSS, JavaScript, XML, PNG, JPG, GIF, XAP, XSL, ICO, SVG, RESX
 
 Required: False
 Position: Named
