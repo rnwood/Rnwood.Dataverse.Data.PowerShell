@@ -91,6 +91,7 @@ For more advanced scenarios including view management and app module management,
 - [View Management](docs/core-concepts/view-management.md) - Create, update, and manage system and personal views
 - [App Module Management](docs/core-concepts/app-module-management.md) - Create, update, and manage model-driven apps
 - [Working with Metadata](docs/core-concepts/metadata.md) - Reading and managing schema (entities, attributes, relationships, option sets)
+- [Solution Component Management](docs/core-concepts/solution-component-management.md) - Managing individual components within solutions
 - [Error Handling and Batch Operations](docs/core-concepts/error-handling.md) - Error handling and retry logic
 - [Environment Variables and Connection References](docs/core-concepts/environment-variables-connection-references.md) - Managing configuration and connections
 
