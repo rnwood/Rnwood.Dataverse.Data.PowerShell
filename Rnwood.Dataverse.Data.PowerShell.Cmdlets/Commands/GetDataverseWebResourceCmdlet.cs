@@ -143,14 +143,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             else
             {
-                foreach (var entity in results)
+                // Collect results to check count for Path parameter
+                var resultsList = results.ToList();
+                
+                foreach (var entity in resultsList)
                 {
                     var psObject = ConvertEntityToPSObject(entity);
 
-                    if (!string.IsNullOrEmpty(Path) && ParameterSetName == PARAMSET_ID)
+                    // Save to file if Path is specified and we have exactly one result
+                    if (!string.IsNullOrEmpty(Path))
                     {
-                        // Save single web resource to file only when querying by ID
-                        SaveWebResourceToFile(entity, Path);
+                        if (resultsList.Count == 1)
+                        {
+                            SaveWebResourceToFile(entity, Path);
+                        }
+                        else if (resultsList.Count > 1)
+                        {
+                            WriteWarning($"Multiple web resources found ({resultsList.Count}). Use -Folder parameter to save multiple files. Skipping file save.");
+                        }
                     }
 
                     WriteObject(psObject);
