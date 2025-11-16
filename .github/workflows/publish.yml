@@ -766,6 +766,51 @@ jobs:
           
           # Publish stable release to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
+      
+      - name: Update GitHub Release Description
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Get the current release
+            const release = context.payload.release;
+            const version = release.tag_name.replace(/^v/, '');
+            
+            // Read existing release notes
+            const releaseNotes = fs.readFileSync('release-notes.md', 'utf8');
+            
+            // Build enhanced release body with PowerShell Gallery and installation links
+            const galleryUrl = `https://www.powershellgallery.com/packages/Rnwood.Dataverse.Data.PowerShell/${version}`;
+            const installDocsUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/docs/getting-started/installation.md`;
+            const readmeUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}#installation`;
+            
+            // Preserve any existing body text
+            const existingBody = release.body || '';
+            
+            // Build enhanced release body
+            let enhancedBody = '## 📦 Installation\n\n';
+            enhancedBody += `View this release on PowerShell Gallery: [${version}](${galleryUrl})\n\n`;
+            enhancedBody += 'To install this release:\n';
+            enhancedBody += '```powershell\n';
+            enhancedBody += `Install-Module Rnwood.Dataverse.Data.PowerShell -RequiredVersion ${version} -Scope CurrentUser\n`;
+            enhancedBody += '```\n\n';
+            enhancedBody += 'For more installation options, see:\n';
+            enhancedBody += `- [Installation Guide](${installDocsUrl})\n`;
+            enhancedBody += `- [Quick Start in README](${readmeUrl})\n\n`;
+            enhancedBody += '## Changes\n\n';
+            enhancedBody += releaseNotes;
+            if (existingBody) {
+              enhancedBody += '\n\n---\n\n' + existingBody;
+            }
+            
+            // Update the release
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.id,
+              body: enhancedBody
+            });
   
   # CI Build Publishing (main branch only)
   publish-ci:
@@ -836,13 +881,35 @@ jobs:
             // Read release notes
             const releaseNotes = fs.readFileSync('release-notes.md', 'utf8');
             
+            // Build release body with PowerShell Gallery and installation links
+            const galleryUrl = `https://www.powershellgallery.com/packages/Rnwood.Dataverse.Data.PowerShell/${version}`;
+            const installDocsUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/docs/getting-started/installation.md`;
+            const readmeUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}#installation`;
+            
+            let releaseBody = `Automated CI build from commit ${shortSha}\n\n`;
+            releaseBody += '**This is a prerelease version for testing purposes.**\n\n';
+            releaseBody += '## 📦 Installation\n\n';
+            releaseBody += `View this prerelease on PowerShell Gallery: [${version}](${galleryUrl})\n\n`;
+            releaseBody += 'To install this CI build:\n';
+            releaseBody += '```powershell\n';
+            releaseBody += `Install-Module Rnwood.Dataverse.Data.PowerShell -RequiredVersion ${version} -AllowPrerelease -Scope CurrentUser\n`;
+            releaseBody += '```\n\n';
+            releaseBody += 'For more installation options, see:\n';
+            releaseBody += `- [Installation Guide](${installDocsUrl})\n`;
+            releaseBody += `- [Quick Start in README](${readmeUrl})\n\n`;
+            releaseBody += '## Changes\n\n';
+            releaseBody += releaseNotes;
+            releaseBody += '\n\n---\n';
+            releaseBody += `**Commit:** ${context.sha}\n`;
+            releaseBody += '**Branch:** main';
+            
             // Create prerelease with release notes
             const release = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tagName,
               name: `CI Build ${version}`,
-              body: `Automated CI build from commit ${shortSha}\n\n**This is a prerelease version for testing purposes.**\n\n## Changes\n\n${releaseNotes}\n\n---\n**Commit:** ${context.sha}\n**Branch:** main`,
+              body: releaseBody,
               draft: false,
               prerelease: true,
               target_commitish: context.sha
