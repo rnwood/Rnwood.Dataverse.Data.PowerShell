@@ -15,6 +15,7 @@
       - [Attribute (Column) - Type 2](#attribute-column---type-2)
       - [View - Type 26](#view---type-26)
       - [Form - Type 24](#form---type-24)
+    - [Removing Components from Solutions](#removing-components-from-solutions)
     - [Listing Solution Components](#listing-solution-components)
   - [Advanced Scenarios](#advanced-scenarios)
     - [Adding with Required Dependencies](#adding-with-required-dependencies)

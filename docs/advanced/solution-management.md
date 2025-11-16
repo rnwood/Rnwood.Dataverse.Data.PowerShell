@@ -15,6 +15,7 @@
         - [Compare-DataverseSolutionComponents](#compare-dataversesolutioncomponents)
       - [Managing Solution Components](#managing-solution-components)
         - [Set-DataverseSolutionComponent](#set-dataversesolutioncomponent)
+        - [Remove-DataverseSolutionComponent](#remove-dataversesolutioncomponent)
         - [Common Component Types](#common-component-types)
       - [Uninstalling/removing solutions](#uninstallingremoving-solutions)
         - [Handling Connection References and Environment Variables](#handling-connection-references-and-environment-variables)
