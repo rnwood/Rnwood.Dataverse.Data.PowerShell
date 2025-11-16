@@ -2,7 +2,6 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 ## Table of Contents
 
-
 - [Plugin Management Cmdlets - Usage Examples](#plugin-management-cmdlets---usage-examples)
   - [Prerequisites](#prerequisites)
   - [Complete Plugin Registration Example](#complete-plugin-registration-example)
