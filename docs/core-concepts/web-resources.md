@@ -1,62 +1,7 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Managing Web Resources](#managing-web-resources)
-  - [Table of Contents](#table-of-contents)
-  - [Overview](#overview)
-  - [Web Resource Types](#web-resource-types)
-  - [Retrieving Web Resources](#retrieving-web-resources)
-    - [Get by Name](#get-by-name)
-    - [Get by ID](#get-by-id)
-    - [Filter by Type](#filter-by-type)
-    - [Filter by Display Name](#filter-by-display-name)
-    - [Filter Unmanaged Only](#filter-unmanaged-only)
-    - [Download to File](#download-to-file)
-    - [Download to Folder](#download-to-folder)
-    - [Decode Content](#decode-content)
-  - [Creating and Updating Web Resources](#creating-and-updating-web-resources)
-    - [Create from File](#create-from-file)
-    - [Update Existing](#update-existing)
-    - [Conditional Update with IfNewer](#conditional-update-with-ifnewer)
-    - [Create from InputObject](#create-from-inputobject)
-    - [Publish After Create/Update](#publish-after-createupdate)
-    - [Control Create/Update Behavior](#control-createupdate-behavior)
-    - [Get Result with PassThru](#get-result-with-passthru)
-  - [Deleting Web Resources](#deleting-web-resources)
-    - [Delete by Name](#delete-by-name)
-    - [Delete by ID](#delete-by-id)
-    - [Silent Deletion](#silent-deletion)
-    - [Delete from Pipeline](#delete-from-pipeline)
-    - [Confirmation Control](#confirmation-control)
-  - [Batch Operations](#batch-operations)
-    - [Upload Folder](#upload-folder)
-    - [Download Folder](#download-folder)
-    - [Batch Delete](#batch-delete)
-  - [Best Practices](#best-practices)
-    - [Naming Conventions](#naming-conventions)
-    - [Version Control Integration](#version-control-integration)
-    - [Development Workflow](#development-workflow)
-    - [Error Handling](#error-handling)
-    - [Using with Solution Management](#using-with-solution-management)
-    - [Testing](#testing)
-  - [See Also](#see-also)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Managing Web Resources
 
 Web resources in Dataverse allow you to store and serve web files like JavaScript, CSS, HTML, images, and other content. This guide covers the cmdlets for managing web resources with file system integration.
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Web Resource Types](#web-resource-types)
-- [Retrieving Web Resources](#retrieving-web-resources)
-- [Creating and Updating Web Resources](#creating-and-updating-web-resources)
-- [Deleting Web Resources](#deleting-web-resources)
-- [Batch Operations](#batch-operations)
-- [Best Practices](#best-practices)
 
 ## Overview
 

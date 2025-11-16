@@ -1,31 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Working with Metadata](#working-with-metadata)
-  - [Reading Metadata](#reading-metadata)
-    - [Entity Metadata](#entity-metadata)
-    - [Attribute Metadata](#attribute-metadata)
-    - [Relationship Metadata](#relationship-metadata)
-    - [Option Set Metadata](#option-set-metadata)
-  - [Metadata Caching](#metadata-caching)
-    - [How Caching Works](#how-caching-works)
-    - [Using the Cache](#using-the-cache)
-    - [Manual Cache Management](#manual-cache-management)
-    - [When to Use Caching](#when-to-use-caching)
-  - [Creating and Updating Metadata](#creating-and-updating-metadata)
-    - [Creating Entities](#creating-entities)
-    - [Creating Attributes](#creating-attributes)
-    - [Creating Relationships](#creating-relationships)
-    - [Creating Global Option Sets](#creating-global-option-sets)
-  - [Deleting Metadata](#deleting-metadata)
-  - [Common Patterns](#common-patterns)
-    - [Schema Documentation](#schema-documentation)
-    - [Schema Validation](#schema-validation)
-    - [Bulk Attribute Creation](#bulk-attribute-creation)
-  - [Related Resources](#related-resources)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Working with Metadata
 

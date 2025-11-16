@@ -1,37 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Record Access Management](#record-access-management)
-  - [Overview](#overview)
-  - [Test-DataverseRecordAccess](#test-dataverserecordaccess)
-    - [Basic Usage](#basic-usage)
-    - [Check Specific Permissions](#check-specific-permissions)
-    - [Access Rights Values](#access-rights-values)
-  - [Set-DataverseRecordAccess](#set-dataverserecordaccess)
-    - [Additive Mode (Default)](#additive-mode-default)
-    - [Replace Mode](#replace-mode)
-    - [Combining Multiple Rights](#combining-multiple-rights)
-    - [Working with Teams](#working-with-teams)
-    - [WhatIf and Confirm Support](#whatif-and-confirm-support)
-  - [Get-DataverseRecordAccess](#get-dataverserecordaccess)
-    - [Basic Usage](#basic-usage-1)
-    - [Filter by Access Rights](#filter-by-access-rights)
-    - [Pipeline Usage](#pipeline-usage)
-  - [Remove-DataverseRecordAccess](#remove-dataverserecordaccess)
-    - [Basic Usage](#basic-usage-2)
-    - [Skip Confirmation](#skip-confirmation)
-    - [Bulk Operations](#bulk-operations)
-  - [Complete Workflow Example](#complete-workflow-example)
-  - [Common Use Cases](#common-use-cases)
-    - [Audit Who Has Access to Sensitive Records](#audit-who-has-access-to-sensitive-records)
-    - [Bulk Share Records with a Team](#bulk-share-records-with-a-team)
-    - [Implement Custom Security Logic](#implement-custom-security-logic)
-  - [Best Practices](#best-practices)
-  - [Related Documentation](#related-documentation)
-  - [API Reference](#api-reference)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Record Access Management
 

@@ -1,46 +1,7 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Metadata CRUD Cmdlets - Usage Examples](#metadata-crud-cmdlets---usage-examples)
-  - [Table of Contents](#table-of-contents)
-  - [Metadata Cache](#metadata-cache)
-    - [Using the Cache](#using-the-cache)
-    - [Cache Invalidation](#cache-invalidation)
-    - [Clearing the Cache](#clearing-the-cache)
-    - [Performance Benefits](#performance-benefits)
-  - [Get Cmdlets (Read Operations)](#get-cmdlets-read-operations)
-    - [Get-DataverseEntityMetadata](#get-dataverseentitymetadata)
-    - [Get-DataverseEntityMetadata](#get-dataverseentitymetadata-1)
-    - [Get-DataverseAttributeMetadata](#get-dataverseattributemetadata)
-    - [Get-DataverseOptionSetMetadata](#get-dataverseoptionsetmetadata)
-  - [Set Cmdlets (Create/Update Operations)](#set-cmdlets-createupdate-operations)
-    - [Set-DataverseAttributeMetadata](#set-dataverseattributemetadata)
-    - [Set-DataverseEntityMetadata](#set-dataverseentitymetadata)
-    - [Set-DataverseOptionSetMetadata](#set-dataverseoptionsetmetadata)
-  - [Remove Cmdlets (Delete Operations)](#remove-cmdlets-delete-operations)
-    - [Remove-DataverseAttributeMetadata](#remove-dataverseattributemetadata)
-    - [Remove-DataverseEntityMetadata](#remove-dataverseentitymetadata)
-  - [Advanced Scenarios](#advanced-scenarios)
-    - [Bulk Attribute Creation](#bulk-attribute-creation)
-    - [Clone Entity Structure](#clone-entity-structure)
-    - [Audit Metadata Changes](#audit-metadata-changes)
-  - [Notes](#notes)
-    - [Lookup Attribute Notes](#lookup-attribute-notes)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Metadata CRUD Cmdlets - Usage Examples
 
 This document provides examples of using the new comprehensive metadata CRUD cmdlets.
-
-## Table of Contents
-
-- [Metadata Cache](#metadata-cache)
-- [Get Cmdlets (Read Operations)](#get-cmdlets-read-operations)
-- [Set Cmdlets (Create/Update Operations)](#set-cmdlets-createupdate-operations)
-- [Remove Cmdlets (Delete Operations)](#remove-cmdlets-delete-operations)
-- [Advanced Scenarios](#advanced-scenarios)
 
 ## Metadata Cache
 

@@ -1,36 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Plugin Management Cmdlets - Usage Examples](#plugin-management-cmdlets---usage-examples)
-  - [Prerequisites](#prerequisites)
-  - [Complete Plugin Registration Example](#complete-plugin-registration-example)
-    - [1. Upload Plugin Assembly](#1-upload-plugin-assembly)
-    - [2. Register Plugin Type](#2-register-plugin-type)
-    - [3. Get SDK Message and Filter IDs](#3-get-sdk-message-and-filter-ids)
-    - [4. Register Plugin Step](#4-register-plugin-step)
-    - [5. Register Step Image (Optional)](#5-register-step-image-optional)
-  - [Query and Management Examples](#query-and-management-examples)
-    - [List All Plugin Assemblies](#list-all-plugin-assemblies)
-    - [Find Plugin Types for an Assembly](#find-plugin-types-for-an-assembly)
-    - [List Steps for a Plugin Type](#list-steps-for-a-plugin-type)
-    - [Update Assembly with New Version](#update-assembly-with-new-version)
-  - [Cleanup Examples](#cleanup-examples)
-    - [Remove a Plugin Step](#remove-a-plugin-step)
-    - [Remove All Steps for a Plugin Type](#remove-all-steps-for-a-plugin-type)
-    - [Unregister Complete Plugin](#unregister-complete-plugin)
-  - [Plugin Package Examples (for modern plugins)](#plugin-package-examples-for-modern-plugins)
-    - [Upload Plugin Package](#upload-plugin-package)
-    - [List All Plugin Packages](#list-all-plugin-packages)
-  - [Advanced Scenarios](#advanced-scenarios)
-    - [Disable a Plugin Step](#disable-a-plugin-step)
-    - [Change Step Execution Order](#change-step-execution-order)
-  - [WhatIf and Confirm Support](#whatif-and-confirm-support)
-  - [Error Handling](#error-handling)
-  - [Notes](#notes)
-  - [Additional Resources](#additional-resources)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Plugin Management Cmdlets - Usage Examples
 

@@ -1,19 +1,6 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Getting Started](#getting-started)
-  - [Contents](#contents)
-  - [Quick Links](#quick-links)
-    - [Next Steps](#next-steps)
-    - [Common Tasks](#common-tasks)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Getting Started
 
-<!-- TOC -->
-<!-- /TOC -->
 
 This section contains guides to help you get started with the Rnwood.Dataverse.Data.PowerShell module.
 
