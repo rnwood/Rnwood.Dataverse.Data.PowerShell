@@ -162,6 +162,88 @@ Compare-DataverseSolutionComponents -Connection $c -SolutionFile "MySolution.zip
 
 These cmdlets help understand what components are included in solutions, their behavior settings, and differences between versions or environments.
 
+#### Managing Solution Components
+
+The module provides cmdlets for managing individual solution components within a solution:
+
+##### Set-DataverseSolutionComponent
+
+Adds or updates a solution component with automatic handling of behavior changes. Since Dataverse doesn't allow updating the root component behavior directly, this cmdlet automatically removes and re-adds the component when the behavior needs to change.
+
+```powershell
+# Add an entity to a solution with default behavior (Include Subcomponents)
+$entityMetadata = Get-DataverseEntityMetadata -Connection $c -EntityName "new_customtable"
+Set-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
+    -ComponentId $entityMetadata.MetadataId -ComponentType 1 -Behavior 0
+
+# Change behavior from "Include Subcomponents" to "Do Not Include Subcomponents"
+Set-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
+    -ComponentId $entityMetadata.MetadataId -ComponentType 1 -Behavior 1 -PassThru
+
+# Add an attribute component
+$attributeMetadata = Get-DataverseAttributeMetadata -Connection $c `
+    -EntityName "new_customtable" -AttributeName "new_field"
+Set-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
+    -ComponentId $attributeMetadata.MetadataId -ComponentType 2 -Behavior 0
+```
+
+**Behavior values:**
+- `0` = Include Subcomponents (default) - Includes all subcomponents like attributes, forms, views
+- `1` = Do Not Include Subcomponents - Includes only the root component
+- `2` = Include As Shell - Not fully supported by the API (will display a warning)
+
+**Key features:**
+- Idempotent operation - no action if component already exists with the same behavior
+- Automatic behavior change - removes and re-adds component when behavior changes
+- Supports all component types (entities, attributes, forms, views, etc.)
+- Returns solutioncomponentid and other details when using -PassThru
+
+See the full parameter reference: [Set-DataverseSolutionComponent](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSolutionComponent.md).
+
+##### Remove-DataverseSolutionComponent
+
+Removes a solution component from an unmanaged solution. Note that this only removes the component from the solution - the component itself remains in the environment.
+
+```powershell
+# Remove an entity component from a solution
+$entityMetadata = Get-DataverseEntityMetadata -Connection $c -EntityName "new_customtable"
+Remove-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
+    -ComponentId $entityMetadata.MetadataId -ComponentType 1
+
+# Remove with IfExists flag (no error if component doesn't exist in solution)
+Remove-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
+    -ComponentId $componentId -ComponentType 2 -IfExists
+
+# Remove multiple components
+$components = Get-DataverseSolutionComponent -Connection $c -SolutionName "MySolution"
+$components | Where-Object { $_.ComponentType -eq 26 } | ForEach-Object {
+    Remove-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
+        -ComponentId $_.ObjectId -ComponentType $_.ComponentType -Confirm:$false
+}
+```
+
+**Important distinction:**
+- `Remove-DataverseSolutionComponent` removes the component from the solution (component remains in environment)
+- `Remove-DataverseEntityMetadata` / `Remove-DataverseAttributeMetadata` delete the component from the environment entirely
+
+See the full parameter reference: [Remove-DataverseSolutionComponent](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseSolutionComponent.md).
+
+##### Common Component Types
+
+| Component Type | Description |
+|----------------|-------------|
+| 1 | Entity (Table) |
+| 2 | Attribute (Column) |
+| 9 | Option Set (Choice) |
+| 10 | Entity Relationship |
+| 24 | Form |
+| 26 | View |
+| 29 | Web Resource |
+| 60 | Chart |
+| 80 | Process (Workflow) |
+
+For a complete list, see [Microsoft's Solution Component documentation](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/solution-component-file).
+
 #### Uninstalling/removing solutions
 - `Remove-DataverseSolution` removes (uninstalls) a solution from a Dataverse environment using the asynchronous uninstall process. The operation is asynchronous and the cmdlet monitors the uninstall progress.
 - When removing a solution:
