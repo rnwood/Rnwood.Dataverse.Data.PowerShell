@@ -32,6 +32,11 @@ $entities = @(
     "environmentvariabledefinition",
     "environmentvariablevalue",
     "systemform"
+    "plugintype"
+    "pluginassembly"
+    "sdkmessageprocessingstep"
+    "sdkmessageprocessingstepimage"
+    "sdkmessageprocessingstepsecureconfig"
 )
 
 Write-Host "Will generate metadata for $($entities.Count) entities:" -ForegroundColor Yellow
