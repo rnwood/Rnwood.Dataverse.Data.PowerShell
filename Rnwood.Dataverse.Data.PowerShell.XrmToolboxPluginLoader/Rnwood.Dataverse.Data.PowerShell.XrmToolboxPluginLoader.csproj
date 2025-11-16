@@ -8,7 +8,7 @@
    </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="XrmToolBoxPackage" Version="1.2025.7.71"/>
+    <PackageReference Include="XrmToolBoxPackage" Version="1.2025.10.74" />
   </ItemGroup>
 
 
