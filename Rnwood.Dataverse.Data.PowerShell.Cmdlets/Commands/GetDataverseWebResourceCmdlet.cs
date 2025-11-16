@@ -126,7 +126,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Use QueryHelpers to execute with automatic paging
-            var results = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose);
+            // Read unpublished by default since web resources are customizable entities
+            var results = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, unpublished: true);
 
             if (!string.IsNullOrEmpty(Folder))
             {

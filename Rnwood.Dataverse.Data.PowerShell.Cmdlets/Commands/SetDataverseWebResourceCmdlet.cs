@@ -195,7 +195,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Check IfNewer flag
                 if (IfNewer)
                 {
-                    var existingEntity = Connection.Retrieve("webresource", existingId.Value, new ColumnSet("modifiedon"));
+                    // Use RetrieveUnpublishedRequest to get unpublished web resource
+                    var retrieveUnpublishedRequest = new Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedRequest
+                    {
+                        Target = new EntityReference("webresource", existingId.Value),
+                        ColumnSet = new ColumnSet("modifiedon")
+                    };
+                    var response = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
+                    var existingEntity = response.Entity;
+                    
                     if (existingEntity.Contains("modifiedon"))
                     {
                         var modifiedOn = existingEntity.GetAttributeValue<DateTime>("modifiedon");
@@ -373,7 +381,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             query.Criteria.AddCondition("name", ConditionOperator.Equal, name);
             query.TopCount = 1;
 
-            var results = Connection.RetrieveMultiple(query);
+            // Use RetrieveUnpublishedMultipleRequest to find unpublished web resources
+            var request = new Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleRequest { Query = query };
+            var response = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+            var results = response.EntityCollection;
 
             return results.Entities.Count > 0 ? results.Entities[0].Id : (Guid?)null;
         }

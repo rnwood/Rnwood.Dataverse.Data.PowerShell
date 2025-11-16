@@ -143,7 +143,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             query.Criteria.AddCondition("name", ConditionOperator.Equal, name);
             query.TopCount = 1;
 
-            var results = Connection.RetrieveMultiple(query);
+            // Use RetrieveUnpublishedMultipleRequest to find unpublished web resources
+            var request = new Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleRequest { Query = query };
+            var response = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+            var results = response.EntityCollection;
 
             return results.Entities.Count > 0 ? results.Entities[0].Id : (Guid?)null;
         }
