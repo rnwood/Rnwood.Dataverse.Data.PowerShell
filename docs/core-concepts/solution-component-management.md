@@ -1,3 +1,31 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table of Contents
+
+- [Solution Component Management](#solution-component-management)
+  - [Overview](#overview)
+  - [Key Concepts](#key-concepts)
+    - [Component Types](#component-types)
+    - [Root Component Behavior](#root-component-behavior)
+  - [Managing Components](#managing-components)
+    - [Adding Components to Solutions](#adding-components-to-solutions)
+    - [Changing Component Behavior](#changing-component-behavior)
+    - [Adding Different Component Types](#adding-different-component-types)
+      - [Entity (Table) - Type 1](#entity-table---type-1)
+      - [Attribute (Column) - Type 2](#attribute-column---type-2)
+      - [View - Type 26](#view---type-26)
+      - [Form - Type 24](#form---type-24)
+    - [Listing Solution Components](#listing-solution-components)
+  - [Advanced Scenarios](#advanced-scenarios)
+    - [Adding with Required Dependencies](#adding-with-required-dependencies)
+    - [Idempotent Operations](#idempotent-operations)
+    - [Preview Changes with WhatIf](#preview-changes-with-whatif)
+    - [Getting Output Details](#getting-output-details)
+  - [Best Practices](#best-practices)
+  - [Related Topics](#related-topics)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Solution Component Management
 
 This guide covers managing individual solution components within Dataverse solutions.
