@@ -1,21 +1,6 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Core Concepts](#core-concepts)
-  - [Contents](#contents)
-  - [Key Topics](#key-topics)
-    - [Working with Records](#working-with-records)
-    - [Connection Features](#connection-features)
-    - [Performance and Reliability](#performance-and-reliability)
-  - [See Also](#see-also)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Core Concepts
 
-<!-- TOC -->
-<!-- /TOC -->
 
 This section covers the core concepts and operations for working with Dataverse data using PowerShell.
 

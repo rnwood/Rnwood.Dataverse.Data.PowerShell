@@ -103,7 +103,3 @@ This automation ensures test failures are immediately visible and actionable, en
 The workflow requires:
 - `contents: read` - To checkout code
 - `pull-requests: write` - To post comments on PRs
-
-## toc.yml - Table of Contents Generation
-
-Automatically generates and updates table of contents for documentation files.
