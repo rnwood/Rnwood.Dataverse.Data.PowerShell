@@ -1,6 +1,6 @@
 # Rnwood.Dataverse.Data.PowerShell
 
-<img src="logo.svg" height=150/>
+<img src="logo.png" height=150/>
 
 A PowerShell module for connecting to Microsoft Dataverse (used by Dynamics 365 and Power Apps) to query and manipulate data. 
 
