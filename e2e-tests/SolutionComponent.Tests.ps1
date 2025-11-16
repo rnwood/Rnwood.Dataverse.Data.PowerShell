@@ -291,21 +291,66 @@ Describe "Solution Component E2E Tests" {
             }
             Write-Host "✓ Get-DataverseSolutionComponent works with SolutionId parameter"
                 
-            Write-Host "Step 11: Cleanup - Removing test solution (will cascade delete components)..."
+            Write-Host "Step 11: Testing Remove-DataverseSolutionComponent..."
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                
+                # Remove the attribute component
+                Remove-DataverseSolutionComponent -Connection $connection `
+                    -SolutionName $solutionName `
+                    -ComponentId $script:attributeObjectId `
+                    -ComponentType 2 `
+                    -Confirm:$false
+            }
+            Write-Host "✓ Attribute component removed from solution"
+                
+            Write-Host "Step 12: Verifying component removal..."
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
+                
+                $attributeComp = $components | Where-Object { $_.ObjectId -eq $script:attributeObjectId }
+                if ($attributeComp) {
+                    throw "Attribute component should not be in solution after removal"
+                }
+                
+                # Entity should still be there
+                $entityComp = $components | Where-Object { $_.ObjectId -eq $script:entityObjectId }
+                if (-not $entityComp) {
+                    throw "Entity component should still be in solution"
+                }
+            }
+            Write-Host "✓ Component removal verified"
+                
+            Write-Host "Step 13: Testing Remove-DataverseSolutionComponent with IfExists (should not error)..."
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                
+                # Try to remove the attribute again with IfExists - should not error
+                Remove-DataverseSolutionComponent -Connection $connection `
+                    -SolutionName $solutionName `
+                    -ComponentId $script:attributeObjectId `
+                    -ComponentType 2 `
+                    -IfExists `
+                    -Confirm:$false
+            }
+            Write-Host "✓ IfExists parameter works correctly"
+                
+            Write-Host "Step 14: Cleanup - Removing test solution (will cascade delete components)..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
                 Remove-DataverseSolution -Connection $connection -UniqueName $solutionName -Confirm:$false
             }
             Write-Host "✓ Test solution deleted"
                 
-            Write-Host "Step 12: Cleanup - Removing test entity..."
+            Write-Host "Step 15: Cleanup - Removing test entity..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
                 Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
             }
             Write-Host "✓ Test entity deleted"
                 
-            Write-Host "Step 13: Cleanup any old test solutions from previous failed runs..."
+            Write-Host "Step 16: Cleanup any old test solutions from previous failed runs..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
                 $oldSolutions = Get-DataverseSolution -Connection $connection | Where-Object { 
@@ -329,7 +374,7 @@ Describe "Solution Component E2E Tests" {
                 }
             }
             
-            Write-Host "Step 14: Cleanup any old test entities from previous failed runs..."
+            Write-Host "Step 17: Cleanup any old test entities from previous failed runs..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
                 $oldEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 

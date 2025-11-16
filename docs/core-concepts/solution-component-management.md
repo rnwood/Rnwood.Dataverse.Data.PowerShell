@@ -139,6 +139,25 @@ Set-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
     -ComponentId $form.formid -ComponentType 24 -Behavior 0
 ```
 
+### Removing Components from Solutions
+
+Use `Remove-DataverseSolutionComponent` to remove a component from a solution:
+
+```powershell
+# Remove an entity component
+$entityMetadata = Get-DataverseEntityMetadata -Connection $c -EntityName "new_customtable"
+Remove-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
+    -ComponentId $entityMetadata.MetadataId -ComponentType 1
+
+# Remove an attribute component
+$attributeMetadata = Get-DataverseAttributeMetadata -Connection $c `
+    -EntityName "account" -AttributeName "new_customfield"
+Remove-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
+    -ComponentId $attributeMetadata.MetadataId -ComponentType 2 -Confirm:$false
+```
+
+**Important:** This only removes the component from the solution. The component itself remains in the environment. To delete the component entirely, use the appropriate `Remove-Dataverse*Metadata` cmdlet.
+
 ### Listing Solution Components
 
 Use `Get-DataverseSolutionComponent` to view components in a solution:
@@ -176,6 +195,14 @@ Set-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
 # Second run: no action (component already exists with same behavior)
 Set-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
     -ComponentId $entityId -ComponentType 1 -Behavior 0
+```
+
+Similarly, `Remove-DataverseSolutionComponent` supports `-IfExists` for idempotent removal:
+
+```powershell
+# Remove component if it exists, no error if it doesn't
+Remove-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
+    -ComponentId $entityId -ComponentType 1 -IfExists
 ```
 
 ### Preview Changes with WhatIf
@@ -223,3 +250,4 @@ Write-Host "Was Updated: $($result.WasUpdated)"
 - [Working with Metadata](metadata.md) - Managing entities, attributes, and relationships
 - [Set-DataverseSolutionComponent](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSolutionComponent.md) - Full cmdlet reference
 - [Get-DataverseSolutionComponent](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSolutionComponent.md) - Full cmdlet reference
+- [Remove-DataverseSolutionComponent](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseSolutionComponent.md) - Full cmdlet reference

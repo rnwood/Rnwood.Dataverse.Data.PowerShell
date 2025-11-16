@@ -233,6 +233,34 @@ Set-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
 
 See the full parameter reference: [Set-DataverseSolutionComponent](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseSolutionComponent.md).
 
+##### Remove-DataverseSolutionComponent
+
+Removes a solution component from an unmanaged solution. Note that this only removes the component from the solution - the component itself remains in the environment.
+
+```powershell
+# Remove an entity component from a solution
+$entityMetadata = Get-DataverseEntityMetadata -Connection $c -EntityName "new_customtable"
+Remove-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
+    -ComponentId $entityMetadata.MetadataId -ComponentType 1
+
+# Remove with IfExists flag (no error if component doesn't exist in solution)
+Remove-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
+    -ComponentId $componentId -ComponentType 2 -IfExists
+
+# Remove multiple components
+$components = Get-DataverseSolutionComponent -Connection $c -SolutionName "MySolution"
+$components | Where-Object { $_.ComponentType -eq 26 } | ForEach-Object {
+    Remove-DataverseSolutionComponent -Connection $c -SolutionName "MySolution" `
+        -ComponentId $_.ObjectId -ComponentType $_.ComponentType -Confirm:$false
+}
+```
+
+**Important distinction:**
+- `Remove-DataverseSolutionComponent` removes the component from the solution (component remains in environment)
+- `Remove-DataverseEntityMetadata` / `Remove-DataverseAttributeMetadata` delete the component from the environment entirely
+
+See the full parameter reference: [Remove-DataverseSolutionComponent](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseSolutionComponent.md).
+
 ##### Common Component Types
 
 | Component Type | Description |
