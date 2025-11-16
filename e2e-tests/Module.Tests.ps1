@@ -29,7 +29,9 @@ Describe "Module" {
                 $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
                 Get-DataverseRecord -Connection $connection -TableName systemuser
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
 
@@ -49,7 +51,9 @@ Describe "Module" {
                 $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
                 Invoke-DataverseSql -Connection $connection -Sql "SELECT * FROM systemuser"
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
 
@@ -82,7 +86,9 @@ Describe "Module" {
                 
                 Write-Host "All cmdlets have help available"
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
         
@@ -152,7 +158,9 @@ Describe "Module" {
                 
                 Write-Host "All tested cmdlets have proper help structure"
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
         
@@ -189,7 +197,9 @@ Describe "Module" {
                 
                 Write-Host "Help files exist and are accessible"
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
         
@@ -233,7 +243,9 @@ Describe "Module" {
                 
                 Write-Host "Successfully executed 5 parallel WhoAmI calls"
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
         
@@ -321,7 +333,9 @@ Describe "Module" {
                 Write-Host "Total test duration: $((Get-Date) - $startTime)"
                 
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
         
@@ -420,7 +434,9 @@ Describe "Module" {
                 Write-Host "SUCCESS: All web resource operations completed successfully"
                 
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
         
@@ -486,7 +502,9 @@ Describe "Module" {
                 Write-Host "SUCCESS: Batch web resource operations completed successfully"
                 
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
         
