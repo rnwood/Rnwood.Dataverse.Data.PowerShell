@@ -9,6 +9,7 @@ This document provides examples of common Dataverse operations using `Rnwood.Dat
 - [Querying Records](#querying-records)
 - [Batch Operations](#batch-operations)
 - [Working with Attachments](#working-with-attachments)
+- [Working with Web Resources](#working-with-web-resources)
 - [Invoking Custom Requests](#invoking-custom-requests)
 - [Metadata Operations](#metadata-operations)
 - [Solution Management](#solution-management)
@@ -336,6 +337,159 @@ $note = @{
 }
 
 $noteId = Set-DataverseRecord -Connection $conn -TableName annotation -Fields $note
+```
+
+## Working with Web Resources
+
+### Example: Create a Web Resource from a File
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex - requires building Entity objects and manual base64 encoding
+$fileContent = [System.IO.File]::ReadAllBytes("C:\script.js")
+$base64 = [System.Convert]::ToBase64String($fileContent)
+
+$webResource = New-Object Microsoft.Xrm.Sdk.Entity("webresource")
+$webResource.Attributes["name"] = "new_/script.js"
+$webResource.Attributes["displayname"] = "My Script"
+$webResource.Attributes["webresourcetype"] = New-Object Microsoft.Xrm.Sdk.OptionSetValue(3)  # JavaScript
+$webResource.Attributes["content"] = $base64
+
+$webResourceId = $conn.Create($webResource)
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple - automatically handles file reading and base64 encoding
+Set-DataverseWebResource -Connection $conn -Name "new_script" -Path "C:\script.js" `
+    -DisplayName "My Script" -PublisherPrefix "new"
+```
+
+### Example: Update a Web Resource
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex - requires retrieving, modifying and updating
+$webResource = $conn.Retrieve("webresource", $webResourceId, (New-Object Microsoft.Xrm.Sdk.Query.ColumnSet($true)))
+$fileContent = [System.IO.File]::ReadAllBytes("C:\updated-script.js")
+$webResource.Attributes["content"] = [System.Convert]::ToBase64String($fileContent)
+$conn.Update($webResource)
+
+# Publish the web resource
+$publishRequest = New-Object Microsoft.Crm.Sdk.Messages.PublishXmlRequest
+$publishRequest.ParameterXml = "<importexportxml><webresources><webresource>$webResourceId</webresource></webresources></importexportxml>"
+$conn.Execute($publishRequest)
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple - automatically updates by name and optionally publishes
+Set-DataverseWebResource -Connection $conn -Name "new_script" -Path "C:\updated-script.js" -Publish
+```
+
+### Example: Download a Web Resource
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex - requires manual base64 decoding and file writing
+$query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression("webresource")
+$query.ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet("name", "content")
+$query.Criteria.AddCondition("name", [Microsoft.Xrm.Sdk.Query.ConditionOperator]::Equal, "new_/script.js")
+
+$result = $conn.RetrieveMultiple($query)
+if ($result.Entities.Count -gt 0) {
+    $webResource = $result.Entities[0]
+    $content = [System.Convert]::FromBase64String($webResource.Attributes["content"])
+    [System.IO.File]::WriteAllBytes("C:\downloaded-script.js", $content)
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple - automatically handles base64 decoding and file writing
+Get-DataverseWebResource -Connection $conn -Name "new_script" -Path "C:\downloaded-script.js"
+```
+
+### Example: Upload Multiple Web Resources from a Folder
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex - requires looping and manual handling
+$files = Get-ChildItem -Path "C:\webresources" -File -Filter "*.js"
+foreach ($file in $files) {
+    $fileContent = [System.IO.File]::ReadAllBytes($file.FullName)
+    $base64 = [System.Convert]::ToBase64String($fileContent)
+    
+    $webResource = New-Object Microsoft.Xrm.Sdk.Entity("webresource")
+    $webResource.Attributes["name"] = "new_/$($file.Name)"
+    $webResource.Attributes["displayname"] = $file.BaseName
+    $webResource.Attributes["webresourcetype"] = New-Object Microsoft.Xrm.Sdk.OptionSetValue(3)
+    $webResource.Attributes["content"] = $base64
+    
+    $conn.Create($webResource)
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple - single command processes entire folder
+Set-DataverseWebResource -Connection $conn -Folder "C:\webresources" `
+    -PublisherPrefix "new" -FileFilter "*.js" -Publish
+```
+
+### Example: Download Multiple Web Resources
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex - requires querying, looping, and manual file handling
+$query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression("webresource")
+$query.ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet("name", "content")
+$query.Criteria.AddCondition("webresourcetype", [Microsoft.Xrm.Sdk.Query.ConditionOperator]::Equal, 3)
+
+$results = $conn.RetrieveMultiple($query)
+foreach ($webResource in $results.Entities) {
+    $name = $webResource.Attributes["name"].Replace("/", "_")
+    $content = [System.Convert]::FromBase64String($webResource.Attributes["content"])
+    [System.IO.File]::WriteAllBytes("C:\download\$name", $content)
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple - automatically saves all matching resources
+Get-DataverseWebResource -Connection $conn -WebResourceType 3 -Folder "C:\download"
+
+# Or with wildcards for name filtering
+Get-DataverseWebResource -Connection $conn -Name "new_*" -Folder "C:\download"
+```
+
+### Example: Delete a Web Resource
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Must look up by name first, then delete
+$query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression("webresource")
+$query.ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet("webresourceid")
+$query.Criteria.AddCondition("name", [Microsoft.Xrm.Sdk.Query.ConditionOperator]::Equal, "new_/script.js")
+
+$result = $conn.RetrieveMultiple($query)
+if ($result.Entities.Count -gt 0) {
+    $conn.Delete("webresource", $result.Entities[0].Id)
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple - delete by name directly
+Remove-DataverseWebResource -Connection $conn -Name "new_script"
+
+# Or pipe from Get with name wildcard
+Get-DataverseWebResource -Connection $conn -Name "new_script*" |
+    Remove-DataverseWebResource -Connection $conn
+
+# Or by type
+Get-DataverseWebResource -Connection $conn -WebResourceType 3 |
+    Remove-DataverseWebResource -Connection $conn
 ```
 
 ## Invoking Custom Requests

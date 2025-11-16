@@ -29,7 +29,9 @@ Describe "Module" {
                 $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
                 Get-DataverseRecord -Connection $connection -TableName systemuser
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
 
@@ -49,7 +51,9 @@ Describe "Module" {
                 $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
                 Invoke-DataverseSql -Connection $connection -Sql "SELECT * FROM systemuser"
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
 
@@ -82,7 +86,9 @@ Describe "Module" {
                 
                 Write-Host "All cmdlets have help available"
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
         
@@ -152,7 +158,9 @@ Describe "Module" {
                 
                 Write-Host "All tested cmdlets have proper help structure"
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
         
@@ -189,7 +197,9 @@ Describe "Module" {
                 
                 Write-Host "Help files exist and are accessible"
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
         
@@ -233,7 +243,9 @@ Describe "Module" {
                 
                 Write-Host "Successfully executed 5 parallel WhoAmI calls"
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
         
@@ -321,7 +333,178 @@ Describe "Module" {
                 Write-Host "Total test duration: $((Get-Date) - $startTime)"
                 
             } catch {
-                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
+            }
+        }
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed"
+        }
+    }
+
+    It "Can create, retrieve, update and delete web resources" {
+        pwsh -noninteractive -noprofile -command {
+            $env:PSModulePath = $env:ChildProcessPSModulePath
+            
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+            
+            try {
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+                
+                # Create a unique name for test web resource
+                $testPrefix = "test_e2e_" + [Guid]::NewGuid().ToString().Substring(0, 8)
+                $webResourceName = $testPrefix
+                
+                Write-Host "Creating test web resource: $webResourceName"
+                
+                # Create a test file
+                $tempFile = [System.IO.Path]::GetTempFileName()
+                $tempJsFile = [System.IO.Path]::ChangeExtension($tempFile, ".js")
+                Move-Item $tempFile $tempJsFile -Force
+                "console.log('E2E test');" | Out-File -FilePath $tempJsFile -NoNewline -Encoding utf8
+                
+                # Test: Create web resource from file
+                Set-DataverseWebResource -Connection $connection -Name $webResourceName -Path $tempJsFile -DisplayName "E2E Test Resource" -PublisherPrefix "test" -PassThru | Out-Null
+                Write-Host "Created web resource: $webResourceName"
+                
+                # Test: Retrieve by name
+                $retrieved = Get-DataverseWebResource -Connection $connection -Name $webResourceName
+                if (-not $retrieved) {
+                    throw "Failed to retrieve web resource by name"
+                }
+                Write-Host "Retrieved web resource by name"
+                
+                # Test: Retrieve by ID
+                $retrievedById = Get-DataverseWebResource -Connection $connection -Id $retrieved.Id
+                if (-not $retrievedById) {
+                    throw "Failed to retrieve web resource by ID"
+                }
+                Write-Host "Retrieved web resource by ID"
+                
+                # Test: Retrieve by type with wildcard
+                $retrievedByType = Get-DataverseWebResource -Connection $connection -Name "$testPrefix*" -WebResourceType JavaScript
+                if ($retrievedByType.Count -eq 0) {
+                    throw "Failed to retrieve web resource by type with wildcard"
+                }
+                Write-Host "Retrieved web resource by type with wildcard"
+                
+                # Test: Update web resource
+                "console.log('E2E test updated');" | Out-File -FilePath $tempJsFile -NoNewline -Encoding utf8
+                Set-DataverseWebResource -Connection $connection -Name $webResourceName -Path $tempJsFile | Out-Null
+                Write-Host "Updated web resource"
+                
+                # Test: Retrieve and save to file
+                $downloadFile = [System.IO.Path]::GetTempFileName()
+                $downloadJsFile = [System.IO.Path]::ChangeExtension($downloadFile, ".js")
+                Remove-Item $downloadFile -Force
+                Get-DataverseWebResource -Connection $connection -Name $webResourceName -Path $downloadJsFile | Out-Null
+                if (-not (Test-Path $downloadJsFile)) {
+                    throw "Failed to download web resource to file"
+                }
+                $downloadedContent = Get-Content $downloadJsFile -Raw
+                $expectedContent = "console.log('E2E test updated');"
+                if ($downloadedContent -ne $expectedContent) {
+                    $downloadedBytes = [System.IO.File]::ReadAllBytes($downloadJsFile)
+                    throw "Downloaded content does not match expected value. Expected length: $($expectedContent.Length), Got length: $($downloadedContent.Length), Bytes: $($downloadedBytes.Length). Expected: [$expectedContent], Got: [$downloadedContent]"
+                }
+                Write-Host "Downloaded and verified web resource content"
+                
+                # Test: IfNewer flag (should not update since file is older)
+                Start-Sleep -Milliseconds 100
+                Set-DataverseWebResource -Connection $connection -Name $webResourceName -Path $tempJsFile -IfNewer -Verbose | Out-Null
+                Write-Host "Tested IfNewer flag"
+                
+                # Cleanup temp files
+                Remove-Item $tempJsFile -Force -ErrorAction SilentlyContinue
+                Remove-Item $downloadJsFile -Force -ErrorAction SilentlyContinue
+                
+                # Test: Delete web resource
+                Remove-DataverseWebResource -Connection $connection -Name $webResourceName -Confirm:$false | Out-Null
+                Write-Host "Deleted web resource"
+                
+                # Verify deletion
+                $deleted = Get-DataverseWebResource -Connection $connection -Name $webResourceName
+                if ($deleted) {
+                    throw "Web resource was not deleted"
+                }
+                Write-Host "Verified web resource deletion"
+                
+                Write-Host "SUCCESS: All web resource operations completed successfully"
+                
+            } catch {
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
+            }
+        }
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed"
+        }
+    }
+
+    It "Can batch upload and download web resources from folder" {
+        pwsh -noninteractive -noprofile -command {
+            $env:PSModulePath = $env:ChildProcessPSModulePath
+            
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+            
+            try {
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+                
+                # Create test files in a temp folder
+                $testPrefix = "test_e2e_batch_" + [Guid]::NewGuid().ToString().Substring(0, 8)
+                $tempFolder = Join-Path ([System.IO.Path]::GetTempPath()) ([Guid]::NewGuid().ToString())
+                New-Item -ItemType Directory -Path $tempFolder -Force | Out-Null
+                
+                Write-Host "Creating test files in: $tempFolder"
+                
+                # Create 3 test files
+                "console.log('test1');" | Out-File -FilePath (Join-Path $tempFolder "test1.js") -NoNewline -Encoding utf8
+                "console.log('test2');" | Out-File -FilePath (Join-Path $tempFolder "test2.js") -NoNewline -Encoding utf8
+                "body { color: red; }" | Out-File -FilePath (Join-Path $tempFolder "test.css") -NoNewline -Encoding utf8
+                
+                # Upload folder
+                Write-Host "Uploading web resources from folder"
+                Set-DataverseWebResource -Connection $connection -Folder $tempFolder -PublisherPrefix $testPrefix -FileFilter "*.*" | Out-Null
+                
+                # Verify uploads
+                $uploaded = Get-DataverseWebResource -Connection $connection -Name "${testPrefix}_*"
+                if ($uploaded.Count -lt 3) {
+                    throw "Expected at least 3 web resources, found $($uploaded.Count)"
+                }
+                Write-Host "Verified: Uploaded $($uploaded.Count) web resources"
+                
+                # Download to new folder
+                $downloadFolder = Join-Path ([System.IO.Path]::GetTempPath()) ([Guid]::NewGuid().ToString())
+                New-Item -ItemType Directory -Path $downloadFolder -Force | Out-Null
+                Write-Host "Downloading web resources to: $downloadFolder"
+                Get-DataverseWebResource -Connection $connection -Name "${testPrefix}_*" -Folder $downloadFolder | Out-Null
+                
+                # Verify downloads
+                $downloadedFiles = Get-ChildItem $downloadFolder
+                if ($downloadedFiles.Count -lt 3) {
+                    throw "Expected at least 3 downloaded files, found $($downloadedFiles.Count)"
+                }
+                Write-Host "Verified: Downloaded $($downloadedFiles.Count) files"
+                
+                # Cleanup web resources
+                Write-Host "Cleaning up web resources"
+                Get-DataverseWebResource -Connection $connection -Name "${testPrefix}_*" | 
+                    Remove-DataverseWebResource -Connection $connection -Confirm:$false | Out-Null
+                
+                # Cleanup temp folders
+                Remove-Item $tempFolder -Recurse -Force -ErrorAction SilentlyContinue
+                Remove-Item $downloadFolder -Recurse -Force -ErrorAction SilentlyContinue
+                
+                Write-Host "SUCCESS: Batch web resource operations completed successfully"
+                
+            } catch {
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
             }
         }
         

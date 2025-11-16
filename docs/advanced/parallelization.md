@@ -1,15 +1,6 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Parallelizing Work for Best Performance](#parallelizing-work-for-best-performance)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Parallelizing Work for Best Performance
 
-<!-- TOC -->
-<!-- /TOC -->
 
 
 When processing many records you can use parallelism to reduce elapsed time. Use parallelism when network latency or per-request processing dominates total time, but be careful to avoid overwhelming the Dataverse service (throttling).

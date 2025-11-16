@@ -57,6 +57,19 @@ Set-DataverseRecord -Connection $c -TableName contact -Id $contactId -InputObjec
 
 # Delete a record
 Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
+
+# Manage web resources
+# Upload a JavaScript file
+Set-DataverseWebResource -Connection $c -Name "new_myscript" -Path "./script.js" -DisplayName "My Script"
+
+# Download a web resource
+Get-DataverseWebResource -Connection $c -Name "new_myscript" -Path "./downloaded-script.js"
+
+# Upload all files from a folder (only if newer)
+Set-DataverseWebResource -Connection $c -Folder "./webresources" -PublisherPrefix "new" -IfNewer
+
+# Download all JavaScript web resources
+Get-DataverseWebResource -Connection $c -WebResourceType 3 -Folder "./downloaded"
 ```
 
 For more advanced scenarios including view management and app module management, see the [documentation](#documentation) section below.
@@ -73,6 +86,7 @@ For more advanced scenarios including view management and app module management,
 - [Querying Records](docs/core-concepts/querying.md) - Filtering, paging, sorting, linking, SQL queries
 - [Creating and Updating Records](docs/core-concepts/creating-updating.md) - Create, update, upsert operations
 - [Deleting Records](docs/core-concepts/deleting.md) - Delete operations and SQL alternatives
+- [Managing Web Resources](docs/core-concepts/web-resources.md) - Upload, download, and manage web resources with file system integration
 - [Record Access Management](docs/core-concepts/record-access-management.md) - Test, grant, list, and revoke record-level access rights
 - [View Management](docs/core-concepts/view-management.md) - Create, update, and manage system and personal views
 - [App Module Management](docs/core-concepts/app-module-management.md) - Create, update, and manage model-driven apps
@@ -116,6 +130,11 @@ For more advanced scenarios including view management and app module management,
 - [`Get-DataverseAppModuleComponent`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseAppModuleComponent.md) — retrieve components included in an app (entities, forms, views, etc.)
 - [`Set-DataverseAppModuleComponent`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseAppModuleComponent.md) — add or update a component within an app
 - [`Remove-DataverseAppModuleComponent`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModuleComponent.md) — remove a component from an app
+
+### Web Resource Management
+- [`Get-DataverseWebResource`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseWebResource.md) — retrieve web resources with file support
+- [`Set-DataverseWebResource`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseWebResource.md) — create or update web resources from files or folders
+- [`Remove-DataverseWebResource`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseWebResource.md) — delete web resources
 
 ### Advanced Operations
 - [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) — execute arbitrary SDK requests

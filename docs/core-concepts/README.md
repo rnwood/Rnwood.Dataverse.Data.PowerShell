@@ -1,21 +1,6 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Core Concepts](#core-concepts)
-  - [Contents](#contents)
-  - [Key Topics](#key-topics)
-    - [Working with Records](#working-with-records)
-    - [Connection Features](#connection-features)
-    - [Performance and Reliability](#performance-and-reliability)
-  - [See Also](#see-also)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Core Concepts
 
-<!-- TOC -->
-<!-- /TOC -->
 
 This section covers the core concepts and operations for working with Dataverse data using PowerShell.
 
@@ -25,6 +10,7 @@ This section covers the core concepts and operations for working with Dataverse 
 - **[Querying Records](querying.md)** - Filtering, paging, sorting, linking tables, SQL queries, and using SDK requests
 - **[Creating and Updating Records](creating-updating.md)** - Create, update, upsert operations with type conversion and batching
 - **[Deleting Records](deleting.md)** - Delete operations with confirmation, batching, and SQL alternatives
+- **[Managing Web Resources](web-resources.md)** - Upload, download, and manage web resources (JavaScript, CSS, HTML, images, etc.) with file system integration
 - **[Working with Metadata](metadata.md)** - Reading and managing schema (entities, attributes, relationships, option sets)
 - **[Form Management](form-management.md)** - Managing forms, tabs, sections, and controls with positioning and FormXml manipulation
 - **[Solution Component Management](solution-component-management.md)** - Managing individual solution components (entities, attributes, forms, views) within solutions
@@ -39,6 +25,7 @@ This section covers the core concepts and operations for working with Dataverse 
 - Creating, updating, and upserting records
 - Deleting records safely
 - Batch operations for efficiency
+- Managing web resources (files, scripts, styles)
 - Working with metadata (schema management)
 - Managing forms, tabs, sections, and controls
 - Managing solution components within solutions

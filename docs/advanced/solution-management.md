@@ -1,40 +1,6 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Solution Management](#solution-management)
-      - [Parsing solution files](#parsing-solution-files)
-      - [Exporting solutions](#exporting-solutions)
-      - [Listing solutions](#listing-solutions)
-      - [Creating and updating solutions](#creating-and-updating-solutions)
-      - [Publishing customizations](#publishing-customizations)
-      - [Importing solutions](#importing-solutions)
-      - [Analyzing Solution Components](#analyzing-solution-components)
-        - [Get-DataverseSolutionComponent](#get-dataversesolutioncomponent)
-        - [Get-DataverseSolutionFileComponent](#get-dataversesolutionfilecomponent)
-        - [Compare-DataverseSolutionComponents](#compare-dataversesolutioncomponents)
-      - [Managing Solution Components](#managing-solution-components)
-        - [Set-DataverseSolutionComponent](#set-dataversesolutioncomponent)
-        - [Remove-DataverseSolutionComponent](#remove-dataversesolutioncomponent)
-        - [Common Component Types](#common-component-types)
-      - [Uninstalling/removing solutions](#uninstallingremoving-solutions)
-        - [Handling Connection References and Environment Variables](#handling-connection-references-and-environment-variables)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Solution Management
 
-<!-- TOC -->
-    - [Parsing solution files](#parsing-solution-files)
-    - [Exporting solutions](#exporting-solutions)
-    - [Listing solutions](#listing-solutions)
-    - [Creating and updating solutions](#creating-and-updating-solutions)
-    - [Publishing customizations](#publishing-customizations)
-    - [Importing solutions](#importing-solutions)
-    - [Analyzing Solution Components](#analyzing-solution-components)
-    - [Uninstalling/removing solutions](#uninstallingremoving-solutions)
-      - [Handling Connection References and Environment Variables](#handling-connection-references-and-environment-variables)
-<!-- /TOC -->
 
 
 You can manage Dataverse solutions from this module. The module provides cmdlets for:

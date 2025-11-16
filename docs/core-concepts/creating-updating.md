@@ -1,27 +1,6 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Creating and Updating Records](#creating-and-updating-records)
-      - [Input object shape and type conversion (create/update)](#input-object-shape-and-type-conversion-createupdate)
-      - [Advanced Set-DataverseRecord Parameters](#advanced-set-dataverserecord-parameters)
-    - [Assigning records](#assigning-records)
-    - [Setting state and status](#setting-state-and-status)
-      - [Alternate Keys Explanation](#alternate-keys-explanation)
-    - [SQL alternative — Create / Update](#sql-alternative--create--update)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Creating and Updating Records
 
-<!-- TOC -->
-    - [Input object shape and type conversion (create/update)](#input-object-shape-and-type-conversion-createupdate)
-    - [Advanced Set-DataverseRecord Parameters](#advanced-set-dataverserecord-parameters)
-  - [Assigning records](#assigning-records)
-  - [Setting state and status](#setting-state-and-status)
-    - [Alternate Keys Explanation](#alternate-keys-explanation)
-  - [SQL alternative — Create / Update](#sql-alternative-create-update)
-<!-- /TOC -->
 
 
 Use [`Set-DataverseRecord`](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md) to create new records or update existing ones. You can pass a single hashtable, a list of hashtables, or pipeline objects. Use `-PassThru` to return the created/updated records (including their Ids). The cmdlet expects each input object to expose properties whose names match the Dataverse logical names for the target table's columns — those properties are mapped to Dataverse attributes during conversion.
