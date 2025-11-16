@@ -46,9 +46,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 0, HelpMessage = "HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).")]
 		public System.Net.Http.HttpMethod Method { get; set; }
 		/// <summary>
-		/// Path portion of the REST API URL (e.g., 'api/data/v9.2/contacts' or 'myapi_Example').
+		/// Path portion of the REST API URL. Can be either a relative path (e.g., 'api/data/v9.2/contacts' or 'myapi_Example') or an absolute path starting with '/' (e.g., '/api/data/v9.2/contacts').
 		/// </summary>
-		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 1, HelpMessage = "Path portion of the REST API URL (e.g., 'api/data/v9.2/contacts' or 'myapi_Example').")]
+		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 1, HelpMessage = "Path portion of the REST API URL. Can be either a relative path (e.g., 'api/data/v9.2/contacts' or 'myapi_Example') or an absolute path starting with '/' (e.g., '/api/data/v9.2/contacts').")]
 		public string Path { get; set; }
 		/// <summary>
 		/// Body of the REST API request. Can be a string (JSON) or a PSObject which will be converted to JSON.
@@ -147,7 +147,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					}
 				}
 
-				System.Net.Http.HttpResponseMessage response = Connection.ExecuteWebRequest(Method, Path, bodyString, headers);
+				// Handle absolute paths (starting with '/') vs relative paths
+				// ExecuteWebRequest treats paths as relative to the organization URL by default
+				// If the path starts with '/', treat it as an absolute path from the domain root
+				string requestPath = Path;
+				if (Path.StartsWith("/"))
+				{
+					// For absolute paths, we need to construct the full URL ourselves
+					// Remove the leading '/' since ExecuteWebRequest will add it
+					requestPath = Path.TrimStart('/');
+				}
+
+				System.Net.Http.HttpResponseMessage response = Connection.ExecuteWebRequest(Method, requestPath, bodyString, headers);
 				response.EnsureSuccessStatusCode();
 				string responseBody = response.Content.ReadAsStringAsync().Result;
 				var result = InvokeCommand.NewScriptBlock("param($response); $response | ConvertFrom-Json -Depth 100").Invoke(responseBody);

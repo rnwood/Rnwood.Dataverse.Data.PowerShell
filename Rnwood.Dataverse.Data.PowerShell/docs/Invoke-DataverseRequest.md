@@ -133,7 +133,16 @@ PS C:\> invoke-dataverserequest -connection $c -method POST myapi_Example \
 
 Invokes the `POST` `myapi_Example` REST API using custom headers and body. REST responses are returned as JSON objects without conversion.
 
-### Example 6: Using retry logic for transient failures
+### Example 6: Using REST API with absolute path
+
+```powershell
+PS C:\> $response = Invoke-DataverseRequest -Connection $c -Method Get -Path "/api/data/v9.2/contacts?`$select=fullname&`$top=5"
+PS C:\> $response.value | ForEach-Object { $_.fullname }
+```
+
+Invokes a GET request using an absolute path (starting with '/'). Both relative paths ('api/data/v9.2/contacts') and absolute paths ('/api/data/v9.2/contacts') are supported and produce the same result.
+
+### Example 7: Using retry logic for transient failures
 
 ```powershell
 PS C:\> $request = New-Object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
@@ -283,7 +292,9 @@ Accept wildcard characters: False
 ```
 
 ### -Path
-Path portion of the REST API URL (e.g., 'api/data/v9.2/contacts' or 'myapi_Example').
+Path portion of the REST API URL. Can be either a relative path (e.g., 'api/data/v9.2/contacts' or 'myapi_Example') or an absolute path starting with '/' (e.g., '/api/data/v9.2/contacts'). 
+
+Relative paths are appended to the organization URL. Absolute paths (starting with '/') are treated as paths from the domain root - the leading '/' is automatically handled to ensure correct URL formation.
 
 ```yaml
 Type: String
