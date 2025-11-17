@@ -592,7 +592,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
-        /// Tries to determine if DataField is a relationship field (lookup) and return appropriate control type.
+        /// Tries to determine if DataField is a relationship field and return appropriate control type.
+        /// Supports lookup attributes (many-to-one), one-to-many, and many-to-many relationships.
         /// </summary>
         private string TryDetermineRelationshipControlType(string fieldName)
         {
@@ -609,14 +610,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var response = (RetrieveEntityResponse)Connection.Execute(request);
                 var entityMetadata = response.EntityMetadata;
 
-                // Check if this field name matches a lookup attribute from relationships
-                var relationship = entityMetadata.ManyToOneRelationships
+                // Check if this field name matches a lookup attribute from many-to-one relationships
+                var manyToOneRelationship = entityMetadata.ManyToOneRelationships
                     .FirstOrDefault(r => r.ReferencingAttribute == fieldName);
 
-                if (relationship != null)
+                if (manyToOneRelationship != null)
                 {
-                    WriteVerbose($"Field '{fieldName}' identified as lookup relationship to '{relationship.ReferencedEntity}'");
+                    WriteVerbose($"Field '{fieldName}' identified as many-to-one lookup relationship to '{manyToOneRelationship.ReferencedEntity}'");
                     return ControlType ?? "Lookup";
+                }
+
+                // Check if this is a one-to-many relationship name (should create a subgrid)
+                var oneToManyRelationship = entityMetadata.OneToManyRelationships
+                    .FirstOrDefault(r => r.SchemaName.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
+
+                if (oneToManyRelationship != null)
+                {
+                    WriteVerbose($"Field '{fieldName}' identified as one-to-many relationship to '{oneToManyRelationship.ReferencedEntity}' - using Subgrid control type");
+                    return ControlType ?? "Subgrid";
+                }
+
+                // Check if this is a many-to-many relationship name (should create a subgrid)
+                var manyToManyRelationship = entityMetadata.ManyToManyRelationships
+                    .FirstOrDefault(r => r.SchemaName.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
+
+                if (manyToManyRelationship != null)
+                {
+                    WriteVerbose($"Field '{fieldName}' identified as many-to-many relationship '{manyToManyRelationship.SchemaName}' - using Subgrid control type");
+                    return ControlType ?? "Subgrid";
                 }
 
                 return null;
