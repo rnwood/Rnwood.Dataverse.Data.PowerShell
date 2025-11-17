@@ -15,7 +15,7 @@ Creates or updates a control in a Dataverse form section or header.
 ### Standard (Default)
 ```
 Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
- -DataField <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Visible]
+ [-DataField <String>] [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Visible]
  [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>]
  [-PassThru] [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Auto] [-LockLevel <Int32>] [-Hidden]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
@@ -75,7 +75,7 @@ PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'Ge
 
 Inserts an email control after the 'lastname' control.
 
-### Example 5: Create a subgrid control with parameters
+### Example 5: Create a subgrid control without DataField
 ```powershell
 PS C:\> $parameters = @{
     'targetEntityType' = 'opportunity'
@@ -83,13 +83,13 @@ PS C:\> $parameters = @{
     'RelationshipName' = 'contact_customer_opportunity'
 }
 PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'RelatedData' `
-    -DataField 'opportunities' -ControlType 'Subgrid' `
+    -TabName 'General' -ControlType 'Subgrid' -ControlId 'opportunities_subgrid' `
     -Label 'Related Opportunities' -Parameters $parameters -ColSpan 2 -PassThru
 ```
 
-Creates a subgrid control showing related opportunities with custom parameters.
+Creates a subgrid control showing related opportunities. Note: Subgrids don't require a DataField parameter since they're not bound to a single attribute.
 
-### Example 6: Add a web resource control
+### Example 6: Create a web resource control without DataField
 ```powershell
 PS C:\> $webResourceParams = @{
     'src' = 'WebResources/custom_chart.html'
@@ -97,13 +97,22 @@ PS C:\> $webResourceParams = @{
     'scrolling' = 'no'
 }
 PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'Analytics' `
-    -DataField 'webresource_chart' -ControlType 'WebResource' `
+    -TabName 'General' -ControlType 'WebResource' -ControlId 'chart_webresource' `
     -Label 'Sales Chart' -Parameters $webResourceParams -ColSpan 2 -PassThru
 ```
 
-Adds a web resource control displaying a custom HTML chart.
+Adds a web resource control displaying a custom HTML chart. Web resources don't require a DataField parameter.
 
-### Example 7: Update existing control properties
+### Example 7: Auto-create subgrid using relationship name
+```powershell
+PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'RelatedData' `
+    -TabName 'General' -DataField 'contact_customer_accounts' `
+    -Label 'Related Accounts' -ColSpan 2 -PassThru
+```
+
+Creates a subgrid control by specifying a relationship name in DataField. When DataField contains a one-to-many or many-to-many relationship name, the cmdlet automatically determines the control type as Subgrid. No need to explicitly specify ControlType.
+
+### Example 8: Update existing control properties
 ```powershell
 PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'ContactInfo' `
     -ControlId 'existing-control-id' -DataField 'telephone1' `
@@ -112,7 +121,7 @@ PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'Co
 
 Updates an existing control's label, requirement status, and layout.
 
-### Example 8: Create control using raw XML for advanced configuration
+### Example 9: Create control using raw XML for advanced configuration
 ```powershell
 PS C:\> $controlXml = @"
 <control id="custom_datetime" classid="{5B773807-9FB2-42DB-97C3-7A91EFF8ADFF}" 
@@ -132,7 +141,7 @@ PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'Cu
 
 Creates a datetime control using raw XML for full control over configuration.
 
-### Example 9: Create control with cell-level attributes
+### Example 10: Create control with cell-level attributes
 ```powershell
 PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
     -TabName 'General' -SectionName 'Details' `
@@ -143,7 +152,7 @@ PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
 
 Creates a memo control with cell-level attributes including auto-sizing and custom cell ID.
 
-### Example 10: Update existing control to make it required
+### Example 11: Update existing control to make it required
 ```powershell
 PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
     -TabName 'General' -SectionName 'ContactInfo' `
@@ -152,7 +161,7 @@ PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
 
 Updates an existing control to make it required. The cmdlet now supports updating existing controls without recreating them.
 
-### Example 11: Create Email control with validation
+### Example 12: Create Email control with validation
 ```powershell
 PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
     -TabName 'General' -SectionName 'ContactInfo' `
@@ -162,7 +171,7 @@ PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
 
 Creates an email control with built-in email validation.
 
-### Example 12: Create Money control for currency field
+### Example 13: Create Money control for currency field
 ```powershell
 PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
     -TabName 'Financial' -SectionName 'Pricing' `
@@ -172,7 +181,7 @@ PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
 
 Creates a currency control with proper formatting.
 
-### Example 13: Bulk control creation with error handling
+### Example 14: Bulk control creation with error handling
 ```powershell
 PS C:\> $controls = @(
     @{ DataField = 'firstname'; Label = 'First Name'; ColSpan = 1 }
@@ -207,7 +216,7 @@ PS C:\> foreach ($ctrl in $controls) {
 
 Creates multiple controls with error handling and conditional parameters.
 
-### Example 14: Create header control (form header)
+### Example 15: Create header control (form header)
 ```powershell
 PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
     -TabName '[Header]' -DataField 'emailaddress1' `
@@ -216,7 +225,7 @@ PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
 
 Creates a read-only email control in the form header. Header controls are displayed at the top of the form across all tabs. The header section is automatically created if it doesn't exist.
 
-### Example 15: Create multiple header controls
+### Example 16: Create multiple header controls
 ```powershell
 PS C:\> # Create email control in header
 PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
@@ -234,7 +243,7 @@ PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId -TabName '[Heade
 
 Creates multiple controls in the form header with specific positioning.
 
-### Example 16: Update existing header control
+### Example 17: Update existing header control
 ```powershell
 PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
     -TabName '[Header]' -DataField 'emailaddress1' `
@@ -386,12 +395,16 @@ Accept wildcard characters: False
 ### -DataField
 Data field name (attribute logical name) for the control. This binds the control to a specific entity attribute.
 
+**Can also accept relationship names**: When DataField contains a one-to-many or many-to-many relationship name, the cmdlet automatically determines the control type as Subgrid.
+
+**Not required** for special controls that are not bound to attributes: Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch (when creating them without a relationship binding).
+
 ```yaml
 Type: String
 Parameter Sets: Standard
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -682,29 +695,25 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 **Control Types and Usage:**
 
-| ControlType | Purpose | Common Parameters |
-|-------------|---------|-------------------|
-| **Standard** | Basic text/numeric input | Rows (for multiline) |
-| **Email** | Email address fields | None (validates email format) |
-| **Memo** | Multiline text areas | Rows (height in lines) |
-| **Money** | Currency fields | None (inherits from attribute) |
-| **Lookup** | Entity references | None (uses default lookup behavior) |
-| **OptionSet** | Choice/Picklist fields | None (inherits from attribute) |
-| **DateTime** | Date/time fields | DateAndTimeStyle, HideTimeForDate |
-| **Boolean** | Yes/No fields | None (checkbox behavior) |
-| **Subgrid** | Related records | targetEntityType, viewId, RelationshipName |
-| **WebResource** | Custom HTML/images | src, height, width, scrolling |
-| **QuickForm** | Embedded forms | EntityName, FormId |
-| **Spacer** | Layout spacing | Height |
-| **Data** | Hidden data fields | None (stores data without UI) |
-| **IFrame** | External content | src, height, width, scrolling |
-| **Timer** | Date/time tracking | None |
-| **KBSearch** | Knowledge base | None |
-| **Notes** | Attachments | None |
-| **Email** | Email fields | None |
-| **Memo** | Multiline text areas | Rows |
-| **Money** | Currency fields | None |
-| **Data** | Generic data fields | None |
+| ControlType | Purpose | DataField Required | Common Parameters |
+|-------------|---------|-------------------|-------------------|
+| **Standard** | Basic text/numeric input | ✓ Yes | Rows (for multiline) |
+| **Email** | Email address fields | ✓ Yes | None (validates email format) |
+| **Memo** | Multiline text areas | ✓ Yes | Rows (height in lines) |
+| **Money** | Currency fields | ✓ Yes | None (inherits from attribute) |
+| **Lookup** | Entity references | ✓ Yes | None (uses default lookup behavior) |
+| **OptionSet** | Choice/Picklist fields | ✓ Yes | None (inherits from attribute) |
+| **DateTime** | Date/time fields | ✓ Yes | DateAndTimeStyle, HideTimeForDate |
+| **Boolean** | Yes/No fields | ✓ Yes | None (checkbox behavior) |
+| **Notes** | Attachments | ✓ Yes | None |
+| **Data** | Generic data fields | ✓ Yes | None |
+| **Subgrid** | Related records | ✗ No | targetEntityType, viewId, RelationshipName |
+| **WebResource** | Custom HTML/images | ✗ No | src, height, width, scrolling |
+| **QuickForm** | Embedded forms | ✗ No | EntityName, FormId |
+| **Spacer** | Layout spacing | ✗ No | Height |
+| **IFrame** | External content | ✗ No | src, height, width, scrolling |
+| **Timer** | Date/time tracking | ✗ No | None |
+| **KBSearch** | Knowledge base | ✗ No | None |
 
 **Parameter Sets:**
 - **Create**: For creating new controls (no ControlId required)
@@ -754,6 +763,22 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - Header controls should be read-only (Disabled) in most cases
 - Keep header simple with only key fields (3-5 controls recommended)
 - Use ColSpan to balance header control widths
+- For special controls (Subgrid, WebResource, etc.), omit DataField and use ControlType to specify the control type
+- For relationship-based subgrids, provide the relationship name in DataField and the control type will be auto-determined
+
+**Control Types Requiring DataField vs. Not:**
+
+**Attribute-Bound Controls (DataField Required):**
+- Standard, Lookup, OptionSet, DateTime, Boolean, Email, Memo, Money, Notes, Data
+
+**Special Controls (DataField Not Required):**
+- Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch
+
+**Relationship-Based Controls:**
+- When DataField contains a one-to-many or many-to-many relationship name (e.g., "contact_customer_accounts"), the cmdlet automatically determines the control type as Subgrid
+- You can override the auto-determined type by specifying the ControlType parameter
+
+When creating special controls without a relationship binding, you must specify the ControlType parameter but should NOT provide a DataField parameter.
 
 **Working with Header Controls:**
 - Use TabName='[Header]' to create or update header controls

@@ -47,8 +47,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         /// <summary>
         /// Gets or sets the data field name (attribute) for the control.
+        /// Not required for special controls like Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch.
         /// </summary>
-        [Parameter(Mandatory = true, ParameterSetName = "Standard", HelpMessage = "Data field name (attribute) for the control")]
+        [Parameter(Mandatory = false, ParameterSetName = "Standard", HelpMessage = "Data field name (attribute) for the control. Not required for special controls like Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch.")]
         public string DataField { get; set; }
 
         /// <summary>
@@ -262,6 +263,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             XElement existingCell = null;
             string controlId = ControlId;
             bool isUpdate = false;
+            string finalControlType = null; // Will be set based on parameter set
 
             if (ParameterSetName == "RawXml")
             {
@@ -352,7 +354,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             else
             {
                 // Standard parameter set - determine control type if not provided and validate metadata
-                string finalControlType = DetermineAndValidateControlType();
+                finalControlType = DetermineAndValidateControlType();
 
                 // Determine control ID and check if exists
                 if (!string.IsNullOrEmpty(ControlId))
@@ -378,9 +380,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         controlId = ControlId;
                     }
                 }
-                else
+                else if (!string.IsNullOrEmpty(DataField))
                 {
-                    // Find by DataField
+                    // Find by DataField (only if DataField is provided)
                     XElement existingControl;
                     XElement tempExistingCell;
                     
@@ -401,6 +403,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         controlId = existingControl.Attribute("id")?.Value;
                     }
                 }
+                // else: No ControlId and no DataField (special controls) - will create new
 
                 if (!isUpdate)
                 {
@@ -466,7 +469,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Confirm action
             string action = isUpdate ? "Update" : "Create";
-            string controlDescriptor = isUpdate ? $"control '{ControlId}'" : $"control '{DataField}'";
+            string controlDescriptor = isUpdate 
+                ? $"control '{ControlId}'" 
+                : (!string.IsNullOrEmpty(DataField) ? $"control '{DataField}'" : $"control of type '{finalControlType}'");
             if (!ShouldProcess($"form '{FormId}', section '{SectionName}'", $"{action} {controlDescriptor}"))
             {
                 WriteVerbose("DEBUG: ShouldProcess returned false, returning early");
@@ -492,9 +497,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         private string DetermineAndValidateControlType()
         {
+            // Check if this is a special control type that doesn't require a DataField
+            if (!string.IsNullOrEmpty(ControlType) && IsSpecialControlType(ControlType))
+            {
+                // Special controls (Subgrid, WebResource, etc.) don't need DataField or metadata validation
+                WriteVerbose($"Special control type '{ControlType}' specified - skipping DataField validation");
+                return ControlType;
+            }
+
             if (string.IsNullOrEmpty(DataField))
             {
-                throw new ArgumentException("DataField is required for standard controls");
+                throw new ArgumentException("DataField is required for attribute-bound controls (Standard, Lookup, OptionSet, DateTime, Boolean, Email, Memo, Money, Notes, Data). For special controls (Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch), specify ControlType parameter.");
             }
 
             // First check if this is a virtual/computed field or relationship
@@ -528,6 +541,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Auto-determine control type based on attribute metadata
             return DetermineControlTypeFromAttribute(attributeMetadata);
+        }
+
+        /// <summary>
+        /// Determines if the control type is a special control that doesn't require a DataField.
+        /// </summary>
+        private bool IsSpecialControlType(string controlType)
+        {
+            // Special controls that are not bound to a specific attribute
+            var specialControlTypes = new[] { "Subgrid", "WebResource", "QuickForm", "Spacer", "IFrame", "Timer", "KBSearch" };
+            return specialControlTypes.Contains(controlType, StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -569,7 +592,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
-        /// Tries to determine if DataField is a relationship field (lookup) and return appropriate control type.
+        /// Tries to determine if DataField is a relationship field and return appropriate control type.
+        /// Supports lookup attributes (many-to-one), one-to-many, and many-to-many relationships.
         /// </summary>
         private string TryDetermineRelationshipControlType(string fieldName)
         {
@@ -586,14 +610,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var response = (RetrieveEntityResponse)Connection.Execute(request);
                 var entityMetadata = response.EntityMetadata;
 
-                // Check if this field name matches a lookup attribute from relationships
-                var relationship = entityMetadata.ManyToOneRelationships
+                // Check if this field name matches a lookup attribute from many-to-one relationships
+                var manyToOneRelationship = entityMetadata.ManyToOneRelationships
                     .FirstOrDefault(r => r.ReferencingAttribute == fieldName);
 
-                if (relationship != null)
+                if (manyToOneRelationship != null)
                 {
-                    WriteVerbose($"Field '{fieldName}' identified as lookup relationship to '{relationship.ReferencedEntity}'");
+                    WriteVerbose($"Field '{fieldName}' identified as many-to-one lookup relationship to '{manyToOneRelationship.ReferencedEntity}'");
                     return ControlType ?? "Lookup";
+                }
+
+                // Check if this is a one-to-many relationship name (should create a subgrid)
+                var oneToManyRelationship = entityMetadata.OneToManyRelationships
+                    .FirstOrDefault(r => r.SchemaName.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
+
+                if (oneToManyRelationship != null)
+                {
+                    WriteVerbose($"Field '{fieldName}' identified as one-to-many relationship to '{oneToManyRelationship.ReferencedEntity}' - using Subgrid control type");
+                    return ControlType ?? "Subgrid";
+                }
+
+                // Check if this is a many-to-many relationship name (should create a subgrid)
+                var manyToManyRelationship = entityMetadata.ManyToManyRelationships
+                    .FirstOrDefault(r => r.SchemaName.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
+
+                if (manyToManyRelationship != null)
+                {
+                    WriteVerbose($"Field '{fieldName}' identified as many-to-many relationship '{manyToManyRelationship.SchemaName}' - using Subgrid control type");
+                    return ControlType ?? "Subgrid";
                 }
 
                 return null;
@@ -758,7 +802,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             WriteVerbose($"DEBUG: UpdateControlAttributes called - finalControlType='{finalControlType}', controlId='{controlId}'");
             
             control.SetAttributeValue("id", controlId);
-            control.SetAttributeValue("datafieldname", DataField);
+            
+            // Only set datafieldname if DataField is provided (special controls may not have a DataField)
+            if (!string.IsNullOrEmpty(DataField))
+            {
+                control.SetAttributeValue("datafieldname", DataField);
+            }
 
             // Set the class ID based on the determined control type
             var classId = GetClassId(finalControlType);
