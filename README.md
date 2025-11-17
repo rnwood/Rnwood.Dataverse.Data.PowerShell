@@ -104,6 +104,9 @@ For more advanced scenarios including view management and app module management,
 - [Error Handling and Batch Operations](docs/core-concepts/error-handling.md) - Error handling and retry logic
 - [Parallelization](docs/advanced/parallelization.md) - Parallel processing for best performance
 
+### Common Use Cases
+- [Use Cases](docs/use-cases/) - Real-world scenarios including CI/CD pipelines, data import/export, mass updates, and source control management
+
 ### Reference
 - [Cmdlet Documentation](Rnwood.Dataverse.Data.PowerShell/docs/) - Full cmdlet reference with parameters and examples
 

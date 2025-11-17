@@ -1,18 +1,23 @@
-
 # Common Use Cases
 
+This section provides guides for common real-world scenarios where the module is typically used. It groups practical examples and guidance for automation, deployments, and other operational tasks so you can find the recommended patterns quickly.
 
-This section will contain guides for common use cases and scenarios.
+## Topics
 
-## Planned Topics
+### [CI/CD Pipelines](ci-cd-pipelines.md)
+Automate Dataverse operations in Azure DevOps Pipelines and GitHub Actions using service principal authentication with secure credential management.
 
-- CI/CD Pipelines (Azure DevOps, GitHub Actions)
-- Data Import/Export (JSON, CSV, XML, Excel, SQL Server)
-- Managing Data in Source Control
-- Copying Data Between Environments
-- Mass Updating Data
+### [Data Export](data-export.md)
+Export Dataverse data to JSON, CSV, XML, Excel (XLSX), and SQL Server for reporting, backups, or offline analysis.
 
-*This section is under construction. Check back later for detailed guides.*
+### [Data Import](data-import.md)
+Import data from JSON, CSV, XML, and Excel files into Dataverse with proper mapping, type conversion, and bulk operations.
+
+### [Mass Updates](mass-updates.md)
+Perform bulk updates on Dataverse records safely and efficiently using PowerShell or SQL approaches.
+
+### [Source Control and Data Migration](source-control.md)
+Manage Dataverse data in source control and copy data between environments with folder-based workflows.
 
 ## See Also
 
