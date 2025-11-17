@@ -14,6 +14,7 @@ Describe 'WebResource Cmdlets - Basic Functionality' {
         { Get-Command Get-DataverseWebResource -ParameterName Unmanaged } | Should -Not -Throw
         { Get-Command Get-DataverseWebResource -ParameterName Path } | Should -Not -Throw
         { Get-Command Get-DataverseWebResource -ParameterName Folder } | Should -Not -Throw
+        { Get-Command Get-DataverseWebResource -ParameterName IncludeContent } | Should -Not -Throw
         { Get-Command Get-DataverseWebResource -ParameterName DecodeContent } | Should -Not -Throw
     }
     

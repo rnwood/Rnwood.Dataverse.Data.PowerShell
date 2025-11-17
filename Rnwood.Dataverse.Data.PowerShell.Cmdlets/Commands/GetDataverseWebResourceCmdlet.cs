@@ -63,9 +63,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string Folder { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether to include the content property in the results.
+        /// </summary>
+        [Parameter(HelpMessage = "If set, includes the content property in the results. By default, content is excluded.")]
+        public SwitchParameter IncludeContent { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether to decode the content from base64.
         /// </summary>
-        [Parameter(HelpMessage = "If set, decodes the content from base64 and returns as byte array")]
+        [Parameter(HelpMessage = "If set, decodes the content from base64 and returns as byte array. Implies -IncludeContent.")]
         public SwitchParameter DecodeContent { get; set; }
 
         protected override void ProcessRecord()
@@ -73,7 +79,44 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.ProcessRecord();
 
             QueryExpression query = new QueryExpression("webresource");
-            query.ColumnSet = new ColumnSet(true);
+            
+            // Exclude content by default unless IncludeContent or DecodeContent is specified
+            // DecodeContent implies IncludeContent
+            bool includeContent = IncludeContent || DecodeContent;
+            
+            if (includeContent)
+            {
+                query.ColumnSet = new ColumnSet(true);
+            }
+            else
+            {
+                // Get all columns except content
+                query.ColumnSet = new ColumnSet(
+                    "webresourceid",
+                    "name",
+                    "displayname",
+                    "webresourcetype",
+                    "description",
+                    "ismanaged",
+                    "iscustomizable",
+                    "canbedeleted",
+                    "languagecode",
+                    "dependencyxml",
+                    "introducedversion",
+                    "isenabledformobileclient",
+                    "ishidden",
+                    "createdon",
+                    "modifiedon",
+                    "createdby",
+                    "modifiedby",
+                    "organizationid",
+                    "versionnumber",
+                    "solutionid",
+                    "componentstate",
+                    "overwritetime",
+                    "publishedon"
+                );
+            }
 
             // Apply filters based on parameter set
             switch (ParameterSetName)
@@ -129,6 +172,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Read unpublished by default since web resources are customizable entities
             var results = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, unpublished: true);
 
+            // When saving to file/folder, we need content even if not requested in the output
+            bool needContentForFileOperations = !string.IsNullOrEmpty(Path) || !string.IsNullOrEmpty(Folder);
+
             if (!string.IsNullOrEmpty(Folder))
             {
                 // Save multiple web resources to folder
@@ -139,6 +185,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 foreach (var entity in results)
                 {
+                    // If content wasn't retrieved, fetch it now for saving
+                    if (needContentForFileOperations && !entity.Contains("content"))
+                    {
+                        var fullEntity = Connection.Retrieve("webresource", entity.Id, new ColumnSet("content"));
+                        entity["content"] = fullEntity.GetAttributeValue<string>("content");
+                    }
                     SaveWebResourceToFolder(entity);
                 }
             }
@@ -151,7 +203,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 foreach (var entity in results)
                 {
                     count++;
-                    var psObject = ConvertEntityToPSObject(entity);
+                    
+                    // If content wasn't retrieved but needed for file operations, fetch it now
+                    if (needContentForFileOperations && !entity.Contains("content"))
+                    {
+                        var fullEntity = Connection.Retrieve("webresource", entity.Id, new ColumnSet("content"));
+                        entity["content"] = fullEntity.GetAttributeValue<string>("content");
+                    }
+                    
+                    var psObject = ConvertEntityToPSObject(entity, includeContent);
 
                     // Save to file if Path is specified and we have exactly one result
                     if (!string.IsNullOrEmpty(Path))
@@ -172,11 +232,48 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private PSObject ConvertEntityToPSObject(Entity entity)
+        private PSObject ConvertEntityToPSObject(Entity entity, bool includeContent)
         {
             var metadataFactory = new EntityMetadataFactory(Connection);
             var converter = new DataverseEntityConverter(Connection, metadataFactory);
-            var psObject = converter.ConvertToPSObject(entity, new ColumnSet(true), _ => ValueType.Display);
+            
+            // Determine which columns to include in the PSObject
+            ColumnSet columnSet;
+            if (includeContent)
+            {
+                columnSet = new ColumnSet(true);
+            }
+            else
+            {
+                // Use the same column list as the query (without content)
+                columnSet = new ColumnSet(
+                    "webresourceid",
+                    "name",
+                    "displayname",
+                    "webresourcetype",
+                    "description",
+                    "ismanaged",
+                    "iscustomizable",
+                    "canbedeleted",
+                    "languagecode",
+                    "dependencyxml",
+                    "introducedversion",
+                    "isenabledformobileclient",
+                    "ishidden",
+                    "createdon",
+                    "modifiedon",
+                    "createdby",
+                    "modifiedby",
+                    "organizationid",
+                    "versionnumber",
+                    "solutionid",
+                    "componentstate",
+                    "overwritetime",
+                    "publishedon"
+                );
+            }
+            
+            var psObject = converter.ConvertToPSObject(entity, columnSet, _ => ValueType.Display);
 
             // Decode content if requested
             if (DecodeContent && entity.Contains("content"))

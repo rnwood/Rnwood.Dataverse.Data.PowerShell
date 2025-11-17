@@ -8,34 +8,64 @@ schema: 2.0.0
 # Get-DataverseWebResource
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves web resources from a Dataverse environment.
 
 ## SYNTAX
 
 ### Id
 ```
-Get-DataverseWebResource -Id <Guid> [-Path <String>] [-Folder <String>] [-DecodeContent]
+Get-DataverseWebResource -Id <Guid> [-Path <String>] [-Folder <String>] [-IncludeContent] [-DecodeContent]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Query
 ```
 Get-DataverseWebResource [-Name <String>] [-WebResourceType <WebResourceType>] [-DisplayName <String>]
- [-Unmanaged] [-Path <String>] [-Folder <String>] [-DecodeContent] [-Connection <ServiceClient>]
+ [-Unmanaged] [-Path <String>] [-Folder <String>] [-IncludeContent] [-DecodeContent] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Retrieves web resources from Dataverse with support for filtering by name, type, and other attributes.
+By default, the content property is excluded from results to improve performance. 
+Use -IncludeContent to include the content property or -Path/-Folder to save content to files.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Get web resource metadata without content
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Get-DataverseWebResource -Connection $conn -Name "new_myscript"
 ```
 
-{{ Add example description here }}
+Retrieves the web resource metadata without the content property.
+
+### Example 2: Get web resource with content
+```powershell
+PS C:\> Get-DataverseWebResource -Connection $conn -Name "new_myscript" -IncludeContent
+```
+
+Retrieves the web resource including its base64-encoded content.
+
+### Example 3: Download web resource to file
+```powershell
+PS C:\> Get-DataverseWebResource -Connection $conn -Name "new_myscript" -Path "./local-script.js"
+```
+
+Downloads the web resource content to a local file. Content is automatically fetched even without -IncludeContent.
+
+### Example 4: Get web resources by type
+```powershell
+PS C:\> Get-DataverseWebResource -Connection $conn -WebResourceType JavaScript
+```
+
+Retrieves all JavaScript web resources (metadata only, no content).
+
+### Example 5: Download multiple web resources to folder
+```powershell
+PS C:\> Get-DataverseWebResource -Connection $conn -Name "new_*" -Folder "./webresources"
+```
+
+Downloads all web resources matching the pattern to a folder.
 
 ## PARAMETERS
 
@@ -57,7 +87,7 @@ Accept wildcard characters: False
 ```
 
 ### -DecodeContent
-If set, decodes the content from base64 and returns as byte array
+If set, decodes the content from base64 and returns as byte array. Implies -IncludeContent.
 
 ```yaml
 Type: SwitchParameter
@@ -78,6 +108,21 @@ Supports wildcards (* and ?)
 ```yaml
 Type: String
 Parameter Sets: Query
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeContent
+If set, includes the content property in the results. By default, content is excluded for better performance.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
 Aliases:
 
 Required: False
