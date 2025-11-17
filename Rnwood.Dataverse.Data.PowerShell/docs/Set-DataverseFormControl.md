@@ -15,7 +15,7 @@ Creates or updates a control in a Dataverse form section or header.
 ### Standard (Default)
 ```
 Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
- -DataField <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Visible]
+ [-DataField <String>] [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Visible]
  [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>]
  [-PassThru] [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Auto] [-LockLevel <Int32>] [-Hidden]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
@@ -75,7 +75,7 @@ PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'Ge
 
 Inserts an email control after the 'lastname' control.
 
-### Example 5: Create a subgrid control with parameters
+### Example 5: Create a subgrid control without DataField
 ```powershell
 PS C:\> $parameters = @{
     'targetEntityType' = 'opportunity'
@@ -83,13 +83,13 @@ PS C:\> $parameters = @{
     'RelationshipName' = 'contact_customer_opportunity'
 }
 PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'RelatedData' `
-    -DataField 'opportunities' -ControlType 'Subgrid' `
+    -TabName 'General' -ControlType 'Subgrid' -ControlId 'opportunities_subgrid' `
     -Label 'Related Opportunities' -Parameters $parameters -ColSpan 2 -PassThru
 ```
 
-Creates a subgrid control showing related opportunities with custom parameters.
+Creates a subgrid control showing related opportunities. Note: Subgrids don't require a DataField parameter since they're not bound to a single attribute.
 
-### Example 6: Add a web resource control
+### Example 6: Create a web resource control without DataField
 ```powershell
 PS C:\> $webResourceParams = @{
     'src' = 'WebResources/custom_chart.html'
@@ -97,11 +97,11 @@ PS C:\> $webResourceParams = @{
     'scrolling' = 'no'
 }
 PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'Analytics' `
-    -DataField 'webresource_chart' -ControlType 'WebResource' `
+    -TabName 'General' -ControlType 'WebResource' -ControlId 'chart_webresource' `
     -Label 'Sales Chart' -Parameters $webResourceParams -ColSpan 2 -PassThru
 ```
 
-Adds a web resource control displaying a custom HTML chart.
+Adds a web resource control displaying a custom HTML chart. Web resources don't require a DataField parameter.
 
 ### Example 7: Update existing control properties
 ```powershell
@@ -386,12 +386,14 @@ Accept wildcard characters: False
 ### -DataField
 Data field name (attribute logical name) for the control. This binds the control to a specific entity attribute.
 
+**Not required** for special controls that are not bound to attributes: Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch.
+
 ```yaml
 Type: String
 Parameter Sets: Standard
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -682,29 +684,25 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 **Control Types and Usage:**
 
-| ControlType | Purpose | Common Parameters |
-|-------------|---------|-------------------|
-| **Standard** | Basic text/numeric input | Rows (for multiline) |
-| **Email** | Email address fields | None (validates email format) |
-| **Memo** | Multiline text areas | Rows (height in lines) |
-| **Money** | Currency fields | None (inherits from attribute) |
-| **Lookup** | Entity references | None (uses default lookup behavior) |
-| **OptionSet** | Choice/Picklist fields | None (inherits from attribute) |
-| **DateTime** | Date/time fields | DateAndTimeStyle, HideTimeForDate |
-| **Boolean** | Yes/No fields | None (checkbox behavior) |
-| **Subgrid** | Related records | targetEntityType, viewId, RelationshipName |
-| **WebResource** | Custom HTML/images | src, height, width, scrolling |
-| **QuickForm** | Embedded forms | EntityName, FormId |
-| **Spacer** | Layout spacing | Height |
-| **Data** | Hidden data fields | None (stores data without UI) |
-| **IFrame** | External content | src, height, width, scrolling |
-| **Timer** | Date/time tracking | None |
-| **KBSearch** | Knowledge base | None |
-| **Notes** | Attachments | None |
-| **Email** | Email fields | None |
-| **Memo** | Multiline text areas | Rows |
-| **Money** | Currency fields | None |
-| **Data** | Generic data fields | None |
+| ControlType | Purpose | DataField Required | Common Parameters |
+|-------------|---------|-------------------|-------------------|
+| **Standard** | Basic text/numeric input | ✓ Yes | Rows (for multiline) |
+| **Email** | Email address fields | ✓ Yes | None (validates email format) |
+| **Memo** | Multiline text areas | ✓ Yes | Rows (height in lines) |
+| **Money** | Currency fields | ✓ Yes | None (inherits from attribute) |
+| **Lookup** | Entity references | ✓ Yes | None (uses default lookup behavior) |
+| **OptionSet** | Choice/Picklist fields | ✓ Yes | None (inherits from attribute) |
+| **DateTime** | Date/time fields | ✓ Yes | DateAndTimeStyle, HideTimeForDate |
+| **Boolean** | Yes/No fields | ✓ Yes | None (checkbox behavior) |
+| **Notes** | Attachments | ✓ Yes | None |
+| **Data** | Generic data fields | ✓ Yes | None |
+| **Subgrid** | Related records | ✗ No | targetEntityType, viewId, RelationshipName |
+| **WebResource** | Custom HTML/images | ✗ No | src, height, width, scrolling |
+| **QuickForm** | Embedded forms | ✗ No | EntityName, FormId |
+| **Spacer** | Layout spacing | ✗ No | Height |
+| **IFrame** | External content | ✗ No | src, height, width, scrolling |
+| **Timer** | Date/time tracking | ✗ No | None |
+| **KBSearch** | Knowledge base | ✗ No | None |
 
 **Parameter Sets:**
 - **Create**: For creating new controls (no ControlId required)
@@ -754,6 +752,17 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - Header controls should be read-only (Disabled) in most cases
 - Keep header simple with only key fields (3-5 controls recommended)
 - Use ColSpan to balance header control widths
+- For special controls (Subgrid, WebResource, etc.), omit DataField and use ControlType to specify the control type
+
+**Control Types Requiring DataField vs. Not:**
+
+**Attribute-Bound Controls (DataField Required):**
+- Standard, Lookup, OptionSet, DateTime, Boolean, Email, Memo, Money, Notes, Data
+
+**Special Controls (DataField Not Required):**
+- Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch
+
+When creating special controls, you must specify the ControlType parameter but should NOT provide a DataField parameter.
 
 **Working with Header Controls:**
 - Use TabName='[Header]' to create or update header controls
