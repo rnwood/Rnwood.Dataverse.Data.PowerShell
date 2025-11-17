@@ -1,3 +1,5 @@
+. $PSScriptRoot/Common.ps1
+
 Describe 'WebResource Cmdlets - Basic Functionality' {
     # Note: These tests validate cmdlet parameter handling and basic logic.
     # Full integration tests require webresource entity metadata which is not
