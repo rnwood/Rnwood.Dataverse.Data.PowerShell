@@ -46,6 +46,14 @@ Describe "Solution Component E2E Tests" {
                     return  # Success, exit function
                 }
                 catch {
+                    # Check if this is an EntityCustomization operation error
+                    if ($_.Exception.Message -like "*Cannot start the requested operation*EntityCustomization*") {
+                        Write-Warning "EntityCustomization operation conflict detected. Waiting 2 minutes before retry without incrementing attempt count..."
+                        $attempt--  # Don't count this as a retry attempt
+                        Start-Sleep -Seconds 120
+                        continue
+                    }
+                    
                     if ($attempt -eq $MaxRetries) {
                         Write-Error "All $MaxRetries attempts failed. Last error: $_"
                         throw
@@ -62,13 +70,14 @@ Describe "Solution Component E2E Tests" {
             $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
             $connection.EnableAffinityCookie = $true    
 
-            # Generate unique test identifiers
+            # Generate unique test identifiers with timestamp to enable age-based cleanup
+            $timestamp = [DateTime]::UtcNow.ToString("yyyyMMddHHmm")
             $testRunId = [guid]::NewGuid().ToString("N").Substring(0, 8)
-            $solutionName = "e2esolcomp_$testRunId"
+            $solutionName = "e2esolcomp_${timestamp}_$testRunId"
             $solutionDisplayName = "E2E Solution Component Test $testRunId"
             $publisherPrefix = "e2e"
-            $entityName = "new_e2esolent_$testRunId"
-            $entitySchemaName = "new_E2ESolEnt_$testRunId"
+            $entityName = "new_e2esolent_${timestamp}_$testRunId"
+            $entitySchemaName = "new_E2ESolEnt_${timestamp}_$testRunId"
                 
             Write-Host "Test solution: $solutionName"
             Write-Host "Test entity: $entityName"
@@ -353,12 +362,20 @@ Describe "Solution Component E2E Tests" {
             Write-Host "Step 16: Cleanup any old test solutions from previous failed runs..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
+                
+                # Only clean up solutions older than 1 hour to avoid interfering with concurrent tests
+                $cutoffTime = [DateTime]::UtcNow.AddHours(-1)
+                $cutoffTimestamp = $cutoffTime.ToString("yyyyMMddHHmm")
+                
                 $oldSolutions = Get-DataverseSolution -Connection $connection | Where-Object { 
                     $_.uniquename -like "e2esolcomp_*" -and 
-                    $_.uniquename -ne $solutionName 
+                    $_.uniquename -ne $solutionName -and
+                    # Extract timestamp from name (format: e2esolcomp_yyyyMMddHHmm_guid)
+                    # Only clean up if timestamp is old enough (older than 1 hour)
+                    ($_.uniquename -match "e2esolcomp_(\d{12})_" -and $matches[1] -lt $cutoffTimestamp)
                 }
                 if ($oldSolutions.Count -gt 0) {
-                    Write-Host "  Found $($oldSolutions.Count) old test solutions to clean up"
+                    Write-Host "  Found $($oldSolutions.Count) old test solutions (>1 hour old) to clean up"
                     foreach ($sol in $oldSolutions) {
                         try {
                             Write-Host "  Removing old solution: $($sol.uniquename)"
@@ -370,19 +387,27 @@ Describe "Solution Component E2E Tests" {
                     }
                 }
                 else {
-                    Write-Host "  No old test solutions found"
+                    Write-Host "  No old test solutions found (>1 hour old)"
                 }
             }
             
             Write-Host "Step 17: Cleanup any old test entities from previous failed runs..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
+                
+                # Only clean up entities older than 1 hour to avoid interfering with concurrent tests
+                $cutoffTime = [DateTime]::UtcNow.AddHours(-1)
+                $cutoffTimestamp = $cutoffTime.ToString("yyyyMMddHHmm")
+                
                 $oldEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
                     $_.LogicalName -like "new_e2esolent_*" -and 
-                    $_.LogicalName -ne $entityName 
+                    $_.LogicalName -ne $entityName -and
+                    # Extract timestamp from name (format: new_e2esolent_yyyyMMddHHmm_guid)
+                    # Only clean up if timestamp is old enough (older than 1 hour)
+                    ($_.LogicalName -match "new_e2esolent_(\d{12})_" -and $matches[1] -lt $cutoffTimestamp)
                 }
                 if ($oldEntities.Count -gt 0) {
-                    Write-Host "  Found $($oldEntities.Count) old test entities to clean up"
+                    Write-Host "  Found $($oldEntities.Count) old test entities (>1 hour old) to clean up"
                     foreach ($entity in $oldEntities) {
                         try {
                             Write-Host "  Removing old entity: $($entity.LogicalName)"
@@ -397,7 +422,7 @@ Describe "Solution Component E2E Tests" {
                     }
                 }
                 else {
-                    Write-Host "  No old test entities found"
+                    Write-Host "  No old test entities found (>1 hour old)"
                 }
             }
                 

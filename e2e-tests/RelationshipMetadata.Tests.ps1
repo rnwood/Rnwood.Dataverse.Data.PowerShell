@@ -47,6 +47,14 @@ Describe "Relationship Metadata E2E Tests" {
                     return  # Success, exit function
                 }
                 catch {
+                    # Check if this is an EntityCustomization operation error
+                    if ($_.Exception.Message -like "*Cannot start the requested operation*EntityCustomization*") {
+                        Write-Warning "EntityCustomization operation conflict detected. Waiting 2 minutes before retry without incrementing attempt count..."
+                        $attempt--  # Don't count this as a retry attempt
+                        Start-Sleep -Seconds 120
+                        continue
+                    }
+                    
                     if ($attempt -eq $MaxRetries) {
                         Write-Error "All $MaxRetries attempts failed. Last error: $_"
                         throw
@@ -63,22 +71,32 @@ Describe "Relationship Metadata E2E Tests" {
             $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
             $connection.EnableAffinityCookie = $true    
 
-            # Generate unique test identifiers
+            # Generate unique test identifiers with timestamp to enable age-based cleanup
+            $timestamp = [DateTime]::UtcNow.ToString("yyyyMMddHHmm")
             $testRunId = [guid]::NewGuid().ToString("N").Substring(0, 8)
-            $entity1Name = "new_e2erel1_$testRunId"
-            $entity1Schema = "new_E2ERel1_$testRunId"
-            $entity2Name = "new_e2erel2_$testRunId"
-            $entity2Schema = "new_E2ERel2_$testRunId"
+            $entity1Name = "new_e2erel1_${timestamp}_$testRunId"
+            $entity1Schema = "new_E2ERel1_${timestamp}_$testRunId"
+            $entity2Name = "new_e2erel2_${timestamp}_$testRunId"
+            $entity2Schema = "new_E2ERel2_${timestamp}_$testRunId"
                 
             Write-Host "Test entities: $entity1Name, $entity2Name"
             
             Write-Host "Step 0: Cleanup any old test entities from previous failed runs..."
             Wait-DataversePublish -Connection $connection -Verbose
+            
+            # Only clean up entities older than 1 hour to avoid interfering with concurrent tests
+            $cutoffTime = [DateTime]::UtcNow.AddHours(-1)
+            $cutoffTimestamp = $cutoffTime.ToString("yyyyMMddHHmm")
+            
             $oldEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
-                $_.LogicalName -like "new_e2erel*" -and $_.LogicalName -notlike "*m2m_intersect"
+                $_.LogicalName -like "new_e2erel*" -and 
+                $_.LogicalName -notlike "*m2m_intersect" -and
+                # Extract timestamp from name (format: new_e2erel[12]_yyyyMMddHHmm_guid)
+                # Only clean up if timestamp is old enough (older than 1 hour)
+                ($_.LogicalName -match "new_e2erel\d+_(\d{12})_" -and $matches[1] -lt $cutoffTimestamp)
             }
             if ($oldEntities.Count -gt 0) {
-                Write-Host "  Found $($oldEntities.Count) old test entities to clean up"
+                Write-Host "  Found $($oldEntities.Count) old test entities (>1 hour old) to clean up"
                 foreach ($entity in $oldEntities) {
                     try {
                         Write-Host "  Removing old entity: $($entity.LogicalName)"
@@ -91,7 +109,7 @@ Describe "Relationship Metadata E2E Tests" {
                 }
             }
             else {
-                Write-Host "  No old test entities found"
+                Write-Host "  No old test entities found (>1 hour old)"
             }
             
             Write-Host "  Waiting for all cleanup operations to complete..."
