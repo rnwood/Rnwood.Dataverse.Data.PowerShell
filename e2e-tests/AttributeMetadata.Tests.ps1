@@ -70,10 +70,11 @@ Describe "Attribute Metadata E2E Tests" {
             $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
             $connection.EnableAffinityCookie = $true    
 
-            # Generate unique test identifiers
+            # Generate unique test identifiers with timestamp to enable age-based cleanup
+            $timestamp = [DateTime]::UtcNow.ToString("yyyyMMddHHmm")
             $testRunId = [guid]::NewGuid().ToString("N").Substring(0, 8)
-            $entityName = "new_e2eattr_$testRunId"
-            $schemaName = "new_E2EAttr_$testRunId"
+            $entityName = "new_e2eattr_${timestamp}_$testRunId"
+            $schemaName = "new_E2EAttr_${timestamp}_$testRunId"
                 
             Write-Host "Test entity: $entityName"
                 
@@ -310,12 +311,20 @@ Describe "Attribute Metadata E2E Tests" {
             Write-Host "Step 16: Cleanup any old test entities from previous failed runs..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
+                
+                # Only clean up entities older than 1 hour to avoid interfering with concurrent tests
+                $cutoffTime = [DateTime]::UtcNow.AddHours(-1)
+                $cutoffTimestamp = $cutoffTime.ToString("yyyyMMddHHmm")
+                
                 $oldEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
                     $_.LogicalName -like "new_e2eattr_*" -and 
-                    $_.LogicalName -ne $entityName 
+                    $_.LogicalName -ne $entityName -and
+                    # Extract timestamp from name (format: new_e2eattr_yyyyMMddHHmm_guid)
+                    # Only clean up if timestamp is old enough (older than 1 hour)
+                    ($_.LogicalName -match "new_e2eattr_(\d{12})_" -and $matches[1] -lt $cutoffTimestamp)
                 }
                 if ($oldEntities.Count -gt 0) {
-                    Write-Host "  Found $($oldEntities.Count) old test entities to clean up"
+                    Write-Host "  Found $($oldEntities.Count) old test entities (>1 hour old) to clean up"
                     foreach ($entity in $oldEntities) {
                         try {
                             Write-Host "  Removing old entity: $($entity.LogicalName)"
@@ -330,7 +339,7 @@ Describe "Attribute Metadata E2E Tests" {
                     }
                 }
                 else {
-                    Write-Host "  No old test entities found"
+                    Write-Host "  No old test entities found (>1 hour old)"
                 }
             }
                 
