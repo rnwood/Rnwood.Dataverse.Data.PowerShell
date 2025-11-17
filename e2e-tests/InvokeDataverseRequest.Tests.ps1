@@ -159,6 +159,30 @@ Describe "Invoke-DataverseRequest E2E Tests" {
         }
     }
 
+    It "Allows forward slash in query string" {
+        $ErrorActionPreference = "Stop"
+        
+        try {
+            $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+            $connection.EnableAffinityCookie = $true
+            
+            # This should succeed because '/' is in the query string portion, not the resource name
+            # Testing with a hypothetical filter that contains '/' in the value
+            $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path "WhoAmI?test=value/with/slashes"
+            
+            # Verify response (WhoAmI should ignore query parameters and still work)
+            if (-not $response.UserId) {
+                throw "Response missing expected property"
+            }
+            
+            Write-Host "✓ Forward slash in query string is correctly allowed"
+        }
+        catch {
+            Write-Host "ERROR: $($_ | Out-String)"
+            throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+        }
+    }
+
     It "Can invoke custom action using REST parameter set" {
         $ErrorActionPreference = "Stop"
         

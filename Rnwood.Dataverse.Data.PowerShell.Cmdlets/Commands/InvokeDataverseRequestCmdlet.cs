@@ -129,13 +129,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			if (ParameterSetName == "REST")
 			{
-				// Validate that the path does not contain '/' as the SDK does not support full paths
-				if (Path.Contains("/"))
+				// Validate that the path portion (before query string) does not contain '/' as the SDK does not support full paths
+				// Query strings (after '?') may contain '/' characters
+				string pathPortion = Path.Split('?')[0];
+				if (pathPortion.Contains("/"))
 				{
 					throw new ArgumentException(
-						$"The Path parameter should not contain '/' characters. " +
+						$"The Path parameter should not contain '/' characters in the resource name portion. " +
 						$"Provide only the resource name (e.g., 'accounts' or 'WhoAmI') rather than a full path like '/api/data/v9.2/accounts'. " +
 						$"The organization URL and API version are automatically added by the connection. " +
+						$"Query strings may contain '/' characters. " +
 						$"Current value: '{Path}'",
 						nameof(Path));
 				}
