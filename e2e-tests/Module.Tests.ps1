@@ -411,6 +411,20 @@ Describe "Module" {
                 }
                 Write-Host "Downloaded and verified web resource content"
                 
+                # Test: Content excluded by default
+                $retrievedWithoutContent = Get-DataverseWebResource -Connection $connection -Name $webResourceName
+                if ($retrievedWithoutContent.PSObject.Properties['content']) {
+                    throw "Content should be excluded by default"
+                }
+                Write-Host "Verified content excluded by default"
+                
+                # Test: Content included with -IncludeContent
+                $retrievedWithContent = Get-DataverseWebResource -Connection $connection -Name $webResourceName -IncludeContent
+                if (-not $retrievedWithContent.content) {
+                    throw "Content should be included with -IncludeContent"
+                }
+                Write-Host "Verified content included with -IncludeContent"
+                
                 # Test: IfNewer flag (should not update since file is older)
                 Start-Sleep -Milliseconds 100
                 Set-DataverseWebResource -Connection $connection -Name $webResourceName -Path $tempJsFile -IfNewer -Verbose | Out-Null

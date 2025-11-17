@@ -12,6 +12,9 @@ The web resource cmdlets provide:
 - **Conditional updates** - Only update when files are newer
 - **Batch operations** - Process multiple files in a folder
 - **Pipeline support** - Chain operations together
+- **Performance optimization** - Content excluded by default, use -IncludeContent when needed
+
+**Breaking Change (v2.0.0+):** The `Get-DataverseWebResource` cmdlet now excludes the `content` property by default for improved performance. Use the `-IncludeContent` switch to include content in results, or use `-Path`/`-Folder` parameters to save content to files (which automatically fetches content as needed).
 
 ## Web Resource Types
 
@@ -37,8 +40,11 @@ Web resources are classified by type using the `WebResourceType` enum:
 ### Get by Name
 
 ```powershell
-# Get a specific web resource
+# Get web resource metadata (without content for better performance)
 Get-DataverseWebResource -Connection $conn -Name "new_myscript"
+
+# Get web resource with content included
+Get-DataverseWebResource -Connection $conn -Name "new_myscript" -IncludeContent
 
 # Use wildcards
 Get-DataverseWebResource -Connection $conn -Name "new_*"
@@ -101,9 +107,13 @@ Get-DataverseWebResource -Connection $conn -Name "new_*" -Folder "./webresources
 ### Decode Content
 
 ```powershell
-# Get content as byte array instead of base64 string
+# Get content as byte array instead of base64 string (implies -IncludeContent)
 $webResource = Get-DataverseWebResource -Connection $conn -Name "new_myscript" -DecodeContent
 $contentBytes = $webResource.content  # byte[]
+
+# Or get base64 content
+$webResource = Get-DataverseWebResource -Connection $conn -Name "new_myscript" -IncludeContent
+$contentBase64 = $webResource.content  # string (base64)
 ```
 
 ## Creating and Updating Web Resources
