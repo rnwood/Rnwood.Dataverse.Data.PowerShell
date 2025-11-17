@@ -1,3 +1,4 @@
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
@@ -187,8 +188,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     // If content wasn't retrieved, fetch it now for saving
                     if (needContentForFileOperations && !entity.Contains("content"))
                     {
-                        var fullEntity = Connection.Retrieve("webresource", entity.Id, new ColumnSet("content"));
-                        entity["content"] = fullEntity.GetAttributeValue<string>("content");
+                        // Use RetrieveUnpublishedRequest to get unpublished content
+                        var retrieveUnpublishedRequest = new RetrieveUnpublishedRequest
+                        {
+                            Target = new EntityReference("webresource", entity.Id),
+                            ColumnSet = new ColumnSet("content")
+                        };
+                        var response = (RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
+                        entity["content"] = response.Entity.GetAttributeValue<string>("content");
                     }
                     SaveWebResourceToFolder(entity);
                 }
@@ -206,8 +213,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     // If content wasn't retrieved but needed for file operations, fetch it now
                     if (needContentForFileOperations && !entity.Contains("content"))
                     {
-                        var fullEntity = Connection.Retrieve("webresource", entity.Id, new ColumnSet("content"));
-                        entity["content"] = fullEntity.GetAttributeValue<string>("content");
+                        // Use RetrieveUnpublishedRequest to get unpublished content
+                        var retrieveUnpublishedRequest = new RetrieveUnpublishedRequest
+                        {
+                            Target = new EntityReference("webresource", entity.Id),
+                            ColumnSet = new ColumnSet("content")
+                        };
+                        var response = (RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
+                        entity["content"] = response.Entity.GetAttributeValue<string>("content");
                     }
                     
                     var psObject = ConvertEntityToPSObject(entity, includeContent);
