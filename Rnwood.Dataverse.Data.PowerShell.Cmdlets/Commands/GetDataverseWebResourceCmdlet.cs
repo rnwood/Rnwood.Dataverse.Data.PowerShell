@@ -113,8 +113,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     "versionnumber",
                     "solutionid",
                     "componentstate",
-                    "overwritetime",
-                    "publishedon"
+                    "overwritetime"
                 );
             }
 
@@ -268,8 +267,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     "versionnumber",
                     "solutionid",
                     "componentstate",
-                    "overwritetime",
-                    "publishedon"
+                    "overwritetime"
                 );
             }
             
