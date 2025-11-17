@@ -354,7 +354,7 @@ jobs:
               return $results
           } -ArgumentList $env:TESTMODULEPATH, $workingDir
           
-          # Job 2: E2E tests (Module.Tests.ps1 for all matrix combinations)
+          # Job 2: E2E tests (all test files in parallel)
           $e2eTestsJob = Start-Job -ScriptBlock {
               param($modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret, $osType, $psVersion, $workDir)
               
@@ -366,46 +366,71 @@ jobs:
               $env:E2ETESTS_CLIENTID = $e2eClientId
               $env:E2ETESTS_CLIENTSECRET = $e2eClientSecret
               
-              Write-Host "Running E2E tests (Module.Tests.ps1)..."
+              Write-Host "Discovering E2E test files..."
               
-              $config = New-PesterConfiguration
-              $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
-              $config.Run.PassThru = $true
-              $config.Output.Verbosity = 'Minimal'
-              $config.Filter.ExcludeTag = 'LongRunning'
+              # Get all e2e test files
+              $allE2eTestFiles = Get-ChildItem 'e2e-tests/*.Tests.ps1' | Select-Object -ExpandProperty FullName
               
-              $result = Invoke-Pester -Configuration $config
-              
-              # Check if we should also run metadata tests (Windows Latest only)
+              # Metadata tests only run on Windows Latest
+              $metadataTests = @(
+                  'EntityMetadata.Tests.ps1',
+                  'AttributeMetadata.Tests.ps1', 
+                  'RelationshipMetadata.Tests.ps1',
+                  'OptionSetMetadata.Tests.ps1'
+              )
               $shouldRunMetadataTests = ($osType -eq 'windows-latest' -and $psVersion -eq 'latest')
               
-              if ($shouldRunMetadataTests) {
-                  Write-Host "Running E2E Metadata tests (Windows Latest only)..."
-                  
-                  $metadataConfig = New-PesterConfiguration
-                  $metadataConfig.Run.Path = @(
-                      'e2e-tests/EntityMetadata.Tests.ps1',
-                      'e2e-tests/AttributeMetadata.Tests.ps1', 
-                      'e2e-tests/RelationshipMetadata.Tests.ps1',
-                      'e2e-tests/OptionSetMetadata.Tests.ps1'
-                  )
-                  $metadataConfig.Run.PassThru = $true
-                  $metadataConfig.Output.Verbosity = 'Minimal'
-                  $metadataConfig.Filter.ExcludeTag = 'LongRunning'
-                  
-                  $metadataResult = Invoke-Pester -Configuration $metadataConfig
-                  
-                  # Combine results
-                  return @{
-                      ModuleTests = $result
-                      MetadataTests = $metadataResult
+              # Filter test files based on platform
+              $testFiles = $allE2eTestFiles | Where-Object {
+                  $fileName = Split-Path $_ -Leaf
+                  # Include metadata tests only if on Windows Latest
+                  if ($metadataTests -contains $fileName) {
+                      return $shouldRunMetadataTests
                   }
+                  return $true
               }
               
-              return @{
-                  ModuleTests = $result
-                  MetadataTests = $null
+              Write-Host "Found $($testFiles.Count) E2E test files to run in parallel"
+              
+              # Start a job for each test file
+              $jobs = $testFiles | ForEach-Object {
+                  $testFile = $_
+                  Start-Job -ScriptBlock {
+                      param($testFilePath, $modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret)
+                      
+                      $env:TESTMODULEPATH = $modulePath
+                      $env:E2ETESTS_URL = $e2eUrl
+                      $env:E2ETESTS_CLIENTID = $e2eClientId
+                      $env:E2ETESTS_CLIENTSECRET = $e2eClientSecret
+                      
+                      # Run each test file independently
+                      $config = New-PesterConfiguration
+                      $config.Run.Path = $testFilePath
+                      $config.Run.PassThru = $true
+                      $config.Output.Verbosity = 'Minimal'
+                      $config.Should.ErrorAction = 'Continue'
+                      $config.Filter.ExcludeTag = 'LongRunning'
+                      
+                      $result = Invoke-Pester -Configuration $config
+                      
+                      # Return result with filename for aggregation
+                      [PSCustomObject]@{
+                          File = (Split-Path $testFilePath -Leaf)
+                          TotalCount = $result.TotalCount
+                          PassedCount = $result.PassedCount
+                          FailedCount = $result.FailedCount
+                          SkippedCount = $result.SkippedCount
+                          DurationSeconds = $result.Duration.TotalSeconds
+                          Failed = $result.Failed
+                      }
+                  } -ArgumentList $testFile, $modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret
               }
+              
+              # Wait for all test file jobs to complete
+              $results = $jobs | Wait-Job | Receive-Job
+              $jobs | Remove-Job
+              
+              return $results
           } -ArgumentList $env:TESTMODULEPATH, $env:E2ETESTS_URL, $env:E2ETESTS_CLIENTID, $env:E2ETESTS_CLIENTSECRET, "${{ matrix.os }}", "${{ matrix.powershell_version }}", $workingDir
           
           # Wait for both jobs to complete
@@ -450,44 +475,28 @@ jobs:
           # Process E2E test results
           Write-Host ""
           Write-Host "=== E2E Tests Results ===" -ForegroundColor Cyan
+          $e2eTotalTests = ($e2eResults | Measure-Object -Property TotalCount -Sum).Sum
+          $e2eTotalPassed = ($e2eResults | Measure-Object -Property PassedCount -Sum).Sum
+          $e2eTotalFailed = ($e2eResults | Measure-Object -Property FailedCount -Sum).Sum
+          $e2eTotalSkipped = ($e2eResults | Measure-Object -Property SkippedCount -Sum).Sum
+          $e2eTotalDurationSeconds = ($e2eResults | Measure-Object -Property DurationSeconds -Sum).Sum
           
-          $e2eModuleResult = $e2eResults.ModuleTests
-          Write-Host "Module.Tests.ps1:"
-          Write-Host "  Total:   $($e2eModuleResult.TotalCount)" -ForegroundColor White
-          Write-Host "  Passed:  $($e2eModuleResult.PassedCount)" -ForegroundColor Green
-          Write-Host "  Failed:  $($e2eModuleResult.FailedCount)" -ForegroundColor $(if ($e2eModuleResult.FailedCount -gt 0) { "Red" } else { "Green" })
-          Write-Host "  Skipped: $($e2eModuleResult.SkippedCount)" -ForegroundColor Yellow
-          Write-Host "  Duration: $($e2eModuleResult.Duration.TotalSeconds)s" -ForegroundColor White
+          Write-Host "  Total:   $e2eTotalTests" -ForegroundColor White
+          Write-Host "  Passed:  $e2eTotalPassed" -ForegroundColor Green
+          Write-Host "  Failed:  $e2eTotalFailed" -ForegroundColor $(if ($e2eTotalFailed -gt 0) { "Red" } else { "Green" })
+          Write-Host "  Skipped: $e2eTotalSkipped" -ForegroundColor Yellow
+          Write-Host "  Duration: $($e2eTotalDurationSeconds)s" -ForegroundColor White
           
-          if ($e2eModuleResult.FailedCount -gt 0) {
+          if ($e2eTotalFailed -gt 0) {
               $hasFailures = $true
               Write-Host ""
-              Write-Host "Failed E2E Module Tests:" -ForegroundColor Red
-              foreach ($test in $e2eModuleResult.Failed) {
-                  Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
-                  if ($test.ErrorRecord) {
-                      Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
-                  }
-              }
-          }
-          
-          if ($e2eResults.MetadataTests) {
-              Write-Host ""
-              Write-Host "Metadata Tests:"
-              Write-Host "  Total:   $($e2eResults.MetadataTests.TotalCount)" -ForegroundColor White
-              Write-Host "  Passed:  $($e2eResults.MetadataTests.PassedCount)" -ForegroundColor Green
-              Write-Host "  Failed:  $($e2eResults.MetadataTests.FailedCount)" -ForegroundColor $(if ($e2eResults.MetadataTests.FailedCount -gt 0) { "Red" } else { "Green" })
-              Write-Host "  Skipped: $($e2eResults.MetadataTests.SkippedCount)" -ForegroundColor Yellow
-              Write-Host "  Duration: $($e2eResults.MetadataTests.Duration.TotalSeconds)s" -ForegroundColor White
-              
-              if ($e2eResults.MetadataTests.FailedCount -gt 0) {
-                  $hasFailures = $true
-                  Write-Host ""
-                  Write-Host "Failed E2E Metadata Tests:" -ForegroundColor Red
-                  foreach ($test in $e2eResults.MetadataTests.Failed) {
-                      Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
+              Write-Host "Failed E2E Tests:" -ForegroundColor Red
+              foreach ($result in $e2eResults | Where-Object { $_.FailedCount -gt 0 }) {
+                  Write-Host "  File: $($result.File)" -ForegroundColor Yellow
+                  foreach ($test in $result.Failed) {
+                      Write-Host "    - $($test.ExpandedPath)" -ForegroundColor Red
                       if ($test.ErrorRecord) {
-                          Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+                          Write-Host "      $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
                       }
                   }
               }
@@ -569,7 +578,7 @@ jobs:
                 return $results
             } -ArgumentList $env:TESTMODULEPATH, $workingDir
             
-            # Job 2: E2E tests (Module.Tests.ps1 for PowerShell 5)
+            # Job 2: E2E tests (all test files in parallel for PowerShell 5)
             $e2eTestsJob = Start-Job -ScriptBlock {
                 param($modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret, $workDir)
                 
@@ -581,23 +590,72 @@ jobs:
                 $env:E2ETESTS_CLIENTID = $e2eClientId
                 $env:E2ETESTS_CLIENTSECRET = $e2eClientSecret
                 
-                Write-Host "Running E2E tests (Module.Tests.ps1)..."
+                Write-Host "Discovering E2E test files..."
                 
-                $config = New-PesterConfiguration
-                $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
-                $config.Run.PassThru = $true
-                $config.Output.Verbosity = 'Minimal'
-                $config.Filter.ExcludeTag = 'LongRunning'
+                # Get all e2e test files
+                $allE2eTestFiles = Get-ChildItem 'e2e-tests/*.Tests.ps1' | Select-Object -ExpandProperty FullName
                 
-                $result = Invoke-Pester -Configuration $config
+                # Metadata tests only run on Windows Latest (not on PowerShell 5)
+                $metadataTests = @(
+                    'EntityMetadata.Tests.ps1',
+                    'AttributeMetadata.Tests.ps1', 
+                    'RelationshipMetadata.Tests.ps1',
+                    'OptionSetMetadata.Tests.ps1'
+                )
                 
-                return $result
+                # Filter out metadata tests for PowerShell 5
+                $testFiles = $allE2eTestFiles | Where-Object {
+                    $fileName = Split-Path $_ -Leaf
+                    return -not ($metadataTests -contains $fileName)
+                }
+                
+                Write-Host "Found $($testFiles.Count) E2E test files to run in parallel"
+                
+                # Start a job for each test file
+                $jobs = $testFiles | ForEach-Object {
+                    $testFile = $_
+                    Start-Job -ScriptBlock {
+                        param($testFilePath, $modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret)
+                        
+                        $env:TESTMODULEPATH = $modulePath
+                        $env:E2ETESTS_URL = $e2eUrl
+                        $env:E2ETESTS_CLIENTID = $e2eClientId
+                        $env:E2ETESTS_CLIENTSECRET = $e2eClientSecret
+                        
+                        # Run each test file independently
+                        $config = New-PesterConfiguration
+                        $config.Run.Path = $testFilePath
+                        $config.Run.PassThru = $true
+                        $config.Output.Verbosity = 'Minimal'
+                        $config.Should.ErrorAction = 'Continue'
+                        $config.Filter.ExcludeTag = 'LongRunning'
+                        
+                        $result = Invoke-Pester -Configuration $config
+                        
+                        # Return result with filename for aggregation
+                        [PSCustomObject]@{
+                            File = (Split-Path $testFilePath -Leaf)
+                            TotalCount = $result.TotalCount
+                            PassedCount = $result.PassedCount
+                            FailedCount = $result.FailedCount
+                            SkippedCount = $result.SkippedCount
+                            DurationSeconds = $result.Duration.TotalSeconds
+                            Failed = $result.Failed
+                        }
+                    } -ArgumentList $testFile, $modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret
+                }
+                
+                # Wait for all test file jobs to complete
+                $results = $jobs | Wait-Job | Receive-Job
+                $jobs | Remove-Job
+                
+                return $results
             } -ArgumentList $env:TESTMODULEPATH, $env:E2ETESTS_URL, $env:E2ETESTS_CLIENTID, $env:E2ETESTS_CLIENTSECRET, $workingDir
             
             # Wait for both jobs to complete
             Write-Host "Waiting for standard tests and E2E tests to complete..."
             $standardResults = Wait-Job $standardTestsJob | Receive-Job
-            $e2eResult = Wait-Job $e2eTestsJob | Receive-Job
+            $e2eResults = Wait-Job $e2eTestsJob | Receive-Job
             
             Remove-Job $standardTestsJob, $e2eTestsJob
             
@@ -636,21 +694,29 @@ jobs:
             # Process E2E test results
             Write-Host ""
             Write-Host "=== E2E Tests Results ===" -ForegroundColor Cyan
-            Write-Host "Module.Tests.ps1:"
-            Write-Host "  Total:   $($e2eResult.TotalCount)" -ForegroundColor White
-            Write-Host "  Passed:  $($e2eResult.PassedCount)" -ForegroundColor Green
-            Write-Host "  Failed:  $($e2eResult.FailedCount)" -ForegroundColor $(if ($e2eResult.FailedCount -gt 0) { "Red" } else { "Green" })
-            Write-Host "  Skipped: $($e2eResult.SkippedCount)" -ForegroundColor Yellow
-            Write-Host "  Duration: $($e2eResult.Duration.TotalSeconds)s" -ForegroundColor White
+            $e2eTotalTests = ($e2eResults | Measure-Object -Property TotalCount -Sum).Sum
+            $e2eTotalPassed = ($e2eResults | Measure-Object -Property PassedCount -Sum).Sum
+            $e2eTotalFailed = ($e2eResults | Measure-Object -Property FailedCount -Sum).Sum
+            $e2eTotalSkipped = ($e2eResults | Measure-Object -Property SkippedCount -Sum).Sum
+            $e2eTotalDurationSeconds = ($e2eResults | Measure-Object -Property DurationSeconds -Sum).Sum
             
-            if ($e2eResult.FailedCount -gt 0) {
+            Write-Host "  Total:   $e2eTotalTests" -ForegroundColor White
+            Write-Host "  Passed:  $e2eTotalPassed" -ForegroundColor Green
+            Write-Host "  Failed:  $e2eTotalFailed" -ForegroundColor $(if ($e2eTotalFailed -gt 0) { "Red" } else { "Green" })
+            Write-Host "  Skipped: $e2eTotalSkipped" -ForegroundColor Yellow
+            Write-Host "  Duration: $($e2eTotalDurationSeconds)s" -ForegroundColor White
+            
+            if ($e2eTotalFailed -gt 0) {
                 $hasFailures = $true
                 Write-Host ""
                 Write-Host "Failed E2E Tests:" -ForegroundColor Red
-                foreach ($test in $e2eResult.Failed) {
-                    Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
-                    if ($test.ErrorRecord) {
-                        Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+                foreach ($result in $e2eResults | Where-Object { $_.FailedCount -gt 0 }) {
+                    Write-Host "  File: $($result.File)" -ForegroundColor Yellow
+                    foreach ($test in $result.Failed) {
+                        Write-Host "    - $($test.ExpandedPath)" -ForegroundColor Red
+                        if ($test.ErrorRecord) {
+                            Write-Host "      $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+                        }
                     }
                 }
             }
