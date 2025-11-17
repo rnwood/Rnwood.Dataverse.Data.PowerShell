@@ -108,8 +108,69 @@ try {
 
 Write-Host ""
 
-# Test 6: Simulate workflow behavior with error throwing
-Write-Host "Test 6: Workflow error handling simulation" -ForegroundColor Yellow
+# Test 6: Breaking change with all conventional commit types
+Write-Host "Test 6: Breaking changes with all types (! should work for all)" -ForegroundColor Yellow
+$allTypes = @("feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore")
+$allTestsPassed = $true
+
+foreach ($type in $allTypes) {
+    $testTitle = "$type!: breaking change for $type"
+    try {
+        $isValid = & ./scripts/Test-ConventionalCommits.ps1 -Text $testTitle
+        if ($isValid) {
+            Write-Host "  ✓ $type!: passed validation" -ForegroundColor Green
+        } else {
+            Write-Host "  ✗ $type!: failed validation (unexpected)" -ForegroundColor Red
+            $allTestsPassed = $false
+        }
+    } catch {
+        Write-Host "  ✗ $type!: threw exception (unexpected): $_" -ForegroundColor Red
+        $allTestsPassed = $false
+    }
+}
+
+if (-not $allTestsPassed) {
+    Write-Host ""
+    Write-Host "✗ Some breaking change type tests failed" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "✓ All breaking change types passed validation" -ForegroundColor Green
+
+Write-Host ""
+
+# Test 7: Breaking change with scope for all types
+Write-Host "Test 7: Breaking changes with scope (all types)" -ForegroundColor Yellow
+$allTestsPassed = $true
+
+foreach ($type in $allTypes) {
+    $testTitle = "$type(scope)!: breaking change for $type with scope"
+    try {
+        $isValid = & ./scripts/Test-ConventionalCommits.ps1 -Text $testTitle
+        if ($isValid) {
+            Write-Host "  ✓ $type(scope)!: passed validation" -ForegroundColor Green
+        } else {
+            Write-Host "  ✗ $type(scope)!: failed validation (unexpected)" -ForegroundColor Red
+            $allTestsPassed = $false
+        }
+    } catch {
+        Write-Host "  ✗ $type(scope)!: threw exception (unexpected): $_" -ForegroundColor Red
+        $allTestsPassed = $false
+    }
+}
+
+if (-not $allTestsPassed) {
+    Write-Host ""
+    Write-Host "✗ Some breaking change with scope tests failed" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "✓ All breaking change types with scope passed validation" -ForegroundColor Green
+
+Write-Host ""
+
+# Test 8: Simulate workflow behavior with error throwing
+Write-Host "Test 8: Workflow error handling simulation" -ForegroundColor Yellow
 try {
     $isValid = & ./scripts/Test-ConventionalCommits.ps1 -Text "No commits here"
     if (-not $isValid) {

@@ -17,13 +17,16 @@ Types:
 - chore: Other changes that don't modify src or test files (patch version bump)
 
 Breaking changes:
-- Add ! after type for breaking changes: feat!: or fix!: (major version bump)
+- Add ! after type for breaking changes (works with ANY type): feat!:, fix!:, docs!:, chore!:, etc. (major version bump)
+- The ! suffix indicates a breaking change regardless of the type used
 
 Examples:
 - feat: add support for batch operations
 - fix: resolve connection timeout issue
 - feat!: remove deprecated cmdlet parameters
 - fix(auth): handle expired tokens correctly
+- docs!: restructure entire documentation
+- chore!: drop support for PowerShell 5.1
 
 The scope is optional but recommended for clarity.
 -->

@@ -35,7 +35,7 @@ Examples:
 |------|--------------|---------|
 | `feat:` | Minor (1.4.0 → 1.5.0) | `feat: add batch delete operation` |
 | `fix:` | Patch (1.4.0 → 1.4.1) | `fix: resolve connection timeout` |
-| `feat!:` or `BREAKING CHANGE:` | Major (1.4.0 → 2.0.0) | `feat!: remove deprecated parameters` |
+| **Any type with `!`** or `BREAKING CHANGE:` | **Major (1.4.0 → 2.0.0)** | `feat!: remove deprecated parameters`<br/>`fix!: change parameter types`<br/>`docs!: restructure all documentation` |
 | `docs:` | Patch (1.4.0 → 1.4.1) | `docs: update installation guide` |
 | `chore:`, `style:`, `refactor:`, `perf:`, `test:`, `build:`, `ci:` | Patch | `chore: update dependencies` |
 
@@ -53,7 +53,7 @@ docs(readme): update quick start examples
 
 Breaking changes trigger a **major version bump**. Indicate breaking changes in one of two ways:
 
-1. **Add `!` after the type**: `feat!:` or `fix!:`
+1. **Add `!` after the type** (works with ANY type): `feat!:`, `fix!:`, `docs!:`, `chore!:`, etc.
 2. **Use `BREAKING CHANGE:` footer**:
 
 ```
@@ -61,6 +61,11 @@ feat: change parameter names
 
 BREAKING CHANGE: renamed -TableName to -Table for consistency
 ```
+
+**Note:** According to the Conventional Commits specification, the `!` suffix can be used with any commit type to indicate a breaking change, not just `feat` and `fix`. For example:
+- `docs!: restructure entire documentation` (breaking documentation changes)
+- `build!: upgrade to .NET 9` (breaking build changes)
+- `chore!: drop support for PowerShell 5.1` (breaking maintenance changes)
 
 ### Examples
 

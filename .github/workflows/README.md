@@ -14,15 +14,17 @@ The workflow uses `scripts/Test-ConventionalCommits.ps1` to validate that PR tit
 
 - **Format**: `<type>(<scope>): <description>`
 - **Valid types**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
-- **Breaking changes**: Add `!` after type (e.g., `feat!:` or `fix!:`)
+- **Breaking changes**: Add `!` after type (works with ANY type: `feat!:`, `fix!:`, `docs!:`, `chore!:`, etc.)
 
 ### Examples
 
 Valid PR titles:
 - `feat: add batch delete operation`
 - `fix: resolve connection timeout issue`
-- `feat!: remove deprecated parameters`
+- `feat!: remove deprecated parameters` (breaking feature)
 - `fix(auth): handle expired tokens correctly`
+- `docs!: restructure entire documentation` (breaking docs change)
+- `chore!: drop support for PowerShell 5.1` (breaking maintenance change)
 
 Invalid PR titles:
 - `Update code` (missing type)

@@ -68,10 +68,15 @@ if (-not $foundConventionalCommit) {
     Write-Host "  - ci:       CI/CD changes" -ForegroundColor Yellow
     Write-Host "  - chore:    Other changes" -ForegroundColor Yellow
     Write-Host ""
+    Write-Host "Breaking changes (major version bump):" -ForegroundColor Yellow
+    Write-Host "  - Add ! after ANY type: feat!:, fix!:, docs!:, chore!:, etc." -ForegroundColor Yellow
+    Write-Host ""
     Write-Host "Examples:" -ForegroundColor Yellow
     Write-Host "  - feat: add batch delete operation" -ForegroundColor Yellow
     Write-Host "  - fix: resolve connection timeout" -ForegroundColor Yellow
-    Write-Host "  - feat!: remove deprecated parameters" -ForegroundColor Yellow
+    Write-Host "  - feat!: remove deprecated parameters (breaking)" -ForegroundColor Yellow
+    Write-Host "  - docs!: restructure documentation (breaking)" -ForegroundColor Yellow
+    Write-Host "  - chore!: drop support for old versions (breaking)" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "See CONTRIBUTING.md for full details." -ForegroundColor Yellow
     Write-Host ""
