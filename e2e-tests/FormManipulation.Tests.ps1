@@ -351,6 +351,22 @@ Describe "Form Manipulation E2E Tests" {
                 
                 Write-Host "  Created control: emailaddress1 (Email)"
                 
+                # Create a subgrid control (special control without DataField)
+                Write-Host "  Creating subgrid control..."
+                
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Set-DataverseFormControl -Connection $connection `
+                    -FormId $formId `
+                    -TabName "CustomTab" `
+                    -SectionName "SecondSection" `
+                    -ControlId "contacts_subgrid" `
+                    -ControlType Subgrid `
+                    -Label "Related Contacts" `
+                    -Confirm:$false
+                
+                Write-Host "  Created control: contacts_subgrid (Subgrid - special control without DataField)"
+                
                 # Get control to verify
                 $control = Invoke-WithRetry {
                     Wait-DataversePublish -Connection $connection -Verbose
@@ -369,6 +385,21 @@ Describe "Form Manipulation E2E Tests" {
                 }
                 
                 Write-Host "  Verified: Control 'name' created successfully"
+                
+                # Verify subgrid control was created
+                $subgridControl = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseFormControl -Connection $connection `
+                    -FormId $formId `
+                    -TabName "CustomTab" `
+                    -SectionName "SecondSection" `
+                    -ControlId "contacts_subgrid"
+                
+                if (-not $subgridControl) {
+                    throw "Failed to retrieve created subgrid control 'contacts_subgrid'"
+                }
+                
+                Write-Host "  Verified: Subgrid control 'contacts_subgrid' created successfully"
                 
                 # Get all controls in section
                 $allControls = Invoke-WithRetry {
@@ -576,7 +607,8 @@ Describe "Form Manipulation E2E Tests" {
                 Write-Host "  - Created form with unique name"
                 Write-Host "  - Created and updated tabs with multi-column layouts"
                 Write-Host "  - Created multiple sections within tabs"
-                Write-Host "  - Created controls of different types (Standard, Lookup, Email)"
+                Write-Host "  - Created controls of different types (Standard, Lookup, Email, Subgrid)"
+                Write-Host "  - Created Subgrid control without DataField (special control type)"
                 Write-Host "  - Updated control properties"
                 Write-Host "  - Published form after all modifications (tested -Publish parameter)"
                 Write-Host "  - Successfully removed controls, sections, tabs"
