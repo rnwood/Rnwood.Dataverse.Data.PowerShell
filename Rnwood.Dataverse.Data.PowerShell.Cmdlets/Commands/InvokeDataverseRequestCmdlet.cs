@@ -46,9 +46,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 0, HelpMessage = "HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).")]
 		public System.Net.Http.HttpMethod Method { get; set; }
 		/// <summary>
-		/// Path portion of the REST API URL. Can be either a relative path (e.g., 'api/data/v9.2/contacts' or 'myapi_Example') or an absolute path starting with '/' (e.g., '/api/data/v9.2/contacts').
+		/// Resource name for the REST API call (e.g., 'accounts' or 'myapi_Example'). Do not include the full path like '/api/data/v9.2/accounts' as the organization URL and API version are automatically added.
 		/// </summary>
-		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 1, HelpMessage = "Path portion of the REST API URL. Can be either a relative path (e.g., 'api/data/v9.2/contacts' or 'myapi_Example') or an absolute path starting with '/' (e.g., '/api/data/v9.2/contacts').")]
+		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 1, HelpMessage = "Resource name for the REST API call (e.g., 'accounts' or 'myapi_Example'). Do not include the full path - the organization URL and API version are automatically added.")]
 		public string Path { get; set; }
 		/// <summary>
 		/// Body of the REST API request. Can be a string (JSON) or a PSObject which will be converted to JSON.
@@ -129,6 +129,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			if (ParameterSetName == "REST")
 			{
+				// Validate that the path does not contain '/' as the SDK does not support full paths
+				if (Path.Contains("/"))
+				{
+					throw new ArgumentException(
+						$"The Path parameter should not contain '/' characters. " +
+						$"Provide only the resource name (e.g., 'accounts' or 'WhoAmI') rather than a full path like '/api/data/v9.2/accounts'. " +
+						$"The organization URL and API version are automatically added by the connection. " +
+						$"Current value: '{Path}'",
+						nameof(Path));
+				}
+
 				var headers = new Dictionary<string, List<string>>();
 				foreach (DictionaryEntry kvp in CustomHeaders.Cast<DictionaryEntry>())
 				{
@@ -147,18 +158,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					}
 				}
 
-				// Handle absolute paths (starting with '/') vs relative paths
-				// ExecuteWebRequest treats paths as relative to the organization URL by default
-				// If the path starts with '/', treat it as an absolute path from the domain root
-				string requestPath = Path;
-				if (Path.StartsWith("/"))
-				{
-					// For absolute paths, we need to construct the full URL ourselves
-					// Remove the leading '/' since ExecuteWebRequest will add it
-					requestPath = Path.TrimStart('/');
-				}
-
-				System.Net.Http.HttpResponseMessage response = Connection.ExecuteWebRequest(Method, requestPath, bodyString, headers);
+				System.Net.Http.HttpResponseMessage response = Connection.ExecuteWebRequest(Method, Path, bodyString, headers);
 				response.EnsureSuccessStatusCode();
 				string responseBody = response.Content.ReadAsStringAsync().Result;
 				var result = InvokeCommand.NewScriptBlock("param($response); $response | ConvertFrom-Json -Depth 100").Invoke(responseBody);

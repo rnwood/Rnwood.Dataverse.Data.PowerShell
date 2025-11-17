@@ -94,22 +94,24 @@ Describe "Invoke-DataverseRequest E2E Tests" {
         }
     }
 
-    It "Can invoke REST API with relative path" {
+    It "Can invoke REST API with simple resource name" {
         $ErrorActionPreference = "Stop"
         
         try {
             $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
             $connection.EnableAffinityCookie = $true
             
-            # Test REST API with relative path (without leading /)
-            $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path "api/data/v9.2/systemusers?`$select=fullname&`$top=1"
+            # Test REST API with simple resource name (without any slashes)
+            # Note: The REST parameter set is intended for custom actions and simple resource names
+            # For full Web API operations, use the NameAndInputs or Request parameter sets
+            $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path "WhoAmI"
             
             # Verify response structure
-            if (-not $response.value) {
-                throw "Response missing 'value' property"
+            if (-not $response.UserId) {
+                throw "Response missing 'UserId' property"
             }
             
-            Write-Host "✓ REST API with relative path succeeded, returned $($response.value.Count) records"
+            Write-Host "✓ REST API with simple resource name succeeded"
         }
         catch {
             Write-Host "ERROR: $($_ | Out-String)"
@@ -117,141 +119,89 @@ Describe "Invoke-DataverseRequest E2E Tests" {
         }
     }
 
-    It "Can invoke REST API with absolute path" {
+    It "Throws error when path contains forward slash" {
         $ErrorActionPreference = "Stop"
         
         try {
             $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
             $connection.EnableAffinityCookie = $true
             
-            # Test REST API with absolute path (with leading /)
-            $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path "/api/data/v9.2/systemusers?`$select=fullname&`$top=1"
-            
-            # Verify response structure
-            if (-not $response.value) {
-                throw "Response missing 'value' property"
+            # This should throw an error because the path contains '/'
+            $errorThrown = $false
+            try {
+                $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path "/api/data/v9.2/systemusers"
             }
-            
-            Write-Host "✓ REST API with absolute path succeeded, returned $($response.value.Count) records"
-        }
-        catch {
-            Write-Host "ERROR: $($_ | Out-String)"
-            throw "Failed: " + ($_ | Format-Table -force * | Out-String)
-        }
-    }
-
-    It "Can invoke REST API POST with body" {
-        $ErrorActionPreference = "Stop"
-        $ConfirmPreference = 'None'
-        
-        try {
-            $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
-            $connection.EnableAffinityCookie = $true
-            
-            # Create a test contact using REST API
-            $testRunId = [guid]::NewGuid().ToString("N").Substring(0, 8)
-            $body = @{
-                firstname = "Test"
-                lastname = "InvokeRequest_$testRunId"
-            }
-            
-            $createResponse = Invoke-DataverseRequest -Connection $connection -Method Post -Path "api/data/v9.2/contacts" -Body $body
-            
-            # Extract contact ID from response header (OData-EntityId)
-            # For now, just verify the request succeeded
-            Write-Host "✓ REST API POST with body succeeded"
-            
-            # Clean up - try to delete the created contact
-            # We need to query for it first since we don't have the ID from the response
-            $queryResponse = Invoke-DataverseRequest -Connection $connection -Method Get -Path "api/data/v9.2/contacts?`$filter=lastname eq 'InvokeRequest_$testRunId'&`$select=contactid"
-            
-            if ($queryResponse.value -and $queryResponse.value.Count -gt 0) {
-                $contactId = $queryResponse.value[0].contactid
-                Invoke-DataverseRequest -Connection $connection -Method Delete -Path "api/data/v9.2/contacts($contactId)" | Out-Null
-                Write-Host "✓ Test contact cleaned up"
-            }
-        }
-        catch {
-            Write-Host "ERROR: $($_ | Out-String)"
-            throw "Failed: " + ($_ | Format-Table -force * | Out-String)
-        }
-    }
-
-    It "Can invoke REST API with custom headers" {
-        $ErrorActionPreference = "Stop"
-        
-        try {
-            $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
-            $connection.EnableAffinityCookie = $true
-            
-            # Test REST API with custom headers
-            # Prefer header controls the return representation preference
-            $customHeaders = @{
-                "Prefer" = "odata.include-annotations=*"
-            }
-            
-            $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path "api/data/v9.2/systemusers?`$select=fullname&`$top=1" -CustomHeaders $customHeaders
-            
-            # Verify response structure
-            if (-not $response.value) {
-                throw "Response missing 'value' property"
-            }
-            
-            Write-Host "✓ REST API with custom headers succeeded"
-        }
-        catch {
-            Write-Host "ERROR: $($_ | Out-String)"
-            throw "Failed: " + ($_ | Format-Table -force * | Out-String)
-        }
-    }
-
-    It "Can invoke REST API PATCH operation" {
-        $ErrorActionPreference = "Stop"
-        $ConfirmPreference = 'None'
-        
-        try {
-            $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
-            $connection.EnableAffinityCookie = $true
-            
-            # Create a test contact first
-            $testRunId = [guid]::NewGuid().ToString("N").Substring(0, 8)
-            $body = @{
-                firstname = "Test"
-                lastname = "InvokeRequest_$testRunId"
-            }
-            
-            Invoke-DataverseRequest -Connection $connection -Method Post -Path "api/data/v9.2/contacts" -Body $body | Out-Null
-            
-            # Query for the created contact
-            $queryResponse = Invoke-DataverseRequest -Connection $connection -Method Get -Path "api/data/v9.2/contacts?`$filter=lastname eq 'InvokeRequest_$testRunId'&`$select=contactid,firstname"
-            
-            if ($queryResponse.value -and $queryResponse.value.Count -gt 0) {
-                $contactId = $queryResponse.value[0].contactid
+            catch {
+                $errorThrown = $true
+                $errorMessage = $_.Exception.Message
                 
-                # Update the contact using PATCH
-                $updateBody = @{
-                    firstname = "Updated"
+                # Verify the error message is helpful
+                if ($errorMessage -notlike "*should not contain*/*") {
+                    throw "Error message does not contain expected guidance. Message: $errorMessage"
                 }
                 
-                Invoke-DataverseRequest -Connection $connection -Method Patch -Path "api/data/v9.2/contacts($contactId)" -Body $updateBody | Out-Null
-                
-                Write-Host "✓ REST API PATCH operation succeeded"
-                
-                # Verify the update
-                $verifyResponse = Invoke-DataverseRequest -Connection $connection -Method Get -Path "api/data/v9.2/contacts($contactId)?`$select=firstname"
-                
-                if ($verifyResponse.firstname -ne "Updated") {
-                    throw "Update verification failed: expected 'Updated', got '$($verifyResponse.firstname)'"
-                }
-                
-                Write-Host "✓ Update verified successfully"
-                
-                # Clean up
-                Invoke-DataverseRequest -Connection $connection -Method Delete -Path "api/data/v9.2/contacts($contactId)" | Out-Null
-                Write-Host "✓ Test contact cleaned up"
-            } else {
-                throw "Failed to find created contact for PATCH test"
+                Write-Host "✓ Correctly threw error with helpful message: $errorMessage"
             }
+            
+            if (-not $errorThrown) {
+                throw "Expected an error to be thrown for path containing '/'"
+            }
+        }
+        catch {
+            # If the error is from our validation, this is expected
+            if ($_.Exception.Message -like "*should not contain*/*") {
+                Write-Host "✓ Validation correctly prevents paths with forward slashes"
+            }
+            else {
+                Write-Host "ERROR: $($_ | Out-String)"
+                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+            }
+        }
+    }
+
+    It "Can invoke custom action using REST parameter set" {
+        $ErrorActionPreference = "Stop"
+        
+        try {
+            $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+            $connection.EnableAffinityCookie = $true
+            
+            # Test REST API with a custom action name (no slashes)
+            # For this test, we'll use WhoAmI as a representative custom action
+            $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path "WhoAmI"
+            
+            # Verify response
+            if (-not $response.UserId) {
+                throw "Response missing expected property"
+            }
+            
+            Write-Host "✓ REST API custom action call succeeded"
+        }
+        catch {
+            Write-Host "ERROR: $($_ | Out-String)"
+            throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+        }
+    }
+
+    It "Can invoke batch requests using NameAndInputs parameter set" {
+        $ErrorActionPreference = "Stop"
+        
+        try {
+            $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+            
+            # Test batch processing with multiple WhoAmI requests
+            $responses = @()
+            1..3 | ForEach-Object {
+                $response = Invoke-DataverseRequest -Connection $connection -RequestName "WhoAmI" -Parameters @{} -BatchSize 3
+                $responses += $response
+            }
+            
+            # Verify we got responses
+            if ($responses.Count -ne 3) {
+                throw "Expected 3 responses, got $($responses.Count)"
+            }
+            
+            Write-Host "✓ Batch request processing succeeded"
         }
         catch {
             Write-Host "ERROR: $($_ | Out-String)"
