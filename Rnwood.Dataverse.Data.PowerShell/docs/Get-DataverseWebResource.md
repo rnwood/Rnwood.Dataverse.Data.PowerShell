@@ -21,8 +21,8 @@ Get-DataverseWebResource -Id <Guid> [-Path <String>] [-Folder <String>] [-Includ
 ### Query
 ```
 Get-DataverseWebResource [-Name <String>] [-WebResourceType <WebResourceType>] [-DisplayName <String>]
- [-Unmanaged] [-Path <String>] [-Folder <String>] [-IncludeContent] [-DecodeContent] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Unmanaged] [-Path <String>] [-Folder <String>] [-IncludeContent] [-DecodeContent]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -117,21 +117,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -IncludeContent
-If set, includes the content property in the results. By default, content is excluded for better performance.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Folder
 Folder path to save multiple web resource files.
 File names are based on the web resource name.
@@ -157,6 +142,21 @@ Parameter Sets: Id
 Aliases:
 
 Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeContent
+If set, includes the content property in the results. By default, content is excluded for better performance.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
