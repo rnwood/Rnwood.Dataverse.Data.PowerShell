@@ -51,6 +51,14 @@ Describe "Form Manipulation E2E Tests" {
                             return  # Success, exit function
                         }
                         catch {
+                            # Check if this is an EntityCustomization operation error
+                            if ($_.Exception.Message -like "*Cannot start the requested operation*EntityCustomization*") {
+                                Write-Warning "EntityCustomization operation conflict detected. Waiting 2 minutes before retry without incrementing attempt count..."
+                                $attempt--  # Don't count this as a retry attempt
+                                Start-Sleep -Seconds 120
+                                continue
+                            }
+                            
                             if ($attempt -eq $MaxRetries) {
                                 Write-Error "All $MaxRetries attempts failed. Last error: $_"
                                 throw
