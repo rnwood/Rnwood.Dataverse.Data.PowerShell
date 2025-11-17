@@ -77,6 +77,131 @@ steps:
 - [Azure DevOps: Variable groups](https://learn.microsoft.com/azure/devops/pipelines/library/variable-groups)
 - [Azure DevOps: Use Azure Key Vault secrets](https://learn.microsoft.com/azure/devops/pipelines/release/azure-key-vault)
 
+### Using PAC CLI Authentication in Azure DevOps
+
+If you have the [Power Platform CLI](https://learn.microsoft.com/power-platform/developer/cli/introduction) installed and configured in your pipeline, you can leverage PAC CLI authentication profiles instead of managing credentials separately.
+
+*Example: Azure Pipeline using PAC CLI authentication:*
+```yaml
+# azure-pipelines.yml
+trigger:
+  - main
+
+pool:
+  vmImage: 'windows-latest'  # PAC CLI requires Windows or Linux with .NET
+
+steps:
+  - task: PowerShell@2
+    displayName: 'Install PAC CLI'
+    inputs:
+      targetType: 'inline'
+      script: |
+        # Install PAC CLI if not already available
+        dotnet tool install --global Microsoft.PowerApps.CLI.Tool
+        
+  - task: PowerShell@2
+    displayName: 'Authenticate with PAC CLI'
+    inputs:
+      targetType: 'inline'
+      script: |
+        # Authenticate using service principal
+        pac auth create `
+          --name "Pipeline" `
+          --url "$(DATAVERSE_URL)" `
+          --applicationId "$(CLIENT_ID)" `
+          --clientSecret "$(CLIENT_SECRET)" `
+          --tenant "$(TENANT_ID)"
+    env:
+      DATAVERSE_URL: $(DATAVERSE_URL)
+      CLIENT_ID: $(CLIENT_ID)
+      CLIENT_SECRET: $(CLIENT_SECRET)
+      TENANT_ID: $(TENANT_ID)
+      
+  - task: PowerShell@2
+    displayName: 'Install Dataverse Module'
+    inputs:
+      targetType: 'inline'
+      script: |
+        Install-Module -Name Rnwood.Dataverse.Data.PowerShell -Force -Scope CurrentUser
+        
+  - task: PowerShell@2
+    displayName: 'Run Dataverse Operations'
+    inputs:
+      targetType: 'inline'
+      script: |
+        $ErrorActionPreference = "Stop"
+        
+        # Connect using PAC CLI profile
+        $c = Get-DataverseConnection -FromPac
+        
+        # Your operations here
+        $contacts = Get-DataverseRecord -Connection $c -TableName contact -Top 10
+        Write-Host "Retrieved $($contacts.Count) contacts"
+```
+
+**Learn more:**
+- [Power Platform CLI: Installation](https://learn.microsoft.com/power-platform/developer/cli/introduction#install-power-platform-cli)
+- [Power Platform CLI: Authentication](https://learn.microsoft.com/power-platform/developer/cli/reference/auth)
+
+### Using Managed Identity in Azure DevOps
+
+For Azure-hosted agents and self-hosted agents on Azure VMs, you can use Azure Managed Identity for passwordless authentication. This eliminates the need to manage secrets entirely.
+
+*Example: Azure Pipeline using Managed Identity:*
+```yaml
+# azure-pipelines.yml
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'  # Can also use Azure-hosted or self-hosted agents on Azure VMs
+
+steps:
+  - task: PowerShell@2
+    displayName: 'Install Dataverse Module'
+    inputs:
+      targetType: 'inline'
+      script: |
+        Install-Module -Name Rnwood.Dataverse.Data.PowerShell -Force -Scope CurrentUser
+        
+  - task: PowerShell@2
+    displayName: 'Run Dataverse Operations with Managed Identity'
+    inputs:
+      targetType: 'inline'
+      script: |
+        $ErrorActionPreference = "Stop"
+        
+        # Connect using Managed Identity (system-assigned or user-assigned)
+        $c = Get-DataverseConnection `
+          -url "$(DATAVERSE_URL)" `
+          -ManagedIdentity
+        
+        # Or use user-assigned managed identity with specific client ID
+        # $c = Get-DataverseConnection `
+        #   -url "$(DATAVERSE_URL)" `
+        #   -ManagedIdentity `
+        #   -ManagedIdentityClientId "12345678-1234-1234-1234-123456789abc"
+        
+        # Your operations here
+        $contacts = Get-DataverseRecord -Connection $c -TableName contact -Top 10
+        Write-Host "Retrieved $($contacts.Count) contacts"
+    env:
+      DATAVERSE_URL: $(DATAVERSE_URL)
+```
+
+**Prerequisites for Managed Identity:**
+1. Enable managed identity on your Azure DevOps agent (Azure VM, Azure Container Instance, etc.)
+2. Grant the managed identity appropriate permissions in your Dataverse environment:
+   - Go to [Power Platform Admin Center](https://admin.powerplatform.microsoft.com/)
+   - Select your environment > **Settings** > **Users + permissions** > **Application users**
+   - Create an application user for the managed identity
+   - Assign appropriate security role
+
+**Learn more:**
+- [Azure Managed Identities Overview](https://learn.microsoft.com/azure/active-directory/managed-identities-azure-resources/overview)
+- [Configure managed identity for Azure Pipelines](https://learn.microsoft.com/azure/devops/pipelines/library/connect-to-azure#use-a-managed-identity)
+- [Authentication Methods](../getting-started/authentication.md) - All supported authentication methods
+
 ## GitHub Actions
 
 **Prerequisites:**

@@ -2,13 +2,15 @@
 
 Importing data is equally common. This section shows safe, practical patterns to read files, map columns to Dataverse fields, handle lookups and choices, and import efficiently in bulk.
 
-General guidance:
+## General Guidance
+
 - Validate and preview data before writing to Dataverse (use `-WhatIf`, `-Top`, or import a small sample file first).
 - Map column names from files to Dataverse logical names and normalise data types (dates, guids, numbers) before calling [`Set-DataverseRecord`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md).
 - For lookups prefer providing the target record Id where possible. If using names, ensure uniqueness or narrow the import with `-MatchOn`/`-Upsert` patterns.
-- Use `-BatchSize` to control batching and `Get-Chunks` helper for memory-friendly large imports.
+- Use `-BatchSize` to control batching for memory-friendly large imports.
+- **For large-scale imports**, consider using `-MaxDegreeOfParallelism` to process records in parallel for improved performance. See [Parallelization](../advanced/parallelization.md) for detailed guidance.
 
-### JSON (import)
+## JSON (import)
 ```powershell
 # Simple JSON import (small file):
 $items = Get-Content -Path .\contacts.json -Raw | ConvertFrom-Json
@@ -212,10 +214,38 @@ Notes and safety:
 - Network and DB credentials: use secure practices (Windows auth, managed identity, or store credentials in a secure store) rather than embedding passwords in scripts.
 - For very large imports consider a staged approach: load into a staging table in Dataverse or SQL, validate, then upsert using `-MatchOn` or platform logic.
 
+## Parallelization for Large Imports
 
+For importing large datasets (thousands to millions of records), parallelization can significantly reduce import time by processing multiple batches concurrently. The module supports built-in parallelization through the `-MaxDegreeOfParallelism` parameter.
+
+*Example: Import large dataset with parallel processing:*
+```powershell
+# Import 100,000 contacts in parallel using 4 workers
+$contacts = Get-Content -Path .\large-contacts.json -Raw | ConvertFrom-Json
+
+$contacts | ForEach-Object {
+  [PSCustomObject]@{
+    firstname = $_.firstName
+    lastname = $_.lastName
+    emailaddress1 = $_.email
+  }
+} | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly `
+    -BatchSize 100 `
+    -MaxDegreeOfParallelism 4 `
+    -Verbose
+```
+
+**Key considerations for parallel imports:**
+- Start with `-MaxDegreeOfParallelism 4` and adjust based on performance and throttling limits
+- Combine with appropriate `-BatchSize` (typically 50-100) for optimal throughput
+- Monitor for throttling errors and reduce parallelism if needed
+- Use `-Retries` parameter to handle transient failures automatically
+
+For complex multi-step import workflows, consider using `Invoke-DataverseParallel` for more control. See [Parallelization](../advanced/parallelization.md) for comprehensive guidance on parallel processing strategies, performance tuning, and best practices.
 
 ## See Also
 
 - [Data Export](data-export.md) - Export data to various formats
 - [Creating and Updating Records](../core-concepts/creating-updating.md) - Details on Set-DataverseRecord
+- [Parallelization](../advanced/parallelization.md) - Parallel processing for best performance
 - [Source Control](source-control.md) - Manage data in source control
