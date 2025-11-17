@@ -4,11 +4,16 @@ This directory contains end-to-end tests that run against a real Dataverse envir
 
 ## CI/CD Execution
 
-In the CI/CD pipeline, all e2e tests run in parallel for faster execution:
-- Each test file runs in its own background job
-- **Metadata tests** (EntityMetadata, AttributeMetadata, RelationshipMetadata, OptionSetMetadata) only run on Windows Latest with PowerShell 7+
-- All other tests run on all matrix combinations (Windows/Linux × PowerShell 5/7.4.11/latest)
-- Results are aggregated and reported with file-level granularity
+In the CI/CD pipeline, e2e tests run with the following strategy:
+
+- **Module.Tests.ps1** runs on **all matrix combinations** (Windows/Linux × PowerShell 5/7.4.11/latest)
+  - Contains basic connectivity, help system validation, and parallel processing tests
+- **All other e2e tests** run in parallel **only on Windows Latest with PowerShell 7+**
+  - Includes: RecordAccess, InvokeDataverseRequest, PluginManagement, SolutionComponent, AppModule, Sitemap, FormManipulation, EntityMetadata, AttributeMetadata, RelationshipMetadata, OptionSetMetadata
+  - Each test file runs in its own background job for faster execution
+  - Results are aggregated and reported with file-level granularity
+
+This approach ensures comprehensive cross-platform validation for core functionality while running the full test suite efficiently on a single target.
 
 ## Prerequisites
 
@@ -124,8 +129,8 @@ Tests for sitemap operations.
 - **Module.Tests.ps1**: ~30-60 seconds (depending on network and environment)
 - **FormManipulation.Tests.ps1**: ~60-120 seconds (includes form metadata operations)
 - **Other tests**: Varies by test complexity and network conditions
-- **Total (sequential)**: ~5-10 minutes
-- **Total (parallel in CI)**: ~2-3 minutes (significant speedup)
+- **Total (Module.Tests.ps1)**: ~30-60 seconds per platform
+- **Total (all other tests, parallel, Windows Latest only)**: ~2-3 minutes
 
 ## Notes
 
@@ -134,6 +139,7 @@ Tests for sitemap operations.
 - Tests create temporary copies of the module to avoid file locking issues
 - Form manipulation test creates forms on the `account` entity
 - All test artifacts are cleaned up automatically
+- In CI/CD, Module.Tests.ps1 validates core functionality across all platforms, while the full test suite runs on Windows Latest only
 
 ## Troubleshooting
 
