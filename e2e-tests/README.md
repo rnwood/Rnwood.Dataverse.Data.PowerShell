@@ -2,6 +2,14 @@
 
 This directory contains end-to-end tests that run against a real Dataverse environment. These tests validate the module's functionality in a live environment.
 
+## CI/CD Execution
+
+In the CI/CD pipeline, all e2e tests run in parallel for faster execution:
+- Each test file runs in its own background job
+- **Metadata tests** (EntityMetadata, AttributeMetadata, RelationshipMetadata, OptionSetMetadata) only run on Windows Latest with PowerShell 7+
+- All other tests run on all matrix combinations (Windows/Linux × PowerShell 5/7.4.11/latest)
+- Results are aggregated and reported with file-level granularity
+
 ## Prerequisites
 
 E2E tests require:
@@ -47,6 +55,7 @@ General module functionality tests including:
 - SQL queries
 - Help system validation
 - Parallel processing with Invoke-DataverseParallel
+- Web resource management
 
 ### FormManipulation.Tests.ps1
 Comprehensive form manipulation test that exercises all form-related cmdlets:
@@ -76,10 +85,47 @@ The form manipulation test automatically cleans up:
 
 This ensures the test can run reliably even if previous runs failed or were interrupted.
 
+### RecordAccess.Tests.ps1
+Tests record-level security operations:
+- Granting record access
+- Testing record access
+- Getting record access
+- Removing record access
+
+### InvokeDataverseRequest.Tests.ps1
+Tests for executing arbitrary organization requests.
+
+### PluginManagement.Tests.ps1
+Tests for plugin management operations.
+
+### EntityMetadata.Tests.ps1
+Tests for entity metadata operations (runs only on Windows Latest).
+
+### AttributeMetadata.Tests.ps1
+Tests for attribute metadata operations (runs only on Windows Latest).
+
+### RelationshipMetadata.Tests.ps1
+Tests for relationship metadata operations (runs only on Windows Latest).
+
+### OptionSetMetadata.Tests.ps1
+Tests for option set metadata operations (runs only on Windows Latest).
+
+### SolutionComponent.Tests.ps1
+Tests for solution component operations.
+
+### AppModule.Tests.ps1
+Tests for app module operations.
+
+### Sitemap.Tests.ps1
+Tests for sitemap operations.
+
 ## Expected Test Duration
 
 - **Module.Tests.ps1**: ~30-60 seconds (depending on network and environment)
 - **FormManipulation.Tests.ps1**: ~60-120 seconds (includes form metadata operations)
+- **Other tests**: Varies by test complexity and network conditions
+- **Total (sequential)**: ~5-10 minutes
+- **Total (parallel in CI)**: ~2-3 minutes (significant speedup)
 
 ## Notes
 
