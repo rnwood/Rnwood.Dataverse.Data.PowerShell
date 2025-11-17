@@ -46,9 +46,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 0, HelpMessage = "HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).")]
 		public System.Net.Http.HttpMethod Method { get; set; }
 		/// <summary>
-		/// Path portion of the REST API URL (e.g., 'api/data/v9.2/contacts' or 'myapi_Example').
+		/// Resource name for the REST API call (e.g., 'accounts' or 'myapi_Example'). Do not include the full path like '/api/data/v9.2/accounts' as the organization URL and API version are automatically added.
 		/// </summary>
-		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 1, HelpMessage = "Path portion of the REST API URL (e.g., 'api/data/v9.2/contacts' or 'myapi_Example').")]
+		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 1, HelpMessage = "Resource name for the REST API call (e.g., 'accounts' or 'myapi_Example'). Do not include the full path - the organization URL and API version are automatically added.")]
 		public string Path { get; set; }
 		/// <summary>
 		/// Body of the REST API request. Can be a string (JSON) or a PSObject which will be converted to JSON.
@@ -129,6 +129,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			if (ParameterSetName == "REST")
 			{
+				// Validate that the path portion (before query string) does not contain '/' as the SDK does not support full paths
+				// Query strings (after '?') may contain '/' characters
+				string pathPortion = Path.Split('?')[0];
+				if (pathPortion.Contains("/"))
+				{
+					throw new ArgumentException(
+						$"The Path parameter should not contain '/' characters in the resource name portion. " +
+						$"Provide only the resource name (e.g., 'accounts' or 'WhoAmI') rather than a full path like '/api/data/v9.2/accounts'. " +
+						$"The organization URL and API version are automatically added by the connection. " +
+						$"Query strings may contain '/' characters. " +
+						$"Current value: '{Path}'",
+						nameof(Path));
+				}
+
 				var headers = new Dictionary<string, List<string>>();
 				foreach (DictionaryEntry kvp in CustomHeaders.Cast<DictionaryEntry>())
 				{

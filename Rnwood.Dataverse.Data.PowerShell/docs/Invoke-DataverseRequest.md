@@ -283,7 +283,11 @@ Accept wildcard characters: False
 ```
 
 ### -Path
-Path portion of the REST API URL (e.g., 'api/data/v9.2/contacts' or 'myapi_Example').
+Resource name for the REST API call (e.g., 'accounts', 'contacts', or 'myapi_Example'). 
+
+**Important:** Do not include the full path like '/api/data/v9.2/accounts' or 'api/data/v9.2/accounts'. The organization URL and API version are automatically added by the connection. The resource name portion (before any query string) must not contain '/' characters.
+
+Query strings are allowed and may contain '/' characters (e.g., 'accounts?$filter=name eq ''test/value''').
 
 ```yaml
 Type: String
