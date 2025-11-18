@@ -80,7 +80,7 @@ Describe "Attribute Metadata E2E Tests" {
                 
             Write-Host "Step 1: Creating test entity..."#
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 
                 Set-DataverseEntityMetadata -Connection $connection `
                     -EntityName $entityName `
@@ -96,7 +96,7 @@ Describe "Attribute Metadata E2E Tests" {
                 
             Write-Host "Step 2: Creating String attribute..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
                     -AttributeName "new_email" `
@@ -114,7 +114,7 @@ Describe "Attribute Metadata E2E Tests" {
                 
             Write-Host "Step 3: Creating Integer attribute..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
                     -AttributeName "new_count" `
@@ -130,7 +130,7 @@ Describe "Attribute Metadata E2E Tests" {
                 
             Write-Host "Step 4: Creating Decimal attribute..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
                     -AttributeName "new_amount" `
@@ -146,7 +146,7 @@ Describe "Attribute Metadata E2E Tests" {
                 
             Write-Host "Step 5: Creating Boolean attribute..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
                     -AttributeName "new_isactive" `
@@ -162,7 +162,7 @@ Describe "Attribute Metadata E2E Tests" {
                 
             Write-Host "Step 6: Creating DateTime attribute..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
                     -AttributeName "new_duedate" `
@@ -177,7 +177,7 @@ Describe "Attribute Metadata E2E Tests" {
                 
             Write-Host "Step 7: Creating Picklist attribute..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
                     -AttributeName "new_priority" `
@@ -195,7 +195,7 @@ Describe "Attribute Metadata E2E Tests" {
                 
             Write-Host "Step 8: Creating Lookup attribute with relationship..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
                     -AttributeName "new_accountid" `
@@ -214,7 +214,7 @@ Describe "Attribute Metadata E2E Tests" {
                 
             Write-Host "Step 9: Creating Memo attribute..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
                     -AttributeName "new_notes" `
@@ -228,7 +228,7 @@ Describe "Attribute Metadata E2E Tests" {
                 
             Write-Host "Step 10: Reading and verifying all attributes..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $attributes = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName
                 
                 $expectedAttributes = @('new_email', 'new_count', 'new_amount', 'new_isactive', 'new_duedate', 'new_priority', 'new_accountid', 'new_notes')
@@ -242,7 +242,7 @@ Describe "Attribute Metadata E2E Tests" {
                 
             Write-Host "Step 11: Updating String attribute..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
                     -AttributeName "new_email" `
@@ -255,7 +255,7 @@ Describe "Attribute Metadata E2E Tests" {
                 
             Write-Host "Step 12: Updating Lookup attribute..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
                     -AttributeName "new_accountid" `
@@ -268,7 +268,7 @@ Describe "Attribute Metadata E2E Tests" {
                 
             Write-Host "Step 13: Verifying updates..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $updatedEmail = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_email"
                 if ($updatedEmail.DisplayName.UserLocalizedLabel.Label -ne "Email Address (Updated)") {
                     throw "Email attribute display name not updated"
@@ -286,14 +286,14 @@ Describe "Attribute Metadata E2E Tests" {
                 
             Write-Host "Step 14: Testing attribute deletion..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Remove-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_notes" -Confirm:$false
             }
             Write-Host "✓ Memo attribute deleted"
                 
             Write-Host "Verifying deletion..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $remainingAttrs = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName | Where-Object { $_.LogicalName -eq 'new_notes' }
                 if ($remainingAttrs) {
                     throw "Deleted attribute still exists"
@@ -303,14 +303,14 @@ Describe "Attribute Metadata E2E Tests" {
                 
             Write-Host "Step 15: Cleanup - Deleting test entity..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
             }
             Write-Host "✓ Test entity deleted"
                 
             Write-Host "Step 16: Cleanup any old test entities from previous failed runs..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 
                 # Only clean up entities older than 1 hour to avoid interfering with concurrent tests
                 $cutoffTime = [DateTime]::UtcNow.AddHours(-1)
@@ -329,7 +329,7 @@ Describe "Attribute Metadata E2E Tests" {
                         try {
                             Write-Host "  Removing old entity: $($entity.LogicalName)"
                             Invoke-WithRetry {
-                                Wait-DataversePublish -Connection $connection -Verbose
+                                Wait-DataversePublish -Connection $connection
                                 Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
                             }
                         }

@@ -81,7 +81,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 1: Creating first global option set..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                     
                 Set-DataverseOptionSetMetadata -Connection $connection `
                     -Name $optionSetName1 `
@@ -99,7 +99,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 2: Creating second global option set..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                     
                 Set-DataverseOptionSetMetadata -Connection $connection `
                     -Name $optionSetName2 `
@@ -117,7 +117,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 3: Reading global option set..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $script:optionSet1 = Get-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName1
                     
                 if (-not $script:optionSet1) {
@@ -134,7 +134,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 4: Listing all global option sets..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $script:allOptionSets = Get-DataverseOptionSetMetadata -Connection $connection
                     
                 $ourOptionSets = $script:allOptionSets | Where-Object { 
@@ -149,7 +149,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 5: Creating test entity to use option sets..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                     
                 Set-DataverseEntityMetadata -Connection $connection `
                     -EntityName $entityName `
@@ -164,7 +164,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 6: Creating picklist attribute using global option set..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                     
                 Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
@@ -179,7 +179,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 7: Creating another attribute using second option set..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                     
                 Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
@@ -194,7 +194,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 8: Reading option set from attribute..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $script:priorityAttr = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_priority"
                     
                 if ($script:priorityAttr.OptionSet.Name -ne $optionSetName1) {
@@ -205,7 +205,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 9: Getting option set values for entity attribute..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $script:priorityOptions = Get-DataverseOptionSetMetadata -Connection $connection -EntityName $entityName -AttributeName "new_priority"
                     
                 if ($script:priorityOptions.Options.Count -ne 4) {
@@ -216,7 +216,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 10: Updating global option set (adding new option)..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                     
                 Set-DataverseOptionSetMetadata -Connection $connection `
                     -Name $optionSetName1 `
@@ -234,7 +234,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 11: Verifying option set update..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $script:updatedOptionSet = Get-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName1
                     
                 if ($script:updatedOptionSet.DisplayName.UserLocalizedLabel.Label -ne "E2E Test Priority (Updated)") {
@@ -253,7 +253,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 12: Testing local option set (created with attribute)..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseAttributeMetadata -Connection $connection `
                     -EntityName $entityName `
                     -AttributeName "new_category" `
@@ -271,7 +271,7 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 13: Verifying local option set..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $categoryAttr = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_category"
                 
                 if ($categoryAttr.OptionSet.IsGlobal -eq $true) {
@@ -285,14 +285,14 @@ Describe "OptionSet Metadata E2E Tests" {
                 
             Write-Host "Step 14: Cleanup - Deleting test entity (and local option set)..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
             }
             Write-Host "✓ Test entity deleted"
                 
             Write-Host "Step 15: Cleanup any old test entities from previous failed runs..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 
                 # Only clean up entities older than 1 hour to avoid interfering with concurrent tests
                 $cutoffTime = [DateTime]::UtcNow.AddHours(-1)
@@ -311,7 +311,7 @@ Describe "OptionSet Metadata E2E Tests" {
                         try {
                             Write-Host "  Removing old entity: $($entity.LogicalName)"
                             Invoke-WithRetry {
-                                Wait-DataversePublish -Connection $connection -Verbose
+                                Wait-DataversePublish -Connection $connection
                                 Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
                             }
                         }
