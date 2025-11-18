@@ -23,7 +23,7 @@ Describe "Relationship Metadata E2E Tests" {
     It "Can create, read, update, and delete OneToMany and ManyToMany relationships comprehensively" {
         $ErrorActionPreference = "Stop"
         $ConfirmPreference = 'None'  # Suppress all confirmation prompts in non-interactive mode
-        $VerbosePreference = 'Continue'  # Enable verbose output
+        $VerbosePreference = 'SilentlyContinue'  # Reduce noise; enable 'Continue' for debugging if needed
             
 
             

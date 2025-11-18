@@ -23,7 +23,7 @@ Describe "Attribute Metadata E2E Tests" {
             
         $ErrorActionPreference = "Stop"
         $ConfirmPreference = 'None'  # Suppress all confirmation prompts in non-interactive mode
-        $VerbosePreference = 'Continue'  # Enable verbose output
+        $VerbosePreference = 'SilentlyContinue'  # Reduce noise; enable 'Continue' for debugging if needed
         
             
         # Retry helper function with exponential backoff

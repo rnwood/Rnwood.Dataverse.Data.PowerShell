@@ -29,7 +29,7 @@ Describe "Form Manipulation E2E Tests" {
                 # Enable affinity cookie and set verbosity/confirm preferences for consistent test execution
                 $connection.EnableAffinityCookie = $true
                 $ConfirmPreference = 'None'
-                $VerbosePreference = 'Continue'
+                $VerbosePreference = 'SilentlyContinue'  # Reduce noise; enable 'Continue' for debugging if needed
 
                 # Retry helper function with exponential backoff (kept consistent with other e2e tests)
                 function Invoke-WithRetry {
