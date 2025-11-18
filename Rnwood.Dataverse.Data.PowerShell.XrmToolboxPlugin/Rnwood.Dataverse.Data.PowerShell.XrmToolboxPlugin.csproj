@@ -7,7 +7,7 @@
     <AssemblyTitle>PowerShell Console Plugin for XrmToolbox</AssemblyTitle>
     <Product>Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin</Product>
     <Description>XrmToolbox plugin that embeds a PowerShell console with Rnwood.Dataverse.Data.PowerShell module pre-loaded</Description>
-    <Copyright>Copyright © 2024 Robert Wood</Copyright>
+    <Copyright>Copyright © 2024-2025 Robert Wood and project contributors</Copyright>
     <Authors>Rob Wood</Authors>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
