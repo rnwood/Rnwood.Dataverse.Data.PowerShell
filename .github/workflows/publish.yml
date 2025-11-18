@@ -344,8 +344,18 @@ jobs:
                   } -ArgumentList $testFile, $modulePath
               }
               
-              # Wait for all test file jobs to complete
-              $results = $jobs | Wait-Job | Receive-Job
+              # Wait for all test file jobs to complete with streaming output
+              while ($jobs | Where-Object { $_.State -eq 'Running' }) {
+                  foreach ($job in $jobs) {
+                      if ($job.HasMoreData) {
+                          $job | Receive-Job
+                      }
+                  }
+                  Start-Sleep -Milliseconds 100
+              }
+              
+              # Get final results
+              $results = $jobs | Receive-Job
               $jobs | Remove-Job
               
               return $results
@@ -409,8 +419,21 @@ jobs:
           } -ArgumentList $env:TESTMODULEPATH, $env:E2ETESTS_URL, $env:E2ETESTS_CLIENTID, $env:E2ETESTS_CLIENTSECRET, "${{ matrix.os }}", "${{ matrix.powershell_version }}", $workingDir
           
           # Wait for both jobs to complete and show progress
-          $standardResults = Wait-Job $standardTestsJob | Receive-Job
-          $e2eResults = Wait-Job $e2eTestsJob | Receive-Job
+          # Poll jobs to show streaming output
+          while ($standardTestsJob.State -eq 'Running' -or $e2eTestsJob.State -eq 'Running') {
+              # Receive any available output without waiting
+              if ($standardTestsJob.HasMoreData) {
+                  $standardTestsJob | Receive-Job
+              }
+              if ($e2eTestsJob.HasMoreData) {
+                  $e2eTestsJob | Receive-Job  
+              }
+              Start-Sleep -Milliseconds 100
+          }
+          
+          # Get final results
+          $standardResults = $standardTestsJob | Receive-Job
+          $e2eResults = $e2eTestsJob | Receive-Job
           
           Remove-Job $standardTestsJob, $e2eTestsJob
           
@@ -558,8 +581,18 @@ jobs:
                     } -ArgumentList $testFile, $modulePath
                 }
                 
-                # Wait for all test file jobs to complete
-                $results = $jobs | Wait-Job | Receive-Job
+                # Wait for all test file jobs to complete with streaming output
+                while ($jobs | Where-Object { $_.State -eq 'Running' }) {
+                    foreach ($job in $jobs) {
+                        if ($job.HasMoreData) {
+                            $job | Receive-Job
+                        }
+                    }
+                    Start-Sleep -Milliseconds 100
+                }
+                
+                # Get final results
+                $results = $jobs | Receive-Job
                 $jobs | Remove-Job
                 
                 return $results
@@ -589,8 +622,21 @@ jobs:
             } -ArgumentList $env:TESTMODULEPATH, $env:E2ETESTS_URL, $env:E2ETESTS_CLIENTID, $env:E2ETESTS_CLIENTSECRET, $workingDir
             
             # Wait for both jobs to complete and show progress
-            $standardResults = Wait-Job $standardTestsJob | Receive-Job
-            $e2eResult = Wait-Job $e2eTestsJob | Receive-Job
+            # Poll jobs to show streaming output
+            while ($standardTestsJob.State -eq 'Running' -or $e2eTestsJob.State -eq 'Running') {
+                # Receive any available output without waiting
+                if ($standardTestsJob.HasMoreData) {
+                    $standardTestsJob | Receive-Job
+                }
+                if ($e2eTestsJob.HasMoreData) {
+                    $e2eTestsJob | Receive-Job
+                }
+                Start-Sleep -Milliseconds 100
+            }
+            
+            # Get final results
+            $standardResults = $standardTestsJob | Receive-Job
+            $e2eResult = $e2eTestsJob | Receive-Job
             
             Remove-Job $standardTestsJob, $e2eTestsJob
             
