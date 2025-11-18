@@ -11,7 +11,7 @@ on:
 
 jobs:
   test:
-    timeout-minutes: 60  # Fail fast if job exceeds 60 minutes
+    timeout-minutes: 90  # Fail fast if job exceeds 90 minutes
     strategy:
       matrix:
         include:
@@ -382,39 +382,97 @@ jobs:
               $result = Invoke-Pester -Configuration $config
               
               # Check if we should also run all other e2e tests (Windows Latest only)
-              $shouldRunMetadataTests = ($osType -eq 'windows-latest' -and $psVersion -eq 'latest')
+              $shouldRunAdditionalTests = ($osType -eq 'windows-latest' -and $psVersion -eq 'latest')
               
-              if ($shouldRunMetadataTests) {
-                  $metadataConfig = New-PesterConfiguration
-                  $metadataConfig.Run.Path = @(
-                      'e2e-tests/AppModule.Tests.ps1',
+              if ($shouldRunAdditionalTests) {
+                  # Run Metadata tests SEQUENTIALLY (they cannot run in parallel)
+                  $metadataTests = @(
                       'e2e-tests/AttributeMetadata.Tests.ps1',
                       'e2e-tests/EntityMetadata.Tests.ps1',
+                      'e2e-tests/OptionSetMetadata.Tests.ps1',
+                      'e2e-tests/RelationshipMetadata.Tests.ps1'
+                  )
+                  
+                  $metadataResults = @()
+                  foreach ($testFile in $metadataTests) {
+                      $testConfig = New-PesterConfiguration
+                      $testConfig.Run.Path = $testFile
+                      $testConfig.Run.PassThru = $true
+                      $testConfig.Output.Verbosity = 'Normal'
+                      $testConfig.Filter.ExcludeTag = 'LongRunning'
+                      
+                      $testResult = Invoke-Pester -Configuration $testConfig
+                      $metadataResults += $testResult
+                  }
+                  
+                  # Run non-Metadata tests in PARALLEL
+                  $nonMetadataTests = @(
+                      'e2e-tests/AppModule.Tests.ps1',
                       'e2e-tests/FormManipulation.Tests.ps1',
                       'e2e-tests/InvokeDataverseRequest.Tests.ps1',
-                      'e2e-tests/OptionSetMetadata.Tests.ps1',
                       'e2e-tests/PluginManagement.Tests.ps1',
                       'e2e-tests/RecordAccess.Tests.ps1',
-                      'e2e-tests/RelationshipMetadata.Tests.ps1',
                       'e2e-tests/Sitemap.Tests.ps1',
                       'e2e-tests/SolutionComponent.Tests.ps1'
                   )
-                  $metadataConfig.Run.PassThru = $true
-                  $metadataConfig.Output.Verbosity = 'Normal'
-                  $metadataConfig.Filter.ExcludeTag = 'LongRunning'
                   
-                  $metadataResult = Invoke-Pester -Configuration $metadataConfig
+                  $nonMetadataJobs = $nonMetadataTests | ForEach-Object {
+                      $testFile = $_
+                      Start-Job -ScriptBlock {
+                          param($testFilePath, $modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret)
+                          
+                          $env:TESTMODULEPATH = $modulePath
+                          $env:E2ETESTS_URL = $e2eUrl
+                          $env:E2ETESTS_CLIENTID = $e2eClientId
+                          $env:E2ETESTS_CLIENTSECRET = $e2eClientSecret
+                          
+                          $config = New-PesterConfiguration
+                          $config.Run.Path = $testFilePath
+                          $config.Run.PassThru = $true
+                          $config.Output.Verbosity = 'Normal'
+                          $config.Filter.ExcludeTag = 'LongRunning'
+                          
+                          $result = Invoke-Pester -Configuration $config
+                          
+                          # Return result with filename
+                          [PSCustomObject]@{
+                              File = (Split-Path $testFilePath -Leaf)
+                              TotalCount = $result.TotalCount
+                              PassedCount = $result.PassedCount
+                              FailedCount = $result.FailedCount
+                              SkippedCount = $result.SkippedCount
+                              DurationSeconds = $result.Duration.TotalSeconds
+                              Failed = $result.Failed
+                          }
+                      } -ArgumentList $testFile, $modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret
+                  }
+                  
+                  # Wait for non-Metadata tests with streaming output
+                  while ($nonMetadataJobs | Where-Object { $_.State -eq 'Running' }) {
+                      foreach ($job in $nonMetadataJobs) {
+                          if ($job.HasMoreData) {
+                              $job | Receive-Job
+                          }
+                      }
+                      Start-Sleep -Milliseconds 100
+                  }
+                  
+                  # Get final results
+                  $nonMetadataResults = $nonMetadataJobs | Receive-Job
+                  $nonMetadataJobs | Remove-Job
                   
                   # Combine results
                   return @{
                       ModuleTests = $result
-                      AdditionalTests = $metadataResult
+                      MetadataTests = $metadataResults
+                      NonMetadataTests = $nonMetadataResults
                   }
               }
               
               return @{
                   ModuleTests = $result
-                  AdditionalTests = $null
+                  MetadataTests = $null
+                  NonMetadataTests = $null
               }
           } -ArgumentList $env:TESTMODULEPATH, $env:E2ETESTS_URL, $env:E2ETESTS_CLIENTID, $env:E2ETESTS_CLIENTSECRET, "${{ matrix.os }}", "${{ matrix.powershell_version }}", $workingDir
           
@@ -493,23 +551,74 @@ jobs:
               }
           }
           
-          if ($e2eResults.AdditionalTests) {
+          if ($e2eResults.MetadataTests) {
               Write-Host ""
-              Write-Host "Additional E2E Tests:"
-              Write-Host "  Total:   $($e2eResults.AdditionalTests.TotalCount)" -ForegroundColor White
-              Write-Host "  Passed:  $($e2eResults.AdditionalTests.PassedCount)" -ForegroundColor Green
-              Write-Host "  Failed:  $($e2eResults.AdditionalTests.FailedCount)" -ForegroundColor $(if ($e2eResults.AdditionalTests.FailedCount -gt 0) { "Red" } else { "Green" })
-              Write-Host "  Skipped: $($e2eResults.AdditionalTests.SkippedCount)" -ForegroundColor Yellow
-              Write-Host "  Duration: $($e2eResults.AdditionalTests.Duration.TotalSeconds)s" -ForegroundColor White
+              Write-Host "Metadata E2E Tests (Sequential):"
               
-              if ($e2eResults.AdditionalTests.FailedCount -gt 0) {
+              $totalMetadataTests = 0
+              $totalMetadataPassed = 0
+              $totalMetadataFailed = 0
+              $totalMetadataSkipped = 0
+              $totalMetadataDuration = 0
+              
+              foreach ($metadataResult in $e2eResults.MetadataTests) {
+                  $totalMetadataTests += $metadataResult.TotalCount
+                  $totalMetadataPassed += $metadataResult.PassedCount
+                  $totalMetadataFailed += $metadataResult.FailedCount
+                  $totalMetadataSkipped += $metadataResult.SkippedCount
+                  $totalMetadataDuration += $metadataResult.Duration.TotalSeconds
+              }
+              
+              Write-Host "  Total:   $totalMetadataTests" -ForegroundColor White
+              Write-Host "  Passed:  $totalMetadataPassed" -ForegroundColor Green
+              Write-Host "  Failed:  $totalMetadataFailed" -ForegroundColor $(if ($totalMetadataFailed -gt 0) { "Red" } else { "Green" })
+              Write-Host "  Skipped: $totalMetadataSkipped" -ForegroundColor Yellow
+              Write-Host "  Duration: $($totalMetadataDuration)s" -ForegroundColor White
+              
+              if ($totalMetadataFailed -gt 0) {
                   $hasFailures = $true
                   Write-Host ""
-                  Write-Host "Failed Additional E2E Tests:" -ForegroundColor Red
-                  foreach ($test in $e2eResults.AdditionalTests.Failed) {
-                      Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
-                      if ($test.ErrorRecord) {
-                          Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+                  Write-Host "Failed Metadata E2E Tests:" -ForegroundColor Red
+                  foreach ($metadataResult in $e2eResults.MetadataTests) {
+                      if ($metadataResult.FailedCount -gt 0) {
+                          foreach ($test in $metadataResult.Failed) {
+                              Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
+                              if ($test.ErrorRecord) {
+                                  Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+          
+          if ($e2eResults.NonMetadataTests) {
+              Write-Host ""
+              Write-Host "Non-Metadata E2E Tests (Parallel):"
+              
+              $totalNonMetadataTests = ($e2eResults.NonMetadataTests | Measure-Object -Property TotalCount -Sum).Sum
+              $totalNonMetadataPassed = ($e2eResults.NonMetadataTests | Measure-Object -Property PassedCount -Sum).Sum
+              $totalNonMetadataFailed = ($e2eResults.NonMetadataTests | Measure-Object -Property FailedCount -Sum).Sum
+              $totalNonMetadataSkipped = ($e2eResults.NonMetadataTests | Measure-Object -Property SkippedCount -Sum).Sum
+              $totalNonMetadataDuration = ($e2eResults.NonMetadataTests | Measure-Object -Property DurationSeconds -Sum).Sum
+              
+              Write-Host "  Total:   $totalNonMetadataTests" -ForegroundColor White
+              Write-Host "  Passed:  $totalNonMetadataPassed" -ForegroundColor Green
+              Write-Host "  Failed:  $totalNonMetadataFailed" -ForegroundColor $(if ($totalNonMetadataFailed -gt 0) { "Red" } else { "Green" })
+              Write-Host "  Skipped: $totalNonMetadataSkipped" -ForegroundColor Yellow
+              Write-Host "  Duration: $($totalNonMetadataDuration)s" -ForegroundColor White
+              
+              if ($totalNonMetadataFailed -gt 0) {
+                  $hasFailures = $true
+                  Write-Host ""
+                  Write-Host "Failed Non-Metadata E2E Tests:" -ForegroundColor Red
+                  foreach ($result in $e2eResults.NonMetadataTests | Where-Object { $_.FailedCount -gt 0 }) {
+                      Write-Host "  File: $($result.File)" -ForegroundColor Yellow
+                      foreach ($test in $result.Failed) {
+                          Write-Host "    - $($test.ExpandedPath)" -ForegroundColor Red
+                          if ($test.ErrorRecord) {
+                              Write-Host "      $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+                          }
                       }
                   }
               }

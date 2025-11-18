@@ -95,6 +95,7 @@ Describe "Form Manipulation E2E Tests" {
                     "name:Like"      = "E2ETestForm-%"
                     "objecttypecode" = $entityName
                 } -Columns formid, name
+                }
                 
                 if ($script:existingTestForms -and $script:existingTestForms.Count -gt 0) {
                     Write-Host "  Found $($existingTestForms.Count) leftover test form(s) to clean up"
@@ -191,6 +192,7 @@ Describe "Form Manipulation E2E Tests" {
                     -Expanded `
                     -ShowLabel `
                     -Confirm:$false
+                }
                 
                 Write-Host "  Created tab: CustomTab"
                 
@@ -223,6 +225,7 @@ Describe "Form Manipulation E2E Tests" {
                     -Column2Width 34 `
                     -Column3Width 33 `
                     -Confirm:$false
+                }
                 
                 $updatedTab = Invoke-WithRetry {
                     Wait-DataversePublish -Connection $connection
@@ -257,6 +260,7 @@ Describe "Form Manipulation E2E Tests" {
                     -ShowBar `
                     -Columns 2 `
                     -Confirm:$false
+                }
                 
                 Write-Host "  Created section: TestSection"
                 
@@ -286,6 +290,7 @@ Describe "Form Manipulation E2E Tests" {
                     -ShowLabel `
                     -Columns 1 `
                     -Confirm:$false
+                }
                 
                 Write-Host "  Created second section: SecondSection"
                 
@@ -322,6 +327,7 @@ Describe "Form Manipulation E2E Tests" {
                     -Label "Account Name" `
                     -IsRequired `
                     -Confirm:$false
+                }
                 
                 Write-Host "  Created control: name (Standard, Required)"
                 
@@ -339,6 +345,7 @@ Describe "Form Manipulation E2E Tests" {
                     -ControlType Lookup `
                     -Label "Primary Contact" `
                     -Confirm:$false
+                }
                 
                 Write-Host "  Created control: primarycontactid (Lookup)"
                 
@@ -356,6 +363,7 @@ Describe "Form Manipulation E2E Tests" {
                     -ControlType Email `
                     -Label "Email Address" `
                     -Confirm:$false
+                }
                 
                 Write-Host "  Created control: emailaddress1 (Email)"
                 
@@ -372,6 +380,7 @@ Describe "Form Manipulation E2E Tests" {
                     -ControlType Subgrid `
                     -Label "Related Contacts" `
                     -Confirm:$false
+                }
                 
                 Write-Host "  Created control: contacts_subgrid (Subgrid - special control without DataField)"
                 
@@ -392,6 +401,7 @@ Describe "Form Manipulation E2E Tests" {
                     throw "Control DataField mismatch. Expected: name, Got: $($control.DataField)"
                 }
                 
+                }
                 Write-Host "  Verified: Control 'name' created successfully"
                 
                 # Verify subgrid control was created
@@ -406,6 +416,7 @@ Describe "Form Manipulation E2E Tests" {
                 if (-not $subgridControl) {
                     throw "Failed to retrieve created subgrid control 'contacts_subgrid'"
                 }
+                }
                 
                 Write-Host "  Verified: Subgrid control 'contacts_subgrid' created successfully"
                 
@@ -419,6 +430,7 @@ Describe "Form Manipulation E2E Tests" {
                 
                 if (-not $allControls -or $allControls.Count -lt 2) {
                     throw "Expected at least 2 controls in TestSection, got: $($allControls.Count)"
+                }
                 }
                 
                 Write-Host "  Verified: Multiple controls created in TestSection (Total: $($allControls.Count))"
@@ -439,6 +451,7 @@ Describe "Form Manipulation E2E Tests" {
                     -ControlId "name" `
                     -Disabled `
                     -Confirm:$false
+                }
                 
                 Write-Host "  Updated control 'name' to disabled"
                 
@@ -452,6 +465,7 @@ Describe "Form Manipulation E2E Tests" {
                     -ControlId "name"
                 
                 Write-Host "  Verified: Control properties updated"
+                }
                 
                 # ============================================================
                 # STEP 6.5: TEST PUBLISHING AFTER MODIFICATIONS
@@ -466,6 +480,7 @@ Describe "Form Manipulation E2E Tests" {
                     -Id $formId `
                     -Publish `
                     -Confirm:$false
+                }
                 
                 Write-Host "  Published form successfully"
                 
@@ -476,9 +491,9 @@ Describe "Form Manipulation E2E Tests" {
                 }
                 if (-not $publishedForm) {
                     throw "Failed to retrieve form after publish"
-                }
                 
                 if (-not $publishedForm.formxml) {
+                }
                     throw "Form XML is empty after publish"
                 }
                 
@@ -498,6 +513,7 @@ Describe "Form Manipulation E2E Tests" {
                     -TabName "CustomTab" `
                     -SectionName "SecondSection" `
                     -ControlId "emailaddress1" `
+                }
                     -Confirm:$false
                 
                 Write-Host "  Removed control: emailaddress1"
@@ -513,6 +529,7 @@ Describe "Form Manipulation E2E Tests" {
                 
                 if ($removedControl) {
                     throw "Control 'emailaddress1' should have been removed but still exists"
+                }
                 }
                 
                 Write-Host "  Verified: Control successfully removed"
@@ -530,8 +547,8 @@ Describe "Form Manipulation E2E Tests" {
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -SectionName "SecondSection" `
+                }
                     -Confirm:$false
-                
                 Write-Host "  Removed section: SecondSection"
                 
                 # Verify the section was removed
@@ -540,10 +557,10 @@ Describe "Form Manipulation E2E Tests" {
                     Get-DataverseFormSection -Connection $connection `
                     -FormId $formId `
                     -TabName "CustomTab" `
-                    -SectionName "SecondSection"
                 
                 if ($removedSection) {
                     throw "Section 'SecondSection' should have been removed but still exists"
+                }
                 }
                 
                 Write-Host "  Verified: Section successfully removed"
@@ -558,6 +575,7 @@ Describe "Form Manipulation E2E Tests" {
                 Invoke-WithRetry {
                     Wait-DataversePublish -Connection $connection
                     Remove-DataverseFormTab -Connection $connection `
+                }
                     -FormId $formId `
                     -TabName "CustomTab" `
                     -Confirm:$false
@@ -573,9 +591,9 @@ Describe "Form Manipulation E2E Tests" {
                 
                 if ($removedTab) {
                     throw "Tab 'CustomTab' should have been removed but still exists"
-                }
                 
                 Write-Host "  Verified: Tab successfully removed"
+                }
                 
                 # ============================================================
                 # STEP 10: CLEANUP - REMOVE FORM
@@ -585,6 +603,7 @@ Describe "Form Manipulation E2E Tests" {
                 
                 # Remove the form
                 Invoke-WithRetry {
+                }
                     Wait-DataversePublish -Connection $connection
                     Remove-DataverseForm -Connection $connection -Id $formId -Confirm:$false
                 }
