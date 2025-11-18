@@ -90,7 +90,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			_userCancellationCts = new System.Threading.CancellationTokenSource();
 
 			_sqlConnection = new Sql4CdsConnection(Connection);
-			_sqlConnection.UseTDSEndpoint = false;
 			_sqlConnection.Progress += OnSqlConnection_Progress;
 			_sqlConnection.UseTDSEndpoint = UseTdsEndpoint;
 			_sqlConnection.UseBulkDelete = UseBulkDelete;
