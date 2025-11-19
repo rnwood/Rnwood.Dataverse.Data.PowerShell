@@ -3,7 +3,7 @@
     <TargetFrameworks>net8.0;net462</TargetFrameworks>
     <AssemblyTitle>Rnwood.Dataverse.Data.PowerShell.Cmdlets</AssemblyTitle>
     <Product>Rnwood.Dataverse.Data.PowerShell</Product>
-    <Copyright>Copyright © 2023-2024</Copyright>
+    <Copyright>Copyright © 2023-2025 Robert Wood and project contributors</Copyright>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
