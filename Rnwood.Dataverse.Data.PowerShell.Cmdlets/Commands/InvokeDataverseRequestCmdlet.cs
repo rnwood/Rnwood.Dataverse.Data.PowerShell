@@ -192,7 +192,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				if (ParameterSetName == "NameAndInputs")
 				{
 					Request = new OrganizationRequest(RequestName);
-					Request.Parameters.AddRange(Parameters.Cast<DictionaryEntry>().Select(e => new KeyValuePair<string, object>((string)e.Key, e.Value)));
+					Request.Parameters.AddRange(Parameters.Cast<DictionaryEntry>().Select(e => new KeyValuePair<string, object>((string)e.Key, UnwrapPSObject(e.Value))));
 				}
 
 				// Apply bypass parameters to the request
@@ -264,6 +264,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 			catch { }
 			base.StopProcessing();
+		}
+
+		/// <summary>
+		/// Unwraps a PSObject value to its base object if needed.
+		/// This prevents serialization errors when SDK objects like EntityReference or OptionSetValue
+		/// are wrapped in PSObject and passed to OrganizationRequest.Parameters.
+		/// </summary>
+		/// <param name="value">The value to unwrap</param>
+		/// <returns>The unwrapped base object if value is a PSObject wrapping a non-PSCustomObject, otherwise the original value</returns>
+		private static object UnwrapPSObject(object value)
+		{
+			// Unwrap PSObject if it's not wrapping a PSCustomObject
+			// This pattern matches the one used in DataverseEntityConverter.cs
+			if (value is PSObject psObject && !(psObject.BaseObject is PSCustomObject))
+			{
+				return psObject.BaseObject;
+			}
+			return value;
 		}
 	}
 }
