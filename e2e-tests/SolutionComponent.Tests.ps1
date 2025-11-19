@@ -109,6 +109,8 @@ Describe "Solution Component E2E Tests" {
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection
                 
+                Write-Host "  DEBUG: Adding component - SolutionName: $solutionName, ComponentId: $($script:entityObjectId), ComponentType: 1"
+                
                 $result = Set-DataverseSolutionComponent -Connection $connection `
                     -SolutionName $solutionName `
                     -ComponentId $script:entityObjectId `
@@ -116,6 +118,8 @@ Describe "Solution Component E2E Tests" {
                     -Behavior 0 `
                     -PassThru `
                     -Confirm:$false
+                
+                Write-Host "  DEBUG: Set-DataverseSolutionComponent result - WasUpdated: $($result.WasUpdated), BehaviorValue: $($result.BehaviorValue)"
                 
                 if ($result.WasUpdated -eq $true) {
                     throw "Component should not be marked as updated when adding new component"
@@ -125,17 +129,30 @@ Describe "Solution Component E2E Tests" {
                 }
             }
             Write-Host "✓ Entity added to solution with Behavior 0"
-            
-            # Wait for solution component to propagate (components can take time to appear in queries)
-            Write-Host "  Waiting for solution component to propagate..."
-            Start-Sleep -Seconds 15
                 
             Write-Host "Step 4: Verifying component exists in solution using Get-DataverseSolutionComponent..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection
                 $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
                 
+                Write-Host "  DEBUG: Retrieved $($components.Count) components from solution"
+                if ($components) {
+                    Write-Host "  DEBUG: First component ObjectId type: $($components[0].ObjectId.GetType().FullName)"
+                    Write-Host "  DEBUG: Looking for ObjectId: $($script:entityObjectId) (type: $($script:entityObjectId.GetType().FullName))"
+                    foreach ($comp in $components) {
+                        Write-Host "  DEBUG: Component - ObjectId: $($comp.ObjectId), ComponentType: $($comp.ComponentType)"
+                    }
+                }
+                
                 $entityComponent = $components | Where-Object { $_.ObjectId -eq $script:entityObjectId }
+                if (-not $entityComponent) {
+                    # Try string comparison in case of type mismatch
+                    $entityComponent = $components | Where-Object { $_.ObjectId.ToString() -eq $script:entityObjectId.ToString() }
+                    if ($entityComponent) {
+                        Write-Host "  DEBUG: Found component using string comparison"
+                    }
+                }
+                
                 if (-not $entityComponent) {
                     throw "Entity component not found in solution"
                 }
@@ -187,10 +204,6 @@ Describe "Solution Component E2E Tests" {
                 }
             }
             Write-Host "✓ Component behavior changed from 0 to 1"
-            
-            # Wait for solution component changes to propagate
-            Write-Host "  Waiting for behavior change to propagate..."
-            Start-Sleep -Seconds 15
                 
             Write-Host "Step 7: Verifying behavior change using Get-DataverseSolutionComponent..."
             Invoke-WithRetry {
@@ -236,10 +249,6 @@ Describe "Solution Component E2E Tests" {
                     -Confirm:$false
             }
             Write-Host "✓ Attribute component added to solution"
-            
-            # Wait for solution component to propagate
-            Write-Host "  Waiting for attribute component to propagate..."
-            Start-Sleep -Seconds 15
                 
             Write-Host "Step 9: Listing all components in solution..."
             Invoke-WithRetry {
