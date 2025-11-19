@@ -24,6 +24,9 @@ This module works in PowerShell Desktop and PowerShell Core, supporting Windows,
 
 **Note**: On-premise Dataverse environments are not supported.
 
+- An XrmToolbox plugin is also available to make getting started really easy: 
+  See the [Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin README](Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/README.md) for information.
+
 ## Quick Start
 
 ### Installation

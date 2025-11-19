@@ -5,6 +5,12 @@ This XrmToolbox plugin provides a PowerShell console with the Rnwood.Dataverse.D
 ## Features
 
 - **Embedded PowerShell console** directly within the XrmToolbox tab using ConEmu control
+- **Script editor with Monaco** - Modern code editor with syntax highlighting and IntelliSense
+- **Intelligent code completion (LSP-based)** - Dynamic PowerShell IntelliSense using TabExpansion2 API
+  - Context-aware cmdlet, parameter, and variable completion
+  - Works with PowerShell 5.1+ (no PowerShell 7 requirement)
+  - Automatic completion of module cmdlets and all installed modules
+  - Parameter completion with inline help
 - **Automatic connection bridging** - Automatically connects to the same Dataverse environment as XrmToolbox using named pipes
 - **Bundled PowerShell module** - Module is included with the plugin, no separate installation required
 - **Execution policy detection** - Detects and warns about restrictive PowerShell policies with clear instructions
@@ -215,6 +221,54 @@ Get-Help Get-DataverseRecord -Full
 Get-Help Set-DataverseRecord -Examples
 ```
 
+### Using the Script Editor
+
+The plugin includes a Monaco-based script editor with intelligent code completion powered by PowerShell's TabExpansion2 API.
+
+#### Switching to Script Editor
+
+Click the **📝 Script Editor** button in the toolbar to switch from the console view to the script editor.
+
+#### Code Completion Features
+
+The script editor provides dynamic, context-aware IntelliSense:
+
+1. **Command Completion**: Type `Get-D` and press `Ctrl+Space` to see all available cmdlets starting with "Get-D"
+   - Includes cmdlets from the Dataverse module
+   - Includes all built-in PowerShell cmdlets
+   - Shows cmdlets from all loaded modules
+
+2. **Parameter Completion**: Type `Get-DataverseRecord -` and press `Ctrl+Space` to see all available parameters
+   - Shows parameter names with inline documentation
+   - Automatically triggered after typing `-`
+
+3. **Variable Completion**: Type `$` to see available variables
+   - Shows variables defined in your script
+   - Shows PowerShell automatic variables
+
+4. **Property/Method Completion**: Type a variable followed by `.` to see properties and methods
+   - Example: `$connection.` shows properties like `ConnectedOrgUniqueName`, `ConnectedOrgVersion`, etc.
+
+5. **Trigger Characters**: Completion is automatically triggered when typing:
+   - `-` (for parameters)
+   - `$` (for variables)
+   - `.` (for properties/methods)
+   - `::` (for static members)
+
+#### Running Scripts
+
+- Press **F5** or click the **▶ Run** button to execute your script
+- Press **Ctrl+S** to save your script
+- Press **Ctrl+N** for a new script
+
+#### Technical Details
+
+The code completion uses PowerShell's native `TabExpansion2` API running in a background PowerShell process:
+- Compatible with PowerShell 5.1+ (no PowerShell 7 required)
+- Works with all installed modules and their cmdlets
+- Provides real-time completion based on current script context
+- Minimal performance impact with intelligent caching
+
 ## Embedded Console Technology
 
 The plugin uses the ConEmu.Control.WinForms package to provide an embedded terminal experience directly within the XrmToolbox tab. This provides:
@@ -225,6 +279,8 @@ The plugin uses the ConEmu.Control.WinForms package to provide an embedded termi
 - No external dependencies or installations required
 
 The ConEmu control is bundled with the plugin via NuGet, so there's no need to install ConEmu separately.
+
+The script editor uses Monaco Editor (the same editor used in VS Code) with WebView2 integration for modern editing features.
 
 ## Troubleshooting
 
@@ -365,7 +421,6 @@ The plugin project includes launch profiles for easy debugging:
 1. Open `Rnwood.Dataverse.Data.PowerShell.sln` in Visual Studio
 2. Set `Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin` as the startup project
 3. Select one of the launch profiles:
-   - **XrmToolbox (auto-download)** - Uses Start-XrmToolbox.ps1 script to auto-download and configure
    - **XrmToolbox (local)** - Uses `.xrmtoolbox\XrmToolBox.exe` from repo root
    - **XrmToolbox (custom path)** - Uses XrmToolbox from a custom installation path (edit path in Properties/launchSettings.json)
 4. Press F5 to start debugging
@@ -390,7 +445,6 @@ The repository includes VS Code tasks and launch configurations:
 2. Run tasks via Terminal > Run Task:
    - **Download XrmToolbox** - Downloads XrmToolbox to `.xrmtoolbox`
    - **Build XrmToolbox Plugin** - Builds the plugin project
-   - **Start XrmToolbox with Plugin** - Builds plugin, copies files, and starts XrmToolbox
 
 #### Using Launch Configuration
 
@@ -425,27 +479,6 @@ Downloads XrmToolbox from GitHub releases:
 .\scripts\Download-XrmToolbox.ps1 -Version "1.2024.9.23"
 ```
 
-#### Start-XrmToolbox.ps1
-
-Starts XrmToolbox with the plugin loaded:
-
-```powershell
-# Use local XrmToolbox with Debug build
-.\scripts\Start-XrmToolbox.ps1
-
-# Use Release build
-.\scripts\Start-XrmToolbox.ps1 -BuildConfiguration Release
-
-# Use custom XrmToolbox path
-.\scripts\Start-XrmToolbox.ps1 -XrmToolboxPath "C:\XrmToolbox\XrmToolBox.exe"
-```
-
-This script:
-1. Downloads XrmToolbox if not present
-2. Builds the plugin if not built
-3. Copies plugin files to XrmToolbox Plugins folder
-4. Starts XrmToolbox
-
 ### Testing Changes
 
 After making changes:
@@ -462,11 +495,7 @@ After making changes:
    ```
 
 3. Test the plugin:
-   ```powershell
-   .\scripts\Start-XrmToolbox.ps1
-   ```
-
-4. In XrmToolbox:
+   - Manually start XrmToolbox from `.xrmtoolbox\XrmToolBox.exe`
    - Connect to a Dataverse environment
    - Launch PowerShell Console from Tools menu
    - Test your changes
@@ -485,7 +514,6 @@ Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/
 
 scripts/
 ├── Download-XrmToolbox.ps1              # Downloads XrmToolbox
-└── Start-XrmToolbox.ps1                 # Starts XrmToolbox with plugin
 
 .vscode/
 ├── launch.json                          # VS Code debugging config
