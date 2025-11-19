@@ -129,16 +129,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			if (ParameterSetName == "REST")
 			{
-				// Validate that the path portion (before query string) does not contain '/' as the SDK does not support full paths
+				// Validate that the path does not start with /api/ or api/ which would indicate an absolute path
+				// The SDK does not support full absolute API paths like '/api/data/v9.2/accounts'
+				// However, we do allow navigation paths like 'entities(id)/Microsoft.Dynamics.CRM.action' for custom APIs
 				// Query strings (after '?') may contain '/' characters
 				string pathPortion = Path.Split('?')[0];
-				if (pathPortion.Contains("/"))
+				if (pathPortion.StartsWith("/api/", StringComparison.OrdinalIgnoreCase) || 
+				    pathPortion.StartsWith("api/", StringComparison.OrdinalIgnoreCase))
 				{
 					throw new ArgumentException(
-						$"The Path parameter should not contain '/' characters in the resource name portion. " +
-						$"Provide only the resource name (e.g., 'accounts' or 'WhoAmI') rather than a full path like '/api/data/v9.2/accounts'. " +
+						$"The Path parameter should not start with '/api/' or 'api/'. " +
+						$"Provide the resource name or navigation path (e.g., 'accounts', 'WhoAmI', or 'entities(id)/Microsoft.Dynamics.CRM.action') " +
+						$"rather than a full path like '/api/data/v9.2/accounts'. " +
 						$"The organization URL and API version are automatically added by the connection. " +
-						$"Query strings may contain '/' characters. " +
 						$"Current value: '{Path}'",
 						nameof(Path));
 				}
