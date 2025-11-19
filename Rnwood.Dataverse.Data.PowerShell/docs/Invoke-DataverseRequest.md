@@ -133,7 +133,16 @@ PS C:\> invoke-dataverserequest -connection $c -method POST myapi_Example \
 
 Invokes the `POST` `myapi_Example` REST API using custom headers and body. REST responses are returned as JSON objects without conversion.
 
-### Example 6: Using retry logic for transient failures
+### Example 6: Calling a custom API on a specific record
+
+```powershell
+PS C:\> $id = "1d936fda-9076-ef11-a671-6045bd0ab99c"
+PS C:\> $response = Invoke-DataverseRequest -connection $c -method POST -path "sample_entities($id)/Microsoft.Dynamics.CRM.sample_MyCustomApi" -body @{ param1 = "value1" }
+```
+
+Invokes a custom API on a specific record using a navigation path. This pattern is useful for calling bound custom actions that operate on a specific entity instance.
+
+### Example 7: Using retry logic for transient failures
 
 ```powershell
 PS C:\> $request = New-Object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
@@ -283,9 +292,11 @@ Accept wildcard characters: False
 ```
 
 ### -Path
-Resource name for the REST API call (e.g., 'accounts', 'contacts', or 'myapi_Example'). 
+Resource name or navigation path for the REST API call (e.g., 'accounts', 'contacts', 'myapi_Example', or 'entities(id)/Microsoft.Dynamics.CRM.CustomAction'). 
 
-**Important:** Do not include the full path like '/api/data/v9.2/accounts' or 'api/data/v9.2/accounts'. The organization URL and API version are automatically added by the connection. The resource name portion (before any query string) must not contain '/' characters.
+**Important:** Do not include the full API path starting with '/api/' or 'api/' (like '/api/data/v9.2/accounts'). The organization URL and API version are automatically added by the connection.
+
+Navigation paths with forward slashes are supported for calling custom APIs on specific records (e.g., 'sample_entities(guid)/Microsoft.Dynamics.CRM.sample_MyCustomApi').
 
 Query strings are allowed and may contain '/' characters (e.g., 'accounts?$filter=name eq ''test/value''').
 

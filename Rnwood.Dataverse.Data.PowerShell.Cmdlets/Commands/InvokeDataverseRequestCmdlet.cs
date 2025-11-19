@@ -129,16 +129,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			if (ParameterSetName == "REST")
 			{
-				// Validate that the path portion (before query string) does not contain '/' as the SDK does not support full paths
+				// Validate that the path does not start with /api/ or api/ which would indicate an absolute path
+				// The SDK does not support full absolute API paths like '/api/data/v9.2/accounts'
+				// However, we do allow navigation paths like 'entities(id)/Microsoft.Dynamics.CRM.action' for custom APIs
 				// Query strings (after '?') may contain '/' characters
 				string pathPortion = Path.Split('?')[0];
-				if (pathPortion.Contains("/"))
+				if (pathPortion.StartsWith("/api/", StringComparison.OrdinalIgnoreCase) || 
+				    pathPortion.StartsWith("api/", StringComparison.OrdinalIgnoreCase))
 				{
 					throw new ArgumentException(
-						$"The Path parameter should not contain '/' characters in the resource name portion. " +
-						$"Provide only the resource name (e.g., 'accounts' or 'WhoAmI') rather than a full path like '/api/data/v9.2/accounts'. " +
+						$"The Path parameter should not start with '/api/' or 'api/'. " +
+						$"Provide the resource name or navigation path (e.g., 'accounts', 'WhoAmI', or 'entities(id)/Microsoft.Dynamics.CRM.action') " +
+						$"rather than a full path like '/api/data/v9.2/accounts'. " +
 						$"The organization URL and API version are automatically added by the connection. " +
-						$"Query strings may contain '/' characters. " +
 						$"Current value: '{Path}'",
 						nameof(Path));
 				}
@@ -157,14 +160,31 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						bodyString = bs;
 					} else
 					{
-						bodyString = (string)InvokeCommand.NewScriptBlock("param($body); $body | ConvertTo-Json -Depth 100").Invoke(Body).First().ImmediateBaseObject;
+						// Detect PowerShell version - PowerShell 5.1 doesn't support -Depth parameter
+						var psVersionResult = InvokeCommand.NewScriptBlock("$PSVersionTable.PSVersion.Major").Invoke();
+						int psMajorVersion = (int)psVersionResult.FirstOrDefault()?.BaseObject;
+						
+						// PowerShell 5.1 doesn't support -Depth parameter, use it only for PS 6+
+						string convertToJsonScript = psMajorVersion >= 6 
+							? "param($body); $body | ConvertTo-Json -Depth 100" 
+							: "param($body); $body | ConvertTo-Json";
+						bodyString = (string)InvokeCommand.NewScriptBlock(convertToJsonScript).Invoke(Body).First().ImmediateBaseObject;
 					}
 				}
 
 				System.Net.Http.HttpResponseMessage response = Connection.ExecuteWebRequest(Method, Path, bodyString, headers);
 				response.EnsureSuccessStatusCode();
 				string responseBody = response.Content.ReadAsStringAsync().Result;
-				var result = InvokeCommand.NewScriptBlock("param($response); $response | ConvertFrom-Json -Depth 100").Invoke(responseBody);
+				
+				// Detect PowerShell version - PowerShell 5.1 doesn't support -Depth parameter
+				var psVersionResult2 = InvokeCommand.NewScriptBlock("$PSVersionTable.PSVersion.Major").Invoke();
+				int psMajorVersion2 = (int)psVersionResult2.FirstOrDefault()?.BaseObject;
+				
+				// PowerShell 5.1 doesn't support -Depth parameter, use it only for PS 6+
+				string convertFromJsonScript = psMajorVersion2 >= 6 
+					? "param($response); $response | ConvertFrom-Json -Depth 100" 
+					: "param($response); $response | ConvertFrom-Json";
+				var result = InvokeCommand.NewScriptBlock(convertFromJsonScript).Invoke(responseBody);
 				WriteObject(result);
 			}
 			else

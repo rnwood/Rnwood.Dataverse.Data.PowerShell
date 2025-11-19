@@ -119,14 +119,14 @@ Describe "Invoke-DataverseRequest E2E Tests" {
         }
     }
 
-    It "Throws error when path contains forward slash" {
+    It "Throws error when path starts with /api/ or api/" {
         $ErrorActionPreference = "Stop"
         
         try {
             $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
             $connection.EnableAffinityCookie = $true
             
-            # This should throw an error because the path contains '/'
+            # This should throw an error because the path starts with /api/
             $errorThrown = $false
             try {
                 $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path "/api/data/v9.2/systemusers"
@@ -136,7 +136,7 @@ Describe "Invoke-DataverseRequest E2E Tests" {
                 $errorMessage = $_.Exception.Message
                 
                 # Verify the error message is helpful
-                if ($errorMessage -notlike "*should not contain*/*") {
+                if ($errorMessage -notlike "*should not start with*") {
                     throw "Error message does not contain expected guidance. Message: $errorMessage"
                 }
                 
@@ -144,13 +144,13 @@ Describe "Invoke-DataverseRequest E2E Tests" {
             }
             
             if (-not $errorThrown) {
-                throw "Expected an error to be thrown for path containing '/'"
+                throw "Expected an error to be thrown for path starting with /api/"
             }
         }
         catch {
             # If the error is from our validation, this is expected
-            if ($_.Exception.Message -like "*should not contain*/*") {
-                Write-Host "✓ Validation correctly prevents paths with forward slashes"
+            if ($_.Exception.Message -like "*should not start with*") {
+                Write-Host "✓ Validation correctly prevents paths starting with /api/ or api/"
             }
             else {
                 Write-Host "ERROR: $($_ | Out-String)"
