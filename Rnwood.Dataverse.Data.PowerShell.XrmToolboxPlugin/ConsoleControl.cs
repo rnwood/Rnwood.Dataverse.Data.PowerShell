@@ -23,7 +23,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
     public partial class ConsoleControl : UserControl
     {
-        private Dictionary<TabPage, ConsoleTabControl> conEmuControls = new Dictionary<TabPage, ConsoleTabControl>();
+        private Dictionary<TabPage, ConsoleTabControl> tabControls = new Dictionary<TabPage, ConsoleTabControl>();
         private ConnectionInfo connectionInfo;
         private int scriptSessionCounter = 1;
         private CrmServiceClient service;
@@ -40,9 +40,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             tabPage.Controls.Add(consoleTabControl);
             consoleTabControl.CloseRequested += (s, e) => {
                 tabControl.TabPages.Remove(tabPage);
-                if (conEmuControls.ContainsKey(tabPage)) {
-                    conEmuControls[tabPage].ConEmuControl.Dispose();
-                    conEmuControls.Remove(tabPage);
+                if (tabControls.ContainsKey(tabPage)) {
+                    tabControls[tabPage].DisposeConsole();
+                    tabControls.Remove(tabPage);
                 }
             };
             return tabPage;
@@ -329,21 +329,18 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
 
         public void DisposeResources()
         {
-            foreach (var tab in conEmuControls.Values.ToArray())
+            foreach (var tab in tabControls.Values.ToArray())
             {
-                if (tab.ConEmuControl.IsConsoleEmulatorOpen)
+                try
                 {
-                    try
-                    {
-                        tab.ConEmuControl.Dispose();
-                    }
-                    catch
-                    {
-                        // Ignore errors when disposing
-                    }
+                    tab.DisposeConsole();
+                }
+                catch
+                {
+                    // Ignore errors when disposing
                 }
             }
-            conEmuControls.Clear();
+            tabControls.Clear();
         }
 
         public void StartScriptSession(string script)
@@ -356,60 +353,31 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
             StartSession($"Script Session {scriptSessionCounter++}", script, connectionInfo);
         }
 
-        private ConEmuStartInfo CreateConEmuStartInfo(string tempScriptPath)
-        {
-            ConEmuStartInfo startInfo = new ConEmuStartInfo();
-            startInfo.ConsoleProcessCommandLine = $"powershell.exe -NoExit -ExecutionPolicy Bypass -File \"{tempScriptPath}\"";
-            startInfo.StartupDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            startInfo.ConEmuConsoleExtenderExecutablePath = Path.Combine(Assembly.GetExecutingAssembly().Location, "..", "conemu", "conemuc.exe");
-
-            var configXml = new System.Xml.XmlDocument();
-            var assembly = Assembly.GetExecutingAssembly();
-            using (Stream stream = assembly.GetManifestResourceStream("Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.conemu.xml"))
-            {
-                if (stream != null)
-                {
-                    configXml.Load(stream);
-                }
-                else
-                {
-                    // Fallback to inline XML if resource not found
-                    configXml.LoadXml(@"<?xml version=""1.0"" encoding=""utf-8""?
-<key name=""Software"">
-  <key name=""ConEmu"">
-    <key name=""Vanilla"">
-      <value name=""FontSize"" type=""dword"" data=""00000008""/>
-    </key>
-  </key>
-</key>");
-                }
-            }
-            startInfo.BaseConfiguration = configXml;
-            return startInfo;
-        }
-
-        private void StartConEmuSession(string title, ConEmuStartInfo startInfo)
+        private void StartConEmuSession(string title, string scriptContent)
         {
             ConsoleTabControl consoleTabControl = new ConsoleTabControl();
 
             TabPage tabPage = CreateConsoleTab(title, consoleTabControl);
 
-            conEmuControls[tabPage] = consoleTabControl;
+            tabControls[tabPage] = consoleTabControl;
 
             tabControl.TabPages.Add(tabPage);
             tabControl.SelectedTab = tabPage;
 
-            consoleTabControl.ConEmuControl.Start(startInfo).ConsoleProcessExited += (s, e) =>
+            // Start the session using the new encapsulated method
+            consoleTabControl.ProcessExited += (s, e) =>
             {
                 this.Invoke((MethodInvoker)delegate {
                     tabControl.TabPages.Remove(tabPage);
-                    if (conEmuControls.ContainsKey(tabPage))
+                    if (tabControls.ContainsKey(tabPage))
                     {
-                        conEmuControls[tabPage].ConEmuControl.Dispose();
-                        conEmuControls.Remove(tabPage);
+                        tabControls[tabPage].DisposeConsole();
+                        tabControls.Remove(tabPage);
                     }
                 });
             };
+
+            consoleTabControl.StartSessionWithScriptContent(title, scriptContent);
         }
 
         private void StartSession(string title, string userScript, ConnectionInfo connectionInfo)
@@ -424,22 +392,14 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
             }
 
             string connectionScript = GenerateConnectionScript(bundledModulePath, tempConnectionFile, userScript);
-            string tempScriptPath = Path.Combine(Path.GetTempPath(), $"xrmtoolbox-{(string.IsNullOrEmpty(userScript) ? "console" : "script")}-{Guid.NewGuid()}.ps1");
-            File.WriteAllText(tempScriptPath, connectionScript);
 
-            ConEmuStartInfo startInfo = CreateConEmuStartInfo(tempScriptPath);
+            StartConEmuSession(title, connectionScript);
 
-            StartConEmuSession(title, startInfo);
-
-            // Cleanup temp files
+            // Cleanup temp connection file only — script temp file is cleaned up by ConsoleTabControl
             _ = Task.Delay(30000).ContinueWith(t =>
             {
                 try
                 {
-                    if (File.Exists(tempScriptPath))
-                    {
-                        File.Delete(tempScriptPath);
-                    }
                     if (!string.IsNullOrEmpty(tempConnectionFile) && File.Exists(tempConnectionFile))
                     {
                         File.Delete(tempConnectionFile);
