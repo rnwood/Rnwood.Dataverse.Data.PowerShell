@@ -125,6 +125,10 @@ Describe "Solution Component E2E Tests" {
                 }
             }
             Write-Host "✓ Entity added to solution with Behavior 0"
+            
+            # Wait for solution component to propagate (components can take time to appear in queries)
+            Write-Host "  Waiting for solution component to propagate..."
+            Start-Sleep -Seconds 15
                 
             Write-Host "Step 4: Verifying component exists in solution using Get-DataverseSolutionComponent..."
             Invoke-WithRetry {
@@ -183,6 +187,10 @@ Describe "Solution Component E2E Tests" {
                 }
             }
             Write-Host "✓ Component behavior changed from 0 to 1"
+            
+            # Wait for solution component changes to propagate
+            Write-Host "  Waiting for behavior change to propagate..."
+            Start-Sleep -Seconds 15
                 
             Write-Host "Step 7: Verifying behavior change using Get-DataverseSolutionComponent..."
             Invoke-WithRetry {
@@ -228,6 +236,10 @@ Describe "Solution Component E2E Tests" {
                     -Confirm:$false
             }
             Write-Host "✓ Attribute component added to solution"
+            
+            # Wait for solution component to propagate
+            Write-Host "  Waiting for attribute component to propagate..."
+            Start-Sleep -Seconds 15
                 
             Write-Host "Step 9: Listing all components in solution..."
             Invoke-WithRetry {
