@@ -296,7 +296,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 						for (int f = 0; f < reader.VisibleFieldCount; f++)
 						{
-							string fieldName = reader.GetName(f) ?? $"field{f}";
+							string fieldName = reader.GetName(f);
+							if (string.IsNullOrEmpty(fieldName))
+							{
+								fieldName = $"field{f}";
+                            } 
 							output.Properties.Add(new PSNoteProperty(fieldName, reader.GetValue(f)));
 						}
 
