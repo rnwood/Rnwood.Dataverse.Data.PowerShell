@@ -327,7 +327,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <returns>The access token, or null if unavailable</returns>
 		private string GetAccessToken(ServiceClient serviceClient)
 		{
-			// Try to get CurrentAccessToken using reflection
+			// If using ServiceClientWithTokenProvider, use the TokenProviderFunction
+			if (serviceClient is ServiceClientWithTokenProvider clientWithProvider && clientWithProvider.TokenProviderFunction != null)
+			{
+				try
+				{
+					// Call the token provider function with the service URL
+					// The function expects a URL parameter for scope resolution
+					var tokenTask = clientWithProvider.TokenProviderFunction(serviceClient.ConnectedOrgUriActual?.ToString() ?? string.Empty);
+					return tokenTask.GetAwaiter().GetResult();
+				}
+				catch
+				{
+					// If token retrieval fails, fall back to checking CurrentAccessToken
+				}
+			}
+
+			// Fallback: Try to get CurrentAccessToken using reflection
 			// This property is available but may be null when using external token management
 			try
 			{
