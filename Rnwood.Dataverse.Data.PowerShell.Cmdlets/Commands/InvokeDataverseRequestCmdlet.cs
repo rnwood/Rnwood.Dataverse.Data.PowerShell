@@ -160,14 +160,31 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						bodyString = bs;
 					} else
 					{
-						bodyString = (string)InvokeCommand.NewScriptBlock("param($body); $body | ConvertTo-Json -Depth 100").Invoke(Body).First().ImmediateBaseObject;
+						// Detect PowerShell version - PowerShell 5.1 doesn't support -Depth parameter
+						var psVersionResult = InvokeCommand.NewScriptBlock("$PSVersionTable.PSVersion.Major").Invoke();
+						int psMajorVersion = (int)psVersionResult.FirstOrDefault()?.BaseObject;
+						
+						// PowerShell 5.1 doesn't support -Depth parameter, use it only for PS 6+
+						string convertToJsonScript = psMajorVersion >= 6 
+							? "param($body); $body | ConvertTo-Json -Depth 100" 
+							: "param($body); $body | ConvertTo-Json";
+						bodyString = (string)InvokeCommand.NewScriptBlock(convertToJsonScript).Invoke(Body).First().ImmediateBaseObject;
 					}
 				}
 
 				System.Net.Http.HttpResponseMessage response = Connection.ExecuteWebRequest(Method, Path, bodyString, headers);
 				response.EnsureSuccessStatusCode();
 				string responseBody = response.Content.ReadAsStringAsync().Result;
-				var result = InvokeCommand.NewScriptBlock("param($response); $response | ConvertFrom-Json -Depth 100").Invoke(responseBody);
+				
+				// Detect PowerShell version - PowerShell 5.1 doesn't support -Depth parameter
+				var psVersionResult2 = InvokeCommand.NewScriptBlock("$PSVersionTable.PSVersion.Major").Invoke();
+				int psMajorVersion2 = (int)psVersionResult2.FirstOrDefault()?.BaseObject;
+				
+				// PowerShell 5.1 doesn't support -Depth parameter, use it only for PS 6+
+				string convertFromJsonScript = psMajorVersion2 >= 6 
+					? "param($response); $response | ConvertFrom-Json -Depth 100" 
+					: "param($response); $response | ConvertFrom-Json";
+				var result = InvokeCommand.NewScriptBlock(convertFromJsonScript).Invoke(responseBody);
 				WriteObject(result);
 			}
 			else
