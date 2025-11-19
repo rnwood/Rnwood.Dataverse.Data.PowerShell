@@ -25,46 +25,8 @@ Describe "Solution Component E2E Tests" {
         $ConfirmPreference = 'None'  # Suppress all confirmation prompts in non-interactive mode
         $VerbosePreference = 'SilentlyContinue'  # Reduce noise; enable 'Continue' for debugging if needed
         
-            
-        # Retry helper function with exponential backoff
-        function Invoke-WithRetry {
-            param(
-                [Parameter(Mandatory = $true)]
-                [scriptblock]$ScriptBlock,
-                [int]$MaxRetries = 5,
-                [int]$InitialDelaySeconds = 10
-            )
-                
-            $attempt = 0
-            $delay = $InitialDelaySeconds
-                
-            while ($attempt -lt $MaxRetries) {
-                try {
-                    $attempt++
-                    Write-Verbose "Attempt $attempt of $MaxRetries"
-                    & $ScriptBlock
-                    return  # Success, exit function
-                }
-                catch {
-                    # Check if this is an EntityCustomization operation error
-                    if ($_.Exception.Message -like "*Cannot start the requested operation*EntityCustomization*") {
-                        Write-Warning "EntityCustomization operation conflict detected. Waiting 2 minutes before retry without incrementing attempt count..."
-                        $attempt--  # Don't count this as a retry attempt
-                        Start-Sleep -Seconds 120
-                        continue
-                    }
-                    
-                    if ($attempt -eq $MaxRetries) {
-                        Write-Error "All $MaxRetries attempts failed. Last error: $_"
-                        throw
-                    }
-                        
-                    Write-Warning "Attempt $attempt failed: $_. Retrying in $delay seconds..."
-                    Start-Sleep -Seconds $delay
-                    $delay = $delay * 2  # Exponential backoff
-                }
-            }
-        }
+        # Import common utilities
+        . "$PSScriptRoot/Common.ps1"
             
         try {
             $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
