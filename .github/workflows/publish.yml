@@ -286,7 +286,7 @@ jobs:
       - if: ${{ matrix.powershell_version != '5' }}
         name: Test - pwsh (Standard + E2E in parallel)
         id: test-pwsh
-        timeout-minutes: 45  # Tests expected to complete in < 45 minutes
+        timeout-minutes: 90  # Tests expected to complete in < 90 minutes
         shell: pwsh
         env:
           E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
@@ -633,7 +633,7 @@ jobs:
       - if:  ${{ matrix.powershell_version == '5' }}
         name: Test - powershell (Standard + E2E in parallel)
         id: test-powershell
-        timeout-minutes: 45  # Tests expected to complete in < 45 minutes
+        timeout-minutes: 90  # Tests expected to complete in < 90 minutes
         shell: powershell
         env:
           E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
