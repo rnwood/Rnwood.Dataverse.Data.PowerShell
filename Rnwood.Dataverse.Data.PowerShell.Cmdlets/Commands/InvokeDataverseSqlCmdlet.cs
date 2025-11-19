@@ -89,7 +89,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			// Initialize cancellation token source for this pipeline invocation
 			_userCancellationCts = new System.Threading.CancellationTokenSource();
 
-			_sqlConnection = new Sql4CdsConnection(Connection);
+			// Create a DataSource with AccessTokenProvider to enable TDS endpoint support
+			// when CurrentAccessToken is not available (e.g., with token provider authentication)
+			var dataSource = new DataSource(Connection);
+			
+			// Set AccessTokenProvider to retrieve access token from ServiceClient
+			// This is used as a fallback when CurrentAccessToken is null
+			if (Connection is ServiceClient serviceClient)
+			{
+				dataSource.AccessTokenProvider = () => GetAccessToken(serviceClient);
+			}
+
+			// Create connection using the DataSource with AccessTokenProvider configured
+			var dataSources = new Dictionary<string, DataSource>(StringComparer.OrdinalIgnoreCase)
+			{
+				[dataSource.Name] = dataSource
+			};
+			
+			_sqlConnection = new Sql4CdsConnection(dataSources);
 			_sqlConnection.UseTDSEndpoint = false;
 			_sqlConnection.Progress += OnSqlConnection_Progress;
 			_sqlConnection.UseTDSEndpoint = UseTdsEndpoint;
@@ -301,6 +318,39 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			WriteProgress(progressRecord);
 			WriteVerbose($"{progressRecord.Activity}: {progressRecord.StatusDescription} {progressRecord.PercentComplete}%");
+		}
+
+		/// <summary>
+		/// Gets an access token from the ServiceClient for TDS endpoint authentication.
+		/// </summary>
+		/// <param name="serviceClient">The ServiceClient instance to retrieve the token from</param>
+		/// <returns>The access token, or null if unavailable</returns>
+		private string GetAccessToken(ServiceClient serviceClient)
+		{
+			// Try to get CurrentAccessToken using reflection
+			// This property is available but may be null when using external token management
+			try
+			{
+				var currentAccessTokenProperty = serviceClient.GetType().GetProperty("CurrentAccessToken",
+					System.Reflection.BindingFlags.Instance |
+					System.Reflection.BindingFlags.Public |
+					System.Reflection.BindingFlags.NonPublic);
+
+				if (currentAccessTokenProperty != null)
+				{
+					var token = currentAccessTokenProperty.GetValue(serviceClient) as string;
+					if (!string.IsNullOrEmpty(token))
+					{
+						return token;
+					}
+				}
+			}
+			catch
+			{
+				// If reflection fails, we'll return null and fall back to non-TDS mode
+			}
+
+			return null;
 		}
 	}
 }

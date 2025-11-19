@@ -1,0 +1,3 @@
+[submodule "Sql4Cds"]
+	path = Sql4Cds
+	url = https://github.com/rnwood/Sql4Cds.git
