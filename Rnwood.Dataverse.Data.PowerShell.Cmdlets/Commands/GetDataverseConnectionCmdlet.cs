@@ -515,7 +515,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								Url = new Uri(discoveryUrl);
 							}
 
-							result = new ServiceClient(Url, url => GetTokenInteractive(publicClient, url));
+							result = new ServiceClientWithTokenProvider(Url, url => GetTokenInteractive(publicClient, url));
 
 							// Save connection metadata if a name was provided
 							if (!string.IsNullOrEmpty(Name) && ParameterSetName != PARAMSET_LOADNAMED)
@@ -557,7 +557,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								Url = new Uri(discoveryUrl);
 							}
 
-							result = new ServiceClient(Url, url => GetTokenWithUsernamePassword(publicClient, url));
+							result = new ServiceClientWithTokenProvider(Url, url => GetTokenWithUsernamePassword(publicClient, url));
 
 							// Save connection metadata if a name was provided
 							if (!string.IsNullOrEmpty(Name))
@@ -611,7 +611,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								Url = new Uri(discoveryUrl);
 							}
 
-							result = new ServiceClient(Url, url => GetTokenWithDeviceCode(publicClient, url));
+							result = new ServiceClientWithTokenProvider(Url, url => GetTokenWithDeviceCode(publicClient, url));
 
 							// Save connection metadata if a name was provided
 							if (!string.IsNullOrEmpty(Name))
@@ -649,7 +649,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								store.RegisterCache(confApp);
 							}
 
-							result = new ServiceClient(Url, url => GetTokenWithClientSecret(confApp, url));
+							result = new ServiceClientWithTokenProvider(Url, url => GetTokenWithClientSecret(confApp, url));
 
 							// Save connection metadata if a name was provided
 							if (!string.IsNullOrEmpty(Name))
@@ -701,7 +701,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								store.RegisterCache(confApp);
 							}
 
-							result = new ServiceClient(Url, url => GetTokenWithClientCertificate(confApp, url));
+							result = new ServiceClientWithTokenProvider(Url, url => GetTokenWithClientCertificate(confApp, url));
 
 							// Save connection metadata if a name was provided
 							if (!string.IsNullOrEmpty(Name))
@@ -757,7 +757,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								Url = new Uri(discoveryUrl);
 							}
 
-							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
+							result = new ServiceClientWithTokenProvider(Url, url => GetTokenWithAzureCredential(credential, url));
 
 							// Save connection metadata if a name was provided
 							if (!string.IsNullOrEmpty(Name))
@@ -800,7 +800,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 								Url = new Uri(discoveryUrl);
 							}
 
-							result = new ServiceClient(Url, url => GetTokenWithAzureCredential(credential, url));
+							result = new ServiceClientWithTokenProvider(Url, url => GetTokenWithAzureCredential(credential, url));
 
 							// Save connection metadata if a name was provided
 							if (!string.IsNullOrEmpty(Name))
@@ -821,7 +821,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						}
 
 					case PARAMSET_ACCESSTOKEN:
-						result = new ServiceClient(Url, url => GetTokenWithScriptBlock());
+						result = new ServiceClientWithTokenProvider(Url, url => GetTokenWithScriptBlock());
 						break;
 
 					case PARAMSET_FROMPAC:

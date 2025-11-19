@@ -31,11 +31,16 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0  # Fetch all history for tags
+          submodules: recursive  # Initialize and update submodules
       - if: ${{ matrix.powershell_version != '5' }}
         name: Install PowerShell ${{ matrix.powershell_version }}
         uses: PSModule/install-powershell@v1
         with:
           Version: ${{ matrix.powershell_version }}
+      - name: Build Sql4CDS
+        shell: pwsh
+        run: |
+          ./scripts/Build-Sql4Cds.ps1
       - name: Build
         shell: pwsh
         run: |       
