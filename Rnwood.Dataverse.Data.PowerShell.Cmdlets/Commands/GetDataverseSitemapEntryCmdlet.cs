@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
@@ -360,9 +361,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return null;
         }
 
-        private Dictionary<int, string> ParseTitles(XElement element)
+        private Hashtable ParseTitles(XElement element)
         {
-            var titles = new Dictionary<int, string>();
+            var titles = new Hashtable();
             
             // First check for new format: <Titles><Title LCID="..." Title="..." /></Titles>
             var titlesElement = element.Element("Titles");
@@ -390,9 +391,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return titles.Count > 0 ? titles : null;
         }
 
-        private Dictionary<int, string> ParseDescriptions(XElement element)
+        private Hashtable ParseDescriptions(XElement element)
         {
-            var descriptions = new Dictionary<int, string>();
+            var descriptions = new Hashtable();
             
             // First check for new format: <Descriptions><Description LCID="..." Description="..." /></Descriptions>
             var descriptionsElement = element.Element("Descriptions");
