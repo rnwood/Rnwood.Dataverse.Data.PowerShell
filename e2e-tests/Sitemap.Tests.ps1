@@ -337,6 +337,50 @@ Describe "Sitemap Manipulation" {
                 }
                 Write-Host "Verified published sitemap is retrievable"
                 
+                # --- TEST 10a: Verify original issue - Publish by UniqueName without other parameters ---
+                Write-Host "`nTest 10a: Testing original issue - Publish sitemap by UniqueName only (no Name, no SitemapXml)..."
+                
+                # Get the current sitemap XML before publish-only operation
+                $sitemapBeforePublish = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseSitemap -Connection $connection -UniqueName $sitemapUniqueName
+                }
+                
+                if ([string]::IsNullOrWhiteSpace($sitemapBeforePublish.SitemapXml)) {
+                    throw "Sitemap XML is already empty before test"
+                }
+                
+                $originalSitemapXml = $sitemapBeforePublish.SitemapXml
+                Write-Host "  Original sitemap XML length: $($originalSitemapXml.Length) characters"
+                
+                # This was the original issue: Set-DataverseSitemap -UniqueName "XYZ" -Publish
+                # It should NOT empty the sitemap XML
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Set-DataverseSitemap -Connection $connection -UniqueName $sitemapUniqueName -Publish -Confirm:$false
+                }
+                Write-Host "  Publish-only operation completed"
+                
+                # Verify the sitemap XML is NOT empty after publish-only operation
+                $sitemapAfterPublish = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseSitemap -Connection $connection -UniqueName $sitemapUniqueName
+                }
+                
+                if ([string]::IsNullOrWhiteSpace($sitemapAfterPublish.SitemapXml)) {
+                    throw "REGRESSION: Sitemap XML became empty after publish-only operation! This is the original issue (bug #277)."
+                }
+                
+                Write-Host "  Sitemap XML after publish: $($sitemapAfterPublish.SitemapXml.Length) characters"
+                
+                if ($sitemapAfterPublish.SitemapXml -ne $originalSitemapXml) {
+                    Write-Warning "  Sitemap XML changed after publish (this may be expected due to Dataverse normalization)"
+                } else {
+                    Write-Host "  Sitemap XML unchanged - correct behavior"
+                }
+                
+                Write-Host "Successfully verified original issue fix - sitemap XML not emptied by publish-only operation"
+                
                 # --- TEST 11: Remove SubArea entry ---
                 Write-Host "`nTest 11: Removing SubArea entry..."
                 Invoke-WithRetry {
