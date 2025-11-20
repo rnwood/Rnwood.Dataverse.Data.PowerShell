@@ -231,6 +231,56 @@ Describe 'Set-DataverseSitemap' {
             $updatedSitemap.Name | Should -Be "OriginalName"
             $updatedSitemap.SitemapXml | Should -Be $newXml
         }
+
+        It "Does not modify sitemap when no update parameters are provided" {
+            $testSitemap = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $testSitemap["sitemapname"] = "NoChangeSitemap"
+            $testSitemap["sitemapnameunique"] = "nochangesitemap"
+            $testSitemap["sitemapxml"] = "<SiteMap><Area Id='OriginalArea' /></SiteMap>"
+            $testSitemapId = $connection.Create($testSitemap)
+            
+            # Call Set-DataverseSitemap with no update parameters (only ID)
+            Set-DataverseSitemap -Connection $connection -Id $testSitemapId
+            
+            # Verify nothing changed
+            $unchangedSitemap = Get-DataverseSitemap -Connection $connection -Id $testSitemapId
+            $unchangedSitemap.Name | Should -Be "NoChangeSitemap"
+            $unchangedSitemap.UniqueName | Should -Be "nochangesitemap"
+            $unchangedSitemap.SitemapXml | Should -Be "<SiteMap><Area Id='OriginalArea' /></SiteMap>"
+        }
+
+        It "Does not modify sitemap when calling with UniqueName and no update parameters" {
+            $testSitemap = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $testSitemap["sitemapname"] = "NoChangeByUniqueName"
+            $testSitemap["sitemapnameunique"] = "nochangebyuniquename"
+            $testSitemap["sitemapxml"] = "<SiteMap><Area Id='UnchangedArea' /></SiteMap>"
+            $connection.Create($testSitemap) | Out-Null
+            
+            # Call Set-DataverseSitemap with UniqueName only, no update parameters
+            Set-DataverseSitemap -Connection $connection -UniqueName "nochangebyuniquename"
+            
+            # Verify nothing changed
+            $unchangedSitemap = Get-DataverseSitemap -Connection $connection -UniqueName "nochangebyuniquename"
+            $unchangedSitemap.Name | Should -Be "NoChangeByUniqueName"
+            $unchangedSitemap.UniqueName | Should -Be "nochangebyuniquename"
+            $unchangedSitemap.SitemapXml | Should -Be "<SiteMap><Area Id='UnchangedArea' /></SiteMap>"
+        }
+
+        It "Skips update when provided values match existing values" {
+            $testSitemap = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $testSitemap["sitemapname"] = "SameValueSitemap"
+            $testSitemap["sitemapnameunique"] = "samevaluesitemap"
+            $testSitemap["sitemapxml"] = "<SiteMap><Area Id='SameArea' /></SiteMap>"
+            $testSitemapId = $connection.Create($testSitemap)
+            
+            # Call Set-DataverseSitemap with same values as existing
+            Set-DataverseSitemap -Connection $connection -Id $testSitemapId -Name "SameValueSitemap" -SitemapXml "<SiteMap><Area Id='SameArea' /></SiteMap>"
+            
+            # Verify values remain the same
+            $unchangedSitemap = Get-DataverseSitemap -Connection $connection -Id $testSitemapId
+            $unchangedSitemap.Name | Should -Be "SameValueSitemap"
+            $unchangedSitemap.SitemapXml | Should -Be "<SiteMap><Area Id='SameArea' /></SiteMap>"
+        }
     }
 
     Context 'Error Handling' {

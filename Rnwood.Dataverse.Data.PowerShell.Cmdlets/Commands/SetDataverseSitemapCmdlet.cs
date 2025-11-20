@@ -172,16 +172,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     existingSitemap = existingSitemaps.Entities[0];
                 }
 
-                WriteVerbose($"Updating sitemap...");
+                WriteVerbose($"Checking for changes to sitemap...");
 
                 var updateEntity = new Entity("sitemap", sitemapId);
+                
+                // Only add attributes that have changed
                 if (!string.IsNullOrEmpty(Name))
                 {
-                    updateEntity["sitemapname"] = Name;
+                    var existingName = existingSitemap.GetAttributeValue<string>("sitemapname");
+                    if (existingName != Name)
+                    {
+                        updateEntity["sitemapname"] = Name;
+                    }
                 }
                 if (!string.IsNullOrEmpty(UniqueName))
                 {
-                    updateEntity["sitemapnameunique"] = UniqueName;
+                    var existingUniqueName = existingSitemap.GetAttributeValue<string>("sitemapnameunique");
+                    if (existingUniqueName != UniqueName)
+                    {
+                        updateEntity["sitemapnameunique"] = UniqueName;
+                    }
                 }
                 if (!string.IsNullOrEmpty(SitemapXml))
                 {
@@ -199,12 +209,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             SitemapXml));
                         return;
                     }
-                    updateEntity["sitemapxml"] = SitemapXml;
+                    
+                    var existingSitemapXml = existingSitemap.GetAttributeValue<string>("sitemapxml");
+                    if (existingSitemapXml != SitemapXml)
+                    {
+                        updateEntity["sitemapxml"] = SitemapXml;
+                    }
                 }
 
-                Connection.Update(updateEntity);
-
-                WriteVerbose("Sitemap updated successfully.");
+                // Only call Update if there are changes
+                if (updateEntity.Attributes.Count > 0)
+                {
+                    WriteVerbose($"Updating sitemap with {updateEntity.Attributes.Count} changed attribute(s)...");
+                    Connection.Update(updateEntity);
+                    WriteVerbose("Sitemap updated successfully.");
+                }
+                else
+                {
+                    WriteVerbose("No changes detected. Skipping update.");
+                }
             }
             else
             {
