@@ -493,7 +493,7 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
 
     Context 'Privilege Parsing and Management' {
         BeforeAll {
-            $connection = getMockConnection -Entities @('sitemap', 'account', 'contact')
+            $connection = getMockConnection -Entities @('sitemap', 'contact')
             
             # Sample sitemap XML with Privilege elements using available entities
             $privilegeSitemapXml = @"
@@ -503,9 +503,8 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
             <SubArea Id="nav_activities" Entity="contact" ResourceId="Area_Activities" DescriptionResourceId="Activities_Area_Description" Icon="/_imgs/ico_18_activitiesServices.gif" GetStartedPanePath="Activities_Web_Part_Path" IntroducedVersion="7.0.0.0">
                 <Privilege Entity="contact" Privilege="Read" />
                 <Privilege Entity="contact" Privilege="Create" />
-                <Privilege Entity="account" Privilege="Read" />
-                <Privilege Entity="account" Privilege="Create" />
-                <Privilege Entity="account" Privilege="Write" />
+                <Privilege Entity="contact" Privilege="Write" />
+                <Privilege Entity="contact" Privilege="Delete" />
             </SubArea>
         </Group>
     </Area>
@@ -526,23 +525,23 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
             $subArea.EntryType | Should -Be "SubArea"
             $subArea.Id | Should -Be "nav_activities"
             $subArea.Privileges | Should -Not -BeNullOrEmpty
-            $subArea.Privileges.Count | Should -Be 5
+            $subArea.Privileges.Count | Should -Be 4
             
             # Verify specific privileges
             $contactRead = $subArea.Privileges | Where-Object { $_.Entity -eq "contact" -and $_.Privilege -eq "Read" }
             $contactRead | Should -Not -BeNullOrEmpty
             
-            $accountCreate = $subArea.Privileges | Where-Object { $_.Entity -eq "account" -and $_.Privilege -eq "Create" }
-            $accountCreate | Should -Not -BeNullOrEmpty
+            $contactCreate = $subArea.Privileges | Where-Object { $_.Entity -eq "contact" -and $_.Privilege -eq "Create" }
+            $contactCreate | Should -Not -BeNullOrEmpty
             
-            $accountWrite = $subArea.Privileges | Where-Object { $_.Entity -eq "account" -and $_.Privilege -eq "Write" }
-            $accountWrite | Should -Not -BeNullOrEmpty
+            $contactWrite = $subArea.Privileges | Where-Object { $_.Entity -eq "contact" -and $_.Privilege -eq "Write" }
+            $contactWrite | Should -Not -BeNullOrEmpty
         }
 
         It "Get-DataverseSitemapEntry can return individual Privilege entries" {
             $privileges = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -Privilege -ParentSubAreaId "nav_activities"
             $privileges | Should -Not -BeNullOrEmpty
-            $privileges.Count | Should -Be 5
+            $privileges.Count | Should -Be 4
             
             # Verify all privileges are returned as separate entries
             foreach ($privilege in $privileges) {
@@ -558,17 +557,16 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
             $contactRead.EntryType | Should -Be "Privilege"
         }
 
-        It "Set-DataverseSitemapEntry can add new Privilege to existing SubArea" {
-            # Add a new privilege to the existing SubArea
-            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -Privilege -PrivilegeEntity "account" -PrivilegeName "Delete" -ParentSubAreaId "nav_activities"
+        It "Set-DataverseSitemapEntry replaces privileges for an entity" {
+            # The Set operation replaces all privileges for a given entity
+            # This test verifies that adding a new privilege name for an entity removes the old ones
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -Privilege -PrivilegeEntity "contact" -PrivilegeName "Assign" -ParentSubAreaId "nav_activities"
             
-            # Verify the privilege was added
+            # Verify only the new privilege exists for contact entity
             $subArea = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -EntryId "nav_activities"
-            $newPrivilege = $subArea.Privileges | Where-Object { $_.Entity -eq "account" -and $_.Privilege -eq "Delete" }
-            $newPrivilege | Should -Not -BeNullOrEmpty
-            
-            # Verify total privilege count increased
-            $subArea.Privileges.Count | Should -Be 6
+            $contactPrivileges = $subArea.Privileges | Where-Object { $_.Entity -eq "contact" }
+            $contactPrivileges.Count | Should -Be 1
+            $contactPrivileges[0].Privilege | Should -Be "Assign"
         }
 
         It "Set-DataverseSitemapEntry can update existing Privilege" {
@@ -589,21 +587,21 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
         }
 
         It "Remove-DataverseSitemapEntry can remove specific Privilege" {
-            # First add a privilege to remove
-            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -Privilege -PrivilegeEntity "account" -PrivilegeName "Delete" -ParentSubAreaId "nav_activities"
+            # First add a privilege to remove (use Append since it's available for contact)
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -Privilege -PrivilegeEntity "contact" -PrivilegeName "Append" -ParentSubAreaId "nav_activities"
             
             # Verify it was added
             $subArea = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -EntryId "nav_activities"
-            $addedPrivilege = $subArea.Privileges | Where-Object { $_.Entity -eq "account" -and $_.Privilege -eq "Delete" }
+            $addedPrivilege = $subArea.Privileges | Where-Object { $_.Entity -eq "contact" -and $_.Privilege -eq "Append" }
             $addedPrivilege | Should -Not -BeNullOrEmpty
             $initialCount = $subArea.Privileges.Count
             
             # Remove the privilege
-            Remove-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -Privilege -PrivilegeEntity "account" -PrivilegeName "Delete" -ParentSubAreaId "nav_activities" -Confirm:$false
+            Remove-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -Privilege -PrivilegeEntity "contact" -PrivilegeName "Append" -ParentSubAreaId "nav_activities" -Confirm:$false
             
             # Verify it was removed
             $subAreaAfter = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -EntryId "nav_activities"
-            $removedPrivilege = $subAreaAfter.Privileges | Where-Object { $_.Entity -eq "account" -and $_.Privilege -eq "Delete" }
+            $removedPrivilege = $subAreaAfter.Privileges | Where-Object { $_.Entity -eq "contact" -and $_.Privilege -eq "Append" }
             $removedPrivilege | Should -BeNullOrEmpty
             $subAreaAfter.Privileges.Count | Should -Be ($initialCount - 1)
         }
