@@ -78,7 +78,31 @@ CustomSolution        Custom Solution       1.2.0.0    False
 
 Retrieves only unmanaged solutions, excluding the Default, Active, and Basic system solutions.
 
-### Example 5: Check solution version before upgrade
+### Example 5: Get solutions using wildcard patterns
+```powershell
+PS C:\> Get-DataverseSolution -UniqueName "Contoso*"
+
+UniqueName            Name                  Version    IsManaged
+----------            ----                  -------    ---------
+ContosoSales          Contoso Sales         1.0.0.0    False
+ContosoMarketing      Contoso Marketing     2.1.0.0    False
+```
+
+Retrieves all solutions whose unique name starts with "Contoso".
+
+### Example 6: Filter solutions with multiple wildcards
+```powershell
+PS C:\> Get-DataverseSolution -UniqueName "*Custom*" -Unmanaged
+
+UniqueName            Name                  Version    IsManaged
+----------            ----                  -------    ---------
+MyCustomSolution      My Custom Solution    1.0.0.0    False
+TeamCustomization     Team Customization    1.5.0.0    False
+```
+
+Retrieves all unmanaged solutions whose unique name contains "Custom".
+
+### Example 7: Check solution version before upgrade
 ```powershell
 PS C:\> $solution = Get-DataverseSolution -UniqueName "MySolution"
 PS C:\> if ($solution.Version -lt [Version]"2.0.0.0") {
@@ -136,7 +160,9 @@ Accept wildcard characters: False
 ```
 
 ### -UniqueName
-The unique name of the solution to retrieve. If not specified, all solutions are returned.
+The unique name of the solution to retrieve. Supports wildcards (* and ?). If not specified, all solutions are returned.
+
+Use `*` to match zero or more characters and `?` to match a single character.
 
 ```yaml
 Type: String
@@ -147,7 +173,7 @@ Required: False
 Position: 0
 Default value: None
 Accept pipeline input: False
-Accept wildcard characters: False
+Accept wildcard characters: True
 ```
 
 ### -Unmanaged
