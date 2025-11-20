@@ -160,7 +160,29 @@ Describe 'Set-DataverseSitemapEntry' {
 
     Context 'Creating New Entries with ResourceId Properties' {
         BeforeAll {
-            $connection = getMockConnection -Entities @('sitemap')
+            # Create a request interceptor to mock entity metadata
+            $requestInterceptor = {
+                param($request)
+                
+                if ($request.GetType().Name -eq 'RetrieveEntityRequest') {
+                    $entityName = $request.LogicalName
+                    # Accept common test entities
+                    if ($entityName -in @('contact', 'account', 'appointment')) {
+                        $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveEntityResponse
+                        $metadata = New-Object Microsoft.Xrm.Sdk.Metadata.EntityMetadata
+                        $metadata.LogicalName = $entityName
+                        $metadata.MetadataId = [Guid]::NewGuid()
+                        $response.Results.Add("EntityMetadata", $metadata)
+                        return $response
+                    } else {
+                        throw [System.ServiceModel.FaultException]::new("Entity '$entityName' does not exist")
+                    }
+                }
+                
+                return $null
+            }
+            
+            $connection = getMockConnection -RequestInterceptor $requestInterceptor -Entities @('sitemap')
             
             # Create test sitemap
             $sitemapXml = "<SiteMap></SiteMap>"
@@ -453,7 +475,29 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
 
     Context 'Privilege Parsing and Management' {
         BeforeAll {
-            $connection = getMockConnection -Entities @('sitemap')
+            # Create a request interceptor to mock entity metadata
+            $requestInterceptor = {
+                param($request)
+                
+                if ($request.GetType().Name -eq 'RetrieveEntityRequest') {
+                    $entityName = $request.LogicalName
+                    # Accept common test entities including the ones used in privilege tests
+                    if ($entityName -in @('contact', 'account', 'appointment', 'activitypointer', 'email', 'phonecall', 'task')) {
+                        $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveEntityResponse
+                        $metadata = New-Object Microsoft.Xrm.Sdk.Metadata.EntityMetadata
+                        $metadata.LogicalName = $entityName
+                        $metadata.MetadataId = [Guid]::NewGuid()
+                        $response.Results.Add("EntityMetadata", $metadata)
+                        return $response
+                    } else {
+                        throw [System.ServiceModel.FaultException]::new("Entity '$entityName' does not exist")
+                    }
+                }
+                
+                return $null
+            }
+            
+            $connection = getMockConnection -RequestInterceptor $requestInterceptor -Entities @('sitemap')
             
             # Sample sitemap XML with Privilege elements as shown in user's example
             $privilegeSitemapXml = @"
@@ -912,8 +956,32 @@ Describe 'Sitemap Titles and Descriptions with LCID' {
 
     Context 'Entity Validation' {
         BeforeAll {
-            # Create a connection with a mock that simulates entity metadata retrieval
-            $connection = getMockConnection -Entities @('sitemap', 'contact', 'account')
+            # Create a connection with a custom request interceptor that mocks entity metadata retrieval
+            $requestInterceptor = {
+                param($request)
+                
+                # Mock RetrieveEntityRequest to simulate entity existence
+                if ($request.GetType().Name -eq 'RetrieveEntityRequest') {
+                    $entityName = $request.LogicalName
+                    
+                    # Valid entities: contact, account
+                    if ($entityName -in @('contact', 'account')) {
+                        $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveEntityResponse
+                        $metadata = New-Object Microsoft.Xrm.Sdk.Metadata.EntityMetadata
+                        $metadata.LogicalName = $entityName
+                        $metadata.MetadataId = [Guid]::NewGuid()
+                        $response.Results.Add("EntityMetadata", $metadata)
+                        return $response
+                    } else {
+                        # Throw exception for non-existent entities
+                        throw [System.ServiceModel.FaultException]::new("Entity '$entityName' does not exist")
+                    }
+                }
+                
+                return $null
+            }
+            
+            $connection = getMockConnection -RequestInterceptor $requestInterceptor -Entities @('sitemap')
         }
 
         It "Validates Entity parameter when provided" {
