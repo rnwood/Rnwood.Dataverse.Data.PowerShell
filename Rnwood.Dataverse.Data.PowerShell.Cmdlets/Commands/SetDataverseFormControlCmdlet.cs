@@ -803,10 +803,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             
             control.SetAttributeValue("id", controlId);
             
-            // Only set datafieldname if DataField is provided (special controls may not have a DataField)
-            if (!string.IsNullOrEmpty(DataField))
+            // Only set datafieldname if DataField is provided AND it's not a Subgrid control
+            // Subgrid controls should NOT have a datafieldname attribute
+            if (!string.IsNullOrEmpty(DataField) && !finalControlType.Equals("Subgrid", StringComparison.OrdinalIgnoreCase))
             {
                 control.SetAttributeValue("datafieldname", DataField);
+            }
+            
+            // For Subgrid controls, add the indicationOfSubgrid attribute
+            if (finalControlType.Equals("Subgrid", StringComparison.OrdinalIgnoreCase))
+            {
+                control.SetAttributeValue("indicationOfSubgrid", "true");
             }
 
             // Set the class ID based on the determined control type
@@ -921,7 +928,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Add parameters for special controls
-            if (Parameters != null && Parameters.Count > 0)
+            // For Subgrid controls, ensure default parameters are set if not provided
+            if (finalControlType.Equals("Subgrid", StringComparison.OrdinalIgnoreCase))
+            {
+                var subgridParams = PrepareSubgridParameters();
+                
+                XElement paramsElement = control.Element("parameters");
+                if (paramsElement == null)
+                {
+                    paramsElement = new XElement("parameters");
+                    control.Add(paramsElement);
+                }
+                else
+                {
+                    paramsElement.RemoveAll();
+                }
+
+                foreach (var param in subgridParams)
+                {
+                    paramsElement.Add(new XElement(param.Key, param.Value));
+                }
+            }
+            else if (Parameters != null && Parameters.Count > 0)
             {
                 XElement paramsElement = control.Element("parameters");
                 if (paramsElement == null)
@@ -1036,6 +1064,202 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     return "{5546E6CD-394C-4BEE-94A8-4425E17EF6C6}"; // Data control
                 default:
                     return "{4273EDBD-AC1D-40D3-9FB2-095C621B552D}"; // Default to standard
+            }
+        }
+
+        /// <summary>
+        /// Prepares default parameters for a subgrid control, querying relationship metadata as needed.
+        /// </summary>
+        private System.Collections.Generic.Dictionary<string, string> PrepareSubgridParameters()
+        {
+            var subgridParams = new System.Collections.Generic.Dictionary<string, string>();
+
+            // If user provided Parameters, use them as a base
+            if (Parameters != null && Parameters.Count > 0)
+            {
+                foreach (System.Collections.DictionaryEntry param in Parameters)
+                {
+                    subgridParams[param.Key.ToString()] = param.Value?.ToString();
+                }
+            }
+
+            // Try to determine relationship details from DataField if provided
+            string relationshipName = null;
+            string targetEntityType = null;
+            string viewId = null;
+
+            if (!string.IsNullOrEmpty(DataField))
+            {
+                // DataField might contain a relationship name
+                var relationshipInfo = TryGetRelationshipInfo(DataField);
+                if (relationshipInfo != null)
+                {
+                    relationshipName = relationshipInfo.Value.RelationshipName;
+                    targetEntityType = relationshipInfo.Value.TargetEntity;
+                    WriteVerbose($"Detected relationship: {relationshipName}, target entity: {targetEntityType}");
+                }
+            }
+
+            // Set RelationshipName - use detected value or user-provided value
+            if (!subgridParams.ContainsKey("RelationshipName"))
+            {
+                if (!string.IsNullOrEmpty(relationshipName))
+                {
+                    subgridParams["RelationshipName"] = relationshipName;
+                }
+                else if (!string.IsNullOrEmpty(DataField))
+                {
+                    // Fallback: use DataField as relationship name
+                    subgridParams["RelationshipName"] = DataField;
+                    WriteVerbose($"Using DataField '{DataField}' as RelationshipName");
+                }
+            }
+
+            // Set TargetEntityType - use detected value or user-provided value
+            if (!subgridParams.ContainsKey("TargetEntityType"))
+            {
+                if (!string.IsNullOrEmpty(targetEntityType))
+                {
+                    subgridParams["TargetEntityType"] = targetEntityType;
+                }
+            }
+
+            // Get or determine ViewId
+            if (!subgridParams.ContainsKey("ViewId") && !string.IsNullOrEmpty(targetEntityType))
+            {
+                // Try to get the default view for the target entity
+                viewId = GetDefaultViewId(targetEntityType);
+                if (!string.IsNullOrEmpty(viewId))
+                {
+                    subgridParams["ViewId"] = viewId;
+                    WriteVerbose($"Using default view {viewId} for entity {targetEntityType}");
+                }
+            }
+
+            // Set ViewIds to match ViewId if not provided
+            if (subgridParams.ContainsKey("ViewId") && !subgridParams.ContainsKey("ViewIds"))
+            {
+                subgridParams["ViewIds"] = subgridParams["ViewId"];
+            }
+
+            // Set default parameters if not provided
+            if (!subgridParams.ContainsKey("RecordsPerPage"))
+            {
+                subgridParams["RecordsPerPage"] = "4";
+            }
+
+            if (!subgridParams.ContainsKey("AutoExpand"))
+            {
+                subgridParams["AutoExpand"] = "Fixed";
+            }
+
+            if (!subgridParams.ContainsKey("EnableQuickFind"))
+            {
+                subgridParams["EnableQuickFind"] = "false";
+            }
+
+            if (!subgridParams.ContainsKey("EnableViewPicker"))
+            {
+                subgridParams["EnableViewPicker"] = "false";
+            }
+
+            if (!subgridParams.ContainsKey("EnableChartPicker"))
+            {
+                subgridParams["EnableChartPicker"] = "false";
+            }
+
+            return subgridParams;
+        }
+
+        /// <summary>
+        /// Tries to get relationship information from a field name that might be a relationship.
+        /// </summary>
+        private (string RelationshipName, string TargetEntity)? TryGetRelationshipInfo(string fieldName)
+        {
+            try
+            {
+                // Get entity metadata with relationships
+                var request = new RetrieveEntityRequest
+                {
+                    LogicalName = _entityName,
+                    EntityFilters = EntityFilters.Relationships,
+                    RetrieveAsIfPublished = false
+                };
+
+                var response = (RetrieveEntityResponse)Connection.Execute(request);
+                var entityMetadata = response.EntityMetadata;
+
+                // Check one-to-many relationships
+                var oneToManyRelationship = entityMetadata.OneToManyRelationships
+                    .FirstOrDefault(r => r.SchemaName.Equals(fieldName, StringComparison.OrdinalIgnoreCase) ||
+                                        r.ReferencingEntity.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
+
+                if (oneToManyRelationship != null)
+                {
+                    WriteVerbose($"Found one-to-many relationship: {oneToManyRelationship.SchemaName} to {oneToManyRelationship.ReferencingEntity}");
+                    return (oneToManyRelationship.SchemaName, oneToManyRelationship.ReferencingEntity);
+                }
+
+                // Check many-to-many relationships
+                var manyToManyRelationship = entityMetadata.ManyToManyRelationships
+                    .FirstOrDefault(r => r.SchemaName.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
+
+                if (manyToManyRelationship != null)
+                {
+                    // Determine which is the target entity (not the current entity)
+                    string targetEntity = manyToManyRelationship.Entity1LogicalName == _entityName
+                        ? manyToManyRelationship.Entity2LogicalName
+                        : manyToManyRelationship.Entity1LogicalName;
+                    
+                    WriteVerbose($"Found many-to-many relationship: {manyToManyRelationship.SchemaName} to {targetEntity}");
+                    return (manyToManyRelationship.SchemaName, targetEntity);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                WriteVerbose($"Failed to get relationship info for '{fieldName}': {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the default view ID for an entity.
+        /// </summary>
+        private string GetDefaultViewId(string entityLogicalName)
+        {
+            try
+            {
+                // Query for the default public view
+                var query = new QueryExpression("savedquery")
+                {
+                    ColumnSet = new ColumnSet("savedqueryid"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("returnedtypecode", ConditionOperator.Equal, entityLogicalName),
+                            new ConditionExpression("isdefault", ConditionOperator.Equal, true),
+                            new ConditionExpression("querytype", ConditionOperator.Equal, 0) // 0 = public view
+                        }
+                    },
+                    TopCount = 1
+                };
+
+                var results = Connection.RetrieveMultiple(query);
+                if (results.Entities.Count > 0)
+                {
+                    return results.Entities[0].GetAttributeValue<Guid>("savedqueryid").ToString("B").ToUpper();
+                }
+
+                WriteVerbose($"No default view found for entity {entityLogicalName}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                WriteVerbose($"Failed to get default view for entity '{entityLogicalName}': {ex.Message}");
+                return null;
             }
         }
     }
