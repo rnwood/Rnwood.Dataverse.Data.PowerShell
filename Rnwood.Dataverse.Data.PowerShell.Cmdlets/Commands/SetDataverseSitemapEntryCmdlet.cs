@@ -269,28 +269,52 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Validate entity names exist
-            if (!string.IsNullOrEmpty(Entity))
+            try
             {
-                ValidateEntityExists(Entity);
-            }
+                if (!string.IsNullOrEmpty(Entity))
+                {
+                    ValidateEntityExists(Entity);
+                }
 
-            if (!string.IsNullOrEmpty(PrivilegeEntity))
+                if (!string.IsNullOrEmpty(PrivilegeEntity))
+                {
+                    ValidateEntityExists(PrivilegeEntity);
+                }
+            }
+            catch (InvalidOperationException ex)
             {
-                ValidateEntityExists(PrivilegeEntity);
+                ThrowTerminatingError(new ErrorRecord(
+                    ex,
+                    "EntityNotFound",
+                    ErrorCategory.ObjectNotFound,
+                    !string.IsNullOrEmpty(Entity) ? (object)Entity : (object)PrivilegeEntity));
+                return;
             }
 
             // Convert Hashtable parameters to Dictionary<int, string>
             Dictionary<int, string> titlesDict = null;
             Dictionary<int, string> descriptionsDict = null;
 
-            if (Titles != null)
+            try
             {
-                titlesDict = ConvertHashtableToIntDictionary(Titles, "Titles");
-            }
+                if (Titles != null)
+                {
+                    titlesDict = ConvertHashtableToIntDictionary(Titles, "Titles");
+                }
 
-            if (Descriptions != null)
+                if (Descriptions != null)
+                {
+                    descriptionsDict = ConvertHashtableToIntDictionary(Descriptions, "Descriptions");
+                }
+            }
+            catch (ArgumentException ex)
             {
-                descriptionsDict = ConvertHashtableToIntDictionary(Descriptions, "Descriptions");
+                ThrowTerminatingError(new ErrorRecord(
+                    ex,
+                    "InvalidHashtableParameter",
+                    ErrorCategory.InvalidArgument,
+                    ex.ParamName == "Titles" ? (object)Titles : (object)Descriptions));
+                return;
             }
 
             WriteVerbose($"Retrieving sitemap '{sitemapUniqueName ?? sitemapId.ToString()}'...");
