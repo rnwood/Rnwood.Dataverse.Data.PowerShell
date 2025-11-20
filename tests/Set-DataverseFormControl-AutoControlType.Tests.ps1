@@ -180,7 +180,10 @@ Describe 'Set-DataverseFormControl - Automatic Control Type Determination' {
             $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId
             $form.formxml | Should -Match 'id="related_accounts"'
             $form.formxml | Should -Match 'E7A81278-8635-4d9e-8D4D-59480B391C5B'  # Subgrid control class ID
-            $form.formxml | Should -Match 'datafieldname="contact_customer_accounts"'
+            # Subgrids should NOT have datafieldname attribute - it uses RelationshipName in parameters instead
+            $form.formxml | Should -Not -Match '<control[^>]*id="related_accounts"[^>]*datafieldname'
+            # But should have the relationship name in parameters
+            $form.formxml | Should -Match '<RelationshipName>contact_customer_accounts</RelationshipName>'
         }
     }
 }
