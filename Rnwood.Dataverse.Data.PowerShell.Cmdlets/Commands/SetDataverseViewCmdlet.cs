@@ -37,9 +37,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets or sets the logical name of the table (entity) this view is for. Required when creating a new view.
+        /// Gets or sets the logical name of the table (entity) this view is for. Required when creating a new view. When updating an existing view, this parameter is optional as the table name is automatically determined from the view's metadata or FetchXML.
         /// </summary>
-        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of the table this view is for. Required when creating a new view.")]
+        [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of the table this view is for. Required when creating a new view. When updating, this is automatically determined if not specified.")]
         [ArgumentCompleter(typeof(TableNameArgumentCompleter))]
         [Alias("EntityName")]
         public string TableName { get; set; }
@@ -266,6 +266,32 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             string currentFetchXml = viewEntity.GetAttributeValue<string>("fetchxml");
                             bool isQuickFind = viewEntity.GetAttributeValue<int>("querytype") == 4;
                             string tableName = viewEntity.GetAttributeValue<string>("returnedtypecode");
+                            
+                            // If tableName is not available from the view entity, try to use the TableName parameter
+                            if (string.IsNullOrEmpty(tableName) && !string.IsNullOrEmpty(TableName))
+                            {
+                                tableName = TableName;
+                            }
+                            
+                            // If still null, try to extract from FetchXML
+                            if (string.IsNullOrEmpty(tableName) && !string.IsNullOrEmpty(currentFetchXml))
+                            {
+                                try
+                                {
+                                    XDocument fetchDoc = XDocument.Parse(currentFetchXml);
+                                    tableName = fetchDoc.Descendants("entity").FirstOrDefault()?.Attribute("name")?.Value;
+                                }
+                                catch
+                                {
+                                    // If parsing fails, tableName will remain null
+                                }
+                            }
+                            
+                            if (string.IsNullOrEmpty(tableName))
+                            {
+                                throw new ArgumentException("TableName could not be determined from the existing view. Please specify the TableName parameter.");
+                            }
+                            
                             string modifiedFetchXml = ModifyFetchXml(currentFetchXml, isQuickFind, tableName, viewId);
                             if (currentFetchXml != modifiedFetchXml)
                             {
