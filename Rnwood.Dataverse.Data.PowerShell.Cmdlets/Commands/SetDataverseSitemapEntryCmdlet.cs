@@ -1233,22 +1233,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     if (!int.TryParse(strKey, out key))
                     {
-                        ThrowTerminatingError(new ErrorRecord(
-                            new ArgumentException($"Invalid key '{strKey}' in {parameterName}. Keys must be integers or strings that can be parsed as integers (LCID values)."),
-                            "InvalidHashtableKey",
-                            ErrorCategory.InvalidArgument,
-                            strKey));
-                        return null;
+                        throw new ArgumentException($"Invalid key '{strKey}' in {parameterName}. Keys must be integers or strings that can be parsed as integers (LCID values).", parameterName);
                     }
                 }
                 else
                 {
-                    ThrowTerminatingError(new ErrorRecord(
-                        new ArgumentException($"Invalid key type '{entry.Key?.GetType().Name}' in {parameterName}. Keys must be integers or strings that can be parsed as integers (LCID values)."),
-                        "InvalidHashtableKeyType",
-                        ErrorCategory.InvalidArgument,
-                        entry.Key));
-                    return null;
+                    throw new ArgumentException($"Invalid key type '{entry.Key?.GetType().Name}' in {parameterName}. Keys must be integers or strings that can be parsed as integers (LCID values).", parameterName);
                 }
 
                 // The value should be a string or null
@@ -1262,12 +1252,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 else
                 {
-                    ThrowTerminatingError(new ErrorRecord(
-                        new ArgumentException($"Invalid value type '{entry.Value.GetType().Name}' for key '{key}' in {parameterName}. Values must be strings or null."),
-                        "InvalidHashtableValueType",
-                        ErrorCategory.InvalidArgument,
-                        entry.Value));
-                    return null;
+                    throw new ArgumentException($"Invalid value type '{entry.Value.GetType().Name}' for key '{key}' in {parameterName}. Values must be strings or null.", parameterName);
                 }
             }
 
@@ -1302,11 +1287,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             catch (Exception ex)
             {
-                ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException($"Entity '{entityLogicalName}' does not exist or could not be retrieved. Ensure the entity name is correct and includes both published and unpublished entities. Error: {ex.Message}"),
-                    "EntityNotFound",
-                    ErrorCategory.ObjectNotFound,
-                    entityLogicalName));
+                throw new InvalidOperationException($"Entity '{entityLogicalName}' does not exist or could not be retrieved. Ensure the entity name is correct and includes both published and unpublished entities. Error: {ex.Message}", ex);
             }
         }
     }
