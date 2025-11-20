@@ -692,7 +692,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 // Create the new entry element
-                var newElement = CreateEntryElement(entryType);
+                var newElement = CreateEntryElement(entryType, titlesDict, descriptionsDict);
 
                 // Add the entry to the appropriate parent
                 bool added = false;
@@ -907,7 +907,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private XElement CreateEntryElement(SitemapEntryType entryType)
+        private XElement CreateEntryElement(SitemapEntryType entryType, Dictionary<int, string> titlesDict, Dictionary<int, string> descriptionsDict)
         {
             XElement element;
             
@@ -936,12 +936,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 element.SetAttributeValue("ToolTipResourseId", ToolTipResourceId);
 
             // Handle Titles (new format)
-            if (Titles != null)
+            if (titlesDict != null)
             {
                 var titlesToSet = new Dictionary<int, string>();
                 
-                // Add titles from Titles hashtable (converted to dictionary)
-                var titlesDict = ConvertHashtableToIntDictionary(Titles, "Titles");
+                // Add titles from converted dictionary
                 foreach (var kvp in titlesDict)
                 {
                     if (kvp.Value != null) // Skip null values
@@ -952,12 +951,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Handle Descriptions (new format)
-            if (Descriptions != null)
+            if (descriptionsDict != null)
             {
                 var descriptionsToSet = new Dictionary<int, string>();
                 
-                // Add descriptions from Descriptions hashtable (converted to dictionary)
-                var descriptionsDict = ConvertHashtableToIntDictionary(Descriptions, "Descriptions");
+                // Add descriptions from converted dictionary
                 foreach (var kvp in descriptionsDict)
                 {
                     if (kvp.Value != null) // Skip null values

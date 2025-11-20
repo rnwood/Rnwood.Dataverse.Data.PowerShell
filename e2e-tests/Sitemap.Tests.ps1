@@ -404,4 +404,228 @@ Describe "Sitemap Manipulation" {
             throw "Failed"
         }
     }
+
+    It "Can set sitemap group titles with hashtable keys (integer and string)" {
+        pwsh -noninteractive -noprofile -command {
+            $env:PSModulePath = $env:ChildProcessPSModulePath
+           
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+
+            # Retry helper function with exponential backoff
+            function Invoke-WithRetry {
+                param(
+                    [Parameter(Mandatory = $true)]
+                    [scriptblock]$ScriptBlock,
+                    [int]$MaxRetries = 5,
+                    [int]$InitialDelaySeconds = 10
+                )
+
+                $attempt = 0
+                $delay = $InitialDelaySeconds
+
+                while ($attempt -lt $MaxRetries) {
+                    try {
+                        $attempt++
+                        Write-Verbose "Attempt $attempt of $MaxRetries"
+                        & $ScriptBlock
+                        return  # Success
+                    }
+                    catch {
+                        # Check if this is an EntityCustomization operation error
+                        if ($_.Exception.Message -like "*Cannot start the requested operation*EntityCustomization*") {
+                            Write-Warning "EntityCustomization operation conflict detected. Waiting 2 minutes before retry without incrementing attempt count..."
+                            $attempt--  # Don't count this as a retry attempt
+                            Start-Sleep -Seconds 120
+                            continue
+                        }
+                        
+                        if ($attempt -eq $MaxRetries) {
+                            Write-Error "All $MaxRetries attempts failed. Last error: $_"
+                            throw
+                        }
+
+                        Write-Warning "Attempt $attempt failed: $_. Retrying in $delay seconds..."
+                        Start-Sleep -Seconds $delay
+                        $delay = $delay * 2
+                    }
+                }
+            }
+
+            try {
+                # Connect to environment
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+                
+                # Generate unique test identifiers
+                $testRunId = [guid]::NewGuid().ToString("N").Substring(0, 8)
+                $sitemapUniqueName = "test_titles_$testRunId"
+                $sitemapName = "Test Titles Sitemap $testRunId"
+                
+                Write-Host "Using test sitemap unique name: $sitemapUniqueName"
+                
+                # --- TEST 1: Create sitemap ---
+                Write-Host "`nTest 1: Creating new sitemap for title testing..."
+                $sitemap = Invoke-WithRetry {
+                    Set-DataverseSitemap -Connection $connection -Name $sitemapName -UniqueName $sitemapUniqueName -PassThru -Confirm:$false
+                }
+                $sitemapId = $sitemap.Id
+                Write-Host "Created sitemap with ID: $sitemapId"
+                
+                # --- TEST 2: Add Area with integer keys ---
+                Write-Host "`nTest 2: Adding Area with integer keys for titles..."
+                $areaId = "area_intkeys_$testRunId"
+                $areaEntry = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Area `
+                        -EntryId $areaId `
+                        -Titles @{ 1033 = "English Area"; 1036 = "Zone française" } `
+                        -Icon "/_imgs/area_icon.png" `
+                        -PassThru -Confirm:$false
+                }
+                
+                if (-not $areaEntry) {
+                    throw "Failed to create Area with integer key titles"
+                }
+                Write-Host "Created Area with integer key titles"
+                
+                # Verify titles were set correctly
+                $verifyArea = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Area -EntryId $areaId
+                }
+                if ($verifyArea.Titles[1033] -ne "English Area") {
+                    throw "Area title for LCID 1033 not set correctly"
+                }
+                if ($verifyArea.Titles[1036] -ne "Zone française") {
+                    throw "Area title for LCID 1036 not set correctly"
+                }
+                Write-Host "Verified Area titles with integer keys"
+                
+                # --- TEST 3: Add Group with string keys for titles ---
+                Write-Host "`nTest 3: Adding Group with string keys for titles..."
+                $groupId = "group_strkeys_$testRunId"
+                $groupEntry = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Group `
+                        -EntryId $groupId `
+                        -ParentAreaId $areaId `
+                        -Titles @{ "1033" = "English Group"; "1036" = "Groupe français" } `
+                        -PassThru -Confirm:$false
+                }
+                
+                if (-not $groupEntry) {
+                    throw "Failed to create Group with string key titles"
+                }
+                Write-Host "Created Group with string key titles"
+                
+                # Verify titles were set correctly
+                $verifyGroup = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Group -EntryId $groupId
+                }
+                if ($verifyGroup.Titles[1033] -ne "English Group") {
+                    throw "Group title for LCID 1033 not set correctly"
+                }
+                if ($verifyGroup.Titles[1036] -ne "Groupe français") {
+                    throw "Group title for LCID 1036 not set correctly"
+                }
+                Write-Host "Verified Group titles with string keys"
+                
+                # --- TEST 4: Add SubArea with mixed integer and string keys, and entity validation ---
+                Write-Host "`nTest 4: Adding SubArea with mixed keys and entity validation..."
+                $subAreaId = "subarea_mixed_$testRunId"
+                $subAreaEntry = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea `
+                        -EntryId $subAreaId `
+                        -ParentAreaId $areaId `
+                        -ParentGroupId $groupId `
+                        -Entity "account" `
+                        -Titles @{ 1033 = "English SubArea"; "1036" = "Sous-zone française" } `
+                        -Descriptions @{ "1033" = "English Description"; 1036 = "Description française" } `
+                        -Icon "/_imgs/subarea_icon.png" `
+                        -PassThru -Confirm:$false
+                }
+                
+                if (-not $subAreaEntry) {
+                    throw "Failed to create SubArea with mixed keys"
+                }
+                Write-Host "Created SubArea with mixed keys and entity validation passed"
+                
+                # Verify titles and descriptions
+                $verifySubArea = Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea -EntryId $subAreaId
+                }
+                if ($verifySubArea.Titles[1033] -ne "English SubArea") {
+                    throw "SubArea title for LCID 1033 not set correctly"
+                }
+                if ($verifySubArea.Titles[1036] -ne "Sous-zone française") {
+                    throw "SubArea title for LCID 1036 not set correctly"
+                }
+                if ($verifySubArea.Descriptions[1033] -ne "English Description") {
+                    throw "SubArea description for LCID 1033 not set correctly"
+                }
+                if ($verifySubArea.Descriptions[1036] -ne "Description française") {
+                    throw "SubArea description for LCID 1036 not set correctly"
+                }
+                if ($verifySubArea.Entity -ne "account") {
+                    throw "SubArea entity not set correctly"
+                }
+                Write-Host "Verified SubArea titles, descriptions with mixed keys and entity"
+                
+                # --- TEST 5: Test entity validation with invalid entity ---
+                Write-Host "`nTest 5: Testing entity validation with invalid entity..."
+                $invalidSubAreaId = "subarea_invalid_$testRunId"
+                $validationFailed = $false
+                try {
+                    Invoke-WithRetry {
+                        Wait-DataversePublish -Connection $connection -Verbose
+                        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea `
+                            -EntryId $invalidSubAreaId `
+                            -ParentAreaId $areaId `
+                            -ParentGroupId $groupId `
+                            -Entity "nonexistent_entity_xyz" `
+                            -Titles @{ 1033 = "Should Fail" } `
+                            -Confirm:$false
+                    }
+                }
+                catch {
+                    if ($_.Exception.Message -like "*does not exist*") {
+                        $validationFailed = $true
+                        Write-Host "Entity validation correctly rejected invalid entity"
+                    }
+                    else {
+                        throw "Unexpected error during entity validation test: $_"
+                    }
+                }
+                
+                if (-not $validationFailed) {
+                    throw "Entity validation did not fail for invalid entity"
+                }
+                
+                Write-Host "`nAll title and entity validation tests passed successfully!"
+                
+            }
+            finally {
+                # Cleanup
+                Write-Host "`nCleaning up test sitemap..."
+                try {
+                    if ($sitemapId) {
+                        Invoke-WithRetry {
+                            Wait-DataversePublish -Connection $connection -Verbose
+                            Remove-DataverseSitemap -Connection $connection -Id $sitemapId -Confirm:$false
+                        }
+                        Write-Host "Test sitemap removed successfully"
+                    }
+                }
+                catch {
+                    Write-Warning "Failed to clean up test sitemap: $_"
+                }
+            }
+        }
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed"
+        }
+    }
 }
