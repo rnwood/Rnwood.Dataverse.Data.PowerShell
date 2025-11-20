@@ -840,9 +840,11 @@ Describe 'Sitemap Titles and Descriptions with LCID' {
     }
 
     Context 'Hashtable Parameters with Integer Keys' {
-        BeforeEach {
+        BeforeAll {
             $connection = getMockConnection -Entities @('sitemap')
-            
+        }
+        
+        BeforeEach {
             # Create a simple sitemap for testing
             $baseSitemapXml = @"
 <SiteMap IntroducedVersion="7.0.0.0">
@@ -887,9 +889,11 @@ Describe 'Sitemap Titles and Descriptions with LCID' {
     }
 
     Context 'Hashtable Parameters with String Keys' {
-        BeforeEach {
+        BeforeAll {
             $connection = getMockConnection -Entities @('sitemap')
-            
+        }
+        
+        BeforeEach {
             # Create a simple sitemap for testing
             $baseSitemapXml = @"
 <SiteMap IntroducedVersion="7.0.0.0">
