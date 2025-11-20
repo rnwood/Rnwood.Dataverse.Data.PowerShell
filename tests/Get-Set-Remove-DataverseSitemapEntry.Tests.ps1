@@ -794,4 +794,220 @@ Describe 'Sitemap Titles and Descriptions with LCID' {
             $subArea.Titles[1033] | Should -Be "Old SubArea Title"
         }
     }
+
+    Context 'Hashtable Parameters with Integer Keys' {
+        BeforeEach {
+            $connection = getMockConnection -Entities @('sitemap')
+            
+            # Create a simple sitemap for testing
+            $baseSitemapXml = @"
+<SiteMap IntroducedVersion="7.0.0.0">
+    <Area Id="TestIntKeyArea" ResourceId="Area_Test" ShowGroups="true" IntroducedVersion="7.0.0.0" />
+</SiteMap>
+"@
+            
+            $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $sitemapEntity["sitemapname"] = "TestIntKeySitemap"
+            $sitemapEntity["sitemapnameunique"] = "TestIntKeySitemap"
+            $sitemapEntity["sitemapxml"] = $baseSitemapXml
+            $connection.Create($sitemapEntity) | Out-Null
+        }
+
+        It "Accepts Titles with integer keys" {
+            $titles = @{1033="English Title"; 1036="Titre français"}
+            
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestIntKeySitemap" `
+                -Area -EntryId "NewIntKeyArea" -Titles $titles -Confirm:$false
+            
+            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestIntKeySitemap" -EntryId "NewIntKeyArea"
+            $area | Should -Not -BeNullOrEmpty
+            $area.Titles | Should -Not -BeNullOrEmpty
+            $area.Titles.Count | Should -Be 2
+            $area.Titles[1033] | Should -Be "English Title"
+            $area.Titles[1036] | Should -Be "Titre français"
+        }
+
+        It "Accepts Descriptions with integer keys" {
+            $descriptions = @{1033="English Description"; 1036="Description française"}
+            
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestIntKeySitemap" `
+                -Area -EntryId "NewDescIntKeyArea" -Descriptions $descriptions -Confirm:$false
+            
+            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestIntKeySitemap" -EntryId "NewDescIntKeyArea"
+            $area | Should -Not -BeNullOrEmpty
+            $area.Descriptions | Should -Not -BeNullOrEmpty
+            $area.Descriptions.Count | Should -Be 2
+            $area.Descriptions[1033] | Should -Be "English Description"
+            $area.Descriptions[1036] | Should -Be "Description française"
+        }
+    }
+
+    Context 'Hashtable Parameters with String Keys' {
+        BeforeEach {
+            $connection = getMockConnection -Entities @('sitemap')
+            
+            # Create a simple sitemap for testing
+            $baseSitemapXml = @"
+<SiteMap IntroducedVersion="7.0.0.0">
+    <Area Id="TestStrKeyArea" ResourceId="Area_Test" ShowGroups="true" IntroducedVersion="7.0.0.0" />
+</SiteMap>
+"@
+            
+            $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $sitemapEntity["sitemapname"] = "TestStrKeySitemap"
+            $sitemapEntity["sitemapnameunique"] = "TestStrKeySitemap"
+            $sitemapEntity["sitemapxml"] = $baseSitemapXml
+            $connection.Create($sitemapEntity) | Out-Null
+        }
+
+        It "Accepts Titles with string keys that are numbers" {
+            $titles = @{"1033"="English Title"; "1036"="Titre français"}
+            
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestStrKeySitemap" `
+                -Area -EntryId "NewStrKeyArea" -Titles $titles -Confirm:$false
+            
+            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestStrKeySitemap" -EntryId "NewStrKeyArea"
+            $area | Should -Not -BeNullOrEmpty
+            $area.Titles | Should -Not -BeNullOrEmpty
+            $area.Titles.Count | Should -Be 2
+            $area.Titles[1033] | Should -Be "English Title"
+            $area.Titles[1036] | Should -Be "Titre français"
+        }
+
+        It "Accepts Descriptions with string keys that are numbers" {
+            $descriptions = @{"1033"="English Description"; "1036"="Description française"}
+            
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestStrKeySitemap" `
+                -Area -EntryId "NewDescStrKeyArea" -Descriptions $descriptions -Confirm:$false
+            
+            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestStrKeySitemap" -EntryId "NewDescStrKeyArea"
+            $area | Should -Not -BeNullOrEmpty
+            $area.Descriptions | Should -Not -BeNullOrEmpty
+            $area.Descriptions.Count | Should -Be 2
+            $area.Descriptions[1033] | Should -Be "English Description"
+            $area.Descriptions[1036] | Should -Be "Description française"
+        }
+
+        It "Rejects Titles with string keys that are not numbers" {
+            $titles = @{"invalid"="Should Fail"}
+            
+            { Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestStrKeySitemap" `
+                -Area -EntryId "InvalidKeyArea" -Titles $titles -Confirm:$false } | Should -Throw
+        }
+
+        It "Accepts mixed integer and string keys" {
+            $titles = @{1033="English Title"; "1036"="Titre français"}
+            
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestStrKeySitemap" `
+                -Area -EntryId "MixedKeyArea" -Titles $titles -Confirm:$false
+            
+            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestStrKeySitemap" -EntryId "MixedKeyArea"
+            $area | Should -Not -BeNullOrEmpty
+            $area.Titles | Should -Not -BeNullOrEmpty
+            $area.Titles.Count | Should -Be 2
+            $area.Titles[1033] | Should -Be "English Title"
+            $area.Titles[1036] | Should -Be "Titre français"
+        }
+    }
+
+    Context 'Entity Validation' {
+        BeforeAll {
+            # Create a connection with a mock that simulates entity metadata retrieval
+            $connection = getMockConnection -Entities @('sitemap', 'contact', 'account')
+        }
+
+        It "Validates Entity parameter when provided" {
+            # Create a sitemap for testing
+            $sitemapXml = @"
+<SiteMap IntroducedVersion="7.0.0.0">
+    <Area Id="ValidationTestArea" ShowGroups="true" IntroducedVersion="7.0.0.0">
+        <Group Id="ValidationTestGroup" IntroducedVersion="7.0.0.0" />
+    </Area>
+</SiteMap>
+"@
+            $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $sitemapEntity["sitemapname"] = "ValidationTestSitemap"
+            $sitemapEntity["sitemapnameunique"] = "ValidationTestSitemap"
+            $sitemapEntity["sitemapxml"] = $sitemapXml
+            $connection.Create($sitemapEntity) | Out-Null
+            
+            # This should succeed because 'contact' entity exists in the mock
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "ValidationTestSitemap" `
+                -SubArea -EntryId "ValidEntitySubArea" -ParentAreaId "ValidationTestArea" -ParentGroupId "ValidationTestGroup" `
+                -Entity "contact" -Confirm:$false
+            
+            $subArea = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "ValidationTestSitemap" -EntryId "ValidEntitySubArea"
+            $subArea | Should -Not -BeNullOrEmpty
+            $subArea.Entity | Should -Be "contact"
+        }
+
+        It "Throws error for non-existent Entity" {
+            # Create a sitemap for testing
+            $sitemapXml = @"
+<SiteMap IntroducedVersion="7.0.0.0">
+    <Area Id="InvalidEntityTestArea" ShowGroups="true" IntroducedVersion="7.0.0.0">
+        <Group Id="InvalidEntityTestGroup" IntroducedVersion="7.0.0.0" />
+    </Area>
+</SiteMap>
+"@
+            $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $sitemapEntity["sitemapname"] = "InvalidEntityTestSitemap"
+            $sitemapEntity["sitemapnameunique"] = "InvalidEntityTestSitemap"
+            $sitemapEntity["sitemapxml"] = $sitemapXml
+            $connection.Create($sitemapEntity) | Out-Null
+            
+            # This should fail because 'nonexistentent ity' doesn't exist
+            { Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "InvalidEntityTestSitemap" `
+                -SubArea -EntryId "InvalidEntitySubArea" -ParentAreaId "InvalidEntityTestArea" -ParentGroupId "InvalidEntityTestGroup" `
+                -Entity "nonexistententity" -Confirm:$false } | Should -Throw
+        }
+
+        It "Validates PrivilegeEntity parameter when provided" {
+            # Create a sitemap for testing
+            $sitemapXml = @"
+<SiteMap IntroducedVersion="7.0.0.0">
+    <Area Id="PrivValidationTestArea" ShowGroups="true" IntroducedVersion="7.0.0.0">
+        <Group Id="PrivValidationTestGroup" IntroducedVersion="7.0.0.0">
+            <SubArea Id="PrivValidationTestSubArea" Entity="contact" IntroducedVersion="7.0.0.0" />
+        </Group>
+    </Area>
+</SiteMap>
+"@
+            $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $sitemapEntity["sitemapname"] = "PrivValidationTestSitemap"
+            $sitemapEntity["sitemapnameunique"] = "PrivValidationTestSitemap"
+            $sitemapEntity["sitemapxml"] = $sitemapXml
+            $connection.Create($sitemapEntity) | Out-Null
+            
+            # This should succeed because 'account' entity exists in the mock
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivValidationTestSitemap" `
+                -Privilege -PrivilegeEntity "account" -PrivilegeName "Read" -ParentSubAreaId "PrivValidationTestSubArea" -Confirm:$false
+            
+            $privilege = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivValidationTestSitemap" `
+                -Privilege -ParentSubAreaId "PrivValidationTestSubArea" | Where-Object { $_.PrivilegeEntity -eq "account" }
+            $privilege | Should -Not -BeNullOrEmpty
+        }
+
+        It "Throws error for non-existent PrivilegeEntity" {
+            # Create a sitemap for testing
+            $sitemapXml = @"
+<SiteMap IntroducedVersion="7.0.0.0">
+    <Area Id="InvalidPrivTestArea" ShowGroups="true" IntroducedVersion="7.0.0.0">
+        <Group Id="InvalidPrivTestGroup" IntroducedVersion="7.0.0.0">
+            <SubArea Id="InvalidPrivTestSubArea" Entity="contact" IntroducedVersion="7.0.0.0" />
+        </Group>
+    </Area>
+</SiteMap>
+"@
+            $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $sitemapEntity["sitemapname"] = "InvalidPrivTestSitemap"
+            $sitemapEntity["sitemapnameunique"] = "InvalidPrivTestSitemap"
+            $sitemapEntity["sitemapxml"] = $sitemapXml
+            $connection.Create($sitemapEntity) | Out-Null
+            
+            # This should fail because 'nonexistententity' doesn't exist
+            { Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "InvalidPrivTestSitemap" `
+                -Privilege -PrivilegeEntity "nonexistententity" -PrivilegeName "Read" -ParentSubAreaId "InvalidPrivTestSubArea" -Confirm:$false } | Should -Throw
+        }
+    }
 }
