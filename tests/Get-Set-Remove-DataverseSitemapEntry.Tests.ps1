@@ -160,7 +160,7 @@ Describe 'Set-DataverseSitemapEntry' {
 
     Context 'Creating New Entries with ResourceId Properties' {
         BeforeAll {
-            $connection = getMockConnection -Entities @('sitemap')
+            $connection = getMockConnection -Entities @('sitemap', 'contact')
             
             # Create test sitemap
             $sitemapXml = "<SiteMap></SiteMap>"
@@ -278,6 +278,46 @@ Describe 'Set-DataverseSitemapEntry' {
             $connection.Create($sitemapEntity) | Out-Null
             
             { Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "ErrorTestSitemap" -Group -EntryId "TestGroup" -ParentAreaId "NonExistentArea" } | Should -Throw
+        }
+
+        It "Validates entity name exists when creating SubArea with Entity" {
+            $connection = getMockConnection -Entities @('sitemap', 'contact')
+            $sitemapXml = @"
+<SiteMap>
+    <Area Id="TestArea" ShowGroups="true">
+        <Group Id="TestGroup" />
+    </Area>
+</SiteMap>
+"@
+            $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $sitemapEntity["sitemapname"] = "ValidateEntityTestSitemap"
+            $sitemapEntity["sitemapnameunique"] = "ValidateEntityTestSitemap"
+            $sitemapEntity["sitemapxml"] = $sitemapXml
+            $connection.Create($sitemapEntity) | Out-Null
+            
+            # Should fail with non-existent entity
+            { Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "ValidateEntityTestSitemap" -SubArea -EntryId "TestSubArea" -ParentAreaId "TestArea" -ParentGroupId "TestGroup" -Entity "nonexistententity" } | Should -Throw
+        }
+
+        It "Validates entity name exists when creating Privilege with PrivilegeEntity" {
+            $connection = getMockConnection -Entities @('sitemap', 'contact')
+            $sitemapXml = @"
+<SiteMap>
+    <Area Id="TestArea" ShowGroups="true">
+        <Group Id="TestGroup">
+            <SubArea Id="TestSubArea" />
+        </Group>
+    </Area>
+</SiteMap>
+"@
+            $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $sitemapEntity["sitemapname"] = "ValidatePrivilegeEntityTestSitemap"
+            $sitemapEntity["sitemapnameunique"] = "ValidatePrivilegeEntityTestSitemap"
+            $sitemapEntity["sitemapxml"] = $sitemapXml
+            $connection.Create($sitemapEntity) | Out-Null
+            
+            # Should fail with non-existent entity
+            { Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "ValidatePrivilegeEntityTestSitemap" -Privilege -PrivilegeEntity "nonexistententity" -PrivilegeName "Read" -ParentSubAreaId "TestSubArea" } | Should -Throw
         }
 
         # Removed the missing ParentAreaId test since PowerShell now handles this with mandatory parameter validation
@@ -453,20 +493,19 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
 
     Context 'Privilege Parsing and Management' {
         BeforeAll {
-            $connection = getMockConnection -Entities @('sitemap')
+            $connection = getMockConnection -Entities @('sitemap', 'account', 'contact')
             
-            # Sample sitemap XML with Privilege elements as shown in user's example
+            # Sample sitemap XML with Privilege elements using available entities
             $privilegeSitemapXml = @"
 <SiteMap IntroducedVersion="7.0.0.0">
     <Area Id="Workplace" ResourceId="Area_Workplace" Icon="/_imgs/workplace_24x24.gif" DescriptionResourceId="Workplace_Area_Description" ShowGroups="true" IntroducedVersion="7.0.0.0">
         <Group Id="MyWork" ResourceId="Group_MyWork" DescriptionResourceId="MyWork_Description" IntroducedVersion="7.0.0.0">
-            <SubArea Id="nav_activities" Entity="activitypointer" ResourceId="Area_Activities" DescriptionResourceId="Activities_Area_Description" Icon="/_imgs/ico_18_activitiesServices.gif" GetStartedPanePath="Activities_Web_Part_Path" IntroducedVersion="7.0.0.0">
-                <Privilege Entity="activitypointer" Privilege="Read" />
-                <Privilege Entity="activitypointer" Privilege="Create" />
-                <Privilege Entity="email" Privilege="Read" />
-                <Privilege Entity="email" Privilege="Create" />
-                <Privilege Entity="phonecall" Privilege="Read" />
-                <Privilege Entity="task" Privilege="Write" />
+            <SubArea Id="nav_activities" Entity="contact" ResourceId="Area_Activities" DescriptionResourceId="Activities_Area_Description" Icon="/_imgs/ico_18_activitiesServices.gif" GetStartedPanePath="Activities_Web_Part_Path" IntroducedVersion="7.0.0.0">
+                <Privilege Entity="contact" Privilege="Read" />
+                <Privilege Entity="contact" Privilege="Create" />
+                <Privilege Entity="account" Privilege="Read" />
+                <Privilege Entity="account" Privilege="Create" />
+                <Privilege Entity="account" Privilege="Write" />
             </SubArea>
         </Group>
     </Area>
@@ -487,23 +526,23 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
             $subArea.EntryType | Should -Be "SubArea"
             $subArea.Id | Should -Be "nav_activities"
             $subArea.Privileges | Should -Not -BeNullOrEmpty
-            $subArea.Privileges.Count | Should -Be 6
+            $subArea.Privileges.Count | Should -Be 5
             
             # Verify specific privileges
-            $activityPointerRead = $subArea.Privileges | Where-Object { $_.Entity -eq "activitypointer" -and $_.Privilege -eq "Read" }
-            $activityPointerRead | Should -Not -BeNullOrEmpty
+            $contactRead = $subArea.Privileges | Where-Object { $_.Entity -eq "contact" -and $_.Privilege -eq "Read" }
+            $contactRead | Should -Not -BeNullOrEmpty
             
-            $emailCreate = $subArea.Privileges | Where-Object { $_.Entity -eq "email" -and $_.Privilege -eq "Create" }
-            $emailCreate | Should -Not -BeNullOrEmpty
+            $accountCreate = $subArea.Privileges | Where-Object { $_.Entity -eq "account" -and $_.Privilege -eq "Create" }
+            $accountCreate | Should -Not -BeNullOrEmpty
             
-            $taskWrite = $subArea.Privileges | Where-Object { $_.Entity -eq "task" -and $_.Privilege -eq "Write" }
-            $taskWrite | Should -Not -BeNullOrEmpty
+            $accountWrite = $subArea.Privileges | Where-Object { $_.Entity -eq "account" -and $_.Privilege -eq "Write" }
+            $accountWrite | Should -Not -BeNullOrEmpty
         }
 
         It "Get-DataverseSitemapEntry can return individual Privilege entries" {
             $privileges = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -Privilege -ParentSubAreaId "nav_activities"
             $privileges | Should -Not -BeNullOrEmpty
-            $privileges.Count | Should -Be 6
+            $privileges.Count | Should -Be 5
             
             # Verify all privileges are returned as separate entries
             foreach ($privilege in $privileges) {
@@ -514,22 +553,22 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
             }
             
             # Check specific privilege entries
-            $activityPointerRead = $privileges | Where-Object { $_.PrivilegeEntity -eq "activitypointer" -and $_.PrivilegeName -eq "Read" }
-            $activityPointerRead | Should -Not -BeNullOrEmpty
-            $activityPointerRead.EntryType | Should -Be "Privilege"
+            $contactRead = $privileges | Where-Object { $_.PrivilegeEntity -eq "contact" -and $_.PrivilegeName -eq "Read" }
+            $contactRead | Should -Not -BeNullOrEmpty
+            $contactRead.EntryType | Should -Be "Privilege"
         }
 
         It "Set-DataverseSitemapEntry can add new Privilege to existing SubArea" {
             # Add a new privilege to the existing SubArea
-            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -Privilege -PrivilegeEntity "appointment" -PrivilegeName "Read" -ParentSubAreaId "nav_activities"
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -Privilege -PrivilegeEntity "account" -PrivilegeName "Delete" -ParentSubAreaId "nav_activities"
             
             # Verify the privilege was added
             $subArea = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "PrivilegeSitemap" -EntryId "nav_activities"
-            $newPrivilege = $subArea.Privileges | Where-Object { $_.Entity -eq "appointment" -and $_.Privilege -eq "Read" }
+            $newPrivilege = $subArea.Privileges | Where-Object { $_.Entity -eq "account" -and $_.Privilege -eq "Delete" }
             $newPrivilege | Should -Not -BeNullOrEmpty
             
             # Verify total privilege count increased
-            $subArea.Privileges.Count | Should -Be 7
+            $subArea.Privileges.Count | Should -Be 6
         }
 
         It "Set-DataverseSitemapEntry can update existing Privilege" {
@@ -670,10 +709,11 @@ Describe 'Sitemap Titles and Descriptions with LCID' {
         }
 
         It "Creates Area with Titles dictionary" {
-            $titles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
-            $titles.Add(1033, "English Title")
-            $titles.Add(1036, "Titre français")
-            $titles.Add(1031, "Deutscher Titel")
+            $titles = @{
+                1033 = "English Title"
+                1036 = "Titre français"
+                1031 = "Deutscher Titel"
+            }
             
             Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" `
                 -Area -EntryId "NewMultilingualArea" -Titles $titles -Confirm:$false
@@ -688,9 +728,10 @@ Describe 'Sitemap Titles and Descriptions with LCID' {
         }
 
         It "Creates Area with Descriptions dictionary" {
-            $descriptions = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
-            $descriptions.Add(1033, "English Description")
-            $descriptions.Add(1036, "Description française")
+            $descriptions = @{
+                1033 = "English Description"
+                1036 = "Description française"
+            }
             
             Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" `
                 -Area -EntryId "NewDescArea" -Descriptions $descriptions -Confirm:$false
@@ -703,16 +744,31 @@ Describe 'Sitemap Titles and Descriptions with LCID' {
             $area.Descriptions[1036] | Should -Be "Description française"
         }
 
+        It "Accepts string keys for LCID" {
+            $titles = @{
+                "1033" = "English Title (string key)"
+                "1036" = "French Title (string key)"
+            }
+            
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" `
+                -Area -EntryId "StringKeyArea" -Titles $titles -Confirm:$false
+            
+            $area = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" -EntryId "StringKeyArea"
+            $area | Should -Not -BeNullOrEmpty
+            $area.Titles | Should -Not -BeNullOrEmpty
+            $area.Titles.Count | Should -Be 2
+            $area.Titles[1033] | Should -Be "English Title (string key)"
+            $area.Titles[1036] | Should -Be "French Title (string key)"
+        }
+
         It "Updates existing Titles additively" {
             # First create with English title
-            $initialTitles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
-            $initialTitles.Add(1033, "Initial English")
+            $initialTitles = @{ 1033 = "Initial English" }
             Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" `
                 -Area -EntryId "AdditiveArea" -Titles $initialTitles -Confirm:$false
             
             # Now add French title
-            $frenchTitle = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
-            $frenchTitle.Add(1036, "Titre français ajouté")
+            $frenchTitle = @{ 1036 = "Titre français ajouté" }
             Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" `
                 -Area -EntryId "AdditiveArea" -Titles $frenchTitle -Confirm:$false
             
@@ -725,16 +781,16 @@ Describe 'Sitemap Titles and Descriptions with LCID' {
 
         It "Removes LCID when null value is provided" {
             # Create with multiple titles
-            $initialTitles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
-            $initialTitles.Add(1033, "English")
-            $initialTitles.Add(1036, "Français")
-            $initialTitles.Add(1031, "Deutsch")
+            $initialTitles = @{
+                1033 = "English"
+                1036 = "Français"
+                1031 = "Deutsch"
+            }
             Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" `
                 -Area -EntryId "RemoveArea" -Titles $initialTitles -Confirm:$false
             
             # Remove French title
-            $removeTitle = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
-            $removeTitle.Add(1036, $null)
+            $removeTitle = @{ 1036 = $null }
             Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TestSetSitemap" `
                 -Area -EntryId "RemoveArea" -Titles $removeTitle -Confirm:$false
             

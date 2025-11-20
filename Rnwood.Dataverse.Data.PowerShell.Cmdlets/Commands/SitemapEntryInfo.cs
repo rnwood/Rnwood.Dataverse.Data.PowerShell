@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -35,13 +36,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         /// <summary>
         /// Gets or sets the titles of the entry keyed by LCID.
+        /// Keys can be int or string representation of LCID (e.g., 1033 or "1033").
         /// </summary>
-        public Dictionary<int, string> Titles { get; set; }
+        public Hashtable Titles { get; set; }
 
         /// <summary>
         /// Gets or sets the descriptions of the entry keyed by LCID.
+        /// Keys can be int or string representation of LCID (e.g., 1033 or "1033").
         /// </summary>
-        public Dictionary<int, string> Descriptions { get; set; }
+        public Hashtable Descriptions { get; set; }
 
         /// <summary>
         /// Gets or sets the icon path (for Areas and SubAreas).

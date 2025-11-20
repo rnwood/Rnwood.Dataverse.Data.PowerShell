@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
@@ -97,16 +98,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the titles of the entry keyed by LCID.
         /// Null values for a specific LCID will remove that LCID's title.
+        /// Keys can be int or string representation of LCID (e.g., 1033 or "1033").
         /// </summary>
-        [Parameter(HelpMessage = "The titles of the entry as a dictionary keyed by LCID. Null values for a specific LCID will remove that LCID's title.")]
-        public Dictionary<int, string> Titles { get; set; }
+        [Parameter(HelpMessage = "The titles of the entry as a dictionary keyed by LCID. Null values for a specific LCID will remove that LCID's title. Keys can be int or string representation of LCID.")]
+        public Hashtable Titles { get; set; }
 
         /// <summary>
         /// Gets or sets the descriptions of the entry keyed by LCID.
         /// Null values for a specific LCID will remove that LCID's description.
+        /// Keys can be int or string representation of LCID (e.g., 1033 or "1033").
         /// </summary>
-        [Parameter(HelpMessage = "The descriptions of the entry as a dictionary keyed by LCID. Null values for a specific LCID will remove that LCID's description.")]
-        public Dictionary<int, string> Descriptions { get; set; }
+        [Parameter(HelpMessage = "The descriptions of the entry as a dictionary keyed by LCID. Null values for a specific LCID will remove that LCID's description. Keys can be int or string representation of LCID.")]
+        public Hashtable Descriptions { get; set; }
 
         /// <summary>
         /// Gets or sets the icon path (for Areas and SubAreas).
@@ -242,6 +245,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 // This should not happen due to parameter set validation
                 throw new InvalidOperationException("No entry type specified.");
+            }
+
+            // Validate entity names if provided
+            if (entryType == SitemapEntryType.SubArea && !string.IsNullOrEmpty(Entity))
+            {
+                ValidateEntityExists(Entity);
+            }
+            if (entryType == SitemapEntryType.Privilege && !string.IsNullOrEmpty(PrivilegeEntity))
+            {
+                ValidateEntityExists(PrivilegeEntity);
             }
 
             if (Sitemap != null)
@@ -581,7 +594,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Handle Titles (new format) - merge with existing and update
                 if (Titles != null)
                 {
-                    var mergedTitles = MergeTitles(entryElement, Titles);
+                    var titlesDict = ConvertHashtableToDictionary(Titles);
+                    var mergedTitles = MergeTitles(entryElement, titlesDict);
                     UpdateTitlesElement(entryElement, mergedTitles);
                     // Remove old Title attribute if it exists
                     entryElement.Attribute("Title")?.Remove();
@@ -591,7 +605,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Handle Descriptions (new format) - merge with existing and update
                 if (Descriptions != null)
                 {
-                    var mergedDescriptions = MergeDescriptions(entryElement, Descriptions);
+                    var descriptionsDict = ConvertHashtableToDictionary(Descriptions);
+                    var mergedDescriptions = MergeDescriptions(entryElement, descriptionsDict);
                     UpdateDescriptionsElement(entryElement, mergedDescriptions);
                     // Remove old Description attribute if it exists
                     entryElement.Attribute("Description")?.Remove();
@@ -908,10 +923,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Handle Titles (new format)
             if (Titles != null)
             {
+                var titlesDict = ConvertHashtableToDictionary(Titles);
                 var titlesToSet = new Dictionary<int, string>();
                 
                 // Add titles from Titles dictionary
-                foreach (var kvp in Titles)
+                foreach (var kvp in titlesDict)
                 {
                     if (kvp.Value != null) // Skip null values
                         titlesToSet[kvp.Key] = kvp.Value;
@@ -923,10 +939,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Handle Descriptions (new format)
             if (Descriptions != null)
             {
+                var descriptionsDict = ConvertHashtableToDictionary(Descriptions);
                 var descriptionsToSet = new Dictionary<int, string>();
                 
                 // Add descriptions from Descriptions dictionary
-                foreach (var kvp in Descriptions)
+                foreach (var kvp in descriptionsDict)
                 {
                     if (kvp.Value != null) // Skip null values
                         descriptionsToSet[kvp.Key] = kvp.Value;
@@ -1175,6 +1192,74 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             
             return result.Count > 0 ? result : null;
+        }
+
+        /// <summary>
+        /// Validates that an entity exists in the Dataverse environment (including unpublished entities).
+        /// </summary>
+        /// <param name="entityLogicalName">The logical name of the entity to validate.</param>
+        private void ValidateEntityExists(string entityLogicalName)
+        {
+            try
+            {
+                var request = new Microsoft.Xrm.Sdk.Messages.RetrieveEntityRequest
+                {
+                    LogicalName = entityLogicalName,
+                    EntityFilters = Microsoft.Xrm.Sdk.Metadata.EntityFilters.Entity,
+                    RetrieveAsIfPublished = true // Include unpublished entities
+                };
+                
+                WriteVerbose($"Validating entity '{entityLogicalName}' exists...");
+                Connection.Execute(request);
+                WriteVerbose($"Entity '{entityLogicalName}' validated successfully.");
+            }
+            catch (Exception ex)
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new ArgumentException($"Entity '{entityLogicalName}' does not exist or is not accessible. {ex.Message}"),
+                    "InvalidEntityName",
+                    ErrorCategory.InvalidArgument,
+                    entityLogicalName));
+            }
+        }
+
+        /// <summary>
+        /// Converts a Hashtable to Dictionary&lt;int, string&gt;, normalizing keys to integers.
+        /// Supports both int and string keys (e.g., 1033 or "1033").
+        /// </summary>
+        /// <param name="hashtable">The hashtable to convert.</param>
+        /// <returns>A dictionary with integer keys and string values.</returns>
+        private Dictionary<int, string> ConvertHashtableToDictionary(Hashtable hashtable)
+        {
+            if (hashtable == null)
+                return null;
+
+            var result = new Dictionary<int, string>();
+            foreach (System.Collections.DictionaryEntry entry in hashtable)
+            {
+                int lcid;
+                if (entry.Key is int intKey)
+                {
+                    lcid = intKey;
+                }
+                else if (entry.Key is string strKey && int.TryParse(strKey, out int parsedKey))
+                {
+                    lcid = parsedKey;
+                }
+                else
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new ArgumentException($"Invalid LCID key '{entry.Key}'. Keys must be integers or string representations of integers."),
+                        "InvalidLCIDKey",
+                        ErrorCategory.InvalidArgument,
+                        entry.Key));
+                    return null;
+                }
+
+                result[lcid] = entry.Value as string;
+            }
+
+            return result;
         }
     }
 }
