@@ -238,6 +238,37 @@ It "Creates a system view with hashtable column definitions" -Skip {
          # Success if no error thrown
             $true | Should -Be $true
         }
+        
+        It "Adds columns to existing view without TableName parameter" -Skip {
+            # Skip: FakeXrmEasy doesn't support QueryExpressionToFetchXmlRequest
+            # This test specifically validates the fix for the issue where TableName was required
+            $connection = getMockConnection -Entities @("savedquery", "userquery", "contact")
+      
+            # Create a view first with FetchXML (which has the entity name)
+            $fetchXml = @"
+<fetch>
+  <entity name="contact">
+    <attribute name="firstname" />
+    <attribute name="lastname" />
+  </entity>
+</fetch>
+"@
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
+                -Name "Test View for AddColumns Without TableName" `
+                -TableName contact `
+                -ViewType "Personal" `
+                -FetchXml $fetchXml
+ 
+            # Add columns WITHOUT specifying TableName - should automatically determine it
+            # This is the scenario from the issue: updating a view should not require TableName
+            Set-DataverseView -Connection $connection `
+                -Id $viewId `
+                -ViewType "Personal" `
+                -AddColumns @("emailaddress1", "telephone1")
+       
+            # Success if no error thrown - the fix should prevent "value cannot be null" error
+            $true | Should -Be $true
+        }
 
         It "Removes columns from existing view" -Skip {
             # Skip: FakeXrmEasy doesn't support QueryExpressionToFetchXmlRequest
@@ -460,6 +491,35 @@ It "Creates a system view with hashtable column definitions" -Skip {
         
       # Success if no error thrown
     $true | Should -Be $true
+        }
+        
+        It "Updates view without TableName parameter (determines from view metadata)" {
+            $connection = getMockConnection -Entities @("savedquery", "userquery", "contact")
+            
+            # Create a view first with FetchXML
+            $fetchXml = @"
+<fetch>
+  <entity name="contact">
+    <attribute name="firstname" />
+    <attribute name="lastname" />
+  </entity>
+</fetch>
+"@
+            $viewId = Set-DataverseView -PassThru -Connection $connection `
+                -Name "Test View for TableName" `
+                -TableName contact `
+                -ViewType "Personal" `
+                -FetchXml $fetchXml
+            
+            # Update view without specifying TableName - should automatically determine it
+            # This tests the fix for the issue where TableName was required but should be auto-determined
+            Set-DataverseView -Connection $connection `
+                -Id $viewId `
+                -ViewType "Personal" `
+                -Name "Updated Name Without TableName"
+            
+            # Success if no error thrown
+            $true | Should -Be $true
         }
     }
 

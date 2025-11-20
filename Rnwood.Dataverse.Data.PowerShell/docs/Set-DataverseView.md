@@ -494,7 +494,7 @@ Accept wildcard characters: False
 
 ### -TableName
 Logical name of the table this view is for.
-Required when creating a new view.
+Required when creating a new view. When updating an existing view, this parameter is optional as the table name is automatically determined from the view's metadata or FetchXML.
 
 ```yaml
 Type: String
