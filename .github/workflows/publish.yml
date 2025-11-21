@@ -138,9 +138,10 @@ jobs:
                   if ($tagCommit -and $stableCommit) {
                     # Check if stable tag is an ancestor of this prerelease tag
                     # If true, the prerelease was created AFTER the stable release
-                    $isAfterStable = git merge-base --is-ancestor $stableCommit $tagCommit 2>$null
+                    git merge-base --is-ancestor $stableCommit $tagCommit 2>$null
+                    $isAfterStable = $LASTEXITCODE -eq 0
                     
-                    if ($LASTEXITCODE -ne 0) {
+                    if (-not $isAfterStable) {
                       # Stable tag is NOT an ancestor, so this prerelease is not after it
                       # Skip this prerelease tag
                       continue

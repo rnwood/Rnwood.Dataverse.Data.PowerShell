@@ -87,9 +87,10 @@ foreach ($tag in $prereleaseTags) {
         
         if (-not $isAfterStable -or $isSameCommit) {
             # This prerelease is BEFORE or AT the stable tag
+            $shortCommit = if ($tagCommit.Length -ge 7) { $tagCommit.Substring(0, 7) } else { $tagCommit }
             $invalidTags += @{
                 Tag = $tag
-                Commit = $tagCommit.Substring(0, 7)
+                Commit = $shortCommit
                 Reason = if ($isSameCommit) { "Same commit as stable tag" } else { "Created before stable tag" }
             }
         }
@@ -118,15 +119,13 @@ Write-Host ""
 
 # Handle deletion
 if ($Delete) {
+    # Build git push command string for display
+    $gitPushCommand = "git push origin " + (($invalidTags | ForEach-Object { ":refs/tags/$($_.Tag)" }) -join " ")
+    
     if (-not $Force) {
         Write-Host "This will DELETE these tags from the local repository." -ForegroundColor Yellow
         Write-Host "You will need to push the deletions separately with:" -ForegroundColor Yellow
-        Write-Host "  git push origin " -NoNewline -ForegroundColor Yellow
-        
-        foreach ($invalid in $invalidTags) {
-            Write-Host ":refs/tags/$($invalid.Tag) " -NoNewline -ForegroundColor Gray
-        }
-        Write-Host ""
+        Write-Host "  $gitPushCommand" -ForegroundColor Gray
         Write-Host ""
         
         $confirm = Read-Host "Do you want to delete these tags? (yes/no)"
@@ -153,12 +152,7 @@ if ($Delete) {
     
     Write-Host ""
     Write-Host "Local tags deleted. To delete from remote, run:" -ForegroundColor Yellow
-    Write-Host "  git push origin " -NoNewline -ForegroundColor Yellow
-    
-    foreach ($invalid in $invalidTags) {
-        Write-Host ":refs/tags/$($invalid.Tag) " -NoNewline -ForegroundColor Gray
-    }
-    Write-Host ""
+    Write-Host "  $gitPushCommand" -ForegroundColor Gray
 } else {
     Write-Host "To delete these tags, run:" -ForegroundColor Yellow
     Write-Host "  ./scripts/Clean-InvalidPrereleases.ps1 -Delete" -ForegroundColor Gray
