@@ -130,6 +130,29 @@ jobs:
                 
                 # Filter to only prereleases that are based on or after the stable version
                 foreach ($tag in $tagsAfterStable) {
+                  # First, check if this prerelease tag is on a commit that comes AFTER the stable tag
+                  # Use git merge-base to verify the stable tag is an ancestor of this prerelease
+                  $tagCommit = git rev-list -n 1 $tag 2>$null
+                  $stableCommit = git rev-list -n 1 $latestStableTag 2>$null
+                  
+                  if ($tagCommit -and $stableCommit) {
+                    # Check if stable tag is an ancestor of this prerelease tag
+                    # If true, the prerelease was created AFTER the stable release
+                    git merge-base --is-ancestor $stableCommit $tagCommit 2>$null
+                    $isAfterStable = $LASTEXITCODE -eq 0
+                    
+                    if (-not $isAfterStable) {
+                      # Stable tag is NOT an ancestor, so this prerelease is not after it
+                      # Skip this prerelease tag
+                      continue
+                    }
+                    
+                    # Also verify the prerelease is not the same commit as the stable tag
+                    if ($tagCommit -eq $stableCommit) {
+                      continue
+                    }
+                  }
+                  
                   if ($tag -match '^v?(\d+)\.(\d+)\.(\d+)') {
                     $tagVersion = "$($matches[1]).$($matches[2]).$($matches[3])"
                     # Parse tag version
