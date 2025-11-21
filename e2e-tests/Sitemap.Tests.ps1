@@ -19,7 +19,17 @@ Describe "Sitemap Manipulation" {
     }
 
     It "Can perform full lifecycle of sitemap manipulation including entries" {
+        # Suppress StandardOutputEncoding errors that can occur when pwsh runs without redirection
+        $ErrorActionPreference = "Continue"
+        
         pwsh -noninteractive -noprofile -command {
+            # Suppress StandardOutputEncoding errors  
+            try {
+                [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+            } catch {
+                # Ignore errors setting output encoding in non-redirected contexts
+            }
+            
             $env:PSModulePath = $env:ChildProcessPSModulePath
            
             Import-Module Rnwood.Dataverse.Data.PowerShell

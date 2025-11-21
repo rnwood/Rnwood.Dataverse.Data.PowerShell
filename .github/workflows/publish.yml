@@ -317,7 +317,8 @@ jobs:
               # Start a job for each test file
               $jobs = $testFiles | ForEach-Object {
                   $testFile = $_
-                  Start-Job -ScriptBlock {
+                  $testFileName = Split-Path $testFile -Leaf
+                  Start-Job -Name "StandardTest-$testFileName" -ScriptBlock {
                       param($testFilePath, $modulePath)
                       
                       $env:TESTMODULEPATH = $modulePath
@@ -344,13 +345,31 @@ jobs:
                   } -ArgumentList $testFile, $modulePath
               }
               
-              # Wait for all test file jobs to complete with streaming output
+              # Wait for all test file jobs to complete with streaming output and timeout detection
+              $lastOutputTime = Get-Date
+              $noOutputThresholdSeconds = 300  # 5 minutes
+              
               while ($jobs | Where-Object { $_.State -eq 'Running' }) {
+                  $hadOutput = $false
                   foreach ($job in $jobs) {
                       if ($job.HasMoreData) {
                           $job | Receive-Job
+                          $hadOutput = $true
+                          $lastOutputTime = Get-Date
                       }
                   }
+                  
+                  # Check if we've had no output for too long
+                  $timeSinceLastOutput = (Get-Date) - $lastOutputTime
+                  if ($timeSinceLastOutput.TotalSeconds -gt $noOutputThresholdSeconds) {
+                      Write-Host "WARNING: No output for $($timeSinceLastOutput.TotalSeconds) seconds. Active jobs:" -ForegroundColor Yellow
+                      $runningJobs = $jobs | Where-Object { $_.State -eq 'Running' }
+                      foreach ($job in $runningJobs) {
+                          Write-Host "  - $($job.Name) (State: $($job.State), HasMoreData: $($job.HasMoreData))" -ForegroundColor Yellow
+                      }
+                      $lastOutputTime = Get-Date  # Reset timer after warning
+                  }
+                  
                   Start-Sleep -Milliseconds 100
               }
               
@@ -418,7 +437,8 @@ jobs:
                   
                   $nonMetadataJobs = $nonMetadataTests | ForEach-Object {
                       $testFile = $_
-                      Start-Job -ScriptBlock {
+                      $testFileName = Split-Path $testFile -Leaf
+                      Start-Job -Name "E2E-NonMetadata-$testFileName" -ScriptBlock {
                           param($testFilePath, $modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret)
                           
                           $env:TESTMODULEPATH = $modulePath
@@ -447,13 +467,31 @@ jobs:
                       } -ArgumentList $testFile, $modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret
                   }
                   
-                  # Wait for non-Metadata tests with streaming output
+                  # Wait for non-Metadata tests with streaming output and timeout detection
+                  $lastOutputTime = Get-Date
+                  $noOutputThresholdSeconds = 300  # 5 minutes
+                  
                   while ($nonMetadataJobs | Where-Object { $_.State -eq 'Running' }) {
+                      $hadOutput = $false
                       foreach ($job in $nonMetadataJobs) {
                           if ($job.HasMoreData) {
                               $job | Receive-Job
+                              $hadOutput = $true
+                              $lastOutputTime = Get-Date
                           }
                       }
+                      
+                      # Check if we've had no output for too long
+                      $timeSinceLastOutput = (Get-Date) - $lastOutputTime
+                      if ($timeSinceLastOutput.TotalSeconds -gt $noOutputThresholdSeconds) {
+                          Write-Host "WARNING: No output for $($timeSinceLastOutput.TotalSeconds) seconds. Active E2E non-metadata jobs:" -ForegroundColor Yellow
+                          $runningJobs = $nonMetadataJobs | Where-Object { $_.State -eq 'Running' }
+                          foreach ($job in $runningJobs) {
+                              Write-Host "  - $($job.Name) (State: $($job.State), HasMoreData: $($job.HasMoreData))" -ForegroundColor Yellow
+                          }
+                          $lastOutputTime = Get-Date  # Reset timer after warning
+                      }
+                      
                       Start-Sleep -Milliseconds 100
                   }
                   
@@ -477,15 +515,37 @@ jobs:
           } -ArgumentList $env:TESTMODULEPATH, $env:E2ETESTS_URL, $env:E2ETESTS_CLIENTID, $env:E2ETESTS_CLIENTSECRET, "${{ matrix.os }}", "${{ matrix.powershell_version }}", $workingDir
           
           # Wait for both jobs to complete and show progress
-          # Poll jobs to show streaming output
+          # Poll jobs to show streaming output with timeout detection
+          $lastOutputTime = Get-Date
+          $noOutputThresholdSeconds = 300  # 5 minutes
+          
           while ($standardTestsJob.State -eq 'Running' -or $e2eTestsJob.State -eq 'Running') {
+              $hadOutput = $false
               # Receive any available output without waiting
               if ($standardTestsJob.HasMoreData) {
                   $standardTestsJob | Receive-Job
+                  $hadOutput = $true
+                  $lastOutputTime = Get-Date
               }
               if ($e2eTestsJob.HasMoreData) {
-                  $e2eTestsJob | Receive-Job  
+                  $e2eTestsJob | Receive-Job
+                  $hadOutput = $true
+                  $lastOutputTime = Get-Date
               }
+              
+              # Check if we've had no output for too long
+              $timeSinceLastOutput = (Get-Date) - $lastOutputTime
+              if ($timeSinceLastOutput.TotalSeconds -gt $noOutputThresholdSeconds) {
+                  Write-Host "WARNING: No output for $($timeSinceLastOutput.TotalSeconds) seconds. Active outer jobs:" -ForegroundColor Yellow
+                  if ($standardTestsJob.State -eq 'Running') {
+                      Write-Host "  - StandardTests (State: $($standardTestsJob.State), HasMoreData: $($standardTestsJob.HasMoreData))" -ForegroundColor Yellow
+                  }
+                  if ($e2eTestsJob.State -eq 'Running') {
+                      Write-Host "  - E2ETests (State: $($e2eTestsJob.State), HasMoreData: $($e2eTestsJob.HasMoreData))" -ForegroundColor Yellow
+                  }
+                  $lastOutputTime = Get-Date  # Reset timer after warning
+              }
+              
               Start-Sleep -Milliseconds 100
           }
           
@@ -663,7 +723,8 @@ jobs:
                 # Start a job for each test file
                 $jobs = $testFiles | ForEach-Object {
                     $testFile = $_
-                    Start-Job -ScriptBlock {
+                    $testFileName = Split-Path $testFile -Leaf
+                    Start-Job -Name "StandardTest-PS5-$testFileName" -ScriptBlock {
                         param($testFilePath, $modulePath)
                         
                         $env:TESTMODULEPATH = $modulePath
@@ -690,13 +751,31 @@ jobs:
                     } -ArgumentList $testFile, $modulePath
                 }
                 
-                # Wait for all test file jobs to complete with streaming output
+                # Wait for all test file jobs to complete with streaming output and timeout detection
+                $lastOutputTime = Get-Date
+                $noOutputThresholdSeconds = 300  # 5 minutes
+                
                 while ($jobs | Where-Object { $_.State -eq 'Running' }) {
+                    $hadOutput = $false
                     foreach ($job in $jobs) {
                         if ($job.HasMoreData) {
                             $job | Receive-Job
+                            $hadOutput = $true
+                            $lastOutputTime = Get-Date
                         }
                     }
+                    
+                    # Check if we've had no output for too long
+                    $timeSinceLastOutput = (Get-Date) - $lastOutputTime
+                    if ($timeSinceLastOutput.TotalSeconds -gt $noOutputThresholdSeconds) {
+                        Write-Host "WARNING: No output for $($timeSinceLastOutput.TotalSeconds) seconds. Active jobs:" -ForegroundColor Yellow
+                        $runningJobs = $jobs | Where-Object { $_.State -eq 'Running' }
+                        foreach ($job in $runningJobs) {
+                            Write-Host "  - $($job.Name) (State: $($job.State), HasMoreData: $($job.HasMoreData))" -ForegroundColor Yellow
+                        }
+                        $lastOutputTime = Get-Date  # Reset timer after warning
+                    }
+                    
                     Start-Sleep -Milliseconds 100
                 }
                 
@@ -731,15 +810,37 @@ jobs:
             } -ArgumentList $env:TESTMODULEPATH, $env:E2ETESTS_URL, $env:E2ETESTS_CLIENTID, $env:E2ETESTS_CLIENTSECRET, $workingDir
             
             # Wait for both jobs to complete and show progress
-            # Poll jobs to show streaming output
+            # Poll jobs to show streaming output with timeout detection
+            $lastOutputTime = Get-Date
+            $noOutputThresholdSeconds = 300  # 5 minutes
+            
             while ($standardTestsJob.State -eq 'Running' -or $e2eTestsJob.State -eq 'Running') {
+                $hadOutput = $false
                 # Receive any available output without waiting
                 if ($standardTestsJob.HasMoreData) {
                     $standardTestsJob | Receive-Job
+                    $hadOutput = $true
+                    $lastOutputTime = Get-Date
                 }
                 if ($e2eTestsJob.HasMoreData) {
                     $e2eTestsJob | Receive-Job
+                    $hadOutput = $true
+                    $lastOutputTime = Get-Date
                 }
+                
+                # Check if we've had no output for too long
+                $timeSinceLastOutput = (Get-Date) - $lastOutputTime
+                if ($timeSinceLastOutput.TotalSeconds -gt $noOutputThresholdSeconds) {
+                    Write-Host "WARNING: No output for $($timeSinceLastOutput.TotalSeconds) seconds. Active outer jobs:" -ForegroundColor Yellow
+                    if ($standardTestsJob.State -eq 'Running') {
+                        Write-Host "  - StandardTests (State: $($standardTestsJob.State), HasMoreData: $($standardTestsJob.HasMoreData))" -ForegroundColor Yellow
+                    }
+                    if ($e2eTestsJob.State -eq 'Running') {
+                        Write-Host "  - E2ETests (State: $($e2eTestsJob.State), HasMoreData: $($e2eTestsJob.HasMoreData))" -ForegroundColor Yellow
+                    }
+                    $lastOutputTime = Get-Date  # Reset timer after warning
+                }
+                
                 Start-Sleep -Milliseconds 100
             }
             
