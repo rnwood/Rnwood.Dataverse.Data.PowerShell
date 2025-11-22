@@ -36,9 +36,38 @@ Invoke-Pester -Output Detailed -Path e2e-tests/Module.Tests.ps1
 
 # Run only form manipulation tests
 Invoke-Pester -Output Detailed -Path e2e-tests/FormManipulation.Tests.ps1
+
+# Run only form library and event handler tests
+Invoke-Pester -Output Detailed -Path e2e-tests/FormLibraryAndEventHandler.Tests.ps1
 ```
 
 ## Test Files
+
+### FormLibraryAndEventHandler.Tests.ps1
+E2E test for form script library and event handler management:
+
+**Test Coverage:**
+- Adding JavaScript libraries to forms (Set-DataverseFormLibrary)
+- Retrieving libraries from forms (Get-DataverseFormLibrary)
+- Removing libraries from forms (Remove-DataverseFormLibrary)
+- Adding form-level event handlers (Set-DataverseFormEventHandler)
+- Retrieving event handlers (Get-DataverseFormEventHandler)
+- Removing event handlers (Remove-DataverseFormEventHandler)
+- Web resource creation and cleanup
+- Comprehensive validation at each step
+
+**Features:**
+- Uses unique test identifiers to avoid conflicts
+- Creates test web resources for validation
+- Tests complete CRUD cycle for libraries and handlers
+- Proper cleanup of all created resources
+- Detailed logging of all operations
+
+**Cleanup Behavior:**
+The test automatically cleans up:
+1. All added libraries are removed after testing
+2. All added event handlers are removed after testing
+3. All test web resources are deleted
 
 ### Module.Tests.ps1
 General module functionality tests including:
@@ -80,6 +109,7 @@ This ensures the test can run reliably even if previous runs failed or were inte
 
 - **Module.Tests.ps1**: ~30-60 seconds (depending on network and environment)
 - **FormManipulation.Tests.ps1**: ~60-120 seconds (includes form metadata operations)
+- **FormLibraryAndEventHandler.Tests.ps1**: ~60-90 seconds (includes web resource and form operations)
 
 ## Notes
 
