@@ -312,7 +312,7 @@ jobs:
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
       - if: ${{ matrix.powershell_version != '5' }}
-        name: Test - pwsh (Standard + E2E in parallel)
+        name: Test - pwsh (Standard (Sequential) + E2E)
         id: test-pwsh
         timeout-minutes: 45  # Tests expected to complete in < 45 minutes
         shell: pwsh
@@ -327,12 +327,12 @@ jobs:
           Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
           
           # Start standard tests and E2E tests in parallel
-          Write-Host "Starting standard tests and E2E tests in parallel..." -ForegroundColor Cyan
+          Write-Host "Starting standard tests (sequential) and E2E tests..." -ForegroundColor Cyan
           
           # Capture current working directory to pass to background jobs
           $workingDir = Get-Location
           
-          # Job 1: Standard tests
+          # Job 1: Standard tests (running sequentially to identify blocking issues)
           $standardTestsJob = Start-Job -ScriptBlock {
               param($modulePath, $workDir)
               
@@ -343,41 +343,35 @@ jobs:
               
               Write-Host "Discovering standard test files..."
               $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
-              Write-Host "Found $($testFiles.Count) standard test files to run in parallel"
+              Write-Host "Found $($testFiles.Count) standard test files to run sequentially"
               
-              # Start a job for each test file
-              $jobs = $testFiles | ForEach-Object {
-                  $testFile = $_
-                  Start-Job -ScriptBlock {
-                      param($testFilePath, $modulePath)
-                      
-                      $env:TESTMODULEPATH = $modulePath
-                      
-                      # Run each test file independently
-                      $config = New-PesterConfiguration
-                      $config.Run.Path = $testFilePath
-                      $config.Run.PassThru = $true
-                      $config.Output.Verbosity = 'Minimal'
-                      $config.Should.ErrorAction = 'Continue'
-                      
-                      $result = Invoke-Pester -Configuration $config
-                      
-                      # Return result with filename for aggregation
-                      [PSCustomObject]@{
-                          File = (Split-Path $testFilePath -Leaf)
-                          TotalCount = $result.TotalCount
-                          PassedCount = $result.PassedCount
-                          FailedCount = $result.FailedCount
-                          SkippedCount = $result.SkippedCount
-                          DurationSeconds = $result.Duration.TotalSeconds
-                          Failed = $result.Failed
-                      }
-                  } -ArgumentList $testFile, $modulePath
+              # Run tests sequentially using default Pester behavior
+              $results = @()
+              foreach ($testFile in $testFiles) {
+                  Write-Host "Running test file: $(Split-Path $testFile -Leaf)"
+                  
+                  # Run test file
+                  $config = New-PesterConfiguration
+                  $config.Run.Path = $testFile
+                  $config.Run.PassThru = $true
+                  $config.Output.Verbosity = 'Detailed'
+                  $config.Should.ErrorAction = 'Continue'
+                  
+                  $result = Invoke-Pester -Configuration $config
+                  
+                  # Store result with filename for aggregation
+                  $results += [PSCustomObject]@{
+                      File = (Split-Path $testFile -Leaf)
+                      TotalCount = $result.TotalCount
+                      PassedCount = $result.PassedCount
+                      FailedCount = $result.FailedCount
+                      SkippedCount = $result.SkippedCount
+                      DurationSeconds = $result.Duration.TotalSeconds
+                      Failed = $result.Failed
+                  }
+                  
+                  Write-Host "Completed: $(Split-Path $testFile -Leaf) - Passed: $($result.PassedCount), Failed: $($result.FailedCount)"
               }
-              
-              # Wait for all test file jobs to complete
-              $results = $jobs | Wait-Job | Receive-Job
-              $jobs | Remove-Job
               
               return $results
           } -ArgumentList $env:TESTMODULEPATH, $workingDir
@@ -528,7 +522,7 @@ jobs:
           Write-Host ""
           Write-Host "All tests passed!" -ForegroundColor Green
       - if:  ${{ matrix.powershell_version == '5' }}
-        name: Test - powershell (Standard + E2E in parallel)
+        name: Test - powershell (Standard (Sequential) + E2E)
         id: test-powershell
         timeout-minutes: 45  # Tests expected to complete in < 45 minutes
         shell: powershell
@@ -542,7 +536,7 @@ jobs:
             Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
             
             # Start standard tests and E2E tests in parallel
-            Write-Host "Starting standard tests and E2E tests in parallel..." -ForegroundColor Cyan
+            Write-Host "Starting standard tests (sequential) and E2E tests..." -ForegroundColor Cyan
             
             # Capture current working directory to pass to background jobs
             $workingDir = Get-Location
@@ -558,41 +552,35 @@ jobs:
                 
                 Write-Host "Discovering standard test files..."
                 $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
-                Write-Host "Found $($testFiles.Count) standard test files to run in parallel"
+                Write-Host "Found $($testFiles.Count) standard test files to run sequentially"
                 
-                # Start a job for each test file
-                $jobs = $testFiles | ForEach-Object {
-                    $testFile = $_
-                    Start-Job -ScriptBlock {
-                        param($testFilePath, $modulePath)
-                        
-                        $env:TESTMODULEPATH = $modulePath
-                        
-                        # Run each test file independently
-                        $config = New-PesterConfiguration
-                        $config.Run.Path = $testFilePath
-                        $config.Run.PassThru = $true
-                        $config.Output.Verbosity = 'Minimal'
-                        $config.Should.ErrorAction = 'Continue'
-                        
-                        $result = Invoke-Pester -Configuration $config
-                        
-                        # Return result with filename for aggregation
-                        [PSCustomObject]@{
-                            File = (Split-Path $testFilePath -Leaf)
-                            TotalCount = $result.TotalCount
-                            PassedCount = $result.PassedCount
-                            FailedCount = $result.FailedCount
-                            SkippedCount = $result.SkippedCount
-                            DurationSeconds = $result.Duration.TotalSeconds
-                            Failed = $result.Failed
-                        }
-                    } -ArgumentList $testFile, $modulePath
+                # Run tests sequentially using default Pester behavior
+                $results = @()
+                foreach ($testFile in $testFiles) {
+                    Write-Host "Running test file: $(Split-Path $testFile -Leaf)"
+                    
+                    # Run test file
+                    $config = New-PesterConfiguration
+                    $config.Run.Path = $testFile
+                    $config.Run.PassThru = $true
+                    $config.Output.Verbosity = 'Detailed'
+                    $config.Should.ErrorAction = 'Continue'
+                    
+                    $result = Invoke-Pester -Configuration $config
+                    
+                    # Store result with filename for aggregation
+                    $results += [PSCustomObject]@{
+                        File = (Split-Path $testFile -Leaf)
+                        TotalCount = $result.TotalCount
+                        PassedCount = $result.PassedCount
+                        FailedCount = $result.FailedCount
+                        SkippedCount = $result.SkippedCount
+                        DurationSeconds = $result.Duration.TotalSeconds
+                        Failed = $result.Failed
+                    }
+                    
+                    Write-Host "Completed: $(Split-Path $testFile -Leaf) - Passed: $($result.PassedCount), Failed: $($result.FailedCount)"
                 }
-                
-                # Wait for all test file jobs to complete
-                $results = $jobs | Wait-Job | Receive-Job
-                $jobs | Remove-Job
                 
                 return $results
             } -ArgumentList $env:TESTMODULEPATH, $workingDir
