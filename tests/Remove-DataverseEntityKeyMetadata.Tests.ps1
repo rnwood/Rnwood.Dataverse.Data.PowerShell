@@ -20,7 +20,7 @@ Describe 'Remove-DataverseEntityKeyMetadata' {
             # Delete the key
             Remove-DataverseEntityKeyMetadata -Connection $connection `
                 -EntityName contact `
-                -KeyName "contact_emailaddress1_key"
+                -KeyName "contact_emailaddress1_key" -Confirm:$false
             
             # Verify key was deleted
             $keyDeleted | Should -Be $true
@@ -45,7 +45,7 @@ Describe 'Remove-DataverseEntityKeyMetadata' {
             # Delete the key
             Remove-DataverseEntityKeyMetadata -Connection $connection `
                 -EntityName contact `
-                -KeyName "contact_emailaddress1_key"
+                -KeyName "contact_emailaddress1_key" -Confirm:$false
             
             # Verify entity name was correct
             $correctEntityName | Should -Be $true
@@ -70,7 +70,7 @@ Describe 'Remove-DataverseEntityKeyMetadata' {
             # Delete the key
             Remove-DataverseEntityKeyMetadata -Connection $connection `
                 -EntityName contact `
-                -KeyName "contact_emailaddress1_key"
+                -KeyName "contact_emailaddress1_key" -Confirm:$false
             
             # Verify key name was correct
             $correctKeyName | Should -Be $true
@@ -93,7 +93,7 @@ Describe 'Remove-DataverseEntityKeyMetadata' {
             Set-DataverseConnectionAsDefault -Connection $connection
             
             # Delete without explicit connection
-            Remove-DataverseEntityKeyMetadata -EntityName contact -KeyName "contact_emailaddress1_key"
+            Remove-DataverseEntityKeyMetadata -EntityName contact -KeyName "contact_emailaddress1_key" -Confirm:$false
             
             # Verify key was deleted
             $keyDeleted | Should -Be $true

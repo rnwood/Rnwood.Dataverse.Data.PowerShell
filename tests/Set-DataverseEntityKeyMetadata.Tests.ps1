@@ -49,7 +49,8 @@ Describe 'Set-DataverseEntityKeyMetadata' {
             Set-DataverseEntityKeyMetadata -Connection $connection `
                 -EntityName contact `
                 -SchemaName "contact_emailaddress1_key" `
-                -KeyAttributes @("emailaddress1")
+                -KeyAttributes @("emailaddress1") `
+                -Confirm:$false
             
             # Verify request was created correctly
             $capturedRequest | Should -Not -BeNullOrEmpty
@@ -82,7 +83,8 @@ Describe 'Set-DataverseEntityKeyMetadata' {
             Set-DataverseEntityKeyMetadata -Connection $connection `
                 -EntityName contact `
                 -SchemaName "contact_emailaddress1_key" `
-                -KeyAttributes @("emailaddress1")
+                -KeyAttributes @("emailaddress1") `
+                -Confirm:$false
             
             # Verify EntityKeyMetadata was created correctly
             $capturedRequest | Should -Not -BeNullOrEmpty
@@ -116,7 +118,8 @@ Describe 'Set-DataverseEntityKeyMetadata' {
             Set-DataverseEntityKeyMetadata -Connection $connection `
                 -EntityName contact `
                 -SchemaName "contact_name_key" `
-                -KeyAttributes @("firstname", "lastname")
+                -KeyAttributes @("firstname", "lastname") `
+                -Confirm:$false
             
             # Verify attributes were set correctly
             $capturedRequest | Should -Not -BeNullOrEmpty
