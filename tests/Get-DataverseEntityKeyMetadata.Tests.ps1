@@ -1,11 +1,8 @@
 . $PSScriptRoot/Common.ps1
 
-Describe 'Get-DataverseEntityKeyMetadata' -Skip {
-    # Skipping these tests because FakeXrmEasy doesn't support:
-    # 1. RetrieveEntityRequest (used to get entity metadata with keys)
-    # These request types are validated by:
-    # 1. Successful build (compilation)
-    # 2. E2E tests in e2e-tests/EntityKeyMetadata.Tests.ps1
+Describe 'Get-DataverseEntityKeyMetadata' {
+    # Note: RetrieveEntityRequest is intercepted by Common.ps1's getMockConnection
+    # which returns entity metadata from the test cache
     
     Context 'Command Parameter Validation' {
         It "Accepts EntityName parameter" {

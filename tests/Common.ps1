@@ -127,6 +127,18 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
                 return New-Object Microsoft.Xrm.Sdk.OrganizationResponse
             }
             
+            # Handle CreateEntityKeyRequest - return success response with new key ID
+            if ($request.GetType().Name -eq 'CreateEntityKeyRequest') {
+                $response = New-Object Microsoft.Xrm.Sdk.Messages.CreateEntityKeyResponse
+                $response.Results.Add("EntityKeyId", [Guid]::NewGuid())
+                return $response
+            }
+            
+            # Handle DeleteEntityKeyRequest - return empty success response
+            if ($request.GetType().Name -eq 'DeleteEntityKeyRequest') {
+                return New-Object Microsoft.Xrm.Sdk.Messages.DeleteEntityKeyResponse
+            }
+            
             # Don't return anything - let FakeXrmEasy handle the request
         }.GetNewClosure()
     } else {
@@ -196,6 +208,18 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
                 $request.GetType().Name -eq 'RemoveAppComponentsRequest') {
                 # Return empty response - the request was successful
                 return New-Object Microsoft.Xrm.Sdk.OrganizationResponse
+            }
+            
+            # Handle CreateEntityKeyRequest - return success response with new key ID
+            if ($request.GetType().Name -eq 'CreateEntityKeyRequest') {
+                $response = New-Object Microsoft.Xrm.Sdk.Messages.CreateEntityKeyResponse
+                $response.Results.Add("EntityKeyId", [Guid]::NewGuid())
+                return $response
+            }
+            
+            # Handle DeleteEntityKeyRequest - return empty success response
+            if ($request.GetType().Name -eq 'DeleteEntityKeyRequest') {
+                return New-Object Microsoft.Xrm.Sdk.Messages.DeleteEntityKeyResponse
             }
             
             # Don't return anything - let FakeXrmEasy handle the request

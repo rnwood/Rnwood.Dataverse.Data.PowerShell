@@ -1,11 +1,8 @@
 . $PSScriptRoot/Common.ps1
 
-Describe 'Remove-DataverseEntityKeyMetadata' -Skip {
-    # Skipping these tests because FakeXrmEasy doesn't support:
-    # 1. DeleteEntityKeyRequest (used to delete alternate keys)
-    # These request types are validated by:
-    # 1. Successful build (compilation)
-    # 2. E2E tests in e2e-tests/EntityKeyMetadata.Tests.ps1
+Describe 'Remove-DataverseEntityKeyMetadata' {
+    # Note: DeleteEntityKeyRequest is intercepted by Common.ps1's getMockConnection
+    # to avoid FakeXrmEasy limitations
     
     Context 'Delete Key' {
         It "Deletes an alternate key" {
