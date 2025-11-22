@@ -24,7 +24,7 @@ Describe 'Set-DataverseEntityKeyMetadata' {
     
     Context 'Request Creation' {
         It "Creates CreateEntityKeyRequest with correct EntityName" {
-            $capturedRequest = $null
+            $script:capturedRequest = $null
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
@@ -53,12 +53,12 @@ Describe 'Set-DataverseEntityKeyMetadata' {
                 -Confirm:$false
             
             # Verify request was created correctly
-            $capturedRequest | Should -Not -BeNullOrEmpty
-            $capturedRequest.EntityName | Should -Be "contact"
+            $script:capturedRequest | Should -Not -BeNullOrEmpty
+            $script:capturedRequest.EntityName | Should -Be "contact"
         }
         
         It "Creates EntityKeyMetadata with correct SchemaName" {
-            $capturedRequest = $null
+            $script:capturedRequest = $null
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
@@ -87,13 +87,13 @@ Describe 'Set-DataverseEntityKeyMetadata' {
                 -Confirm:$false
             
             # Verify EntityKeyMetadata was created correctly
-            $capturedRequest | Should -Not -BeNullOrEmpty
-            $capturedRequest.EntityKey | Should -Not -BeNullOrEmpty
-            $capturedRequest.EntityKey.SchemaName | Should -Be "contact_emailaddress1_key"
+            $script:capturedRequest | Should -Not -BeNullOrEmpty
+            $script:capturedRequest.EntityKey | Should -Not -BeNullOrEmpty
+            $script:capturedRequest.EntityKey.SchemaName | Should -Be "contact_emailaddress1_key"
         }
         
         It "Sets KeyAttributes correctly" {
-            $capturedRequest = $null
+            $script:capturedRequest = $null
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
@@ -122,10 +122,10 @@ Describe 'Set-DataverseEntityKeyMetadata' {
                 -Confirm:$false
             
             # Verify attributes were set correctly
-            $capturedRequest | Should -Not -BeNullOrEmpty
-            $capturedRequest.EntityKey.KeyAttributes.Count | Should -Be 2
-            $capturedRequest.EntityKey.KeyAttributes[0] | Should -Be "firstname"
-            $capturedRequest.EntityKey.KeyAttributes[1] | Should -Be "lastname"
+            $script:capturedRequest | Should -Not -BeNullOrEmpty
+            $script:capturedRequest.EntityKey.KeyAttributes.Count | Should -Be 2
+            $script:capturedRequest.EntityKey.KeyAttributes[0] | Should -Be "firstname"
+            $script:capturedRequest.EntityKey.KeyAttributes[1] | Should -Be "lastname"
         }
     }
     

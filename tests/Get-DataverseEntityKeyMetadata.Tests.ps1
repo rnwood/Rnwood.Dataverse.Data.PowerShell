@@ -44,7 +44,7 @@ Describe 'Get-DataverseEntityKeyMetadata' {
     
     Context 'Request Creation' {
         It "Creates RetrieveEntityRequest with correct EntityName" {
-            $capturedRequest = $null
+            $script:capturedRequest = $null
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
@@ -65,12 +65,12 @@ Describe 'Get-DataverseEntityKeyMetadata' {
             } catch {}
             
             # Verify request was created correctly
-            $capturedRequest | Should -Not -BeNullOrEmpty
-            $capturedRequest.LogicalName | Should -Be "contact"
+            $script:capturedRequest | Should -Not -BeNullOrEmpty
+            $script:capturedRequest.LogicalName | Should -Be "contact"
         }
         
         It "Uses RetrieveAsIfPublished=true by default" {
-            $capturedRequest = $null
+            $script:capturedRequest = $null
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
@@ -91,12 +91,12 @@ Describe 'Get-DataverseEntityKeyMetadata' {
             } catch {}
             
             # Verify RetrieveAsIfPublished is true (unpublished)
-            $capturedRequest | Should -Not -BeNullOrEmpty
-            $capturedRequest.RetrieveAsIfPublished | Should -Be $true
+            $script:capturedRequest | Should -Not -BeNullOrEmpty
+            $script:capturedRequest.RetrieveAsIfPublished | Should -Be $true
         }
         
         It "Uses RetrieveAsIfPublished=false with -Published" {
-            $capturedRequest = $null
+            $script:capturedRequest = $null
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
@@ -117,8 +117,8 @@ Describe 'Get-DataverseEntityKeyMetadata' {
             } catch {}
             
             # Verify RetrieveAsIfPublished is false (published only)
-            $capturedRequest | Should -Not -BeNullOrEmpty
-            $capturedRequest.RetrieveAsIfPublished | Should -Be $false
+            $script:capturedRequest | Should -Not -BeNullOrEmpty
+            $script:capturedRequest.RetrieveAsIfPublished | Should -Be $false
         }
     }
     
