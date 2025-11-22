@@ -3,7 +3,7 @@
 Describe 'Remove-DataverseEntityKeyMetadata' {
     Context 'Delete Key' {
         It "Deletes an alternate key" {
-            $keyDeleted = $false
+            $script:keyDeleted = $false
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
@@ -23,11 +23,11 @@ Describe 'Remove-DataverseEntityKeyMetadata' {
                 -KeyName "contact_emailaddress1_key" -Confirm:$false
             
             # Verify key was deleted
-            $keyDeleted | Should -Be $true
+            $script:keyDeleted | Should -Be $true
         }
 
         It "Passes correct entity name" {
-            $correctEntityName = $false
+            $script:correctEntityName = $false
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
@@ -48,11 +48,11 @@ Describe 'Remove-DataverseEntityKeyMetadata' {
                 -KeyName "contact_emailaddress1_key" -Confirm:$false
             
             # Verify entity name was correct
-            $correctEntityName | Should -Be $true
+            $script:correctEntityName | Should -Be $true
         }
 
         It "Passes correct key name" {
-            $correctKeyName = $false
+            $script:correctKeyName = $false
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
@@ -73,11 +73,11 @@ Describe 'Remove-DataverseEntityKeyMetadata' {
                 -KeyName "contact_emailaddress1_key" -Confirm:$false
             
             # Verify key name was correct
-            $correctKeyName | Should -Be $true
+            $script:correctKeyName | Should -Be $true
         }
 
         It "Works with default connection" {
-            $keyDeleted = $false
+            $script:keyDeleted = $false
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
@@ -96,13 +96,13 @@ Describe 'Remove-DataverseEntityKeyMetadata' {
             Remove-DataverseEntityKeyMetadata -EntityName contact -KeyName "contact_emailaddress1_key" -Confirm:$false
             
             # Verify key was deleted
-            $keyDeleted | Should -Be $true
+            $script:keyDeleted | Should -Be $true
         }
     }
 
     Context 'WhatIf Support' {
         It "Supports -WhatIf" {
-            $keyDeleted = $false
+            $script:keyDeleted = $false
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
@@ -122,11 +122,11 @@ Describe 'Remove-DataverseEntityKeyMetadata' {
                 -WhatIf
             
             # Verify key was NOT deleted
-            $keyDeleted | Should -Be $false
+            $script:keyDeleted | Should -Be $false
         }
 
         It "Supports -Confirm:$false" {
-            $keyDeleted = $false
+            $script:keyDeleted = $false
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
@@ -146,13 +146,13 @@ Describe 'Remove-DataverseEntityKeyMetadata' {
                 -Confirm:$false
             
             # Verify key was deleted
-            $keyDeleted | Should -Be $true
+            $script:keyDeleted | Should -Be $true
         }
     }
 
     Context 'Pipeline Support' {
         It "Accepts EntityName from pipeline" {
-            $keyDeleted = $false
+            $script:keyDeleted = $false
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
@@ -169,7 +169,7 @@ Describe 'Remove-DataverseEntityKeyMetadata' {
             "contact" | Remove-DataverseEntityKeyMetadata -Connection $connection -KeyName "contact_emailaddress1_key" -Confirm:$false
             
             # Verify key was deleted
-            $keyDeleted | Should -Be $true
+            $script:keyDeleted | Should -Be $true
         }
     }
 }

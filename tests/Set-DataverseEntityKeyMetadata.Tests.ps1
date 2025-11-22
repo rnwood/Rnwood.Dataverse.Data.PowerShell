@@ -131,7 +131,7 @@ Describe 'Set-DataverseEntityKeyMetadata' {
     
     Context 'WhatIf Support' {
         It "Supports -WhatIf" {
-            $keyCreated = $false
+            $script:keyCreated = $false
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
@@ -160,14 +160,14 @@ Describe 'Set-DataverseEntityKeyMetadata' {
                 -WhatIf
             
             # Verify key was NOT created
-            $keyCreated | Should -Be $false
+            $script:keyCreated | Should -Be $false
         }
     }
     
     Context 'Force Parameter' {
         It "Skips existence check with -Force" {
-            $retrieveCalled = $false
-            $createCalled = $false
+            $script:retrieveCalled = $false
+            $script:createCalled = $false
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
@@ -197,9 +197,9 @@ Describe 'Set-DataverseEntityKeyMetadata' {
                 -Force
             
             # Verify retrieve was NOT called (existence check skipped)
-            $retrieveCalled | Should -Be $false
+            $script:retrieveCalled | Should -Be $false
             # Verify key was created
-            $createCalled | Should -Be $true
+            $script:createCalled | Should -Be $true
         }
     }
 }
