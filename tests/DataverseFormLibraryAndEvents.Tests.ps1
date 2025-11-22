@@ -72,7 +72,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
 
     Context 'Set-DataverseFormLibrary' {
         It "Adds a new library to a form" {
-            $result = Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/newlibrary.js" -SkipPublish
+            $result = Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/newlibrary.js" -SkipPublish -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.Name | Should -Be "new_/scripts/newlibrary.js"
@@ -86,7 +86,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         It "Updates an existing library" {
             $customId = [System.Guid]::NewGuid()
             
-            $result = Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/main.js" -LibraryUniqueId $customId -SkipPublish
+            $result = Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/main.js" -LibraryUniqueId $customId -SkipPublish -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.LibraryUniqueId | Should -Be $customId
@@ -100,7 +100,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
             $newForm["formxml"] = "<form></form>"
             $connection.Create($newForm)
             
-            $result = Set-DataverseFormLibrary -Connection $connection -FormId $newForm.Id -LibraryName "new_/scripts/main.js" -SkipPublish
+            $result = Set-DataverseFormLibrary -Connection $connection -FormId $newForm.Id -LibraryName "new_/scripts/main.js" -SkipPublish -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.Name | Should -Be "new_/scripts/main.js"
@@ -115,7 +115,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
             # FakeXrmEasy doesn't support RetrieveUnpublished and we don't have webresource metadata
             # The cmdlets will catch validation in try/catch and skip for mock scenarios
             # This test just verifies the cmdlet works with any library name
-            $result = Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "any/resource.js" -SkipPublish
+            $result = Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "any/resource.js" -SkipPublish -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.Name | Should -Be "any/resource.js"
@@ -124,7 +124,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         It "Supports WhatIf" {
             $initialCount = @(Get-DataverseFormLibrary -Connection $connection -FormId $testFormId).Count
             
-            Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/newlibrary.js" -SkipPublish -WhatIf
+            Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/newlibrary.js" -SkipPublish -Confirm:$false -WhatIf
             
             $afterCount = @(Get-DataverseFormLibrary -Connection $connection -FormId $testFormId).Count
             $afterCount | Should -Be $initialCount
@@ -247,7 +247,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
 
     Context 'Set-DataverseFormEventHandler - Form Events' {
         It "Adds a new form-level event handler" {
-            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "NewOnLoadFunction" -LibraryName "new_/scripts/newlibrary.js" -SkipPublish
+            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "NewOnLoadFunction" -LibraryName "new_/scripts/newlibrary.js" -SkipPublish -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.EventName | Should -Be "onload"
@@ -264,7 +264,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         It "Updates an existing form-level event handler" {
             $customId = [System.Guid]::NewGuid()
             
-            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "FormOnLoad" -LibraryName "new_/scripts/main.js" -HandlerUniqueId $customId -Enabled $false -SkipPublish
+            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "FormOnLoad" -LibraryName "new_/scripts/main.js" -HandlerUniqueId $customId -Enabled $false -SkipPublish -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.HandlerUniqueId | Should -Be $customId
@@ -279,7 +279,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
             $newForm["formxml"] = "<form></form>"
             $connection.Create($newForm)
             
-            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $newForm.Id -EventName "onload" -FunctionName "OnLoad" -LibraryName "new_/scripts/main.js" -SkipPublish
+            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $newForm.Id -EventName "onload" -FunctionName "OnLoad" -LibraryName "new_/scripts/main.js" -SkipPublish -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             
@@ -289,7 +289,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         }
 
         It "Supports custom parameters" {
-            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "ParameterizedFunction" -LibraryName "new_/scripts/main.js" -Parameters "{'key':'value'}" -PassExecutionContext $false -SkipPublish
+            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "ParameterizedFunction" -LibraryName "new_/scripts/main.js" -Parameters "{'key':'value'}" -PassExecutionContext $false -SkipPublish -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.Parameters | Should -Be "{'key':'value'}"
@@ -299,7 +299,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         It "Web resource validation in mock tests" {
             # In mock tests, web resource validation is bypassed
             # This test just verifies the cmdlet works with any library name
-            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "Test" -LibraryName "any/resource.js" -SkipPublish
+            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "Test" -LibraryName "any/resource.js" -SkipPublish -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.LibraryName | Should -Be "any/resource.js"
@@ -308,7 +308,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
 
     Context 'Set-DataverseFormEventHandler - Control Events' {
         It "Adds a new control-level event handler" {
-            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onchange" -FunctionName "NewOnChangeFunction" -LibraryName "new_/scripts/newlibrary.js" -ControlId "lastname" -TabName "general" -SectionName "name" -SkipPublish
+            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onchange" -FunctionName "NewOnChangeFunction" -LibraryName "new_/scripts/newlibrary.js" -ControlId "lastname" -TabName "general" -SectionName "name" -SkipPublish -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.EventName | Should -Be "onchange"
@@ -323,7 +323,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         }
 
         It "Throws error when control not found" {
-            { Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onchange" -FunctionName "Test" -LibraryName "new_/scripts/main.js" -ControlId "nonexistent" -TabName "general" -SectionName "name" -SkipPublish -ErrorAction Stop } | Should -Throw "*not found*"
+            { Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onchange" -FunctionName "Test" -LibraryName "new_/scripts/main.js" -ControlId "nonexistent" -TabName "general" -SectionName "name" -SkipPublish -Confirm:$false -ErrorAction Stop } | Should -Throw "*not found*"
         }
     }
 
