@@ -139,6 +139,27 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
                 return New-Object Microsoft.Xrm.Sdk.Messages.DeleteEntityKeyResponse
             }
             
+            # Handle WhoAmI request - return mock organization ID and user ID
+            if ($request.RequestName -eq 'WhoAmI') {
+                $response = New-Object Microsoft.Xrm.Sdk.OrganizationResponse
+                $response.Results.Add("UserId", [Guid]::NewGuid())
+                $response.Results.Add("BusinessUnitId", [Guid]::NewGuid())
+                $response.Results.Add("OrganizationId", [Guid]::Parse("00000000-0000-0000-0000-000000000001"))
+                return $response
+            }
+            
+            # Handle RetrieveRequest for organization entity - return mock organization with language code
+            if ($request.GetType().Name -eq 'RetrieveRequest') {
+                $retrieveReq = $request -as [Microsoft.Xrm.Sdk.Messages.RetrieveRequest]
+                if ($retrieveReq.Target.LogicalName -eq 'organization') {
+                    $org = New-Object Microsoft.Xrm.Sdk.Entity("organization", $retrieveReq.Target.Id)
+                    $org.Attributes.Add("languagecode", 1033) # English (US)
+                    $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveResponse
+                    $response.Results.Add("Entity", $org)
+                    return $response
+                }
+            }
+            
             # Don't return anything - let FakeXrmEasy handle the request
         }.GetNewClosure()
     } else {
@@ -220,6 +241,27 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
             # Handle DeleteEntityKeyRequest - return empty success response
             if ($request.GetType().Name -eq 'DeleteEntityKeyRequest') {
                 return New-Object Microsoft.Xrm.Sdk.Messages.DeleteEntityKeyResponse
+            }
+            
+            # Handle WhoAmI request - return mock organization ID and user ID
+            if ($request.RequestName -eq 'WhoAmI') {
+                $response = New-Object Microsoft.Xrm.Sdk.OrganizationResponse
+                $response.Results.Add("UserId", [Guid]::NewGuid())
+                $response.Results.Add("BusinessUnitId", [Guid]::NewGuid())
+                $response.Results.Add("OrganizationId", [Guid]::Parse("00000000-0000-0000-0000-000000000001"))
+                return $response
+            }
+            
+            # Handle RetrieveRequest for organization entity - return mock organization with language code
+            if ($request.GetType().Name -eq 'RetrieveRequest') {
+                $retrieveReq = $request -as [Microsoft.Xrm.Sdk.Messages.RetrieveRequest]
+                if ($retrieveReq.Target.LogicalName -eq 'organization') {
+                    $org = New-Object Microsoft.Xrm.Sdk.Entity("organization", $retrieveReq.Target.Id)
+                    $org.Attributes.Add("languagecode", 1033) # English (US)
+                    $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveResponse
+                    $response.Results.Add("Entity", $org)
+                    return $response
+                }
             }
             
             # Don't return anything - let FakeXrmEasy handle the request
