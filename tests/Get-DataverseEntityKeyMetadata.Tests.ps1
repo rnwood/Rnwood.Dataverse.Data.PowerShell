@@ -1,14 +1,15 @@
 . $PSScriptRoot/Common.ps1
 
 Describe 'Get-DataverseEntityKeyMetadata' {
-    # Note: RetrieveEntityRequest is intercepted by Common.ps1's getMockConnection
-    # which returns entity metadata from the test cache
+    # Note: RetrieveEntityRequest needs to be intercepted as FakeXrmEasy doesn't support it
+    # The interceptor returns entity metadata from the test cache
     
     Context 'Command Parameter Validation' {
         It "Accepts EntityName parameter" {
             $connection = getMockConnection -Entities @("contact") -RequestInterceptor {
                 param($request)
                 
+                # Handle RetrieveEntityRequest - return cached entity metadata
                 if ($request.GetType().Name -eq 'RetrieveEntityRequest') {
                     $response = New-Object Microsoft.Xrm.Sdk.Messages.RetrieveEntityResponse
                     $entityMetadata = $global:TestMetadataCache["contact"]

@@ -1,8 +1,8 @@
 . $PSScriptRoot/Common.ps1
 
 Describe 'Remove-DataverseEntityKeyMetadata' {
-    # Note: DeleteEntityKeyRequest is intercepted by Common.ps1's getMockConnection
-    # to avoid FakeXrmEasy limitations
+    # Note: DeleteEntityKeyRequest is not supported by FakeXrmEasy
+    # so we intercept it in the test-specific RequestInterceptor
     
     Context 'Delete Key' {
         It "Deletes an alternate key" {
