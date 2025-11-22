@@ -139,8 +139,10 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
                 return New-Object Microsoft.Xrm.Sdk.Messages.DeleteEntityKeyResponse
             }
             
-            # Handle WhoAmI request - return mock organization ID and user ID
-            if ($request.RequestName -eq 'WhoAmI') {
+            # Handle string-based WhoAmI request (not typed WhoAmIRequest)
+            # GetBaseLanguageCode() uses OrganizationRequest("WhoAmI") which FakeXrmEasy doesn't support
+            # Typed WhoAmIRequest is supported by FakeXrmEasy, so only intercept the string-based one
+            if ($request.GetType().FullName -eq 'Microsoft.Xrm.Sdk.OrganizationRequest' -and $request.RequestName -eq 'WhoAmI') {
                 $response = New-Object Microsoft.Xrm.Sdk.OrganizationResponse
                 $response.Results.Add("UserId", [Guid]::NewGuid())
                 $response.Results.Add("BusinessUnitId", [Guid]::NewGuid())
@@ -243,8 +245,10 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
                 return New-Object Microsoft.Xrm.Sdk.Messages.DeleteEntityKeyResponse
             }
             
-            # Handle WhoAmI request - return mock organization ID and user ID
-            if ($request.RequestName -eq 'WhoAmI') {
+            # Handle string-based WhoAmI request (not typed WhoAmIRequest)
+            # GetBaseLanguageCode() uses OrganizationRequest("WhoAmI") which FakeXrmEasy doesn't support
+            # Typed WhoAmIRequest is supported by FakeXrmEasy, so only intercept the string-based one
+            if ($request.GetType().FullName -eq 'Microsoft.Xrm.Sdk.OrganizationRequest' -and $request.RequestName -eq 'WhoAmI') {
                 $response = New-Object Microsoft.Xrm.Sdk.OrganizationResponse
                 $response.Results.Add("UserId", [Guid]::NewGuid())
                 $response.Results.Add("BusinessUnitId", [Guid]::NewGuid())
