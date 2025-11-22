@@ -15,9 +15,11 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         $script:testForm["formxml"] = [string]$global:testFormXmlWithEvents
         $connection.Create($script:testForm)
         
-        # Note: Web resource validation is disabled in mock tests because
-        # FakeXrmEasy doesn't support RetrieveUnpublished and we don't have webresource metadata
-        # The cmdlets will catch validation in try/catch and skip for mock scenarios
+        # Helper function to reset form XML to initial state
+        function Reset-TestFormXml {
+            $script:testForm["formxml"] = [string]$global:testFormXmlWithEvents
+            $connection.Update($script:testForm)
+        }
     }
 
     Context 'Get-DataverseFormLibrary' {
@@ -109,7 +111,9 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         }
 
         It "Web resource validation in mock tests" {
-            # In mock tests, web resource validation is bypassed
+            # Note: Web resource validation is disabled in mock tests because
+            # FakeXrmEasy doesn't support RetrieveUnpublished and we don't have webresource metadata
+            # The cmdlets will catch validation in try/catch and skip for mock scenarios
             # This test just verifies the cmdlet works with any library name
             $result = Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "any/resource.js" -SkipPublish
             
@@ -129,9 +133,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
 
     Context 'Remove-DataverseFormLibrary' {
         BeforeEach {
-            # Reset form to have the initial libraries
-            $script:testForm["formxml"] = [string]$global:testFormXmlWithEvents
-            $connection.Update($script:testForm)
+            Reset-TestFormXml
         }
 
         It "Removes a library by name" {
@@ -327,9 +329,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
 
     Context 'Remove-DataverseFormEventHandler - Form Events' {
         BeforeEach {
-            # Reset form to have the initial events
-            $script:testForm["formxml"] = [string]$global:testFormXmlWithEvents
-            $connection.Update($script:testForm)
+            Reset-TestFormXml
         }
 
         It "Removes a form-level handler by unique ID" {
@@ -371,9 +371,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
 
     Context 'Remove-DataverseFormEventHandler - Control Events' {
         BeforeEach {
-            # Reset form to have the initial events
-            $script:testForm["formxml"] = [string]$global:testFormXmlWithEvents
-            $connection.Update($script:testForm)
+            Reset-TestFormXml
         }
 
         It "Removes a control-level handler" {

@@ -344,13 +344,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (!QueryHelpers.IsNotFoundException(ex))
                 {
                     // Some other error - in test scenarios, this might be "not implemented"
-                    WriteVerbose($"RetrieveUnpublished not supported or other error: {ex.Message}");
+                    WriteVerbose($"Web resource validation skipped due to RetrieveUnpublished not being supported in test environment: {ex.Message}");
                 }
             }
             catch (Exception ex)
             {
                 // For testing scenarios where RetrieveUnpublished is not supported
-                WriteVerbose($"RetrieveUnpublished exception: {ex.Message}");
+                WriteVerbose($"Web resource validation skipped due to exception: {ex.Message}");
             }
 
             // Try published version
@@ -380,8 +380,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 // In test/mock scenarios, the query might fail entirely
                 // Log it but continue (validation will happen in real environment)
-                WriteVerbose($"Web resource query failed (test/mock scenario?): {ex.Message}");
-                WriteVerbose($"Skipping web resource validation - ensure '{webResourceName}' exists in target environment");
+                WriteVerbose($"Web resource validation bypassed in test/mock environment: {ex.Message}");
+                WriteVerbose($"Please ensure '{webResourceName}' exists in the target environment");
             }
         }
     }

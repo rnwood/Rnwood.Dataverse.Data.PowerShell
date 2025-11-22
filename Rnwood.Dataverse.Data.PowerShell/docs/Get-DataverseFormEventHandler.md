@@ -14,7 +14,7 @@ Retrieves event handlers from a Dataverse form (form-level or control-level even
 
 ```
 Get-DataverseFormEventHandler -FormId <Guid> [-EventName <String>] [-ControlId <String>] [-TabName <String>]
- [-SectionName <String>] [-HandlerUniqueId <Guid>] [-Connection <ServiceClient>] 
+ [-SectionName <String>] [-HandlerUniqueId <Guid>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -73,7 +73,14 @@ The Dataverse connection to use.
 
 ```yaml
 Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
 ```
 
 ### -ControlId
@@ -81,7 +88,14 @@ The control ID for retrieving control-level events. Requires TabName and Section
 
 ```yaml
 Type: String
+Parameter Sets: (All)
+Aliases:
+
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
 ```
 
 ### -EventName
@@ -89,7 +103,14 @@ Filter handlers by event name (e.g., onload, onsave, onchange).
 
 ```yaml
 Type: String
+Parameter Sets: (All)
+Aliases:
+
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
 ```
 
 ### -FormId
@@ -97,7 +118,14 @@ The ID of the form to retrieve handlers from.
 
 ```yaml
 Type: Guid
+Parameter Sets: (All)
+Aliases:
+
 Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
 ```
 
 ### -HandlerUniqueId
@@ -105,7 +133,14 @@ Filter by a specific handler's unique ID.
 
 ```yaml
 Type: Guid
+Parameter Sets: (All)
+Aliases:
+
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
 ```
 
 ### -SectionName
@@ -113,7 +148,14 @@ The section name containing the control (required when ControlId is specified).
 
 ```yaml
 Type: String
+Parameter Sets: (All)
+Aliases:
+
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
 ```
 
 ### -TabName
@@ -121,15 +163,44 @@ The tab name containing the control (required when ControlId is specified).
 
 ```yaml
 Type: String
+Parameter Sets: (All)
+Aliases:
+
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Guid
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
-Returns objects with FormId, EventName, ControlId (null for form events), TabName, SectionName, FunctionName, LibraryName, HandlerUniqueId, Enabled, Parameters, and PassExecutionContext properties.
+## NOTES
 
 ## RELATED LINKS
+
 [Set-DataverseFormEventHandler](Set-DataverseFormEventHandler.md)
 [Remove-DataverseFormEventHandler](Remove-DataverseFormEventHandler.md)
 [Get-DataverseFormLibrary](Get-DataverseFormLibrary.md)

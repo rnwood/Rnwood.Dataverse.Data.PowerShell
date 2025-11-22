@@ -14,7 +14,7 @@ Adds or updates a script library in a Dataverse form.
 
 ```
 Set-DataverseFormLibrary -FormId <Guid> -LibraryName <String> [-LibraryUniqueId <Guid>] [-SkipPublish]
- [-Connection <ServiceClient>] [-WhatIf] [-Confirm] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -61,8 +61,7 @@ PS C:\> )
 PS C:\> foreach ($lib in $libraries) {
 PS C:\>     Set-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName $lib -SkipPublish
 PS C:\> }
-PS C:\> # Publish once after all changes
-PS C:\> Publish-DataverseEntity -Connection $c -EntityName "contact"
+PS C:\> # Note: Use Publish-DataverseAllCustomizations or restart the Dataverse environment to publish changes
 ```
 
 Adds multiple libraries efficiently by skipping publish and publishing once at the end.
@@ -76,13 +75,13 @@ Previews the library addition without making changes.
 
 ## PARAMETERS
 
-### -Connection
-The Dataverse connection to use.
+### -Confirm
+Prompts for confirmation before adding or updating the library.
 
 ```yaml
-Type: ServiceClient
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
+Aliases: cf
 
 Required: False
 Position: Named
@@ -91,13 +90,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts for confirmation before adding or updating the library.
+### -Connection
+The Dataverse connection to use.
 
 ```yaml
-Type: SwitchParameter
+Type: ServiceClient
 Parameter Sets: (All)
-Aliases: cf
+Aliases:
 
 Required: False
 Position: Named
@@ -181,19 +180,30 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ### System.Guid
-You can pipe form IDs to this cmdlet.
-
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
-Returns an object with FormId, Name, and LibraryUniqueId properties.
-
 ## NOTES
 - The web resource must exist in the environment (published or unpublished) before adding it to a form.
 - If the library already exists on the form, it will be updated with the new unique ID if provided.
@@ -201,6 +211,7 @@ Returns an object with FormId, Name, and LibraryUniqueId properties.
 - The entity is automatically published after the change unless -SkipPublish is used.
 
 ## RELATED LINKS
+
 [Get-DataverseFormLibrary](Get-DataverseFormLibrary.md)
 [Remove-DataverseFormLibrary](Remove-DataverseFormLibrary.md)
 [Set-DataverseFormEventHandler](Set-DataverseFormEventHandler.md)

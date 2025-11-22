@@ -14,14 +14,14 @@ Removes a script library from a Dataverse form.
 
 ### ByName
 ```
-Remove-DataverseFormLibrary -FormId <Guid> -LibraryName <String> [-SkipPublish]
- [-Connection <ServiceClient>] [-WhatIf] [-Confirm] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Remove-DataverseFormLibrary -FormId <Guid> -LibraryName <String> [-SkipPublish] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### ByUniqueId
 ```
-Remove-DataverseFormLibrary -FormId <Guid> -LibraryUniqueId <Guid> [-SkipPublish]
- [-Connection <ServiceClient>] [-WhatIf] [-Confirm] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Remove-DataverseFormLibrary -FormId <Guid> -LibraryUniqueId <Guid> [-SkipPublish] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -64,20 +64,34 @@ Removes multiple libraries matching a pattern.
 
 ## PARAMETERS
 
-### -Connection
-The Dataverse connection to use.
-
-```yaml
-Type: ServiceClient
-Required: False
-```
-
 ### -Confirm
 Prompts for confirmation before removing the library.
 
 ```yaml
 Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Connection
+The Dataverse connection to use.
+
+```yaml
+Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
 ```
 
 ### -FormId
@@ -85,7 +99,14 @@ The ID of the form to remove the library from.
 
 ```yaml
 Type: Guid
+Parameter Sets: (All)
+Aliases:
+
 Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
 ```
 
 ### -LibraryName
@@ -94,7 +115,13 @@ The name of the library to remove.
 ```yaml
 Type: String
 Parameter Sets: ByName
+Aliases:
+
 Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
 ```
 
 ### -LibraryUniqueId
@@ -103,7 +130,13 @@ The unique ID of the library to remove.
 ```yaml
 Type: Guid
 Parameter Sets: ByUniqueId
+Aliases:
+
 Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
 ```
 
 ### -SkipPublish
@@ -111,7 +144,14 @@ If specified, the entity will not be published after removing the library.
 
 ```yaml
 Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
 ```
 
 ### -WhatIf
@@ -119,9 +159,43 @@ Shows what would happen if the cmdlet runs.
 
 ```yaml
 Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### System.Guid
+## OUTPUTS
+
+### System.Object
+## NOTES
+
 ## RELATED LINKS
+
 [Get-DataverseFormLibrary](Get-DataverseFormLibrary.md)
 [Set-DataverseFormLibrary](Set-DataverseFormLibrary.md)
