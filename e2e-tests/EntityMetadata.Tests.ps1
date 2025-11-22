@@ -23,47 +23,10 @@ Describe "Entity Metadata E2E Tests" {
             
         $ErrorActionPreference = "Stop"
         $ConfirmPreference = 'None'  # Suppress all confirmation prompts in non-interactive mode
-        $VerbosePreference = 'Continue'  # Enable verbose output
-          
-        # Retry helper function with exponential backoff
-        function Invoke-WithRetry {
-            param(
-                [Parameter(Mandatory = $true)]
-                [scriptblock]$ScriptBlock,
-                [int]$MaxRetries = 5,
-                [int]$InitialDelaySeconds = 10
-            )
-                
-            $attempt = 0
-            $delay = $InitialDelaySeconds
-                
-            while ($attempt -lt $MaxRetries) {
-                try {
-                    $attempt++
-                    Write-Verbose "Attempt $attempt of $MaxRetries"
-                    & $ScriptBlock
-                    return  # Success, exit function
-                }
-                catch {
-                    # Check if this is an EntityCustomization operation error
-                    if ($_.Exception.Message -like "*Cannot start the requested operation*EntityCustomization*") {
-                        Write-Warning "EntityCustomization operation conflict detected. Waiting 2 minutes before retry without incrementing attempt count..."
-                        $attempt--  # Don't count this as a retry attempt
-                        Start-Sleep -Seconds 120
-                        continue
-                    }
-                    
-                    if ($attempt -eq $MaxRetries) {
-                        Write-Error "All $MaxRetries attempts failed. Last error: $_"
-                        throw
-                    }
-                        
-                    Write-Warning "Attempt $attempt failed: $_. Retrying in $delay seconds..."
-                    Start-Sleep -Seconds $delay
-                    $delay = $delay * 2  # Exponential backoff
-                }
-            }
-        }
+        $VerbosePreference = 'SilentlyContinue'  # Reduce noise; enable 'Continue' for debugging if needed
+        
+        # Import common utilities
+        . "$PSScriptRoot/Common.ps1"
             
         try {
             $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
@@ -97,7 +60,7 @@ Describe "Entity Metadata E2E Tests" {
                 displayname     = "E2E Test Icon $testRunId"
                 webresourcetype = 11  # SVG
                 content         = $svgBase64
-            } | set-dataverserecord -Connection $connection -TableName webresource -Verbose
+            } | set-dataverserecord -Connection $connection -TableName webresource
                     
             Write-Host "  ✓ Created web resource: $webResourceName1"
                  
@@ -108,13 +71,13 @@ Describe "Entity Metadata E2E Tests" {
                 displayname     = "E2E Test Icon Updated $testRunId"
                 webresourcetype = 11  # SVG
                 content         = $svgBase64
-            } | set-dataverserecord -Connection $connection -TableName webresource -Verbose
+            } | set-dataverserecord -Connection $connection -TableName webresource
                   
             Write-Host "  ✓ Created web resource: $webResourceName2"
               
             Write-Host "Step 1: Creating custom entity with all features..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                     
                 Set-DataverseEntityMetadata `
                     -Connection $connection `
@@ -138,7 +101,7 @@ Describe "Entity Metadata E2E Tests" {
                 
             Write-Host "Step 2: Reading entity metadata..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $script:entity = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName
                     
                 if (-not $script:entity) {
@@ -158,7 +121,7 @@ Describe "Entity Metadata E2E Tests" {
                 
             Write-Host "Step 3: Updating entity metadata..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                     
                 Set-DataverseEntityMetadata `
                     -Connection $connection `
@@ -172,7 +135,7 @@ Describe "Entity Metadata E2E Tests" {
                 
             Write-Host "Step 4: Verifying update..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $script:updatedEntity = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName
                     
                 if ($script:updatedEntity.DisplayName.UserLocalizedLabel.Label -ne "E2E Test Entity (Updated)") {
@@ -186,7 +149,7 @@ Describe "Entity Metadata E2E Tests" {
                 
             Write-Host "Step 5: Testing EntityMetadata object update..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                     
                 $script:entityObj = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName
                 $script:entityObj.Description = New-Object Microsoft.Xrm.Sdk.Label
@@ -198,7 +161,7 @@ Describe "Entity Metadata E2E Tests" {
                 
             Write-Host "Step 6: Cleanup - Deleting entity..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                     
                 Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
             }
@@ -206,7 +169,7 @@ Describe "Entity Metadata E2E Tests" {
                 
             Write-Host "Step 7: Verifying deletion..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $script:deletedEntity = Get-DataverseEntityMetadata -Connection $connection | Where-Object { $_.LogicalName -eq $entityName }
                 if ($script:deletedEntity) {
                     throw "Entity still exists after deletion"
@@ -216,7 +179,7 @@ Describe "Entity Metadata E2E Tests" {
                 
             Write-Host "Step 8: Cleanup any old test entities from previous failed runs..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 
                 # Only clean up entities older than 1 hour to avoid interfering with concurrent tests
                 $cutoffTime = [DateTime]::UtcNow.AddHours(-1)
@@ -235,7 +198,7 @@ Describe "Entity Metadata E2E Tests" {
                         try {
                             Write-Host "  Removing old entity: $($entity.LogicalName)"
                             Invoke-WithRetry {
-                                Wait-DataversePublish -Connection $connection -Verbose
+                                Wait-DataversePublish -Connection $connection
                                 Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
                             }
                         }

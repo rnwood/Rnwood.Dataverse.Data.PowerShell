@@ -102,7 +102,7 @@ Describe "RecordAccess E2E Tests" {
                 Write-Host "Verified: Second user in access list"
                 
                 Write-Host "`n=== Testing Set-DataverseRecordAccess with -Replace ==="
-                Set-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -Principal $secondUserId -AccessRights ([Microsoft.Crm.Sdk.Messages.AccessRights]::DeleteAccess) -Replace -Confirm:$false -Verbose
+                Set-DataverseRecordAccess -Connection $connection -TableName contact -Id $contactId -Principal $secondUserId -AccessRights ([Microsoft.Crm.Sdk.Messages.AccessRights]::DeleteAccess) -Replace -Confirm:$false
                 Write-Host "Replaced access with only DeleteAccess"
                 
                 # Add a small delay to ensure the change is propagated

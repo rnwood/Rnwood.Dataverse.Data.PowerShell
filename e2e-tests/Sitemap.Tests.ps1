@@ -19,50 +19,23 @@ Describe "Sitemap Manipulation" {
     }
 
     It "Can perform full lifecycle of sitemap manipulation including entries" {
+        # Suppress StandardOutputEncoding errors that can occur when pwsh runs without redirection
+        $ErrorActionPreference = "Continue"
+        
         pwsh -noninteractive -noprofile -command {
+            # Suppress StandardOutputEncoding errors  
+            try {
+                [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+            } catch {
+                # Ignore errors setting output encoding in non-redirected contexts
+            }
+            
             $env:PSModulePath = $env:ChildProcessPSModulePath
            
             Import-Module Rnwood.Dataverse.Data.PowerShell
 
-            # Retry helper function with exponential backoff
-            function Invoke-WithRetry {
-                param(
-                    [Parameter(Mandatory = $true)]
-                    [scriptblock]$ScriptBlock,
-                    [int]$MaxRetries = 5,
-                    [int]$InitialDelaySeconds = 10
-                )
-
-                $attempt = 0
-                $delay = $InitialDelaySeconds
-
-                while ($attempt -lt $MaxRetries) {
-                    try {
-                        $attempt++
-                        Write-Verbose "Attempt $attempt of $MaxRetries"
-                        & $ScriptBlock
-                        return  # Success
-                    }
-                    catch {
-                        # Check if this is an EntityCustomization operation error
-                        if ($_.Exception.Message -like "*Cannot start the requested operation*EntityCustomization*") {
-                            Write-Warning "EntityCustomization operation conflict detected. Waiting 2 minutes before retry without incrementing attempt count..."
-                            $attempt--  # Don't count this as a retry attempt
-                            Start-Sleep -Seconds 120
-                            continue
-                        }
-                        
-                        if ($attempt -eq $MaxRetries) {
-                            Write-Error "All $MaxRetries attempts failed. Last error: $_"
-                            throw
-                        }
-
-                        Write-Warning "Attempt $attempt failed: $_. Retrying in $delay seconds..."
-                        Start-Sleep -Seconds $delay
-                        $delay = $delay * 2
-                    }
-                }
-            }
+            # Import common utilities
+            . "$PSScriptRoot/Common.ps1"
 
             try {
                 # Connect to environment
@@ -78,7 +51,7 @@ Describe "Sitemap Manipulation" {
                 # --- CLEANUP: Remove any previously failed test sitemaps ---
                 Write-Host "Cleaning up any existing test sitemaps from previous failed runs..."
                 $existingSitemaps = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Get-DataverseSitemap -Connection $connection | Where-Object {
                         $_.UniqueName -like "test_sitemap_*"
                     }
@@ -88,7 +61,7 @@ Describe "Sitemap Manipulation" {
                     Write-Host "  Removing old sitemap: $($existingSitemap.UniqueName) (ID: $($existingSitemap.Id))"
                     try {
                         Invoke-WithRetry {
-                            Wait-DataversePublish -Connection $connection -Verbose
+                            Wait-DataversePublish -Connection $connection
                             Remove-DataverseSitemap -Connection $connection -Id $existingSitemap.Id -IfExists -Confirm:$false
                         }
                     } catch {
@@ -120,7 +93,7 @@ Describe "Sitemap Manipulation" {
 "@
                 
                 $sitemapId = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Set-DataverseSitemap -Connection $connection -Name $sitemapName -UniqueName $sitemapUniqueName -SitemapXml $sitemapXml -PassThru -Confirm:$false
                 }
                 
@@ -132,7 +105,7 @@ Describe "Sitemap Manipulation" {
                 # --- TEST 2: Retrieve the created sitemap ---
                 Write-Host "`nTest 2: Retrieving sitemap by UniqueName..."
                 $retrievedSitemap = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Get-DataverseSitemap -Connection $connection -UniqueName $sitemapUniqueName
                 }
                 
@@ -150,7 +123,7 @@ Describe "Sitemap Manipulation" {
                 # --- TEST 3: Retrieve sitemap by ID ---
                 Write-Host "`nTest 3: Retrieving sitemap by ID..."
                 $retrievedById = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Get-DataverseSitemap -Connection $connection -Id $sitemapId
                 }
                 
@@ -168,18 +141,18 @@ Describe "Sitemap Manipulation" {
                 
                 # Get current sitemap to retrieve XML
                 $currentSitemap = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Get-DataverseSitemap -Connection $connection -Id $sitemapId
                 }
                 
                 # Update name along with XML to ensure proper Dataverse handling
                 Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Set-DataverseSitemap -Connection $connection -Id $sitemapId -Name $updatedName -SitemapXml $currentSitemap.SitemapXml -Confirm:$false
                 }
                 
                 $updatedSitemap = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Get-DataverseSitemap -Connection $connection -Id $sitemapId
                 }
                 if ($updatedSitemap.Name -ne $updatedName) {
@@ -192,7 +165,7 @@ Describe "Sitemap Manipulation" {
                 
                 # Get all entries
                 $allEntries = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId
                 }
                 if ($allEntries.Count -eq 0) {
@@ -202,7 +175,7 @@ Describe "Sitemap Manipulation" {
                 
                 # Get Area entries
                 $areaEntries = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Area
                 }
                 if ($areaEntries.Count -eq 0) {
@@ -212,7 +185,7 @@ Describe "Sitemap Manipulation" {
                 
                 # Get Group entries
                 $groupEntries = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Group
                 }
                 if ($groupEntries.Count -eq 0) {
@@ -222,7 +195,7 @@ Describe "Sitemap Manipulation" {
                 
                 # Get SubArea entries
                 $subAreaEntries = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea
                 }
                 if ($subAreaEntries.Count -eq 0) {
@@ -234,7 +207,7 @@ Describe "Sitemap Manipulation" {
                 Write-Host "`nTest 6: Adding new Area entry..."
                 $newAreaId = "area_new_$testRunId"
                 $newAreaEntry = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Area `
                     -EntryId $newAreaId `
                     -Titles @{ 1033 = "New Test Area $testRunId" } `
@@ -249,7 +222,7 @@ Describe "Sitemap Manipulation" {
                 
                 # Verify new area exists
                 $verifyArea = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Area -EntryId $newAreaId
                 }
                 if (-not $verifyArea) {
@@ -261,7 +234,7 @@ Describe "Sitemap Manipulation" {
                 Write-Host "`nTest 7: Adding Group to new Area..."
                 $newGroupId = "group_new_$testRunId"
                 $newGroupEntry = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Group `
                     -EntryId $newGroupId `
                     -ParentAreaId $newAreaId `
@@ -278,7 +251,7 @@ Describe "Sitemap Manipulation" {
                 Write-Host "`nTest 8: Adding SubArea to new Group..."
                 $newSubAreaId = "subarea_new_$testRunId"
                 $newSubAreaEntry = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea `
                     -EntryId $newSubAreaId `
                     -ParentAreaId $newAreaId `
@@ -297,7 +270,7 @@ Describe "Sitemap Manipulation" {
                 # --- TEST 9: Update an existing entry ---
                 Write-Host "`nTest 9: Updating SubArea entry..."
                 $updatedSubAreaEntry = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea `
                     -EntryId $newSubAreaId `
                     -Titles @{ 1033 = "Updated SubArea $testRunId" } `
@@ -310,7 +283,7 @@ Describe "Sitemap Manipulation" {
                 
                 # Verify update
                 $verifyUpdatedSubArea = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea -EntryId $newSubAreaId
                 }
                 $updatedTitle = $verifyUpdatedSubArea.Titles[1033]
@@ -322,14 +295,14 @@ Describe "Sitemap Manipulation" {
                 # --- TEST 10: Publish sitemap ---
                 Write-Host "`nTest 10: Publishing sitemap..."
                 Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Set-DataverseSitemap -Connection $connection -Id $sitemapId -Name $updatedName -Publish -Confirm:$false
                 }
                 Write-Host "Successfully published sitemap"
                 
                 # Verify published sitemap is retrievable
                 $publishedSitemap = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Get-DataverseSitemap -Connection $connection -Id $sitemapId -Published
                 }
                 if (-not $publishedSitemap) {
@@ -384,13 +357,13 @@ Describe "Sitemap Manipulation" {
                 # --- TEST 11: Remove SubArea entry ---
                 Write-Host "`nTest 11: Removing SubArea entry..."
                 Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Remove-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea -EntryId $newSubAreaId -Confirm:$false
                 }
                 
                 # Verify deletion
                 $deletedSubArea = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea -EntryId $newSubAreaId
                 }
                 if ($deletedSubArea) {
@@ -401,14 +374,14 @@ Describe "Sitemap Manipulation" {
                 # --- CLEANUP: Remove the test sitemap ---
                 Write-Host "`nCleaning up: Removing test sitemap..."
                 Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Remove-DataverseSitemap -Connection $connection -Id $sitemapId -Confirm:$false
                 }
                 Write-Host "Successfully removed test sitemap"
                 
                 # Verify deletion
                 $deletedSitemap = Invoke-WithRetry {
-                    Wait-DataversePublish -Connection $connection -Verbose
+                    Wait-DataversePublish -Connection $connection
                     Get-DataverseSitemap -Connection $connection -Id $sitemapId
                 }
                 if ($deletedSitemap) {

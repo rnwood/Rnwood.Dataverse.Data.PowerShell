@@ -23,49 +23,10 @@ Describe "Relationship Metadata E2E Tests" {
     It "Can create, read, update, and delete OneToMany and ManyToMany relationships comprehensively" {
         $ErrorActionPreference = "Stop"
         $ConfirmPreference = 'None'  # Suppress all confirmation prompts in non-interactive mode
-        $VerbosePreference = 'Continue'  # Enable verbose output
-            
-
-            
-        # Retry helper function with exponential backoff
-        function Invoke-WithRetry {
-            param(
-                [Parameter(Mandatory = $true)]
-                [scriptblock]$ScriptBlock,
-                [int]$MaxRetries = 5,
-                [int]$InitialDelaySeconds = 10
-            )
-                
-            $attempt = 0
-            $delay = $InitialDelaySeconds
-                
-            while ($attempt -lt $MaxRetries) {
-                try {
-                    $attempt++
-                    Write-Verbose "Attempt $attempt of $MaxRetries"
-                    & $ScriptBlock
-                    return  # Success, exit function
-                }
-                catch {
-                    # Check if this is an EntityCustomization operation error
-                    if ($_.Exception.Message -like "*Cannot start the requested operation*EntityCustomization*") {
-                        Write-Warning "EntityCustomization operation conflict detected. Waiting 2 minutes before retry without incrementing attempt count..."
-                        $attempt--  # Don't count this as a retry attempt
-                        Start-Sleep -Seconds 120
-                        continue
-                    }
-                    
-                    if ($attempt -eq $MaxRetries) {
-                        Write-Error "All $MaxRetries attempts failed. Last error: $_"
-                        throw
-                    }
-                        
-                    Write-Warning "Attempt $attempt failed: $_. Retrying in $delay seconds..."
-                    Start-Sleep -Seconds $delay
-                    $delay = $delay * 2  # Exponential backoff
-                }
-            }
-        }
+        $VerbosePreference = 'SilentlyContinue'  # Reduce noise; enable 'Continue' for debugging if needed
+        
+        # Import common utilities
+        . "$PSScriptRoot/Common.ps1"
             
         try {
             $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
@@ -82,7 +43,7 @@ Describe "Relationship Metadata E2E Tests" {
             Write-Host "Test entities: $entity1Name, $entity2Name"
             
             Write-Host "Step 0: Cleanup any old test entities from previous failed runs..."
-            Wait-DataversePublish -Connection $connection -Verbose
+            Wait-DataversePublish -Connection $connection
             
             # Only clean up entities older than 1 hour to avoid interfering with concurrent tests
             $cutoffTime = [DateTime]::UtcNow.AddHours(-1)
@@ -100,7 +61,7 @@ Describe "Relationship Metadata E2E Tests" {
                 foreach ($entity in $oldEntities) {
                     try {
                         Write-Host "  Removing old entity: $($entity.LogicalName)"
-                        Wait-DataversePublish -Connection $connection -Verbose
+                        Wait-DataversePublish -Connection $connection
                         Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction Stop
                     }
                     catch {
@@ -113,12 +74,12 @@ Describe "Relationship Metadata E2E Tests" {
             }
             
             Write-Host "  Waiting for all cleanup operations to complete..."
-            Wait-DataversePublish -Connection $connection -Verbose
+            Wait-DataversePublish -Connection $connection
             Write-Host "  Cleanup complete"
                 
             Write-Host "Step 1: Creating first test entity..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseEntityMetadata -Connection $connection `
                     -EntityName $entity1Name `
                     -SchemaName $entity1Schema `
@@ -132,7 +93,7 @@ Describe "Relationship Metadata E2E Tests" {
                 
             Write-Host "Step 2: Creating second test entity..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseEntityMetadata -Connection $connection `
                     -EntityName $entity2Name `
                     -SchemaName $entity2Schema `
@@ -149,7 +110,7 @@ Describe "Relationship Metadata E2E Tests" {
             $lookupSchemaName = "new_Entity1Id"
             
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseRelationshipMetadata `
                     -Connection $connection `
                     -SchemaName $relName1 `
@@ -176,7 +137,7 @@ Describe "Relationship Metadata E2E Tests" {
             $parentLookupSchemaName = "new_ParentId"
             
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseRelationshipMetadata `
                     -Connection $connection `
                     -SchemaName $selfRelName `
@@ -196,7 +157,7 @@ Describe "Relationship Metadata E2E Tests" {
             $m2mRelName = "${entity1Name}_${entity2Name}_m2m"
             
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseRelationshipMetadata `
                     -Connection $connection `
                     -SchemaName $m2mRelName `
@@ -210,7 +171,7 @@ Describe "Relationship Metadata E2E Tests" {
                 
             Write-Host "Step 6: Reading and verifying relationships..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $allRelationships = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name
                 
                 Write-Verbose "Retrieved $($allRelationships.Count) relationships"
@@ -239,7 +200,7 @@ Describe "Relationship Metadata E2E Tests" {
                 
             Write-Host "Step 7: Reading specific OneToMany relationship..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $rel1 = Get-DataverseRelationshipMetadata -Connection $connection -RelationshipName $relName1
                 
                 if ($rel1.RelationshipType -ne 'OneToManyRelationship') {
@@ -256,7 +217,7 @@ Describe "Relationship Metadata E2E Tests" {
                 
             Write-Host "Step 8: Reading specific ManyToMany relationship..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $m2mRel = Get-DataverseRelationshipMetadata -Connection $connection -RelationshipName $m2mRelName
                 
                 if ($m2mRel.RelationshipType -ne 'ManyToManyRelationship') {
@@ -267,7 +228,7 @@ Describe "Relationship Metadata E2E Tests" {
                 
             Write-Host "Step 9: Updating OneToMany relationship cascade behaviors..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Set-DataverseRelationshipMetadata `
                     -Connection $connection `
                     -SchemaName $relName1 `
@@ -282,7 +243,7 @@ Describe "Relationship Metadata E2E Tests" {
                 
             Write-Host "Step 10: Verifying relationship update..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $updatedRel = Get-DataverseRelationshipMetadata -Connection $connection -RelationshipName $relName1
                 
                 if ($updatedRel.CascadeConfiguration.Delete -ne 'Cascade') {
@@ -296,7 +257,7 @@ Describe "Relationship Metadata E2E Tests" {
                 
             Write-Host "Step 11: Testing relationship retrieval with filters..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $oneToManyRels = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name -RelationshipType OneToMany
                 $manyToManyRels = Get-DataverseRelationshipMetadata -Connection $connection -EntityName $entity1Name -RelationshipType ManyToMany
                 
@@ -309,20 +270,20 @@ Describe "Relationship Metadata E2E Tests" {
                 
             Write-Host "Step 13: Cleanup - Deleting test entities..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity2Name -Confirm:$false
             }
             Write-Host "✓ Entity 2 deleted"
             
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity1Name -Confirm:$false
             }
             Write-Host "✓ Entity 1 deleted"
                 
             Write-Host "Step 14: Verifying cleanup..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $remainingEntities = Get-DataverseEntityMetadata -Connection $connection | Where-Object { 
                     $_.LogicalName -eq $entity1Name -or $_.LogicalName -eq $entity2Name 
                 }

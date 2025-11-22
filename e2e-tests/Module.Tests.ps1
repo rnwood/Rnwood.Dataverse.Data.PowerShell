@@ -427,7 +427,7 @@ Describe "Module" {
                 
                 # Test: IfNewer flag (should not update since file is older)
                 Start-Sleep -Milliseconds 100
-                Set-DataverseWebResource -Connection $connection -Name $webResourceName -Path $tempJsFile -IfNewer -Verbose | Out-Null
+                Set-DataverseWebResource -Connection $connection -Name $webResourceName -Path $tempJsFile -IfNewer | Out-Null
                 Write-Host "Tested IfNewer flag"
                 
                 # Cleanup temp files

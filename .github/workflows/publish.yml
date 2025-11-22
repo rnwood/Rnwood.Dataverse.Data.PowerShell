@@ -11,7 +11,7 @@ on:
 
 jobs:
   test:
-    timeout-minutes: 60  # Fail fast if job exceeds 60 minutes
+    timeout-minutes: 90  # Fail fast if job exceeds 90 minutes
     strategy:
       matrix:
         include:
@@ -314,7 +314,7 @@ jobs:
       - if: ${{ matrix.powershell_version != '5' }}
         name: Test - pwsh (Standard + E2E in parallel)
         id: test-pwsh
-        timeout-minutes: 45  # Tests expected to complete in < 45 minutes
+        timeout-minutes: 90  # Tests expected to complete in < 90 minutes
         shell: pwsh
         env:
           E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
@@ -327,7 +327,6 @@ jobs:
           Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
           
           # Start standard tests and E2E tests in parallel
-          Write-Host "Starting standard tests and E2E tests in parallel..." -ForegroundColor Cyan
           
           # Capture current working directory to pass to background jobs
           $workingDir = Get-Location
@@ -341,14 +340,13 @@ jobs:
               
               $env:TESTMODULEPATH = $modulePath
               
-              Write-Host "Discovering standard test files..."
               $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
-              Write-Host "Found $($testFiles.Count) standard test files to run in parallel"
               
               # Start a job for each test file
               $jobs = $testFiles | ForEach-Object {
                   $testFile = $_
-                  Start-Job -ScriptBlock {
+                  $testFileName = Split-Path $testFile -Leaf
+                  Start-Job -Name "StandardTest-$testFileName" -ScriptBlock {
                       param($testFilePath, $modulePath)
                       
                       $env:TESTMODULEPATH = $modulePath
@@ -357,7 +355,7 @@ jobs:
                       $config = New-PesterConfiguration
                       $config.Run.Path = $testFilePath
                       $config.Run.PassThru = $true
-                      $config.Output.Verbosity = 'Minimal'
+                      $config.Output.Verbosity = 'Normal'
                       $config.Should.ErrorAction = 'Continue'
                       
                       $result = Invoke-Pester -Configuration $config
@@ -375,8 +373,36 @@ jobs:
                   } -ArgumentList $testFile, $modulePath
               }
               
-              # Wait for all test file jobs to complete
-              $results = $jobs | Wait-Job | Receive-Job
+              # Wait for all test file jobs to complete with streaming output and timeout detection
+              $lastOutputTime = Get-Date
+              $noOutputThresholdSeconds = 300  # 5 minutes
+              
+              while ($jobs | Where-Object { $_.State -eq 'Running' }) {
+                  $hadOutput = $false
+                  foreach ($job in $jobs) {
+                      if ($job.HasMoreData) {
+                          $job | Receive-Job
+                          $hadOutput = $true
+                          $lastOutputTime = Get-Date
+                      }
+                  }
+                  
+                  # Check if we've had no output for too long
+                  $timeSinceLastOutput = (Get-Date) - $lastOutputTime
+                  if ($timeSinceLastOutput.TotalSeconds -gt $noOutputThresholdSeconds) {
+                      Write-Host "WARNING: No output for $($timeSinceLastOutput.TotalSeconds) seconds. Active jobs:" -ForegroundColor Yellow
+                      $runningJobs = $jobs | Where-Object { $_.State -eq 'Running' }
+                      foreach ($job in $runningJobs) {
+                          Write-Host "  - $($job.Name) (State: $($job.State), HasMoreData: $($job.HasMoreData))" -ForegroundColor Yellow
+                      }
+                      $lastOutputTime = Get-Date  # Reset timer after warning
+                  }
+                  
+                  Start-Sleep -Milliseconds 100
+              }
+              
+              # Get final results
+              $results = $jobs | Receive-Job
               $jobs | Remove-Job
               
               return $results
@@ -394,52 +420,166 @@ jobs:
               $env:E2ETESTS_CLIENTID = $e2eClientId
               $env:E2ETESTS_CLIENTSECRET = $e2eClientSecret
               
-              Write-Host "Running E2E tests (Module.Tests.ps1)..."
-              
               $config = New-PesterConfiguration
               $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
               $config.Run.PassThru = $true
-              $config.Output.Verbosity = 'Minimal'
+              $config.Output.Verbosity = 'Normal'
               $config.Filter.ExcludeTag = 'LongRunning'
               
               $result = Invoke-Pester -Configuration $config
               
-              # Check if we should also run metadata tests (Windows Latest only)
-              $shouldRunMetadataTests = ($osType -eq 'windows-latest' -and $psVersion -eq 'latest')
+              # Check if we should also run all other e2e tests (Windows Latest only)
+              $shouldRunAdditionalTests = ($osType -eq 'windows-latest' -and $psVersion -eq 'latest')
               
-              if ($shouldRunMetadataTests) {
-                  Write-Host "Running E2E Metadata tests (Windows Latest only)..."
-                  
-                  $metadataConfig = New-PesterConfiguration
-                  $metadataConfig.Run.Path = @(
+              if ($shouldRunAdditionalTests) {
+                  # Run Metadata tests SEQUENTIALLY (they cannot run in parallel)
+                  $metadataTests = @(
+                      'e2e-tests/AttributeMetadata.Tests.ps1',
                       'e2e-tests/EntityMetadata.Tests.ps1',
-                      'e2e-tests/AttributeMetadata.Tests.ps1', 
-                      'e2e-tests/RelationshipMetadata.Tests.ps1',
-                      'e2e-tests/OptionSetMetadata.Tests.ps1'
+                      'e2e-tests/OptionSetMetadata.Tests.ps1',
+                      'e2e-tests/RelationshipMetadata.Tests.ps1'
                   )
-                  $metadataConfig.Run.PassThru = $true
-                  $metadataConfig.Output.Verbosity = 'Minimal'
-                  $metadataConfig.Filter.ExcludeTag = 'LongRunning'
                   
-                  $metadataResult = Invoke-Pester -Configuration $metadataConfig
+                  $metadataResults = @()
+                  foreach ($testFile in $metadataTests) {
+                      $testConfig = New-PesterConfiguration
+                      $testConfig.Run.Path = $testFile
+                      $testConfig.Run.PassThru = $true
+                      $testConfig.Output.Verbosity = 'Normal'
+                      $testConfig.Filter.ExcludeTag = 'LongRunning'
+                      
+                      $testResult = Invoke-Pester -Configuration $testConfig
+                      $metadataResults += $testResult
+                  }
+                  
+                  # Run non-Metadata tests in PARALLEL
+                  $nonMetadataTests = @(
+                      'e2e-tests/AppModule.Tests.ps1',
+                      'e2e-tests/FormManipulation.Tests.ps1',
+                      'e2e-tests/InvokeDataverseRequest.Tests.ps1',
+                      'e2e-tests/PluginManagement.Tests.ps1',
+                      'e2e-tests/RecordAccess.Tests.ps1',
+                      'e2e-tests/Sitemap.Tests.ps1',
+                      'e2e-tests/SolutionComponent.Tests.ps1'
+                  )
+                  
+                  $nonMetadataJobs = $nonMetadataTests | ForEach-Object {
+                      $testFile = $_
+                      $testFileName = Split-Path $testFile -Leaf
+                      Start-Job -Name "E2E-NonMetadata-$testFileName" -ScriptBlock {
+                          param($testFilePath, $modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret)
+                          
+                          $env:TESTMODULEPATH = $modulePath
+                          $env:E2ETESTS_URL = $e2eUrl
+                          $env:E2ETESTS_CLIENTID = $e2eClientId
+                          $env:E2ETESTS_CLIENTSECRET = $e2eClientSecret
+                          
+                          $config = New-PesterConfiguration
+                          $config.Run.Path = $testFilePath
+                          $config.Run.PassThru = $true
+                          $config.Output.Verbosity = 'Normal'
+                          $config.Filter.ExcludeTag = 'LongRunning'
+                          
+                          $result = Invoke-Pester -Configuration $config
+                          
+                          # Return result with filename
+                          [PSCustomObject]@{
+                              File = (Split-Path $testFilePath -Leaf)
+                              TotalCount = $result.TotalCount
+                              PassedCount = $result.PassedCount
+                              FailedCount = $result.FailedCount
+                              SkippedCount = $result.SkippedCount
+                              DurationSeconds = $result.Duration.TotalSeconds
+                              Failed = $result.Failed
+                          }
+                      } -ArgumentList $testFile, $modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret
+                  }
+                  
+                  # Wait for non-Metadata tests with streaming output and timeout detection
+                  $lastOutputTime = Get-Date
+                  $noOutputThresholdSeconds = 300  # 5 minutes
+                  
+                  while ($nonMetadataJobs | Where-Object { $_.State -eq 'Running' }) {
+                      $hadOutput = $false
+                      foreach ($job in $nonMetadataJobs) {
+                          if ($job.HasMoreData) {
+                              $job | Receive-Job
+                              $hadOutput = $true
+                              $lastOutputTime = Get-Date
+                          }
+                      }
+                      
+                      # Check if we've had no output for too long
+                      $timeSinceLastOutput = (Get-Date) - $lastOutputTime
+                      if ($timeSinceLastOutput.TotalSeconds -gt $noOutputThresholdSeconds) {
+                          Write-Host "WARNING: No output for $($timeSinceLastOutput.TotalSeconds) seconds. Active E2E non-metadata jobs:" -ForegroundColor Yellow
+                          $runningJobs = $nonMetadataJobs | Where-Object { $_.State -eq 'Running' }
+                          foreach ($job in $runningJobs) {
+                              Write-Host "  - $($job.Name) (State: $($job.State), HasMoreData: $($job.HasMoreData))" -ForegroundColor Yellow
+                          }
+                          $lastOutputTime = Get-Date  # Reset timer after warning
+                      }
+                      
+                      Start-Sleep -Milliseconds 100
+                  }
+                  
+                  # Get final results
+                  $nonMetadataResults = $nonMetadataJobs | Receive-Job
+                  $nonMetadataJobs | Remove-Job
                   
                   # Combine results
                   return @{
                       ModuleTests = $result
-                      MetadataTests = $metadataResult
+                      MetadataTests = $metadataResults
+                      NonMetadataTests = $nonMetadataResults
                   }
               }
               
               return @{
                   ModuleTests = $result
                   MetadataTests = $null
+                  NonMetadataTests = $null
               }
           } -ArgumentList $env:TESTMODULEPATH, $env:E2ETESTS_URL, $env:E2ETESTS_CLIENTID, $env:E2ETESTS_CLIENTSECRET, "${{ matrix.os }}", "${{ matrix.powershell_version }}", $workingDir
           
-          # Wait for both jobs to complete
-          Write-Host "Waiting for standard tests and E2E tests to complete..."
-          $standardResults = Wait-Job $standardTestsJob | Receive-Job
-          $e2eResults = Wait-Job $e2eTestsJob | Receive-Job
+          # Wait for both jobs to complete and show progress
+          # Poll jobs to show streaming output with timeout detection
+          $lastOutputTime = Get-Date
+          $noOutputThresholdSeconds = 300  # 5 minutes
+          
+          while ($standardTestsJob.State -eq 'Running' -or $e2eTestsJob.State -eq 'Running') {
+              $hadOutput = $false
+              # Receive any available output without waiting
+              if ($standardTestsJob.HasMoreData) {
+                  $standardTestsJob | Receive-Job
+                  $hadOutput = $true
+                  $lastOutputTime = Get-Date
+              }
+              if ($e2eTestsJob.HasMoreData) {
+                  $e2eTestsJob | Receive-Job
+                  $hadOutput = $true
+                  $lastOutputTime = Get-Date
+              }
+              
+              # Check if we've had no output for too long
+              $timeSinceLastOutput = (Get-Date) - $lastOutputTime
+              if ($timeSinceLastOutput.TotalSeconds -gt $noOutputThresholdSeconds) {
+                  Write-Host "WARNING: No output for $($timeSinceLastOutput.TotalSeconds) seconds. Active outer jobs:" -ForegroundColor Yellow
+                  if ($standardTestsJob.State -eq 'Running') {
+                      Write-Host "  - StandardTests (State: $($standardTestsJob.State), HasMoreData: $($standardTestsJob.HasMoreData))" -ForegroundColor Yellow
+                  }
+                  if ($e2eTestsJob.State -eq 'Running') {
+                      Write-Host "  - E2ETests (State: $($e2eTestsJob.State), HasMoreData: $($e2eTestsJob.HasMoreData))" -ForegroundColor Yellow
+                  }
+                  $lastOutputTime = Get-Date  # Reset timer after warning
+              }
+              
+              Start-Sleep -Milliseconds 100
+          }
+          
+          # Get final results
+          $standardResults = $standardTestsJob | Receive-Job
+          $e2eResults = $e2eTestsJob | Receive-Job
           
           Remove-Job $standardTestsJob, $e2eTestsJob
           
@@ -501,21 +641,72 @@ jobs:
           
           if ($e2eResults.MetadataTests) {
               Write-Host ""
-              Write-Host "Metadata Tests:"
-              Write-Host "  Total:   $($e2eResults.MetadataTests.TotalCount)" -ForegroundColor White
-              Write-Host "  Passed:  $($e2eResults.MetadataTests.PassedCount)" -ForegroundColor Green
-              Write-Host "  Failed:  $($e2eResults.MetadataTests.FailedCount)" -ForegroundColor $(if ($e2eResults.MetadataTests.FailedCount -gt 0) { "Red" } else { "Green" })
-              Write-Host "  Skipped: $($e2eResults.MetadataTests.SkippedCount)" -ForegroundColor Yellow
-              Write-Host "  Duration: $($e2eResults.MetadataTests.Duration.TotalSeconds)s" -ForegroundColor White
+              Write-Host "Metadata E2E Tests (Sequential):"
               
-              if ($e2eResults.MetadataTests.FailedCount -gt 0) {
+              $totalMetadataTests = 0
+              $totalMetadataPassed = 0
+              $totalMetadataFailed = 0
+              $totalMetadataSkipped = 0
+              $totalMetadataDuration = 0
+              
+              foreach ($metadataResult in $e2eResults.MetadataTests) {
+                  $totalMetadataTests += $metadataResult.TotalCount
+                  $totalMetadataPassed += $metadataResult.PassedCount
+                  $totalMetadataFailed += $metadataResult.FailedCount
+                  $totalMetadataSkipped += $metadataResult.SkippedCount
+                  $totalMetadataDuration += $metadataResult.Duration.TotalSeconds
+              }
+              
+              Write-Host "  Total:   $totalMetadataTests" -ForegroundColor White
+              Write-Host "  Passed:  $totalMetadataPassed" -ForegroundColor Green
+              Write-Host "  Failed:  $totalMetadataFailed" -ForegroundColor $(if ($totalMetadataFailed -gt 0) { "Red" } else { "Green" })
+              Write-Host "  Skipped: $totalMetadataSkipped" -ForegroundColor Yellow
+              Write-Host "  Duration: $($totalMetadataDuration)s" -ForegroundColor White
+              
+              if ($totalMetadataFailed -gt 0) {
                   $hasFailures = $true
                   Write-Host ""
-                  Write-Host "Failed E2E Metadata Tests:" -ForegroundColor Red
-                  foreach ($test in $e2eResults.MetadataTests.Failed) {
-                      Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
-                      if ($test.ErrorRecord) {
-                          Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+                  Write-Host "Failed Metadata E2E Tests:" -ForegroundColor Red
+                  foreach ($metadataResult in $e2eResults.MetadataTests) {
+                      if ($metadataResult.FailedCount -gt 0) {
+                          foreach ($test in $metadataResult.Failed) {
+                              Write-Host "  - $($test.ExpandedPath)" -ForegroundColor Red
+                              if ($test.ErrorRecord) {
+                                  Write-Host "    $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+          
+          if ($e2eResults.NonMetadataTests) {
+              Write-Host ""
+              Write-Host "Non-Metadata E2E Tests (Parallel):"
+              
+              $totalNonMetadataTests = ($e2eResults.NonMetadataTests | Measure-Object -Property TotalCount -Sum).Sum
+              $totalNonMetadataPassed = ($e2eResults.NonMetadataTests | Measure-Object -Property PassedCount -Sum).Sum
+              $totalNonMetadataFailed = ($e2eResults.NonMetadataTests | Measure-Object -Property FailedCount -Sum).Sum
+              $totalNonMetadataSkipped = ($e2eResults.NonMetadataTests | Measure-Object -Property SkippedCount -Sum).Sum
+              $totalNonMetadataDuration = ($e2eResults.NonMetadataTests | Measure-Object -Property DurationSeconds -Sum).Sum
+              
+              Write-Host "  Total:   $totalNonMetadataTests" -ForegroundColor White
+              Write-Host "  Passed:  $totalNonMetadataPassed" -ForegroundColor Green
+              Write-Host "  Failed:  $totalNonMetadataFailed" -ForegroundColor $(if ($totalNonMetadataFailed -gt 0) { "Red" } else { "Green" })
+              Write-Host "  Skipped: $totalNonMetadataSkipped" -ForegroundColor Yellow
+              Write-Host "  Duration: $($totalNonMetadataDuration)s" -ForegroundColor White
+              
+              if ($totalNonMetadataFailed -gt 0) {
+                  $hasFailures = $true
+                  Write-Host ""
+                  Write-Host "Failed Non-Metadata E2E Tests:" -ForegroundColor Red
+                  foreach ($result in $e2eResults.NonMetadataTests | Where-Object { $_.FailedCount -gt 0 }) {
+                      Write-Host "  File: $($result.File)" -ForegroundColor Yellow
+                      foreach ($test in $result.Failed) {
+                          Write-Host "    - $($test.ExpandedPath)" -ForegroundColor Red
+                          if ($test.ErrorRecord) {
+                              Write-Host "      $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
+                          }
                       }
                   }
               }
@@ -530,7 +721,7 @@ jobs:
       - if:  ${{ matrix.powershell_version == '5' }}
         name: Test - powershell (Standard + E2E in parallel)
         id: test-powershell
-        timeout-minutes: 45  # Tests expected to complete in < 45 minutes
+        timeout-minutes: 90  # Tests expected to complete in < 90 minutes
         shell: powershell
         env:
           E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
@@ -542,7 +733,6 @@ jobs:
             Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
             
             # Start standard tests and E2E tests in parallel
-            Write-Host "Starting standard tests and E2E tests in parallel..." -ForegroundColor Cyan
             
             # Capture current working directory to pass to background jobs
             $workingDir = Get-Location
@@ -556,14 +746,13 @@ jobs:
                 
                 $env:TESTMODULEPATH = $modulePath
                 
-                Write-Host "Discovering standard test files..."
                 $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
-                Write-Host "Found $($testFiles.Count) standard test files to run in parallel"
                 
                 # Start a job for each test file
                 $jobs = $testFiles | ForEach-Object {
                     $testFile = $_
-                    Start-Job -ScriptBlock {
+                    $testFileName = Split-Path $testFile -Leaf
+                    Start-Job -Name "StandardTest-PS5-$testFileName" -ScriptBlock {
                         param($testFilePath, $modulePath)
                         
                         $env:TESTMODULEPATH = $modulePath
@@ -572,7 +761,7 @@ jobs:
                         $config = New-PesterConfiguration
                         $config.Run.Path = $testFilePath
                         $config.Run.PassThru = $true
-                        $config.Output.Verbosity = 'Minimal'
+                        $config.Output.Verbosity = 'Normal'
                         $config.Should.ErrorAction = 'Continue'
                         
                         $result = Invoke-Pester -Configuration $config
@@ -590,8 +779,36 @@ jobs:
                     } -ArgumentList $testFile, $modulePath
                 }
                 
-                # Wait for all test file jobs to complete
-                $results = $jobs | Wait-Job | Receive-Job
+                # Wait for all test file jobs to complete with streaming output and timeout detection
+                $lastOutputTime = Get-Date
+                $noOutputThresholdSeconds = 300  # 5 minutes
+                
+                while ($jobs | Where-Object { $_.State -eq 'Running' }) {
+                    $hadOutput = $false
+                    foreach ($job in $jobs) {
+                        if ($job.HasMoreData) {
+                            $job | Receive-Job
+                            $hadOutput = $true
+                            $lastOutputTime = Get-Date
+                        }
+                    }
+                    
+                    # Check if we've had no output for too long
+                    $timeSinceLastOutput = (Get-Date) - $lastOutputTime
+                    if ($timeSinceLastOutput.TotalSeconds -gt $noOutputThresholdSeconds) {
+                        Write-Host "WARNING: No output for $($timeSinceLastOutput.TotalSeconds) seconds. Active jobs:" -ForegroundColor Yellow
+                        $runningJobs = $jobs | Where-Object { $_.State -eq 'Running' }
+                        foreach ($job in $runningJobs) {
+                            Write-Host "  - $($job.Name) (State: $($job.State), HasMoreData: $($job.HasMoreData))" -ForegroundColor Yellow
+                        }
+                        $lastOutputTime = Get-Date  # Reset timer after warning
+                    }
+                    
+                    Start-Sleep -Milliseconds 100
+                }
+                
+                # Get final results
+                $results = $jobs | Receive-Job
                 $jobs | Remove-Job
                 
                 return $results
@@ -609,12 +826,10 @@ jobs:
                 $env:E2ETESTS_CLIENTID = $e2eClientId
                 $env:E2ETESTS_CLIENTSECRET = $e2eClientSecret
                 
-                Write-Host "Running E2E tests (Module.Tests.ps1)..."
-                
                 $config = New-PesterConfiguration
                 $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
                 $config.Run.PassThru = $true
-                $config.Output.Verbosity = 'Minimal'
+                $config.Output.Verbosity = 'Normal'
                 $config.Filter.ExcludeTag = 'LongRunning'
                 
                 $result = Invoke-Pester -Configuration $config
@@ -622,10 +837,44 @@ jobs:
                 return $result
             } -ArgumentList $env:TESTMODULEPATH, $env:E2ETESTS_URL, $env:E2ETESTS_CLIENTID, $env:E2ETESTS_CLIENTSECRET, $workingDir
             
-            # Wait for both jobs to complete
-            Write-Host "Waiting for standard tests and E2E tests to complete..."
-            $standardResults = Wait-Job $standardTestsJob | Receive-Job
-            $e2eResult = Wait-Job $e2eTestsJob | Receive-Job
+            # Wait for both jobs to complete and show progress
+            # Poll jobs to show streaming output with timeout detection
+            $lastOutputTime = Get-Date
+            $noOutputThresholdSeconds = 300  # 5 minutes
+            
+            while ($standardTestsJob.State -eq 'Running' -or $e2eTestsJob.State -eq 'Running') {
+                $hadOutput = $false
+                # Receive any available output without waiting
+                if ($standardTestsJob.HasMoreData) {
+                    $standardTestsJob | Receive-Job
+                    $hadOutput = $true
+                    $lastOutputTime = Get-Date
+                }
+                if ($e2eTestsJob.HasMoreData) {
+                    $e2eTestsJob | Receive-Job
+                    $hadOutput = $true
+                    $lastOutputTime = Get-Date
+                }
+                
+                # Check if we've had no output for too long
+                $timeSinceLastOutput = (Get-Date) - $lastOutputTime
+                if ($timeSinceLastOutput.TotalSeconds -gt $noOutputThresholdSeconds) {
+                    Write-Host "WARNING: No output for $($timeSinceLastOutput.TotalSeconds) seconds. Active outer jobs:" -ForegroundColor Yellow
+                    if ($standardTestsJob.State -eq 'Running') {
+                        Write-Host "  - StandardTests (State: $($standardTestsJob.State), HasMoreData: $($standardTestsJob.HasMoreData))" -ForegroundColor Yellow
+                    }
+                    if ($e2eTestsJob.State -eq 'Running') {
+                        Write-Host "  - E2ETests (State: $($e2eTestsJob.State), HasMoreData: $($e2eTestsJob.HasMoreData))" -ForegroundColor Yellow
+                    }
+                    $lastOutputTime = Get-Date  # Reset timer after warning
+                }
+                
+                Start-Sleep -Milliseconds 100
+            }
+            
+            # Get final results
+            $standardResults = $standardTestsJob | Receive-Job
+            $e2eResult = $e2eTestsJob | Receive-Job
             
             Remove-Job $standardTestsJob, $e2eTestsJob
             

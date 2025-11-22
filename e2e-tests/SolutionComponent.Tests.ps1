@@ -23,48 +23,10 @@ Describe "Solution Component E2E Tests" {
             
         $ErrorActionPreference = "Stop"
         $ConfirmPreference = 'None'  # Suppress all confirmation prompts in non-interactive mode
-        $VerbosePreference = 'Continue'  # Enable verbose output
+        $VerbosePreference = 'SilentlyContinue'  # Reduce noise; enable 'Continue' for debugging if needed
         
-            
-        # Retry helper function with exponential backoff
-        function Invoke-WithRetry {
-            param(
-                [Parameter(Mandatory = $true)]
-                [scriptblock]$ScriptBlock,
-                [int]$MaxRetries = 5,
-                [int]$InitialDelaySeconds = 10
-            )
-                
-            $attempt = 0
-            $delay = $InitialDelaySeconds
-                
-            while ($attempt -lt $MaxRetries) {
-                try {
-                    $attempt++
-                    Write-Verbose "Attempt $attempt of $MaxRetries"
-                    & $ScriptBlock
-                    return  # Success, exit function
-                }
-                catch {
-                    # Check if this is an EntityCustomization operation error
-                    if ($_.Exception.Message -like "*Cannot start the requested operation*EntityCustomization*") {
-                        Write-Warning "EntityCustomization operation conflict detected. Waiting 2 minutes before retry without incrementing attempt count..."
-                        $attempt--  # Don't count this as a retry attempt
-                        Start-Sleep -Seconds 120
-                        continue
-                    }
-                    
-                    if ($attempt -eq $MaxRetries) {
-                        Write-Error "All $MaxRetries attempts failed. Last error: $_"
-                        throw
-                    }
-                        
-                    Write-Warning "Attempt $attempt failed: $_. Retrying in $delay seconds..."
-                    Start-Sleep -Seconds $delay
-                    $delay = $delay * 2  # Exponential backoff
-                }
-            }
-        }
+        # Import common utilities
+        . "$PSScriptRoot/Common.ps1"
             
         try {
             $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
@@ -84,7 +46,7 @@ Describe "Solution Component E2E Tests" {
                 
             Write-Host "Step 1: Creating test solution..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 
                 # Check if solution already exists and delete it
                 $existingSolution = Get-DataverseSolution -Connection $connection -UniqueName $solutionName -ErrorAction SilentlyContinue
@@ -121,7 +83,7 @@ Describe "Solution Component E2E Tests" {
                 
             Write-Host "Step 2: Creating test entity..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 
                 Set-DataverseEntityMetadata -Connection $connection `
                     -EntityName $entityName `
@@ -137,7 +99,7 @@ Describe "Solution Component E2E Tests" {
             
             # Get the entity metadata to retrieve the object ID
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $entityMetadata = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName
                 $script:entityObjectId = $entityMetadata.MetadataId
             }
@@ -145,7 +107,9 @@ Describe "Solution Component E2E Tests" {
                 
             Write-Host "Step 3: Adding entity to solution with Behavior 0 (Include Subcomponents)..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
+                
+                Write-Host "  DEBUG: Adding component - SolutionName: $solutionName, ComponentId: $($script:entityObjectId), ComponentType: 1"
                 
                 $result = Set-DataverseSolutionComponent -Connection $connection `
                     -SolutionName $solutionName `
@@ -154,6 +118,8 @@ Describe "Solution Component E2E Tests" {
                     -Behavior 0 `
                     -PassThru `
                     -Confirm:$false
+                
+                Write-Host "  DEBUG: Set-DataverseSolutionComponent result - WasUpdated: $($result.WasUpdated), BehaviorValue: $($result.BehaviorValue)"
                 
                 if ($result.WasUpdated -eq $true) {
                     throw "Component should not be marked as updated when adding new component"
@@ -166,10 +132,27 @@ Describe "Solution Component E2E Tests" {
                 
             Write-Host "Step 4: Verifying component exists in solution using Get-DataverseSolutionComponent..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
                 
+                Write-Host "  DEBUG: Retrieved $($components.Count) components from solution"
+                if ($components) {
+                    Write-Host "  DEBUG: First component ObjectId type: $($components[0].ObjectId.GetType().FullName)"
+                    Write-Host "  DEBUG: Looking for ObjectId: $($script:entityObjectId) (type: $($script:entityObjectId.GetType().FullName))"
+                    foreach ($comp in $components) {
+                        Write-Host "  DEBUG: Component - ObjectId: $($comp.ObjectId), ComponentType: $($comp.ComponentType)"
+                    }
+                }
+                
                 $entityComponent = $components | Where-Object { $_.ObjectId -eq $script:entityObjectId }
+                if (-not $entityComponent) {
+                    # Try string comparison in case of type mismatch
+                    $entityComponent = $components | Where-Object { $_.ObjectId.ToString() -eq $script:entityObjectId.ToString() }
+                    if ($entityComponent) {
+                        Write-Host "  DEBUG: Found component using string comparison"
+                    }
+                }
+                
                 if (-not $entityComponent) {
                     throw "Entity component not found in solution"
                 }
@@ -182,7 +165,7 @@ Describe "Solution Component E2E Tests" {
                 
             Write-Host "Step 5: Attempting to add same component with same behavior (should be no-op)..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 
                 $result = Set-DataverseSolutionComponent -Connection $connection `
                     -SolutionName $solutionName `
@@ -200,7 +183,7 @@ Describe "Solution Component E2E Tests" {
                 
             Write-Host "Step 6: Changing component behavior from 0 to 1 (Do Not Include Subcomponents)..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 
                 $result = Set-DataverseSolutionComponent -Connection $connection `
                     -SolutionName $solutionName `
@@ -224,7 +207,7 @@ Describe "Solution Component E2E Tests" {
                 
             Write-Host "Step 7: Verifying behavior change using Get-DataverseSolutionComponent..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
                 
                 $entityComponent = $components | Where-Object { $_.ObjectId -eq $script:entityObjectId }
@@ -237,7 +220,7 @@ Describe "Solution Component E2E Tests" {
                 
             Write-Host "Step 8: Adding another attribute component to solution..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 
                 # First create an attribute
                 Set-DataverseAttributeMetadata -Connection $connection `
@@ -251,7 +234,7 @@ Describe "Solution Component E2E Tests" {
             }
             
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 
                 # Get the attribute metadata to get its object ID
                 $attributeMetadata = Get-DataverseAttributeMetadata -Connection $connection -EntityName $entityName -AttributeName "new_testfield"
@@ -269,7 +252,7 @@ Describe "Solution Component E2E Tests" {
                 
             Write-Host "Step 9: Listing all components in solution..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $allComponents = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
                 
                 Write-Host "  Total components in solution: $($allComponents.Count)"
@@ -289,7 +272,7 @@ Describe "Solution Component E2E Tests" {
                 
             Write-Host "Step 10: Testing Get-DataverseSolutionComponent with SolutionId parameter..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $componentsBySolutionId = Get-DataverseSolutionComponent -Connection $connection -SolutionId $script:solutionId
                 
                 if ($componentsBySolutionId.Count -eq 0) {
@@ -302,7 +285,7 @@ Describe "Solution Component E2E Tests" {
                 
             Write-Host "Step 11: Testing Remove-DataverseSolutionComponent..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 
                 # Remove the attribute component
                 Remove-DataverseSolutionComponent -Connection $connection `
@@ -315,7 +298,7 @@ Describe "Solution Component E2E Tests" {
                 
             Write-Host "Step 12: Verifying component removal..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
                 
                 $attributeComp = $components | Where-Object { $_.ObjectId -eq $script:attributeObjectId }
@@ -333,7 +316,7 @@ Describe "Solution Component E2E Tests" {
                 
             Write-Host "Step 13: Testing Remove-DataverseSolutionComponent with IfExists (should not error)..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 
                 # Try to remove the attribute again with IfExists - should not error
                 Remove-DataverseSolutionComponent -Connection $connection `
@@ -347,21 +330,21 @@ Describe "Solution Component E2E Tests" {
                 
             Write-Host "Step 14: Cleanup - Removing test solution (will cascade delete components)..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Remove-DataverseSolution -Connection $connection -UniqueName $solutionName -Confirm:$false
             }
             Write-Host "✓ Test solution deleted"
                 
             Write-Host "Step 15: Cleanup - Removing test entity..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
             }
             Write-Host "✓ Test entity deleted"
                 
             Write-Host "Step 16: Cleanup any old test solutions from previous failed runs..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 
                 # Only clean up solutions older than 1 hour to avoid interfering with concurrent tests
                 $cutoffTime = [DateTime]::UtcNow.AddHours(-1)
@@ -393,7 +376,7 @@ Describe "Solution Component E2E Tests" {
             
             Write-Host "Step 17: Cleanup any old test entities from previous failed runs..."
             Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
+                Wait-DataversePublish -Connection $connection
                 
                 # Only clean up entities older than 1 hour to avoid interfering with concurrent tests
                 $cutoffTime = [DateTime]::UtcNow.AddHours(-1)
@@ -412,7 +395,7 @@ Describe "Solution Component E2E Tests" {
                         try {
                             Write-Host "  Removing old entity: $($entity.LogicalName)"
                             Invoke-WithRetry {
-                                Wait-DataversePublish -Connection $connection -Verbose
+                                Wait-DataversePublish -Connection $connection
                                 Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
                             }
                         }
