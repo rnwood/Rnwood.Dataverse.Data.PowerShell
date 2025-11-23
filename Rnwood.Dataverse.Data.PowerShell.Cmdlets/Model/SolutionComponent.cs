@@ -64,7 +64,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
         public bool? IsCustomized { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the parent is a custom component.
+        /// Gets or sets a value indicating whether the parent component is custom.
         /// </summary>
         public bool? ParentIsCustom { get; set; }
 
@@ -74,7 +74,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
         public bool? ParentIsCustomized { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the parent is a default component.
+        /// Gets or sets a value indicating whether the parent component is default.
         /// </summary>
         public bool? ParentIsDefault { get; set; }
 
@@ -84,7 +84,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
         public bool? IsManaged { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the parent is a managed component.
+        /// Gets or sets a value indicating whether the parent component is managed.
         /// </summary>
         public bool? ParentIsManaged { get; set; }
     }
