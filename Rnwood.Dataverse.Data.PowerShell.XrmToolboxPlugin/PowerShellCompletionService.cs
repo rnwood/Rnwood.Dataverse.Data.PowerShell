@@ -7,25 +7,32 @@ using System.Threading;
 using System.Threading.Tasks;
 using CliWrap;
 using CliWrap.Buffered;
+using System.IO;
+using System.Diagnostics;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
     /// <summary>
     /// Service that provides PowerShell code completion using TabExpansion2 API.
     /// Compatible with PowerShell 5.1+ (does not require PowerShell 7).
+    /// Uses a persistent PowerShell process for fast completions.
     /// </summary>
     public class PowerShellCompletionService : IDisposable
     {
-        private readonly SemaphoreSlim _requestLock = new SemaphoreSlim(1, 1);
         private bool _isInitialized = false;
         private readonly string _modulePath;
-        private readonly string _accessToken;
+        private readonly Func<string> _accessTokenProvider;
         private readonly string _url;
+        private Process _powerShellProcess;
+        private StreamWriter _stdin;
+        private StreamReader _stdout;
+        private StreamReader _stderr;
+        private bool _disposed = false;
 
-        public PowerShellCompletionService(string modulePath = null, string accessToken = null, string url = null)
+        public PowerShellCompletionService(string modulePath = null, Func<string> accessTokenProvider = null, string url = null)
         {
             _modulePath = modulePath;
-            _accessToken = accessToken;
+            _accessTokenProvider = accessTokenProvider;
             _url = url;
         }
 
@@ -37,7 +44,131 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             if (_isInitialized)
                 return;
 
-            _isInitialized = true;
+            try
+            {
+                if (_isInitialized)
+                    return;
+
+                Console.WriteLine("Initializing persistent PowerShell process...");
+
+                _powerShellProcess = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "powershell.exe",
+                        Arguments = "-NoExit -NoLogo -NoProfile -Command -",
+                        UseShellExecute = false,
+                        RedirectStandardInput = true,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true,
+                        StandardOutputEncoding = Encoding.UTF8,
+                        StandardErrorEncoding = Encoding.UTF8
+                    }
+                };
+
+                _powerShellProcess.Start();
+                _stdin = _powerShellProcess.StandardInput;
+                _stdout = _powerShellProcess.StandardOutput;
+                _stderr = _powerShellProcess.StandardError;
+
+                await SendInitializationCommandsAsync();
+
+                _isInitialized = true;
+                Console.WriteLine("PowerShell process initialized successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing PowerShell process: {ex.Message}");
+                CleanupProcess();
+                throw;
+            }
+        }
+
+        private async Task SendInitializationCommandsAsync()
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine("$OutputEncoding = [System.Text.Encoding]::UTF8");
+            sb.AppendLine("[Console]::OutputEncoding = [System.Text.Encoding]::UTF8");
+            sb.AppendLine("$ErrorActionPreference = 'SilentlyContinue'");
+
+            if (!string.IsNullOrEmpty(_modulePath))
+            {
+                sb.AppendLine($"Import-Module '{_modulePath}' -ErrorAction SilentlyContinue");
+
+                if (_accessTokenProvider != null && !string.IsNullOrEmpty(_url))
+                {
+                    string accessToken = _accessTokenProvider();
+                    
+                    if (!string.IsNullOrEmpty(accessToken))
+                    {
+                        sb.AppendLine($"Get-DataverseConnection -AccessToken {{'{accessToken}'}} -Url '{_url}' -SetAsDefault -ErrorAction SilentlyContinue");
+                    }
+                }
+            }
+
+            string initMarker = Guid.NewGuid().ToString();
+            sb.AppendLine($"Write-Output '###INIT_COMPLETE_{initMarker}###'");
+
+            await _stdin.WriteAsync(sb.ToString());
+            await _stdin.FlushAsync();
+
+            string line;
+            while ((line = await _stdout.ReadLineAsync()) != null)
+            {
+                if (line.Contains($"###INIT_COMPLETE_{initMarker}###"))
+                {
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Refreshes the Dataverse connection with a new access token.
+        /// </summary>
+        public async Task RefreshConnectionAsync()
+        {
+            if (!_isInitialized)
+            {
+                await InitializeAsync();
+                return;
+            }
+
+            try
+            {
+                if (_accessTokenProvider != null && !string.IsNullOrEmpty(_url))
+                {
+                    string accessToken = _accessTokenProvider();
+                    
+                    if (!string.IsNullOrEmpty(accessToken))
+                    {
+                        var sb = new StringBuilder();
+                        string marker = Guid.NewGuid().ToString();
+                        
+                        sb.AppendLine($"Get-DataverseConnection -AccessToken {{'{accessToken}'}} -Url '{_url}' -SetAsDefault -ErrorAction SilentlyContinue");
+                        sb.AppendLine($"Write-Output '###REFRESH_COMPLETE_{marker}###'");
+
+                        await _stdin.WriteAsync(sb.ToString());
+                        await _stdin.FlushAsync();
+
+                        string line;
+                        while ((line = await _stdout.ReadLineAsync()) != null)
+                        {
+                            if (line.Contains($"###REFRESH_COMPLETE_{marker}###"))
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error refreshing connection: {ex.Message}");
+                _isInitialized = false;
+                CleanupProcess();
+            }
         }
 
         /// <summary>
@@ -50,36 +181,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 await InitializeAsync();
             }
 
-            await _requestLock.WaitAsync();
             try
             {
-                // Add debugging output for the request
+                if (_powerShellProcess == null || _powerShellProcess.HasExited)
+                {
+                    Console.WriteLine("PowerShell process has exited, reinitializing...");
+                    _isInitialized = false;
+                    CleanupProcess();
+                    await InitializeAsync();
+                }
+
                 string debugLine = GetLineWithCursor(script, cursorPosition);
                 Console.WriteLine($"Request: {debugLine}");
 
-                // Build the PowerShell command
-                string command = BuildCommand(script, cursorPosition);
+                string command = BuildCompletionCommand(script, cursorPosition);
 
-                // Execute the command using CliWrap
-                var result = await Cli.Wrap("powershell.exe")
-                    .WithArguments($"-Command \"{command}\"")
-                    .ExecuteBufferedAsync();
+                await _stdin.WriteAsync(command);
+                await _stdin.FlushAsync();
 
-                if (result.ExitCode != 0)
-                {
-                    Console.WriteLine($"PowerShell command failed with exit code {result.ExitCode}: {result.StandardError}");
-                    return new List<CompletionItem>();
-                }
+                string marker = ExtractMarkerFromCommand(command);
+                string output = await ReadUntilMarkerAsync(marker);
 
-                // Parse the JSON response
-                string jsonResponse = ParseResponseBetweenMarkers(result.StandardOutput);
+                string jsonResponse = ParseResponseBetweenMarkers(output, marker);
                 
                 if (string.IsNullOrWhiteSpace(jsonResponse))
                 {
                     return new List<CompletionItem>();
                 }
 
-                // Parse the JSON
                 var completions = ParseCompletions(jsonResponse);
                 Console.WriteLine($"Results count: {completions.Count}");
                 return completions;
@@ -87,81 +216,88 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: {ex.Message}");
+                _isInitialized = false;
+                CleanupProcess();
                 return new List<CompletionItem>();
-            }
-            finally
-            {
-                _requestLock.Release();
             }
         }
 
-        private string BuildCommand(string script, int cursorPosition)
+        private string BuildCompletionCommand(string script, int cursorPosition)
         {
-            var sb = new StringBuilder();
-
-            // Set output encoding
-            sb.Append("$OutputEncoding = [System.Text.Encoding]::UTF8; ");
-            sb.Append("[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; ");
-
-            // Load the module if path is provided
-            if (!string.IsNullOrEmpty(_modulePath))
-            {
-                sb.Append($"Import-Module '{_modulePath}' -ErrorAction SilentlyContinue; ");
-
-                // Only add connection if we have both token and url
-                if (!string.IsNullOrEmpty(_accessToken) && !string.IsNullOrEmpty(_url))
-                {
-                    sb.Append($"Get-DataverseConnection -AccessToken {{'{_accessToken}'}} -Url '{_url}' -SetAsDefault -ErrorAction Stop; ");
-                }
-            }
-
-            // Use a Base64-encoded script to avoid escaping issues
             byte[] scriptBytes = Encoding.UTF8.GetBytes(script);
             string encodedScript = Convert.ToBase64String(scriptBytes);
             
-            // Create a PowerShell command that returns JSON with a clear marker
             string marker = Guid.NewGuid().ToString();
-            sb.Append($@"
-$encodedScript = '{encodedScript}'
-$scriptBytes = [System.Convert]::FromBase64String($encodedScript)
-$decodedScript = [System.Text.Encoding]::UTF8.GetString($scriptBytes)
-$result = TabExpansion2 $decodedScript {cursorPosition}
-Write-Output '###START_{marker}###'
-if ($result -and $result.CompletionMatches) {{
-    $completions = @($result.CompletionMatches | ForEach-Object {{
-        @{{
-            CompletionText = $_.CompletionText
-            ListItemText = $_.ListItemText
-            ResultType = [int]$_.ResultType
-            ToolTip = $_.ToolTip
-        }}
-    }})
-    ($completions | ConvertTo-Json -Compress -Depth 2)
-}} else {{
-    '[]'
-}}
-Write-Output '###END_{marker}###'
-".Trim());
+            
+            var sb = new StringBuilder();
+            sb.AppendLine($"$encodedScript = '{encodedScript}'");
+            sb.AppendLine("$scriptBytes = [System.Convert]::FromBase64String($encodedScript)");
+            sb.AppendLine("$decodedScript = [System.Text.Encoding]::UTF8.GetString($scriptBytes)");
+            sb.AppendLine($"$result = TabExpansion2 $decodedScript {cursorPosition}");
+            sb.AppendLine($"Write-Output '###START_{marker}###'");
+            sb.AppendLine("if ($result -and $result.CompletionMatches) {");
+            sb.AppendLine("    $completionResults = @()");
+            sb.AppendLine("    foreach ($match in $result.CompletionMatches) {");
+            sb.AppendLine("        $completionResult = [PSCustomObject]@{");
+            sb.AppendLine("            CompletionText = $match.CompletionText");
+            sb.AppendLine("            ListItemText = $match.ListItemText");
+            sb.AppendLine("            ResultType = [int]$match.ResultType");
+            sb.AppendLine("            ToolTip = $match.ToolTip");
+            sb.AppendLine("        }");
+            sb.AppendLine("        $completionResults += $completionResult");
+            sb.AppendLine("    }");
+            sb.AppendLine("    $completionResults | ConvertTo-Json -Compress -Depth 2");
+            sb.AppendLine("} else {");
+            sb.AppendLine("    '[]'");
+            sb.AppendLine("}");
+            sb.AppendLine($"Write-Output '###END_{marker}###'");
 
             return sb.ToString();
         }
 
-        private string ParseResponseBetweenMarkers(string output)
+        private string ExtractMarkerFromCommand(string command)
         {
-            string startMarker = "###START_";
-            string endMarker = "###END_";
+            int startIndex = command.IndexOf("###START_");
+            if (startIndex == -1) return Guid.NewGuid().ToString();
+            
+            startIndex += "###START_".Length;
+            int endIndex = command.IndexOf("###", startIndex);
+            if (endIndex == -1) return Guid.NewGuid().ToString();
+            
+            return command.Substring(startIndex, endIndex - startIndex);
+        }
+
+        private async Task<string> ReadUntilMarkerAsync(string marker)
+        {
+            var sb = new StringBuilder();
+            string endMarker = $"###END_{marker}###";
+            bool foundStart = false;
+
+            string line;
+            while ((line = await _stdout.ReadLineAsync()) != null)
+            {
+                sb.AppendLine(line);
+                
+                if (!foundStart && line.Contains($"###START_{marker}###"))
+                {
+                    foundStart = true;
+                }
+                
+                if (foundStart && line.Contains(endMarker))
+                {
+                    break;
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        private string ParseResponseBetweenMarkers(string output, string marker)
+        {
+            string startMarker = $"###START_{marker}###";
+            string endMarker = $"###END_{marker}###";
 
             int startIndex = output.IndexOf(startMarker);
-            if (startIndex == -1) return "";
-
-            startIndex += startMarker.Length;
-            int markerEnd = output.IndexOf("###", startIndex);
-            if (markerEnd == -1) return "";
-            string marker = output.Substring(startIndex, markerEnd - startIndex);
-            startMarker = $"###START_{marker}###";
-            endMarker = $"###END_{marker}###";
-
-            startIndex = output.IndexOf(startMarker);
             if (startIndex == -1) return "";
             startIndex += startMarker.Length;
 
@@ -177,7 +313,6 @@ Write-Output '###END_{marker}###'
             
             try
             {
-                // Handle both array and single object
                 if (json.StartsWith("["))
                 {
                     var items = JsonSerializer.Deserialize<List<JsonElement>>(json);
@@ -232,9 +367,41 @@ Write-Output '###END_{marker}###'
             return $"\"{withCursor}\"";
         }
 
+        private void CleanupProcess()
+        {
+            try
+            {
+                _stdin?.Dispose();
+                _stdout?.Dispose();
+                _stderr?.Dispose();
+
+                if (_powerShellProcess != null && !_powerShellProcess.HasExited)
+                {
+                    _powerShellProcess.Kill();
+                }
+
+                _powerShellProcess?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error cleaning up PowerShell process: {ex.Message}");
+            }
+            finally
+            {
+                _stdin = null;
+                _stdout = null;
+                _stderr = null;
+                _powerShellProcess = null;
+            }
+        }
+
         public void Dispose()
         {
-            _requestLock?.Dispose();
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            CleanupProcess();
         }
     }
 

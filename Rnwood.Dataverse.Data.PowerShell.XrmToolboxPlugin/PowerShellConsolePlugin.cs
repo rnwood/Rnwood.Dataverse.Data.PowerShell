@@ -24,6 +24,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     public partial class PowerShellConsolePlugin : PluginControlBase, IGitHubPlugin, IPayPalPlugin
     {
         private ConsoleControl.ConnectionInfo connectionInfo;
+        private CrmServiceClient service;
 
         public PowerShellConsolePlugin()
         {
@@ -40,28 +41,41 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             if (!DesignMode)
             {
+                service = Service as CrmServiceClient;
+                
                 // Delay starting the console to ensure the form is fully loaded
                 Task.Delay(1000).ContinueWith(_ =>
                 {
                     this.Invoke((MethodInvoker)delegate
                     {
-                        consoleControl.StartEmbeddedPowerShellConsole(Service as CrmServiceClient);
+                        consoleControl.StartEmbeddedPowerShellConsole(service);
                     });
                 });
 
-                scriptEditorControl.InitializeMonacoEditor();
-                helpControl.LoadAndShowHelp();
-
                 // Extract connection info for script editor
-                this.connectionInfo = ConsoleControl.ExtractConnectionInfo(Service as CrmServiceClient);
+                this.connectionInfo = ConsoleControl.ExtractConnectionInfo(service);
                 if (connectionInfo != null)
                 {
-                    scriptEditorControl.InitializeMonacoEditor(connectionInfo.Token, connectionInfo.Url);
+                    // Create a token provider function that extracts the token dynamically
+                    Func<string> tokenProvider = () =>
+                    {
+                        try
+                        {
+                            return service?.CurrentAccessToken;
+                        }
+                        catch
+                        {
+                            return null;
+                        }
+                    };
+                    
+                    scriptEditorControl.InitializeMonacoEditor(tokenProvider, connectionInfo.Url);
                 }
                 else
                 {
                     scriptEditorControl.InitializeMonacoEditor();
                 }
+                
                 helpControl.LoadAndShowHelp();
 
                 // Set splitter to 50/50

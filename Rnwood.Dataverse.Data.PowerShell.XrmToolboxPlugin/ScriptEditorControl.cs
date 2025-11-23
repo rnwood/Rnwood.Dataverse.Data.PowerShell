@@ -24,7 +24,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         // Tab data
         private Dictionary<TabPage, ScriptTabContentControl> tabData = new Dictionary<TabPage, ScriptTabContentControl>();
         private int untitledCounter = 1;
-        private string _accessToken;
+        private Func<string> _accessTokenProvider;
         private string _url;
 
         public event EventHandler RunScriptRequested;
@@ -123,9 +123,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.toolbarImages.Images.Add("Save", saveBmp);
         }
 
-        public async void InitializeMonacoEditor(string accessToken = null, string url = null)
+        public async void InitializeMonacoEditor(Func<string> accessTokenProvider = null, string url = null)
         {
-            this._accessToken = accessToken;
+            this._accessTokenProvider = accessTokenProvider;
             this._url = url;
 
             try
@@ -137,7 +137,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     "Rnwood.Dataverse.Data.PowerShell.psd1"
                 );
 
-                _completionService = new PowerShellCompletionService(modulePath, accessToken, url);
+                _completionService = new PowerShellCompletionService(modulePath, accessTokenProvider, url);
                 _ = Task.Run(async () =>
                 {
                     try

@@ -187,6 +187,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             
             // Handler for completion responses from C#
             window.handleCompletionResponse = function(response) {
+                debugger;
                 if (response.requestId && pendingCompletionRequests[response.requestId]) {
                     var resolve = pendingCompletionRequests[response.requestId];
                     delete pendingCompletionRequests[response.requestId];
@@ -225,7 +226,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     
                     // Wait for response with timeout
                     var timeoutPromise = new Promise(function(resolve) {
-                        setTimeout(function() { resolve([]); }, 5000);
+                        setTimeout(function() { resolve([]); }, 15000);
                     });
                     
                     var completions = await Promise.race([completionPromise, timeoutPromise]);
