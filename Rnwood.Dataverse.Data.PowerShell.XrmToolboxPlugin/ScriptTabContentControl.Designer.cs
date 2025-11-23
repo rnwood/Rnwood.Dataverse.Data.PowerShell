@@ -37,48 +37,89 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         /// </summary>
         private void InitializeComponent()
         {
-            this.panel = new Panel();
-            this.panel.Dock = DockStyle.Fill;
-            this.Controls.Add(panel);
-
-            this.webView = new WebView2();
-            this.webView.Dock = DockStyle.Fill;
-            this.panel.Controls.Add(webView);
-
-            this.tabToolbar = new ToolStrip();
-            this.tabToolbar.GripStyle = ToolStripGripStyle.Hidden;
-            this.tabToolbar.Dock = DockStyle.Top;
-
-            this.runButton = new ToolStripButton();
-            this.runButton.Text = "Run (F5)";
-            this.runButton.ImageIndex = 0;
-            this.runButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
-            // Use named event handler so designer can process this file
-            this.runButton.Click += new EventHandler(this.RunButton_Click);
-
-            this.saveButton = new ToolStripButton();
-            this.saveButton.Text = "Save";
-            this.saveButton.ImageIndex = 3;
-            this.saveButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
-            // Use named event handler so designer can process this file
-            this.saveButton.Click += new EventHandler(this.SaveButton_Click);
-
-            this.tabToolbar.Items.AddRange(new ToolStripItem[] { runButton, saveButton });
-
-            this.panel.Controls.Add(tabToolbar);
-
-            this.closeButton = new Button();
-            this.closeButton.Text = "X";
-            this.closeButton.Size = new Size(20, 20);
-            // Use a fixed location (designer cannot process dynamic expressions like panel.Width - 25)
-            this.closeButton.Location = new Point(100, 5);
-            this.closeButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            // Use named event handler so designer can process this file
-            this.closeButton.Click += new EventHandler(this.CloseButton_Click);
-            this.panel.Controls.Add(closeButton);
-            this.closeButton.BringToFront();
-
+            this.panel = new System.Windows.Forms.Panel();
+            this.webView = new Microsoft.Web.WebView2.WinForms.WebView2();
+            this.tabToolbar = new System.Windows.Forms.ToolStrip();
+            this.runButton = new System.Windows.Forms.ToolStripButton();
+            this.saveButton = new System.Windows.Forms.ToolStripButton();
+            this.closeButton = new System.Windows.Forms.Button();
+            this.panel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.webView)).BeginInit();
+            this.tabToolbar.SuspendLayout();
+            this.SuspendLayout();
+            // 
+            // panel
+            // 
+            this.panel.Controls.Add(this.webView);
+            this.panel.Controls.Add(this.tabToolbar);
+            this.panel.Controls.Add(this.closeButton);
+            this.panel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panel.Location = new System.Drawing.Point(0, 0);
+            this.panel.Name = "panel";
+            this.panel.Size = new System.Drawing.Size(632, 437);
+            this.panel.TabIndex = 0;
+            // 
+            // webView
+            // 
+            this.webView.AllowExternalDrop = true;
+            this.webView.CreationProperties = null;
+            this.webView.DefaultBackgroundColor = System.Drawing.Color.White;
+            this.webView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.webView.Location = new System.Drawing.Point(0, 40);
+            this.webView.Name = "webView";
+            this.webView.Size = new System.Drawing.Size(632, 397);
+            this.webView.TabIndex = 0;
+            this.webView.ZoomFactor = 1D;
             this.webView.WebMessageReceived += EditorWebView_WebMessageReceived;
+            // 
+            // tabToolbar
+            // 
+            this.tabToolbar.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
+            this.tabToolbar.ImageScalingSize = new System.Drawing.Size(28, 28);
+            this.tabToolbar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.runButton,
+            this.saveButton});
+            this.tabToolbar.Location = new System.Drawing.Point(0, 0);
+            this.tabToolbar.Name = "tabToolbar";
+            this.tabToolbar.Size = new System.Drawing.Size(632, 40);
+            this.tabToolbar.TabIndex = 1;
+            // 
+            // runButton
+            // 
+            this.runButton.Name = "runButton";
+            this.runButton.Size = new System.Drawing.Size(93, 34);
+            this.runButton.Text = "Run (F5)";
+            this.runButton.Click += new System.EventHandler(this.RunButton_Click);
+            // 
+            // saveButton
+            // 
+            this.saveButton.Name = "saveButton";
+            this.saveButton.Size = new System.Drawing.Size(60, 34);
+            this.saveButton.Text = "Save";
+            this.saveButton.Click += new System.EventHandler(this.SaveButton_Click);
+            // 
+            // closeButton
+            // 
+            this.closeButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.closeButton.Location = new System.Drawing.Point(532, 5);
+            this.closeButton.Name = "closeButton";
+            this.closeButton.Size = new System.Drawing.Size(20, 20);
+            this.closeButton.TabIndex = 2;
+            this.closeButton.Text = "X";
+            this.closeButton.Click += new System.EventHandler(this.CloseButton_Click);
+            // 
+            // ScriptTabContentControl
+            // 
+            this.Controls.Add(this.panel);
+            this.Name = "ScriptTabContentControl";
+            this.Size = new System.Drawing.Size(632, 437);
+            this.panel.ResumeLayout(false);
+            this.panel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.webView)).EndInit();
+            this.tabToolbar.ResumeLayout(false);
+            this.tabToolbar.PerformLayout();
+            this.ResumeLayout(false);
+
         }
 
         #endregion

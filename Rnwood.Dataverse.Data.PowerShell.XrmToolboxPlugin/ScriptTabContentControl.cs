@@ -78,14 +78,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 MessageBox.Show($"Failed to initialize script editor: {ex.Message}\n\nWebView2 Runtime may not be installed.",
                     "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
-
-            var readyTask = _webViewReadyTask.Task;
-            var timeoutTask = Task.Delay(30000);
-            var completedTask = await Task.WhenAny(readyTask, timeoutTask);
-            if (completedTask == timeoutTask)
-            {
-                MessageBox.Show("WebView2 initialization timed out. The editor may load later.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
         }
 
         public async Task<string> GetScriptContentAsync()
@@ -141,8 +133,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 <head>
     <meta charset=""utf-8"" />
     <style>
-        body {{ margin: 0; padding: 0; overflow: hidden; }}
-        #container {{ width: 100%; height: 100vh; }}
+        body { margin: 0; padding: 0; overflow: hidden; }
+        #container { width: 100%; height: 100vh; }
     </style>
 </head>
 <body>
@@ -166,52 +158,52 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
         
-        require.config({{ paths: {{ vs: 'https://unpkg.com/monaco-editor@0.45.0/min/vs' }} }});
+        require.config({ paths: { vs: 'https://unpkg.com/monaco-editor@0.45.0/min/vs' } });
         
-        require(['vs/editor/editor.main'], function() {{
+        require(['vs/editor/editor.main'], function() {
             // Create Monaco editor
-            window.editor = monaco.editor.create(document.getElementById('container'), {{
+            window.editor = monaco.editor.create(document.getElementById('container'), {
                 value: __DEFAULT_SCRIPT_CONTENT__,
                 language: 'powershell',
                 theme: 'vs-dark',
                 automaticLayout: true,
                 fontSize: 14,
-                minimap: {{ enabled: true }},
+                minimap: { enabled: true },
                 scrollBeyondLastLine: false,
                 wordWrap: 'on',
                 lineNumbers: 'on',
                 folding: true,
                 renderWhitespace: 'selection'
-            }});
+            });
             
             // Set pending content if any
-            if (window.pendingContent) {{
+            if (window.pendingContent) {
                 window.editor.setValue(window.pendingContent);
                 window.pendingContent = null;
-            }}
+            }
             
             // Store for pending completion requests
-            var pendingCompletionRequests = {{}};
+            var pendingCompletionRequests = {};
             
             // Handler for completion responses from C#
-            window.handleCompletionResponse = function(response) {{
-                if (response.requestId && pendingCompletionRequests[response.requestId]) {{
+            window.handleCompletionResponse = function(response) {
+                if (response.requestId && pendingCompletionRequests[response.requestId]) {
                     var resolve = pendingCompletionRequests[response.requestId];
                     delete pendingCompletionRequests[response.requestId];
                     resolve(response.completions || []);
-                }}
-            }};
+                }
+            };
             
             // Register dynamic PowerShell completion provider using LSP
-            monaco.languages.registerCompletionItemProvider('powershell', {{
-                provideCompletionItems: async function(model, position) {{
+            monaco.languages.registerCompletionItemProvider('powershell', {
+                provideCompletionItems: async function(model, position) {
                     var word = model.getWordUntilPosition(position);
-                    var range = {{
+                    var range = {
                         startLineNumber: position.lineNumber,
                         endLineNumber: position.lineNumber,
                         startColumn: word.startColumn,
                         endColumn: word.endColumn
-                    }};
+                    };
                     
                     // Get the full script text and cursor position
                     var script = model.getValue();
@@ -221,62 +213,62 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     var requestId = 'completion_' + Date.now() + '_' + Math.random();
                     
                     // Send completion request to C#
-                    var completionPromise = new Promise(function(resolve) {{
+                    var completionPromise = new Promise(function(resolve) {
                         pendingCompletionRequests[requestId] = resolve;
-                        window.chrome.webview.postMessage({{
+                        window.chrome.webview.postMessage({
                             action: 'completion',
                             requestId: requestId,
                             script: script,
                             cursorPosition: cursorOffset
-                        }});
-                    }});
+                        });
+                    });
                     
                     // Wait for response with timeout
-                    var timeoutPromise = new Promise(function(resolve) {{
-                        setTimeout(function() {{ resolve([]); }}, 5000);
-                    }});
+                    var timeoutPromise = new Promise(function(resolve) {
+                        setTimeout(function() { resolve([]); }, 5000);
+                    });
                     
                     var completions = await Promise.race([completionPromise, timeoutPromise]);
                     
                     // Map completions to Monaco format
-                    return {{
-                        suggestions: completions.map(function(c) {{
-                            return {{
+                    return {
+                        suggestions: completions.map(function(c) {
+                            return {
                                 label: c.label,
                                 kind: c.kind,
                                 documentation: c.documentation,
                                 detail: c.detail,
                                 insertText: c.insertText,
                                 range: range
-                            }};
-                        }})
-                    }};
-                }},
+                            };
+                        })
+                    };
+                },
                 triggerCharacters: ['-', '$', '.', '::']
-            }});
+            });
             
             // Add keyboard shortcuts
-            editor.addCommand(monaco.KeyCode.F5, function() {{
-                window.chrome.webview.postMessage({{ action: 'run' }});
-            }});
+            editor.addCommand(monaco.KeyCode.F5, function() {
+                window.chrome.webview.postMessage({ action: 'run' });
+            });
             
-            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {{
-                window.chrome.webview.postMessage({{ action: 'save' }});
-            }});
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {
+                window.chrome.webview.postMessage({ action: 'save' });
+            });
             
-            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyN, function() {{
-                window.chrome.webview.postMessage({{ action: 'new' }});
-            }});
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyN, function() {
+                window.chrome.webview.postMessage({ action: 'new' });
+            });
             
             // Notify ready
-            window.chrome.webview.postMessage({{ action: 'ready' }});
-        }});
+            window.chrome.webview.postMessage({ action: 'ready' });
+        });
         
     </script>
 </body>
 </html>";
 
-            return html.Replace("__DEFAULT_SCRIPT_CONTENT__", defaultContent);
+            return html.Replace("__DEFAULT_SCRIPT_CONTENT__", "\"\"");
         }
 
         private string GetDefaultScriptContent()
