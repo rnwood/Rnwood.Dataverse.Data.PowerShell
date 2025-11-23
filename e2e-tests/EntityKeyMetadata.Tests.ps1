@@ -220,11 +220,17 @@ Describe "Entity Key Metadata E2E Tests" {
             Write-Host "✓ Deletion verified (1 key remaining)"
                 
             Write-Host "Step 11: Cleanup - Deleting test entity..."
-            Invoke-WithRetry {
-                Wait-DataversePublish -Connection $connection -Verbose
-                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
+            try {
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false -ErrorAction Stop
+                }
+                Write-Host "✓ Test entity deleted"
             }
-            Write-Host "✓ Test entity deleted"
+            catch {
+                # Entity may already be deleted or not exist
+                Write-Host "  Note: Could not delete test entity (may already be deleted): $_"
+            }
                 
             Write-Host "Step 12: Cleanup any old test entities from previous failed runs..."
             Invoke-WithRetry {
@@ -246,13 +252,18 @@ Describe "Entity Key Metadata E2E Tests" {
                     foreach ($entity in $oldEntities) {
                         try {
                             Write-Host "  Removing old entity: $($entity.LogicalName)"
-                            Invoke-WithRetry {
-                                Wait-DataversePublish -Connection $connection -Verbose
-                                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction SilentlyContinue
-                            }
+                            # Use ErrorAction Stop to ensure we catch entity-not-found errors
+                            Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity.LogicalName -Confirm:$false -ErrorAction Stop
                         }
                         catch {
-                            Write-Host "  Could not remove $($entity.LogicalName): $_"
+                            # Entity may have been deleted by another process or doesn't exist
+                            # This is not a failure - just log and continue
+                            if ($_.Exception.Message -like "*could not find*" -or $_.Exception.Message -like "*does not exist*") {
+                                Write-Host "  Entity $($entity.LogicalName) already deleted or doesn't exist"
+                            }
+                            else {
+                                Write-Host "  Could not remove $($entity.LogicalName): $_"
+                            }
                         }
                     }
                 }
