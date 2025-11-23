@@ -182,13 +182,16 @@ For more advanced scenarios including view management and app module management,
 - [`Get-DataverseAttributeMetadata`](docs/core-concepts/metadata.md) — retrieve attribute metadata
 - [`Get-DataverseOptionSetMetadata`](docs/core-concepts/metadata.md) — retrieve option set values
 - [`Get-DataverseRelationshipMetadata`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseRelationshipMetadata.md) — retrieve relationship metadata
+- [`Get-DataverseEntityKeyMetadata`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseEntityKeyMetadata.md) — retrieve alternate key metadata
 - [`Set-DataverseEntityMetadata`](docs/core-concepts/metadata.md) — create or update entities
 - [`Set-DataverseAttributeMetadata`](docs/core-concepts/metadata.md) — create or update attributes (all types)
 - [`Set-DataverseOptionSetMetadata`](docs/core-concepts/metadata.md) — create or update global option sets
 - [`Set-DataverseRelationshipMetadata`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRelationshipMetadata.md) — create relationships (OneToMany, ManyToMany)
+- [`Set-DataverseEntityKeyMetadata`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseEntityKeyMetadata.md) — create alternate keys for entities
 - [`Remove-DataverseEntityMetadata`](docs/core-concepts/metadata.md) — delete entities
 - [`Remove-DataverseAttributeMetadata`](docs/core-concepts/metadata.md) — delete attributes
 - [`Remove-DataverseRelationshipMetadata`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseRelationshipMetadata.md) — delete relationships
+- [`Remove-DataverseEntityKeyMetadata`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseEntityKeyMetadata.md) — delete alternate keys
 
 ### Metadata Cache Management
 - `Clear-DataverseMetadataCache` — clear the metadata cache
