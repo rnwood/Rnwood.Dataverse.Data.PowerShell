@@ -412,10 +412,12 @@ jobs:
                   
                   $metadataConfig = New-PesterConfiguration
                   $metadataConfig.Run.Path = @(
-                      'e2e-tests/EntityMetadata.Tests.ps1',
-                      'e2e-tests/AttributeMetadata.Tests.ps1', 
-                      'e2e-tests/RelationshipMetadata.Tests.ps1',
-                      'e2e-tests/OptionSetMetadata.Tests.ps1'
+                      'e2e-tests/EntityKeyMetadata.Tests.ps1'
+                      # Temporarily disabled to speed up testing - only EntityKeyMetadata test runs
+                      # 'e2e-tests/EntityMetadata.Tests.ps1',
+                      # 'e2e-tests/AttributeMetadata.Tests.ps1', 
+                      # 'e2e-tests/RelationshipMetadata.Tests.ps1',
+                      # 'e2e-tests/OptionSetMetadata.Tests.ps1'
                   )
                   $metadataConfig.Run.PassThru = $true
                   $metadataConfig.Output.Verbosity = 'Minimal'

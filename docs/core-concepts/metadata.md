@@ -361,6 +361,52 @@ foreach ($def in $attributeDefinitions) {
 }
 ```
 
+### Alternate Keys
+
+Alternate keys allow records to be uniquely identified using a combination of attributes instead of the primary GUID key. They're particularly useful for data integration scenarios.
+
+```powershell
+# Create a single-attribute alternate key
+Set-DataverseEntityKeyMetadata `
+    -EntityName contact `
+    -SchemaName contact_email_key `
+    -KeyAttributes @('emailaddress1') `
+    -DisplayName "Email Key" `
+    -Publish
+
+# Create a composite alternate key (multiple attributes)
+Set-DataverseEntityKeyMetadata `
+    -EntityName contact `
+    -SchemaName contact_name_key `
+    -KeyAttributes @('firstname', 'lastname') `
+    -DisplayName "Name Key" `
+    -Publish
+
+# Retrieve all keys for an entity
+$keys = Get-DataverseEntityKeyMetadata -EntityName contact
+
+# Retrieve a specific key
+$emailKey = Get-DataverseEntityKeyMetadata -EntityName contact -KeyName contact_email_key
+
+# Access key properties
+$emailKey.LogicalName          # contact_email_key
+$emailKey.KeyAttributes         # Array of attribute names
+$emailKey.DisplayName.UserLocalizedLabel.Label
+
+# Delete an alternate key
+Remove-DataverseEntityKeyMetadata `
+    -EntityName contact `
+    -KeyName contact_email_key `
+    -Confirm:$false
+```
+
+**Important Notes:**
+- Keys must be published before they become active
+- Use `-Publish` parameter or manually publish customizations
+- Alternate keys **cannot be updated** after creation - you must remove and recreate them
+- Use `-Force` parameter to skip existence checks when creating keys
+- Keys enable efficient upsert operations using alternate key values instead of GUIDs
+
 ## Related Resources
 
 <!-- Link to Metadata CRUD examples removed. See the docs for comprehensive examples of all attribute types and scenarios -->
