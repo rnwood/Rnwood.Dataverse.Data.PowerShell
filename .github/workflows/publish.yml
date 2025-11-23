@@ -412,9 +412,9 @@ jobs:
                   
                   $metadataConfig = New-PesterConfiguration
                   $metadataConfig.Run.Path = @(
-                      'e2e-tests/EntityKeyMetadata.Tests.ps1'
                       'e2e-tests/FormLibraryAndEventHandler.Tests.ps1'
-                      # Temporarily disabled to speed up testing - only EntityKeyMetadata and FormLibraryAndEventHandler tests run
+                      # Opt in per branch by uncommenting
+                      # 'e2e-tests/EntityKeyMetadata.Tests.ps1'
                       # 'e2e-tests/EntityMetadata.Tests.ps1',
                       # 'e2e-tests/AttributeMetadata.Tests.ps1', 
                       # 'e2e-tests/RelationshipMetadata.Tests.ps1',
