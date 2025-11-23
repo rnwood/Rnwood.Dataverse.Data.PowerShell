@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Drawing;
 using System.IO;
+using System.IO.Pipes;
 using System.Linq;
 using System.Management.Automation;
 using System.Reflection;
@@ -27,6 +28,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private ConnectionInfo connectionInfo;
         private int scriptSessionCounter = 1;
         private CrmServiceClient service;
+        private CancellationTokenSource namedPipeCancellation;
+        private string pipeName;
 
         public ConsoleControl()
         {
@@ -58,6 +61,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 var connectionInfo = ExtractConnectionInformation(service);
                 this.connectionInfo = connectionInfo;
 
+                // Start named pipe server for dynamic token extraction
+                if (connectionInfo != null && connectionInfo.Token == "DYNAMIC")
+                {
+                    StartNamedPipeServer();
+                }
+
                 StartSession("Main Console", "", connectionInfo);
             }
             catch (Exception ex)
@@ -79,6 +88,65 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             public string Url { get; set; }
             public string Token { get; set; }
+            public string PipeName { get; set; }
+        }
+
+        /// <summary>
+        /// Starts a named pipe server that provides fresh tokens on demand.
+        /// </summary>
+        private void StartNamedPipeServer()
+        {
+            pipeName = $"xrmtoolbox-token-{Guid.NewGuid()}";
+            namedPipeCancellation = new CancellationTokenSource();
+
+            Task.Run(async () =>
+            {
+                while (!namedPipeCancellation.Token.IsCancellationRequested)
+                {
+                    try
+                    {
+                        using (var pipeServer = new NamedPipeServerStream(
+                            pipeName,
+                            PipeDirection.Out,
+                            NamedPipeServerStream.MaxAllowedServerInstances,
+                            PipeTransmissionMode.Message,
+                            PipeOptions.Asynchronous))
+                        {
+                            // Wait for client connection
+                            await pipeServer.WaitForConnectionAsync(namedPipeCancellation.Token);
+
+                            try
+                            {
+                                // Extract fresh token
+                                string token = service?.CurrentAccessToken;
+
+                                if (!string.IsNullOrEmpty(token))
+                                {
+                                    byte[] tokenBytes = Encoding.UTF8.GetBytes(token);
+                                    await pipeServer.WriteAsync(tokenBytes, 0, tokenBytes.Length, namedPipeCancellation.Token);
+                                    await pipeServer.FlushAsync(namedPipeCancellation.Token);
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                // Ignore errors writing to pipe
+                            }
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
+                    catch (Exception)
+                    {
+                        // Ignore errors and retry
+                        if (!namedPipeCancellation.Token.IsCancellationRequested)
+                        {
+                            await Task.Delay(100);
+                        }
+                    }
+                }
+            }, namedPipeCancellation.Token);
         }
 
         private ConnectionInfo ExtractConnectionInformation(CrmServiceClient client)
@@ -106,26 +174,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     return null;
                 }
 
-                // Try to get the access token
-                string accessToken = null;
+                // Check if token is available
+                bool tokenAvailable = false;
                 try
                 {
-                    accessToken = client.CurrentAccessToken;
+                    var token = client.CurrentAccessToken;
+                    tokenAvailable = !string.IsNullOrEmpty(token);
                 }
                 catch
                 {
-                    // If we can't get the token, that's okay - we'll fall back to interactive auth
+                    tokenAvailable = false;
                 }
 
                 return new ConnectionInfo
                 {
                     Url = orgUrl,
-                    Token = accessToken
+                    Token = tokenAvailable ? "DYNAMIC" : null
                 };
             }
             catch (Exception)
             {
-                // Could not extract connection information, will fall back to manual connection
                 return null;
             }
         }
@@ -179,7 +247,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        private string GenerateConnectionScript(string bundledModulePath, string tempConnectionFile, string userScript)
+        private string GenerateConnectionScript(string bundledModulePath, ConnectionInfo connectionInfo, string userScript)
         {
             string script = $@"
 # Check PowerShell execution environment
@@ -214,67 +282,75 @@ if ($executionPolicy -eq 'Restricted' -or $executionPolicy -eq 'AllSigned') {{
 }}
 
 $bundledModulePath = '{bundledModulePath.Replace("\\", "\\\\")}'
-
-    Import-Module $bundledModulePath/Rnwood.Dataverse.Data.PowerShell.psd1 -ErrorAction Stop
+Import-Module $bundledModulePath/Rnwood.Dataverse.Data.PowerShell.psd1 -ErrorAction Stop
 ";
 
-            // Add connection logic if we have a temp connection file
-            if (!string.IsNullOrEmpty(tempConnectionFile))
+            // Add connection logic if we have connection info
+            if (connectionInfo != null && !string.IsNullOrEmpty(connectionInfo.Url))
             {
                 script += $@"
+Write-Host ""Connecting to: {connectionInfo.Url}"" -ForegroundColor Cyan
+";
 
-$tempConnectionFile = '{tempConnectionFile.Replace("\\", "\\\\")}'
+                if (connectionInfo.Token == "DYNAMIC" && !string.IsNullOrEmpty(pipeName))
+                {
+                    // Use named pipe for dynamic token retrieval
+                    script += $@"
+# Create script block that retrieves token from named pipe
+$tokenScriptBlock = {{
+
+    try {{
+        $pipeName = '{pipeName}'
+        $pipeClient = New-Object System.IO.Pipes.NamedPipeClientStream('.', $pipeName, [System.IO.Pipes.PipeDirection]::In)
+        $pipeClient.Connect(5000)  # 5 second timeout
+        
+        $reader = New-Object System.IO.StreamReader($pipeClient)
+        $token = $reader.ReadToEnd()
+        
+        $reader.Close()
+        $pipeClient.Close()
+        
+        return $token
+    }} catch {{
+        throw ""Failed to retrieve token from XrmToolbox: $($_.Exception.Message)""
+    }}
+}}
+
 try {{
-    $lines = Get-Content $tempConnectionFile
-    $url = $null
-    $token = $null
-    foreach ($line in $lines) {{
-        if ($line -match '^URL:(.+)$') {{
-            $url = $matches[1].Trim()
-        }}
-        elseif ($line -match '^TOKEN:(.+)$') {{
-            $token = $matches[1].Trim()
-        }}
-    }}
-    # Clean up the file
-    Remove-Item $tempConnectionFile -ErrorAction SilentlyContinue
-    if (!$url) {{
-        Write-Host ""ERROR: URL is required for automatic connection from XrmToolbox."" -ForegroundColor Red
-        Write-Host ""You can connect manually with:"" -ForegroundColor Yellow
-        Write-Host ""  Get-DataverseConnection -Interactive -SetAsDefault"" -ForegroundColor Cyan
-    }} else {{
-        Write-Host ""Connecting to: $url"" -ForegroundColor Cyan
-        if ($token) {{
-            # Use OAuth token
-            try {{
-                Get-DataverseConnection -AccessToken {{$token}} -Url $url -SetAsDefault -ErrorAction Stop | out-null
-                Write-Host 'Connected successfully!' -ForegroundColor Green
-                Write-Host ''
-            }} catch {{
-                Write-Host ""ERROR: Failed to connect: $($_.Exception.Message)"" -ForegroundColor Red
-                Write-Host 'You can try connecting manually with:' -ForegroundColor Yellow
-                Write-Host '  Get-DataverseConnection -Url ""' + $url + '"" -Interactive -SetAsDefault' -ForegroundColor Cyan
-            }}
-        }} else {{
-            Write-Host 'No access token available, connecting interactively...' -ForegroundColor Yellow 
-            try {{
-                Get-DataverseConnection -Url $url -Interactive -SetAsDefault -ErrorAction Stop | Out-Null
-                Write-Host 'Connected successfully!' -ForegroundColor Green
-                Write-Host ''
-            }} catch {{
-                Write-Host ""ERROR: Failed to connect: $($_.Exception.Message)"" -ForegroundColor Red
-                Write-Host 'You can try connecting manually with:' -ForegroundColor Yellow
-                Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundColor Cyan
-            }}
-        }}
-    }}
+    Get-DataverseConnection -AccessToken $tokenScriptBlock -Url '{connectionInfo.Url}' -SetAsDefault -ErrorAction Stop | Out-Null
+    Write-Host 'Connected successfully using XrmToolbox token!' -ForegroundColor Green
+    Write-Host ''
 }} catch {{
-
-    Write-Host ""WARNING: Could not read connection information from XrmToolbox: $($_.Exception.Message)"" -ForegroundColor Yellow
-    Write-Host 'You can connect manually with:' -ForegroundColor Yellow
+    Write-Host ""WARNING: Failed to connect using XrmToolbox token: $($_.Exception.Message)"" -ForegroundColor Yellow
+    Write-Host 'Falling back to interactive authentication...' -ForegroundColor Yellow
+    try {{
+        Get-DataverseConnection -Url '{connectionInfo.Url}' -Interactive -SetAsDefault -ErrorAction Stop | Out-Null
+        Write-Host 'Connected successfully!' -ForegroundColor Green
+        Write-Host ''
+    }} catch {{
+        Write-Host ""ERROR: Failed to connect: $($_.Exception.Message)"" -ForegroundColor Red
+        Write-Host 'You can try connecting manually with:' -ForegroundColor Yellow
+        Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundColor Cyan
+    }}
+}}
+";
+                }
+                else
+                {
+                    // No token available, use interactive
+                    script += $@"
+Write-Host 'No access token available, connecting interactively...' -ForegroundColor Yellow 
+try {{
+    Get-DataverseConnection -Url '{connectionInfo.Url}' -Interactive -SetAsDefault -ErrorAction Stop | Out-Null
+    Write-Host 'Connected successfully!' -ForegroundColor Green
+    Write-Host ''
+}} catch {{
+    Write-Host ""ERROR: Failed to connect: $($_.Exception.Message)"" -ForegroundColor Red
+    Write-Host 'You can try connecting manually with:' -ForegroundColor Yellow
     Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundColor Cyan
 }}
 ";
+                }
             }
             else
             {
@@ -307,6 +383,27 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
                 }
             }
             tabControls.Clear();
+
+            // Stop named pipe server
+            StopNamedPipeServer();
+        }
+
+        private void StopNamedPipeServer()
+        {
+            if (namedPipeCancellation != null)
+            {
+                try
+                {
+                    namedPipeCancellation.Cancel();
+                    namedPipeCancellation.Dispose();
+                }
+                catch
+                {
+                    // Ignore cleanup errors
+                }
+                namedPipeCancellation = null;
+            }
+            pipeName = null;
         }
 
         public void StartScriptSession(string script)
@@ -351,31 +448,9 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
         {
             string bundledModulePath = Path.Combine(Path.GetDirectoryName(GetType().Assembly.Location), "PSModule");
 
-            string tempConnectionFile = null;
-            if (connectionInfo != null)
-            {
-                tempConnectionFile = Path.Combine(Path.GetTempPath(), $"xrmtoolbox-connection-{Guid.NewGuid()}.txt");
-                File.WriteAllLines(tempConnectionFile, new[] { $"URL:{connectionInfo.Url}", !string.IsNullOrEmpty(connectionInfo.Token) ? $"TOKEN:{connectionInfo.Token}" : "" });
-            }
-
-            string connectionScript = GenerateConnectionScript(bundledModulePath, tempConnectionFile, userScript);
+            string connectionScript = GenerateConnectionScript(bundledModulePath, connectionInfo, userScript);
 
             StartConEmuSession(title, connectionScript);
-
-            // Cleanup temp connection file only — script temp file is cleaned up by ConsoleTabControl
-            _ = Task.Delay(30000).ContinueWith(t =>
-            {
-                try
-                {
-                    if (!string.IsNullOrEmpty(tempConnectionFile) && File.Exists(tempConnectionFile))
-                    {
-                        File.Delete(tempConnectionFile);
-                    }
-                }
-                catch
-                {
-                }
-            });
         }
 
         private void NewInteractiveSessionButton_Click(object sender, EventArgs e)
