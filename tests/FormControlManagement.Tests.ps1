@@ -44,7 +44,7 @@ Describe 'Form Control Management' {
     Context 'Set-DataverseFormControl - Update existing control' {
         It "Updates an existing control by ControlId" {
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -ControlId "{control1-id}" -DataField "firstname" -Label "Updated First Name"
+                -ControlId "{control1-id}" -DataField "firstname" -Label "Updated First Name" -Confirm:$false
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -ControlId "{control1-id}"
             $control.Labels[0].Description | Should -Be "Updated First Name"
@@ -52,7 +52,7 @@ Describe 'Form Control Management' {
 
         It "Updates an existing control by DataField" {
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -DataField "firstname" -Label "Updated by DataField"
+                -DataField "firstname" -Label "Updated by DataField" -Confirm:$false
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "firstname"
             $control.Labels[0].Description | Should -Be "Updated by DataField"
@@ -62,7 +62,7 @@ Describe 'Form Control Management' {
     Context 'Set-DataverseFormControl - Create new control' {
         It "Creates a new control with generated ID when ControlId not provided" {
             $result = Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -DataField "lastname" -Label "Last Name" -PassThru
+                -DataField "lastname" -Label "Last Name" -Confirm:$false -PassThru
             
             $result | Should -Not -BeNullOrEmpty
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "lastname"
@@ -73,7 +73,7 @@ Describe 'Form Control Management' {
 
         It "Creates a new control with specified ControlId" {
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -ControlId "{control2-id}" -DataField "emailaddress1" -Label "Email"
+                -ControlId "{control2-id}" -DataField "emailaddress1" -Label "Email" -Confirm:$false
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -ControlId "{control2-id}"
             $control | Should -Not -BeNull
@@ -91,7 +91,7 @@ Describe 'Form Control Management' {
 </control>
 '@
             $result = Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -ControlXml $rawXml -PassThru
+                -ControlXml $rawXml -Confirm:$false -PassThru
             
             $result | Should -Not -BeNullOrEmpty
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "mobilephone"
@@ -108,7 +108,7 @@ Describe 'Form Control Management' {
 </control>
 '@
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -ControlXml $rawXml
+                -ControlXml $rawXml -Confirm:$false
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "firstname"
             $control.Labels[0].Description | Should -Be "Updated via RawXml"
@@ -119,7 +119,7 @@ Describe 'Form Control Management' {
         It "Removes control by ControlId" {
             # First create a control to remove
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -ControlId "{control-to-remove}" -DataField "jobtitle" -Label "Job Title"
+                -ControlId "{control-to-remove}" -DataField "jobtitle" -Label "Job Title" -Confirm:$false
             
             # Verify it exists
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -ControlId "{control-to-remove}"
@@ -135,7 +135,7 @@ Describe 'Form Control Management' {
         It "Removes control by DataField" {
             # First create a control to remove
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -DataField "department" -Label "Department"
+                -DataField "department" -Label "Department" -Confirm:$false
             
             # Verify it exists
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "department"
@@ -151,11 +151,11 @@ Describe 'Form Control Management' {
 
     Context 'Error Handling' {
         It "Throws error when trying to update non-existent control by ControlId" -Skip {
-            # This test is skipped because Set-DataverseFormControl is designed to upsert
+            # This test is skipped because Set-DataverseFormControl is designed to upsert -Confirm:$false
             # (create or update). When ControlId is provided for a non-existent control,
             # it creates a new control with that ID, which is the intended behavior.
             { Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -ControlId "{non-existent-id}" -DataField "nonexistent" -Label "Test" } | Should -Throw
+                -ControlId "{non-existent-id}" -DataField "nonexistent" -Label "Test" } | Should -Throw -Confirm:$false
         }
 
         It "Throws error when trying to remove non-existent control" {

@@ -145,7 +145,7 @@ Describe 'Form Control Management - Header Section' {
             # Use the form without header
             $result = Set-DataverseFormControl -Connection $connection -FormId $script:FormId `
                 -TabName '[Header]' -DataField 'emailaddress1' `
-                -ControlType 'Email' -Label 'Email Address' -PassThru
+                -ControlType 'Email' -Label 'Email Address' -Confirm:$false -PassThru
             
             $result | Should -Not -BeNullOrEmpty
             
@@ -160,7 +160,7 @@ Describe 'Form Control Management - Header Section' {
             # Add another control to the header
             $result = Set-DataverseFormControl -Connection $connection -FormId $script:FormId `
                 -TabName '[Header]' -DataField 'ownerid' `
-                -ControlType 'Lookup' -Label 'Owner' -PassThru
+                -ControlType 'Lookup' -Label 'Owner' -Confirm:$false -PassThru
             
             $result | Should -Not -BeNullOrEmpty
             
@@ -180,7 +180,7 @@ Describe 'Form Control Management - Header Section' {
             
             $result = Set-DataverseFormControl -Connection $connection -FormId $formId `
                 -TabName '[Header]' -DataField 'telephone1' `
-                -Label 'Phone' -ColSpan 1 -CellId '{custom-header-cell}' -PassThru
+                -Label 'Phone' -ColSpan 1 -CellId '{custom-header-cell}' -Confirm:$false -PassThru
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $formId -TabName '[Header]' -DataField 'telephone1'
             $control.ColSpan | Should -Be 1
@@ -237,7 +237,7 @@ Describe 'Form Control Management - Header Section' {
         It "Updates existing header control by DataField" {
             Set-DataverseFormControl -Connection $connection -FormId $script:UpdateFormId `
                 -TabName '[Header]' -DataField 'emailaddress1' `
-                -Label 'Primary Email Address' -Disabled
+                -Label 'Primary Email Address' -Disabled -Confirm:$false
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:UpdateFormId -TabName '[Header]' -DataField 'emailaddress1'
             $control.Labels[0].Description | Should -Be 'Primary Email Address'
@@ -247,7 +247,7 @@ Describe 'Form Control Management - Header Section' {
         It "Updates existing header control by ControlId" {
             Set-DataverseFormControl -Connection $connection -FormId $script:UpdateFormId `
                 -TabName '[Header]' -ControlId 'header_email' -DataField 'emailaddress1' `
-                -Label 'Email' -Hidden
+                -Label 'Email' -Hidden -Confirm:$false
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:UpdateFormId -TabName '[Header]' -ControlId 'header_email'
             $control.Hidden | Should -Be $true
@@ -332,7 +332,7 @@ Describe 'Form Control Management - Header Section' {
             # Create header control
             $controlId = Set-DataverseFormControl -Connection $connection -FormId $formId `
                 -TabName '[Header]' -DataField 'telephone1' `
-                -ControlType 'Standard' -Label 'Phone' -ColSpan 1 -PassThru
+                -ControlType 'Standard' -Label 'Phone' -ColSpan 1 -Confirm:$false -PassThru
             
             $controlId | Should -Not -BeNullOrEmpty
             
@@ -345,7 +345,7 @@ Describe 'Form Control Management - Header Section' {
             # Update header control
             Set-DataverseFormControl -Connection $connection -FormId $formId `
                 -TabName '[Header]' -DataField 'telephone1' `
-                -Label 'Business Phone' -ColSpan 2
+                -Label 'Business Phone' -ColSpan 2 -Confirm:$false
             
             $updatedControl = Get-DataverseFormControl -Connection $connection -FormId $formId -TabName '[Header]' -DataField 'telephone1'
             $updatedControl.Labels[0].Description | Should -Be 'Business Phone'
