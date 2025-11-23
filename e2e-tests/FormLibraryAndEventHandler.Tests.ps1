@@ -103,25 +103,43 @@ Describe "Form Library and Event Handler E2E Tests" {
             $webResourceName1 = "new_e2etest_$testRunId/library1.js"
             $webResourceName2 = "new_e2etest_$testRunId/library2.js"
             
+            # Create temporary JavaScript files
+            $tempFile1 = [System.IO.Path]::GetTempFileName()
+            $tempJsFile1 = [System.IO.Path]::ChangeExtension($tempFile1, ".js")
+            Move-Item $tempFile1 $tempJsFile1 -Force
+            "function testFunction1() { console.log('test'); }" | Out-File -FilePath $tempJsFile1 -NoNewline -Encoding utf8
+            
+            $tempFile2 = [System.IO.Path]::GetTempFileName()
+            $tempJsFile2 = [System.IO.Path]::ChangeExtension($tempFile2, ".js")
+            Move-Item $tempFile2 $tempJsFile2 -Force
+            "function testFunction2() { console.log('test2'); }" | Out-File -FilePath $tempJsFile2 -NoNewline -Encoding utf8
+            
             Invoke-WithRetry {
-                # Create first web resource
-                $wr1 = New-Object Microsoft.Xrm.Sdk.Entity "webresource"
-                $wr1["name"] = $webResourceName1
-                $wr1["displayname"] = "E2E Test Library 1"
-                $wr1["webresourcetype"] = New-Object Microsoft.Xrm.Sdk.OptionSetValue(3)  # Script (JScript)
-                $wr1["content"] = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("function testFunction1() { console.log('test'); }"))
-                $script:webResourceId1 = $connection.Create($wr1)
+                # Create first web resource using Set-DataverseWebResource
+                $wr1 = Set-DataverseWebResource -Connection $connection `
+                    -Name $webResourceName1 `
+                    -Path $tempJsFile1 `
+                    -DisplayName "E2E Test Library 1" `
+                    -PassThru `
+                    -Confirm:$false
+                $script:webResourceId1 = $wr1.webresourceid
                 Write-Host "  Created web resource 1: $webResourceName1"
                 
-                # Create second web resource
-                $wr2 = New-Object Microsoft.Xrm.Sdk.Entity "webresource"
-                $wr2["name"] = $webResourceName2
-                $wr2["displayname"] = "E2E Test Library 2"
-                $wr2["webresourcetype"] = New-Object Microsoft.Xrm.Sdk.OptionSetValue(3)
-                $wr2["content"] = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("function testFunction2() { console.log('test2'); }"))
-                $script:webResourceId2 = $connection.Create($wr2)
+                # Create second web resource using Set-DataverseWebResource
+                $wr2 = Set-DataverseWebResource -Connection $connection `
+                    -Name $webResourceName2 `
+                    -Path $tempJsFile2 `
+                    -DisplayName "E2E Test Library 2" `
+                    -PassThru `
+                    -Confirm:$false
+                $script:webResourceId2 = $wr2.webresourceid
                 Write-Host "  Created web resource 2: $webResourceName2"
             }
+            
+            # Cleanup temporary files
+            Remove-Item $tempJsFile1 -Force -ErrorAction SilentlyContinue
+            Remove-Item $tempJsFile2 -Force -ErrorAction SilentlyContinue
+            
             Write-Host "✓ Web resources created"
             
             # ============================================================
@@ -306,10 +324,10 @@ Describe "Form Library and Event Handler E2E Tests" {
             
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
-                $connection.Delete("webresource", $webResourceId1)
+                Remove-DataverseWebResource -Connection $connection -Id $webResourceId1 -Confirm:$false
                 Write-Host "  Deleted web resource 1"
                 
-                $connection.Delete("webresource", $webResourceId2)
+                Remove-DataverseWebResource -Connection $connection -Id $webResourceId2 -Confirm:$false
                 Write-Host "  Deleted web resource 2"
             }
             Write-Host "✓ Web resources deleted"
