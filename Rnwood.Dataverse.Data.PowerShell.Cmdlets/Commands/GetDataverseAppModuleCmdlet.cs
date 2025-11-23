@@ -39,6 +39,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "Return raw values instead of display values")]
         public SwitchParameter Raw { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether to retrieve only published records.
+        /// </summary>
         [Parameter(HelpMessage = "Allows published records to be retrieved instead of the default behavior that includes both published and unpublished records")]
         public SwitchParameter Published { get; set; }
 

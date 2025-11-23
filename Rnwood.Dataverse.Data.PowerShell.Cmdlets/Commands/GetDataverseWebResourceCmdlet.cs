@@ -75,6 +75,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "If set, decodes the content from base64 and returns as byte array. Implies -IncludeContent.")]
         public SwitchParameter DecodeContent { get; set; }
 
+        /// <inheritdoc />
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
