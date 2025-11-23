@@ -13,7 +13,7 @@ Retrieves script libraries from a Dataverse form.
 ## SYNTAX
 
 ```
-Get-DataverseFormLibrary -FormId <Guid> [-LibraryName <String>] [-LibraryUniqueId <Guid>]
+Get-DataverseFormLibrary -FormId <Guid> [-LibraryName <String>] [-LibraryUniqueId <Guid>] [-Published]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -61,6 +61,13 @@ PS C:\> }
 ```
 
 Retrieves all libraries from all forms for an entity.
+
+### Example 5: Get libraries from published form only
+```powershell
+PS C:\> Get-DataverseFormLibrary -Connection $c -FormId $formId -Published
+```
+
+Retrieves libraries from the published version of the form only. By default, the cmdlet retrieves from the unpublished (draft) version which includes all recent changes.
 
 ## PARAMETERS
 
@@ -114,6 +121,21 @@ Optional filter to retrieve a specific library by its unique ID.
 
 ```yaml
 Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Published
+Retrieve only the published version of the form (default is unpublished)
+
+```yaml
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 

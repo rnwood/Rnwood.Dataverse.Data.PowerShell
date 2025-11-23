@@ -72,7 +72,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
 
     Context 'Set-DataverseFormLibrary' {
         It "Adds a new library to a form" {
-            $result = Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/newlibrary.js" -SkipPublish -Confirm:$false
+            $result = Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/newlibrary.js" -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.Name | Should -Be "new_/scripts/newlibrary.js"
@@ -86,7 +86,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         It "Updates an existing library" {
             $customId = [System.Guid]::NewGuid()
             
-            $result = Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/main.js" -LibraryUniqueId $customId -SkipPublish -Confirm:$false
+            $result = Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/main.js" -LibraryUniqueId $customId -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.LibraryUniqueId | Should -Be $customId
@@ -100,7 +100,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
             $newForm["formxml"] = "<form></form>"
             $connection.Create($newForm)
             
-            $result = Set-DataverseFormLibrary -Connection $connection -FormId $newForm.Id -LibraryName "new_/scripts/main.js" -SkipPublish -Confirm:$false
+            $result = Set-DataverseFormLibrary -Connection $connection -FormId $newForm.Id -LibraryName "new_/scripts/main.js" -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.Name | Should -Be "new_/scripts/main.js"
@@ -115,7 +115,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
             # FakeXrmEasy doesn't support RetrieveUnpublished and we don't have webresource metadata
             # The cmdlets will catch validation in try/catch and skip for mock scenarios
             # This test just verifies the cmdlet works with any library name
-            $result = Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "any/resource.js" -SkipPublish -Confirm:$false
+            $result = Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "any/resource.js" -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.Name | Should -Be "any/resource.js"
@@ -124,7 +124,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         It "Supports WhatIf" {
             $initialCount = @(Get-DataverseFormLibrary -Connection $connection -FormId $testFormId).Count
             
-            Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/newlibrary.js" -SkipPublish -Confirm:$false -WhatIf
+            Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/newlibrary.js" -Confirm:$false -WhatIf
             
             $afterCount = @(Get-DataverseFormLibrary -Connection $connection -FormId $testFormId).Count
             $afterCount | Should -Be $initialCount
@@ -139,7 +139,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         It "Removes a library by name" {
             $initialCount = @(Get-DataverseFormLibrary -Connection $connection -FormId $testFormId).Count
             
-            Remove-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/main.js" -SkipPublish -Confirm:$false
+            Remove-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/main.js" -Confirm:$false
             
             $afterCount = @(Get-DataverseFormLibrary -Connection $connection -FormId $testFormId).Count
             $afterCount | Should -Be ($initialCount - 1)
@@ -152,7 +152,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
             $allLibs = Get-DataverseFormLibrary -Connection $connection -FormId $testFormId
             $libToRemove = $allLibs[0]
             
-            Remove-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryUniqueId $libToRemove.LibraryUniqueId -SkipPublish -Confirm:$false
+            Remove-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryUniqueId $libToRemove.LibraryUniqueId -Confirm:$false
             
             $remaining = Get-DataverseFormLibrary -Connection $connection -FormId $testFormId -ErrorAction SilentlyContinue
             $remaining.LibraryUniqueId | Should -Not -Contain $libToRemove.LibraryUniqueId
@@ -162,7 +162,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
             # Remove all libraries one by one
             $allLibs = Get-DataverseFormLibrary -Connection $connection -FormId $testFormId
             foreach ($lib in $allLibs) {
-                Remove-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName $lib.Name -SkipPublish -Confirm:$false
+                Remove-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName $lib.Name -Confirm:$false
             }
             
             # Verify no libraries remain
@@ -171,13 +171,13 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         }
 
         It "Throws error when library not found" {
-            { Remove-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "nonexistent.js" -SkipPublish -Confirm:$false -ErrorAction Stop } | Should -Throw "*not found*"
+            { Remove-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "nonexistent.js" -Confirm:$false -ErrorAction Stop } | Should -Throw "*not found*"
         }
 
         It "Supports WhatIf" {
             $initialCount = @(Get-DataverseFormLibrary -Connection $connection -FormId $testFormId).Count
             
-            Remove-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/main.js" -SkipPublish -WhatIf
+            Remove-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/main.js" -WhatIf
             
             $afterCount = @(Get-DataverseFormLibrary -Connection $connection -FormId $testFormId).Count
             $afterCount | Should -Be $initialCount
@@ -247,7 +247,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
 
     Context 'Set-DataverseFormEventHandler - Form Events' {
         It "Adds a new form-level event handler" {
-            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "NewOnLoadFunction" -LibraryName "new_/scripts/newlibrary.js" -SkipPublish -Confirm:$false
+            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "NewOnLoadFunction" -LibraryName "new_/scripts/newlibrary.js" -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.EventName | Should -Be "onload"
@@ -264,7 +264,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         It "Updates an existing form-level event handler" {
             $customId = [System.Guid]::NewGuid()
             
-            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "FormOnLoad" -LibraryName "new_/scripts/main.js" -HandlerUniqueId $customId -Enabled $false -SkipPublish -Confirm:$false
+            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "FormOnLoad" -LibraryName "new_/scripts/main.js" -HandlerUniqueId $customId -Enabled $false -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.HandlerUniqueId | Should -Be $customId
@@ -279,7 +279,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
             $newForm["formxml"] = "<form></form>"
             $connection.Create($newForm)
             
-            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $newForm.Id -EventName "onload" -FunctionName "OnLoad" -LibraryName "new_/scripts/main.js" -SkipPublish -Confirm:$false
+            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $newForm.Id -EventName "onload" -FunctionName "OnLoad" -LibraryName "new_/scripts/main.js" -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             
@@ -289,7 +289,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         }
 
         It "Supports custom parameters" {
-            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "ParameterizedFunction" -LibraryName "new_/scripts/main.js" -Parameters "{'key':'value'}" -PassExecutionContext $false -SkipPublish -Confirm:$false
+            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "ParameterizedFunction" -LibraryName "new_/scripts/main.js" -Parameters "{'key':'value'}" -PassExecutionContext $false -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.Parameters | Should -Be "{'key':'value'}"
@@ -299,7 +299,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         It "Web resource validation in mock tests" {
             # In mock tests, web resource validation is bypassed
             # This test just verifies the cmdlet works with any library name
-            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "Test" -LibraryName "any/resource.js" -SkipPublish -Confirm:$false
+            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "Test" -LibraryName "any/resource.js" -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.LibraryName | Should -Be "any/resource.js"
@@ -308,7 +308,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
 
     Context 'Set-DataverseFormEventHandler - Control Events' {
         It "Adds a new control-level event handler" {
-            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onchange" -FunctionName "NewOnChangeFunction" -LibraryName "new_/scripts/newlibrary.js" -ControlId "lastname" -TabName "general" -SectionName "name" -SkipPublish -Confirm:$false
+            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onchange" -FunctionName "NewOnChangeFunction" -LibraryName "new_/scripts/newlibrary.js" -ControlId "lastname" -TabName "general" -SectionName "name" -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
             $result.EventName | Should -Be "onchange"
@@ -323,7 +323,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         }
 
         It "Throws error when control not found" {
-            { Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onchange" -FunctionName "Test" -LibraryName "new_/scripts/main.js" -ControlId "nonexistent" -TabName "general" -SectionName "name" -SkipPublish -Confirm:$false -ErrorAction Stop } | Should -Throw "*not found*"
+            { Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onchange" -FunctionName "Test" -LibraryName "new_/scripts/main.js" -ControlId "nonexistent" -TabName "general" -SectionName "name" -Confirm:$false -ErrorAction Stop } | Should -Throw "*not found*"
         }
     }
 
@@ -337,14 +337,14 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
             $handlerToRemove = $allHandlers[0]
             $initialCount = @($allHandlers).Count
             
-            Remove-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -HandlerUniqueId $handlerToRemove.HandlerUniqueId -SkipPublish -Confirm:$false
+            Remove-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -HandlerUniqueId $handlerToRemove.HandlerUniqueId -Confirm:$false
             
             $remaining = Get-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -ErrorAction SilentlyContinue
             @($remaining).Count | Should -Be ($initialCount - 1)
         }
 
         It "Removes a form-level handler by function name and library" {
-            Remove-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onsave" -FunctionName "ValidateBeforeSave" -LibraryName "new_/scripts/validation.js" -SkipPublish -Confirm:$false
+            Remove-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onsave" -FunctionName "ValidateBeforeSave" -LibraryName "new_/scripts/validation.js" -Confirm:$false
             
             $handlers = Get-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onsave" -ErrorAction SilentlyContinue
             if ($handlers) {
@@ -356,7 +356,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
             # Remove all handlers from onsave event
             $handlers = Get-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onsave"
             foreach ($handler in $handlers) {
-                Remove-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onsave" -HandlerUniqueId $handler.HandlerUniqueId -SkipPublish -Confirm:$false
+                Remove-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onsave" -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
             }
             
             # Verify event has no more handlers (might return empty or nothing)
@@ -365,7 +365,7 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         }
 
         It "Throws error when handler not found" {
-            { Remove-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "NonExistent" -LibraryName "nonexistent.js" -SkipPublish -Confirm:$false -ErrorAction Stop } | Should -Throw "*not found*"
+            { Remove-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "NonExistent" -LibraryName "nonexistent.js" -Confirm:$false -ErrorAction Stop } | Should -Throw "*not found*"
         }
     }
 
@@ -378,14 +378,14 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
             $handlers = Get-DataverseFormEventHandler -Connection $connection -FormId $testFormId -ControlId "firstname" -TabName "general" -SectionName "name"
             $handlerToRemove = $handlers[0]
             
-            Remove-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onchange" -HandlerUniqueId $handlerToRemove.HandlerUniqueId -ControlId "firstname" -TabName "general" -SectionName "name" -SkipPublish -Confirm:$false
+            Remove-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onchange" -HandlerUniqueId $handlerToRemove.HandlerUniqueId -ControlId "firstname" -TabName "general" -SectionName "name" -Confirm:$false
             
             $remaining = Get-DataverseFormEventHandler -Connection $connection -FormId $testFormId -ControlId "firstname" -TabName "general" -SectionName "name" -ErrorAction SilentlyContinue
             $remaining | Should -BeNullOrEmpty
         }
 
         It "Throws error when control not found" {
-            { Remove-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onchange" -FunctionName "Test" -LibraryName "test.js" -ControlId "nonexistent" -TabName "general" -SectionName "name" -SkipPublish -Confirm:$false -ErrorAction Stop } | Should -Throw "*not found*"
+            { Remove-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onchange" -FunctionName "Test" -LibraryName "test.js" -ControlId "nonexistent" -TabName "general" -SectionName "name" -Confirm:$false -ErrorAction Stop } | Should -Throw "*not found*"
         }
     }
 }

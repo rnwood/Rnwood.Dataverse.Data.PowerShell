@@ -165,10 +165,10 @@ Describe "Form Library and Event Handler E2E Tests" {
             
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
-                $script:library1 = Set-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName1 -SkipPublish -Confirm:$false
+                $script:library1 = Set-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName1 -Confirm:$false
                 Write-Host "  Added library 1: $($library1.Name)"
                 
-                $script:library2 = Set-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName2 -SkipPublish -Confirm:$false
+                $script:library2 = Set-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName2 -Confirm:$false
                 Write-Host "  Added library 2: $($library2.Name)"
             }
             Write-Host "✓ Libraries added"
@@ -212,7 +212,7 @@ Describe "Form Library and Event Handler E2E Tests" {
                     -EventName "onload" `
                     -FunctionName "E2ETestOnLoad_$testRunId" `
                     -LibraryName $webResourceName1 `
-                    -SkipPublish `
+                    `
                     -Confirm:$false
                 Write-Host "  Added form handler: $($formHandler.FunctionName)"
             }
@@ -251,7 +251,7 @@ Describe "Form Library and Event Handler E2E Tests" {
                     -EventName "onload" `
                     -FunctionName "E2ETestOnLoad_$testRunId" `
                     -LibraryName $webResourceName1 `
-                    -SkipPublish `
+                    `
                     -Confirm:$false
                 Write-Host "  Removed form handler"
             }
@@ -282,10 +282,10 @@ Describe "Form Library and Event Handler E2E Tests" {
             
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
-                Remove-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName1 -SkipPublish -Confirm:$false
+                Remove-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName1 -Confirm:$false
                 Write-Host "  Removed library 1"
                 
-                Remove-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName2 -SkipPublish -Confirm:$false
+                Remove-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName2 -Confirm:$false
                 Write-Host "  Removed library 2"
             }
             Write-Host "✓ Libraries removed"

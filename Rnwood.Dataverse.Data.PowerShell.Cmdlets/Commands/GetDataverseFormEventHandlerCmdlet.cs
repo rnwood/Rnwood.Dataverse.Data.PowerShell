@@ -53,6 +53,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Guid? HandlerUniqueId { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to retrieve only the published version of the form.
+        /// By default, the unpublished version is retrieved.
+        /// </summary>
+        [Parameter(HelpMessage = "Retrieve only the published version of the form (default is unpublished)")]
+        public SwitchParameter Published { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -65,7 +72,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 throw new ArgumentException("TabName and SectionName are required when ControlId is specified");
             }
 
-            Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml"));
+            Entity form = Published.IsPresent 
+                ? Connection.Retrieve("systemform", FormId, new ColumnSet("formxml"))
+                : FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml"));
             var (doc, formElement) = FormXmlHelper.ParseFormXml(form);
 
             bool foundAny = false;

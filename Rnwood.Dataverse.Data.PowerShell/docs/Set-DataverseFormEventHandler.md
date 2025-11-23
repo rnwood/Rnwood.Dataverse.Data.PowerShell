@@ -12,12 +12,20 @@ Adds or updates an event handler in a Dataverse form (form-level or control-leve
 
 ## SYNTAX
 
+### FormEvent (Default)
+```
+Set-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String> -LibraryName <String>
+ [-HandlerUniqueId <Guid>] [-Enabled <Boolean>] [-Parameters <String>] [-PassExecutionContext <Boolean>]
+ [-Application <Boolean>] [-Active <Boolean>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### ControlEvent
 ```
 Set-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String> -LibraryName <String>
  -ControlId <String> -TabName <String> -SectionName <String> [-HandlerUniqueId <Guid>] [-Enabled <Boolean>]
  [-Parameters <String>] [-PassExecutionContext <Boolean>] [-Application <Boolean>] [-Active <Boolean>]
- [-SkipPublish] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -67,7 +75,7 @@ PS C:\>     @{ EventName="onload"; FunctionName="Init"; LibraryName="new_/script
 PS C:\>     @{ EventName="onsave"; FunctionName="Validate"; LibraryName="new_/scripts/validate.js" }
 PS C:\> )
 PS C:\> foreach ($handler in $handlers) {
-PS C:\>     Set-DataverseFormEventHandler -Connection $c -FormId $formId @handler -SkipPublish
+PS C:\>     Set-DataverseFormEventHandler -Connection $c -FormId $formId @handler
 PS C:\> }
 ```
 
@@ -140,7 +148,7 @@ The control ID for control-level events.
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: ControlEvent
 Aliases:
 
 Required: True
@@ -275,25 +283,10 @@ The section name containing the control (required for control events).
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: ControlEvent
 Aliases:
 
 Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -SkipPublish
-If specified, the entity will not be published after adding the handler.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -305,7 +298,7 @@ The tab name containing the control (required for control events).
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: ControlEvent
 Aliases:
 
 Required: True
@@ -357,7 +350,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 - The web resource must exist (published or unpublished) before adding a handler.
 - If a handler with the same function name and library already exists, it will be updated.
-- Use -SkipPublish when adding multiple handlers to avoid multiple publish operations.
+- Use when adding multiple handlers to avoid multiple publish operations.
 
 ## RELATED LINKS
 

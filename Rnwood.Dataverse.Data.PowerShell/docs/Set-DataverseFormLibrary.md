@@ -13,12 +13,12 @@ Adds or updates a script library in a Dataverse form.
 ## SYNTAX
 
 ```
-Set-DataverseFormLibrary -FormId <Guid> -LibraryName <String> [-LibraryUniqueId <Guid>] [-SkipPublish]
+Set-DataverseFormLibrary -FormId <Guid> -LibraryName <String> [-LibraryUniqueId <Guid>]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-The Set-DataverseFormLibrary cmdlet adds a new JavaScript library (web resource) to a form, or updates an existing library reference. The cmdlet validates that the web resource exists (including unpublished versions) before adding it. After adding the library, the entity is published unless -SkipPublish is specified.
+The Set-DataverseFormLibrary cmdlet adds a new JavaScript library (web resource) to a form, or updates an existing library reference. The cmdlet validates that the web resource exists (including unpublished versions) before adding it. After adding the library, the entity is published unless is specified.
 
 ## EXAMPLES
 
@@ -39,7 +39,7 @@ Adds a library with a specific unique identifier.
 
 ### Example 3: Add a library without publishing
 ```powershell
-PS C:\> Set-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName "new_/scripts/mycode.js" -SkipPublish
+PS C:\> Set-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName "new_/scripts/mycode.js"
 ```
 
 Adds the library but does not publish the entity. Useful when making multiple changes.
@@ -59,7 +59,7 @@ PS C:\>     "new_/scripts/validation.js",
 PS C:\>     "new_/scripts/utils.js"
 PS C:\> )
 PS C:\> foreach ($lib in $libraries) {
-PS C:\>     Set-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName $lib -SkipPublish
+PS C:\>     Set-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName $lib
 PS C:\> }
 PS C:\> # Note: Use Publish-DataverseAllCustomizations or restart the Dataverse environment to publish changes
 ```
@@ -150,21 +150,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SkipPublish
-If specified, the entity will not be published after adding the library.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -WhatIf
 Shows what would happen if the cmdlet runs without actually executing it.
 
@@ -207,8 +192,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 - The web resource must exist in the environment (published or unpublished) before adding it to a form.
 - If the library already exists on the form, it will be updated with the new unique ID if provided.
-- Use -SkipPublish when adding multiple libraries to avoid multiple publish operations.
-- The entity is automatically published after the change unless -SkipPublish is used.
+- Use when adding multiple libraries to avoid multiple publish operations.
+- The entity is automatically published after the change unless is used.
 
 ## RELATED LINKS
 

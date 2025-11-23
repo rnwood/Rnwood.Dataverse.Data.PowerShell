@@ -14,18 +14,18 @@ Removes a script library from a Dataverse form.
 
 ### ByName
 ```
-Remove-DataverseFormLibrary -FormId <Guid> -LibraryName <String> [-SkipPublish] [-Connection <ServiceClient>]
+Remove-DataverseFormLibrary -FormId <Guid> -LibraryName <String> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### ByUniqueId
 ```
-Remove-DataverseFormLibrary -FormId <Guid> -LibraryUniqueId <Guid> [-SkipPublish] [-Connection <ServiceClient>]
+Remove-DataverseFormLibrary -FormId <Guid> -LibraryUniqueId <Guid> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-The Remove-DataverseFormLibrary cmdlet removes a JavaScript library reference from a Dataverse form. The library can be identified by its name or unique ID. After removal, the entity is published unless -SkipPublish is specified. Note that this only removes the library reference from the form; it does not delete the web resource itself.
+The Remove-DataverseFormLibrary cmdlet removes a JavaScript library reference from a Dataverse form. The library can be identified by its name or unique ID. After removal, the entity is published unless is specified. Note that this only removes the library reference from the form; it does not delete the web resource itself.
 
 ## EXAMPLES
 
@@ -46,7 +46,7 @@ Removes a library by its unique identifier.
 
 ### Example 3: Remove without publishing
 ```powershell
-PS C:\> Remove-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName "new_/scripts/temp.js" -SkipPublish
+PS C:\> Remove-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName "new_/scripts/temp.js"
 ```
 
 Removes the library without publishing. Useful when making multiple changes.
@@ -56,7 +56,7 @@ Removes the library without publishing. Useful when making multiple changes.
 PS C:\> $libraries = Get-DataverseFormLibrary -Connection $c -FormId $formId
 PS C:\> $unusedLibs = $libraries | Where-Object { $_.Name -like "*test*" }
 PS C:\> foreach ($lib in $unusedLibs) {
-PS C:\>     Remove-DataverseFormLibrary -Connection $c -FormId $formId -LibraryUniqueId $lib.LibraryUniqueId -SkipPublish -Confirm:$false
+PS C:\>     Remove-DataverseFormLibrary -Connection $c -FormId $formId -LibraryUniqueId $lib.LibraryUniqueId -Confirm:$false
 PS C:\> }
 ```
 
@@ -133,21 +133,6 @@ Parameter Sets: ByUniqueId
 Aliases:
 
 Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -SkipPublish
-If specified, the entity will not be published after removing the library.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -97,12 +97,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public bool Active { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets whether to skip publishing the form after update.
-        /// </summary>
-        [Parameter(HelpMessage = "Skip publishing the form after update")]
-        public SwitchParameter SkipPublish { get; set; }
-
-        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -133,14 +127,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 // Update the form
                 FormXmlHelper.UpdateFormXml(Connection, FormId, doc);
-
-                // Publish if requested
-                if (!SkipPublish.IsPresent)
-                {
-                    string entityName = form.GetAttributeValue<string>("objecttypecode");
-                    WriteVerbose($"Publishing entity '{entityName}'");
-                    FormXmlHelper.PublishEntity(Connection, entityName);
-                }
 
                 // Return the handler object
                 PSObject handlerObj = new PSObject();

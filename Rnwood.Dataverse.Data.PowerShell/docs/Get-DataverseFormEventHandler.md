@@ -14,7 +14,7 @@ Retrieves event handlers from a Dataverse form (form-level or control-level even
 
 ```
 Get-DataverseFormEventHandler -FormId <Guid> [-EventName <String>] [-ControlId <String>] [-TabName <String>]
- [-SectionName <String>] [-HandlerUniqueId <Guid>] [-Connection <ServiceClient>]
+ [-SectionName <String>] [-HandlerUniqueId <Guid>] [-Published] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -65,6 +65,13 @@ PS C:\> }
 ```
 
 Lists all event handlers for all controls on a form.
+
+### Example 6: Get event handlers from published form only
+```powershell
+PS C:\> Get-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload" -Published
+```
+
+Retrieves event handlers from the published version of the form only. By default, the cmdlet retrieves from the unpublished (draft) version which includes all recent changes.
 
 ## PARAMETERS
 
@@ -133,6 +140,21 @@ Filter by a specific handler's unique ID.
 
 ```yaml
 Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Published
+Retrieve only the published version of the form (default is unpublished)
+
+```yaml
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 

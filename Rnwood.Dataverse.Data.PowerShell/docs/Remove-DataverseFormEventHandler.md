@@ -14,28 +14,28 @@ Removes an event handler from a Dataverse form (form-level or control-level).
 
 ### FormEventByUniqueId (Default)
 ```
-Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -HandlerUniqueId <Guid> [-SkipPublish]
+Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -HandlerUniqueId <Guid>
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### ControlEventByUniqueId
 ```
 Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -HandlerUniqueId <Guid> -ControlId <String>
- -TabName <String> -SectionName <String> [-SkipPublish] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ -TabName <String> -SectionName <String> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### FormEventByFunction
 ```
 Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String>
- -LibraryName <String> [-SkipPublish] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+ -LibraryName <String> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### ControlEventByFunction
 ```
 Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String>
- -LibraryName <String> -ControlId <String> -TabName <String> -SectionName <String> [-SkipPublish]
+ -LibraryName <String> -ControlId <String> -TabName <String> -SectionName <String>
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -68,7 +68,7 @@ Removes an onchange handler from a specific control.
 
 ### Example 4: Remove without publishing
 ```powershell
-PS C:\> Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload" -HandlerUniqueId $handlerId -SkipPublish
+PS C:\> Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload" -HandlerUniqueId $handlerId
 ```
 
 Removes the handler without publishing the entity.
@@ -77,7 +77,7 @@ Removes the handler without publishing the entity.
 ```powershell
 PS C:\> $handlers = Get-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload"
 PS C:\> foreach ($handler in $handlers) {
-PS C:\>     Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload" -HandlerUniqueId $handler.HandlerUniqueId -SkipPublish -Confirm:$false
+PS C:\>     Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload" -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
 PS C:\> }
 ```
 
@@ -88,7 +88,7 @@ Removes all handlers for a specific event.
 PS C:\> $allHandlers = Get-DataverseFormEventHandler -Connection $c -FormId $formId
 PS C:\> $deprecated = $allHandlers | Where-Object { $_.LibraryName -like "*deprecated*" }
 PS C:\> foreach ($handler in $deprecated) {
-PS C:\>     Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName $handler.EventName -HandlerUniqueId $handler.HandlerUniqueId -SkipPublish -Confirm:$false
+PS C:\>     Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName $handler.EventName -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
 PS C:\> }
 ```
 
@@ -231,21 +231,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SkipPublish
-If specified, the entity will not be published after removing the handler.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -TabName
 The tab name containing the control.
 
@@ -302,8 +287,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Object
 ## NOTES
 - After removing the last handler from an event, the empty event element is automatically cleaned up.
-- Use -SkipPublish when removing multiple handlers to avoid multiple publish operations.
-- The entity is automatically published after removal unless -SkipPublish is used.
+- Use when removing multiple handlers to avoid multiple publish operations.
+- The entity is automatically published after removal unless is used.
 
 ## RELATED LINKS
 
