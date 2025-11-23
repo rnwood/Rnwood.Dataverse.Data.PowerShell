@@ -56,7 +56,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
                 var retrieveAsIfPublished = !Published.IsPresent;
-                if (MetadataCache.TryGetEntityMetadata(connectionKey, EntityName, EntityFilters.Entity, retrieveAsIfPublished, out entityMetadata))
+                if (MetadataCache.TryGetEntityMetadata(connectionKey, EntityName, EntityFilters.All, retrieveAsIfPublished, out entityMetadata))
                 {
                     WriteVerbose($"Retrieved entity metadata for '{EntityName}' from cache");
                 }
@@ -65,7 +65,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var request = new RetrieveEntityRequest
                     {
                         LogicalName = EntityName,
-                        EntityFilters = EntityFilters.Entity,
+                        EntityFilters = EntityFilters.All,
                         RetrieveAsIfPublished = !Published.IsPresent
                     };
 
@@ -75,7 +75,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     entityMetadata = response.EntityMetadata;
 
                     // Cache the result
-                    MetadataCache.AddEntityMetadata(connectionKey, EntityName, EntityFilters.Entity, retrieveAsIfPublished, entityMetadata);
+                    MetadataCache.AddEntityMetadata(connectionKey, EntityName, EntityFilters.All, retrieveAsIfPublished, entityMetadata);
                 }
             }
             else
@@ -83,7 +83,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var request = new RetrieveEntityRequest
                 {
                     LogicalName = EntityName,
-                    EntityFilters = EntityFilters.Entity,
+                    EntityFilters = EntityFilters.All,
                     RetrieveAsIfPublished = !Published.IsPresent
                 };
 

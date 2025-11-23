@@ -76,7 +76,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var retrieveRequest = new RetrieveEntityRequest
                     {
                         LogicalName = EntityName,
-                        EntityFilters = EntityFilters.Entity,
+                        EntityFilters = EntityFilters.All,
                         RetrieveAsIfPublished = true
                     };
 
