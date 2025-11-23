@@ -63,9 +63,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             try
             {
                 ConEmuStartInfo startInfo = new ConEmuStartInfo();
-                startInfo.ConsoleProcessCommandLine = $"powershell.exe -NoExit -ExecutionPolicy Bypass -File \"{tempScriptPath}\"";
+                startInfo.ConsoleProcessCommandLine = $"powershell.exe -NoLogo -NoExit -ExecutionPolicy Bypass -File \"{tempScriptPath}\"";
                 startInfo.StartupDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 startInfo.ConEmuConsoleExtenderExecutablePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty, "conemu", "conemuc.exe");
+                startInfo.SetEnv("POWERSHELL_UPDATECHECK", "Off");
 
                 var configXml = new System.Xml.XmlDocument();
                 var assembly = Assembly.GetExecutingAssembly();

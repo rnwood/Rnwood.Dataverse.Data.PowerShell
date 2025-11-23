@@ -45,6 +45,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // 
             this.conEmuControl.Dock = DockStyle.Fill;
             this.conEmuControl.Name = "conEmuControl";
+            this.conEmuControl.AutoStartInfo = null;
             // 
             // closeButton
             // 

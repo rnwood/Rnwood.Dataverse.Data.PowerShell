@@ -1,6 +1,6 @@
 # Getting Started with PowerShell Scripting Plugin
 
-Welcome to the **PowerShell Console plugin** for XrmToolbox! This plugin provides a powerful PowerShell console directly within XrmToolbox, pre-loaded with the `Rnwood.Dataverse.Data.PowerShell` module and automatically connected to your current Dataverse environment.
+Welcome to **PowerShell Scripting Workspace** for XrmToolbox! This plugin provides a powerful PowerShell scripting environment directly within XrmToolbox, pre-loaded with the `Rnwood.Dataverse.Data.PowerShell` module and automatically connected to your current Dataverse environment.
 
 ## Connection Management
 
@@ -8,7 +8,7 @@ The plugin automatically connects using your XrmToolbox credentials. The connect
 
 For multi-environment scenarios, see the [Common Use-Cases](https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell#common-use-cases) section in the main README.
 
-## Keyboard Shortcuts
+## Console Keyboard Shortcuts
 
 | Shortcut | Description |
 |----------|-------------|

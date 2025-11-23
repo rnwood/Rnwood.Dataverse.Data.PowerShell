@@ -111,7 +111,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 // Only add connection if we have both token and url
                 if (!string.IsNullOrEmpty(_accessToken) && !string.IsNullOrEmpty(_url))
                 {
-                    sb.Append($"Get-DataverseConnection -AccessToken '{_accessToken}' -Url '{_url}' -SetAsDefault -ErrorAction Stop; ");
+                    sb.Append($"Get-DataverseConnection -AccessToken {{'{_accessToken}'}} -Url '{_url}' -SetAsDefault -ErrorAction Stop; ");
                 }
             }
 

@@ -38,9 +38,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             TabPage tabPage = new TabPage(title);
             consoleTabControl.Dock = DockStyle.Fill;
             tabPage.Controls.Add(consoleTabControl);
-            consoleTabControl.CloseRequested += (s, e) => {
+            consoleTabControl.CloseRequested += (s, e) =>
+            {
                 tabControl.TabPages.Remove(tabPage);
-                if (tabControls.ContainsKey(tabPage)) {
+                if (tabControls.ContainsKey(tabPage))
+                {
                     tabControls[tabPage].DisposeConsole();
                     tabControls.Remove(tabPage);
                 }
@@ -56,9 +58,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 var connectionInfo = ExtractConnectionInformation(service);
                 this.connectionInfo = connectionInfo;
 
-                // Dispose any existing console sessions before starting a new one
-                DisposeResources();
-
                 StartSession("Main Console", "", connectionInfo);
             }
             catch (Exception ex)
@@ -70,7 +69,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private void ConsoleControl_ConsoleProcessExited(object sender, ConsoleProcessExitedEventArgs e)
         {
-            throw new NotImplementedException();
+
         }
 
         /// <summary>
@@ -184,10 +183,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             string script = $@"
 # Check PowerShell execution environment
-Write-Host '================================================' -ForegroundColor Cyan
-Write-Host 'Rnwood.Dataverse.Data.PowerShell Console' -ForegroundColor Cyan
-Write-Host '================================================' -ForegroundColor Cyan
-Write-Host ''
 
 # Check for Restricted Language Mode
 if ($ExecutionContext.SessionState.LanguageMode -eq 'RestrictedLanguage') {{
@@ -197,7 +192,6 @@ if ($ExecutionContext.SessionState.LanguageMode -eq 'RestrictedLanguage') {{
     Write-Host 'To fix this, you may need to:' -ForegroundColor Yellow
     Write-Host '  1. Check your organization''s PowerShell security policies' -ForegroundColor Yellow
     Write-Host '  2. Contact your IT administrator' -ForegroundColor Yellow
-    Write-Host '  3. Run PowerShell as Administrator and execute: Set-ExecutionPolicy RemoteSigned' -ForegroundColor Yellow
     Write-Host ''
     Write-Host 'Press any key to exit...' -ForegroundColor Yellow
     $null = $host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
@@ -206,45 +200,28 @@ if ($ExecutionContext.SessionState.LanguageMode -eq 'RestrictedLanguage') {{
 
 # Check execution policy
 $executionPolicy = Get-ExecutionPolicy
-Write-Host ""Current Execution Policy: $executionPolicy"" -ForegroundColor Cyan
 
 if ($executionPolicy -eq 'Restricted' -or $executionPolicy -eq 'AllSigned') {{
     Write-Host ''
     Write-Host 'WARNING: PowerShell Execution Policy may prevent scripts from running' -ForegroundColor Yellow
     Write-Host ""Current policy: $executionPolicy"" -ForegroundColor Yellow
     Write-Host ''
-    Write-Host 'To fix this, run PowerShell as Administrator and execute:' -ForegroundColor Yellow
-    Write-Host '  Set-ExecutionPolicy RemoteSigned -Scope LocalMachine' -ForegroundColor Yellow
-    Write-Host ''
-    Write-Host 'Or for current user only:' -ForegroundColor Yellow
+    Write-Host 'To fix this, execute:' -ForegroundColor Yellow
     Write-Host '  Set-ExecutionPolicy RemoteSigned -Scope CurrentUser' -ForegroundColor Yellow
     Write-Host ''
     Write-Host 'Attempting to continue anyway...' -ForegroundColor Yellow
     Write-Host ''
 }}
 
-Write-Host 'Loading PowerShell module...' -ForegroundColor Yellow
-
-# Try to load bundled module first
 $bundledModulePath = '{bundledModulePath.Replace("\\", "\\\\")}'
-$moduleLoaded = $false
 
-try {{
     Import-Module $bundledModulePath/Rnwood.Dataverse.Data.PowerShell.psd1 -ErrorAction Stop
-    Write-Host 'Module loaded from bundled location!' -ForegroundColor Green
-    $moduleLoaded = $true
-}} catch {{
-    Write-Host ""Warning: Could not load bundled module: $($_.Exception.Message)"" -ForegroundColor Yellow
-}}
-
-Write-Host ''
 ";
 
             // Add connection logic if we have a temp connection file
             if (!string.IsNullOrEmpty(tempConnectionFile))
             {
                 script += $@"
-Write-Host 'Connecting to Dataverse using XrmToolbox connection...' -ForegroundColor Yellow
 
 $tempConnectionFile = '{tempConnectionFile.Replace("\\", "\\\\")}'
 try {{
@@ -269,30 +246,19 @@ try {{
         Write-Host ""Connecting to: $url"" -ForegroundColor Cyan
         if ($token) {{
             # Use OAuth token
-            Write-Host 'Using OAuth token from XrmToolbox...' -ForegroundColor Yellow
             try {{
-                Get-DataverseConnection -AccessToken $token -Url $url -SetAsDefault -ErrorAction Stop
+                Get-DataverseConnection -AccessToken {{$token}} -Url $url -SetAsDefault -ErrorAction Stop | out-null
                 Write-Host 'Connected successfully!' -ForegroundColor Green
                 Write-Host ''
-                # Display connection info
-                try {{
-                    $whoami = Get-DataverseWhoAmI -Connection $global:connection
-                    Write-Host 'Connected as:' -ForegroundColor Cyan
-                    Write-Host ""  User ID: $($whoami.UserId)"" -ForegroundColor White
-                    Write-Host ""  Organization: $($whoami.OrganizationId)"" -ForegroundColor White
-                    Write-Host ''
-                }} catch {{
-                    Write-Host 'Warning: Could not retrieve user info' -ForegroundColor Yellow
-                }}
             }} catch {{
                 Write-Host ""ERROR: Failed to connect: $($_.Exception.Message)"" -ForegroundColor Red
                 Write-Host 'You can try connecting manually with:' -ForegroundColor Yellow
                 Write-Host '  Get-DataverseConnection -Url ""' + $url + '"" -Interactive -SetAsDefault' -ForegroundColor Cyan
             }}
         }} else {{
-            Write-Host 'No access token available, connecting interactively...' -ForegroundColor Yellow
+            Write-Host 'No access token available, connecting interactively...' -ForegroundColor Yellow 
             try {{
-                Get-DataverseConnection -Url $url -Interactive -SetAsDefault -ErrorAction Stop
+                Get-DataverseConnection -Url $url -Interactive -SetAsDefault -ErrorAction Stop | Out-Null
                 Write-Host 'Connected successfully!' -ForegroundColor Green
                 Write-Host ''
             }} catch {{
@@ -367,7 +333,8 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
             // Start the session using the new encapsulated method
             consoleTabControl.ProcessExited += (s, e) =>
             {
-                this.Invoke((MethodInvoker)delegate {
+                this.Invoke((MethodInvoker)delegate
+                {
                     tabControl.TabPages.Remove(tabPage);
                     if (tabControls.ContainsKey(tabPage))
                     {
@@ -413,10 +380,7 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
 
         private void NewInteractiveSessionButton_Click(object sender, EventArgs e)
         {
-            if (service != null)
-            {
-                StartEmbeddedPowerShellConsole(service);
-            }
+            StartEmbeddedPowerShellConsole(service);
         }
     }
 }
