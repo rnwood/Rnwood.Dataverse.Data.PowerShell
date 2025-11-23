@@ -327,124 +327,87 @@ jobs:
           Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
           
           # Start standard tests and E2E tests in parallel
-          Write-Host "Starting standard tests and E2E tests in parallel..." -ForegroundColor Cyan
+          Write-Host "Running tests sequentially..." -ForegroundColor Cyan
           
-          # Capture current working directory to pass to background jobs
-          $workingDir = Get-Location
+          # Run standard tests sequentially
+          Write-Host "Discovering standard test files..."
+          $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
+          Write-Host "Found $($testFiles.Count) standard test files to run sequentially"
           
-          # Job 1: Standard tests
-          $standardTestsJob = Start-Job -ScriptBlock {
-              param($modulePath, $workDir)
+          $standardResults = @()
+          foreach ($testFile in $testFiles) {
+              $testFileName = Split-Path $testFile -Leaf
+              Write-Host "Running $testFileName..." -ForegroundColor Yellow
               
-              # Set working directory for this job
-              Set-Location $workDir
-              
-              $env:TESTMODULEPATH = $modulePath
-              
-              Write-Host "Discovering standard test files..."
-              $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
-              Write-Host "Found $($testFiles.Count) standard test files to run in parallel"
-              
-              # Start a job for each test file
-              $jobs = $testFiles | ForEach-Object {
-                  $testFile = $_
-                  Start-Job -ScriptBlock {
-                      param($testFilePath, $modulePath)
-                      
-                      $env:TESTMODULEPATH = $modulePath
-                      
-                      # Run each test file independently
-                      $config = New-PesterConfiguration
-                      $config.Run.Path = $testFilePath
-                      $config.Run.PassThru = $true
-                      $config.Output.Verbosity = 'Minimal'
-                      $config.Should.ErrorAction = 'Continue'
-                      
-                      $result = Invoke-Pester -Configuration $config
-                      
-                      # Return result with filename for aggregation
-                      [PSCustomObject]@{
-                          File = (Split-Path $testFilePath -Leaf)
-                          TotalCount = $result.TotalCount
-                          PassedCount = $result.PassedCount
-                          FailedCount = $result.FailedCount
-                          SkippedCount = $result.SkippedCount
-                          DurationSeconds = $result.Duration.TotalSeconds
-                          Failed = $result.Failed
-                      }
-                  } -ArgumentList $testFile, $modulePath
-              }
-              
-              # Wait for all test file jobs to complete
-              $results = $jobs | Wait-Job | Receive-Job
-              $jobs | Remove-Job
-              
-              return $results
-          } -ArgumentList $env:TESTMODULEPATH, $workingDir
-          
-          # Job 2: E2E tests (Module.Tests.ps1 for all matrix combinations)
-          $e2eTestsJob = Start-Job -ScriptBlock {
-              param($modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret, $osType, $psVersion, $workDir)
-              
-              # Set working directory for this job
-              Set-Location $workDir
-              
-              $env:TESTMODULEPATH = $modulePath
-              $env:E2ETESTS_URL = $e2eUrl
-              $env:E2ETESTS_CLIENTID = $e2eClientId
-              $env:E2ETESTS_CLIENTSECRET = $e2eClientSecret
-              
-              Write-Host "Running E2E tests (Module.Tests.ps1)..."
-              
+              # Run each test file independently
               $config = New-PesterConfiguration
-              $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
+              $config.Run.Path = $testFile
               $config.Run.PassThru = $true
-              $config.Output.Verbosity = 'Minimal'
-              $config.Filter.ExcludeTag = 'LongRunning'
+              $config.Output.Verbosity = 'Detailed'
+              $config.Should.ErrorAction = 'Continue'
               
               $result = Invoke-Pester -Configuration $config
               
-              # Check if we should also run metadata tests (Windows Latest only)
-              $shouldRunMetadataTests = ($osType -eq 'windows-latest' -and $psVersion -eq 'latest')
+              Write-Host "Completed $testFileName - Passed: $($result.PassedCount), Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { "Red" } else { "Green" })
               
-              if ($shouldRunMetadataTests) {
-                  Write-Host "Running E2E Metadata tests (Windows Latest only)..."
-                  
-                  $metadataConfig = New-PesterConfiguration
-                  $metadataConfig.Run.Path = @(
-                      'e2e-tests/FormLibraryAndEventHandler.Tests.ps1'
-                      # Opt in per branch by uncommenting
-                      # 'e2e-tests/EntityKeyMetadata.Tests.ps1'
-                      # 'e2e-tests/EntityMetadata.Tests.ps1',
-                      # 'e2e-tests/AttributeMetadata.Tests.ps1', 
-                      # 'e2e-tests/RelationshipMetadata.Tests.ps1',
-                      # 'e2e-tests/OptionSetMetadata.Tests.ps1'
-                  )
-                  $metadataConfig.Run.PassThru = $true
-                  $metadataConfig.Output.Verbosity = 'Minimal'
-                  $metadataConfig.Filter.ExcludeTag = 'LongRunning'
-                  
-                  $metadataResult = Invoke-Pester -Configuration $metadataConfig
-                  
-                  # Combine results
-                  return @{
-                      ModuleTests = $result
-                      MetadataTests = $metadataResult
-                  }
+              # Collect result with filename for aggregation
+              $standardResults += [PSCustomObject]@{
+                  File = $testFileName
+                  TotalCount = $result.TotalCount
+                  PassedCount = $result.PassedCount
+                  FailedCount = $result.FailedCount
+                  SkippedCount = $result.SkippedCount
+                  DurationSeconds = $result.Duration.TotalSeconds
+                  Failed = $result.Failed
               }
+          }
+          
+          # Run E2E tests sequentially
+          Write-Host ""
+          Write-Host "Running E2E tests (Module.Tests.ps1)..." -ForegroundColor Yellow
+          
+          $config = New-PesterConfiguration
+          $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
+          $config.Run.PassThru = $true
+          $config.Output.Verbosity = 'Detailed'
+          $config.Filter.ExcludeTag = 'LongRunning'
+          
+          $e2eModuleResult = Invoke-Pester -Configuration $config
+          
+          Write-Host "Completed Module.Tests.ps1 - Passed: $($e2eModuleResult.PassedCount), Failed: $($e2eModuleResult.FailedCount)" -ForegroundColor $(if ($e2eModuleResult.FailedCount -gt 0) { "Red" } else { "Green" })
+          
+          # Check if we should also run metadata tests (Windows Latest only)
+          $shouldRunMetadataTests = ("${{ matrix.os }}" -eq 'windows-latest' -and "${{ matrix.powershell_version }}" -eq 'latest')
+          $metadataResult = $null
+          
+          if ($shouldRunMetadataTests) {
+              Write-Host ""
+              Write-Host "Running E2E Metadata tests (Windows Latest only)..." -ForegroundColor Yellow
               
-              return @{
-                  ModuleTests = $result
-                  MetadataTests = $null
-              }
-          } -ArgumentList $env:TESTMODULEPATH, $env:E2ETESTS_URL, $env:E2ETESTS_CLIENTID, $env:E2ETESTS_CLIENTSECRET, "${{ matrix.os }}", "${{ matrix.powershell_version }}", $workingDir
+              $metadataConfig = New-PesterConfiguration
+              $metadataConfig.Run.Path = @(
+                  'e2e-tests/FormLibraryAndEventHandler.Tests.ps1'
+                  # Opt in per branch by uncommenting
+                  # 'e2e-tests/EntityKeyMetadata.Tests.ps1'
+                  # 'e2e-tests/EntityMetadata.Tests.ps1',
+                  # 'e2e-tests/AttributeMetadata.Tests.ps1', 
+                  # 'e2e-tests/RelationshipMetadata.Tests.ps1',
+                  # 'e2e-tests/OptionSetMetadata.Tests.ps1'
+              )
+              $metadataConfig.Run.PassThru = $true
+              $metadataConfig.Output.Verbosity = 'Detailed'
+              $metadataConfig.Filter.ExcludeTag = 'LongRunning'
+              
+              $metadataResult = Invoke-Pester -Configuration $metadataConfig
+              
+              Write-Host "Completed Metadata tests - Passed: $($metadataResult.PassedCount), Failed: $($metadataResult.FailedCount)" -ForegroundColor $(if ($metadataResult.FailedCount -gt 0) { "Red" } else { "Green" })
+          }
           
-          # Wait for both jobs to complete
-          Write-Host "Waiting for standard tests and E2E tests to complete..."
-          $standardResults = Wait-Job $standardTestsJob | Receive-Job
-          $e2eResults = Wait-Job $e2eTestsJob | Receive-Job
-          
-          Remove-Job $standardTestsJob, $e2eTestsJob
+          # Package results for consistent processing below
+          $e2eResults = @{
+              ModuleTests = $e2eModuleResult
+              MetadataTests = $metadataResult
+          }
           
           # Process standard test results
           Write-Host ""
@@ -544,93 +507,55 @@ jobs:
   
             Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
             
-            # Start standard tests and E2E tests in parallel
-            Write-Host "Starting standard tests and E2E tests in parallel..." -ForegroundColor Cyan
+            # Run tests sequentially
+            Write-Host "Running tests sequentially..." -ForegroundColor Cyan
             
-            # Capture current working directory to pass to background jobs
-            $workingDir = Get-Location
+            # Run standard tests sequentially
+            Write-Host "Discovering standard test files..."
+            $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
+            Write-Host "Found $($testFiles.Count) standard test files to run sequentially"
             
-            # Job 1: Standard tests
-            $standardTestsJob = Start-Job -ScriptBlock {
-                param($modulePath, $workDir)
+            $standardResults = @()
+            foreach ($testFile in $testFiles) {
+                $testFileName = Split-Path $testFile -Leaf
+                Write-Host "Running $testFileName..." -ForegroundColor Yellow
                 
-                # Set working directory for this job
-                Set-Location $workDir
-                
-                $env:TESTMODULEPATH = $modulePath
-                
-                Write-Host "Discovering standard test files..."
-                $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
-                Write-Host "Found $($testFiles.Count) standard test files to run in parallel"
-                
-                # Start a job for each test file
-                $jobs = $testFiles | ForEach-Object {
-                    $testFile = $_
-                    Start-Job -ScriptBlock {
-                        param($testFilePath, $modulePath)
-                        
-                        $env:TESTMODULEPATH = $modulePath
-                        
-                        # Run each test file independently
-                        $config = New-PesterConfiguration
-                        $config.Run.Path = $testFilePath
-                        $config.Run.PassThru = $true
-                        $config.Output.Verbosity = 'Minimal'
-                        $config.Should.ErrorAction = 'Continue'
-                        
-                        $result = Invoke-Pester -Configuration $config
-                        
-                        # Return result with filename for aggregation
-                        [PSCustomObject]@{
-                            File = (Split-Path $testFilePath -Leaf)
-                            TotalCount = $result.TotalCount
-                            PassedCount = $result.PassedCount
-                            FailedCount = $result.FailedCount
-                            SkippedCount = $result.SkippedCount
-                            DurationSeconds = $result.Duration.TotalSeconds
-                            Failed = $result.Failed
-                        }
-                    } -ArgumentList $testFile, $modulePath
-                }
-                
-                # Wait for all test file jobs to complete
-                $results = $jobs | Wait-Job | Receive-Job
-                $jobs | Remove-Job
-                
-                return $results
-            } -ArgumentList $env:TESTMODULEPATH, $workingDir
-            
-            # Job 2: E2E tests (Module.Tests.ps1 for PowerShell 5)
-            $e2eTestsJob = Start-Job -ScriptBlock {
-                param($modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret, $workDir)
-                
-                # Set working directory for this job
-                Set-Location $workDir
-                
-                $env:TESTMODULEPATH = $modulePath
-                $env:E2ETESTS_URL = $e2eUrl
-                $env:E2ETESTS_CLIENTID = $e2eClientId
-                $env:E2ETESTS_CLIENTSECRET = $e2eClientSecret
-                
-                Write-Host "Running E2E tests (Module.Tests.ps1)..."
-                
+                # Run each test file independently
                 $config = New-PesterConfiguration
-                $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
+                $config.Run.Path = $testFile
                 $config.Run.PassThru = $true
-                $config.Output.Verbosity = 'Minimal'
-                $config.Filter.ExcludeTag = 'LongRunning'
+                $config.Output.Verbosity = 'Detailed'
+                $config.Should.ErrorAction = 'Continue'
                 
                 $result = Invoke-Pester -Configuration $config
                 
-                return $result
-            } -ArgumentList $env:TESTMODULEPATH, $env:E2ETESTS_URL, $env:E2ETESTS_CLIENTID, $env:E2ETESTS_CLIENTSECRET, $workingDir
+                Write-Host "Completed $testFileName - Passed: $($result.PassedCount), Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { "Red" } else { "Green" })
+                
+                # Collect result with filename for aggregation
+                $standardResults += [PSCustomObject]@{
+                    File = $testFileName
+                    TotalCount = $result.TotalCount
+                    PassedCount = $result.PassedCount
+                    FailedCount = $result.FailedCount
+                    SkippedCount = $result.SkippedCount
+                    DurationSeconds = $result.Duration.TotalSeconds
+                    Failed = $result.Failed
+                }
+            }
             
-            # Wait for both jobs to complete
-            Write-Host "Waiting for standard tests and E2E tests to complete..."
-            $standardResults = Wait-Job $standardTestsJob | Receive-Job
-            $e2eResult = Wait-Job $e2eTestsJob | Receive-Job
+            # Run E2E tests sequentially
+            Write-Host ""
+            Write-Host "Running E2E tests (Module.Tests.ps1)..." -ForegroundColor Yellow
             
-            Remove-Job $standardTestsJob, $e2eTestsJob
+            $config = New-PesterConfiguration
+            $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
+            $config.Run.PassThru = $true
+            $config.Output.Verbosity = 'Detailed'
+            $config.Filter.ExcludeTag = 'LongRunning'
+            
+            $e2eResult = Invoke-Pester -Configuration $config
+            
+            Write-Host "Completed Module.Tests.ps1 - Passed: $($e2eResult.PassedCount), Failed: $($e2eResult.FailedCount)" -ForegroundColor $(if ($e2eResult.FailedCount -gt 0) { "Red" } else { "Green" })
             
             # Process standard test results
             Write-Host ""
