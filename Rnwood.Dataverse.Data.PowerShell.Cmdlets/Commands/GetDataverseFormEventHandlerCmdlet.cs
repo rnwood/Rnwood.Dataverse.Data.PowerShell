@@ -81,16 +81,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 foundAny = GetFormEvents(formElement);
             }
 
-            // If a specific handler was requested and not found, throw an error
-            if (!foundAny && (HandlerUniqueId.HasValue || !string.IsNullOrEmpty(EventName)))
+            // If a specific handler unique ID was requested and not found, throw an error
+            // But if just filtering by event name, return empty results instead of throwing
+            if (!foundAny && HandlerUniqueId.HasValue)
             {
-                string identifier = HandlerUniqueId.HasValue 
-                    ? $"Handler with unique ID '{HandlerUniqueId}'" 
-                    : $"Event '{EventName}'";
+                string identifier = $"Handler with unique ID '{HandlerUniqueId}'";
                 string location = !string.IsNullOrEmpty(ControlId) 
                     ? $"control '{ControlId}'" 
                     : "form";
                 throw new InvalidOperationException($"{identifier} not found in {location}");
+            }
+            else if (!foundAny && !string.IsNullOrEmpty(EventName))
+            {
+                // Event name specified but not found - just return empty (don't throw)
+                // This allows consumers to check if an event exists without catching exceptions
+                WriteVerbose($"Event '{EventName}' not found - returning empty results");
             }
         }
 
