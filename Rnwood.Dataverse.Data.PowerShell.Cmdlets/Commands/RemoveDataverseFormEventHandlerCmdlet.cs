@@ -99,13 +99,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             bool isTabEvent = ParameterSetName.Contains("TabEvent");
             bool isAttributeEvent = ParameterSetName.Contains("AttributeEvent");
             
-            string location = isControlEvent 
-                ? $"control '{ControlId}' in section '{SectionName}' of tab '{TabName}'" 
-                : isTabEvent
-                ? $"tab '{TabName}'"
-                : isAttributeEvent
-                ? $"attribute '{AttributeName}'"
-                : $"form";
+            string location;
+            if (isControlEvent)
+                location = $"control '{ControlId}' in section '{SectionName}' of tab '{TabName}'";
+            else if (isTabEvent)
+                location = $"tab '{TabName}'";
+            else if (isAttributeEvent)
+                location = $"attribute '{AttributeName}'";
+            else
+                location = "form";
 
             if (ShouldProcess($"Form '{FormId}'", $"Remove event handler from '{EventName}' on {location}"))
             {
