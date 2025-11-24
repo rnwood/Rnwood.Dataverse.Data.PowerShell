@@ -12,7 +12,7 @@ using System.Xml.Linq;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Adds or updates an event handler in a Dataverse form (form-level or control-level).
+    /// Adds or updates an event handler in a Dataverse form (form-level, attribute-level, tab-level, or control-level).
     /// </summary>
     [Cmdlet(VerbsCommon.Set, "DataverseFormEventHandler", DefaultParameterSetName = "FormEvent", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     [OutputType(typeof(PSObject))]
@@ -25,9 +25,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Guid FormId { get; set; }
 
         /// <summary>
-        /// Gets or sets the event name (e.g., onload, onsave, onchange).
+        /// Gets or sets the event name (e.g., onload, onsave, onchange, tabstatechange).
         /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "Name of the event (e.g., onload, onsave, onchange)")]
+        [Parameter(Mandatory = true, HelpMessage = "Name of the event (e.g., onload, onsave, onchange, tabstatechange)")]
         public string EventName { get; set; }
 
         /// <summary>
@@ -43,16 +43,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string LibraryName { get; set; }
 
         /// <summary>
+        /// Gets or sets the attribute name for attribute-level events.
+        /// </summary>
+        [Parameter(ParameterSetName = "AttributeEvent", Mandatory = true, HelpMessage = "Attribute name for attribute-level events")]
+        public string AttributeName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the tab name for tab-level or control-level events.
+        /// </summary>
+        [Parameter(ParameterSetName = "TabEvent", Mandatory = true, HelpMessage = "Tab name for tab-level events")]
+        [Parameter(ParameterSetName = "ControlEvent", Mandatory = true, HelpMessage = "Tab name containing the control")]
+        public string TabName { get; set; }
+
+        /// <summary>
         /// Gets or sets the control ID for control-level events.
         /// </summary>
         [Parameter(ParameterSetName = "ControlEvent", Mandatory = true, HelpMessage = "Control ID for control-level events")]
         public string ControlId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the tab name containing the control.
-        /// </summary>
-        [Parameter(ParameterSetName = "ControlEvent", Mandatory = true, HelpMessage = "Tab name containing the control")]
-        public string TabName { get; set; }
 
         /// <summary>
         /// Gets or sets the section name containing the control.
@@ -109,9 +116,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml", "objecttypecode"));
             var (doc, formElement) = FormXmlHelper.ParseFormXml(form);
 
-            string location = ParameterSetName == "ControlEvent" 
-                ? $"control '{ControlId}' in section '{SectionName}' of tab '{TabName}'" 
-                : $"form";
+            string location;
+            if (ParameterSetName == "ControlEvent")
+                location = $"control '{ControlId}' in section '{SectionName}' of tab '{TabName}'";
+            else if (ParameterSetName == "TabEvent")
+                location = $"tab '{TabName}'";
+            else if (ParameterSetName == "AttributeEvent")
+                location = $"attribute '{AttributeName}'";
+            else
+                location = "form";
 
             if (ShouldProcess($"Form '{FormId}'", $"Add/Update event handler for '{EventName}' on {location}"))
             {
@@ -119,6 +132,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (ParameterSetName == "ControlEvent")
                 {
                     handlerId = SetControlEventHandler(formElement);
+                }
+                else if (ParameterSetName == "TabEvent")
+                {
+                    handlerId = SetTabEventHandler(formElement);
+                }
+                else if (ParameterSetName == "AttributeEvent")
+                {
+                    handlerId = SetAttributeEventHandler(formElement);
                 }
                 else
                 {
@@ -132,8 +153,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 PSObject handlerObj = new PSObject();
                 handlerObj.Properties.Add(new PSNoteProperty("FormId", FormId));
                 handlerObj.Properties.Add(new PSNoteProperty("EventName", EventName));
+                handlerObj.Properties.Add(new PSNoteProperty("Attribute", ParameterSetName == "AttributeEvent" ? AttributeName : null));
                 handlerObj.Properties.Add(new PSNoteProperty("ControlId", ParameterSetName == "ControlEvent" ? ControlId : null));
-                handlerObj.Properties.Add(new PSNoteProperty("TabName", ParameterSetName == "ControlEvent" ? TabName : null));
+                handlerObj.Properties.Add(new PSNoteProperty("TabName", ParameterSetName == "ControlEvent" || ParameterSetName == "TabEvent" ? TabName : null));
                 handlerObj.Properties.Add(new PSNoteProperty("SectionName", ParameterSetName == "ControlEvent" ? SectionName : null));
                 handlerObj.Properties.Add(new PSNoteProperty("FunctionName", FunctionName));
                 handlerObj.Properties.Add(new PSNoteProperty("LibraryName", LibraryName));
@@ -167,6 +189,104 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     formElement.AddFirst(eventsElement);
                 }
+            }
+
+            // Get or create event element
+            XElement eventElement = eventsElement.Elements("event")
+                .FirstOrDefault(e => string.Equals(e.Attribute("name")?.Value, EventName, StringComparison.OrdinalIgnoreCase));
+
+            if (eventElement == null)
+            {
+                eventElement = new XElement("event");
+                eventElement.SetAttributeValue("name", EventName);
+                eventElement.SetAttributeValue("application", Application.ToString().ToLower());
+                eventElement.SetAttributeValue("active", Active.ToString().ToLower());
+                eventsElement.Add(eventElement);
+            }
+
+            // Get or create Handlers element
+            XElement handlersElement = eventElement.Element("Handlers");
+            if (handlersElement == null)
+            {
+                handlersElement = new XElement("Handlers");
+                eventElement.Add(handlersElement);
+            }
+
+            return AddOrUpdateHandler(handlersElement);
+        }
+
+        /// <summary>
+        /// Sets an attribute-level event handler.
+        /// </summary>
+        /// <param name="formElement">The form XML element.</param>
+        /// <returns>The handler unique ID.</returns>
+        private Guid SetAttributeEventHandler(XElement formElement)
+        {
+            // Get or create events element
+            XElement eventsElement = formElement.Element("events");
+            if (eventsElement == null)
+            {
+                eventsElement = new XElement("events");
+                // Insert events after formLibraries if it exists, otherwise as first child
+                XElement formLibrariesElement = formElement.Element("formLibraries");
+                if (formLibrariesElement != null)
+                {
+                    formLibrariesElement.AddAfterSelf(eventsElement);
+                }
+                else
+                {
+                    formElement.AddFirst(eventsElement);
+                }
+            }
+
+            // Get or create event element with attribute property
+            XElement eventElement = eventsElement.Elements("event")
+                .FirstOrDefault(e => 
+                    string.Equals(e.Attribute("name")?.Value, EventName, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(e.Attribute("attribute")?.Value, AttributeName, StringComparison.OrdinalIgnoreCase));
+
+            if (eventElement == null)
+            {
+                eventElement = new XElement("event");
+                eventElement.SetAttributeValue("name", EventName);
+                eventElement.SetAttributeValue("application", Application.ToString().ToLower());
+                eventElement.SetAttributeValue("active", Active.ToString().ToLower());
+                eventElement.SetAttributeValue("attribute", AttributeName);
+                eventsElement.Add(eventElement);
+            }
+
+            // Get or create Handlers element
+            XElement handlersElement = eventElement.Element("Handlers");
+            if (handlersElement == null)
+            {
+                handlersElement = new XElement("Handlers");
+                eventElement.Add(handlersElement);
+            }
+
+            return AddOrUpdateHandler(handlersElement);
+        }
+
+        /// <summary>
+        /// Sets a tab-level event handler.
+        /// </summary>
+        /// <param name="formElement">The form XML element.</param>
+        /// <returns>The handler unique ID.</returns>
+        private Guid SetTabEventHandler(XElement formElement)
+        {
+            // Find the tab
+            var tab = FormXmlHelper.FindTab(formElement, tabName: TabName);
+            
+            if (tab == null)
+            {
+                throw new InvalidOperationException($"Tab '{TabName}' not found");
+            }
+
+            // Get or create events element
+            XElement eventsElement = tab.Element("events");
+            if (eventsElement == null)
+            {
+                eventsElement = new XElement("events");
+                tab.Add(eventsElement);
             }
 
             // Get or create event element

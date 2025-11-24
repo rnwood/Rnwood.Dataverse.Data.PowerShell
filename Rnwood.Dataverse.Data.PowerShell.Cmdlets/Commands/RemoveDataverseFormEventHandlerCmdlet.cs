@@ -10,7 +10,7 @@ using System.Xml.Linq;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Removes an event handler from a Dataverse form (form-level or control-level).
+    /// Removes an event handler from a Dataverse form (form-level, attribute-level, tab-level, or control-level).
     /// </summary>
     [Cmdlet(VerbsCommon.Remove, "DataverseFormEventHandler", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High, DefaultParameterSetName = "FormEventByUniqueId")]
     public class RemoveDataverseFormEventHandlerCmdlet : OrganizationServiceCmdlet
@@ -22,15 +22,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Guid FormId { get; set; }
 
         /// <summary>
-        /// Gets or sets the event name (e.g., onload, onsave, onchange).
+        /// Gets or sets the event name (e.g., onload, onsave, onchange, tabstatechange).
         /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "Name of the event (e.g., onload, onsave, onchange)")]
+        [Parameter(Mandatory = true, HelpMessage = "Name of the event (e.g., onload, onsave, onchange, tabstatechange)")]
         public string EventName { get; set; }
 
         /// <summary>
         /// Gets or sets the handler unique ID to remove.
         /// </summary>
         [Parameter(Mandatory = true, ParameterSetName = "FormEventByUniqueId", HelpMessage = "Unique ID of the handler to remove")]
+        [Parameter(Mandatory = true, ParameterSetName = "AttributeEventByUniqueId", HelpMessage = "Unique ID of the handler to remove")]
+        [Parameter(Mandatory = true, ParameterSetName = "TabEventByUniqueId", HelpMessage = "Unique ID of the handler to remove")]
         [Parameter(Mandatory = true, ParameterSetName = "ControlEventByUniqueId", HelpMessage = "Unique ID of the handler to remove")]
         public Guid HandlerUniqueId { get; set; }
 
@@ -38,6 +40,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the function name to identify the handler to remove.
         /// </summary>
         [Parameter(Mandatory = true, ParameterSetName = "FormEventByFunction", HelpMessage = "Function name to identify the handler to remove")]
+        [Parameter(Mandatory = true, ParameterSetName = "AttributeEventByFunction", HelpMessage = "Function name to identify the handler to remove")]
+        [Parameter(Mandatory = true, ParameterSetName = "TabEventByFunction", HelpMessage = "Function name to identify the handler to remove")]
         [Parameter(Mandatory = true, ParameterSetName = "ControlEventByFunction", HelpMessage = "Function name to identify the handler to remove")]
         public string FunctionName { get; set; }
 
@@ -45,8 +49,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the library name to identify the handler to remove (required with FunctionName).
         /// </summary>
         [Parameter(Mandatory = true, ParameterSetName = "FormEventByFunction", HelpMessage = "Library name to identify the handler to remove")]
+        [Parameter(Mandatory = true, ParameterSetName = "AttributeEventByFunction", HelpMessage = "Library name to identify the handler to remove")]
+        [Parameter(Mandatory = true, ParameterSetName = "TabEventByFunction", HelpMessage = "Library name to identify the handler to remove")]
         [Parameter(Mandatory = true, ParameterSetName = "ControlEventByFunction", HelpMessage = "Library name to identify the handler to remove")]
         public string LibraryName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the attribute name for attribute-level events.
+        /// </summary>
+        [Parameter(Mandatory = true, ParameterSetName = "AttributeEventByUniqueId", HelpMessage = "Attribute name for attribute-level events")]
+        [Parameter(Mandatory = true, ParameterSetName = "AttributeEventByFunction", HelpMessage = "Attribute name for attribute-level events")]
+        public string AttributeName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the tab name for tab-level or control-level events.
+        /// </summary>
+        [Parameter(Mandatory = true, ParameterSetName = "TabEventByUniqueId", HelpMessage = "Tab name for tab-level events")]
+        [Parameter(Mandatory = true, ParameterSetName = "TabEventByFunction", HelpMessage = "Tab name for tab-level events")]
+        [Parameter(Mandatory = true, ParameterSetName = "ControlEventByUniqueId", HelpMessage = "Tab name containing the control")]
+        [Parameter(Mandatory = true, ParameterSetName = "ControlEventByFunction", HelpMessage = "Tab name containing the control")]
+        public string TabName { get; set; }
 
         /// <summary>
         /// Gets or sets the control ID for control-level events.
@@ -54,13 +76,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = true, ParameterSetName = "ControlEventByUniqueId", HelpMessage = "Control ID for control-level events")]
         [Parameter(Mandatory = true, ParameterSetName = "ControlEventByFunction", HelpMessage = "Control ID for control-level events")]
         public string ControlId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the tab name containing the control.
-        /// </summary>
-        [Parameter(Mandatory = true, ParameterSetName = "ControlEventByUniqueId", HelpMessage = "Tab name containing the control")]
-        [Parameter(Mandatory = true, ParameterSetName = "ControlEventByFunction", HelpMessage = "Tab name containing the control")]
-        public string TabName { get; set; }
 
         /// <summary>
         /// Gets or sets the section name containing the control.
@@ -79,9 +94,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml", "objecttypecode"));
             var (doc, formElement) = FormXmlHelper.ParseFormXml(form);
 
+            // Determine event type based on parameter set
             bool isControlEvent = ParameterSetName.Contains("ControlEvent");
+            bool isTabEvent = ParameterSetName.Contains("TabEvent");
+            bool isAttributeEvent = ParameterSetName.Contains("AttributeEvent");
+            
             string location = isControlEvent 
                 ? $"control '{ControlId}' in section '{SectionName}' of tab '{TabName}'" 
+                : isTabEvent
+                ? $"tab '{TabName}'"
+                : isAttributeEvent
+                ? $"attribute '{AttributeName}'"
                 : $"form";
 
             if (ShouldProcess($"Form '{FormId}'", $"Remove event handler from '{EventName}' on {location}"))
@@ -89,6 +112,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (isControlEvent)
                 {
                     RemoveControlEventHandler(formElement);
+                }
+                else if (isTabEvent)
+                {
+                    RemoveTabEventHandler(formElement);
+                }
+                else if (isAttributeEvent)
+                {
+                    RemoveAttributeEventHandler(formElement);
                 }
                 else
                 {
@@ -125,6 +156,70 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Clean up empty elements
             CleanupEmptyEventElements(eventElement, eventsElement, formElement);
+        }
+
+        /// <summary>
+        /// Removes an attribute-level event handler.
+        /// </summary>
+        /// <param name="formElement">The form XML element.</param>
+        private void RemoveAttributeEventHandler(XElement formElement)
+        {
+            XElement eventsElement = formElement.Element("events");
+            
+            if (eventsElement == null)
+            {
+                throw new InvalidOperationException($"No events found in form");
+            }
+
+            XElement eventElement = eventsElement.Elements("event")
+                .FirstOrDefault(e => 
+                    string.Equals(e.Attribute("name")?.Value, EventName, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(e.Attribute("attribute")?.Value, AttributeName, StringComparison.OrdinalIgnoreCase));
+
+            if (eventElement == null)
+            {
+                throw new InvalidOperationException($"Event '{EventName}' for attribute '{AttributeName}' not found in form");
+            }
+
+            RemoveHandler(eventElement);
+
+            // Clean up empty elements
+            CleanupEmptyEventElements(eventElement, eventsElement, formElement);
+        }
+
+        /// <summary>
+        /// Removes a tab-level event handler.
+        /// </summary>
+        /// <param name="formElement">The form XML element.</param>
+        private void RemoveTabEventHandler(XElement formElement)
+        {
+            // Find the tab
+            var tab = FormXmlHelper.FindTab(formElement, tabName: TabName);
+            
+            if (tab == null)
+            {
+                throw new InvalidOperationException($"Tab '{TabName}' not found");
+            }
+
+            XElement eventsElement = tab.Element("events");
+            
+            if (eventsElement == null)
+            {
+                throw new InvalidOperationException($"No events found for tab '{TabName}'");
+            }
+
+            XElement eventElement = eventsElement.Elements("event")
+                .FirstOrDefault(e => string.Equals(e.Attribute("name")?.Value, EventName, StringComparison.OrdinalIgnoreCase));
+
+            if (eventElement == null)
+            {
+                throw new InvalidOperationException($"Event '{EventName}' not found for tab '{TabName}'");
+            }
+
+            RemoveHandler(eventElement);
+
+            // Clean up empty elements
+            CleanupEmptyEventElements(eventElement, eventsElement, tab);
         }
 
         /// <summary>
