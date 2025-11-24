@@ -317,10 +317,171 @@ Describe "Form Library and Event Handler E2E Tests" {
             Write-Host "✓ Library removal verified"
             
             # ============================================================
-            # STEP 12: Cleanup - Delete test web resources
+            # STEP 12: Add and verify attribute-level event handler
             # ============================================================
             Write-Host ""
-            Write-Host "Step 12: Cleanup - Deleting test web resources..."
+            Write-Host "Step 12: Adding attribute-level event handler..."
+            
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                $script:attributeHandler = Set-DataverseFormEventHandler -Connection $connection `
+                    -FormId $formId `
+                    -AttributeName "firstname" `
+                    -EventName "onchange" `
+                    -FunctionName "E2ETestAttributeChange_$testRunId" `
+                    -LibraryName $webResourceName1 `
+                    -Confirm:$false
+                Write-Host "  Added attribute handler: $($attributeHandler.FunctionName) for attribute: $($attributeHandler.Attribute)"
+            }
+            Write-Host "✓ Attribute handler added"
+            
+            # ============================================================
+            # STEP 13: Verify attribute handler was added
+            # ============================================================
+            Write-Host ""
+            Write-Host "Step 13: Verifying attribute handler was added..."
+            
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                $handlers = Get-DataverseFormEventHandler -Connection $connection -FormId $formId -AttributeName "firstname"
+                
+                $ourHandler = $handlers | Where-Object { $_.FunctionName -eq "E2ETestAttributeChange_$testRunId" }
+                if (-not $ourHandler) {
+                    throw "Attribute handler not found"
+                }
+                if ($ourHandler.Attribute -ne "firstname") {
+                    throw "Attribute property mismatch: expected 'firstname', got '$($ourHandler.Attribute)'"
+                }
+                Write-Host "  Handler found: $($ourHandler.FunctionName) on attribute: $($ourHandler.Attribute)"
+            }
+            Write-Host "✓ Attribute handler verified"
+            
+            # ============================================================
+            # STEP 14: Remove attribute handler
+            # ============================================================
+            Write-Host ""
+            Write-Host "Step 14: Removing attribute handler..."
+            
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                Remove-DataverseFormEventHandler -Connection $connection `
+                    -FormId $formId `
+                    -AttributeName "firstname" `
+                    -EventName "onchange" `
+                    -FunctionName "E2ETestAttributeChange_$testRunId" `
+                    -LibraryName $webResourceName1 `
+                    -Confirm:$false
+                Write-Host "  Removed attribute handler"
+            }
+            Write-Host "✓ Attribute handler removed"
+            
+            # ============================================================
+            # STEP 15: Verify attribute handler was removed
+            # ============================================================
+            Write-Host ""
+            Write-Host "Step 15: Verifying attribute handler was removed..."
+            
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                $handlers = Get-DataverseFormEventHandler -Connection $connection -FormId $formId -AttributeName "firstname" -ErrorAction SilentlyContinue
+                $ourHandler = $handlers | Where-Object { $_.FunctionName -eq "E2ETestAttributeChange_$testRunId" }
+                if ($ourHandler) {
+                    throw "Attribute handler still exists after deletion"
+                }
+                Write-Host "  Attribute handler confirmed removed"
+            }
+            Write-Host "✓ Attribute handler removal verified"
+            
+            # ============================================================
+            # STEP 16: Add and verify tab-level event handler
+            # ============================================================
+            Write-Host ""
+            Write-Host "Step 16: Adding tab-level event handler..."
+            
+            # Get the first tab to use for testing
+            $tabs = Get-DataverseFormTab -Connection $connection -FormId $formId
+            if (-not $tabs -or $tabs.Count -eq 0) {
+                Write-Warning "No tabs found on form, skipping tab-level event tests"
+            } else {
+                $testTabName = $tabs[0].Name
+                Write-Host "  Using tab: $testTabName"
+                
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    $script:tabHandler = Set-DataverseFormEventHandler -Connection $connection `
+                        -FormId $formId `
+                        -TabName $testTabName `
+                        -EventName "tabstatechange" `
+                        -FunctionName "E2ETestTabChange_$testRunId" `
+                        -LibraryName $webResourceName1 `
+                        -Confirm:$false
+                    Write-Host "  Added tab handler: $($tabHandler.FunctionName) for tab: $($tabHandler.TabName)"
+                }
+                Write-Host "✓ Tab handler added"
+                
+                # ============================================================
+                # STEP 17: Verify tab handler was added
+                # ============================================================
+                Write-Host ""
+                Write-Host "Step 17: Verifying tab handler was added..."
+                
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    $handlers = Get-DataverseFormEventHandler -Connection $connection -FormId $formId -TabName $testTabName -EventName "tabstatechange"
+                    
+                    $ourHandler = $handlers | Where-Object { $_.FunctionName -eq "E2ETestTabChange_$testRunId" }
+                    if (-not $ourHandler) {
+                        throw "Tab handler not found"
+                    }
+                    if ($ourHandler.TabName -ne $testTabName) {
+                        throw "TabName property mismatch: expected '$testTabName', got '$($ourHandler.TabName)'"
+                    }
+                    Write-Host "  Handler found: $($ourHandler.FunctionName) on tab: $($ourHandler.TabName)"
+                }
+                Write-Host "✓ Tab handler verified"
+                
+                # ============================================================
+                # STEP 18: Remove tab handler
+                # ============================================================
+                Write-Host ""
+                Write-Host "Step 18: Removing tab handler..."
+                
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    Remove-DataverseFormEventHandler -Connection $connection `
+                        -FormId $formId `
+                        -TabName $testTabName `
+                        -EventName "tabstatechange" `
+                        -FunctionName "E2ETestTabChange_$testRunId" `
+                        -LibraryName $webResourceName1 `
+                        -Confirm:$false
+                    Write-Host "  Removed tab handler"
+                }
+                Write-Host "✓ Tab handler removed"
+                
+                # ============================================================
+                # STEP 19: Verify tab handler was removed
+                # ============================================================
+                Write-Host ""
+                Write-Host "Step 19: Verifying tab handler was removed..."
+                
+                Invoke-WithRetry {
+                    Wait-DataversePublish -Connection $connection -Verbose
+                    $handlers = Get-DataverseFormEventHandler -Connection $connection -FormId $formId -TabName $testTabName -EventName "tabstatechange" -ErrorAction SilentlyContinue
+                    $ourHandler = $handlers | Where-Object { $_.FunctionName -eq "E2ETestTabChange_$testRunId" }
+                    if ($ourHandler) {
+                        throw "Tab handler still exists after deletion"
+                    }
+                    Write-Host "  Tab handler confirmed removed"
+                }
+                Write-Host "✓ Tab handler removal verified"
+            }
+            
+            # ============================================================
+            # STEP 20: Cleanup - Delete test web resources
+            # ============================================================
+            Write-Host ""
+            Write-Host "Step 20: Cleanup - Deleting test web resources..."
             
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
@@ -335,6 +496,9 @@ Describe "Form Library and Event Handler E2E Tests" {
             Write-Host ""
             Write-Host "=========================================="
             Write-Host "SUCCESS: All form library and event handler operations completed successfully"
+            Write-Host "  - Form-level events: ✓"
+            Write-Host "  - Attribute-level events: ✓"
+            Write-Host "  - Tab-level events: ✓"
             Write-Host "=========================================="
             
         }
