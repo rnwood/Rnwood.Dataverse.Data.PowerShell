@@ -243,6 +243,9 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
 
     Context 'Set-DataverseFormEventHandler - Form Events' {
         It "Adds a new form-level event handler" {
+            # First add the library
+            Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/newlibrary.js" -Confirm:$false
+            
             $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "NewOnLoadFunction" -LibraryName "new_/scripts/newlibrary.js" -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
@@ -268,11 +271,17 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         }
 
         It "Creates events element if it doesn't exist" {
-            # Create a form without events
+            # Create a form without events but with library
             $newForm = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $newForm["formid"] = $newForm.Id = [System.Guid]::NewGuid()
             $newForm["objecttypecode"] = "contact"
-            $newForm["formxml"] = "<form></form>"
+            $newForm["formxml"] = @"
+<form>
+    <formLibraries>
+        <Library name="new_/scripts/main.js" libraryUniqueId="{A1B2C3D4-E5F6-4789-ABCD-EF0123456789}" />
+    </formLibraries>
+</form>
+"@
             $connection.Create($newForm)
             
             $result = Set-DataverseFormEventHandler -Connection $connection -FormId $newForm.Id -EventName "onload" -FunctionName "OnLoad" -LibraryName "new_/scripts/main.js" -Confirm:$false
@@ -295,6 +304,9 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         It "Web resource validation in mock tests" {
             # In mock tests, web resource validation is bypassed
             # This test just verifies the cmdlet works with any library name
+            # First add the library to the form
+            Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "any/resource.js" -Confirm:$false
+            
             $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "Test" -LibraryName "any/resource.js" -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
@@ -304,6 +316,9 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
 
     Context 'Set-DataverseFormEventHandler - Control Events' {
         It "Adds a new control-level event handler" {
+            # First add the library
+            Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/newlibrary.js" -Confirm:$false
+            
             $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onchange" -FunctionName "NewOnChangeFunction" -LibraryName "new_/scripts/newlibrary.js" -ControlId "lastname" -TabName "general" -SectionName "name" -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
@@ -472,6 +487,9 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         }
 
         It "Adds a new attribute-level event handler" {
+            # First add the library
+            Set-DataverseFormLibrary -Connection $connection -FormId $testForm2Id -LibraryName "new_/scripts/main.js" -Confirm:$false
+            
             $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "firstname" -EventName "onchange" -FunctionName "OnFirstNameChange" -LibraryName "new_/scripts/main.js" -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
@@ -497,6 +515,9 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         }
 
         It "Sets attribute property in event element" {
+            # Library already on form (msdyn_/helplink.js from testform2.formxml), add new one for test
+            Set-DataverseFormLibrary -Connection $connection -FormId $testForm2Id -LibraryName "new_/scripts/main.js" -Confirm:$false
+            
             Set-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "lastname" -EventName "onchange" -FunctionName "OnLastNameChange" -LibraryName "new_/scripts/main.js" -Confirm:$false
             
             # Retrieve the form and check the XML contains attribute property
@@ -515,6 +536,9 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         }
 
         It "Adds a new tab-level event handler" {
+            # First add the library
+            Set-DataverseFormLibrary -Connection $connection -FormId $testForm2Id -LibraryName "new_/scripts/main.js" -Confirm:$false
+            
             $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "General" -EventName "tabstatechange" -FunctionName "OnTabChange" -LibraryName "new_/scripts/main.js" -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
@@ -541,6 +565,9 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         }
 
         It "Throws error when tab not found" {
+            # First add the library so we get to the tab validation
+            Set-DataverseFormLibrary -Connection $connection -FormId $testForm2Id -LibraryName "test.js" -Confirm:$false
+            
             { Set-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "NonExistent" -EventName "tabstatechange" -FunctionName "Test" -LibraryName "test.js" -Confirm:$false -ErrorAction Stop } | Should -Throw "*not found*"
         }
     }

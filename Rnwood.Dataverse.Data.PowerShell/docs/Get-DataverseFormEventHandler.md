@@ -20,22 +20,21 @@ Get-DataverseFormEventHandler -FormId <Guid> [-EventName <String>] [-HandlerUniq
 
 ### AttributeEvent
 ```
-Get-DataverseFormEventHandler -FormId <Guid> -AttributeName <String> [-EventName <String>]
+Get-DataverseFormEventHandler -FormId <Guid> [-EventName <String>] -AttributeName <String>
  [-HandlerUniqueId <Guid>] [-Published] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [<CommonParameters>]
 ```
 
 ### TabEvent
 ```
-Get-DataverseFormEventHandler -FormId <Guid> -TabName <String> [-EventName <String>]
- [-HandlerUniqueId <Guid>] [-Published] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseFormEventHandler -FormId <Guid> [-EventName <String>] -TabName <String> [-HandlerUniqueId <Guid>]
+ [-Published] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### ControlEvent
 ```
-Get-DataverseFormEventHandler -FormId <Guid> -ControlId <String> -TabName <String> -SectionName <String>
- [-EventName <String>] [-HandlerUniqueId <Guid>] [-Published] [-Connection <ServiceClient>]
+Get-DataverseFormEventHandler -FormId <Guid> [-EventName <String>] -TabName <String> -ControlId <String>
+ -SectionName <String> [-HandlerUniqueId <Guid>] [-Published] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -288,25 +287,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
-
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
-
-The cmdlet returns PSObjects with the following properties:
-- **FormId**: The form's unique identifier
-- **EventName**: The event name (onload, onsave, onchange, tabstatechange, etc.)
-- **Attribute**: The attribute name (for attribute-level events only, null otherwise)
-- **ControlId**: The control ID (for control-level events only, null otherwise)
-- **TabName**: The tab name (for tab-level and control-level events, null otherwise)
-- **SectionName**: The section name (for control-level events only, null otherwise)
-- **FunctionName**: The JavaScript function to call
-- **LibraryName**: The web resource containing the function
-- **HandlerUniqueId**: The handler's unique identifier
-- **Enabled**: Whether the handler is enabled
-- **Parameters**: Parameters to pass to the function
-- **PassExecutionContext**: Whether to pass execution context to the function
-
 ## NOTES
 
 **Event Location Types:**

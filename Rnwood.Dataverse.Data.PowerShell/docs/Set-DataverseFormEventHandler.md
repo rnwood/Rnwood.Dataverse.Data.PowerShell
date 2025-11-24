@@ -22,16 +22,16 @@ Set-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <
 
 ### AttributeEvent
 ```
-Set-DataverseFormEventHandler -FormId <Guid> -AttributeName <String> -EventName <String>
- -FunctionName <String> -LibraryName <String> [-HandlerUniqueId <Guid>] [-Enabled <Boolean>]
- [-Parameters <String>] [-PassExecutionContext <Boolean>] [-Application <Boolean>] [-Active <Boolean>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String> -LibraryName <String>
+ -AttributeName <String> [-HandlerUniqueId <Guid>] [-Enabled <Boolean>] [-Parameters <String>]
+ [-PassExecutionContext <Boolean>] [-Application <Boolean>] [-Active <Boolean>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### TabEvent
 ```
-Set-DataverseFormEventHandler -FormId <Guid> -TabName <String> -EventName <String> -FunctionName <String>
- -LibraryName <String> [-HandlerUniqueId <Guid>] [-Enabled <Boolean>] [-Parameters <String>]
+Set-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String> -LibraryName <String>
+ -TabName <String> [-HandlerUniqueId <Guid>] [-Enabled <Boolean>] [-Parameters <String>]
  [-PassExecutionContext <Boolean>] [-Application <Boolean>] [-Active <Boolean>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
@@ -39,7 +39,7 @@ Set-DataverseFormEventHandler -FormId <Guid> -TabName <String> -EventName <Strin
 ### ControlEvent
 ```
 Set-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String> -LibraryName <String>
- -ControlId <String> -TabName <String> -SectionName <String> [-HandlerUniqueId <Guid>] [-Enabled <Boolean>]
+ -TabName <String> -ControlId <String> -SectionName <String> [-HandlerUniqueId <Guid>] [-Enabled <Boolean>]
  [-Parameters <String>] [-PassExecutionContext <Boolean>] [-Application <Boolean>] [-Active <Boolean>]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
@@ -394,11 +394,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
-
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
-
 ## NOTES
 - The web resource must exist (published or unpublished) before adding a handler.
 - If a handler with the same function name and library already exists, it will be updated.

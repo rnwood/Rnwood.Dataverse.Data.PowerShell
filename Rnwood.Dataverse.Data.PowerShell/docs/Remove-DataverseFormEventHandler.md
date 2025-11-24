@@ -18,6 +18,26 @@ Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -HandlerUniq
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
+### AttributeEventByUniqueId
+```
+Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -HandlerUniqueId <Guid>
+ -AttributeName <String> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
+```
+
+### TabEventByUniqueId
+```
+Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -HandlerUniqueId <Guid> -TabName <String>
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### ControlEventByUniqueId
+```
+Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -HandlerUniqueId <Guid> -TabName <String>
+ -ControlId <String> -SectionName <String> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
 ### FormEventByFunction
 ```
 Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String>
@@ -25,45 +45,24 @@ Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionNam
  [<CommonParameters>]
 ```
 
-### AttributeEventByUniqueId
-```
-Remove-DataverseFormEventHandler -FormId <Guid> -AttributeName <String> -EventName <String>
- -HandlerUniqueId <Guid> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
-```
-
 ### AttributeEventByFunction
 ```
-Remove-DataverseFormEventHandler -FormId <Guid> -AttributeName <String> -EventName <String>
- -FunctionName <String> -LibraryName <String> [-Connection <ServiceClient>]
+Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String>
+ -LibraryName <String> -AttributeName <String> [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
-```
-
-### TabEventByUniqueId
-```
-Remove-DataverseFormEventHandler -FormId <Guid> -TabName <String> -EventName <String>
- -HandlerUniqueId <Guid> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
 ```
 
 ### TabEventByFunction
 ```
-Remove-DataverseFormEventHandler -FormId <Guid> -TabName <String> -EventName <String> -FunctionName <String>
- -LibraryName <String> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
-```
-
-### ControlEventByUniqueId
-```
-Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -HandlerUniqueId <Guid> -ControlId <String>
- -TabName <String> -SectionName <String> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String>
+ -LibraryName <String> -TabName <String> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### ControlEventByFunction
 ```
 Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String>
- -LibraryName <String> -ControlId <String> -TabName <String> -SectionName <String>
+ -LibraryName <String> -TabName <String> -ControlId <String> -SectionName <String>
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -311,7 +310,7 @@ The tab name for tab-level events (standalone) or containing the control (for co
 
 ```yaml
 Type: String
-Parameter Sets: TabEventByUniqueId, TabEventByFunction, ControlEventByUniqueId, ControlEventByFunction
+Parameter Sets: TabEventByUniqueId, ControlEventByUniqueId, TabEventByFunction, ControlEventByFunction
 Aliases:
 
 Required: True
@@ -357,11 +356,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
-
 ## OUTPUTS
 
 ### System.Object
-
 ## NOTES
 - After removing the last handler from an event, the empty event element is automatically cleaned up.
 - **Event Location Types:**

@@ -110,11 +110,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            // Validate web resource exists (including unpublished)
+            // Validate web resource exists (including unpublished) and is JavaScript
             ValidateWebResourceExists(LibraryName);
 
             Entity form = FormXmlHelper.RetrieveForm(Connection, FormId, new ColumnSet("formxml", "objecttypecode"));
             var (doc, formElement) = FormXmlHelper.ParseFormXml(form);
+
+            // Validate that the library is already added to the form
+            ValidateLibraryExistsOnForm(formElement, LibraryName);
 
             string location;
             if (ParameterSetName == "ControlEvent")
@@ -424,11 +427,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Validates that a web resource exists (including unpublished versions).
         /// </summary>
+        /// <summary>
+        /// Validates that a web resource exists (including unpublished versions) and is a JavaScript file.
+        /// </summary>
         /// <param name="webResourceName">The name of the web resource to validate.</param>
-        /// <exception cref="InvalidOperationException">Thrown when the web resource is not found.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the web resource is not found or is not a JavaScript file.</exception>
         private void ValidateWebResourceExists(string webResourceName)
         {
-            WriteVerbose($"Validating web resource '{webResourceName}' exists");
+            WriteVerbose($"Validating web resource '{webResourceName}' exists and is JavaScript");
 
             try
             {
@@ -441,7 +447,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 
                 if (response.Entity != null)
                 {
-                    WriteVerbose($"Web resource '{webResourceName}' found (unpublished)");
+                    ValidateWebResourceType(response.Entity, webResourceName);
+                    WriteVerbose($"Web resource '{webResourceName}' found (unpublished) and is JavaScript");
                     return;
                 }
             }
@@ -464,13 +471,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 var query = new QueryExpression("webresource");
                 query.Criteria.AddCondition("name", ConditionOperator.Equal, webResourceName);
-                query.ColumnSet = new ColumnSet("name");
+                query.ColumnSet = new ColumnSet("name", "webresourcetype");
                 query.TopCount = 1;
 
                 var results = Connection.RetrieveMultiple(query);
                 if (results.Entities.Count > 0)
                 {
-                    WriteVerbose($"Web resource '{webResourceName}' found (published)");
+                    ValidateWebResourceType(results.Entities[0], webResourceName);
+                    WriteVerbose($"Web resource '{webResourceName}' found (published) and is JavaScript");
                     return;
                 }
                 
@@ -486,7 +494,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     // No webresources exist at all - likely a test/mock environment
                     WriteVerbose($"Web resource validation bypassed - no webresource entities found in system (likely test/mock environment)");
-                    WriteVerbose($"Please ensure '{webResourceName}' exists in the target environment");
+                    WriteVerbose($"Please ensure '{webResourceName}' exists in the target environment and is a JavaScript file (webresourcetype=3)");
                     return;
                 }
                 
@@ -503,8 +511,54 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // In test/mock scenarios, the query might fail entirely
                 // Log it but continue (validation will happen in real environment)
                 WriteVerbose($"Web resource validation bypassed in test/mock environment: {ex.Message}");
-                WriteVerbose($"Please ensure '{webResourceName}' exists in the target environment");
+                WriteVerbose($"Please ensure '{webResourceName}' exists in the target environment and is a JavaScript file (webresourcetype=3)");
             }
+        }
+
+        /// <summary>
+        /// Validates that a web resource is a JavaScript file (webresourcetype=3).
+        /// </summary>
+        /// <param name="webResource">The web resource entity to validate.</param>
+        /// <param name="webResourceName">The name of the web resource for error messages.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the web resource is not a JavaScript file.</exception>
+        private void ValidateWebResourceType(Entity webResource, string webResourceName)
+        {
+            if (webResource.Contains("webresourcetype"))
+            {
+                var webResourceType = webResource.GetAttributeValue<OptionSetValue>("webresourcetype");
+                if (webResourceType != null && webResourceType.Value != 3)
+                {
+                    throw new InvalidOperationException($"Web resource '{webResourceName}' is not a JavaScript file. Only JavaScript web resources (webresourcetype=3) can be used in form event handlers. Found webresourcetype={webResourceType.Value}.");
+                }
+            }
+            // If webresourcetype is not present (e.g., in mock scenarios), we don't validate
+        }
+
+        /// <summary>
+        /// Validates that the specified library is already added to the form.
+        /// </summary>
+        /// <param name="formElement">The form XML element.</param>
+        /// <param name="libraryName">The name of the library to validate.</param>
+        /// <exception cref="InvalidOperationException">Thrown when the library is not found on the form.</exception>
+        private void ValidateLibraryExistsOnForm(XElement formElement, string libraryName)
+        {
+            WriteVerbose($"Validating library '{libraryName}' exists on form");
+
+            XElement formLibrariesElement = formElement.Element("formLibraries");
+            if (formLibrariesElement == null)
+            {
+                throw new InvalidOperationException($"Library '{libraryName}' is not added to the form. Please add the library using Set-DataverseFormLibrary before adding event handlers that reference it.");
+            }
+
+            XElement library = formLibrariesElement.Elements("Library")
+                .FirstOrDefault(l => string.Equals(l.Attribute("name")?.Value, libraryName, StringComparison.OrdinalIgnoreCase));
+
+            if (library == null)
+            {
+                throw new InvalidOperationException($"Library '{libraryName}' is not added to the form. Please add the library using Set-DataverseFormLibrary before adding event handlers that reference it.");
+            }
+
+            WriteVerbose($"Library '{libraryName}' found on form");
         }
     }
 }
