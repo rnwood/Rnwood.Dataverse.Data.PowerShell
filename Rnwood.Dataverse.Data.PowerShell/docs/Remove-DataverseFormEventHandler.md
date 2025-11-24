@@ -8,7 +8,7 @@ schema: 2.0.0
 # Remove-DataverseFormEventHandler
 
 ## SYNOPSIS
-Removes an event handler from a Dataverse form (form-level or control-level).
+Removes an event handler from a Dataverse form (form-level, attribute-level, tab-level, or control-level).
 
 ## SYNTAX
 
@@ -18,18 +18,46 @@ Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -HandlerUniq
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
-### ControlEventByUniqueId
-```
-Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -HandlerUniqueId <Guid> -ControlId <String>
- -TabName <String> -SectionName <String> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
-```
-
 ### FormEventByFunction
 ```
 Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String>
  -LibraryName <String> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
  [<CommonParameters>]
+```
+
+### AttributeEventByUniqueId
+```
+Remove-DataverseFormEventHandler -FormId <Guid> -AttributeName <String> -EventName <String>
+ -HandlerUniqueId <Guid> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
+```
+
+### AttributeEventByFunction
+```
+Remove-DataverseFormEventHandler -FormId <Guid> -AttributeName <String> -EventName <String>
+ -FunctionName <String> -LibraryName <String> [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### TabEventByUniqueId
+```
+Remove-DataverseFormEventHandler -FormId <Guid> -TabName <String> -EventName <String>
+ -HandlerUniqueId <Guid> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
+```
+
+### TabEventByFunction
+```
+Remove-DataverseFormEventHandler -FormId <Guid> -TabName <String> -EventName <String> -FunctionName <String>
+ -LibraryName <String> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
+```
+
+### ControlEventByUniqueId
+```
+Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -HandlerUniqueId <Guid> -ControlId <String>
+ -TabName <String> -SectionName <String> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### ControlEventByFunction
@@ -40,7 +68,13 @@ Remove-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionNam
 ```
 
 ## DESCRIPTION
-The Remove-DataverseFormEventHandler cmdlet removes JavaScript event handlers from Dataverse forms. It supports both form-level and control-level events. Handlers can be identified by their unique ID or by function name and library name combination.
+The Remove-DataverseFormEventHandler cmdlet removes JavaScript event handlers from Dataverse forms. It supports four event location types:
+- **Form-level events**: Events at the form root
+- **Attribute-level events**: Events with an attribute property
+- **Tab-level events**: Events within a tab element
+- **Control-level events**: Events within a control element
+
+Handlers can be identified by their unique ID or by function name and library name combination.
 
 ## EXAMPLES
 
@@ -52,28 +86,35 @@ PS C:\> Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventNa
 
 Removes a specific onload handler from the form.
 
-### Example 2: Remove a handler by function and library name
+### Example 2: Remove a form-level handler by function and library name
 ```powershell
 PS C:\> Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onsave" -FunctionName "ValidateData" -LibraryName "new_/scripts/validation.js"
 ```
 
 Removes a handler identified by its function and library.
 
-### Example 3: Remove a control-level handler
+### Example 3: Remove an attribute-level handler
+```powershell
+PS C:\> Remove-DataverseFormEventHandler -Connection $c -FormId $formId -AttributeName "department" -EventName "onchange" -FunctionName "OnDepartmentChange" -LibraryName "new_/scripts/validation.js"
+```
+
+Removes an onchange handler from the "department" attribute.
+
+### Example 4: Remove a tab-level handler
+```powershell
+PS C:\> Remove-DataverseFormEventHandler -Connection $c -FormId $formId -TabName "General" -EventName "tabstatechange" -FunctionName "OnTabChange" -LibraryName "new_/scripts/tabs.js"
+```
+
+Removes a tabstatechange handler from the "General" tab.
+
+### Example 5: Remove a control-level handler
 ```powershell
 PS C:\> Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onchange" -FunctionName "OnFieldChange" -LibraryName "new_/scripts/main.js" -ControlId "emailaddress1" -TabName "general" -SectionName "contact_info"
 ```
 
 Removes an onchange handler from a specific control.
 
-### Example 4: Remove without publishing
-```powershell
-PS C:\> Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload" -HandlerUniqueId $handlerId
-```
-
-Removes the handler without publishing the entity.
-
-### Example 5: Remove all handlers for an event
+### Example 6: Remove all handlers for an event
 ```powershell
 PS C:\> $handlers = Get-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload"
 PS C:\> foreach ($handler in $handlers) {
@@ -83,18 +124,52 @@ PS C:\> }
 
 Removes all handlers for a specific event.
 
-### Example 6: Clean up deprecated handlers
+### Example 7: Clean up attribute handlers for multiple fields
+```powershell
+PS C:\> $attributes = @("firstname", "lastname", "emailaddress1")
+PS C:\> foreach ($attr in $attributes) {
+PS C:\>     $handlers = Get-DataverseFormEventHandler -Connection $c -FormId $formId -AttributeName $attr -ErrorAction SilentlyContinue
+PS C:\>     foreach ($handler in $handlers) {
+PS C:\>         Remove-DataverseFormEventHandler -Connection $c -FormId $formId -AttributeName $attr -EventName $handler.EventName -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
+PS C:\>     }
+PS C:\> }
+```
+
+Removes all handlers from multiple attributes.
+
+### Example 8: Clean up deprecated handlers
 ```powershell
 PS C:\> $allHandlers = Get-DataverseFormEventHandler -Connection $c -FormId $formId
 PS C:\> $deprecated = $allHandlers | Where-Object { $_.LibraryName -like "*deprecated*" }
 PS C:\> foreach ($handler in $deprecated) {
-PS C:\>     Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName $handler.EventName -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
+PS C:\>     if ($handler.Attribute) {
+PS C:\>         Remove-DataverseFormEventHandler -Connection $c -FormId $formId -AttributeName $handler.Attribute -EventName $handler.EventName -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
+PS C:\>     } elseif ($handler.TabName -and -not $handler.ControlId) {
+PS C:\>         Remove-DataverseFormEventHandler -Connection $c -FormId $formId -TabName $handler.TabName -EventName $handler.EventName -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
+PS C:\>     } else {
+PS C:\>         Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName $handler.EventName -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
+PS C:\>     }
 PS C:\> }
 ```
 
-Removes all handlers using deprecated libraries.
+Removes all handlers using deprecated libraries across all event types.
 
 ## PARAMETERS
+
+### -AttributeName
+The attribute name for attribute-level events.
+
+```yaml
+Type: String
+Parameter Sets: AttributeEventByUniqueId, AttributeEventByFunction
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -Confirm
 Prompts you for confirmation before running the cmdlet.
@@ -176,7 +251,7 @@ The function name to identify the handler to remove.
 
 ```yaml
 Type: String
-Parameter Sets: FormEventByFunction, ControlEventByFunction
+Parameter Sets: FormEventByFunction, AttributeEventByFunction, TabEventByFunction, ControlEventByFunction
 Aliases:
 
 Required: True
@@ -191,7 +266,7 @@ The unique ID of the handler to remove.
 
 ```yaml
 Type: Guid
-Parameter Sets: FormEventByUniqueId, ControlEventByUniqueId
+Parameter Sets: FormEventByUniqueId, AttributeEventByUniqueId, TabEventByUniqueId, ControlEventByUniqueId
 Aliases:
 
 Required: True
@@ -206,7 +281,7 @@ The library name to identify the handler to remove (required with FunctionName).
 
 ```yaml
 Type: String
-Parameter Sets: FormEventByFunction, ControlEventByFunction
+Parameter Sets: FormEventByFunction, AttributeEventByFunction, TabEventByFunction, ControlEventByFunction
 Aliases:
 
 Required: True
@@ -232,11 +307,11 @@ Accept wildcard characters: False
 ```
 
 ### -TabName
-The tab name containing the control.
+The tab name for tab-level events (standalone) or containing the control (for control-level events).
 
 ```yaml
 Type: String
-Parameter Sets: ControlEventByUniqueId, ControlEventByFunction
+Parameter Sets: TabEventByUniqueId, TabEventByFunction, ControlEventByUniqueId, ControlEventByFunction
 Aliases:
 
 Required: True
@@ -282,13 +357,18 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
+
 ## OUTPUTS
 
 ### System.Object
+
 ## NOTES
 - After removing the last handler from an event, the empty event element is automatically cleaned up.
-- Use when removing multiple handlers to avoid multiple publish operations.
-- The entity is automatically published after removal unless is used.
+- **Event Location Types:**
+  1. **Form-level**: Events at form root without an attribute property
+  2. **Attribute-level**: Events at form root with an attribute property (requires AttributeName parameter)
+  3. **Tab-level**: Events within a tab element (requires TabName parameter without ControlId/SectionName)
+  4. **Control-level**: Events within a control element (requires ControlId, TabName, and SectionName parameters)
 
 ## RELATED LINKS
 
