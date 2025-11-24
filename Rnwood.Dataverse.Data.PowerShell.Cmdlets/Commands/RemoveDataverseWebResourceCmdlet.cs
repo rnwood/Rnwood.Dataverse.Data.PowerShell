@@ -40,6 +40,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "If set, suppresses errors if the web resource doesn't exist")]
         public SwitchParameter IfExists { get; set; }
 
+        /// <inheritdoc />
         protected override void ProcessRecord()
         {
             base.ProcessRecord();

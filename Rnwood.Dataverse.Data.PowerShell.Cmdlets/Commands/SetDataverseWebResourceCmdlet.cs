@@ -118,6 +118,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(ParameterSetName = PARAMSET_FOLDER, HelpMessage = "If set, only updates files that are newer than the corresponding web resources")]
         public SwitchParameter IfNewer { get; set; }
 
+        /// <inheritdoc />
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
