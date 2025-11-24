@@ -26,12 +26,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string Entity { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to include only published customizations. Default is false (includes unpublished).
-        /// </summary>
-        [Parameter(HelpMessage = "Include only published customizations (default: false - includes unpublished)")]
-        public SwitchParameter Published { get; set; }
-
-        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()

@@ -41,13 +41,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter Publish { get; set; }
 
         /// <summary>
-        /// Gets or sets the solution unique name to add ribbon customizations to.
-        /// If not specified, ribbon is added to the default solution.
-        /// </summary>
-        [Parameter(HelpMessage = "Solution unique name to add ribbon customizations to. If not specified, ribbon is added to the default solution.")]
-        public string SolutionUniqueName { get; set; }
-
-        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -142,12 +135,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     ribbonDiffEntity = new Entity("ribbondiff");
                     ribbonDiffEntity["entity"] = entityLogicalName;
                     ribbonDiffEntity["ribbondiffxml"] = ribbonDiffXml;
-                    
-                    if (!string.IsNullOrEmpty(SolutionUniqueName))
-                    {
-                        // TODO: Link to solution if specified
-                        WriteVerbose($"Adding ribbon diff to solution: {SolutionUniqueName}");
-                    }
 
                     Connection.Create(ribbonDiffEntity);
                     WriteVerbose($"Created new ribbon diff for entity '{entityLogicalName}'");
@@ -196,12 +183,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     // Create new application ribbon diff
                     ribbonDiffEntity = new Entity("ribbondiff");
                     ribbonDiffEntity["ribbondiffxml"] = ribbonDiffXml;
-                    
-                    if (!string.IsNullOrEmpty(SolutionUniqueName))
-                    {
-                        // TODO: Link to solution if specified
-                        WriteVerbose($"Adding ribbon diff to solution: {SolutionUniqueName}");
-                    }
 
                     Connection.Create(ribbonDiffEntity);
                     WriteVerbose("Created new application ribbon diff");
