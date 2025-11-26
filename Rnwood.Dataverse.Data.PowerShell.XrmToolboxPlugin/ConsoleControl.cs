@@ -25,7 +25,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     public partial class ConsoleControl : UserControl
     {
         private Dictionary<TabPage, ConsoleTabControl> tabControls = new Dictionary<TabPage, ConsoleTabControl>();
-        private ConnectionInfo connectionInfo;
         private int scriptSessionCounter = 1;
         private CrmServiceClient service;
         private CancellationTokenSource namedPipeCancellation;
@@ -53,13 +52,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             return tabPage;
         }
 
-        public void StartEmbeddedPowerShellConsole(CrmServiceClient service)
+        public void SetService(CrmServiceClient service)
         {
             this.service = service;
+        }
+
+        public void StartEmbeddedPowerShellConsole()
+        {
             try
             {
                 var connectionInfo = ExtractConnectionInformation(service);
-                this.connectionInfo = connectionInfo;
 
                 // Start named pipe server for dynamic token extraction
                 if (connectionInfo != null && connectionInfo.Token == "DYNAMIC")
@@ -89,6 +91,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             public string Url { get; set; }
             public string Token { get; set; }
             public string PipeName { get; set; }
+            public string OrgName { get; set; }
         }
 
         /// <summary>
@@ -189,7 +192,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 return new ConnectionInfo
                 {
                     Url = orgUrl,
-                    Token = tokenAvailable ? "DYNAMIC" : null
+                    Token = tokenAvailable ? "DYNAMIC" : null,
+                    OrgName = client.ConnectedOrgFriendlyName
                 };
             }
             catch (Exception)
@@ -237,7 +241,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 return new ConnectionInfo
                 {
                     Url = orgUrl,
-                    Token = accessToken
+                    Token = accessToken,
+                    OrgName = client.ConnectedOrgFriendlyName
                 };
             }
             catch (Exception)
@@ -408,6 +413,7 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
 
         public void StartScriptSession(string script)
         {
+            var connectionInfo = ExtractConnectionInformation(service);
             StartScriptSession(script, connectionInfo);
         }
 
@@ -416,9 +422,14 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
             StartSession($"Script Session {scriptSessionCounter++}", script, connectionInfo);
         }
 
-        private void StartConEmuSession(string title, string scriptContent)
+        private void StartConEmuSession(string title, string scriptContent, ConnectionInfo connectionInfo)
         {
             ConsoleTabControl consoleTabControl = new ConsoleTabControl();
+
+            if (connectionInfo != null)
+            {
+                consoleTabControl.SetConnectionInfo(connectionInfo.OrgName, connectionInfo.Url);
+            }
 
             TabPage tabPage = CreateConsoleTab(title, consoleTabControl);
 
@@ -450,12 +461,12 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
 
             string connectionScript = GenerateConnectionScript(bundledModulePath, connectionInfo, userScript);
 
-            StartConEmuSession(title, connectionScript);
+            StartConEmuSession(title, connectionScript, connectionInfo);
         }
 
         private void NewInteractiveSessionButton_Click(object sender, EventArgs e)
         {
-            StartEmbeddedPowerShellConsole(service);
+            StartEmbeddedPowerShellConsole();
         }
     }
 }

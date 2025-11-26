@@ -41,6 +41,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             base.OnConnectionUpdated(e);
             service = Service as CrmServiceClient;
+            consoleControl.SetService(service);
         }
 
         private void PowerShellConsolePlugin_Load(object sender, EventArgs e)
@@ -48,13 +49,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             if (!DesignMode)
             {
                 service = Service as CrmServiceClient;
+                consoleControl.SetService(service);
                 
                 // Delay starting the console to ensure the form is fully loaded
                 Task.Delay(1000).ContinueWith(_ =>
                 {
                     this.Invoke((MethodInvoker)delegate
                     {
-                        consoleControl.StartEmbeddedPowerShellConsole(service);
+                        consoleControl.StartEmbeddedPowerShellConsole();
                     });
                 });
 

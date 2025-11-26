@@ -152,5 +152,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 // ignore
             }
         }
+
+        public void SetConnectionInfo(string orgName, string url)
+        {
+            orgNameLabel.Text = orgName;
+            urlLabel.Text = url;
+        }
     }
 }

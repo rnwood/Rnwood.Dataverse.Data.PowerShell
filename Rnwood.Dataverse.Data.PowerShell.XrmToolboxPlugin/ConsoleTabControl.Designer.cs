@@ -39,6 +39,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             this.conEmuControl = new ConEmu.WinForms.ConEmuControl();
             this.closeButton = new System.Windows.Forms.Button();
+            this.statusStrip = new System.Windows.Forms.StatusStrip();
+            this.orgNameLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.urlLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.statusStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // conEmuControl
@@ -63,13 +67,40 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.closeButton.TabIndex = 1;
             this.closeButton.Click += new System.EventHandler(this.CloseButton_Click);
             // 
+            // statusStrip
+            // 
+            this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.orgNameLabel,
+            this.urlLabel});
+            this.statusStrip.Location = new System.Drawing.Point(0, 578);
+            this.statusStrip.Name = "statusStrip";
+            this.statusStrip.Size = new System.Drawing.Size(800, 22);
+            this.statusStrip.SizingGrip = false;
+            this.statusStrip.TabIndex = 2;
+            // 
+            // orgNameLabel
+            // 
+            this.orgNameLabel.Name = "orgNameLabel";
+            this.orgNameLabel.Size = new System.Drawing.Size(0, 17);
+            // 
+            // urlLabel
+            // 
+            this.urlLabel.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Left;
+            this.urlLabel.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
+            this.urlLabel.Name = "urlLabel";
+            this.urlLabel.Size = new System.Drawing.Size(4, 17);
+            // 
             // ConsoleTabControl
             // 
             this.Controls.Add(this.closeButton);
             this.Controls.Add(this.conEmuControl);
+            this.Controls.Add(this.statusStrip);
             this.Name = "ConsoleTabControl";
             this.Size = new System.Drawing.Size(800, 600);
+            this.statusStrip.ResumeLayout(false);
+            this.statusStrip.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -77,5 +108,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private ConEmuControl conEmuControl;
         private Button closeButton;
+        private StatusStrip statusStrip;
+        private ToolStripStatusLabel orgNameLabel;
+        private ToolStripStatusLabel urlLabel;
     }
 }
