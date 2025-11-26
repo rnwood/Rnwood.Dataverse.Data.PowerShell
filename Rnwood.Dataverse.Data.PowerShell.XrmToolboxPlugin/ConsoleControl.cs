@@ -297,7 +297,7 @@ Import-Module $bundledModulePath/Rnwood.Dataverse.Data.PowerShell.psd1 -ErrorAct
 Write-Host ""Connecting to: {connectionInfo.Url}"" -ForegroundColor Cyan
 ";
 
-                if (connectionInfo.Token == "DYNAMIC" && !string.IsNullOrEmpty(pipeName))
+                if (!string.IsNullOrEmpty(connectionInfo.Token) && !string.IsNullOrEmpty(pipeName))
                 {
                     // Use named pipe for dynamic token retrieval
                     script += $@"

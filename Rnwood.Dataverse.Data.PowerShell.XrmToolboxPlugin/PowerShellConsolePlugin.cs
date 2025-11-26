@@ -23,7 +23,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
     public partial class PowerShellConsolePlugin : PluginControlBase, IGitHubPlugin, IPayPalPlugin
     {
-        private ConsoleControl.ConnectionInfo connectionInfo;
         private CrmServiceClient service;
 
         public PowerShellConsolePlugin()
@@ -61,7 +60,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 });
 
                 // Extract connection info for script editor
-                this.connectionInfo = ConsoleControl.ExtractConnectionInfo(service);
+                var connectionInfo = ConsoleControl.ExtractConnectionInfo(service);
                 if (connectionInfo != null)
                 {
                     // Create a token provider function that extracts the token dynamically
@@ -112,6 +111,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 }
 
                 // Send script to console for execution
+                var connectionInfo = ConsoleControl.ExtractConnectionInfo(service);
                 consoleControl.StartScriptSession(script, connectionInfo);
             }
             catch (Exception ex)
