@@ -200,6 +200,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         result[schemaName] = entity.Id;
                         WriteVerbose($"  Found existing value for '{schemaName}': {entity.Id}");
                     }
+                    else
+                    {
+                        WriteVerbose($"  Warning: Alias found but schema name was null or empty for value ID: {entity.Id}");
+                    }
+                }
+                else
+                {
+                    WriteVerbose($"  Warning: Could not get schema name from definition for value ID: {entity.Id}");
                 }
             }
 
