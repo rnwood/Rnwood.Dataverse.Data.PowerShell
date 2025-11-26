@@ -312,7 +312,11 @@ jobs:
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
 
-          # Pack XrmToolbox Plugin
+      # Build and pack XrmToolbox Plugin (Windows only - requires .NET Framework 4.8)
+      - if: ${{ matrix.os == 'windows-latest' }}
+        name: Build and Pack XrmToolbox Plugin
+        shell: pwsh
+        run: |
           $version = ""
           if ($env:GITHUB_REF -like "refs/tags/*") {
              $version = $env:GITHUB_REF -replace "refs/tags/", ""
