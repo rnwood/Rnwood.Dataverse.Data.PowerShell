@@ -338,15 +338,36 @@ jobs:
           $releaseNotes = ""
           if (Test-Path release-notes.txt) {
              $releaseNotes = Get-Content -Path release-notes.txt -Raw
-             # Escape newlines for MSBuild command line (replace with semicolon + space for readability)
-             $releaseNotes = $releaseNotes -replace "`r`n", "; " -replace "`n", "; "
-             # Escape double quotes for MSBuild property value
-             $releaseNotes = $releaseNotes -replace '"', '""'
+             # Remove list item hyphens at the start of lines that could be interpreted as switches
+             # Match start of line (or after newline) followed by optional whitespace, hyphen, and space
+             $releaseNotes = $releaseNotes -replace '(?m)^\s*-\s+', ''
+             # Replace newlines with space for single line
+             $releaseNotes = $releaseNotes -replace "`r`n", " " -replace "`n", " "
+             # Collapse multiple spaces
+             $releaseNotes = $releaseNotes -replace '\s+', ' '
+             $releaseNotes = $releaseNotes.Trim()
           }
           
           Write-Host "Using release notes: $releaseNotes"
           
-          dotnet pack ./Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.csproj -c Release -p:PackageVersion=$version -p:PackageReleaseNotes="$releaseNotes" -o out/nuget
+          # Build argument array to avoid shell parsing issues
+          # Use explicit quoting for release notes to handle special characters
+          $packArgs = @(
+              'pack'
+              './Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.csproj'
+              '-c'
+              'Release'
+              "-p:PackageVersion=$version"
+              '-o'
+              'out/nuget'
+          )
+          
+          # Only add release notes if they exist to avoid empty parameter issues
+          if (-not [string]::IsNullOrWhiteSpace($releaseNotes)) {
+              $packArgs += "-p:PackageReleaseNotes=$releaseNotes"
+          }
+          
+          & dotnet @packArgs
       - if: ${{ matrix.powershell_version != '5' }}
         name: Test - pwsh (Standard + E2E in parallel)
         id: test-pwsh
