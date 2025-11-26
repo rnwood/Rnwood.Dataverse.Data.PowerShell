@@ -37,7 +37,7 @@ Describe "Environment Variable E2E Tests" {
             
             try {
                 Get-DataverseRecord -Connection $Connection -TableName environmentvariablevalue -FilterValues @{ environmentvariabledefinitionid = $DefinitionId } -Columns environmentvariablevalueid -ErrorAction SilentlyContinue | ForEach-Object {
-                    Remove-DataverseRecord -Connection $Connection -TableName environmentvariablevalue -Id $_.environmentvariablevalueid -Confirm:$false -ErrorAction SilentlyContinue
+                    Remove-DataverseRecord -Connection $Connection -TableName environmentvariablevalue -Id $_.Id -Confirm:$false -ErrorAction SilentlyContinue
                 }
             } catch { }
             
@@ -72,7 +72,7 @@ Describe "Environment Variable E2E Tests" {
                     type = 100000000
                 }
                 $createdDef1 = $defRecord1 | Set-DataverseRecord -Connection $connection -TableName environmentvariabledefinition -CreateOnly -PassThru
-                $defId1 = $createdDef1.environmentvariabledefinitionid
+                $defId1 = $createdDef1.Id
                 Write-Host "✓ Created definition 1 with ID: $defId1"
                 
                 $defRecord2 = [PSCustomObject]@{
@@ -81,7 +81,7 @@ Describe "Environment Variable E2E Tests" {
                     type = 100000000
                 }
                 $createdDef2 = $defRecord2 | Set-DataverseRecord -Connection $connection -TableName environmentvariabledefinition -CreateOnly -PassThru
-                $defId2 = $createdDef2.environmentvariabledefinitionid
+                $defId2 = $createdDef2.Id
                 Write-Host "✓ Created definition 2 with ID: $defId2"
                 
                 $defRecordMismatch = [PSCustomObject]@{
@@ -90,7 +90,7 @@ Describe "Environment Variable E2E Tests" {
                     type = 100000000
                 }
                 $createdDefMismatch = $defRecordMismatch | Set-DataverseRecord -Connection $connection -TableName environmentvariabledefinition -CreateOnly -PassThru
-                $defIdMismatch = $createdDefMismatch.environmentvariabledefinitionid
+                $defIdMismatch = $createdDefMismatch.Id
                 Write-Host "✓ Created mismatch test definition with ID: $defIdMismatch"
                 
                 # ==========================================
