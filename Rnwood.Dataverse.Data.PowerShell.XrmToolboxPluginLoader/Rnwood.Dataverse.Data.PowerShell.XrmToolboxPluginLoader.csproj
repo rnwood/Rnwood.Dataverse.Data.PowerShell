@@ -6,7 +6,7 @@
     <AssemblyName>Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader</AssemblyName>
     <RootNamespace>Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader</RootNamespace>
     
-    <PackageId>Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin</PackageId>
+    <PackageId>Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader</PackageId>
     <Authors>Rnwood</Authors>
     <Description>PowerShell Scripting Workspace for XrmToolbox</Description>
     <PackageTags>XrmToolbox;PowerShell;Dataverse</PackageTags>
