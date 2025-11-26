@@ -386,6 +386,102 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -CascadeAssign
+Cascade behavior for Assign: NoCascade, Cascade, Active, UserOwned, RemoveLink (Lookup only)
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: NoCascade, Cascade, Active, UserOwned, RemoveLink
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CascadeDelete
+Cascade behavior for Delete: NoCascade, RemoveLink, Restrict, Cascade (Lookup only)
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: NoCascade, RemoveLink, Restrict, Cascade
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CascadeMerge
+Cascade behavior for Merge: NoCascade, Cascade (Lookup only)
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: NoCascade, Cascade
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CascadeReparent
+Cascade behavior for Reparent: NoCascade, Cascade, Active, UserOwned, RemoveLink (Lookup only)
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: NoCascade, Cascade, Active, UserOwned, RemoveLink
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CascadeShare
+Cascade behavior for Share: NoCascade, Cascade, Active, UserOwned (Lookup only)
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: NoCascade, Cascade, Active, UserOwned
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CascadeUnshare
+Cascade behavior for Unshare: NoCascade, Cascade, Active, UserOwned (Lookup only)
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+Accepted values: NoCascade, Cascade, Active, UserOwned
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Confirm
 Prompts you for confirmation before running the cmdlet.
 
@@ -738,6 +834,36 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Publish
+If specified, publishes the attribute after creating or updating
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RelationshipSchemaName
+Schema name for the relationship created with the Lookup attribute (e.g., 'new_project_contact'). If not specified, generates from entity names.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -RequiredLevel
 Required level for the attribute that controls whether the field is required.
 
@@ -864,126 +990,6 @@ Accept wildcard characters: False
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Publish
-If specified, publishes the attribute after creating or updating
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CascadeAssign
-Cascade behavior for Assign: NoCascade, Cascade, Active, UserOwned, RemoveLink (Lookup only)
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CascadeDelete
-Cascade behavior for Delete: NoCascade, RemoveLink, Restrict, Cascade (Lookup only)
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CascadeMerge
-Cascade behavior for Merge: NoCascade, Cascade (Lookup only)
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CascadeReparent
-Cascade behavior for Reparent: NoCascade, Cascade, Active, UserOwned, RemoveLink (Lookup only)
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CascadeShare
-Cascade behavior for Share: NoCascade, Cascade, Active, UserOwned (Lookup only)
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -CascadeUnshare
-Cascade behavior for Unshare: NoCascade, Cascade, Active, UserOwned (Lookup only)
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -RelationshipSchemaName
-Schema name for the relationship created with the Lookup attribute (e.g., 'new_project_contact'). If not specified, generates from entity names.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
 
 Required: False
 Position: Named
