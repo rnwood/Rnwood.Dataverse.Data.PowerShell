@@ -364,7 +364,7 @@ jobs:
           
           # Only add release notes if they exist to avoid empty parameter issues
           if (-not [string]::IsNullOrWhiteSpace($releaseNotes)) {
-              $packArgs += "-p:PackageReleaseNotes=$releaseNotes"
+              $packArgs += "-p:PackageReleaseNotes=`"$releaseNotes`""
           }
           
           & dotnet @packArgs
