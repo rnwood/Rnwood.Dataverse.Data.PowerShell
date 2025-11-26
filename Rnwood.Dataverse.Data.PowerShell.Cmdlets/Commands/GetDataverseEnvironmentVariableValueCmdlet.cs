@@ -81,17 +81,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 
                 // Use the schema name from the linked definition entity (via alias) for reliability
                 var schemaNameAlias = value.GetAttributeValue<AliasedValue>("def.schemaname");
-                string schemaName;
-                if (schemaNameAlias?.Value is string aliasedSchemaName && !string.IsNullOrEmpty(aliasedSchemaName))
-                {
-                    schemaName = aliasedSchemaName;
-                }
-                else
-                {
-                    // Fallback to the value's schemaname field (may contain GUID in older records)
-                    schemaName = value.GetAttributeValue<string>("schemaname");
-                    WriteVerbose($"  Warning: Using fallback schemaname '{schemaName}' for value ID {value.Id} (definition alias was not available)");
-                }
+                var schemaName = schemaNameAlias?.Value as string;
                 result.Properties.Add(new PSNoteProperty("SchemaName", schemaName));
                 result.Properties.Add(new PSNoteProperty("Value", value.GetAttributeValue<string>("value")));
                 
