@@ -766,7 +766,7 @@ jobs:
           fetch-depth: 0
       
       - name: Download build artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: module-windows-latest-5
           path: .
@@ -857,7 +857,7 @@ jobs:
           fetch-depth: 0
       
       - name: Download build artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: module-windows-latest-5
           path: .
