@@ -145,6 +145,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         /// <summary>
         /// Gets existing environment variable value IDs by schema name.
+        /// Joins with environmentvariabledefinition to lookup by the definition's schemaname,
+        /// since the schemaname field in environmentvariablevalue may not be reliably populated
+        /// (older records may contain a GUID instead of the actual schema name).
         /// </summary>
         private Dictionary<string, Guid> GetExistingEnvironmentVariableValueIds(List<string> schemaNames)
         {
@@ -157,19 +160,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Querying for existing environment variable values for {schemaNames.Count} schema name(s)...");
 
-            // Query for environment variable values by schema name
+            // Query for environment variable values by joining with the parent definition
+            // and filtering by the definition's schemaname. This is more reliable than
+            // filtering by the value's schemaname, which may contain a GUID in older records.
             var query = new QueryExpression("environmentvariablevalue")
             {
-                ColumnSet = new ColumnSet("environmentvariablevalueid", "schemaname"),
-                Criteria = new FilterExpression
-                {
-                    Conditions =
-                    {
-                        new ConditionExpression("schemaname", ConditionOperator.In, schemaNames.ToArray())
-                    }
-                },
+                ColumnSet = new ColumnSet("environmentvariablevalueid", "environmentvariabledefinitionid"),
                 PageInfo = new PagingInfo { PageNumber = 1, Count = 5000 }
             };
+
+            // Add link to environmentvariabledefinition and filter by its schemaname
+            var defLink = query.AddLink("environmentvariabledefinition", "environmentvariabledefinitionid", "environmentvariabledefinitionid");
+            defLink.Columns = new ColumnSet("schemaname");
+            defLink.EntityAlias = "def";
+            defLink.LinkCriteria.AddCondition("schemaname", ConditionOperator.In, schemaNames.ToArray());
 
             var allResults = new List<Entity>();
             EntityCollection ec;
@@ -186,11 +190,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             foreach (var entity in allResults)
             {
-                if (entity.Contains("schemaname"))
+                // Get the schema name from the linked definition entity (via alias)
+                var schemaNameAlias = entity.GetAttributeValue<AliasedValue>("def.schemaname");
+                if (schemaNameAlias != null)
                 {
-                    var schemaName = entity.GetAttributeValue<string>("schemaname");
-                    result[schemaName] = entity.Id;
-                    WriteVerbose($"  Found existing value for '{schemaName}': {entity.Id}");
+                    var schemaName = schemaNameAlias.Value as string;
+                    if (!string.IsNullOrEmpty(schemaName))
+                    {
+                        result[schemaName] = entity.Id;
+                        WriteVerbose($"  Found existing value for '{schemaName}': {entity.Id}");
+                    }
+                    else
+                    {
+                        WriteVerbose($"  Warning: Alias found but schema name was null or empty for value ID: {entity.Id}");
+                    }
+                }
+                else
+                {
+                    WriteVerbose($"  Warning: Could not get schema name from definition for value ID: {entity.Id}");
                 }
             }
 
