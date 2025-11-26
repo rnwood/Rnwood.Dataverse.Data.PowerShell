@@ -368,6 +368,19 @@ jobs:
           }
           
           & dotnet @packArgs
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "dotnet pack failed with exit code $LASTEXITCODE"
+              exit $LASTEXITCODE
+          }
+          
+          # Verify the nupkg was created
+          $nupkgFiles = Get-ChildItem -Path 'out/nuget/*.nupkg' -ErrorAction SilentlyContinue
+          if ($nupkgFiles) {
+              Write-Host "Successfully created package(s): $($nupkgFiles.Name -join ', ')"
+          } else {
+              Write-Error "No .nupkg file was created in out/nuget/"
+              exit 1
+          }
       - if: ${{ matrix.powershell_version != '5' }}
         name: Test - pwsh (Standard + E2E in parallel)
         id: test-pwsh
@@ -858,8 +871,14 @@ jobs:
           # Publish stable release to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
 
-          # Publish XrmToolbox Plugin to NuGet
-          dotnet nuget push out/nuget/*.nupkg -k $env:NUGET_KEY_XRMTOOLBOX -s https://api.nuget.org/v3/index.json --skip-duplicate
+          # Publish XrmToolbox Plugin to NuGet (if package exists)
+          $nupkgFiles = Get-ChildItem -Path 'out/nuget/*.nupkg' -ErrorAction SilentlyContinue
+          if ($nupkgFiles) {
+              Write-Host "Publishing XrmToolbox Plugin to NuGet..."
+              dotnet nuget push out/nuget/*.nupkg -k $env:NUGET_KEY_XRMTOOLBOX -s https://api.nuget.org/v3/index.json --skip-duplicate
+          } else {
+              Write-Warning "No XrmToolbox Plugin nupkg found in out/nuget/ - skipping NuGet publish"
+          }
       
       - name: Update GitHub Release Description
         uses: actions/github-script@v8
@@ -1065,5 +1084,11 @@ jobs:
           # Publish prerelease to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
 
-          # Publish XrmToolbox Plugin to NuGet
-          dotnet nuget push out/nuget/*.nupkg -k $env:NUGET_KEY_XRMTOOLBOX -s https://api.nuget.org/v3/index.json --skip-duplicate
+          # Publish XrmToolbox Plugin to NuGet (if package exists)
+          $nupkgFiles = Get-ChildItem -Path 'out/nuget/*.nupkg' -ErrorAction SilentlyContinue
+          if ($nupkgFiles) {
+              Write-Host "Publishing XrmToolbox Plugin to NuGet..."
+              dotnet nuget push out/nuget/*.nupkg -k $env:NUGET_KEY_XRMTOOLBOX -s https://api.nuget.org/v3/index.json --skip-duplicate
+          } else {
+              Write-Warning "No XrmToolbox Plugin nupkg found in out/nuget/ - skipping NuGet publish"
+          }
