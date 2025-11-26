@@ -935,6 +935,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const path = require('path');
             const version = fs.readFileSync('ci-version.txt', 'utf8').trim();
             const shortSha = context.sha.substring(0, 7);
             const tagName = `v${version}`;
