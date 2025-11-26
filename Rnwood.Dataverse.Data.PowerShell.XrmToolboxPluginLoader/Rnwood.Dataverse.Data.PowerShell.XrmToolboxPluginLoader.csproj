@@ -9,37 +9,46 @@
     <PackageId>Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader</PackageId>
     <Authors>Rnwood</Authors>
     <Description>PowerShell Scripting Workspace for XrmToolbox</Description>
-    <PackageTags>XrmToolbox;PowerShell;Dataverse</PackageTags>
+    <PackageTags>XrmToolBox;PowerShell;Dataverse;Scripting;Automation</PackageTags>
     <IsPackable>true</IsPackable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
     <RepositoryUrl>https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell</RepositoryUrl>
     <PackageProjectUrl>https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <XrmToolBoxVersion>1.2025.10.74</XrmToolBoxVersion>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageIconUrl>https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/refs/heads/main/icon.png</PackageIconUrl>
    </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\icon.png" Pack="true" PackagePath="" />
     <PackageReference Include="XrmToolBoxPackage" Version="$(XrmToolBoxVersion)" PrivateAssets="All" />
   </ItemGroup>
 
 
   
   <Target Name="BuildXrmToolboxPlugin" AfterTargets="Build">
-    <MakeDir Directories="$(OutDir)\plugins" />
-    <Copy SourceFiles="$(OutDir)/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.dll" DestinationFolder="$(OutputPath)/plugins" SkipUnchangedFiles="true" />
+    <MakeDir Directories="$(OutDir)plugins" />
+    <Copy SourceFiles="$(OutDir)Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.dll" DestinationFolder="$(OutDir)plugins" SkipUnchangedFiles="true" />
     <MSBuild Projects="../Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration)" BuildInParallel="true">
     </MSBuild>
     <Exec Command="cmd /c &quot;robocopy &quot;$(ProjectDir)..\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin\bin\$(Configuration)\net48&quot; &quot;$(OutDir)plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin&quot; /E /NJH /NJS &amp; exit 0&quot;" />
   </Target>
 
-  <Target Name="AddPluginFilesToPackage" BeforeTargets="GenerateNuspec">
+  <Target Name="AddPluginFilesToPackage" BeforeTargets="GenerateNuspec" DependsOnTargets="BuildXrmToolboxPlugin">
+        <Message Text="Adding plugin files to package from $(OutDir)plugins" Importance="high" />
     <ItemGroup>
-      <_PluginFiles Include="$(OutDir)plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin\**\*.*" />
-      <Content Include="@(_PluginFiles)" Pack="true" PackagePath="lib\net48\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin" />
+      <_PluginFiles Include="$(OutDir)plugins\**\*.*" Exclude="$(OutDir)plugins\manifest.json" />
+      <_PackageFiles Include="@(_PluginFiles)">
+        <PackagePath>lib\net48\Plugins\%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
+        <BuildAction>Content</BuildAction>
+      </_PackageFiles>
       <_PackageDependency Include="XrmToolBox">
         <Version>$(XrmToolBoxVersion)</Version>
         <TargetFramework>net48</TargetFramework>
       </_PackageDependency>
     </ItemGroup>
+    <Message Text="Included @(_PluginFiles->Count()) files" Importance="high" />
   </Target>
 
   <ItemGroup>
