@@ -64,10 +64,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // 
             // newInteractiveSessionButton
             // 
-            this.newInteractiveSessionButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.newInteractiveSessionButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.mdi__terminal_line;
             this.newInteractiveSessionButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.newInteractiveSessionButton.Name = "newInteractiveSessionButton";
-            this.newInteractiveSessionButton.Size = new System.Drawing.Size(135, 22);
+            this.newInteractiveSessionButton.Size = new System.Drawing.Size(151, 22);
             this.newInteractiveSessionButton.Text = "New Interactive Session";
             this.newInteractiveSessionButton.Click += new System.EventHandler(this.NewInteractiveSessionButton_Click);
             // 

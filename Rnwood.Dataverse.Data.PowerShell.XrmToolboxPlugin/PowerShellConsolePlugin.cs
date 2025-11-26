@@ -37,6 +37,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         public string DonationDescription => "Support development of this PowerShell module";
         public string EmailAccount => "rob@rnwood.co.uk";
 
+        protected override void OnConnectionUpdated(ConnectionUpdatedEventArgs e)
+        {
+            base.OnConnectionUpdated(e);
+            service = Service as CrmServiceClient;
+        }
+
         private void PowerShellConsolePlugin_Load(object sender, EventArgs e)
         {
             if (!DesignMode)

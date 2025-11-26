@@ -67,7 +67,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     StartNamedPipeServer();
                 }
 
-                StartSession("Main Console", "", connectionInfo);
+                StartSession("Interactive", "", connectionInfo);
             }
             catch (Exception ex)
             {

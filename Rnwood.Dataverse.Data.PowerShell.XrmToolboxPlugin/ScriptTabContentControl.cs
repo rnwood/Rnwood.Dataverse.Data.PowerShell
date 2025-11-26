@@ -34,6 +34,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         public ScriptTabContentControl()
         {
             InitializeComponent();
+            closeButton.BringToFront();
         }
 
         // Named event handlers referenced by designer
@@ -84,11 +85,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             try
             {
                 string script = await webView.ExecuteScriptAsync("getContent()");
-
-                script = script.Trim('"').Replace("\\n", "\n").Replace("\\r", "\r")
-                    .Replace("\\\"", "\"").Replace("\\\\", "\\");
-
-                return script;
+                return JsonSerializer.Deserialize<string>(script);
             }
             catch (Exception ex)
             {
@@ -102,13 +99,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             try
             {
-                content = content.Replace("\\", "\\\\")
-                               .Replace("'", "\\'")
-                               .Replace("\n", "\\n")
-                               .Replace("\r", "\\r")
-                               .Replace("\"", "\\\"");
-
-                await webView.ExecuteScriptAsync($"setContent('{content}')");
+                await _webViewReadyTask.Task;
+                string encodedContent = JsonSerializer.Serialize(content);
+                await webView.ExecuteScriptAsync($"setContent({encodedContent})");
             }
             catch (Exception ex)
             {
@@ -119,12 +112,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private string GenerateMonacoEditorHtml()
         {
-            string defaultContent = GetDefaultScriptContent()
-                .Replace("\\", "\\\\")
-                .Replace("'", "\\'")
-                .Replace("\n", "\\n")
-                .Replace("\r", "\\r")
-                .Replace("\"", "\\\"");
+            string defaultContent = GetDefaultScriptContent();
+            string encodedDefaultContent = JsonSerializer.Serialize(defaultContent);
 
             string html = @"
 <!DOCTYPE html>
@@ -267,7 +256,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 </body>
 </html>";
 
-            return html.Replace("__DEFAULT_SCRIPT_CONTENT__", "\"\"");
+            return html.Replace("__DEFAULT_SCRIPT_CONTENT__", encodedDefaultContent);
         }
 
         private string GetDefaultScriptContent()

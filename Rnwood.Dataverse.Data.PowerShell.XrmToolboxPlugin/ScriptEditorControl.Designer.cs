@@ -49,26 +49,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // editorToolbar
             // 
             this.editorToolbar.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
-            this.editorToolbar.ImageScalingSize = new System.Drawing.Size(28, 28);
             this.editorToolbar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newScriptButton,
             this.openScriptButton});
             this.editorToolbar.Location = new System.Drawing.Point(0, 0);
             this.editorToolbar.Name = "editorToolbar";
-            this.editorToolbar.Size = new System.Drawing.Size(800, 25);
+            this.editorToolbar.Size = new System.Drawing.Size(800, 31);
             this.editorToolbar.TabIndex = 0;
             // 
             // newScriptButton
             // 
+            this.newScriptButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.mdi__invoice_new;
             this.newScriptButton.Name = "newScriptButton";
-            this.newScriptButton.Size = new System.Drawing.Size(35, 22);
+            this.newScriptButton.Size = new System.Drawing.Size(59, 28);
             this.newScriptButton.Text = "New";
             this.newScriptButton.Click += new System.EventHandler(this.NewScriptButton_Click);
             // 
             // openScriptButton
             // 
+            this.openScriptButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.mdi__folder_open;
             this.openScriptButton.Name = "openScriptButton";
-            this.openScriptButton.Size = new System.Drawing.Size(40, 22);
+            this.openScriptButton.Size = new System.Drawing.Size(64, 28);
             this.openScriptButton.Text = "Open";
             this.openScriptButton.Click += new System.EventHandler(this.OpenScriptButton_Click);
             // 
@@ -76,10 +77,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // 
             this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.tabControl.Location = new System.Drawing.Point(0, 25);
+            this.tabControl.Location = new System.Drawing.Point(0, 31);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
-            this.tabControl.Size = new System.Drawing.Size(800, 553);
+            this.tabControl.Size = new System.Drawing.Size(800, 547);
             this.tabControl.TabIndex = 1;
             // 
             // statusStrip

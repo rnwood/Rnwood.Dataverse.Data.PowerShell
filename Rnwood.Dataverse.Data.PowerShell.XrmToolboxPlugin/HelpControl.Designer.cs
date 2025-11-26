@@ -37,72 +37,95 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         /// </summary>
         private void InitializeComponent()
         {
-            this.toolStrip = new ToolStrip();
-            this.homeButton = new ToolStripButton();
-            this.backButton = new ToolStripButton();
-            this.forwardButton = new ToolStripButton();
-            this.searchCombo = new ToolStripComboBox();
-            this.helpWebView2 = new WebView2();
+            this.toolStrip = new System.Windows.Forms.ToolStrip();
+            this.forwardButton = new System.Windows.Forms.ToolStripButton();
+            this.searchCombo = new System.Windows.Forms.ToolStripComboBox();
+            this.helpWebView2 = new Microsoft.Web.WebView2.WinForms.WebView2();
+            this.homeButton = new System.Windows.Forms.ToolStripButton();
+            this.backButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStrip.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.helpWebView2)).BeginInit();
             this.SuspendLayout();
-
+            // 
             // toolStrip
-            this.toolStrip.Items.AddRange(new ToolStripItem[] {
-                this.homeButton,
-                this.backButton,
-                this.forwardButton,
-                this.searchCombo});
+            // 
+            this.toolStrip.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
+            this.toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.homeButton,
+            this.backButton,
+            this.forwardButton,
+            this.searchCombo});
+            this.toolStrip.Location = new System.Drawing.Point(0, 0);
             this.toolStrip.Name = "toolStrip";
+            this.toolStrip.Size = new System.Drawing.Size(400, 25);
             this.toolStrip.TabIndex = 0;
             this.toolStrip.Text = "toolStrip";
-            this.toolStrip.Dock = DockStyle.Top;
-
-            // homeButton
-            this.homeButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            this.homeButton.Name = "homeButton";
-            this.homeButton.Size = new System.Drawing.Size(23, 22);
-            this.homeButton.Text = "Home";
-            this.homeButton.ToolTipText = "Home";
-            this.homeButton.Click += new EventHandler(this.HomeButton_Click);
-
-            // backButton
-            this.backButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            this.backButton.Enabled = false;
-            this.backButton.Name = "backButton";
-            this.backButton.Size = new System.Drawing.Size(23, 22);
-            this.backButton.Text = "Back";
-            this.backButton.ToolTipText = "Back";
-            this.backButton.Click += new EventHandler(this.BackButton_Click);
-
+            // 
             // forwardButton
-            this.forwardButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            // 
+            this.forwardButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
             this.forwardButton.Enabled = false;
+            this.forwardButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.mdi__arrow_forward;
             this.forwardButton.Name = "forwardButton";
             this.forwardButton.Size = new System.Drawing.Size(23, 22);
             this.forwardButton.Text = "Forward";
             this.forwardButton.ToolTipText = "Forward";
-            this.forwardButton.Click += new EventHandler(this.ForwardButton_Click);
-
+            this.forwardButton.Click += new System.EventHandler(this.ForwardButton_Click);
+            // 
             // searchCombo
-            this.searchCombo.Name = "searchCombo";
-            this.searchCombo.Size = new System.Drawing.Size(300, 23);
+            // 
             this.searchCombo.DropDownWidth = 1000;
+            this.searchCombo.Name = "searchCombo";
+            this.searchCombo.Size = new System.Drawing.Size(300, 25);
             this.searchCombo.ToolTipText = "Search";
-            this.searchCombo.SelectedIndexChanged += new EventHandler(this.SearchCombo_SelectedIndexChanged);
-
-
+            this.searchCombo.SelectedIndexChanged += new System.EventHandler(this.SearchCombo_SelectedIndexChanged);
+            // 
             // helpWebView2
-            this.helpWebView2.Dock = DockStyle.Fill;
+            // 
+            this.helpWebView2.AllowExternalDrop = true;
+            this.helpWebView2.CreationProperties = null;
+            this.helpWebView2.DefaultBackgroundColor = System.Drawing.Color.White;
+            this.helpWebView2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.helpWebView2.Location = new System.Drawing.Point(0, 25);
             this.helpWebView2.Name = "helpWebView2";
+            this.helpWebView2.Size = new System.Drawing.Size(400, 575);
             this.helpWebView2.TabIndex = 1;
-            this.helpWebView2.NavigationCompleted += new EventHandler<Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs>(this.HelpWebView2_NavigationCompleted);
-
+            this.helpWebView2.ZoomFactor = 1D;
+            this.helpWebView2.NavigationCompleted += new System.EventHandler<Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs>(this.HelpWebView2_NavigationCompleted);
+            // 
+            // homeButton
+            // 
+            this.homeButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.homeButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.mdi__home;
+            this.homeButton.Name = "homeButton";
+            this.homeButton.Size = new System.Drawing.Size(23, 22);
+            this.homeButton.Text = "Home";
+            this.homeButton.ToolTipText = "Home";
+            this.homeButton.Click += new System.EventHandler(this.HomeButton_Click);
+            // 
+            // backButton
+            // 
+            this.backButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.backButton.Enabled = false;
+            this.backButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.mdi__arrow_back;
+            this.backButton.Name = "backButton";
+            this.backButton.Size = new System.Drawing.Size(23, 22);
+            this.backButton.Text = "Back";
+            this.backButton.ToolTipText = "Back";
+            this.backButton.Click += new System.EventHandler(this.BackButton_Click);
+            // 
+            // HelpControl
+            // 
             this.Controls.Add(this.helpWebView2);
             this.Controls.Add(this.toolStrip);
             this.Name = "HelpControl";
             this.Size = new System.Drawing.Size(400, 600);
-            this.Padding = new Padding(0);
+            this.toolStrip.ResumeLayout(false);
+            this.toolStrip.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.helpWebView2)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         #endregion
