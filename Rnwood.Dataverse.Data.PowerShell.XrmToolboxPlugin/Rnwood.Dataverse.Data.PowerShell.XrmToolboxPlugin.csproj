@@ -10,6 +10,7 @@
     <Copyright>Copyright © 2024-2025 Robert Wood and project contributors</Copyright>
     <Authors>Rob Wood</Authors>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
   </PropertyGroup>
 
   <ItemGroup>
