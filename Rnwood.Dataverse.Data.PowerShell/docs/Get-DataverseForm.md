@@ -195,6 +195,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Published
+Include only published forms in the results
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -UniqueName
 Unique name of the form to retrieve
 
@@ -232,21 +247,6 @@ Controls how progress information is displayed during cmdlet execution.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Published
-Include only published forms in the results
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
 
 Required: False
 Position: Named
