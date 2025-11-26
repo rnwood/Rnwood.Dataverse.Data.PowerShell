@@ -143,20 +143,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        private CompletionResultType MapCompletionType(Microsoft.PowerShell.EditorServices.CompletionType type)
+        private CompletionResultType MapCompletionType(CompletionType type)
         {
             switch (type)
             {
-                case Microsoft.PowerShell.EditorServices.CompletionType.Command: return CompletionResultType.Command;
-                case Microsoft.PowerShell.EditorServices.CompletionType.Method: return CompletionResultType.Method;
-                case Microsoft.PowerShell.EditorServices.CompletionType.ParameterName: return CompletionResultType.ParameterName;
-                case Microsoft.PowerShell.EditorServices.CompletionType.ParameterValue: return CompletionResultType.ParameterValue;
-                case Microsoft.PowerShell.EditorServices.CompletionType.Property: return CompletionResultType.Property;
-                case Microsoft.PowerShell.EditorServices.CompletionType.Variable: return CompletionResultType.Variable;
-                case Microsoft.PowerShell.EditorServices.CompletionType.Namespace: return CompletionResultType.Namespace;
-                case Microsoft.PowerShell.EditorServices.CompletionType.Type: return CompletionResultType.Type;
-                case Microsoft.PowerShell.EditorServices.CompletionType.Keyword: return CompletionResultType.Keyword;
-                case Microsoft.PowerShell.EditorServices.CompletionType.Path: return CompletionResultType.ProviderItem;
+                case CompletionType.Command: return CompletionResultType.Command;
+                case CompletionType.Method: return CompletionResultType.Method;
+                case CompletionType.ParameterName: return CompletionResultType.ParameterName;
+                case CompletionType.ParameterValue: return CompletionResultType.ParameterValue;
+                case CompletionType.Property: return CompletionResultType.Property;
+                case CompletionType.Variable: return CompletionResultType.Variable;
+                case CompletionType.Namespace: return CompletionResultType.Namespace;
+                case CompletionType.Type: return CompletionResultType.Type;
+                case CompletionType.Keyword: return CompletionResultType.Keyword;
+                case CompletionType.Path: return CompletionResultType.ProviderItem;
                 default: return CompletionResultType.Text;
             }
         }

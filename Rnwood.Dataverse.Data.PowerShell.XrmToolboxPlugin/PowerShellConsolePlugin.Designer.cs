@@ -151,6 +151,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             tabPageScriptGallery.TabIndex = 1;
             tabPageScriptGallery.Text = "Script Gallery";
             tabPageScriptGallery.UseVisualStyleBackColor = true;
+            scriptGalleryControl.Dock = DockStyle.Fill;
             tabPageScriptGallery.Controls.Add(this.scriptGalleryControl);
             // 
             this.tabControl.Controls.Add(tabPageHelp);

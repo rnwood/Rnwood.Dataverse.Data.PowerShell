@@ -59,6 +59,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             try
             {
                 await webView.EnsureCoreWebView2Async(null);
+                webView.WebMessageReceived += EditorWebView_WebMessageReceived;
 
                 string monacoHtml = GenerateMonacoEditorHtml();
                 webView.NavigateToString(monacoHtml);
@@ -177,7 +178,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             
             // Handler for completion responses from C#
             window.handleCompletionResponse = function(response) {
-                debugger;
                 if (response.requestId && pendingCompletionRequests[response.requestId]) {
                     var resolve = pendingCompletionRequests[response.requestId];
                     delete pendingCompletionRequests[response.requestId];

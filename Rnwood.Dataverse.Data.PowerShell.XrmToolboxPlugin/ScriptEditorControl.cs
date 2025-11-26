@@ -52,6 +52,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private TabPage CreateScriptTab(string title, string path)
         {
             TabPage tabPage = new TabPage(title);
+            tabPage.UseVisualStyleBackColor = true;
 
             ScriptTabContentControl content = new ScriptTabContentControl();
             content.Path = path;
@@ -68,6 +69,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 }
             };
             tabPage.Controls.Add(content);
+            content.Dock = DockStyle.Fill;
 
             tabData[tabPage] = content;
 

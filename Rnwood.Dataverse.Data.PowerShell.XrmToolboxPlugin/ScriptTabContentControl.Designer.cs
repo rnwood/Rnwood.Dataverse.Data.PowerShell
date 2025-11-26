@@ -65,12 +65,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.webView.CreationProperties = null;
             this.webView.DefaultBackgroundColor = System.Drawing.Color.White;
             this.webView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.webView.Location = new System.Drawing.Point(0, 40);
+            this.webView.Location = new System.Drawing.Point(0, 25);
             this.webView.Name = "webView";
-            this.webView.Size = new System.Drawing.Size(632, 397);
+            this.webView.Size = new System.Drawing.Size(632, 412);
             this.webView.TabIndex = 0;
             this.webView.ZoomFactor = 1D;
-            this.webView.WebMessageReceived += EditorWebView_WebMessageReceived;
             // 
             // tabToolbar
             // 
@@ -81,20 +80,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.saveButton});
             this.tabToolbar.Location = new System.Drawing.Point(0, 0);
             this.tabToolbar.Name = "tabToolbar";
-            this.tabToolbar.Size = new System.Drawing.Size(632, 40);
+            this.tabToolbar.Size = new System.Drawing.Size(632, 25);
             this.tabToolbar.TabIndex = 1;
             // 
             // runButton
             // 
             this.runButton.Name = "runButton";
-            this.runButton.Size = new System.Drawing.Size(93, 34);
-            this.runButton.Text = "Run (F5)";
+            this.runButton.Size = new System.Drawing.Size(32, 22);
+            this.runButton.Text = "Run";
             this.runButton.Click += new System.EventHandler(this.RunButton_Click);
             // 
             // saveButton
             // 
             this.saveButton.Name = "saveButton";
-            this.saveButton.Size = new System.Drawing.Size(60, 34);
+            this.saveButton.Size = new System.Drawing.Size(35, 22);
             this.saveButton.Text = "Save";
             this.saveButton.Click += new System.EventHandler(this.SaveButton_Click);
             // 
