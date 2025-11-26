@@ -48,6 +48,12 @@
     <EmbeddedResource Include="DefaultScript.ps1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="monaco-editor\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
    <!--Copy PowerShell module to output for bundling--> 
   <Target Name="CopyPowerShellModule" AfterTargets="Build">
     <ItemGroup>

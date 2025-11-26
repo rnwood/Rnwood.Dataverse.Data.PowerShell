@@ -36,17 +36,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         /// </summary>
         private void InitializeComponent()
         {
-            this.tabControl = new TabControl();
-            this.toolStrip = new ToolStrip();
-            this.newInteractiveSessionButton = new ToolStripButton();
+            this.tabControl = new System.Windows.Forms.TabControl();
+            this.toolStrip = new System.Windows.Forms.ToolStrip();
+            this.newInteractiveSessionButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStrip.SuspendLayout();
             this.SuspendLayout();
+            // 
+            // tabControl
+            // 
+            this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControl.Location = new System.Drawing.Point(0, 25);
+            this.tabControl.Name = "tabControl";
+            this.tabControl.SelectedIndex = 0;
+            this.tabControl.Size = new System.Drawing.Size(800, 575);
+            this.tabControl.TabIndex = 0;
             // 
             // toolStrip
             // 
+            this.toolStrip.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newInteractiveSessionButton});
-            this.toolStrip.Dock = DockStyle.Top;
+            this.toolStrip.Location = new System.Drawing.Point(0, 0);
             this.toolStrip.Name = "toolStrip";
+            this.toolStrip.Size = new System.Drawing.Size(800, 25);
             this.toolStrip.TabIndex = 1;
             this.toolStrip.Text = "toolStrip";
             // 
@@ -55,15 +67,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.newInteractiveSessionButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.newInteractiveSessionButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.newInteractiveSessionButton.Name = "newInteractiveSessionButton";
-            this.newInteractiveSessionButton.Size = new System.Drawing.Size(123, 22);
+            this.newInteractiveSessionButton.Size = new System.Drawing.Size(135, 22);
             this.newInteractiveSessionButton.Text = "New Interactive Session";
             this.newInteractiveSessionButton.Click += new System.EventHandler(this.NewInteractiveSessionButton_Click);
-            // 
-            // tabControl
-            // 
-            this.tabControl.Dock = DockStyle.Fill;
-            this.tabControl.Name = "tabControl";
-            this.tabControl.TabIndex = 0;
             // 
             // ConsoleControl
             // 
@@ -71,6 +77,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.Controls.Add(this.toolStrip);
             this.Name = "ConsoleControl";
             this.Size = new System.Drawing.Size(800, 600);
+            this.toolStrip.ResumeLayout(false);
+            this.toolStrip.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 

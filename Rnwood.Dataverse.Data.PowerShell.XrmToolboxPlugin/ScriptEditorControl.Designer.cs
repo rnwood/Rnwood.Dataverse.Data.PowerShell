@@ -36,7 +36,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             this.editorToolbar = new System.Windows.Forms.ToolStrip();
             this.newScriptButton = new System.Windows.Forms.ToolStripButton();
             this.openScriptButton = new System.Windows.Forms.ToolStripButton();
@@ -58,7 +57,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.editorToolbar.Name = "editorToolbar";
             this.editorToolbar.Size = new System.Drawing.Size(800, 25);
             this.editorToolbar.TabIndex = 0;
-
             // 
             // newScriptButton
             // 
@@ -91,6 +89,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.statusStrip.Location = new System.Drawing.Point(0, 578);
             this.statusStrip.Name = "statusStrip";
             this.statusStrip.Size = new System.Drawing.Size(800, 22);
+            this.statusStrip.SizingGrip = false;
             this.statusStrip.TabIndex = 0;
             // 
             // completionStatusLabel

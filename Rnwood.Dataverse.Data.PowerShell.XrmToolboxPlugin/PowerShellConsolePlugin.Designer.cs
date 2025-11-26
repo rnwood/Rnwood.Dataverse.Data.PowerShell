@@ -94,8 +94,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // 
             // scriptEditorControl
             // 
-            this.scriptEditorControl.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.scriptEditorControl.Dock = System.Windows.Forms.DockStyle.Fill;
+             this.scriptEditorControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.scriptEditorControl.Location = new System.Drawing.Point(0, 0);
             this.scriptEditorControl.Margin = new System.Windows.Forms.Padding(6);
             this.scriptEditorControl.Name = "scriptEditorControl";

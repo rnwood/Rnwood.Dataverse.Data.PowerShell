@@ -59,6 +59,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             try
             {
                 await webView.EnsureCoreWebView2Async(null);
+
+                string monacoPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "monaco-editor");
+                webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
+                    "monaco.editor",
+                    monacoPath,
+                    CoreWebView2HostResourceAccessKind.Allow
+                );
+
                 webView.WebMessageReceived += EditorWebView_WebMessageReceived;
 
                 string monacoHtml = GenerateMonacoEditorHtml();
@@ -131,7 +139,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 <body>
     <div id=""container""></div>
     
-    <script src=""https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js""></script>
+    <script src=""https://monaco.editor/min/vs/loader.js""></script>
     <script>
         window.pendingContent = null;
         function setContent(content) {
@@ -149,7 +157,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
         
-        require.config({ paths: { vs: 'https://unpkg.com/monaco-editor@0.45.0/min/vs' } });
+        require.config({ paths: { vs: 'https://monaco.editor/min/vs' } });
         
         require(['vs/editor/editor.main'], function() {
             // Create Monaco editor
