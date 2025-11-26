@@ -209,23 +209,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Descriptions
-The descriptions of the entry as a dictionary keyed by LCID (Locale ID). Null values for a specific LCID will remove that LCID's description. Updates are additive - existing LCIDs are preserved unless explicitly set to null.
-
-Common LCIDs: 1033 (English), 1036 (French), 1031 (German), 1034 (Spanish), 1041 (Japanese)
-
-```yaml
-Type: Hashtable
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Entity
 The new entity logical name (for SubAreas).
 
@@ -524,23 +507,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Titles
-The titles of the entry as a dictionary keyed by LCID (Locale ID). Null values for a specific LCID will remove that LCID's title. Updates are additive - existing LCIDs are preserved unless explicitly set to null.
-
-Common LCIDs: 1033 (English), 1036 (French), 1031 (German), 1034 (Spanish), 1041 (Japanese)
-
-```yaml
-Type: Hashtable
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -ToolTipResourceId
 The resource ID for localized tooltips.
 
@@ -602,6 +568,40 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Descriptions
+The descriptions of the entry as a dictionary keyed by LCID (Locale ID). Null values for a specific LCID will remove that LCID's description. Updates are additive - existing LCIDs are preserved unless explicitly set to null.
+
+Common LCIDs: 1033 (English), 1036 (French), 1031 (German), 1034 (Spanish), 1041 (Japanese)
+
+```yaml
+Type: Hashtable
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Titles
+The titles of the entry as a dictionary keyed by LCID (Locale ID). Null values for a specific LCID will remove that LCID's title. Updates are additive - existing LCIDs are preserved unless explicitly set to null.
+
+Common LCIDs: 1033 (English), 1036 (French), 1031 (German), 1034 (Spanish), 1041 (Japanese)
+
+```yaml
+Type: Hashtable
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -610,7 +610,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapEntryInfo
 ### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapInfo
 ### System.String
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapEntryInfo

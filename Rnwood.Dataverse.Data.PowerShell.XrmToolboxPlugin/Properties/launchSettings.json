@@ -1,21 +1,10 @@
 {
   "profiles": {
-    "XrmToolbox (auto-download)": {
+    "Profile 1": {
       "commandName": "Executable",
-      "executablePath": "$(ProjectDir)..\\..\\..\\scripts\\Start-XrmToolbox.ps1",
-      "commandLineArgs": "",
-      "workingDirectory": "$(ProjectDir)"
-    },
-    "XrmToolbox (local)": {
-      "commandName": "Executable",
-      "executablePath": "$(ProjectDir)..\\..\\.xrmtoolbox\\XrmToolBox.exe",
-      "workingDirectory": "$(ProjectDir)..\\..\\.xrmtoolbox"
-    },
-    "XrmToolbox (custom path)": {
-      "commandName": "Executable",
-      "executablePath": "C:\\Program Files (x86)\\XrmToolBox\\XrmToolBox.exe",
-      "workingDirectory": "C:\\Program Files (x86)\\XrmToolBox",
-      "commandLineArgs": ""
+      "executablePath": "C:\\Users\\rob\\AppData\\Local\\Microsoft\\WinGet\\Packages\\MscrmTools.XrmToolBox_Microsoft.Winget.Source_8wekyb3d8bbwe\\XrmToolBox.exe",
+      "commandLineArgs": "/overridepath:.",
+      "workingDirectory": "C:\\Users\\rob\\AppData\\Local\\Microsoft\\WinGet\\Packages\\MscrmTools.XrmToolBox_Microsoft.Winget.Source_8wekyb3d8bbwe"
     }
   }
 }

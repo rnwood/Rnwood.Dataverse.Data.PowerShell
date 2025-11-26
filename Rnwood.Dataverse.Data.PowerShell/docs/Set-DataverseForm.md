@@ -206,7 +206,6 @@ Form type
 Type: FormType
 Parameter Sets: Update, UpdateWithXml
 Aliases:
-Accepted values: Dashboard, AppointmentBook, Main, MiniCampaignBO, Preview, MobileExpress, QuickViewForm, QuickCreate, Dialog, TaskFlowForm, InteractionCentricDashboard, Card, MainInteractiveExperience, ContextualDashboard, Other, MainBackup, AppointmentBookBackup, PowerBIDashboard
 
 Required: False
 Position: Named
@@ -219,7 +218,6 @@ Accept wildcard characters: False
 Type: FormType
 Parameter Sets: Create, CreateWithXml
 Aliases:
-Accepted values: Dashboard, AppointmentBook, Main, MiniCampaignBO, Preview, MobileExpress, QuickViewForm, QuickCreate, Dialog, TaskFlowForm, InteractionCentricDashboard, Card, MainInteractiveExperience, ContextualDashboard, Other, MainBackup, AppointmentBookBackup, PowerBIDashboard
 
 Required: True
 Position: Named
@@ -330,6 +328,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+Controls how progress information is displayed during cmdlet execution.
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Publish
 Publish the form and entity after creation/update
 
@@ -360,30 +373,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-Controls how progress information is displayed during cmdlet execution.
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
-### System.Guid
 ## OUTPUTS
 
-### System.Guid
 ## NOTES
 
 **Form Types Available:**

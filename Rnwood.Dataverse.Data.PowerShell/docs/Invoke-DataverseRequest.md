@@ -312,21 +312,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Raw
-Return the raw OrganizationResponse instead of converting to a PSObject.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: NameAndInputs
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Request
 Request to execute using the `OrganizationRequest` class or subclass from the SDK.
 
@@ -384,6 +369,21 @@ Accept wildcard characters: False
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Raw
+Return the raw OrganizationResponse instead of converting to a PSObject.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: NameAndInputs
+Aliases:
 
 Required: False
 Position: Named

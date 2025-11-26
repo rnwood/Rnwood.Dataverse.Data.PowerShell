@@ -25,7 +25,7 @@ Set-DataverseEntityMetadata [-EntityName] <String> [-SchemaName <String>] [-Disp
 
 ### ByEntityMetadata
 ```
-Set-DataverseEntityMetadata [-EntityMetadata] <EntityMetadata> [-PassThru] [-Publish] [-SkipIconValidation]
+Set-DataverseEntityMetadata -EntityMetadata <EntityMetadata> [-PassThru] [-Publish] [-SkipIconValidation]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -479,30 +479,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -EntityMetadata
-EntityMetadata object to update. When provided, all property values from the metadata object are used to update the entity.
-
-This parameter is useful for:
-- Making complex updates by modifying a retrieved EntityMetadata object
-- Batch updates using pipeline processing
-- Copying properties between entities
-
-The EntityMetadata object must have a valid MetadataId and LogicalName.
-
-**Tip**: Retrieve EntityMetadata using `Get-DataverseEntityMetadata`, modify properties, then pass to this cmdlet.
-
-```yaml
-Type: EntityMetadata
-Parameter Sets: ByEntityMetadata
-Aliases:
-
-Required: True
-Position: 0
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
-```
-
 ### -EntityName
 Logical name of the entity (table). This is the internal name used to reference the entity programmatically.
 
@@ -556,72 +532,6 @@ When enabled, users can:
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: ByProperties
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IconLargeName
-Large icon name for the entity. Specifies the filename or identifier for the large icon image used in the Dataverse UI.
-
-Icon files are typically stored in web resources. The value should reference the web resource name (e.g., "Entity/account_large.png").
-
-```yaml
-Type: String
-Parameter Sets: ByProperties
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IconMediumName
-Medium icon name for the entity. Specifies the filename or identifier for the medium icon image used in the Dataverse UI.
-
-```yaml
-Type: String
-Parameter Sets: ByProperties
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IconSmallName
-Small icon name for the entity. Specifies the filename or identifier for the small icon image used in the Dataverse UI.
-
-```yaml
-Type: String
-Parameter Sets: ByProperties
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IconVectorName
-Vector icon name (SVG icon identifier) for the entity. Modern Dataverse UI uses vector icons for scalable, resolution-independent display.
-
-The value typically starts with "svg_" followed by the icon identifier (e.g., "svg_account", "svg_contact").
-
-Vector icons provide the best visual quality across different display resolutions and zoom levels.
-
-```yaml
-Type: String
 Parameter Sets: ByProperties
 Aliases:
 
@@ -742,21 +652,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Publish
-If specified, publishes the entity after creating or updating
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -SchemaName
 Schema name of the entity with publisher prefix (e.g., `new_CustomEntity`). Required when creating a new entity.
 
@@ -767,6 +662,141 @@ This is the unique name that includes your solution publisher's prefix. It becom
 ```yaml
 Type: String
 Parameter Sets: ByProperties
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EntityMetadata
+EntityMetadata object to update. When provided, all property values from the metadata object are used to update the entity.
+
+This parameter is useful for:
+- Making complex updates by modifying a retrieved EntityMetadata object
+- Batch updates using pipeline processing
+- Copying properties between entities
+
+The EntityMetadata object must have a valid MetadataId and LogicalName.
+
+**Tip**: Retrieve EntityMetadata using `Get-DataverseEntityMetadata`, modify properties, then pass to this cmdlet.
+
+```yaml
+Type: EntityMetadata
+Parameter Sets: ByEntityMetadata
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -IconLargeName
+Large icon name for the entity. Specifies the filename or identifier for the large icon image used in the Dataverse UI.
+
+Icon files are typically stored in web resources. The value should reference the web resource name (e.g., "Entity/account_large.png").
+
+```yaml
+Type: String
+Parameter Sets: ByProperties
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IconMediumName
+Medium icon name for the entity. Specifies the filename or identifier for the medium icon image used in the Dataverse UI.
+
+```yaml
+Type: String
+Parameter Sets: ByProperties
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IconSmallName
+Small icon name for the entity. Specifies the filename or identifier for the small icon image used in the Dataverse UI.
+
+```yaml
+Type: String
+Parameter Sets: ByProperties
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IconVectorName
+Vector icon name (SVG icon identifier) for the entity. Modern Dataverse UI uses vector icons for scalable, resolution-independent display.
+
+The value typically starts with "svg_" followed by the icon identifier (e.g., "svg_account", "svg_contact").
+
+Vector icons provide the best visual quality across different display resolutions and zoom levels.
+
+```yaml
+Type: String
+Parameter Sets: ByProperties
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Publish
+If specified, publishes the entity after creating or updating
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -802,42 +832,12 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
-### Microsoft.Xrm.Sdk.Metadata.EntityMetadata
+### None
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
