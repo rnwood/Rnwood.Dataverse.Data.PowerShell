@@ -29,21 +29,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.ProcessRecord();
 
             // Build query for environment variable values
+            // Join with environmentvariabledefinition to get the reliable schemaname from the definition,
+            // since the schemaname field in environmentvariablevalue may not be reliably populated
+            // (older records may contain a GUID instead of the actual schema name).
             var query = new QueryExpression("environmentvariablevalue")
             {
                 ColumnSet = new ColumnSet("environmentvariablevalueid", "schemaname", "value", "environmentvariabledefinitionid"),
                 PageInfo = new PagingInfo { PageNumber = 1, Count = 5000 }
             };
 
+            // Add link to environmentvariabledefinition to get the reliable schema name
+            var defLink = query.AddLink("environmentvariabledefinition", "environmentvariabledefinitionid", "environmentvariabledefinitionid");
+            defLink.Columns = new ColumnSet("schemaname");
+            defLink.EntityAlias = "def";
+
             if (!string.IsNullOrEmpty(SchemaName))
             {
+                // Filter by the definition's schemaname, not the value's schemaname
                 if (SchemaName.Contains("*") || SchemaName.Contains("?"))
                 {
-                    query.Criteria.AddCondition("schemaname", ConditionOperator.Like, SchemaName.Replace("*", "%").Replace("?", "_"));
+                    defLink.LinkCriteria.AddCondition("schemaname", ConditionOperator.Like, SchemaName.Replace("*", "%").Replace("?", "_"));
                 }
                 else
                 {
-                    query.Criteria.AddCondition("schemaname", ConditionOperator.Equal, SchemaName);
+                    defLink.LinkCriteria.AddCondition("schemaname", ConditionOperator.Equal, SchemaName);
                 }
             }
 
@@ -69,7 +78,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 var result = new PSObject();
                 result.Properties.Add(new PSNoteProperty("EnvironmentVariableValueId", value.Id));
-                result.Properties.Add(new PSNoteProperty("SchemaName", value.GetAttributeValue<string>("schemaname")));
+                
+                // Use the schema name from the linked definition entity (via alias) for reliability
+                var schemaNameAlias = value.GetAttributeValue<AliasedValue>("def.schemaname");
+                var schemaName = schemaNameAlias?.Value as string ?? value.GetAttributeValue<string>("schemaname");
+                result.Properties.Add(new PSNoteProperty("SchemaName", schemaName));
                 result.Properties.Add(new PSNoteProperty("Value", value.GetAttributeValue<string>("value")));
                 
                 var defRef = value.GetAttributeValue<EntityReference>("environmentvariabledefinitionid");
