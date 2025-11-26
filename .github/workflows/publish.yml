@@ -875,7 +875,10 @@ jobs:
           $nupkgFiles = Get-ChildItem -Path 'out/nuget/*.nupkg' -ErrorAction SilentlyContinue
           if ($nupkgFiles) {
               Write-Host "Publishing XrmToolbox Plugin to NuGet..."
-              dotnet nuget push out/nuget/*.nupkg -k $env:NUGET_KEY_XRMTOOLBOX -s https://api.nuget.org/v3/index.json --skip-duplicate
+              foreach ($nupkg in $nupkgFiles) {
+                  Write-Host "  Pushing $($nupkg.FullName)..."
+                  dotnet nuget push $nupkg.FullName -k $env:NUGET_KEY_XRMTOOLBOX -s https://api.nuget.org/v3/index.json --skip-duplicate
+              }
           } else {
               Write-Warning "No XrmToolbox Plugin nupkg found in out/nuget/ - skipping NuGet publish"
           }
@@ -1088,7 +1091,10 @@ jobs:
           $nupkgFiles = Get-ChildItem -Path 'out/nuget/*.nupkg' -ErrorAction SilentlyContinue
           if ($nupkgFiles) {
               Write-Host "Publishing XrmToolbox Plugin to NuGet..."
-              dotnet nuget push out/nuget/*.nupkg -k $env:NUGET_KEY_XRMTOOLBOX -s https://api.nuget.org/v3/index.json --skip-duplicate
+              foreach ($nupkg in $nupkgFiles) {
+                  Write-Host "  Pushing $($nupkg.FullName)..."
+                  dotnet nuget push $nupkg.FullName -k $env:NUGET_KEY_XRMTOOLBOX -s https://api.nuget.org/v3/index.json --skip-duplicate
+              }
           } else {
               Write-Warning "No XrmToolbox Plugin nupkg found in out/nuget/ - skipping NuGet publish"
           }
