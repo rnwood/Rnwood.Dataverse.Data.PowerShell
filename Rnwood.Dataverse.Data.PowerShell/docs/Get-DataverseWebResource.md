@@ -148,21 +148,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -IncludeContent
-If set, includes the content property in the results. By default, content is excluded for better performance.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Name
 Name or name pattern of the web resource.
 Supports wildcards (* and ?)
@@ -233,6 +218,21 @@ Accept wildcard characters: False
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IncludeContent
+If set, includes the content property in the results. By default, content is excluded for better performance.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named

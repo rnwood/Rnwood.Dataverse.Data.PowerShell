@@ -24,17 +24,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         public WebView2 WebView => webView;
         public string Path { get => _path; set => _path = value; }
-        public ImageList ToolbarImages
-        {
-            get => tabToolbar?.ImageList;
-            set
-            {
-                if (tabToolbar != null)
-                {
-                    tabToolbar.ImageList = value;
-                }
-            }
-        }
+
         public PowerShellCompletionService CompletionService { get => _completionService; set => _completionService = value; }
 
         public event EventHandler RunRequested;

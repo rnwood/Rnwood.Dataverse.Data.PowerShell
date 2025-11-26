@@ -20,6 +20,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     {
         // PowerShell completion service
         private PowerShellCompletionService _completionService;
+        private StatusStrip statusStrip;
+        private ToolStripStatusLabel completionStatusLabel;
+        private int _activeCompletionRequests = 0;
+        private string _lastCompletionError;
 
         // Tab data
         private Dictionary<TabPage, ScriptTabContentControl> tabData = new Dictionary<TabPage, ScriptTabContentControl>();
@@ -35,7 +39,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         public ScriptEditorControl()
         {
             InitializeComponent();
-            InitializeToolbarImages();
         }
 
         protected override void OnLoad(EventArgs e)
@@ -52,7 +55,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
             ScriptTabContentControl content = new ScriptTabContentControl();
             content.Path = path;
-            content.ToolbarImages = this.toolbarImages;
+ 
             content.CompletionService = _completionService;
             content.RunRequested += (s, e) => RunScriptRequested?.Invoke(this, EventArgs.Empty);
             content.SaveRequested += (s, e) => SaveScriptRequested?.Invoke(this, EventArgs.Empty);
@@ -71,58 +74,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             return tabPage;
         }
 
-        private void InitializeToolbarImages()
-        {
-            if (this.toolbarImages == null)
-            {
-                this.toolbarImages = new ImageList();
-            }
-
-            // toolbarImages
-            this.toolbarImages.ImageSize = new Size(16, 16);
-            this.toolbarImages.ColorDepth = ColorDepth.Depth32Bit;
-
-            // Run icon: play triangle
-            Bitmap runBmp = new Bitmap(16, 16, PixelFormat.Format32bppArgb);
-            using (Graphics g = Graphics.FromImage(runBmp))
-            {
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.FillPolygon(Brushes.Green, new Point[] { new Point(3, 3), new Point(3, 13), new Point(13, 8) });
-            }
-            this.toolbarImages.Images.Add("Run", runBmp);
-
-            // New icon: plus
-            Bitmap newBmp = new Bitmap(16, 16, PixelFormat.Format32bppArgb);
-            using (Graphics g = Graphics.FromImage(newBmp))
-            {
-                g.DrawLine(Pens.Black, 8, 2, 8, 14);
-                g.DrawLine(Pens.Black, 2, 8, 14, 8);
-            }
-            this.toolbarImages.Images.Add("New", newBmp);
-
-            // Open icon: folder
-            Bitmap openBmp = new Bitmap(16, 16, PixelFormat.Format32bppArgb);
-            using (Graphics g = Graphics.FromImage(openBmp))
-            {
-                g.FillRectangle(Brushes.Yellow, 2, 4, 12, 10);
-                g.FillRectangle(Brushes.Yellow, 2, 2, 8, 4);
-                g.DrawRectangle(Pens.Black, 2, 4, 12, 10);
-                g.DrawRectangle(Pens.Black, 2, 2, 8, 4);
-            }
-            this.toolbarImages.Images.Add("Open", openBmp);
-
-            // Save icon: disk
-            Bitmap saveBmp = new Bitmap(16, 16, PixelFormat.Format32bppArgb);
-            using (Graphics g = Graphics.FromImage(saveBmp))
-            {
-                g.FillRectangle(Brushes.Gray, 3, 3, 10, 10);
-                g.DrawRectangle(Pens.Black, 3, 3, 10, 10);
-                g.FillRectangle(Brushes.White, 5, 5, 6, 6);
-                g.DrawRectangle(Pens.Black, 5, 5, 6, 6);
-            }
-            this.toolbarImages.Images.Add("Save", saveBmp);
-        }
-
         public async void InitializeMonacoEditor(Func<string> accessTokenProvider = null, string url = null)
         {
             this._accessTokenProvider = accessTokenProvider;
@@ -137,18 +88,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     "Rnwood.Dataverse.Data.PowerShell.psd1"
                 );
 
-                _completionService = new PowerShellCompletionService(modulePath, accessTokenProvider, url);
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await _completionService.InitializeAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Failed to initialize completion service: {ex.Message}");
-                    }
-                });
+                _completionService = new PowerShellCompletionService(modulePath);
+
+                // Subscribe to completion events
+                _completionService.CompletionRequestStarted += OnCompletionRequestStarted;
+                _completionService.CompletionRequestCompleted += OnCompletionRequestCompleted;
+                _completionService.CompletionRequestFailed += OnCompletionRequestFailed;
+
+                // Initialize the service asynchronously
+                await _completionService.InitializeAsync();
 
                 // Set completion service for existing tabs
                 foreach (var content in tabData.Values)
@@ -306,6 +254,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         public void DisposeResources()
         {
+            // Unsubscribe from completion events
+            if (_completionService != null)
+            {
+                _completionService.CompletionRequestStarted -= OnCompletionRequestStarted;
+                _completionService.CompletionRequestCompleted -= OnCompletionRequestCompleted;
+                _completionService.CompletionRequestFailed -= OnCompletionRequestFailed;
+            }
+
             if (_completionService != null)
             {
                 try
@@ -330,6 +286,56 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 }
             }
             tabData.Clear();
+        }
+
+        private void OnCompletionRequestStarted(object sender, EventArgs e)
+        {
+            _activeCompletionRequests++;
+            UpdateCompletionStatus(null, null); // Update with current status
+        }
+
+        private void OnCompletionRequestCompleted(object sender, EventArgs e)
+        {
+            _activeCompletionRequests--;
+            UpdateCompletionStatus(null, null); // Update with current status
+        }
+
+        private void OnCompletionRequestFailed(object sender, CompletionErrorEventArgs e)
+        {
+            _activeCompletionRequests--;
+            _lastCompletionError = e.ErrorMessage;
+            UpdateCompletionStatus(null, null); // Update with current status
+        }
+
+        private void UpdateCompletionStatus(string status, string errorMessage)
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => UpdateCompletionStatus(status, errorMessage)));
+                return;
+            }
+
+            string currentStatus = status ?? GetCurrentCompletionStatus();
+            string tooltip = errorMessage ?? _lastCompletionError;
+
+            completionStatusLabel.Text = $"Completion: {currentStatus}";
+            completionStatusLabel.ToolTipText = string.IsNullOrEmpty(tooltip) ? "" : tooltip;
+        }
+
+        private string GetCurrentCompletionStatus()
+        {
+            if (_completionService == null || !_completionService.IsInitialized)
+            {
+                return "Not initialized";
+            }
+
+            string baseStatus = "Initialized";
+            if (!string.IsNullOrEmpty(_lastCompletionError))
+            {
+                baseStatus = "Error";
+            }
+
+            return $"{baseStatus} ({_activeCompletionRequests} active)";
         }
     }
 }
