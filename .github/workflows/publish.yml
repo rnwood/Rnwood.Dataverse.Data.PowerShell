@@ -326,8 +326,12 @@ jobs:
           }
           
           $releaseNotes = Get-Content -Path release-notes.txt -Raw
+          # Escape newlines for MSBuild command line (replace with semicolon + space for readability)
+          $releaseNotesEscaped = $releaseNotes -replace "`r`n", "; " -replace "`n", "; "
+          # Also escape any remaining quotes that could break the command
+          $releaseNotesEscaped = $releaseNotesEscaped -replace '"', '\"'
           
-          dotnet pack ./Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.csproj -c Release -p:PackageVersion=$version -p:PackageReleaseNotes="$releaseNotes" -o out/nuget
+          dotnet pack ./Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.csproj -c Release -p:PackageVersion=$version -p:PackageReleaseNotes="$releaseNotesEscaped" -o out/nuget
       - if: ${{ matrix.powershell_version != '5' }}
         name: Test - pwsh (Standard + E2E in parallel)
         id: test-pwsh
