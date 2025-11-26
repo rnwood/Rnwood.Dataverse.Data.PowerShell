@@ -311,6 +311,19 @@ jobs:
             remove-item -force -recurse out/Rnwood.Dataverse.Data.PowerShell
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
+
+          # Pack XrmToolbox Plugin
+          $version = ""
+          if ($env:GITHUB_REF -like "refs/tags/*") {
+             $version = $env:GITHUB_REF -replace "refs/tags/", ""
+          } else {
+             $version = Get-Content -Path ci-version.txt -Raw
+             $version = $version.Trim()
+          }
+          
+          $releaseNotes = Get-Content -Path release-notes.txt -Raw
+          
+          dotnet pack ./Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.csproj -c Release -p:PackageVersion=$version -p:PackageReleaseNotes="$releaseNotes" -o out/nuget
       - if: ${{ matrix.powershell_version != '5' }}
         name: Test - pwsh (Standard + E2E in parallel)
         id: test-pwsh
@@ -699,6 +712,7 @@ jobs:
           name: module-${{ matrix.os }}-${{ matrix.powershell_version }}
           path: |
             out/Rnwood.Dataverse.Data.PowerShell/
+            out/nuget/
             release-notes.md
             release-notes.txt
             ci-version.txt
@@ -769,9 +783,10 @@ jobs:
           name: module-windows-latest-5
           path: .
       
-      - name: Publish Release to PowerShell Gallery
+      - name: Publish to PS Gallery and Nuget (XrmToolbox Plugin)
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
+          NUGET_KEY_XRMTOOLBOX: ${{ secrets.NUGET_KEY_XRMTOOLBOX }}
         shell: pwsh
         run: |
           # Add release notes to module manifest
@@ -796,6 +811,9 @@ jobs:
           
           # Publish stable release to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
+
+          # Publish XrmToolbox Plugin to NuGet
+          dotnet nuget push out/nuget/*.nupkg -k $env:NUGET_KEY_XRMTOOLBOX -s https://api.nuget.org/v3/index.json --skip-duplicate
       
       - name: Update GitHub Release Description
         uses: actions/github-script@v8
@@ -954,10 +972,27 @@ jobs:
               name: 'Rnwood.Dataverse.Data.PowerShell-CI.zip',
               data: assetData
             });
+
+            // Upload the XrmToolbox Plugin NuGet package
+            const nugetDir = 'out/nuget';
+            if (fs.existsSync(nugetDir)) {
+              const nugetFiles = fs.readdirSync(nugetDir).filter(f => f.endsWith('.nupkg'));
+              for (const file of nugetFiles) {
+                const nugetData = fs.readFileSync(path.join(nugetDir, file));
+                await github.rest.repos.uploadReleaseAsset({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: release.data.id,
+                  name: file,
+                  data: nugetData
+                });
+              }
+            }
       
       - name: Publish CI Build to PowerShell Gallery
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
+          NUGET_KEY_XRMTOOLBOX: ${{ secrets.NUGET_KEY_XRMTOOLBOX }}
         shell: pwsh
         run: |
           # Add release notes to module manifest
@@ -982,3 +1017,6 @@ jobs:
           
           # Publish prerelease to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
+
+          # Publish XrmToolbox Plugin to NuGet
+          dotnet nuget push out/nuget/*.nupkg -k $env:NUGET_KEY_XRMTOOLBOX -s https://api.nuget.org/v3/index.json --skip-duplicate
