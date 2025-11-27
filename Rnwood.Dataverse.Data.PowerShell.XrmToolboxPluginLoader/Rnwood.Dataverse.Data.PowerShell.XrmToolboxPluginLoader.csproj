@@ -6,6 +6,12 @@
     <AssemblyName>Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader</AssemblyName>
     <RootNamespace>Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader</RootNamespace>
     
+    <!-- Version properties - set dynamically during CI build via -p:Version=x.y.z -->
+    <!-- XrmToolbox plugin store validation requires assembly version to match NuGet package version -->
+    <Version Condition="'$(Version)' == ''">1.0.0</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
+    
     <PackageId>Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader</PackageId>
     <Authors>Rob Wood and project contributors</Authors>
     <Description>PowerShell Scripting Workspace for XrmToolbox</Description>
@@ -27,12 +33,16 @@
 
   <!-- Add XrmToolBox as a package dependency (special case for XrmToolBox plugin store - not a real NuGet package) -->
   <Target Name="AddXrmToolBoxDependency" AfterTargets="Pack">
+    <!-- Find the actual nupkg file since NuGet normalizes versions (e.g., 2.4.3.0 becomes 2.4.3) -->
+    <ItemGroup>
+      <_NupkgFiles Include="$(PackageOutputAbsolutePath)/$(PackageId).*.nupkg" />
+    </ItemGroup>
     <PropertyGroup>
-      <!-- Use forward slash which works on both Windows and Linux -->
-      <_NupkgPath>$(PackageOutputAbsolutePath)/$(PackageId).$(PackageVersion).nupkg</_NupkgPath>
+      <_NupkgPath>@(_NupkgFiles)</_NupkgPath>
     </PropertyGroup>
     <Message Text="Adding XrmToolBox dependency to nupkg: $(_NupkgPath)" Importance="high" />
-    <Exec Command="pwsh -NoProfile -File &quot;$(ProjectDir)Add-XrmToolBoxDependency.ps1&quot; -NupkgPath &quot;$(_NupkgPath)&quot; -Version &quot;$(XrmToolBoxVersion)&quot;" />
+    <!-- Pass AssemblyVersion to update package version in nuspec to match exactly (XrmToolbox does exact comparison) -->
+    <Exec Command="pwsh -NoProfile -File &quot;$(ProjectDir)Add-XrmToolBoxDependency.ps1&quot; -NupkgPath &quot;$(_NupkgPath)&quot; -Version &quot;$(XrmToolBoxVersion)&quot; -AssemblyVersion &quot;$(Version)&quot;" />
   </Target>
 
 
@@ -40,7 +50,7 @@
   <Target Name="BuildXrmToolboxPlugin" AfterTargets="Build">
     <MakeDir Directories="$(OutDir)plugins" />
     <Copy SourceFiles="$(OutDir)Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.dll" DestinationFolder="$(OutDir)plugins" SkipUnchangedFiles="true" />
-    <MSBuild Projects="../Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration)" BuildInParallel="true">
+    <MSBuild Projects="../Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration);Version=$(Version)" BuildInParallel="true">
     </MSBuild>
     <!-- Copy plugin files to plugins folder (cross-platform MSBuild task instead of robocopy) -->
     <ItemGroup>

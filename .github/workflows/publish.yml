@@ -352,12 +352,28 @@ jobs:
           
           # Build argument array to avoid shell parsing issues
           # Use explicit quoting for release notes to handle special characters
+          
+          # Extract base version for assembly (without prerelease suffix)
+          # AssemblyVersion uses x.y.z.w format (prerelease suffixes like -ci20251127001 are not supported)
+          $assemblyVersion = $version -replace '-.*', ''
+          
+          # Ensure version has 4 parts (x.y.z.w) for XrmToolbox plugin store validation
+          # XrmToolbox does exact comparison between NuGet package version and assembly version
+          $versionParts = $assemblyVersion.Split('.')
+          while ($versionParts.Count -lt 4) {
+              $versionParts += '0'
+          }
+          $assemblyVersion = $versionParts -join '.'
+          Write-Host "Assembly version (4-part): $assemblyVersion"
+          
+          # Use the 4-part version for both package and assembly to ensure they match exactly
           $packArgs = @(
               'pack'
               './Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.csproj'
               '-c'
               'Release'
-              "-p:PackageVersion=$version"
+              "-p:PackageVersion=$assemblyVersion"
+              "-p:Version=$assemblyVersion"
               '-o'
               'out/nuget'
           )
@@ -1087,14 +1103,6 @@ jobs:
           # Publish prerelease to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
 
-          # Publish XrmToolbox Plugin to NuGet (if package exists)
-          $nupkgFiles = Get-ChildItem -Path 'out/nuget/*.nupkg' -ErrorAction SilentlyContinue
-          if ($nupkgFiles) {
-              Write-Host "Publishing XrmToolbox Plugin to NuGet..."
-              foreach ($nupkg in $nupkgFiles) {
-                  Write-Host "  Pushing $($nupkg.FullName)..."
-                  dotnet nuget push $nupkg.FullName -k $env:NUGET_KEY_XRMTOOLBOX -s https://api.nuget.org/v3/index.json --skip-duplicate
-              }
-          } else {
-              Write-Warning "No XrmToolbox Plugin nupkg found in out/nuget/ - skipping NuGet publish"
-          }
+          # NOTE: XrmToolbox Plugin is NOT published to NuGet from CI builds
+          # Only release builds (publish job) should push to NuGet to avoid 
+          # XrmToolbox plugin store validation issues with prerelease versions

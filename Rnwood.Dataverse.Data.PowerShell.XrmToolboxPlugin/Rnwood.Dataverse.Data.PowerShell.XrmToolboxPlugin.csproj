@@ -11,6 +11,12 @@
     <Authors>Rob Wood</Authors>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+    
+    <!-- Version properties - set dynamically during CI build via -p:Version=x.y.z -->
+    <!-- XrmToolbox plugin store validation requires assembly version to match NuGet package version -->
+    <Version Condition="'$(Version)' == ''">1.0.0</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

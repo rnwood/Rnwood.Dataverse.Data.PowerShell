@@ -586,7 +586,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### Rnwood.Dataverse.Data.PowerShell.Commands.DataverseLinkEntity[]
 ### System.String[]
 ### System.Management.Automation.SwitchParameter
-### System.Nullable`1[[Rnwood.Dataverse.Data.PowerShell.Commands.QueryType, Rnwood.Dataverse.Data.PowerShell.Cmdlets, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]
+### System.Nullable`1[[Rnwood.Dataverse.Data.PowerShell.Commands.QueryType, Rnwood.Dataverse.Data.PowerShell.Cmdlets, Version=2.4.3.0, Culture=neutral, PublicKeyToken=null]]
 ## OUTPUTS
 
 ### System.Guid
