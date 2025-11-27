@@ -40,23 +40,31 @@ try {
         throw "Could not find dependencies element in nuspec"
     }
     
-    # Find or create the dependency group
-    $group = $xml.SelectSingleNode("//nu:dependencies/nu:group", $ns)
-    if (-not $group) {
-        # Create a new group element
-        $group = $xml.CreateElement('group', $nsUri)
-        $group.SetAttribute('targetFramework', '.NETFramework4.8')
-        $dependencies.AppendChild($group) | Out-Null
-        Write-Host "Created new dependency group"
+    # Check if XrmToolBox dependency already exists (to prevent duplicates if script runs multiple times)
+    $existingDep = $xml.SelectSingleNode("//nu:dependencies/nu:dependency[@id='XrmToolBox']", $ns)
+    if ($existingDep) {
+        Write-Host "XrmToolBox dependency already exists, updating version"
+        $existingDep.SetAttribute('version', $Version)
+    } else {
+        # Add the XrmToolBox dependency as a global dependency (directly under dependencies, not in a group)
+        # This is required for XrmToolBox plugin store validation
+        $dep = $xml.CreateElement('dependency', $nsUri)
+        $dep.SetAttribute('id', 'XrmToolBox')
+        $dep.SetAttribute('version', $Version)
+        $dependencies.AppendChild($dep) | Out-Null
     }
     
-    # Add the XrmToolBox dependency
-    $dep = $xml.CreateElement('dependency', $nsUri)
-    $dep.SetAttribute('id', 'XrmToolBox')
-    $dep.SetAttribute('version', $Version)
-    $group.AppendChild($dep) | Out-Null
+    # Remove any empty group elements (groups with no child dependencies)
+    $groups = $xml.SelectNodes("//nu:dependencies/nu:group", $ns)
+    foreach ($group in $groups) {
+        if (-not $group.HasChildNodes) {
+            Write-Host "Removing empty dependency group: $($group.GetAttribute('targetFramework'))"
+            $group.ParentNode.RemoveChild($group) | Out-Null
+        }
+    }
+    
     $xml.Save($nuspecFile.FullName)
-    Write-Host "Successfully added XrmToolBox dependency"
+    Write-Host "Successfully added XrmToolBox dependency as global dependency"
     
     # Recreate the nupkg
     Remove-Item $NupkgPath
