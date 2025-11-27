@@ -34,18 +34,29 @@ try {
     $ns = New-Object Xml.XmlNamespaceManager($xml.NameTable)
     $ns.AddNamespace('nu', $nsUri)
     
-    $group = $xml.SelectSingleNode("//nu:dependencies/nu:group", $ns)
-    
-    if ($group) {
-        $dep = $xml.CreateElement('dependency', $nsUri)
-        $dep.SetAttribute('id', 'XrmToolBox')
-        $dep.SetAttribute('version', $Version)
-        $group.AppendChild($dep) | Out-Null
-        $xml.Save($nuspecFile.FullName)
-        Write-Host "Successfully added XrmToolBox dependency"
-    } else {
-        throw "Could not find dependency group in nuspec"
+    # Find the dependencies element
+    $dependencies = $xml.SelectSingleNode("//nu:dependencies", $ns)
+    if (-not $dependencies) {
+        throw "Could not find dependencies element in nuspec"
     }
+    
+    # Find or create the dependency group
+    $group = $xml.SelectSingleNode("//nu:dependencies/nu:group", $ns)
+    if (-not $group) {
+        # Create a new group element
+        $group = $xml.CreateElement('group', $nsUri)
+        $group.SetAttribute('targetFramework', '.NETFramework4.8')
+        $dependencies.AppendChild($group) | Out-Null
+        Write-Host "Created new dependency group"
+    }
+    
+    # Add the XrmToolBox dependency
+    $dep = $xml.CreateElement('dependency', $nsUri)
+    $dep.SetAttribute('id', 'XrmToolBox')
+    $dep.SetAttribute('version', $Version)
+    $group.AppendChild($dep) | Out-Null
+    $xml.Save($nuspecFile.FullName)
+    Write-Host "Successfully added XrmToolBox dependency"
     
     # Recreate the nupkg
     Remove-Item $NupkgPath

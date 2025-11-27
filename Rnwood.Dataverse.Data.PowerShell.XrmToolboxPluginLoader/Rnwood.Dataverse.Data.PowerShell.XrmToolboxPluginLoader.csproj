@@ -28,6 +28,7 @@
   <!-- Add XrmToolBox as a package dependency (special case for XrmToolBox plugin store - not a real NuGet package) -->
   <Target Name="AddXrmToolBoxDependency" AfterTargets="Pack">
     <PropertyGroup>
+      <!-- Use forward slash which works on both Windows and Linux -->
       <_NupkgPath>$(PackageOutputAbsolutePath)/$(PackageId).$(PackageVersion).nupkg</_NupkgPath>
     </PropertyGroup>
     <Message Text="Adding XrmToolBox dependency to nupkg: $(_NupkgPath)" Importance="high" />
