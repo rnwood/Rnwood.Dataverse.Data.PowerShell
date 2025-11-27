@@ -2,7 +2,9 @@ param(
     [Parameter(Mandatory)]
     [string]$NupkgPath,
     [Parameter(Mandatory)]
-    [string]$Version
+    [string]$Version,
+    [Parameter()]
+    [string]$AssemblyVersion
 )
 
 $ErrorActionPreference = 'Stop'
@@ -33,6 +35,16 @@ try {
     
     $ns = New-Object Xml.XmlNamespaceManager($xml.NameTable)
     $ns.AddNamespace('nu', $nsUri)
+    
+    # Update package version to 4-part format to match assembly version exactly
+    # XrmToolbox plugin store does exact version comparison
+    if ($AssemblyVersion) {
+        $versionNode = $xml.SelectSingleNode("//nu:version", $ns)
+        if ($versionNode) {
+            Write-Host "Updating package version from '$($versionNode.InnerText)' to '$AssemblyVersion'"
+            $versionNode.InnerText = $AssemblyVersion
+        }
+    }
     
     # Find the dependencies element
     $dependencies = $xml.SelectSingleNode("//nu:dependencies", $ns)

@@ -33,12 +33,16 @@
 
   <!-- Add XrmToolBox as a package dependency (special case for XrmToolBox plugin store - not a real NuGet package) -->
   <Target Name="AddXrmToolBoxDependency" AfterTargets="Pack">
+    <!-- Find the actual nupkg file since NuGet normalizes versions (e.g., 2.4.3.0 becomes 2.4.3) -->
+    <ItemGroup>
+      <_NupkgFiles Include="$(PackageOutputAbsolutePath)/$(PackageId).*.nupkg" />
+    </ItemGroup>
     <PropertyGroup>
-      <!-- Use forward slash which works on both Windows and Linux -->
-      <_NupkgPath>$(PackageOutputAbsolutePath)/$(PackageId).$(PackageVersion).nupkg</_NupkgPath>
+      <_NupkgPath>@(_NupkgFiles)</_NupkgPath>
     </PropertyGroup>
     <Message Text="Adding XrmToolBox dependency to nupkg: $(_NupkgPath)" Importance="high" />
-    <Exec Command="pwsh -NoProfile -File &quot;$(ProjectDir)Add-XrmToolBoxDependency.ps1&quot; -NupkgPath &quot;$(_NupkgPath)&quot; -Version &quot;$(XrmToolBoxVersion)&quot;" />
+    <!-- Pass AssemblyVersion to update package version in nuspec to match exactly (XrmToolbox does exact comparison) -->
+    <Exec Command="pwsh -NoProfile -File &quot;$(ProjectDir)Add-XrmToolBoxDependency.ps1&quot; -NupkgPath &quot;$(_NupkgPath)&quot; -Version &quot;$(XrmToolBoxVersion)&quot; -AssemblyVersion &quot;$(Version)&quot;" />
   </Target>
 
 

@@ -354,16 +354,25 @@ jobs:
           # Use explicit quoting for release notes to handle special characters
           
           # Extract base version for assembly (without prerelease suffix)
-          # AssemblyVersion uses x.y.z format (prerelease suffixes like -ci20251127001 are not supported)
+          # AssemblyVersion uses x.y.z.w format (prerelease suffixes like -ci20251127001 are not supported)
           $assemblyVersion = $version -replace '-.*', ''
-          Write-Host "Assembly version: $assemblyVersion"
           
+          # Ensure version has 4 parts (x.y.z.w) for XrmToolbox plugin store validation
+          # XrmToolbox does exact comparison between NuGet package version and assembly version
+          $versionParts = $assemblyVersion.Split('.')
+          while ($versionParts.Count -lt 4) {
+              $versionParts += '0'
+          }
+          $assemblyVersion = $versionParts -join '.'
+          Write-Host "Assembly version (4-part): $assemblyVersion"
+          
+          # Use the 4-part version for both package and assembly to ensure they match exactly
           $packArgs = @(
               'pack'
               './Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.csproj'
               '-c'
               'Release'
-              "-p:PackageVersion=$version"
+              "-p:PackageVersion=$assemblyVersion"
               "-p:Version=$assemblyVersion"
               '-o'
               'out/nuget'
