@@ -17,7 +17,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <XrmToolBoxVersion>1.2025.10.74</XrmToolBoxVersion>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageIconUrl>https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/refs/heads/main/icon.png</PackageIconUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/refs/heads/main/icon_80.png</PackageIconUrl>
    </PropertyGroup>
 
   <ItemGroup>
