@@ -25,6 +25,15 @@
     <PackageReference Include="XrmToolBoxPackage" Version="$(XrmToolBoxVersion)" PrivateAssets="All" />
   </ItemGroup>
 
+  <!-- Add XrmToolBox as a package dependency (special case for XrmToolBox plugin store - not a real NuGet package) -->
+  <Target Name="AddXrmToolBoxDependency" AfterTargets="Pack">
+    <PropertyGroup>
+      <_NupkgPath>$(PackageOutputAbsolutePath)/$(PackageId).$(PackageVersion).nupkg</_NupkgPath>
+    </PropertyGroup>
+    <Message Text="Adding XrmToolBox dependency to nupkg: $(_NupkgPath)" Importance="high" />
+    <Exec Command="pwsh -NoProfile -File &quot;$(ProjectDir)Add-XrmToolBoxDependency.ps1&quot; -NupkgPath &quot;$(_NupkgPath)&quot; -Version &quot;$(XrmToolBoxVersion)&quot;" />
+  </Target>
+
 
   
   <Target Name="BuildXrmToolboxPlugin" AfterTargets="Build">
@@ -32,7 +41,12 @@
     <Copy SourceFiles="$(OutDir)Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.dll" DestinationFolder="$(OutDir)plugins" SkipUnchangedFiles="true" />
     <MSBuild Projects="../Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration)" BuildInParallel="true">
     </MSBuild>
-    <Exec Command="cmd /c &quot;robocopy &quot;$(ProjectDir)..\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin\bin\$(Configuration)\net48&quot; &quot;$(OutDir)plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin&quot; /E /NJH /NJS &amp; exit 0&quot;" />
+    <!-- Copy plugin files to plugins folder (cross-platform MSBuild task instead of robocopy) -->
+    <ItemGroup>
+      <XrmToolboxPluginFiles Include="$(ProjectDir)..\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin\bin\$(Configuration)\net48\**\*.*" />
+    </ItemGroup>
+    <MakeDir Directories="$(OutDir)plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin" />
+    <Copy SourceFiles="@(XrmToolboxPluginFiles)" DestinationFolder="$(OutDir)plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 
   <Target Name="AddPluginFilesToPackage" BeforeTargets="GenerateNuspec" DependsOnTargets="BuildXrmToolboxPlugin">
@@ -43,10 +57,6 @@
         <PackagePath>lib\net48\Plugins\%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
         <BuildAction>Content</BuildAction>
       </_PackageFiles>
-      <_PackageDependency Include="XrmToolBox">
-        <Version>$(XrmToolBoxVersion)</Version>
-        <TargetFramework>net48</TargetFramework>
-      </_PackageDependency>
     </ItemGroup>
     <Message Text="Included @(_PluginFiles->Count()) files" Importance="high" />
   </Target>
