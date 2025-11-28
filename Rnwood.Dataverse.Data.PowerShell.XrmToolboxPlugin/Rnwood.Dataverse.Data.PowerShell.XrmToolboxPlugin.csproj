@@ -6,12 +6,13 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyTitle>PowerShell Console Plugin for XrmToolbox</AssemblyTitle>
     <Product>Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin</Product>
-    <Description>XrmToolbox plugin that embeds a PowerShell console with Rnwood.Dataverse.Data.PowerShell module pre-loaded</Description>
+    <Description>XrmToolbox plugin that embeds a PowerShell console with
+      Rnwood.Dataverse.Data.PowerShell module pre-loaded</Description>
     <Copyright>Copyright © 2024-2025 Robert Wood and project contributors</Copyright>
     <Authors>Rob Wood</Authors>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
-    
+
     <!-- Version properties - set dynamically during CI build via -p:Version=x.y.z -->
     <!-- XrmToolbox plugin store validation requires assembly version to match NuGet package version -->
     <Version Condition="'$(Version)' == ''">1.0.0</Version>
@@ -28,8 +29,10 @@
     <PackageReference Include="Markdig" Version="0.43.0" />
     <PackageReference Include="System.Text.Json" Version="9.0.9" />
     <PackageReference Include="System.Resources.Extensions" Version="4.6.0" />
-    <PackageReference Include="XrmToolBoxPackage" Version="1.2025.10.74" />
-    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.10" />
+    <PackageReference Include="XrmToolBoxPackage" Version="1.2025.10.74">
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>build;runtime</ExcludeAssets>
+    </PackageReference>
     <PackageReference Include="ConEmu.Control.WinForms" Version="1.21.9.5" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3595.46" />
     <PackageReference Include="CliWrap" Version="3.9.0" />
@@ -37,11 +40,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Cmdlets\Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj">
-      <SetTargetFramework>TargetFramework=net462</SetTargetFramework>
-    </ProjectReference>
-    <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.csproj">
+    <ProjectReference
+      Include="..\Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <Private>false</Private>
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>build;runtime</ExcludeAssets>
     </ProjectReference>
   </ItemGroup>
 
@@ -77,13 +81,16 @@
     </EmbeddedResource>
   </ItemGroup>
 
-   <!--Copy PowerShell module to output for bundling--> 
+  <!--Copy
+  PowerShell module to output for bundling-->
   <Target Name="CopyPowerShellModule" AfterTargets="Build">
     <ItemGroup>
-      <ModuleFiles Include="$(ProjectDir)..\Rnwood.Dataverse.Data.PowerShell\bin\$(Configuration)\netstandard2.0\**" />
+      <ModuleFiles
+        Include="$(ProjectDir)..\Rnwood.Dataverse.Data.PowerShell\bin\$(Configuration)\netstandard2.0\**" />
     </ItemGroup>
-	  <MakeDir Directories="$(OutDir)PSModule" />
-	  <Copy SourceFiles="@(ModuleFiles)" DestinationFolder="$(OutDir)PSModule\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <MakeDir Directories="$(OutDir)PSModule" />
+    <Copy SourceFiles="@(ModuleFiles)" DestinationFolder="$(OutDir)PSModule\%(RecursiveDir)"
+      SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

@@ -2,17 +2,8 @@ using System;
 using System.IO;
 using System.Windows.Forms;
 using System.Threading.Tasks;
-using System.Linq;
 using System.Reflection;
-using System.Management.Automation;
-using System.Text.Json;
-using Microsoft.Web.WebView2.WinForms;
-using Microsoft.Web.WebView2.Core;
-using System.Text;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Drawing.Drawing2D;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {

@@ -22,13 +22,13 @@
     <PackageProjectUrl>https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <XrmToolBoxVersion>1.2025.10.74</XrmToolBoxVersion>
-    <PackageIcon>icon.png</PackageIcon>
-    <PackageIconUrl>https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/refs/heads/main/icon_80.png</PackageIconUrl>
+    <PackageIcon>icon_80.png</PackageIcon>
+    <PackageIconUrl>https://raw.githu busercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/refs/heads/main/icon_80.png</PackageIconUrl>
    </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\icon.png" Pack="true" PackagePath="" />
-    <PackageReference Include="XrmToolBoxPackage" Version="$(XrmToolBoxVersion)" PrivateAssets="All" />
+    <None Include="..\icon_80.png" Pack="true" PackagePath="" />
+    <PackageReference Include="XrmToolBoxPackage" Version="$(XrmToolBoxVersion)"/>
   </ItemGroup>
 
   <!-- Add XrmToolBox as a package dependency (special case for XrmToolBox plugin store - not a real NuGet package) -->
@@ -56,8 +56,8 @@
     <ItemGroup>
       <XrmToolboxPluginFiles Include="$(ProjectDir)..\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin\bin\$(Configuration)\net48\**\*.*" />
     </ItemGroup>
-    <MakeDir Directories="$(OutDir)plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin" />
-    <Copy SourceFiles="@(XrmToolboxPluginFiles)" DestinationFolder="$(OutDir)plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <MakeDir Directories="$(OutDir)plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader" />
+    <Copy SourceFiles="@(XrmToolboxPluginFiles)" DestinationFolder="$(OutDir)plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 
   <Target Name="AddPluginFilesToPackage" BeforeTargets="GenerateNuspec" DependsOnTargets="BuildXrmToolboxPlugin">
@@ -74,7 +74,8 @@
 
   <ItemGroup>
     <ProjectReference Include="../Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.csproj">
-        <PrivateAssets>all</PrivateAssets>
+        <PrivateAssets>none</PrivateAssets>
+        <Private>false</Private>
     </ProjectReference>
   </ItemGroup>
 
