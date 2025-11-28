@@ -1,22 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Pipes;
 using System.Windows.Forms;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Linq;
-using System.Reflection;
-using System.Management.Automation;
-using System.Text.Json;
 using XrmToolBox.Extensibility;
 using XrmToolBox.Extensibility.Interfaces;
-using Microsoft.PowerPlatform.Dataverse.Client;
-using ConEmu.WinForms;
-using Microsoft.Web.WebView2.WinForms;
-using Microsoft.Web.WebView2.Core;
-using System.Text;
-using System.ComponentModel.Composition;
 using Microsoft.Xrm.Tooling.Connector;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin

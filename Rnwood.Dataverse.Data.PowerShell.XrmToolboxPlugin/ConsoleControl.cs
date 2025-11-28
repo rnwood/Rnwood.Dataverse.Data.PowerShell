@@ -1,24 +1,14 @@
 using ConEmu.WinForms;
-using Microsoft.PowerPlatform.Dataverse.Client;
-using Microsoft.Web.WebView2.Core;
-using Microsoft.Web.WebView2.WinForms;
 using Microsoft.Xrm.Tooling.Connector;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
-using System.Drawing;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
-using System.Management.Automation;
-using System.Reflection;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using XrmToolBox.Extensibility;
-using XrmToolBox.Extensibility.Interfaces;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
@@ -255,36 +245,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private string GenerateConnectionScript(string bundledModulePath, ConnectionInfo connectionInfo, string userScript)
         {
             string script = $@"
-# Check PowerShell execution environment
-
-# Check for Restricted Language Mode
-if ($ExecutionContext.SessionState.LanguageMode -eq 'RestrictedLanguage') {{
-    Write-Host 'ERROR: PowerShell is running in Restricted Language Mode' -ForegroundColor Red
-    Write-Host 'This security setting prevents the module from loading.' -ForegroundColor Red
-    Write-Host ''
-    Write-Host 'To fix this, you may need to:' -ForegroundColor Yellow
-    Write-Host '  1. Check your organization''s PowerShell security policies' -ForegroundColor Yellow
-    Write-Host '  2. Contact your IT administrator' -ForegroundColor Yellow
-    Write-Host ''
-    Write-Host 'Press any key to exit...' -ForegroundColor Yellow
-    $null = $host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
-    exit 1
-}}
-
-# Check execution policy
-$executionPolicy = Get-ExecutionPolicy
-
-if ($executionPolicy -eq 'Restricted' -or $executionPolicy -eq 'AllSigned') {{
-    Write-Host ''
-    Write-Host 'WARNING: PowerShell Execution Policy may prevent scripts from running' -ForegroundColor Yellow
-    Write-Host ""Current policy: $executionPolicy"" -ForegroundColor Yellow
-    Write-Host ''
-    Write-Host 'To fix this, execute:' -ForegroundColor Yellow
-    Write-Host '  Set-ExecutionPolicy RemoteSigned -Scope CurrentUser' -ForegroundColor Yellow
-    Write-Host ''
-    Write-Host 'Attempting to continue anyway...' -ForegroundColor Yellow
-    Write-Host ''
-}}
 
 $bundledModulePath = '{bundledModulePath.Replace("\\", "\\\\")}'
 Import-Module $bundledModulePath/Rnwood.Dataverse.Data.PowerShell.psd1 -ErrorAction Stop

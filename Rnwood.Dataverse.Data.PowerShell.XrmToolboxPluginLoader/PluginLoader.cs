@@ -1,12 +1,10 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin;
-using System.ComponentModel.Composition;
-using System.Diagnostics.CodeAnalysis;
 using XrmToolBox.Extensibility;
 using XrmToolBox.Extensibility.Interfaces;
+using System.ComponentModel.Composition;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader
 {
@@ -27,7 +25,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader
             try
             {
                 string loaderDir = Path.GetDirectoryName(AppContext.BaseDirectory);
-                string pluginSubdir = Path.Combine(loaderDir, "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin");
+                string pluginSubdir = Path.Combine(loaderDir, "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader");
 
                 AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
                 {
