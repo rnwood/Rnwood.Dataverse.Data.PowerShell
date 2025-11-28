@@ -25,7 +25,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader
             try
             {
                 string loaderDir = Path.GetDirectoryName(AppContext.BaseDirectory);
-                string pluginSubdir = Path.Combine(loaderDir, "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin");
+                string pluginSubdir = Path.Combine(loaderDir, "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader");
 
                 AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
                 {
