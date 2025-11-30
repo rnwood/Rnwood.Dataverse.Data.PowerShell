@@ -259,6 +259,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             {
                                 // For non-batched execution, execute requests directly with retry support
                                 bool success = false;
+                                int throttleRetryCount = 0;
+                                const int MaxThrottleRetries = 100;  // Maximum throttle retries to prevent infinite loops
                                 
                                 while (!success && !_isStopping() && !_cancellationToken.IsCancellationRequested)
                                 {
@@ -300,8 +302,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                     }
                                     catch (FaultException<OrganizationServiceFault> ex) when (QueryHelpers.IsThrottlingException(ex, out TimeSpan retryDelay))
                                     {
-                                        // Throttling exception - always retry with the specified delay
-                                        _verboseQueue.Enqueue($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                                        throttleRetryCount++;
+                                        if (throttleRetryCount >= MaxThrottleRetries)
+                                        {
+                                            // Exceeded maximum throttle retries
+                                            _errorQueue.Enqueue(new ErrorRecord(ex, null, ErrorCategory.ResourceUnavailable, originalContext.InputObject));
+                                            break;
+                                        }
+                                        
+                                        // Throttling exception - retry with the specified delay
+                                        _verboseQueue.Enqueue($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {throttleRetryCount})...");
                                         Thread.Sleep(retryDelay);
                                         // Continue the loop to retry
                                     }
