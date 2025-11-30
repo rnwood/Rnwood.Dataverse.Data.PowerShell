@@ -500,6 +500,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
+        /// Maximum number of throttling retries before giving up.
+        /// </summary>
+        private const int MaxThrottlingRetries = 100;
+
+        /// <summary>
         /// Executes an organization request with automatic service protection (throttling) retry handling.
         /// </summary>
         /// <param name="connection">The organization service connection</param>
@@ -508,6 +513,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <returns>The organization response</returns>
         public static OrganizationResponse ExecuteWithThrottlingRetry(IOrganizationService connection, OrganizationRequest request, Action<string> writeVerbose = null)
         {
+            int retryCount = 0;
             while (true)
             {
                 try
@@ -516,7 +522,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
                 {
-                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
                     System.Threading.Thread.Sleep(retryDelay);
                 }
             }
@@ -531,6 +542,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <returns>The ID of the created entity</returns>
         public static Guid CreateWithThrottlingRetry(IOrganizationService connection, Entity entity, Action<string> writeVerbose = null)
         {
+            int retryCount = 0;
             while (true)
             {
                 try
@@ -539,7 +551,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
                 {
-                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
                     System.Threading.Thread.Sleep(retryDelay);
                 }
             }
@@ -553,6 +570,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <param name="writeVerbose">Optional action to write verbose messages</param>
         public static void UpdateWithThrottlingRetry(IOrganizationService connection, Entity entity, Action<string> writeVerbose = null)
         {
+            int retryCount = 0;
             while (true)
             {
                 try
@@ -562,7 +580,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
                 {
-                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
                     System.Threading.Thread.Sleep(retryDelay);
                 }
             }
@@ -577,6 +600,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <param name="writeVerbose">Optional action to write verbose messages</param>
         public static void DeleteWithThrottlingRetry(IOrganizationService connection, string entityName, Guid id, Action<string> writeVerbose = null)
         {
+            int retryCount = 0;
             while (true)
             {
                 try
@@ -586,7 +610,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
                 {
-                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
                     System.Threading.Thread.Sleep(retryDelay);
                 }
             }
@@ -603,6 +632,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <returns>The retrieved entity</returns>
         public static Entity RetrieveWithThrottlingRetry(IOrganizationService connection, string entityName, Guid id, ColumnSet columnSet, Action<string> writeVerbose = null)
         {
+            int retryCount = 0;
             while (true)
             {
                 try
@@ -611,7 +641,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
                 {
-                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
                     System.Threading.Thread.Sleep(retryDelay);
                 }
             }
@@ -626,6 +661,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <returns>The retrieved entity collection</returns>
         public static EntityCollection RetrieveMultipleWithThrottlingRetry(IOrganizationService connection, QueryBase query, Action<string> writeVerbose = null)
         {
+            int retryCount = 0;
             while (true)
             {
                 try
@@ -634,7 +670,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
                 {
-                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
                     System.Threading.Thread.Sleep(retryDelay);
                 }
             }
@@ -651,6 +692,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <param name="writeVerbose">Optional action to write verbose messages</param>
         public static void AssociateWithThrottlingRetry(IOrganizationService connection, string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, Action<string> writeVerbose = null)
         {
+            int retryCount = 0;
             while (true)
             {
                 try
@@ -660,7 +702,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
                 {
-                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
                     System.Threading.Thread.Sleep(retryDelay);
                 }
             }
@@ -677,6 +724,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <param name="writeVerbose">Optional action to write verbose messages</param>
         public static void DisassociateWithThrottlingRetry(IOrganizationService connection, string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, Action<string> writeVerbose = null)
         {
+            int retryCount = 0;
             while (true)
             {
                 try
@@ -686,7 +734,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
                 {
-                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
                     System.Threading.Thread.Sleep(retryDelay);
                 }
             }
