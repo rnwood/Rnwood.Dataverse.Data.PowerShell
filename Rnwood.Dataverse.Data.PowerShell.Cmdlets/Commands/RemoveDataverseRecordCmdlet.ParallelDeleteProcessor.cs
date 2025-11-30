@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -220,7 +221,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 // For non-batched execution, execute request directly with retry support
                                 bool success = false;
                                 
-                                while (!success && workerContext.RetriesRemaining >= 0)
+                                while (!success && !_isStopping() && !_cancellationToken.IsCancellationRequested)
                                 {
                                     try
                                     {
@@ -241,6 +242,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                                 RecordType = ProgressRecordType.Processing
                                             });
                                         }
+                                    }
+                                    catch (FaultException<OrganizationServiceFault> ex) when (QueryHelpers.IsThrottlingException(ex, out TimeSpan retryDelay))
+                                    {
+                                        // Throttling exception - always retry with the specified delay
+                                        _verboseQueue.Enqueue($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                                        Thread.Sleep(retryDelay);
+                                        // Continue the loop to retry
                                     }
                                     catch (System.ServiceModel.FaultException ex)
                                     {

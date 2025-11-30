@@ -2,6 +2,7 @@ using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using System;
 using System.Management.Automation;
+using System.ServiceModel;
 using System.Text;
 using System.Threading;
 
@@ -26,6 +27,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 		/// <summary>
 		/// Executes an organization request with retry logic.
+		/// Throttling exceptions from service protection limits are automatically retried.
 		/// </summary>
 		/// <param name="request">The request to execute.</param>
 		/// <returns>The organization response.</returns>
@@ -46,6 +48,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					}
 
 					return Connection.Execute(request);
+				}
+				catch (FaultException<OrganizationServiceFault> ex) when (QueryHelpers.IsThrottlingException(ex, out TimeSpan retryDelay))
+				{
+					// Throttling exceptions are always retried, regardless of Retries setting
+					WriteVerbose($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+					Thread.Sleep(retryDelay);
+					// Don't decrement retriesRemaining for throttling - it's a separate retry mechanism
 				}
 				catch (Exception ex) when (retriesRemaining > 0)
 				{
