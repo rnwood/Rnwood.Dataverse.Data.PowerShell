@@ -8,6 +8,8 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>1701;1702;NU1605</NoWarn>
+    <!-- Treat DVPS001 (direct IOrganizationService calls) as an error to enforce throttling protection -->
+    <WarningsAsErrors>DVPS001</WarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -20,19 +22,15 @@
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0|AnyCPU'">
-    <WarningsAsErrors></WarningsAsErrors>
     <NoWarn>1701;1702;NU1605</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net462|AnyCPU'">
-    <WarningsAsErrors></WarningsAsErrors>
     <NoWarn>1701;1702;NU1605</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0|AnyCPU'">
-    <WarningsAsErrors></WarningsAsErrors>
     <NoWarn>1701;1702;NU1605</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net462|AnyCPU'">
-    <WarningsAsErrors></WarningsAsErrors>
     <NoWarn>1701;1702;NU1605</NoWarn>
   </PropertyGroup>
   <ItemGroup>
@@ -55,6 +53,13 @@
     <PackageReference Include="FakeXrmEasy.v9">
       <Version>2.8.0</Version>
     </PackageReference>
+  </ItemGroup>
+
+  <!-- Analyzer reference to enforce throttling-protected method usage -->
+  <ItemGroup>
+    <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Analyzers\Rnwood.Dataverse.Data.PowerShell.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <!-- Build Sql4Cds submodule before restoring packages -->

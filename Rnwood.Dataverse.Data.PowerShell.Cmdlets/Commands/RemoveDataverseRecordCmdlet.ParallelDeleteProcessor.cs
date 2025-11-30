@@ -227,7 +227,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 {
                                     try
                                     {
+#pragma warning disable DVPS001 // Throttling is handled in the catch block below
                                         workerConnection.Execute(workerContext.Request);
+#pragma warning restore DVPS001
                                         _verboseQueue.Enqueue(string.Format("Deleted record {0}:{1}", workerContext.TableName, workerContext.Id));
                                         
                                         success = true;

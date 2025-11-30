@@ -241,7 +241,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             return null;
                         }
 
-                        string name = service.Retrieve(entityReferenceValue.LogicalName, entityReferenceValue.Id,
+                        string name = QueryHelpers.RetrieveWithThrottlingRetry(service, entityReferenceValue.LogicalName, entityReferenceValue.Id,
                                          new ColumnSet(nameAttribute)).GetAttributeValue<string>(nameAttribute);
 
                         if (string.IsNullOrEmpty(name))
@@ -317,12 +317,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         if (manyToManyRelationshipMetadata.Entity1IntersectAttribute.Equals(attributeMetadata.LogicalName, StringComparison.OrdinalIgnoreCase))
                         {
                             string nameAttribute = entityMetadataFactory.GetMetadata(manyToManyRelationshipMetadata.Entity1LogicalName).PrimaryNameAttribute;
-                            return service.Retrieve(manyToManyRelationshipMetadata.Entity1LogicalName, guidValue.Value, new ColumnSet(nameAttribute)).GetAttributeValue<string>(nameAttribute);
+                            return QueryHelpers.RetrieveWithThrottlingRetry(service, manyToManyRelationshipMetadata.Entity1LogicalName, guidValue.Value, new ColumnSet(nameAttribute)).GetAttributeValue<string>(nameAttribute);
                         }
                         else if (manyToManyRelationshipMetadata.Entity2IntersectAttribute.Equals(attributeMetadata.LogicalName, StringComparison.OrdinalIgnoreCase))
                         {
                             string nameAttribute = entityMetadataFactory.GetMetadata(manyToManyRelationshipMetadata.Entity2LogicalName).PrimaryNameAttribute;
-                            return service.Retrieve(manyToManyRelationshipMetadata.Entity2LogicalName, guidValue.Value, new ColumnSet(nameAttribute)).GetAttributeValue<string>(nameAttribute);
+                            return QueryHelpers.RetrieveWithThrottlingRetry(service, manyToManyRelationshipMetadata.Entity2LogicalName, guidValue.Value, new ColumnSet(nameAttribute)).GetAttributeValue<string>(nameAttribute);
                         }
                     }
                     return guidValue;
@@ -1020,7 +1020,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         
                         if (!string.IsNullOrEmpty(nameAttribute))
                         {
-                            string name = service.Retrieve(entityRef.LogicalName, entityRef.Id, new ColumnSet(nameAttribute))
+                            string name = QueryHelpers.RetrieveWithThrottlingRetry(service, entityRef.LogicalName, entityRef.Id, new ColumnSet(nameAttribute))
                                 .GetAttributeValue<string>(nameAttribute);
                             
                             if (!string.IsNullOrEmpty(name))

@@ -276,7 +276,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                         for (int i = 0; i < workerContext.Requests.Count; i++)
                                         {
                                             var request = workerContext.Requests[i];
+#pragma warning disable DVPS001 // Throttling is handled in the catch block below
                                             var response = workerConnection.Execute(request);
+#pragma warning restore DVPS001
 
                                             // Call completion callback for this request
                                             if (workerContext.ResponseCompletions != null && i < workerContext.ResponseCompletions.Count && workerContext.ResponseCompletions[i] != null)
