@@ -155,7 +155,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (PassThru)
             {
-                var retrievedEntity = Connection.Retrieve("webresource", webResourceId, new ColumnSet(true));
+                var retrievedEntity = QueryHelpers.RetrieveWithThrottlingRetry(Connection, "webresource", webResourceId, new ColumnSet(true));
                 var psObject = converter.ConvertToPSObject(retrievedEntity, new ColumnSet(true), _ => ValueType.Display);
                 WriteObject(psObject);
             }
@@ -202,7 +202,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         Target = new EntityReference("webresource", existingId.Value),
                         ColumnSet = new ColumnSet("modifiedon")
                     };
-                    var response = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
+                    var response = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveUnpublishedRequest);
                     var existingEntity = response.Entity;
                     
                     if (existingEntity.Contains("modifiedon"))
@@ -228,7 +228,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (ShouldProcess(webResourceName, "Update web resource"))
                 {
-                    Connection.Update(entity);
+                    QueryHelpers.UpdateWithThrottlingRetry(Connection, entity);
                     WriteVerbose($"Updated web resource: {webResourceName} (ID: {existingId.Value})");
 
                     if (Publish)
@@ -238,7 +238,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (PassThru)
                     {
-                        var retrievedEntity = Connection.Retrieve("webresource", existingId.Value, new ColumnSet(true));
+                        var retrievedEntity = QueryHelpers.RetrieveWithThrottlingRetry(Connection, "webresource", existingId.Value, new ColumnSet(true));
                         var metadataFactory = new EntityMetadataFactory(Connection);
                         var converter = new DataverseEntityConverter(Connection, metadataFactory);
                         WriteObject(converter.ConvertToPSObject(retrievedEntity, new ColumnSet(true), _ => ValueType.Display));
@@ -276,7 +276,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (ShouldProcess(fullName, "Create web resource"))
                 {
-                    var newId = Connection.Create(entity);
+                    var newId = QueryHelpers.CreateWithThrottlingRetry(Connection, entity);
                     WriteVerbose($"Created web resource: {fullName} (ID: {newId})");
 
                     if (Publish)
@@ -286,7 +286,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (PassThru)
                     {
-                        var retrievedEntity = Connection.Retrieve("webresource", newId, new ColumnSet(true));
+                        var retrievedEntity = QueryHelpers.RetrieveWithThrottlingRetry(Connection, "webresource", newId, new ColumnSet(true));
                         var metadataFactory = new EntityMetadataFactory(Connection);
                         var converter = new DataverseEntityConverter(Connection, metadataFactory);
                         WriteObject(converter.ConvertToPSObject(retrievedEntity, new ColumnSet(true), _ => ValueType.Display));
@@ -339,7 +339,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (ShouldProcess(entity.GetAttributeValue<string>("name") ?? webResourceId.ToString(), "Update web resource"))
                 {
-                    Connection.Update(entity);
+                    QueryHelpers.UpdateWithThrottlingRetry(Connection, entity);
                     WriteVerbose($"Updated web resource: {webResourceId}");
 
                     if (Publish)
@@ -358,7 +358,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (ShouldProcess(entity.GetAttributeValue<string>("name") ?? "new web resource", "Create web resource"))
                 {
-                    webResourceId = Connection.Create(entity);
+                    webResourceId = QueryHelpers.CreateWithThrottlingRetry(Connection, entity);
                     WriteVerbose($"Created web resource: {webResourceId}");
 
                     if (Publish)
@@ -384,7 +384,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Use RetrieveUnpublishedMultipleRequest to find unpublished web resources
             var request = new Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleRequest { Query = query };
-            var response = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+            var response = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
             var results = response.EntityCollection;
 
             return results.Entities.Count > 0 ? results.Entities[0].Id : (Guid?)null;
@@ -397,7 +397,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var request = new OrganizationRequest("PublishXml");
             request["ParameterXml"] = publishXml;
 
-            Connection.Execute(request);
+            QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
             WriteVerbose($"Published web resource: {webResourceId}");
         }
 

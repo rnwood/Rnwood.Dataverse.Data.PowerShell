@@ -280,7 +280,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 FetchXml = modifiedFetchXml
             };
-            var translateResponse = (FetchXmlToQueryExpressionResponse)Connection.Execute(translateRequest);
+            var translateResponse = (FetchXmlToQueryExpressionResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, translateRequest);
             var query = translateResponse.Query;
 
             if (queryType == 4 && placeholderMap != null)

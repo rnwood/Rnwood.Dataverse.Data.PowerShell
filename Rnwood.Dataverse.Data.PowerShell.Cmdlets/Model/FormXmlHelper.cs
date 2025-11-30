@@ -40,7 +40,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
                     Target = new EntityReference("systemform", formId),
                     ColumnSet = columnSet
                 };
-                var response = (RetrieveUnpublishedResponse)connection.Execute(retrieveUnpublishedRequest);
+                var response = (RetrieveUnpublishedResponse)QueryHelpers.ExecuteWithThrottlingRetry(connection, retrieveUnpublishedRequest);
                 return response.Entity;
             }
             catch (FaultException<OrganizationServiceFault> ex)
@@ -48,7 +48,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
                 if (QueryHelpers.IsNotFoundException(ex))
                 {
                     // Try published version
-                    return connection.Retrieve("systemform", formId, columnSet);
+                    return QueryHelpers.RetrieveWithThrottlingRetry(connection, "systemform", formId, columnSet);
                 }
                 else
                 {
@@ -59,7 +59,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             {
                 // For testing with FakeXrmEasy or other scenarios where RetrieveUnpublished is not supported,
                 // fall back to regular Retrieve
-                return connection.Retrieve("systemform", formId, columnSet);
+                return QueryHelpers.RetrieveWithThrottlingRetry(connection, "systemform", formId, columnSet);
             }
         }
 
@@ -112,7 +112,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
 
             Entity updateForm = new Entity("systemform", formId);
             updateForm["formxml"] = document.ToString();
-            connection.Update(updateForm);
+            QueryHelpers.UpdateWithThrottlingRetry(connection, updateForm);
         }
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             {
                 ParameterXml = $"<importexportxml><entities><entity>{entityName}</entity></entities></importexportxml>"
             };
-            connection.Execute(publishRequest);
+            QueryHelpers.ExecuteWithThrottlingRetry(connection, publishRequest);
         }
 
         /// <summary>

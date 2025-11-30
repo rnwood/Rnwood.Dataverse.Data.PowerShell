@@ -60,7 +60,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 TopCount = 1
             };
 
-            var solutions = Connection.RetrieveMultiple(query);
+            var solutions = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
 
             if (solutions.Entities.Count == 0)
             {
@@ -89,7 +89,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Execute asynchronous uninstall request
             var request = new UninstallSolutionAsyncRequest { SolutionUniqueName = UniqueName };
-            var response = (UninstallSolutionAsyncResponse)Connection.Execute(request);
+            var response = (UninstallSolutionAsyncResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
             var asyncOperationId = response.AsyncOperationId;
 
             WriteVerbose($"Uninstall request submitted. AsyncOperationId: {asyncOperationId}. Monitoring uninstall progress...");
@@ -124,7 +124,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 // Retrieve the async operation status
-                var asyncOp = Connection.Retrieve("asyncoperation", asyncOperationId, new ColumnSet("statecode", "statuscode", "message"));
+                var asyncOp = QueryHelpers.RetrieveWithThrottlingRetry(Connection, "asyncoperation", asyncOperationId, new ColumnSet("statecode", "statuscode", "message"));
                 var stateCode = asyncOp.GetAttributeValue<OptionSetValue>("statecode")?.Value ?? -1;
 
                 if (stateCode == 3) // Completed

@@ -47,7 +47,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 Principal = new EntityReference("systemuser", Principal)
             };
 
-            var response = (RetrievePrincipalAccessResponse)Connection.Execute(request);
+            var response = (RetrievePrincipalAccessResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             WriteObject(response.AccessRights);
         }

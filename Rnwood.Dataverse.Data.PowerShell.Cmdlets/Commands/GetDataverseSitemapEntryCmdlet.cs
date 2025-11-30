@@ -165,7 +165,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             try
             {
                 var request = new Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleRequest { Query = query };
-                var response = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+                var response = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                 if (response.EntityCollection.Entities.Count > 0)
                 {
                     sitemap = response.EntityCollection.Entities[0];
@@ -180,7 +180,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // If not found in unpublished, try published
             if (sitemap == null)
             {
-                var sitemaps = Connection.RetrieveMultiple(query);
+                var sitemaps = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
                 if (sitemaps.Entities.Count > 0)
                 {
                     sitemap = sitemaps.Entities[0];

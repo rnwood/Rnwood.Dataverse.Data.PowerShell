@@ -101,7 +101,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             publisherLink.Columns = new ColumnSet("friendlyname", "uniquename", "customizationprefix");
 
             // Execute query
-            var solutions = Connection.RetrieveMultiple(query);
+            var solutions = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
 
             WriteVerbose($"Found {solutions.Entities.Count} solution(s)");
 

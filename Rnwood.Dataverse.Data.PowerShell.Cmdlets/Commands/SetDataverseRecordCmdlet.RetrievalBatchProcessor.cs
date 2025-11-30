@@ -360,7 +360,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             _writeVerbose($"Retrieving {ids.Count} record(s) by ID in retrieval batch");
 
-            var retrievedRecords = _connection.RetrieveMultiple(query).Entities;
+            var retrievedRecords = QueryHelpers.RetrieveMultipleWithThrottlingRetry(_connection, query).Entities;
             var retrievedDict = retrievedRecords.ToDictionary(e => e.Id);
 
             // Match retrieved records back to processing items
@@ -413,7 +413,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     _writeVerbose($"Retrieving records by MatchOn ({matchColumn}) in retrieval batch");
 
-                    var retrievedRecords = _connection.RetrieveMultiple(query).Entities;
+                    var retrievedRecords = QueryHelpers.RetrieveMultipleWithThrottlingRetry(_connection, query).Entities;
 
                     // Match back to items
                     foreach (var item in recordsNeedingMatch)
@@ -497,7 +497,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     _writeVerbose($"Retrieving records by MatchOn ({string.Join(",", matchOnColumnList)}) in retrieval batch");
 
-                    var retrievedRecords = _connection.RetrieveMultiple(query).Entities;
+                    var retrievedRecords = QueryHelpers.RetrieveMultipleWithThrottlingRetry(_connection, query).Entities;
 
                     // Match back to items
                     foreach (var item in recordsNeedingMatch)
@@ -595,7 +595,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 _writeVerbose($"Retrieving {records.Count} intersect record(s) in retrieval batch");
 
-                var retrievedRecords = _connection.RetrieveMultiple(query).Entities;
+                var retrievedRecords = QueryHelpers.RetrieveMultipleWithThrottlingRetry(_connection, query).Entities;
 
                 // Match back to items
                 foreach (var item in records)

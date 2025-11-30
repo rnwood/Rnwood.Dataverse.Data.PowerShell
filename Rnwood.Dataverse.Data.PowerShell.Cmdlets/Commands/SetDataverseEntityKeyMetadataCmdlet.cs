@@ -80,7 +80,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         RetrieveAsIfPublished = true
                     };
 
-                    var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
+                    var retrieveResponse = (RetrieveEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                     var entityMetadata = retrieveResponse.EntityMetadata;
 
                     if (entityMetadata.Keys != null)
@@ -173,7 +173,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Creating alternate key '{SchemaName}' on entity '{EntityName}' with attributes: {string.Join(", ", KeyAttributes)}");
 
-            var response = (CreateEntityKeyResponse)Connection.Execute(request);
+            var response = (CreateEntityKeyResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             WriteVerbose($"Alternate key created successfully with MetadataId: {response.EntityKeyId}");
 
@@ -187,7 +187,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     ParameterXml = $"<importexportxml><entities><entity>{EntityName}</entity></entities></importexportxml>"
                 };
-                Connection.Execute(publishRequest);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, publishRequest);
                 WriteVerbose($"Published entity '{EntityName}'");
 
                 // Wait for publish to complete
@@ -204,7 +204,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     RetrieveAsIfPublished = true
                 };
 
-                var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
+                var retrieveResponse = (RetrieveEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                 var createdKey = retrieveResponse.EntityMetadata.Keys?.FirstOrDefault(k =>
                     string.Equals(k.LogicalName, logicalName, StringComparison.OrdinalIgnoreCase));
 

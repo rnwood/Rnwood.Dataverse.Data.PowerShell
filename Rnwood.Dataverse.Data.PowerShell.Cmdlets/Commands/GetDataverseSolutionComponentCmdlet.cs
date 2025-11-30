@@ -60,7 +60,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
                     }
                 };
-                var result = Connection.RetrieveMultiple(query);
+                var result = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
                 if (result.Entities.Count == 0)
                 {
                     ThrowTerminatingError(new ErrorRecord(new Exception($"Solution '{SolutionName}' not found."), "SolutionNotFound", ErrorCategory.ObjectNotFound, SolutionName));

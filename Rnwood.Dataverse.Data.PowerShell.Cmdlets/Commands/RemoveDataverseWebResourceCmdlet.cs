@@ -118,7 +118,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 try
                 {
-                    Connection.Delete("webresource", webResourceId);
+                    QueryHelpers.DeleteWithThrottlingRetry(Connection, "webresource", webResourceId);
                     WriteVerbose($"Deleted web resource: {webResourceName} (ID: {webResourceId})");
                 }
                 catch (Exception ex) when (IfExists)
@@ -146,7 +146,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Use RetrieveUnpublishedMultipleRequest to find unpublished web resources
             var request = new Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleRequest { Query = query };
-            var response = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+            var response = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
             var results = response.EntityCollection;
 
             return results.Entities.Count > 0 ? results.Entities[0].Id : (Guid?)null;

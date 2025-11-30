@@ -159,7 +159,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             };
 
             // Execute the async export request
-            var exportResponse = (ExportSolutionAsyncResponse)Connection.Execute(exportRequest);
+            var exportResponse = (ExportSolutionAsyncResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, exportRequest);
             var exportJobId = exportResponse.ExportJobId;
             var asyncOperationId = exportResponse.AsyncOperationId;
 
@@ -213,7 +213,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 };
 
-                var asyncOperations = Connection.RetrieveMultiple(query);
+                var asyncOperations = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
                 if (asyncOperations.Entities.Count == 0)
                 {
                     progressRecord.RecordType = ProgressRecordType.Completed;
@@ -307,7 +307,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             };
 
             WriteVerbose("Downloading exported solution data...");
-            var downloadResponse = (DownloadSolutionExportDataResponse)Connection.Execute(downloadRequest);
+            var downloadResponse = (DownloadSolutionExportDataResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, downloadRequest);
             var solutionFileBytes = downloadResponse.ExportSolutionFile;
 
             progressRecord.RecordType = ProgressRecordType.Completed;

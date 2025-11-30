@@ -42,7 +42,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 TopCount = 1
             };
 
-            var results = Connection.RetrieveMultiple(query);
+            var results = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
 
             if (results.Entities.Count == 0)
             {
@@ -64,7 +64,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             WriteVerbose($"Removing connection reference: '{displayName}' (ID: {connRefId})");
-            Connection.Delete("connectionreference", connRefId);
+            QueryHelpers.DeleteWithThrottlingRetry(Connection, "connectionreference", connRefId);
             WriteVerbose($"Successfully removed connection reference '{ConnectionReferenceLogicalName}'");
         }
     }

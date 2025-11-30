@@ -521,5 +521,175 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
         }
+
+        /// <summary>
+        /// Creates an entity with automatic service protection (throttling) retry handling.
+        /// </summary>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="entity">The entity to create</param>
+        /// <param name="writeVerbose">Optional action to write verbose messages</param>
+        /// <returns>The ID of the created entity</returns>
+        public static Guid CreateWithThrottlingRetry(IOrganizationService connection, Entity entity, Action<string> writeVerbose = null)
+        {
+            while (true)
+            {
+                try
+                {
+                    return connection.Create(entity);
+                }
+                catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    System.Threading.Thread.Sleep(retryDelay);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Updates an entity with automatic service protection (throttling) retry handling.
+        /// </summary>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="entity">The entity to update</param>
+        /// <param name="writeVerbose">Optional action to write verbose messages</param>
+        public static void UpdateWithThrottlingRetry(IOrganizationService connection, Entity entity, Action<string> writeVerbose = null)
+        {
+            while (true)
+            {
+                try
+                {
+                    connection.Update(entity);
+                    return;
+                }
+                catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    System.Threading.Thread.Sleep(retryDelay);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Deletes an entity with automatic service protection (throttling) retry handling.
+        /// </summary>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="entityName">The logical name of the entity</param>
+        /// <param name="id">The ID of the entity to delete</param>
+        /// <param name="writeVerbose">Optional action to write verbose messages</param>
+        public static void DeleteWithThrottlingRetry(IOrganizationService connection, string entityName, Guid id, Action<string> writeVerbose = null)
+        {
+            while (true)
+            {
+                try
+                {
+                    connection.Delete(entityName, id);
+                    return;
+                }
+                catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    System.Threading.Thread.Sleep(retryDelay);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Retrieves an entity with automatic service protection (throttling) retry handling.
+        /// </summary>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="entityName">The logical name of the entity</param>
+        /// <param name="id">The ID of the entity to retrieve</param>
+        /// <param name="columnSet">The columns to retrieve</param>
+        /// <param name="writeVerbose">Optional action to write verbose messages</param>
+        /// <returns>The retrieved entity</returns>
+        public static Entity RetrieveWithThrottlingRetry(IOrganizationService connection, string entityName, Guid id, ColumnSet columnSet, Action<string> writeVerbose = null)
+        {
+            while (true)
+            {
+                try
+                {
+                    return connection.Retrieve(entityName, id, columnSet);
+                }
+                catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    System.Threading.Thread.Sleep(retryDelay);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Retrieves multiple entities with automatic service protection (throttling) retry handling.
+        /// </summary>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="query">The query to execute</param>
+        /// <param name="writeVerbose">Optional action to write verbose messages</param>
+        /// <returns>The retrieved entity collection</returns>
+        public static EntityCollection RetrieveMultipleWithThrottlingRetry(IOrganizationService connection, QueryBase query, Action<string> writeVerbose = null)
+        {
+            while (true)
+            {
+                try
+                {
+                    return connection.RetrieveMultiple(query);
+                }
+                catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    System.Threading.Thread.Sleep(retryDelay);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Associates entities with automatic service protection (throttling) retry handling.
+        /// </summary>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="entityName">The logical name of the entity</param>
+        /// <param name="entityId">The ID of the entity</param>
+        /// <param name="relationship">The relationship to use</param>
+        /// <param name="relatedEntities">The related entities</param>
+        /// <param name="writeVerbose">Optional action to write verbose messages</param>
+        public static void AssociateWithThrottlingRetry(IOrganizationService connection, string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, Action<string> writeVerbose = null)
+        {
+            while (true)
+            {
+                try
+                {
+                    connection.Associate(entityName, entityId, relationship, relatedEntities);
+                    return;
+                }
+                catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    System.Threading.Thread.Sleep(retryDelay);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Disassociates entities with automatic service protection (throttling) retry handling.
+        /// </summary>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="entityName">The logical name of the entity</param>
+        /// <param name="entityId">The ID of the entity</param>
+        /// <param name="relationship">The relationship to use</param>
+        /// <param name="relatedEntities">The related entities</param>
+        /// <param name="writeVerbose">Optional action to write verbose messages</param>
+        public static void DisassociateWithThrottlingRetry(IOrganizationService connection, string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, Action<string> writeVerbose = null)
+        {
+            while (true)
+            {
+                try
+                {
+                    connection.Disassociate(entityName, entityId, relationship, relatedEntities);
+                    return;
+                }
+                catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    System.Threading.Thread.Sleep(retryDelay);
+                }
+            }
+        }
     }
 }

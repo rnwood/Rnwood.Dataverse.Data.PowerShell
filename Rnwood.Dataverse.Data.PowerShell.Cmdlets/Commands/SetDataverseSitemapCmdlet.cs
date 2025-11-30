@@ -99,13 +99,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     Query = query
                 };
-                var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveUnpublishedMultipleRequest);
                 var results = unpublishedResponse.EntityCollection;
                 
                 if (results.Entities.Count == 0)
                 {
                     // If not found in unpublished, try published
-                    results = Connection.RetrieveMultiple(query);
+                    results = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
                 }
 
                 if (results.Entities.Count > 0)
@@ -150,13 +150,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         Query = existingQuery
                     };
-                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveUnpublishedMultipleRequest);
                     var existingSitemaps = unpublishedResponse.EntityCollection;
 
                     if (existingSitemaps.Entities.Count == 0)
                     {
                         // If not found in unpublished, try published
-                        existingSitemaps = Connection.RetrieveMultiple(existingQuery);
+                        existingSitemaps = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, existingQuery);
                     }
 
                     if (existingSitemaps.Entities.Count == 0)
@@ -221,7 +221,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (updateEntity.Attributes.Count > 0)
                 {
                     WriteVerbose($"Updating sitemap with {updateEntity.Attributes.Count} changed attribute(s)...");
-                    Connection.Update(updateEntity);
+                    QueryHelpers.UpdateWithThrottlingRetry(Connection, updateEntity);
                     WriteVerbose("Sitemap updated successfully.");
                 }
                 else
@@ -278,7 +278,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 createEntity["sitemapxml"] = SitemapXml;
 
-                sitemapId = Connection.Create(createEntity);
+                sitemapId = QueryHelpers.CreateWithThrottlingRetry(Connection, createEntity);
 
                 WriteVerbose($"Sitemap created successfully with ID: {sitemapId}");
             }
@@ -290,7 +290,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     ParameterXml = $"<importexportxml><sitemaps><sitemap>{sitemapId}</sitemap></sitemaps></importexportxml>"
                 };
-                Connection.Execute(publishRequest);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, publishRequest);
                 WriteVerbose($"Published sitemap with ID: {sitemapId}");
                 
                 // Wait for publish to complete

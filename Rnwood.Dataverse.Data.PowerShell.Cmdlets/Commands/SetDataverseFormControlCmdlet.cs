@@ -567,7 +567,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     RetrieveAsIfPublished = false  // Use unpublished metadata
                 };
 
-                var response = (RetrieveAttributeResponse)Connection.Execute(request);
+                var response = (RetrieveAttributeResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                 return response.AttributeMetadata;
             }
             catch (FaultException<OrganizationServiceFault> ex)
@@ -607,7 +607,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     RetrieveAsIfPublished = false
                 };
 
-                var response = (RetrieveEntityResponse)Connection.Execute(request);
+                var response = (RetrieveEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                 var entityMetadata = response.EntityMetadata;
 
                 // Check if this field name matches a lookup attribute from many-to-one relationships
@@ -1186,7 +1186,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     RetrieveAsIfPublished = false
                 };
 
-                var response = (RetrieveEntityResponse)Connection.Execute(request);
+                var response = (RetrieveEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                 var entityMetadata = response.EntityMetadata;
 
                 // Check one-to-many relationships
@@ -1247,7 +1247,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     TopCount = 1
                 };
 
-                var results = Connection.RetrieveMultiple(query);
+                var results = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
                 if (results.Entities.Count > 0)
                 {
                     return results.Entities[0].GetAttributeValue<Guid>("savedqueryid").ToString("B").ToUpper();

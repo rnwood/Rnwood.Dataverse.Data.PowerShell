@@ -115,7 +115,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     WriteVerbose($"Retrieving all entity metadata with filters: {filters}");
 
-                    var response = (RetrieveAllEntitiesResponse)Connection.Execute(request);
+                    var response = (RetrieveAllEntitiesResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                     entities = response.EntityMetadata;
 
                     WriteVerbose($"Retrieved {entities.Length} entities");
@@ -134,7 +134,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 WriteVerbose($"Retrieving all entity metadata with filters: {filters}");
 
-                var response = (RetrieveAllEntitiesResponse)Connection.Execute(request);
+                var response = (RetrieveAllEntitiesResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                 entities = response.EntityMetadata;
 
                 WriteVerbose($"Retrieved {entities.Length} entities");
@@ -188,7 +188,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     WriteVerbose($"Retrieving entity metadata for '{entityName}' with filters: {filters}");
 
-                    var response = (RetrieveEntityResponse)Connection.Execute(request);
+                    var response = (RetrieveEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                     entityMetadata = response.EntityMetadata;
 
                     // Cache the result
@@ -206,7 +206,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 WriteVerbose($"Retrieving entity metadata for '{entityName}' with filters: {filters}");
 
-                var response = (RetrieveEntityResponse)Connection.Execute(request);
+                var response = (RetrieveEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                 entityMetadata = response.EntityMetadata;
             }
 

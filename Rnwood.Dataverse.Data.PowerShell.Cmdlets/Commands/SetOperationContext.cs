@@ -382,7 +382,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         existingRecordQuery.AddAttributeValue(entityMetadata.PrimaryIdAttribute, Id);
                         existingRecordQuery.ColumnSet = target.LogicalName.Equals("calendar", StringComparison.OrdinalIgnoreCase) ? new ColumnSet(true) : new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
 
-                        var record = Connection.RetrieveMultiple(existingRecordQuery).Entities.FirstOrDefault();
+                        var record = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, existingRecordQuery).Entities.FirstOrDefault();
                         if (record != null)
                         {
                             existingRecords.Add(record);
@@ -419,7 +419,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         matchOnQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
 
-                        var matchedRecords = Connection.RetrieveMultiple(matchOnQuery).Entities;
+                        var matchedRecords = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, matchOnQuery).Entities;
 
                         if (matchedRecords.Count == 1)
                         {
@@ -469,7 +469,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 existingRecordQuery.AddAttributeValue(manyToManyRelationshipMetadata.Entity2IntersectAttribute, entity2Value.Value);
                 existingRecordQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
 
-                var record = Connection.RetrieveMultiple(existingRecordQuery).Entities.FirstOrDefault();
+                var record = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, existingRecordQuery).Entities.FirstOrDefault();
                 if (record != null)
                 {
                     existingRecords.Add(record);
@@ -539,7 +539,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             QueryExpression getIdQuery = new QueryExpression(TableName);
             getIdQuery.Criteria.AddCondition(manyToManyRelationshipMetadata.Entity1IntersectAttribute, ConditionOperator.Equal, record1.Id);
             getIdQuery.Criteria.AddCondition(manyToManyRelationshipMetadata.Entity2IntersectAttribute, ConditionOperator.Equal, record2.Id);
-            Guid id = Connection.RetrieveMultiple(getIdQuery).Entities.Single().Id;
+            Guid id = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, getIdQuery).Entities.Single().Id;
 
             SetIdProperty(InputObject, id);
             _writeVerbose(string.Format("Created new intersect record {0}:{1}", target.LogicalName, id));

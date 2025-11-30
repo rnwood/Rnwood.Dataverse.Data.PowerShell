@@ -125,7 +125,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     try
                     {
-                        appModuleEntity = Connection.Retrieve("appmodule", Id, new ColumnSet(true));
+                        appModuleEntity = QueryHelpers.RetrieveWithThrottlingRetry(Connection, "appmodule", Id, new ColumnSet(true));
                         isUpdate = true;
                         WriteVerbose($"Found existing app module with ID: {Id}");
                     }
@@ -142,7 +142,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                     Target = new EntityReference("appmodule", Id),
                                     ColumnSet = new ColumnSet(true)
                                 };
-                                var response = (RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
+                                var response = (RetrieveUnpublishedResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveUnpublishedRequest);
                                 appModuleEntity = response.Entity;
                                 isUpdate = true;
                                 WriteVerbose($"Found existing unpublished app module with ID: {Id}");
@@ -176,14 +176,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     };
                     query.Criteria.AddCondition("uniquename", ConditionOperator.Equal, UniqueName);
 
-                    var results = Connection.RetrieveMultiple(query);
+                    var results = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
                     if (results.Entities.Count == 0)
                     {
                         var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
                         {
                             Query = query
                         };
-                        var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                        var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveUnpublishedMultipleRequest);
                         results = unpublishedResponse.EntityCollection;
                     }
 
@@ -330,7 +330,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             var converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
                             string columnSummary = QueryHelpers.GetColumnSummary(updateEntity, converter, false);
-                            Connection.Update(updateEntity);
+                            QueryHelpers.UpdateWithThrottlingRetry(Connection, updateEntity);
                             WriteVerbose($"Updated app module with ID: {appModuleId} columns:\n{columnSummary}");
                         }
                         else
@@ -409,7 +409,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         var converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
                         string columnSummary = QueryHelpers.GetColumnSummary(newEntity, converter, false);
-                        appModuleId = Connection.Create(newEntity);
+                        appModuleId = QueryHelpers.CreateWithThrottlingRetry(Connection, newEntity);
                         WriteVerbose($"Created new app module with ID: {appModuleId} columns:\n{columnSummary}");
 
                         if (PassThru)
@@ -426,7 +426,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         AppModuleId = appModuleId
                     };
-                    var validateResponse = (ValidateAppResponse)Connection.Execute(validateRequest);
+                    var validateResponse = (ValidateAppResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, validateRequest);
                     foreach (var issue in validateResponse.AppValidationResponse.ValidationIssueList)
                     {
          
@@ -449,7 +449,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // Setting the ParameterXml to an empty string to publish all changes
                         ParameterXml = $"<importexportxml><appmodules><appmodule>{appModuleId}</appmodule></appmodules></importexportxml>"
                     };
-                    Connection.Execute(publishRequest);
+                    QueryHelpers.ExecuteWithThrottlingRetry(Connection, publishRequest);
                     WriteVerbose($"Published app module with ID: {appModuleId}");
                 
                 // Wait for publish to complete

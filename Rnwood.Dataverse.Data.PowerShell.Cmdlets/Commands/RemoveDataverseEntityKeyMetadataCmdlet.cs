@@ -43,7 +43,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Deleting alternate key '{KeyName}' from entity '{EntityName}'");
 
-            Connection.Execute(request);
+            QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             WriteVerbose($"Alternate key '{KeyName}' deleted successfully from entity '{EntityName}'");
 

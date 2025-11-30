@@ -23,7 +23,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.BeginProcessing();
 
             WhoAmIRequest request = new WhoAmIRequest();
-            WhoAmIResponse response = (WhoAmIResponse)Connection.Execute(request);
+            WhoAmIResponse response = (WhoAmIResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             WriteObject(response);
         }

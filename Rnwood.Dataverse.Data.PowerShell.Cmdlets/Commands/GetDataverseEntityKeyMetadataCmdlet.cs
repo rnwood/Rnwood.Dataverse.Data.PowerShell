@@ -71,7 +71,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     WriteVerbose($"Retrieving entity metadata for '{EntityName}'");
 
-                    var response = (RetrieveEntityResponse)Connection.Execute(request);
+                    var response = (RetrieveEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                     entityMetadata = response.EntityMetadata;
 
                     // Cache the result
@@ -89,7 +89,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 WriteVerbose($"Retrieving entity metadata for '{EntityName}'");
 
-                var response = (RetrieveEntityResponse)Connection.Execute(request);
+                var response = (RetrieveEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                 entityMetadata = response.EntityMetadata;
             }
 

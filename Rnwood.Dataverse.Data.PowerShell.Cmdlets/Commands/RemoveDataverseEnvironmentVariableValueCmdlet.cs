@@ -43,7 +43,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             defLink.EntityAlias = "def";
             defLink.LinkCriteria.AddCondition("schemaname", ConditionOperator.Equal, SchemaName);
 
-            var valueResults = Connection.RetrieveMultiple(valueQuery);
+            var valueResults = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, valueQuery);
 
             if (valueResults.Entities.Count == 0)
             {
@@ -63,7 +63,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             WriteVerbose($"Removing environment variable value (ID: {valueId})");
-            Connection.Delete("environmentvariablevalue", valueId);
+            QueryHelpers.DeleteWithThrottlingRetry(Connection, "environmentvariablevalue", valueId);
             WriteVerbose($"Successfully removed environment variable value for '{SchemaName}'");
         }
     }

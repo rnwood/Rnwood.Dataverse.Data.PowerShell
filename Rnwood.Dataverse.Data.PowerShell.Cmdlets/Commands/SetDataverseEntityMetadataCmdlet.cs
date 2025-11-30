@@ -172,7 +172,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     RetrieveAsIfPublished = true
                 };
 
-                var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
+                var retrieveResponse = (RetrieveEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                 existingEntity = retrieveResponse.EntityMetadata;
                 entityExists = true;
                 WriteVerbose($"Entity '{EntityName}' already exists");
@@ -357,7 +357,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Creating entity '{SchemaName}'");
 
-            var response = (CreateEntityResponse)Connection.Execute(request);
+            var response = (CreateEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             WriteVerbose($"Entity created successfully with MetadataId: {response.EntityId}");
 
@@ -371,7 +371,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     ParameterXml = $"<importexportxml><entities><entity>{EntityName}</entity></entities></importexportxml>"
                 };
-                Connection.Execute(publishRequest);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, publishRequest);
                 WriteVerbose($"Published entity '{EntityName}'");
                 
                 // Wait for publish to complete
@@ -388,7 +388,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     RetrieveAsIfPublished = true
                 };
 
-                var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
+                var retrieveResponse = (RetrieveEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                 var result = ConvertEntityMetadataToPSObject(retrieveResponse.EntityMetadata);
                 WriteObject(result);
             }
@@ -522,7 +522,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Updating entity '{EntityName}'");
 
-            Connection.Execute(request);
+            QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             WriteVerbose($"Entity updated successfully");
 
@@ -536,7 +536,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     ParameterXml = $"<importexportxml><entities><entity>{EntityName}</entity></entities></importexportxml>"
                 };
-                Connection.Execute(publishRequest);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, publishRequest);
                 WriteVerbose($"Published entity '{EntityName}'");
                 
                 // Wait for publish to complete
@@ -553,7 +553,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     RetrieveAsIfPublished = true
                 };
 
-                var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
+                var retrieveResponse = (RetrieveEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                 var result = ConvertEntityMetadataToPSObject(retrieveResponse.EntityMetadata);
                 WriteObject(result);
             }
@@ -696,7 +696,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Updating entity '{EntityMetadata.LogicalName}' from EntityMetadata object");
 
-            Connection.Execute(request);
+            QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             WriteVerbose($"Entity updated successfully");
 
@@ -715,7 +715,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     ParameterXml = $"<importexportxml><entities><entity>{EntityMetadata.LogicalName}</entity></entities></importexportxml>"
                 };
-                Connection.Execute(publishRequest);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, publishRequest);
                 WriteVerbose($"Published entity '{EntityMetadata.LogicalName}'");
                 
                 // Wait for publish to complete
@@ -732,7 +732,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     RetrieveAsIfPublished = true
                 };
 
-                var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
+                var retrieveResponse = (RetrieveEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                 var result = ConvertEntityMetadataToPSObject(retrieveResponse.EntityMetadata);
                 WriteObject(result);
             }

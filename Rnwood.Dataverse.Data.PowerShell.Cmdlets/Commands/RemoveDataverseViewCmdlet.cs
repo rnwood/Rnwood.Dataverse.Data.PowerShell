@@ -43,7 +43,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (ShouldProcess($"{ViewType} view with ID '{Id}'", "Remove"))
                 {
-                    Connection.Delete(entityName, Id);
+                    QueryHelpers.DeleteWithThrottlingRetry(Connection, entityName, Id);
                     WriteVerbose($"Removed {(ViewType == "System" ? "system" : "personal")} view with ID: {Id}");
                 }
             }

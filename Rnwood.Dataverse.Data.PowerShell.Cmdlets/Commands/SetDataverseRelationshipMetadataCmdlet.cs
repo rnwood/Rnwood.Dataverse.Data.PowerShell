@@ -196,7 +196,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     ParameterXml = $"<importexportxml><entities><entity>{ReferencedEntity}</entity><entity>{ReferencingEntity}</entity></entities></importexportxml>"
                 };
-                Connection.Execute(publishRequest);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, publishRequest);
                 WriteVerbose($"Published entities '{ReferencedEntity}' and '{ReferencingEntity}'");
                 
                 // Wait for publish to complete
@@ -213,7 +213,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     Name = schemaName
                 };
 
-                Connection.Execute(request);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                 return true;
             }
             catch (FaultException<OrganizationServiceFault> ex)
@@ -284,7 +284,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Creating OneToMany relationship '{SchemaName}' from {ReferencedEntity} to {ReferencingEntity}");
 
-            var response = (CreateOneToManyResponse)Connection.Execute(request);
+            var response = (CreateOneToManyResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             WriteVerbose($"Relationship created with ID: {response.RelationshipId}");
 
@@ -295,7 +295,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     Name = SchemaName
                 };
-                var retrieveResponse = (RetrieveRelationshipResponse)Connection.Execute(retrieveRequest);
+                var retrieveResponse = (RetrieveRelationshipResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                 WriteObject(retrieveResponse.RelationshipMetadata);
             }
         }
@@ -320,7 +320,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Creating ManyToMany relationship '{SchemaName}' between {ReferencedEntity} and {ReferencingEntity} with intersect entity '{intersectEntitySchemaName}'");
 
-            Connection.Execute(request);
+            QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             WriteVerbose($"ManyToMany relationship created successfully");
 
@@ -331,7 +331,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     Name = SchemaName
                 };
-                var retrieveResponse = (RetrieveRelationshipResponse)Connection.Execute(retrieveRequest);
+                var retrieveResponse = (RetrieveRelationshipResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                 WriteObject(retrieveResponse.RelationshipMetadata);
             }
         }
@@ -344,7 +344,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 Name = SchemaName
             };
             
-            var retrieveResponse = (RetrieveRelationshipResponse)Connection.Execute(retrieveRequest);
+            var retrieveResponse = (RetrieveRelationshipResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
             var existingRelationship = retrieveResponse.RelationshipMetadata;
 
             WriteVerbose($"Retrieved existing relationship '{SchemaName}' of type {existingRelationship.RelationshipType}");
@@ -476,7 +476,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Updating relationship '{SchemaName}'");
 
-            Connection.Execute(updateRequest);
+            QueryHelpers.ExecuteWithThrottlingRetry(Connection, updateRequest);
 
             WriteVerbose($"Relationship updated successfully");
 
@@ -487,7 +487,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     Name = SchemaName
                 };
-                var retrieveUpdatedResponse = (RetrieveRelationshipResponse)Connection.Execute(retrieveUpdatedRequest);
+                var retrieveUpdatedResponse = (RetrieveRelationshipResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveUpdatedRequest);
                 WriteObject(retrieveUpdatedResponse.RelationshipMetadata);
             }
         }

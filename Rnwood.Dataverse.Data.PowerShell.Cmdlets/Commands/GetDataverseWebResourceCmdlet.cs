@@ -195,7 +195,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             Target = new EntityReference("webresource", entity.Id),
                             ColumnSet = new ColumnSet("content")
                         };
-                        var response = (RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
+                        var response = (RetrieveUnpublishedResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveUnpublishedRequest);
                         entity["content"] = response.Entity.GetAttributeValue<string>("content");
                     }
                     SaveWebResourceToFolder(entity);
@@ -220,7 +220,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             Target = new EntityReference("webresource", entity.Id),
                             ColumnSet = new ColumnSet("content")
                         };
-                        var response = (RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
+                        var response = (RetrieveUnpublishedResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveUnpublishedRequest);
                         entity["content"] = response.Entity.GetAttributeValue<string>("content");
                     }
                     

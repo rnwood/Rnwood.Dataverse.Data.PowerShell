@@ -66,7 +66,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     TopCount = 1
                 };
 
-                var sitemaps = Connection.RetrieveMultiple(query);
+                var sitemaps = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
 
                 if (sitemaps.Entities.Count == 0)
                 {
@@ -75,7 +75,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         Query = query
                     };
-                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveUnpublishedMultipleRequest);
                     sitemaps = unpublishedResponse.EntityCollection;
                 }
 
@@ -117,7 +117,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     TopCount = 1
                 };
 
-                var sitemaps = Connection.RetrieveMultiple(query);
+                var sitemaps = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
 
                 if (sitemaps.Entities.Count == 0)
                 {
@@ -126,7 +126,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         Query = query
                     };
-                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveUnpublishedMultipleRequest);
                     sitemaps = unpublishedResponse.EntityCollection;
                 }
 
@@ -168,7 +168,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     TopCount = 1
                 };
 
-                var sitemaps = Connection.RetrieveMultiple(query);
+                var sitemaps = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
 
                 if (sitemaps.Entities.Count == 0)
                 {
@@ -177,7 +177,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         Query = query
                     };
-                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                    var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveUnpublishedMultipleRequest);
                     sitemaps = unpublishedResponse.EntityCollection;
                 }
 
@@ -208,7 +208,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             WriteVerbose($"Deleting sitemap '{sitemapName}' (ID: {sitemapId})...");
-            Connection.Delete("sitemap", sitemapId);
+            QueryHelpers.DeleteWithThrottlingRetry(Connection, "sitemap", sitemapId);
 
             WriteVerbose("Sitemap deleted successfully.");
             WriteObject($"Sitemap '{sitemapName}' deleted successfully.");

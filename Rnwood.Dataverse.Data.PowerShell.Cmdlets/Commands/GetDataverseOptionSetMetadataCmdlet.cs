@@ -68,7 +68,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 WriteVerbose($"Retrieving attribute metadata for '{EntityName}.{AttributeName}'");
 
-                var attributeResponse = (RetrieveAttributeResponse)Connection.Execute(attributeRequest);
+                var attributeResponse = (RetrieveAttributeResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, attributeRequest);
                 var attributeMetadata = attributeResponse.AttributeMetadata;
 
                 // Extract option set based on attribute type
@@ -123,7 +123,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     WriteVerbose($"Retrieving global option set '{Name}'");
 
-                    var optionSetResponse = (RetrieveOptionSetResponse)Connection.Execute(optionSetRequest);
+                    var optionSetResponse = (RetrieveOptionSetResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, optionSetRequest);
                     optionSetMetadata = optionSetResponse.OptionSetMetadata as OptionSetMetadata;
 
                     if (optionSetMetadata == null)
@@ -160,7 +160,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose("Retrieving all global option sets");
 
-            var response = (RetrieveAllOptionSetsResponse)Connection.Execute(request);
+            var response = (RetrieveAllOptionSetsResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
             var optionSets = response.OptionSetMetadata;
 
             WriteVerbose($"Retrieved {optionSets.Length} option sets");

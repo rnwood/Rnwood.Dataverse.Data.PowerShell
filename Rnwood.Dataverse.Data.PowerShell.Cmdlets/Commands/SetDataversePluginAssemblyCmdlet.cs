@@ -131,19 +131,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 Guid assemblyId;
                 if (Id.HasValue)
                 {
-                    Connection.Update(assembly);
+                    QueryHelpers.UpdateWithThrottlingRetry(Connection, assembly);
                     assemblyId = Id.Value;
                     WriteVerbose($"Updated plugin assembly: {Name} (ID: {assemblyId})");
                 }
                 else
                 {
-                    assemblyId = Connection.Create(assembly);
+                    assemblyId = QueryHelpers.CreateWithThrottlingRetry(Connection, assembly);
                     WriteVerbose($"Created plugin assembly: {Name} (ID: {assemblyId})");
                 }
 
                 if (PassThru)
                 {
-                    Entity retrieved = Connection.Retrieve("pluginassembly", assemblyId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+                    Entity retrieved = QueryHelpers.RetrieveWithThrottlingRetry(Connection, "pluginassembly", assemblyId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
                     EntityMetadataFactory entityMetadataFactory = new EntityMetadataFactory(Connection);
                     DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
                     PSObject psObject = converter.ConvertToPSObject(retrieved, new Microsoft.Xrm.Sdk.Query.ColumnSet(true), _ => ValueType.Display);

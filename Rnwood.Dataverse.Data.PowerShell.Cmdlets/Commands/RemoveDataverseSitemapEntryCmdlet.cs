@@ -211,7 +211,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             try
             {
                 var request = new RetrieveUnpublishedMultipleRequest { Query = query };
-                var response = (RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+                var response = (RetrieveUnpublishedMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                 if (response.EntityCollection.Entities.Count > 0)
                 {
                     sitemap = response.EntityCollection.Entities[0];
@@ -226,7 +226,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // If not found in unpublished, try published
             if (sitemap == null)
             {
-                var sitemaps = Connection.RetrieveMultiple(query);
+                var sitemaps = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
                 if (sitemaps.Entities.Count > 0)
                 {
                     sitemap = sitemaps.Entities[0];
@@ -324,7 +324,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             updateEntity["sitemapxml"] = doc.ToString();
 
             WriteVerbose("Updating sitemap in Dataverse...");
-            Connection.Update(updateEntity);
+            QueryHelpers.UpdateWithThrottlingRetry(Connection, updateEntity);
 
             WriteVerbose($"{removedDescription} removed successfully.");
             string successMessage = entryType.Value == SitemapEntryType.Privilege

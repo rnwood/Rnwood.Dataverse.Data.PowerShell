@@ -63,7 +63,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                 TopCount = 1
             };
 
-            var results = _connection.RetrieveMultiple(query);
+            var results = Commands.QueryHelpers.RetrieveMultipleWithThrottlingRetry(_connection, query);
             if (results.Entities.Count > 0)
             {
                 var solution = results.Entities[0];
@@ -180,7 +180,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                 EntityCollection result;
                 do
                 {
-                    result = _connection.RetrieveMultiple(solutionComponentQuery);
+                    result = Commands.QueryHelpers.RetrieveMultipleWithThrottlingRetry(_connection, solutionComponentQuery);
                     allSolutionComponents.AddRange(result.Entities);
                     if (result.MoreRecords)
                     {
@@ -387,7 +387,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                 EntityCollection result;
                 do
                 {
-                    result = _connection.RetrieveMultiple(solutionComponentQuery);
+                    result = Commands.QueryHelpers.RetrieveMultipleWithThrottlingRetry(_connection, solutionComponentQuery);
                     allSolutionComponents.AddRange(result.Entities);
                     if (result.MoreRecords)
                     {

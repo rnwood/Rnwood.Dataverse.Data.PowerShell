@@ -80,7 +80,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					LogicalName = entityName
 				};
 
-				RetrieveEntityResponse response = (RetrieveEntityResponse)this.Connection.Execute(request);
+				RetrieveEntityResponse response = (RetrieveEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 				result = response.EntityMetadata;
 				_entities.Add(entityName, result);
 
@@ -117,7 +117,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					RetrieveAsIfPublished = false
 				};
 
-				var response = (RetrieveAllEntitiesResponse)this.Connection.Execute(request);
+				var response = (RetrieveAllEntitiesResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 				_allEntityMetadata = response.EntityMetadata.Where(em => !string.IsNullOrWhiteSpace(em.LogicalName)).OrderBy(em => em.LogicalName).ToList();
 
 				// Add to shared cache if enabled

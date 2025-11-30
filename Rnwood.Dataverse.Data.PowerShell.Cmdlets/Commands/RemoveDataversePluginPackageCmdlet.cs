@@ -33,7 +33,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 try
                 {
-                    Connection.Delete("pluginpackage", Id);
+                    QueryHelpers.DeleteWithThrottlingRetry(Connection, "pluginpackage", Id);
                     WriteVerbose($"Removed plugin package with ID: {Id}");
                 }
                 catch (Exception ex)

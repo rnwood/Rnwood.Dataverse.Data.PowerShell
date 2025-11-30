@@ -542,7 +542,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 }
                             }
 
-                            var response = Connection.Execute(request);
+                            var response = QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
                             // Call completion callback for this request
                             if (context.ResponseCompletions != null && i < context.ResponseCompletions.Count && context.ResponseCompletions[i] != null)
@@ -624,7 +624,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         for (int i = 0; i < context.Requests.Count; i++)
                         {
                             var request = context.Requests[i];
-                            var response = Connection.Execute(request);
+                            var response = QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
                             // Call completion callback for this request
                             if (context.ResponseCompletions != null && i < context.ResponseCompletions.Count && context.ResponseCompletions[i] != null)
@@ -701,7 +701,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         for (int i = 0; i < context.Requests.Count; i++)
                         {
                             var request = context.Requests[i];
-                            var response = Connection.Execute(request);
+                            var response = QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
                             // Call completion callback for this request
                             if (context.ResponseCompletions != null && i < context.ResponseCompletions.Count && context.ResponseCompletions[i] != null)
@@ -796,7 +796,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             try
                             {
-                                Connection.Execute(request);
+                                QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                                 WriteVerbose(string.Format("Record {0}:{1} assigned to {2}", target.LogicalName, target.Id, ownerid.Name));
                             }
                             catch (Exception e)
@@ -863,7 +863,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             try
                             {
-                                Connection.Execute(request);
+                                QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                                 WriteVerbose(string.Format("Record {0}:{1} status set to State:{2} Status: {3}", target.LogicalName, target.Id, stateCode.Value, statuscode.Value));
                             }
                             catch (Exception e)

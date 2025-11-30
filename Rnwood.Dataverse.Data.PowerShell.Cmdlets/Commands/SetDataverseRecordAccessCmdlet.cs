@@ -73,7 +73,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         Target = target,
                         Principal = principalRef
                     };
-                    var retrieveResponse = (RetrievePrincipalAccessResponse)Connection.Execute(retrieveRequest);
+                    var retrieveResponse = (RetrievePrincipalAccessResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                     hasExistingAccess = true;
                     
                     // If not replacing, add new rights to existing rights
@@ -106,7 +106,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
                     };
 
-                    Connection.Execute(modifyRequest);
+                    QueryHelpers.ExecuteWithThrottlingRetry(Connection, modifyRequest);
                     WriteVerbose($"Modified access to {effectiveAccessRights} for {principalType} {Principal} on {TableName} {Id}");
                 }
                 else
@@ -121,7 +121,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
                     };
 
-                    Connection.Execute(grantRequest);
+                    QueryHelpers.ExecuteWithThrottlingRetry(Connection, grantRequest);
                     WriteVerbose($"Granted access {effectiveAccessRights} to {principalType} {Principal} on {TableName} {Id}");
                 }
             }

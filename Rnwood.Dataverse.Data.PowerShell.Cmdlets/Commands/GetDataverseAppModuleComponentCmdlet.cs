@@ -93,13 +93,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
 
                 // Try unpublished appmodules first
-                var response = Connection.Execute(new RetrieveUnpublishedMultipleRequest { Query = appModuleQuery });
+                var response = QueryHelpers.ExecuteWithThrottlingRetry(Connection, new RetrieveUnpublishedMultipleRequest { Query = appModuleQuery });
                 var entities = ((RetrieveUnpublishedMultipleResponse)response).EntityCollection.Entities;
 
                 // If not found, try published appmodules
                 if (entities.Count == 0)
                 {
-                    response = Connection.Execute(new RetrieveMultipleRequest { Query = appModuleQuery });
+                    response = QueryHelpers.ExecuteWithThrottlingRetry(Connection, new RetrieveMultipleRequest { Query = appModuleQuery });
                     entities = ((RetrieveMultipleResponse)response).EntityCollection.Entities;
                 }
 
@@ -128,13 +128,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
 
                 // Try unpublished appmodules first
-                var response = Connection.Execute(new RetrieveUnpublishedMultipleRequest { Query = appModuleQuery });
+                var response = QueryHelpers.ExecuteWithThrottlingRetry(Connection, new RetrieveUnpublishedMultipleRequest { Query = appModuleQuery });
                 var entities = ((RetrieveUnpublishedMultipleResponse)response).EntityCollection.Entities;
 
                 // If not found, try published appmodules
                 if (entities.Count == 0)
                 {
-                    response = Connection.Execute(new RetrieveMultipleRequest { Query = appModuleQuery });
+                    response = QueryHelpers.ExecuteWithThrottlingRetry(Connection, new RetrieveMultipleRequest { Query = appModuleQuery });
                     entities = ((RetrieveMultipleResponse)response).EntityCollection.Entities;
                 }
 

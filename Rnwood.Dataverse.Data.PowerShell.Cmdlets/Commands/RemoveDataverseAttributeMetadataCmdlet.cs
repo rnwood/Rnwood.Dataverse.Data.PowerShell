@@ -46,7 +46,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Deleting attribute '{AttributeName}' from entity '{EntityName}'");
 
-            Connection.Execute(request);
+            QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             WriteVerbose($"Attribute '{AttributeName}' deleted successfully");
 

@@ -133,14 +133,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // First try unpublished
             var request = new RetrieveUnpublishedMultipleRequest { Query = appModuleQuery };
-            var response = (RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+            var response = (RetrieveUnpublishedMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
             var appModuleResults = response.EntityCollection;
 
             if (appModuleResults.Entities.Count == 0)
             {
                 // Try published
                 var pubRequest = new RetrieveMultipleRequest { Query = appModuleQuery };
-                var pubResponse = (RetrieveMultipleResponse)Connection.Execute(pubRequest);
+                var pubResponse = (RetrieveMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, pubRequest);
                 appModuleResults = pubResponse.EntityCollection;
             }
 
@@ -180,14 +180,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // First try unpublished
             var request = new RetrieveUnpublishedMultipleRequest { Query = appModuleQuery };
-            var response = (RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+            var response = (RetrieveUnpublishedMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
             var appModuleResults = response.EntityCollection;
 
             if (appModuleResults.Entities.Count == 0)
             {
                 // Try published
                 var pubRequest = new RetrieveMultipleRequest { Query = appModuleQuery };
-                var pubResponse = (RetrieveMultipleResponse)Connection.Execute(pubRequest);
+                var pubResponse = (RetrieveMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, pubRequest);
                 appModuleResults = pubResponse.EntityCollection;
             }
 
@@ -226,7 +226,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 TopCount = 1
             };
 
-            var componentResults = Connection.RetrieveMultiple(componentQuery);
+            var componentResults = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, componentQuery);
             if (componentResults.Entities.Count == 0)
             {
                 if (IfExists)
@@ -250,7 +250,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             try
             {
-                return Connection.Retrieve("appmodulecomponent", componentId, new ColumnSet("appmoduleidunique", "objectid", "componenttype"));
+                return QueryHelpers.RetrieveWithThrottlingRetry(Connection, "appmodulecomponent", componentId, new ColumnSet("appmoduleidunique", "objectid", "componenttype"));
             }
             catch (FaultException<OrganizationServiceFault> ex)
             {
@@ -299,7 +299,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             };
 
-            Connection.Execute(request);
+            QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
             WriteVerbose($"Removed app module component with ID: {componentId}");
         }
 
@@ -321,7 +321,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 TopCount = 1
             };
 
-            var results = Connection.RetrieveMultiple(query);
+            var results = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
             if (results.Entities.Count == 0)
             {
                 throw new InvalidOperationException($"Cannot find app module with unique ID '{appModuleIdUnique}'");

@@ -193,7 +193,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     try
                     {
-                        viewEntity = Connection.Retrieve(entityName, Id, new ColumnSet(true));
+                        viewEntity = QueryHelpers.RetrieveWithThrottlingRetry(Connection, entityName, Id, new ColumnSet(true));
                         isUpdate = true;
                         WriteVerbose($"Found existing {(ViewType == "System" ? "system" : "personal")} view with ID: {Id}");
                     }
@@ -348,7 +348,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             var converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
                             string columnSummary = QueryHelpers.GetColumnSummary(updateEntity, converter, false);
-                            Connection.Update(updateEntity);
+                            QueryHelpers.UpdateWithThrottlingRetry(Connection, updateEntity);
                             WriteVerbose($"Updated {(ViewType == "System" ? "system" : "personal")} view with ID: {Id} columns:\n{columnSummary}");
                         }
                         else
@@ -423,7 +423,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         var converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
                         string columnSummary = QueryHelpers.GetColumnSummary(newEntity, converter, false);
-                        viewId = Connection.Create(newEntity);
+                        viewId = QueryHelpers.CreateWithThrottlingRetry(Connection, newEntity);
                         WriteVerbose($"Created new {(ViewType == "System" ? "system" : "personal")} view with ID: {viewId} columns:\n{columnSummary}");
 
                         if (PassThru)
@@ -792,7 +792,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private string ConvertQueryExpressionToFetchXml(QueryExpression query)
         {
             var request = new QueryExpressionToFetchXmlRequest { Query = query };
-            var response = (QueryExpressionToFetchXmlResponse)Connection.Execute(request);
+            var response = (QueryExpressionToFetchXmlResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
             string fetchXml = response.FetchXml;
 
             // Post-process to remove single top-level AND filter if it contains only nested filters
@@ -827,7 +827,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private QueryExpression ConvertFetchXmlToQueryExpression(string fetchXml)
         {
             var request = new FetchXmlToQueryExpressionRequest { FetchXml = fetchXml };
-            var response = (FetchXmlToQueryExpressionResponse)Connection.Execute(request);
+            var response = (FetchXmlToQueryExpressionResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
             return response.Query;
         }
 
