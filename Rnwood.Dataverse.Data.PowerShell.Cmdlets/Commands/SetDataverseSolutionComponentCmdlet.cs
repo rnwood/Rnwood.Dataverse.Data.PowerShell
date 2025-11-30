@@ -144,7 +144,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 TopCount = 1
             };
 
-            var result = Connection.RetrieveMultiple(query);
+            var result = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
             if (result.Entities.Count == 0)
             {
                 ThrowTerminatingError(new ErrorRecord(
@@ -174,7 +174,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 TopCount = 1
             };
 
-            var result = Connection.RetrieveMultiple(query);
+            var result = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
             return result.Entities.FirstOrDefault();
         }
 
@@ -187,7 +187,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ComponentType = componentType
             };
 
-            Connection.Execute(request);
+            QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
         }
 
         private void AddComponent(Guid solutionId, Guid componentId, int componentType, int behavior)
@@ -224,7 +224,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 IncludedComponentSettingsValues = includedComponentSettingsValues
             };
 
-            Connection.Execute(request);
+            QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
         }
 
         private void OutputComponentInfo(Guid solutionId, Guid componentId, int componentType, int behavior, Guid? solutionComponentId, bool wasUpdated)

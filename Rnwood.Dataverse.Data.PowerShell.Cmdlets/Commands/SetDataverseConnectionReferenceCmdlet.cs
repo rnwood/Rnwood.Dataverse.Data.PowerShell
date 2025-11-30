@@ -121,7 +121,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     TopCount = 1
                 };
 
-                var results = Connection.RetrieveMultiple(query);
+                var results = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
 
                 if (results.Entities.Count == 0)
                 {
@@ -170,7 +170,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         connRefEntity["description"] = info.Description;
                     }
 
-                    var newConnRefId = Connection.Create(connRefEntity);
+                    var newConnRefId = QueryHelpers.CreateWithThrottlingRetry(Connection, connRefEntity);
                     WriteVerbose($"  Created connection reference with ID: {newConnRefId}");
 
                 }
@@ -224,7 +224,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (hasChanges)
                     {
-                        Connection.Update(updateEntity);
+                        QueryHelpers.UpdateWithThrottlingRetry(Connection, updateEntity);
                         WriteVerbose($"  Successfully updated connection reference '{logicalName}'");
                     }
                     else

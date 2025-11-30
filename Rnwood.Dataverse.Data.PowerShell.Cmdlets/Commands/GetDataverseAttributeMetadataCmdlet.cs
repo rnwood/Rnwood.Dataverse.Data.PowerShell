@@ -91,7 +91,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 WriteVerbose($"Retrieving all attributes for entity '{EntityName}'");
 
-                var response = (RetrieveEntityResponse)Connection.Execute(request);
+                var response = (RetrieveEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                 entityMetadata = response.EntityMetadata;
 
                 // Cache the results if caching is enabled
@@ -129,7 +129,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Retrieving attribute metadata for '{EntityName}.{AttributeName}'");
 
-            var response = (RetrieveAttributeResponse)Connection.Execute(request);
+            var response = (RetrieveAttributeResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
             var attributeMetadata = response.AttributeMetadata;
 
             WriteObject(attributeMetadata);

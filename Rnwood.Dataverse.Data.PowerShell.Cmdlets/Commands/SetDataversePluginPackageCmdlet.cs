@@ -95,19 +95,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 Guid packageId;
                 if (Id.HasValue)
                 {
-                    Connection.Update(package);
+                    QueryHelpers.UpdateWithThrottlingRetry(Connection, package);
                     packageId = Id.Value;
                     WriteVerbose($"Updated plugin package: {UniqueName} (ID: {packageId})");
                 }
                 else
                 {
-                    packageId = Connection.Create(package);
+                    packageId = QueryHelpers.CreateWithThrottlingRetry(Connection, package);
                     WriteVerbose($"Created plugin package: {UniqueName} (ID: {packageId})");
                 }
 
                 if (PassThru)
                 {
-                    Entity retrieved = Connection.Retrieve("pluginpackage", packageId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+                    Entity retrieved = QueryHelpers.RetrieveWithThrottlingRetry(Connection, "pluginpackage", packageId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
                     EntityMetadataFactory entityMetadataFactory = new EntityMetadataFactory(Connection);
                     DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
                     PSObject psObject = converter.ConvertToPSObject(retrieved, new Microsoft.Xrm.Sdk.Query.ColumnSet(true), _ => ValueType.Display);

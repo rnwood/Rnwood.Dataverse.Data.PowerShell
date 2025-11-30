@@ -130,7 +130,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 try
                 {
-                    componentEntity = Connection.Retrieve("appmodulecomponent", Id, new ColumnSet(true));
+                    componentEntity = QueryHelpers.RetrieveWithThrottlingRetry(Connection, "appmodulecomponent", Id, new ColumnSet(true));
                     isUpdate = true;
                     WriteVerbose($"Found existing app module component with ID: {Id}");
                 }
@@ -186,7 +186,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         if (hasUpdates)
                         {
-                            Connection.Update(updateEntity);
+                            QueryHelpers.UpdateWithThrottlingRetry(Connection, updateEntity);
                             WriteVerbose($"Updated app module component with ID: {componentId}");
                         }
                         else
@@ -273,14 +273,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                             // First try unpublished
                             var request = new RetrieveUnpublishedMultipleRequest { Query = query };
-                            var response = (RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+                            var response = (RetrieveUnpublishedMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                             var results = response.EntityCollection;
 
                             if (results.Entities.Count == 0)
                             {
                                 // Try published
                                 var pubRequest = new RetrieveMultipleRequest { Query = query };
-                                var pubResponse = (RetrieveMultipleResponse)Connection.Execute(pubRequest);
+                                var pubResponse = (RetrieveMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, pubRequest);
                                 results = pubResponse.EntityCollection;
                             }
 
@@ -311,7 +311,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 TopCount = 1
                             };
 
-                            var results = Connection.RetrieveMultiple(query);
+                            var results = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
                             if (results.Entities.Count > 0)
                             {
                                 appModuleIdUnique = results.Entities[0].GetAttributeValue<Guid>("appmoduleidunique");
@@ -335,7 +335,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             Components = new EntityReferenceCollection { entityReference }
                         };
 
-                        Connection.Execute(addRequest);
+                        QueryHelpers.ExecuteWithThrottlingRetry(Connection, addRequest);
                         WriteVerbose($"Added new app module component to app {appModuleId}");
 
                         // The AddAppComponentsRequest doesn't return the component ID directly,
@@ -358,7 +358,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 TopCount = 1
                             };
 
-                            var results = Connection.RetrieveMultiple(query);
+                            var results = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
                             if (results.Entities.Count > 0)
                             {
                                 componentId = results.Entities[0].Id;

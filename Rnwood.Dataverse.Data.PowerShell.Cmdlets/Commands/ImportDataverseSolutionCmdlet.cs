@@ -347,7 +347,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     TopCount = 1
                 };
 
-                var solutions = Connection.RetrieveMultiple(solutionQuery);
+                var solutions = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, solutionQuery);
                 if (solutions.Entities.Count > 0)
                 {
                     var solutionId = solutions.Entities[0].Id;
@@ -499,13 +499,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             Guid asyncOperationId;
             if (importRequest is StageAndUpgradeAsyncRequest)
             {
-                var response = (StageAndUpgradeAsyncResponse)Connection.Execute(importRequest);
+                var response = (StageAndUpgradeAsyncResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, importRequest);
                 importJobId = response.ImportJobKey;
                 asyncOperationId = response.AsyncOperationId;
             }
             else
             {
-                var response = (ImportSolutionAsyncResponse)Connection.Execute(importRequest);
+                var response = (ImportSolutionAsyncResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, importRequest);
                 importJobId = response.ImportJobKey;
                 asyncOperationId = response.AsyncOperationId;
             }
@@ -560,7 +560,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 };
 
-                var asyncOperations = Connection.RetrieveMultiple(query);
+                var asyncOperations = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
                 if (asyncOperations.Entities.Count == 0)
                 {
                     progressRecord.RecordType = ProgressRecordType.Completed;
@@ -591,7 +591,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 };
 
-                var jobResults = Connection.RetrieveMultiple(jobQuery);
+                var jobResults = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, jobQuery);
                 int progress = 0;
                 if (jobResults.Entities.Count > 0)
                 {
@@ -680,7 +680,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     TopCount = 1
                 };
 
-                var solutions = Connection.RetrieveMultiple(query);
+                var solutions = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
 
                 bool exists = solutions.Entities.Count > 0;
                 WriteVerbose($"Solution '{solutionUniqueName}' {(exists ? "exists" : "does not exist")} in target environment.");
@@ -990,7 +990,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 TopCount = 1
             };
 
-            var results = Connection.RetrieveMultiple(query);
+            var results = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
 
             if (results.Entities.Count > 0)
             {
@@ -1019,7 +1019,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 TopCount = 1
             };
 
-            var defResults = Connection.RetrieveMultiple(defQuery);
+            var defResults = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, defQuery);
 
             if (defResults.Entities.Count > 0)
             {
@@ -1040,7 +1040,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     TopCount = 1
                 };
 
-                var valueResults = Connection.RetrieveMultiple(valueQuery);
+                var valueResults = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, valueQuery);
 
                 if (valueResults.Entities.Count > 0)
                 {
@@ -1082,7 +1082,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             EntityCollection ec;
             do
             {
-                ec = Connection.RetrieveMultiple(query);
+                ec = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
                 allResults.AddRange(ec.Entities);
                 if (ec.MoreRecords)
                 {
@@ -1171,7 +1171,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     TopCount = 1
                 };
 
-                var solutions = Connection.RetrieveMultiple(query);
+                var solutions = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
 
                 if (solutions.Entities.Count > 0)
                 {

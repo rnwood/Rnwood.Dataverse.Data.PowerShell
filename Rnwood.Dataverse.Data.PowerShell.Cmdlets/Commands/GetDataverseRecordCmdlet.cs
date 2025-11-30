@@ -751,7 +751,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 // Execute the query to see if this match criteria returns records
-                var testResults = Connection.RetrieveMultiple(candidateQuery).Entities;
+                var testResults = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, candidateQuery).Entities;
                 matchCount = testResults.Count;
 
                 if (matchCount == 1)
@@ -832,7 +832,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             QueryExpression query;
             FetchXmlToQueryExpressionRequest translateQueryRequest = new FetchXmlToQueryExpressionRequest { FetchXml = FetchXml };
-            var translateQueryResponse = (FetchXmlToQueryExpressionResponse)Connection.Execute(translateQueryRequest);
+            var translateQueryResponse = (FetchXmlToQueryExpressionResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, translateQueryRequest);
             query = translateQueryResponse.Query;
             return query;
         }

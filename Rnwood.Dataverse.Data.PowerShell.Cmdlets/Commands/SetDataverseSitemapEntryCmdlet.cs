@@ -300,7 +300,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             try
             {
                 var request = new RetrieveUnpublishedMultipleRequest { Query = query };
-                var response = (RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+                var response = (RetrieveUnpublishedMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                 if (response.EntityCollection.Entities.Count > 0)
                 {
                     sitemap = response.EntityCollection.Entities[0];
@@ -315,7 +315,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // If not found in unpublished, try published
             if (sitemap == null)
             {
-                var sitemaps = Connection.RetrieveMultiple(query);
+                var sitemaps = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
                 if (sitemaps.Entities.Count > 0)
                 {
                     sitemap = sitemaps.Entities[0];
@@ -805,7 +805,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             updateEntity["sitemapxml"] = doc.ToString();
 
             WriteVerbose("Updating sitemap in Dataverse...");
-            Connection.Update(updateEntity);
+            QueryHelpers.UpdateWithThrottlingRetry(Connection, updateEntity);
 
             WriteVerbose($"{entryType} entry '{EntryId}' {(isUpdate ? "updated" : "created")} in sitemap '{sitemapUniqueName ?? sitemapId.ToString()}' successfully.");
 
@@ -1210,7 +1210,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
                 
                 WriteVerbose($"Validating entity '{entityLogicalName}' exists...");
-                Connection.Execute(request);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                 WriteVerbose($"Entity '{entityLogicalName}' validated successfully.");
             }
             catch (Exception ex)

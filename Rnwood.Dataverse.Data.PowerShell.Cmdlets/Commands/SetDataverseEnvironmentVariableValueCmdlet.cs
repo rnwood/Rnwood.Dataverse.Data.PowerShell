@@ -97,7 +97,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     TopCount = 1
                 };
 
-                var defResults = Connection.RetrieveMultiple(defQuery);
+                var defResults = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, defQuery);
 
                 if (defResults.Entities.Count == 0)
                 {
@@ -124,7 +124,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var updateEntity = new Entity("environmentvariablevalue", existingValueId);
                     updateEntity["value"] = value;
 
-                    Connection.Update(updateEntity);
+                    QueryHelpers.UpdateWithThrottlingRetry(Connection, updateEntity);
                     WriteVerbose($"  Successfully updated environment variable value for '{schemaName}'");
                 }
                 else
@@ -137,7 +137,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     createEntity["value"] = value;
                     createEntity["environmentvariabledefinitionid"] = new EntityReference("environmentvariabledefinition", envVarDefId);
 
-                    var newValueId = Connection.Create(createEntity);
+                    var newValueId = QueryHelpers.CreateWithThrottlingRetry(Connection, createEntity);
                     WriteVerbose($"  Successfully created environment variable value for '{schemaName}' (ID: {newValueId})");
                 }
             }
@@ -179,7 +179,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             EntityCollection ec;
             do
             {
-                ec = Connection.RetrieveMultiple(query);
+                ec = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
                 allResults.AddRange(ec.Entities);
                 if (ec.MoreRecords)
                 {

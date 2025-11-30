@@ -40,7 +40,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 Target = target
             };
 
-            var response = (RetrieveSharedPrincipalsAndAccessResponse)Connection.Execute(request);
+            var response = (RetrieveSharedPrincipalsAndAccessResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             foreach (var principalAccess in response.PrincipalAccesses)
             {

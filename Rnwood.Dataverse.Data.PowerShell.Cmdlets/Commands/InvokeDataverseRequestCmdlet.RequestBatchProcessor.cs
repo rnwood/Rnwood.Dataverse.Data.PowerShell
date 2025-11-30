@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 using System.Text;
 using System.Threading;
 
@@ -150,6 +151,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     response = (ExecuteMultipleResponse)_connection.Execute(batchRequest);
                 }
+                catch (FaultException<OrganizationServiceFault> ex) when (QueryHelpers.IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    // Throttling exception - schedule all items for retry with the specified delay
+                    _writeVerbose($"Batch throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                    foreach (var context in _nextBatchItems)
+                    {
+                        context.NextRetryTime = DateTime.UtcNow.Add(retryDelay);
+                        _pendingRetries.Add(context);
+                    }
+
+                    _nextBatchItems.Clear();
+                    return;
+                }
                 catch (Exception e)
                 {
                     foreach (var context in _nextBatchItems)
@@ -176,20 +190,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (itemResponse.Fault != null)
                     {
-                        StringBuilder details = new StringBuilder();
-                        QueryHelpers.AppendFaultDetails(itemResponse.Fault, details);
-                        var e = new Exception(details.ToString());
-
-                        bool handled = context.HandleFault(itemResponse.Fault);
-
-                        if (!handled && context.RetriesRemaining > 0)
+                        // Check if this is a throttling fault
+                        if (QueryHelpers.IsThrottlingException(itemResponse.Fault, out TimeSpan retryDelay))
                         {
-                            context.ScheduleRetry(e);
+                            _writeVerbose($"Request in batch throttled by service protection. Will retry after {retryDelay.TotalSeconds:F1}s...");
+                            context.NextRetryTime = DateTime.UtcNow.Add(retryDelay);
                             _pendingRetries.Add(context);
                         }
-                        else if (!handled)
+                        else
                         {
-                            context.ReportError(e);
+                            StringBuilder details = new StringBuilder();
+                            QueryHelpers.AppendFaultDetails(itemResponse.Fault, details);
+                            var e = new Exception(details.ToString());
+
+                            bool handled = context.HandleFault(itemResponse.Fault);
+
+                            if (!handled && context.RetriesRemaining > 0)
+                            {
+                                context.ScheduleRetry(e);
+                                _pendingRetries.Add(context);
+                            }
+                            else if (!handled)
+                            {
+                                context.ReportError(e);
+                            }
                         }
                     }
                     else

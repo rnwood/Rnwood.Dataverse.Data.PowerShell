@@ -56,7 +56,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 try
                 {
-                    var results = connection.RetrieveMultiple(query);
+                    var results = QueryHelpers.RetrieveMultipleWithThrottlingRetry(connection, query, writeVerbose);
                     
                     if (results.Entities == null || !results.Entities.Any())
                     {

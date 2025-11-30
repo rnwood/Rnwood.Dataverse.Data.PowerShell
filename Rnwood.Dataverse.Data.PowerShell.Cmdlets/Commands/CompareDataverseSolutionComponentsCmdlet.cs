@@ -114,7 +114,7 @@ new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionNam
                 TopCount = 1
             };
 
-            var solutions = Connection.RetrieveMultiple(solutionQuery);
+            var solutions = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, solutionQuery);
 
             var solutionId = solutions.Entities[0].Id;
             WriteVerbose($"Found solution in target environment: {solutionId}");

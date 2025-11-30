@@ -56,7 +56,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     Revokee = principalRef
                 };
 
-                Connection.Execute(request);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                 WriteVerbose($"Revoked access from {principalType} {Principal} on {TableName} {Id}");
             }
         }

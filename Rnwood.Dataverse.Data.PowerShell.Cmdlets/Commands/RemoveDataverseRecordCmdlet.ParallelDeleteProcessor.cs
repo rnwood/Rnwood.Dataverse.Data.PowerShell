@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -219,12 +220,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             {
                                 // For non-batched execution, execute request directly with retry support
                                 bool success = false;
+                                int throttleRetryCount = 0;
+                                const int MaxThrottleRetries = 100;  // Maximum throttle retries to prevent infinite loops
                                 
-                                while (!success && workerContext.RetriesRemaining >= 0)
+                                while (!success && !_isStopping() && !_cancellationToken.IsCancellationRequested)
                                 {
                                     try
                                     {
+#pragma warning disable DVPS001 // Throttling is handled in the catch block below
                                         workerConnection.Execute(workerContext.Request);
+#pragma warning restore DVPS001
                                         _verboseQueue.Enqueue(string.Format("Deleted record {0}:{1}", workerContext.TableName, workerContext.Id));
                                         
                                         success = true;
@@ -241,6 +246,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                                 RecordType = ProgressRecordType.Processing
                                             });
                                         }
+                                    }
+                                    catch (FaultException<OrganizationServiceFault> ex) when (QueryHelpers.IsThrottlingException(ex, out TimeSpan retryDelay))
+                                    {
+                                        throttleRetryCount++;
+                                        if (throttleRetryCount >= MaxThrottleRetries)
+                                        {
+                                            // Exceeded maximum throttle retries
+                                            _errorQueue.Enqueue(new ErrorRecord(ex, null, ErrorCategory.ResourceUnavailable, originalContext.InputObject));
+                                            break;
+                                        }
+                                        
+                                        // Throttling exception - retry with the specified delay
+                                        _verboseQueue.Enqueue($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {throttleRetryCount})...");
+                                        Thread.Sleep(retryDelay);
+                                        // Continue the loop to retry
                                     }
                                     catch (System.ServiceModel.FaultException ex)
                                     {

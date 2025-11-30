@@ -62,7 +62,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             EntityCollection ec;
             do
             {
-                ec = Connection.RetrieveMultiple(query);
+                ec = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
                 allValues.AddRange(ec.Entities);
                 if (ec.MoreRecords)
                 {

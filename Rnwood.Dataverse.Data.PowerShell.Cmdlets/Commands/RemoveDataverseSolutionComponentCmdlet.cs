@@ -94,7 +94,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 TopCount = 1
             };
 
-            var result = Connection.RetrieveMultiple(query);
+            var result = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
             if (result.Entities.Count == 0)
             {
                 ThrowTerminatingError(new ErrorRecord(
@@ -124,7 +124,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 TopCount = 1
             };
 
-            var result = Connection.RetrieveMultiple(query);
+            var result = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
             return result.Entities.FirstOrDefault();
         }
 
@@ -137,7 +137,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ComponentType = componentType
             };
 
-            Connection.Execute(request);
+            QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
         }
     }
 }

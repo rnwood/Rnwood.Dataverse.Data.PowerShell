@@ -42,7 +42,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 TopCount = 1
             };
 
-            var defResults = Connection.RetrieveMultiple(defQuery);
+            var defResults = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, defQuery);
 
             if (defResults.Entities.Count == 0)
             {
@@ -79,19 +79,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 TopCount = 1
             };
 
-            var valueResults = Connection.RetrieveMultiple(valueQuery);
+            var valueResults = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, valueQuery);
 
             // Remove value first if it exists
             if (valueResults.Entities.Count > 0)
             {
                 var valueId = valueResults.Entities[0].Id;
                 WriteVerbose($"Removing environment variable value (ID: {valueId})");
-                Connection.Delete("environmentvariablevalue", valueId);
+                QueryHelpers.DeleteWithThrottlingRetry(Connection, "environmentvariablevalue", valueId);
             }
 
             // Remove definition
             WriteVerbose($"Removing environment variable definition (ID: {envVarDefId})");
-            Connection.Delete("environmentvariabledefinition", envVarDefId);
+            QueryHelpers.DeleteWithThrottlingRetry(Connection, "environmentvariabledefinition", envVarDefId);
             WriteVerbose($"Successfully removed environment variable definition '{SchemaName}'");
         }
     }

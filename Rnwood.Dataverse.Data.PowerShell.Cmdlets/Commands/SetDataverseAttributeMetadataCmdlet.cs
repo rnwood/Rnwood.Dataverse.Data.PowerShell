@@ -262,7 +262,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     RetrieveAsIfPublished = true
                 };
 
-                var retrieveResponse = (RetrieveAttributeResponse)Connection.Execute(retrieveRequest);
+                var retrieveResponse = (RetrieveAttributeResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                 existingAttribute = retrieveResponse.AttributeMetadata;
                 attributeExists = true;
                 WriteVerbose($"Attribute '{AttributeName}' already exists on entity '{EntityName}'");
@@ -335,7 +335,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Creating attribute '{SchemaName}' on entity '{EntityName}'");
 
-            var response = (CreateAttributeResponse)Connection.Execute(request);
+            var response = (CreateAttributeResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             WriteVerbose($"Attribute created successfully with MetadataId: {response.AttributeId}");
 
@@ -349,7 +349,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     ParameterXml = $"<importexportxml><entities><entity>{EntityName}</entity></entities></importexportxml>"
                 };
-                Connection.Execute(publishRequest);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, publishRequest);
                 WriteVerbose($"Published entity '{EntityName}'");
                 
                 // Wait for publish to complete
@@ -366,7 +366,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     RetrieveAsIfPublished = true
                 };
 
-                var retrieveResponse = (RetrieveAttributeResponse)Connection.Execute(retrieveRequest);
+                var retrieveResponse = (RetrieveAttributeResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                 var result = ConvertAttributeMetadataToPSObject(retrieveResponse.AttributeMetadata);
                 WriteObject(result);
             }
@@ -464,7 +464,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Creating lookup attribute '{SchemaName}' with relationship '{relationshipSchemaName}' from {targetEntity} to {referencingEntity}");
 
-            var response = (CreateOneToManyResponse)Connection.Execute(request);
+            var response = (CreateOneToManyResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             WriteVerbose($"Lookup attribute and relationship created successfully with AttributeId: {response.AttributeId}, RelationshipId: {response.RelationshipId}");
 
@@ -478,7 +478,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     ParameterXml = $"<importexportxml><entities><entity>{EntityName}</entity></entities></importexportxml>"
                 };
-                Connection.Execute(publishRequest);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, publishRequest);
                 WriteVerbose($"Published entity '{EntityName}'");
                 
                 // Wait for publish to complete
@@ -495,7 +495,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     RetrieveAsIfPublished = true
                 };
 
-                var retrieveResponse = (RetrieveAttributeResponse)Connection.Execute(retrieveRequest);
+                var retrieveResponse = (RetrieveAttributeResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                 var result = ConvertAttributeMetadataToPSObject(retrieveResponse.AttributeMetadata);
                 WriteObject(result);
             }
@@ -987,7 +987,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Updating attribute '{AttributeName}' on entity '{EntityName}'");
 
-            Connection.Execute(request);
+            QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             WriteVerbose($"Attribute updated successfully");
 
@@ -1001,7 +1001,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     ParameterXml = $"<importexportxml><entities><entity>{EntityName}</entity></entities></importexportxml>"
                 };
-                Connection.Execute(publishRequest);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, publishRequest);
                 WriteVerbose($"Published entity '{EntityName}'");
                 
                 // Wait for publish to complete
@@ -1018,7 +1018,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     RetrieveAsIfPublished = true
                 };
 
-                var retrieveResponse = (RetrieveAttributeResponse)Connection.Execute(retrieveRequest);
+                var retrieveResponse = (RetrieveAttributeResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                 var result = ConvertAttributeMetadataToPSObject(retrieveResponse.AttributeMetadata);
                 WriteObject(result);
             }

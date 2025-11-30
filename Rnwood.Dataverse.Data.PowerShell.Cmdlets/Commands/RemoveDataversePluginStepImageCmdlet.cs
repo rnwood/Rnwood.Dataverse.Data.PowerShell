@@ -33,7 +33,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 try
                 {
-                    Connection.Delete("sdkmessageprocessingstepimage", Id);
+                    QueryHelpers.DeleteWithThrottlingRetry(Connection, "sdkmessageprocessingstepimage", Id);
                     WriteVerbose($"Removed plugin step image with ID: {Id}");
                 }
                 catch (Exception ex)

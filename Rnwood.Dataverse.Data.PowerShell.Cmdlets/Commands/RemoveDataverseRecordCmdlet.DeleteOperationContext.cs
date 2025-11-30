@@ -83,7 +83,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         manyToManyRelationshipMetadata.Entity2IntersectAttribute);
                     getRecordWithMMColumns.Criteria.AddCondition(metadata.PrimaryIdAttribute, ConditionOperator.Equal, Id);
 
-                    Entity record = Connection.RetrieveMultiple(getRecordWithMMColumns).Entities.Single();
+                    Entity record = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, getRecordWithMMColumns).Entities.Single();
 
                     DisassociateRequest request = new DisassociateRequest()
                     {
@@ -116,7 +116,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     try
                     {
-                        Connection.Execute(Request);
+                        QueryHelpers.ExecuteWithThrottlingRetry(Connection, Request);
                         _writeVerbose(string.Format("Deleted record {0}:{1}", TableName, Id));
                     }
                     catch (FaultException<OrganizationServiceFault> ex)

@@ -10,6 +10,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
+using System.ServiceModel;
 using System.Text;
 using System.Threading;
 
@@ -185,6 +186,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 response = (ExecuteMultipleResponse)_connection.Execute(batchRequest);
             }
+            catch (FaultException<OrganizationServiceFault> ex) when (QueryHelpers.IsThrottlingException(ex, out TimeSpan retryDelay))
+            {
+                // Throttling exception - schedule all items for retry with the specified delay
+                _writeVerbose($"Batch throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry...");
+                foreach (var context in _nextBatchItems)
+                {
+                    context.NextRetryTime = DateTime.UtcNow.Add(retryDelay);
+                    _pendingRetries.Add(context);
+                }
+
+                _nextBatchItems.Clear();
+                return;
+            }
             catch (Exception e)
             {
                 foreach (var context in _nextBatchItems)
@@ -215,6 +229,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 bool hasError = false;
                 bool handledError = false;
+                bool hasThrottling = false;
+                TimeSpan throttlingDelay = TimeSpan.Zero;
                 Exception firstError = null;
                 OrganizationServiceFault firstFault = null;
 
@@ -227,23 +243,35 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         
                         if (itemResponse.Fault != null)
                         {
-                            // Try to handle fault with context's exception handler
-                            if (context.ResponseExceptionCompletion != null && !handledError)
+                            // Check if this is a throttling fault
+                            if (QueryHelpers.IsThrottlingException(itemResponse.Fault, out TimeSpan retryDelay))
                             {
-                                handledError = context.ResponseExceptionCompletion(itemResponse.Fault);
-                            }
-                            
-                            if (!handledError)
-                            {
-                                // Build fault details for failed request
-                                StringBuilder details = new StringBuilder();
-                                QueryHelpers.AppendFaultDetails(itemResponse.Fault, details);
-                                if (firstError == null)
+                                hasThrottling = true;
+                                if (retryDelay > throttlingDelay)
                                 {
-                                    firstError = new Exception(details.ToString());
-                                    firstFault = itemResponse.Fault;
+                                    throttlingDelay = retryDelay;
                                 }
-                                hasError = true;
+                            }
+                            else
+                            {
+                                // Try to handle fault with context's exception handler
+                                if (context.ResponseExceptionCompletion != null && !handledError)
+                                {
+                                    handledError = context.ResponseExceptionCompletion(itemResponse.Fault);
+                                }
+                                
+                                if (!handledError)
+                                {
+                                    // Build fault details for failed request
+                                    StringBuilder details = new StringBuilder();
+                                    QueryHelpers.AppendFaultDetails(itemResponse.Fault, details);
+                                    if (firstError == null)
+                                    {
+                                        firstError = new Exception(details.ToString());
+                                        firstFault = itemResponse.Fault;
+                                    }
+                                    hasError = true;
+                                }
                             }
                         }
                         else if (context.ResponseCompletions != null && i < context.ResponseCompletions.Count && context.ResponseCompletions[i] != null)
@@ -255,7 +283,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     requestIndex++;
                 }
 
-                if (hasError && !handledError)
+                if (hasThrottling)
+                {
+                    // Throttling takes precedence - always retry with the specified delay
+                    _writeVerbose($"Request in batch throttled by service protection. Will retry after {throttlingDelay.TotalSeconds:F1}s...");
+                    context.NextRetryTime = DateTime.UtcNow.Add(throttlingDelay);
+                    _pendingRetries.Add(context);
+                }
+                else if (hasError && !handledError)
                 {
                     if (context.RetriesRemaining > 0)
                     {

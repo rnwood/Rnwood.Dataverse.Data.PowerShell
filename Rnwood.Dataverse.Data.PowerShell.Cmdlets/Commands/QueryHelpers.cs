@@ -77,7 +77,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     pageNum++;
                     writeVerbose($"Retrieving page {pageNum}...");
-                    response = connection.Execute(request);
+                    response = ExecuteWithThrottlingRetry(connection, request, writeVerbose);
                     entityCollection = GetEntityCollectionFromResponse(response);
                     writeVerbose($"Page {pageNum} returned {entityCollection.Entities.Count} records");
 
@@ -107,7 +107,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 writeVerbose($"Executing query with TopCount={topCountStr}");
                 OrganizationRequest request = !unpublished ? new RetrieveMultipleRequest() { Query = query } : (OrganizationRequest)new RetrieveUnpublishedMultipleRequest() { Query = query };
 
-                OrganizationResponse response = connection.Execute(request);
+                OrganizationResponse response = ExecuteWithThrottlingRetry(connection, request, writeVerbose);
                 EntityCollection entityCollection = GetEntityCollectionFromResponse(response);
                 writeVerbose($"Query returned {entityCollection.Entities.Count} records");
 
@@ -403,6 +403,346 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Determines if an exception is a service protection (throttling) exception.
+        /// </summary>
+        /// <param name="ex">The FaultException to check</param>
+        /// <param name="retryDelay">The recommended delay before retrying</param>
+        /// <returns>True if the exception indicates throttling, false otherwise</returns>
+        public static bool IsThrottlingException(FaultException<OrganizationServiceFault> ex, out TimeSpan retryDelay)
+        {
+            if (ex == null)
+            {
+                retryDelay = TimeSpan.Zero;
+                return false;
+            }
+
+            // Error codes for service protection limits:
+            // 429: Virtual/elastic tables HTTP status code
+            // -2147015902: Number of requests exceeded the limit of 6000 over time window of 300 seconds.
+            // -2147015903: Combined execution time of incoming requests exceeded limit of 1,200,000 milliseconds over time window of 300 seconds.
+            // -2147015898: Number of concurrent requests exceeded the limit of 52.
+            if (ex.Detail != null && (
+                ex.Detail.ErrorCode == 429 ||
+                ex.Detail.ErrorCode == -2147015902 ||
+                ex.Detail.ErrorCode == -2147015903 ||
+                ex.Detail.ErrorCode == -2147015898))
+            {
+                retryDelay = TimeSpan.FromSeconds(2);
+
+                if (ex.Detail.ErrorDetails != null && 
+                    ex.Detail.ErrorDetails.TryGetValue("Retry-After", out var retryAfter) && 
+                    retryAfter is TimeSpan ts)
+                {
+                    retryDelay = ts;
+                }
+
+                // Cap retry delay at 5 minutes to prevent excessively long waits
+                if (retryDelay > TimeSpan.FromMinutes(5))
+                {
+                    retryDelay = TimeSpan.FromMinutes(5);
+                }
+
+                return true;
+            }
+
+            retryDelay = TimeSpan.Zero;
+            return false;
+        }
+
+        /// <summary>
+        /// Determines if an OrganizationServiceFault is a service protection (throttling) fault.
+        /// Used when working with faults from ExecuteMultipleResponse or other batch operations.
+        /// </summary>
+        /// <param name="fault">The OrganizationServiceFault to check</param>
+        /// <param name="retryDelay">The recommended delay before retrying</param>
+        /// <returns>True if the fault indicates throttling, false otherwise</returns>
+        public static bool IsThrottlingException(OrganizationServiceFault fault, out TimeSpan retryDelay)
+        {
+            if (fault == null)
+            {
+                retryDelay = TimeSpan.Zero;
+                return false;
+            }
+
+            // Error codes for service protection limits:
+            // 429: Virtual/elastic tables HTTP status code
+            // -2147015902: Number of requests exceeded the limit of 6000 over time window of 300 seconds.
+            // -2147015903: Combined execution time of incoming requests exceeded limit of 1,200,000 milliseconds over time window of 300 seconds.
+            // -2147015898: Number of concurrent requests exceeded the limit of 52.
+            if (fault.ErrorCode == 429 ||
+                fault.ErrorCode == -2147015902 ||
+                fault.ErrorCode == -2147015903 ||
+                fault.ErrorCode == -2147015898)
+            {
+                retryDelay = TimeSpan.FromSeconds(2);
+
+                if (fault.ErrorDetails != null && 
+                    fault.ErrorDetails.TryGetValue("Retry-After", out var retryAfter) && 
+                    retryAfter is TimeSpan ts)
+                {
+                    retryDelay = ts;
+                }
+
+                // Cap retry delay at 5 minutes to prevent excessively long waits
+                if (retryDelay > TimeSpan.FromMinutes(5))
+                {
+                    retryDelay = TimeSpan.FromMinutes(5);
+                }
+
+                return true;
+            }
+
+            retryDelay = TimeSpan.Zero;
+            return false;
+        }
+
+        /// <summary>
+        /// Maximum number of throttling retries before giving up.
+        /// </summary>
+        private const int MaxThrottlingRetries = 100;
+
+        /// <summary>
+        /// Executes an organization request with automatic service protection (throttling) retry handling.
+        /// </summary>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="request">The request to execute</param>
+        /// <param name="writeVerbose">Optional action to write verbose messages</param>
+        /// <returns>The organization response</returns>
+        public static OrganizationResponse ExecuteWithThrottlingRetry(IOrganizationService connection, OrganizationRequest request, Action<string> writeVerbose = null)
+        {
+            int retryCount = 0;
+            while (true)
+            {
+                try
+                {
+                    return connection.Execute(request);
+                }
+                catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
+                    System.Threading.Thread.Sleep(retryDelay);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Creates an entity with automatic service protection (throttling) retry handling.
+        /// </summary>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="entity">The entity to create</param>
+        /// <param name="writeVerbose">Optional action to write verbose messages</param>
+        /// <returns>The ID of the created entity</returns>
+        public static Guid CreateWithThrottlingRetry(IOrganizationService connection, Entity entity, Action<string> writeVerbose = null)
+        {
+            int retryCount = 0;
+            while (true)
+            {
+                try
+                {
+                    return connection.Create(entity);
+                }
+                catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
+                    System.Threading.Thread.Sleep(retryDelay);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Updates an entity with automatic service protection (throttling) retry handling.
+        /// </summary>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="entity">The entity to update</param>
+        /// <param name="writeVerbose">Optional action to write verbose messages</param>
+        public static void UpdateWithThrottlingRetry(IOrganizationService connection, Entity entity, Action<string> writeVerbose = null)
+        {
+            int retryCount = 0;
+            while (true)
+            {
+                try
+                {
+                    connection.Update(entity);
+                    return;
+                }
+                catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
+                    System.Threading.Thread.Sleep(retryDelay);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Deletes an entity with automatic service protection (throttling) retry handling.
+        /// </summary>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="entityName">The logical name of the entity</param>
+        /// <param name="id">The ID of the entity to delete</param>
+        /// <param name="writeVerbose">Optional action to write verbose messages</param>
+        public static void DeleteWithThrottlingRetry(IOrganizationService connection, string entityName, Guid id, Action<string> writeVerbose = null)
+        {
+            int retryCount = 0;
+            while (true)
+            {
+                try
+                {
+                    connection.Delete(entityName, id);
+                    return;
+                }
+                catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
+                    System.Threading.Thread.Sleep(retryDelay);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Retrieves an entity with automatic service protection (throttling) retry handling.
+        /// </summary>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="entityName">The logical name of the entity</param>
+        /// <param name="id">The ID of the entity to retrieve</param>
+        /// <param name="columnSet">The columns to retrieve</param>
+        /// <param name="writeVerbose">Optional action to write verbose messages</param>
+        /// <returns>The retrieved entity</returns>
+        public static Entity RetrieveWithThrottlingRetry(IOrganizationService connection, string entityName, Guid id, ColumnSet columnSet, Action<string> writeVerbose = null)
+        {
+            int retryCount = 0;
+            while (true)
+            {
+                try
+                {
+                    return connection.Retrieve(entityName, id, columnSet);
+                }
+                catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
+                    System.Threading.Thread.Sleep(retryDelay);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Retrieves multiple entities with automatic service protection (throttling) retry handling.
+        /// </summary>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="query">The query to execute</param>
+        /// <param name="writeVerbose">Optional action to write verbose messages</param>
+        /// <returns>The retrieved entity collection</returns>
+        public static EntityCollection RetrieveMultipleWithThrottlingRetry(IOrganizationService connection, QueryBase query, Action<string> writeVerbose = null)
+        {
+            int retryCount = 0;
+            while (true)
+            {
+                try
+                {
+                    return connection.RetrieveMultiple(query);
+                }
+                catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
+                    System.Threading.Thread.Sleep(retryDelay);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Associates entities with automatic service protection (throttling) retry handling.
+        /// </summary>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="entityName">The logical name of the entity</param>
+        /// <param name="entityId">The ID of the entity</param>
+        /// <param name="relationship">The relationship to use</param>
+        /// <param name="relatedEntities">The related entities</param>
+        /// <param name="writeVerbose">Optional action to write verbose messages</param>
+        public static void AssociateWithThrottlingRetry(IOrganizationService connection, string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, Action<string> writeVerbose = null)
+        {
+            int retryCount = 0;
+            while (true)
+            {
+                try
+                {
+                    connection.Associate(entityName, entityId, relationship, relatedEntities);
+                    return;
+                }
+                catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
+                    System.Threading.Thread.Sleep(retryDelay);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Disassociates entities with automatic service protection (throttling) retry handling.
+        /// </summary>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="entityName">The logical name of the entity</param>
+        /// <param name="entityId">The ID of the entity</param>
+        /// <param name="relationship">The relationship to use</param>
+        /// <param name="relatedEntities">The related entities</param>
+        /// <param name="writeVerbose">Optional action to write verbose messages</param>
+        public static void DisassociateWithThrottlingRetry(IOrganizationService connection, string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, Action<string> writeVerbose = null)
+        {
+            int retryCount = 0;
+            while (true)
+            {
+                try
+                {
+                    connection.Disassociate(entityName, entityId, relationship, relatedEntities);
+                    return;
+                }
+                catch (FaultException<OrganizationServiceFault> ex) when (IsThrottlingException(ex, out TimeSpan retryDelay))
+                {
+                    retryCount++;
+                    if (retryCount > MaxThrottlingRetries)
+                    {
+                        throw new Exception($"Maximum throttling retries ({MaxThrottlingRetries}) exceeded", ex);
+                    }
+                    writeVerbose?.Invoke($"Throttled by service protection. Waiting {retryDelay.TotalSeconds:F1}s before retry (attempt {retryCount})...");
+                    System.Threading.Thread.Sleep(retryDelay);
+                }
+            }
         }
     }
 }

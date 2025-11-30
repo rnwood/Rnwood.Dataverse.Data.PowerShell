@@ -60,7 +60,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			// Retrieve the organization to get the base language code
 			var whoAmIRequest = new OrganizationRequest("WhoAmI");
-			var whoAmIResponse = Connection.Execute(whoAmIRequest);
+			var whoAmIResponse = QueryHelpers.ExecuteWithThrottlingRetry(Connection, whoAmIRequest);
 			var organizationId = (Guid)whoAmIResponse["OrganizationId"];
 
 			var retrieveRequest = new RetrieveRequest
@@ -69,7 +69,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				ColumnSet = new ColumnSet("languagecode")
 			};
 
-			var retrieveResponse = (RetrieveResponse)Connection.Execute(retrieveRequest);
+			var retrieveResponse = (RetrieveResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
 			var organization = retrieveResponse.Entity;
 
 			return (int)organization["languagecode"];

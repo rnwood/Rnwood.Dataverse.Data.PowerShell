@@ -62,14 +62,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     // First try unpublished
                     var request = new RetrieveUnpublishedMultipleRequest { Query = query };
-                    var response = (RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+                    var response = (RetrieveUnpublishedMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
                     var results = response.EntityCollection;
 
                     if (results.Entities.Count == 0)
                     {
                         // Try published
                         var pubRequest = new RetrieveMultipleRequest { Query = query };
-                        var pubResponse = (RetrieveMultipleResponse)Connection.Execute(pubRequest);
+                        var pubResponse = (RetrieveMultipleResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, pubRequest);
                         results = pubResponse.EntityCollection;
                     }
 
@@ -91,7 +91,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (ShouldProcess($"App module with ID '{appModuleId}'", "Remove"))
                 {
-                    Connection.Delete("appmodule", appModuleId);
+                    QueryHelpers.DeleteWithThrottlingRetry(Connection, "appmodule", appModuleId);
                     WriteVerbose($"Removed app module with ID: {appModuleId}");
                 }
             }

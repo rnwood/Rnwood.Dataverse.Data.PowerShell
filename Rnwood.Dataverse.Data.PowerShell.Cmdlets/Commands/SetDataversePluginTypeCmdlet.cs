@@ -100,19 +100,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 Guid typeId;
                 if (Id.HasValue)
                 {
-                    Connection.Update(pluginType);
+                    QueryHelpers.UpdateWithThrottlingRetry(Connection, pluginType);
                     typeId = Id.Value;
                     WriteVerbose($"Updated plugin type: {TypeName} (ID: {typeId})");
                 }
                 else
                 {
-                    typeId = Connection.Create(pluginType);
+                    typeId = QueryHelpers.CreateWithThrottlingRetry(Connection, pluginType);
                     WriteVerbose($"Created plugin type: {TypeName} (ID: {typeId})");
                 }
 
                 if (PassThru)
                 {
-                    Entity retrieved = Connection.Retrieve("plugintype", typeId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+                    Entity retrieved = QueryHelpers.RetrieveWithThrottlingRetry(Connection, "plugintype", typeId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
                     EntityMetadataFactory entityMetadataFactory = new EntityMetadataFactory(Connection);
                     DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
                     PSObject psObject = converter.ConvertToPSObject(retrieved, new Microsoft.Xrm.Sdk.Query.ColumnSet(true), _ => ValueType.Display);

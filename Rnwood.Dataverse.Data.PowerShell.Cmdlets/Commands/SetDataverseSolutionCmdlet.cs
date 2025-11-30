@@ -78,7 +78,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             };
             query.LinkEntities.Add(publisherLink);
 
-            var solutions = Connection.RetrieveMultiple(query);
+            var solutions = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, query);
 
             if (solutions.Entities.Count ==0)
             {
@@ -112,7 +112,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         TopCount = 1
                     };
 
-                    var publishers = Connection.RetrieveMultiple(publisherQuery);
+                    var publishers = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, publisherQuery);
 
                     if (publishers.Entities.Count == 0)
                     {
@@ -149,7 +149,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 WriteVerbose("Creating solution...");
-                Connection.Create(createEntity);
+                QueryHelpers.CreateWithThrottlingRetry(Connection, createEntity);
                 WriteVerbose("Solution created successfully.");
                 WriteObject($"Solution '{UniqueName}' created successfully.");
                 return;
@@ -244,7 +244,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         TopCount =1
                     };
 
-                    var publishers = Connection.RetrieveMultiple(publisherQuery);
+                    var publishers = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, publisherQuery);
 
                     if (publishers.Entities.Count ==0)
                     {
@@ -274,7 +274,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             WriteVerbose("Updating solution...");
-            Connection.Update(updateEntity);
+            QueryHelpers.UpdateWithThrottlingRetry(Connection, updateEntity);
 
             WriteVerbose("Solution updated successfully.");
             WriteObject($"Solution '{UniqueName}' updated successfully.");

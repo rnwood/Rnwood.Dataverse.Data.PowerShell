@@ -93,19 +93,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 Guid imageId;
                 if (Id.HasValue)
                 {
-                    Connection.Update(image);
+                    QueryHelpers.UpdateWithThrottlingRetry(Connection, image);
                     imageId = Id.Value;
                     WriteVerbose($"Updated plugin step image: {EntityAlias} (ID: {imageId})");
                 }
                 else
                 {
-                    imageId = Connection.Create(image);
+                    imageId = QueryHelpers.CreateWithThrottlingRetry(Connection, image);
                     WriteVerbose($"Created plugin step image: {EntityAlias} (ID: {imageId})");
                 }
 
                 if (PassThru)
                 {
-                    Entity retrieved = Connection.Retrieve("sdkmessageprocessingstepimage", imageId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+                    Entity retrieved = QueryHelpers.RetrieveWithThrottlingRetry(Connection, "sdkmessageprocessingstepimage", imageId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
                     EntityMetadataFactory entityMetadataFactory = new EntityMetadataFactory(Connection);
                     DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
                     PSObject psObject = converter.ConvertToPSObject(retrieved, new Microsoft.Xrm.Sdk.Query.ColumnSet(true), _ => ValueType.Display);

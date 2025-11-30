@@ -243,7 +243,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     matchOnQuery.AddAttributeValue(matchOnColumn, queryValue);
                 }
 
-                var matchingRecords = Connection.RetrieveMultiple(matchOnQuery).Entities;
+                var matchingRecords = QueryHelpers.RetrieveMultipleWithThrottlingRetry(Connection, matchOnQuery).Entities;
 
                 if (matchingRecords.Count > 0)
                 {

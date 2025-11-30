@@ -77,7 +77,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Retrieving relationship metadata for '{RelationshipName}'");
 
-            var response = (RetrieveRelationshipResponse)Connection.Execute(request);
+            var response = (RetrieveRelationshipResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
             var relationship = response.RelationshipMetadata;
 
             // Filter by relationship type if specified
@@ -101,7 +101,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Retrieving relationships for entity '{EntityName}'");
 
-            var response = (RetrieveEntityResponse)Connection.Execute(request);
+            var response = (RetrieveEntityResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
             var entityMetadata = response.EntityMetadata;
 
             var relationships = new System.Collections.Generic.List<RelationshipMetadataBase>();
@@ -150,7 +150,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 RetrieveAsIfPublished = !Published.IsPresent
             };
 
-            var allEntitiesResponse = (RetrieveAllEntitiesResponse)Connection.Execute(allEntitiesRequest);
+            var allEntitiesResponse = (RetrieveAllEntitiesResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, allEntitiesRequest);
             var entities = allEntitiesResponse.EntityMetadata;
 
             var allRelationships = new System.Collections.Generic.Dictionary<string, RelationshipMetadataBase>();

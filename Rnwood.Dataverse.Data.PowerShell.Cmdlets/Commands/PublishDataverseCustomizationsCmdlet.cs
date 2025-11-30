@@ -33,7 +33,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteVerbose("Publishing all customizations...");
 
                 var request = new PublishAllXmlRequest();
-                Connection.Execute(request);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
                 WriteVerbose("All customizations published successfully.");
             }
@@ -51,7 +51,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     ParameterXml = $"<importexportxml><entities><entity>{EntityName}</entity></entities></importexportxml>"
                 };
 
-                Connection.Execute(request);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
                 WriteVerbose($"Customizations for entity '{EntityName}' published successfully.");
             }

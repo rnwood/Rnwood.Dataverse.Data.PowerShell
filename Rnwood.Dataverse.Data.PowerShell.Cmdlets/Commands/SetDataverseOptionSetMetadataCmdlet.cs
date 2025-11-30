@@ -93,7 +93,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     RetrieveAsIfPublished = false
                 };
 
-                var retrieveResponse = (RetrieveOptionSetResponse)Connection.Execute(retrieveRequest);
+                var retrieveResponse = (RetrieveOptionSetResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                 existingOptionSet = retrieveResponse.OptionSetMetadata as OptionSetMetadata;
                 optionSetExists = existingOptionSet != null;
 
@@ -186,7 +186,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Creating global option set '{Name}' with {optionSet.Options.Count} options");
 
-            var response = (CreateOptionSetResponse)Connection.Execute(request);
+            var response = (CreateOptionSetResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             WriteVerbose($"Option set created successfully with MetadataId: {response.OptionSetId}");
 
@@ -197,7 +197,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     ParameterXml = $"<importexportxml><optionsets><optionset>{Name}</optionset></optionsets></importexportxml>"
                 };
-                Connection.Execute(publishRequest);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, publishRequest);
                 WriteVerbose($"Published global option set '{Name}'");
                 
                 // Wait for publish to complete
@@ -213,7 +213,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     RetrieveAsIfPublished = true
                 };
 
-                var retrieveResponse = (RetrieveOptionSetResponse)Connection.Execute(retrieveRequest);
+                var retrieveResponse = (RetrieveOptionSetResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                 var result = ConvertOptionSetToPSObject((OptionSetMetadata)retrieveResponse.OptionSetMetadata);
                 WriteObject(result);
             }
@@ -244,7 +244,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     return;
                 }
 
-                Connection.Execute(updateDisplayNameRequest);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, updateDisplayNameRequest);
                 hasChanges = true;
                 WriteVerbose($"Updated display name to '{DisplayName}'");
             }
@@ -267,7 +267,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     return;
                 }
 
-                Connection.Execute(updateDescriptionRequest);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, updateDescriptionRequest);
                 hasChanges = true;
                 WriteVerbose($"Updated description");
             }
@@ -308,7 +308,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         return;
                     }
 
-                    Connection.Execute(updateOptionRequest);
+                    QueryHelpers.ExecuteWithThrottlingRetry(Connection, updateOptionRequest);
                     hasChanges = true;
                     WriteVerbose($"Updated option value {value.Value} with label '{label}'");
                 }
@@ -332,7 +332,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         return;
                     }
 
-                    Connection.Execute(insertOptionRequest);
+                    QueryHelpers.ExecuteWithThrottlingRetry(Connection, insertOptionRequest);
                     hasChanges = true;
                     WriteVerbose($"Inserted new option value {value.Value} with label '{label}'");
                 }
@@ -364,7 +364,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         return;
                     }
 
-                    Connection.Execute(deleteRequest);
+                    QueryHelpers.ExecuteWithThrottlingRetry(Connection, deleteRequest);
                     hasChanges = true;
                     WriteVerbose($"Deleted option value {existingOption.Value.Value}");
                 }
@@ -391,7 +391,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     ParameterXml = $"<importexportxml><optionsets><optionset>{Name}</optionset></optionsets></importexportxml>"
                 };
-                Connection.Execute(publishRequest);
+                QueryHelpers.ExecuteWithThrottlingRetry(Connection, publishRequest);
                 WriteVerbose($"Published global option set '{Name}'");
                 
                 // Wait for publish to complete
@@ -407,7 +407,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     RetrieveAsIfPublished = true
                 };
 
-                var retrieveResponse = (RetrieveOptionSetResponse)Connection.Execute(retrieveRequest);
+                var retrieveResponse = (RetrieveOptionSetResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveRequest);
                 var result = ConvertOptionSetToPSObject((OptionSetMetadata)retrieveResponse.OptionSetMetadata);
                 WriteObject(result);
             }

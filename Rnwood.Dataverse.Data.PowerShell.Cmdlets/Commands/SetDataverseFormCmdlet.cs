@@ -185,12 +185,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 if (isUpdate)
                 {
-                    Connection.Update(form);
+                    QueryHelpers.UpdateWithThrottlingRetry(Connection, form);
                     WriteVerbose($"Updated form '{formId}'");
                 }
                 else
                 {
-                    formId = Connection.Create(form);
+                    formId = QueryHelpers.CreateWithThrottlingRetry(Connection, form);
                     WriteVerbose($"Created form '{formId}'");
                 }
 
@@ -211,7 +211,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 ColumnSet = new ColumnSet("objecttypecode")
                             };
 
-                            var unpublishedResponse = (RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
+                            var unpublishedResponse = (RetrieveUnpublishedResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveUnpublishedRequest);
                             var unpublishedForm = unpublishedResponse?.Entity;
                             publishEntity = unpublishedForm?.GetAttributeValue<string>("objecttypecode");
                             WriteVerbose($"Determined entity for unpublished form '{formId}' as '{publishEntity}'");
@@ -234,7 +234,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 WriteVerbose($"Unpublished form '{formId}' not found (unpublished).");
 
 
-                                var retrievedForm = Connection.Retrieve("systemform", formId, new ColumnSet("objecttypecode"));
+                                var retrievedForm = QueryHelpers.RetrieveWithThrottlingRetry(Connection, "systemform", formId, new ColumnSet("objecttypecode"));
                                 publishEntity = retrievedForm?.GetAttributeValue<string>("objecttypecode");
                                 WriteVerbose($"Determined entity for published form '{formId}' as '{publishEntity}'");
                             }
@@ -251,7 +251,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         ParameterXml = parameterXml
                     };
-                    Connection.Execute(publishRequest);
+                    QueryHelpers.ExecuteWithThrottlingRetry(Connection, publishRequest);
                     WriteVerbose("Form published successfully");
                 }
 

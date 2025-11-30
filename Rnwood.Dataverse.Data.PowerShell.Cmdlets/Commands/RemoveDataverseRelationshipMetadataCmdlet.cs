@@ -63,7 +63,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Deleting relationship '{SchemaName}'");
 
-            Connection.Execute(request);
+            QueryHelpers.ExecuteWithThrottlingRetry(Connection, request);
 
             WriteVerbose($"Relationship '{SchemaName}' deleted successfully");
         }

@@ -103,7 +103,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     try
                     {
-                        Entity form = Connection.Retrieve("systemform", formId, new ColumnSet("objecttypecode"));
+                        Entity form = QueryHelpers.RetrieveWithThrottlingRetry(Connection, "systemform", formId, new ColumnSet("objecttypecode"));
                         entityName = form.GetAttributeValue<string>("objecttypecode");
                     }
                     catch (FaultException<OrganizationServiceFault> ex)
@@ -118,7 +118,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                     Target = new EntityReference("systemform", formId),
                                     ColumnSet = new ColumnSet("objecttypecode")
                                 };
-                                var response = (RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
+                                var response = (RetrieveUnpublishedResponse)QueryHelpers.ExecuteWithThrottlingRetry(Connection, retrieveUnpublishedRequest);
                                 entityName = response.Entity.GetAttributeValue<string>("objecttypecode");
                             }
                             catch (FaultException<OrganizationServiceFault> ex2)
@@ -157,7 +157,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Delete the form
             try
             {
-                Connection.Delete("systemform", formId);
+                QueryHelpers.DeleteWithThrottlingRetry(Connection, "systemform", formId);
                 WriteVerbose($"Deleted form '{formId}'");
 
                 // Publish if requested
@@ -168,7 +168,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         ParameterXml = $"<importexportxml><entities><entity>{entityName}</entity></entities></importexportxml>"
                     };
-                    Connection.Execute(publishRequest);
+                    QueryHelpers.ExecuteWithThrottlingRetry(Connection, publishRequest);
                     WriteVerbose("Entity published successfully");
                 }
             }
