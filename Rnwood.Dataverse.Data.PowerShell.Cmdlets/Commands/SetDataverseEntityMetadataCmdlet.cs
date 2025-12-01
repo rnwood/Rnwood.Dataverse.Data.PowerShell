@@ -282,11 +282,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 entity.IsActivity = IsActivity.ToBool();
                 
-                // Activity entities require offline availability and notes relationship
+                // Activity entities have specific requirements per Microsoft docs
                 if (IsActivity.ToBool())
                 {
                     entity.IsAvailableOffline = true;
-                    entity.HasNotes = true;
+                    entity.IsMailMergeEnabled = new BooleanManagedProperty(false);
                 }
             }
 
@@ -369,6 +369,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 Entity = entity,
                 PrimaryAttribute = primaryAttribute
             };
+
+            // Set HasNotes and HasActivities on the request (different from EntityMetadata properties)
+            if (IsActivity.IsPresent && IsActivity.ToBool())
+            {
+                // Activity entities require HasNotes = true and HasActivities = false on the request
+                request.HasNotes = true;
+                request.HasActivities = false;
+            }
+            else
+            {
+                // For non-activity entities, set based on parameters
+                if (HasNotes.IsPresent)
+                {
+                    request.HasNotes = HasNotes.ToBool();
+                }
+                if (HasActivities.IsPresent)
+                {
+                    request.HasActivities = HasActivities.ToBool();
+                }
+            }
 
             if (!ShouldProcess($"Entity '{SchemaName}'", $"Create entity with ownership '{entity.OwnershipType}'"))
             {
