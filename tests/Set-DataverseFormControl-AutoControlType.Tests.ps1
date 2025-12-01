@@ -114,7 +114,7 @@ Describe 'Set-DataverseFormControl - Automatic Control Type Determination' {
     Context 'Special Controls Without DataField' {
         It 'Should create Subgrid control without DataField' {
             # Create a subgrid control - these don't have a DataField
-            $result = Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -ControlType "Subgrid" -ControlId "mysubgrid" -Label "Related Contacts" -PassThru
+            $result = Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -ControlType "Subgrid" -ControlId "mysubgrid" -Labels @{1033 = 'Related Contacts'} -PassThru
             
             $result | Should -Not -BeNullOrEmpty
             $result | Should -Be "mysubgrid"
@@ -129,7 +129,7 @@ Describe 'Set-DataverseFormControl - Automatic Control Type Determination' {
 
         It 'Should create WebResource control without DataField' {
             # Create a web resource control - these don't have a DataField
-            $result = Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -ControlType "WebResource" -ControlId "mywebresource" -Label "Custom Web Resource" -PassThru
+            $result = Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -ControlType "WebResource" -ControlId "mywebresource" -Labels @{1033 = 'Custom Web Resource'} -PassThru
             
             $result | Should -Not -BeNullOrEmpty
             $result | Should -Be "mywebresource"
