@@ -498,14 +498,8 @@ jobs:
                   
                   $metadataConfig = New-PesterConfiguration
                   $metadataConfig.Run.Path = @(
-                      # Only run EnvironmentVariable tests for this branch (issue fix)
-                      'e2e-tests/EnvironmentVariable.Tests.ps1'
-                      # Temporarily disabled to speed up testing for issue fix branch
-                      # 'e2e-tests/EntityKeyMetadata.Tests.ps1',
-                      # 'e2e-tests/EntityMetadata.Tests.ps1',
-                      # 'e2e-tests/AttributeMetadata.Tests.ps1', 
-                      # 'e2e-tests/RelationshipMetadata.Tests.ps1',
-                      # 'e2e-tests/OptionSetMetadata.Tests.ps1'
+                      # Run EntityMetadata tests for activity entity support feature
+                      'e2e-tests/EntityMetadata.Tests.ps1'
                   )
                   $metadataConfig.Run.PassThru = $true
                   $metadataConfig.Output.Verbosity = 'Minimal'

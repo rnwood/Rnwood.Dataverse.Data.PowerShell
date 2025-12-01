@@ -15,12 +15,12 @@ Creates or updates an entity (table) in Dataverse.
 ### ByProperties (Default)
 ```
 Set-DataverseEntityMetadata [-EntityName] <String> [-SchemaName <String>] [-DisplayName <String>]
- [-DisplayCollectionName <String>] [-Description <String>] [-OwnershipType <String>] [-HasActivities]
- [-HasNotes] [-IsAuditEnabled] [-ChangeTrackingEnabled] [-IconVectorName <String>] [-IconLargeName <String>]
- [-IconMediumName <String>] [-IconSmallName <String>] [-PrimaryAttributeSchemaName <String>]
- [-PrimaryAttributeDisplayName <String>] [-PrimaryAttributeMaxLength <Int32>] [-PassThru] [-Publish]
- [-SkipIconValidation] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+ [-DisplayCollectionName <String>] [-Description <String>] [-OwnershipType <String>] [-IsActivity]
+ [-HasActivities] [-HasNotes] [-IsAuditEnabled] [-ChangeTrackingEnabled] [-IconVectorName <String>]
+ [-IconLargeName <String>] [-IconMediumName <String>] [-IconSmallName <String>]
+ [-PrimaryAttributeSchemaName <String>] [-PrimaryAttributeDisplayName <String>]
+ [-PrimaryAttributeMaxLength <Int32>] [-PassThru] [-Publish] [-SkipIconValidation]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### ByEntityMetadata
@@ -381,6 +381,28 @@ PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
 
 Creates an entity with icon validation disabled. The cmdlet will not check if "new_product_icon" webresource exists or has the correct type. Use this when you plan to create the webresource later or want to bypass validation for development/testing.
 
+### Example 23: Create an activity entity
+```powershell
+PS C:\> Set-DataverseEntityMetadata -EntityName new_customactivity `
+    -SchemaName new_CustomActivity `
+    -DisplayName "Custom Activity" `
+    -DisplayCollectionName "Custom Activities" `
+    -Description "A custom activity entity for tracking interactions" `
+    -OwnershipType UserOwned `
+    -IsActivity `
+    -PrimaryAttributeSchemaName new_subject `
+    -PrimaryAttributeDisplayName "Subject" `
+    -PrimaryAttributeMaxLength 200
+```
+
+Creates a custom activity entity that derives from activitypointer. Activity entities are used to track interactions like appointments, emails, phone calls, and custom activity types. Activity entities automatically support certain features like regarding objects and activity parties.
+
+**Important Notes:**
+- Activity entities derive from the activitypointer entity and inherit standard activity fields
+- The `-IsActivity` switch can only be set during entity creation and cannot be changed afterwards
+- Activity entities automatically appear in timeline controls and activity-related views
+- The primary attribute is typically used as the "Subject" field for the activity
+
 ## PARAMETERS
 
 ### -ChangeTrackingEnabled
@@ -622,6 +644,29 @@ Vector icons provide the best visual quality across different display resolution
 
 ```yaml
 Type: String
+Parameter Sets: ByProperties
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IsActivity
+Whether this entity is an activity entity (derives from activitypointer). Activity entities are used to track interactions like appointments, emails, phone calls, and custom activity types.
+
+When enabled, the entity:
+- Inherits standard activity fields (regardingobjectid, scheduledstart, scheduledend, etc.)
+- Appears in timeline controls on related records
+- Can be associated with regarding objects (accounts, contacts, opportunities, etc.)
+- Supports activity parties for participants
+
+**Note**: This property can only be set during entity creation and cannot be changed afterwards. Activity entities cannot be converted to standard entities and vice versa.
+
+```yaml
+Type: SwitchParameter
 Parameter Sets: ByProperties
 Aliases:
 

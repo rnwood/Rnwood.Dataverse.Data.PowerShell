@@ -62,6 +62,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string OwnershipType { get; set; }
 
         /// <summary>
+        /// Gets or sets whether this entity is an activity entity (derives from activitypointer).
+        /// Activity entities are used to track interactions like appointments, emails, phone calls, etc.
+        /// This property can only be set during entity creation and cannot be changed afterwards.
+        /// </summary>
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Whether this is an activity entity (derives from activitypointer). Can only be set during creation.")]
+        public SwitchParameter IsActivity { get; set; }
+
+        /// <summary>
         /// Gets or sets whether the entity supports activities.
         /// </summary>
         [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Whether the entity supports activities")]
@@ -268,6 +276,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             else
             {
                 entity.OwnershipType = OwnershipTypes.UserOwned; // Default
+            }
+
+            if (IsActivity.IsPresent)
+            {
+                entity.IsActivity = IsActivity.ToBool();
             }
 
             if (HasActivities.IsPresent)
@@ -593,6 +606,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ThrowTerminatingError(new ErrorRecord(
                     new InvalidOperationException($"Cannot change HasActivities from '{existingEntity.HasActivities}' to '{HasActivities.ToBool()}'. This property is immutable after creation."),
                     "ImmutableHasActivities",
+                    ErrorCategory.InvalidOperation,
+                    null));
+            }
+
+            // Check if IsActivity was provided and is different (immutable after creation)
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(IsActivity)) &&
+                IsActivity.ToBool() != existingEntity.IsActivity)
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new InvalidOperationException($"Cannot change IsActivity from '{existingEntity.IsActivity}' to '{IsActivity.ToBool()}'. This property is immutable after creation. Activity entities cannot be converted to standard entities and vice versa."),
+                    "ImmutableIsActivity",
                     ErrorCategory.InvalidOperation,
                     null));
             }
