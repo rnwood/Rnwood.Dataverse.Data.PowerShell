@@ -675,14 +675,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
                 secObj.Properties.Add(new PSNoteProperty("Labels", labels));
             }
 
-            // Parse controls
+            // Parse controls - pass the parent cell to ParseControl so it can read labels from the cell
             var rowsElement = section.Element("rows");
             if (rowsElement != null)
             {
                 var controls = rowsElement.Elements("row")
                     .SelectMany(row => row.Elements("cell"))
-                    .SelectMany(cell => cell.Elements("control"))
-                    .Select(ctrl => ParseControl(ctrl))
+                    .SelectMany(cell => cell.Elements("control").Select(ctrl => ParseControl(ctrl, cell)))
                     .ToArray();
                 secObj.Properties.Add(new PSNoteProperty("Controls", controls));
             }
@@ -711,8 +710,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             ctrlObj.Properties.Add(new PSNoteProperty("ShowLabel", control.Attribute("showlabel")?.Value != "false"));
             ctrlObj.Properties.Add(new PSNoteProperty("IsRequired", control.Attribute("isrequired")?.Value == "true"));
 
-            // Parse labels
-            var labelsElement = control.Element("labels");
+            // Parse labels - labels are stored in the cell, not in the control
+            // Per the form XML schema, the labels element goes inside the cell, before the control
+            XElement labelsElement = null;
+            if (parentCell != null)
+            {
+                labelsElement = parentCell.Element("labels");
+            }
+            
             if (labelsElement != null)
             {
                 var labels = labelsElement.Elements("label").Select(l => new PSObject(new
@@ -750,18 +755,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
                 ctrlObj.Properties.Add(new PSNoteProperty("RowSpan", parentCell.Attribute("rowspan") != null ? (int?)int.Parse(parentCell.Attribute("rowspan").Value) : null));
                 ctrlObj.Properties.Add(new PSNoteProperty("Auto", parentCell.Attribute("auto")?.Value == "true"));
                 ctrlObj.Properties.Add(new PSNoteProperty("LockLevel", parentCell.Attribute("locklevel")?.Value));
-
-                // Parse cell labels
-                var cellLabelsElement = parentCell.Element("labels");
-                if (cellLabelsElement != null)
-                {
-                    var cellLabels = cellLabelsElement.Elements("label").Select(l => new PSObject(new
-                    {
-                        Description = l.Attribute("description")?.Value,
-                        LanguageCode = l.Attribute("languagecode")?.Value
-                    })).ToArray();
-                    ctrlObj.Properties.Add(new PSNoteProperty("CellLabels", cellLabels));
-                }
             }
 
             return ctrlObj;
@@ -781,14 +774,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             headerObj.Properties.Add(new PSNoteProperty("Id", header.Attribute("id")?.Value));
             headerObj.Properties.Add(new PSNoteProperty("CellLabelPosition", header.Attribute("celllabelposition")?.Value));
 
-            // Parse header rows and controls
+            // Parse header rows and controls - pass the parent cell to ParseControl so it can read labels from the cell
             var rowsElement = header.Element("rows");
             if (rowsElement != null)
             {
                 var controls = rowsElement.Elements("row")
                     .SelectMany(row => row.Elements("cell"))
-                    .SelectMany(cell => cell.Elements("control"))
-                    .Select(ctrl => ParseControl(ctrl))
+                    .SelectMany(cell => cell.Elements("control").Select(ctrl => ParseControl(ctrl, cell)))
                     .ToArray();
                 headerObj.Properties.Add(new PSNoteProperty("Controls", controls));
             }
