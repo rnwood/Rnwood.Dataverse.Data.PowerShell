@@ -62,6 +62,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string OwnershipType { get; set; }
 
         /// <summary>
+        /// Gets or sets whether this entity is an activity entity (derives from activitypointer).
+        /// Activity entities are used to track interactions like appointments, emails, phone calls, etc.
+        /// This property can only be set during entity creation and cannot be changed afterwards.
+        /// </summary>
+        [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Whether this is an activity entity (derives from activitypointer). Can only be set during creation.")]
+        public SwitchParameter IsActivity { get; set; }
+
+        /// <summary>
         /// Gets or sets whether the entity supports activities.
         /// </summary>
         [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Whether the entity supports activities")]
@@ -270,6 +278,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 entity.OwnershipType = OwnershipTypes.UserOwned; // Default
             }
 
+            if (IsActivity.IsPresent)
+            {
+                entity.IsActivity = IsActivity.ToBool();
+                
+                // Activity entities have specific requirements per Microsoft docs
+                if (IsActivity.ToBool())
+                {
+                    entity.IsAvailableOffline = true;
+                    entity.IsMailMergeEnabled = new BooleanManagedProperty(false);
+                }
+            }
+
             if (HasActivities.IsPresent)
             {
                 entity.HasActivities = HasActivities.ToBool();
@@ -349,6 +369,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 Entity = entity,
                 PrimaryAttribute = primaryAttribute
             };
+
+            // Set HasNotes and HasActivities on the request (different from EntityMetadata properties)
+            if (IsActivity.IsPresent && IsActivity.ToBool())
+            {
+                // Activity entities require HasNotes = true and HasActivities = false on the request
+                request.HasNotes = true;
+                request.HasActivities = false;
+            }
+            else
+            {
+                // For non-activity entities, set based on parameters
+                if (HasNotes.IsPresent)
+                {
+                    request.HasNotes = HasNotes.ToBool();
+                }
+                if (HasActivities.IsPresent)
+                {
+                    request.HasActivities = HasActivities.ToBool();
+                }
+            }
 
             if (!ShouldProcess($"Entity '{SchemaName}'", $"Create entity with ownership '{entity.OwnershipType}'"))
             {
@@ -593,6 +633,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ThrowTerminatingError(new ErrorRecord(
                     new InvalidOperationException($"Cannot change HasActivities from '{existingEntity.HasActivities}' to '{HasActivities.ToBool()}'. This property is immutable after creation."),
                     "ImmutableHasActivities",
+                    ErrorCategory.InvalidOperation,
+                    null));
+            }
+
+            // Check if IsActivity was provided and is different (immutable after creation)
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(IsActivity)) &&
+                IsActivity.ToBool() != existingEntity.IsActivity)
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new InvalidOperationException($"Cannot change IsActivity from '{existingEntity.IsActivity}' to '{IsActivity.ToBool()}'. This property is immutable after creation. Activity entities cannot be converted to standard entities and vice versa."),
+                    "ImmutableIsActivity",
                     ErrorCategory.InvalidOperation,
                     null));
             }
