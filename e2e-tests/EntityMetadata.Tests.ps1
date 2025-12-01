@@ -371,7 +371,7 @@ Describe "Entity Metadata E2E Tests" {
                     -DisplayName "E2E Test Activity" `
                     -DisplayCollectionName "E2E Test Activities" `
                     -Description "Activity entity created for E2E testing" `
-                    -PrimaryAttributeSchemaName "new_name" `
+                    -PrimaryAttributeSchemaName "Subject" `
                     -PrimaryAttributeDisplayName "Subject" `
                     -PrimaryAttributeMaxLength 200 `
                     -OwnershipType UserOwned `
