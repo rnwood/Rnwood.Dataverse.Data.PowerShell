@@ -487,7 +487,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -DataField 'mobilephone' -Label 'New Field' -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -DataField 'mobilephone' -Labels @{1033 = 'New Field'} -WhatIf } | Should -Not -Throw
         }
 
         It "Updates existing control" {
@@ -501,7 +501,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -ControlId 'firstname' -DataField 'firstname' -Label 'Updated First Name' -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -ControlId 'firstname' -DataField 'firstname' -Labels @{1033 = 'Updated First Name'} -WhatIf } | Should -Not -Throw
         }
 
         It "Creates control with raw XML" {
@@ -530,7 +530,7 @@ Describe 'Dataverse Form Cmdlets' {
             $form["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
             $connection.Create($form)
             
-            { Set-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -DataField 'jobtitle' -Label 'Test Label' -Disabled -Hidden:$false -IsRequired -WhatIf } | Should -Not -Throw
+            { Set-DataverseFormControl -Connection $connection -FormId $formId -TabName 'general' -SectionName 'name' -DataField 'jobtitle' -Labels @{1033 = 'Test Label'} -Disabled -Hidden:$false -IsRequired -WhatIf } | Should -Not -Throw
         }
 
         It "Handles positioning with Index" -Skip {
