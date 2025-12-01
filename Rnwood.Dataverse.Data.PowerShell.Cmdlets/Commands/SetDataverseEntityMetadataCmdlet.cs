@@ -355,23 +355,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Create primary attribute
-            var primaryAttributeSchemaName = PrimaryAttributeSchemaName;
-            
-            // Activity entities require primary attribute schema name to be "Subject"
-            if (IsActivity.IsPresent && IsActivity.ToBool())
-            {
-                primaryAttributeSchemaName = "Subject";
-                if (!string.IsNullOrEmpty(PrimaryAttributeSchemaName) && 
-                    !string.Equals(PrimaryAttributeSchemaName, "Subject", StringComparison.OrdinalIgnoreCase))
-                {
-                    WriteWarning($"Activity entities require the primary attribute schema name to be 'Subject'. Ignoring provided value '{PrimaryAttributeSchemaName}'.");
-                }
-            }
-            
             var primaryAttribute = new StringAttributeMetadata
             {
-                SchemaName = primaryAttributeSchemaName,
-                LogicalName = primaryAttributeSchemaName.ToLowerInvariant(),
+                SchemaName = PrimaryAttributeSchemaName,
+                LogicalName = PrimaryAttributeSchemaName.ToLowerInvariant(),
                 RequiredLevel = new AttributeRequiredLevelManagedProperty(AttributeRequiredLevel.None),
                 MaxLength = PrimaryAttributeMaxLength ?? 100,
                 DisplayName = new Label(PrimaryAttributeDisplayName ?? "Name", baseLanguageCode)
