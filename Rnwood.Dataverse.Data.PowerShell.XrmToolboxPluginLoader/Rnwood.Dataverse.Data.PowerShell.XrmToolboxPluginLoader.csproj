@@ -24,6 +24,7 @@
     <XrmToolBoxVersion>1.2025.10.74</XrmToolBoxVersion>
     <PackageIcon>icon_80.png</PackageIcon>
     <PackageIconUrl>https://raw.githu busercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/refs/heads/main/icon_80.png</PackageIconUrl>
+    <Title>PowerShell Scripting Workspace</Title>
    </PropertyGroup>
 
   <ItemGroup>
