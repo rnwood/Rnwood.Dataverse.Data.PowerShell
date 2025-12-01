@@ -282,10 +282,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 entity.IsActivity = IsActivity.ToBool();
                 
-                // Activity entities require offline availability to be enabled
+                // Activity entities require offline availability and notes relationship
                 if (IsActivity.ToBool())
                 {
                     entity.IsAvailableOffline = true;
+                    entity.HasNotes = true;
                 }
             }
 
