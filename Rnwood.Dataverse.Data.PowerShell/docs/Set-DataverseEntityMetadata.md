@@ -654,29 +654,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -IsActivity
-Whether this entity is an activity entity (derives from activitypointer). Activity entities are used to track interactions like appointments, emails, phone calls, and custom activity types.
-
-When enabled, the entity:
-- Inherits standard activity fields (regardingobjectid, scheduledstart, scheduledend, etc.)
-- Appears in timeline controls on related records
-- Can be associated with regarding objects (accounts, contacts, opportunities, etc.)
-- Supports activity parties for participants
-
-**Note**: This property can only be set during entity creation and cannot be changed afterwards. Activity entities cannot be converted to standard entities and vice versa.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: ByProperties
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -IsAuditEnabled
 Whether audit is enabled for this entity. When enabled, changes to records are tracked in the audit history.
 
@@ -869,6 +846,29 @@ Accept wildcard characters: False
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -IsActivity
+Whether this entity is an activity entity (derives from activitypointer). Activity entities are used to track interactions like appointments, emails, phone calls, and custom activity types.
+
+When enabled, the entity:
+- Inherits standard activity fields (regardingobjectid, scheduledstart, scheduledend, etc.)
+- Appears in timeline controls on related records
+- Can be associated with regarding objects (accounts, contacts, opportunities, etc.)
+- Supports activity parties for participants
+
+**Note**: This property can only be set during entity creation and cannot be changed afterwards. Activity entities cannot be converted to standard entities and vice versa.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: ByProperties
+Aliases:
 
 Required: False
 Position: Named

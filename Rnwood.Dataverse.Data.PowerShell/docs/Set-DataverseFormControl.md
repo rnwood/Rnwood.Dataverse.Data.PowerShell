@@ -471,21 +471,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Labels
-The labels for the control as a hashtable keyed by LCID. Example: @{1033 = 'English Label'; 1031 = 'German Label'}
-
-```yaml
-Type: Hashtable
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -LockLevel
 Lock level for the cell
 
@@ -659,6 +644,21 @@ Controls how progress information is displayed during cmdlet execution.
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Labels
+The labels for the control as a hashtable keyed by LCID. Example: @{1033 = 'English Label'; 1031 = 'German Label'}
+
+```yaml
+Type: Hashtable
+Parameter Sets: (All)
+Aliases:
 
 Required: False
 Position: Named

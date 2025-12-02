@@ -4,6 +4,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.PowerShell.EditorServices;
 using Microsoft.PowerShell.EditorServices.Session;
+using System.Management.Automation.Language;
+using System.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
@@ -55,7 +57,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 // Load the module if path is provided
                 if (!string.IsNullOrEmpty(_modulePath))
                 {
-                    await _powerShellContext.ExecuteScriptString($"Import-Module '{_modulePath}' -ErrorAction SilentlyContinue");
+                    await _powerShellContext.ExecuteScriptString($"Import-Module '{_modulePath}'");
                 }
 
                 _isInitialized = true;
@@ -117,6 +119,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
                 var result = await _languageService.GetCompletionsInFile(scriptFile, line, column);
 
+                // Find related command for parameters
+                string relatedCommand = null;
+                try
+                {
+                    var ast = Parser.ParseInput(script, out Token[] tokens, out ParseError[] errors);
+                    var commandAst = ast.Find(a => a is CommandAst && a.Extent.StartOffset <= cursorPosition && a.Extent.EndOffset >= cursorPosition, true) as CommandAst;
+                    if (commandAst != null)
+                    {
+                        relatedCommand = commandAst.GetCommandName();
+                    }
+                }
+                catch { }
+
                 var completions = new List<CompletionItem>();
                 if (result != null && result.Completions != null)
                 {
@@ -127,7 +142,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                             CompletionText = match.CompletionText,
                             ListItemText = match.ListItemText,
                             ResultType = MapCompletionType(match.CompletionType),
-                            ToolTip = match.ToolTipText
+                            ToolTip = match.ToolTipText,
+                            RelatedCommand = relatedCommand
                         });
                     }
                 }
@@ -147,8 +163,63 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             switch (type)
             {
+                case CompletionType.Command: return CompletionResultType.Command;
+                case CompletionType.Method: return CompletionResultType.Method;
+                case CompletionType.ParameterName: return CompletionResultType.ParameterName;
+                case CompletionType.ParameterValue: return CompletionResultType.ParameterValue;
+                case CompletionType.Property: return CompletionResultType.Property;
+                case CompletionType.Variable: return CompletionResultType.Variable;
+                case CompletionType.Namespace: return CompletionResultType.Namespace;
+                case CompletionType.Type: return CompletionResultType.Type;
+                case CompletionType.Keyword: return CompletionResultType.Keyword;
+                case CompletionType.Path: return CompletionResultType.ProviderItem;
+                case CompletionType.Unknown:
                 default: return CompletionResultType.Text;
             }
+        }
+
+        public async Task<CompletionItem> GetCompletionDetailsAsync(CompletionItem item)
+        {
+            if (item.ResultType == CompletionResultType.Command)
+            {
+                string help = await GetHelpContentAsync(item.CompletionText, null);
+                if (!string.IsNullOrEmpty(help)) item.ToolTip = help;
+            }
+            else if (item.ResultType == CompletionResultType.ParameterName && !string.IsNullOrEmpty(item.RelatedCommand))
+            {
+                string help = await GetHelpContentAsync(item.RelatedCommand, item.CompletionText);
+                if (!string.IsNullOrEmpty(help)) item.ToolTip = help;
+            }
+            return item;
+        }
+
+        private async Task<string> GetHelpContentAsync(string command, string parameter)
+        {
+            try
+            {
+                string script;
+                if (string.IsNullOrEmpty(parameter))
+                {
+                    script = $"Get-Help '{command}'";
+                }
+                else
+                {
+                    script = $"Get-Help '{command}' -Parameter '{parameter.TrimStart('-')}'";
+                }
+
+                var results = await _powerShellContext.ExecuteScriptString(script);
+                
+                if (results != null)
+                {
+                    var text = string.Join(Environment.NewLine, results.Select(r => r?.ToString()));
+                    return string.IsNullOrWhiteSpace(text) ? null : text;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching help: {ex.Message}");
+            }
+            return null;
         }
 
         public void Dispose()
@@ -168,6 +239,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         public string ListItemText { get; set; }
         public CompletionResultType ResultType { get; set; }
         public string ToolTip { get; set; }
+        public string RelatedCommand { get; set; }
     }
 
     /// <summary>
