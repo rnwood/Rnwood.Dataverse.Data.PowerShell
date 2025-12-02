@@ -118,6 +118,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     <style>
         body { margin: 0; padding: 0; overflow: hidden; }
         #container { width: 100%; height: 100vh; }
+
+        /* make the suggest widget taller and wider so multiple items show */
+        .monaco-editor .suggest-widget .monaco-list,
+        .monaco-editor .suggest-widget .monaco-tree {
+          max-height: 240px !important;   /* show ~8�10 items depending on row height */
+          min-width: 320px !important;    /* optional: widen the widget */
+        }
+
+        /* reduce row height to fit more items if desired */
+        .monaco-editor .suggest-widget .monaco-list .monaco-list-row {
+          height: 24px !important;
+          line-height: 24px !important;
+        }
+
     </style>
 </head>
 <body>
@@ -222,10 +236,38 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                                 documentation: c.documentation,
                                 detail: c.detail,
                                 insertText: c.insertText,
-                                range: range
+                                filterText: c.filterText,
+                                range: range,
+                                data: c.data
                             };
                         })
                     };
+                },
+                resolveCompletionItem: async function(item, token) {
+                    if (!item.data) return item;
+                    
+                    var requestId = 'resolve_' + Date.now() + '_' + Math.random();
+                    
+                    var resolvePromise = new Promise(function(resolve) {
+                        pendingCompletionRequests[requestId] = resolve;
+                        window.chrome.webview.postMessage({
+                            action: 'resolveCompletion',
+                            requestId: requestId,
+                            item: item.data
+                        });
+                    });
+                    
+                    var timeoutPromise = new Promise(function(resolve) {
+                        setTimeout(function() { resolve(null); }, 5000);
+                    });
+                    
+                    var resolvedData = await Promise.race([resolvePromise, timeoutPromise]);
+                    
+                    if (resolvedData) {
+                        item.documentation = resolvedData.ToolTip;
+                    }
+                    
+                    return item;
                 },
                 triggerCharacters: ['-', '$', '.', '::']
             });
@@ -273,6 +315,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 {
                     await HandleCompletionRequestAsync(message, sender as WebView2);
                 }
+                else if (message.Contains("\"action\":\"resolveCompletion\""))
+                {
+                    await HandleResolveCompletionRequestAsync(message, sender as WebView2);
+                }
                 else if (message.Contains("\"action\":\"run\""))
                 {
                     RunRequested?.Invoke(this, EventArgs.Empty);
@@ -314,13 +360,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     completions = await _completionService.GetCompletionsAsync(script, cursorPosition);
                 }
 
-                var monacoCompletions = completions.Select(c => new
-                {
-                    label = c.ListItemText ?? c.CompletionText,
-                    insertText = c.CompletionText,
-                    kind = MapCompletionTypeToMonacoKind(c.ResultType),
-                    documentation = c.ToolTip,
-                    detail = GetCompletionDetail(c.ResultType)
+                var monacoCompletions = completions.Select(c => {
+                    return new
+                    {
+                        label = c.ListItemText ?? c.CompletionText,
+                        insertText = c.CompletionText,
+                        filterText = c.CompletionText,
+                        kind = MapCompletionTypeToMonacoKind(c.ResultType),
+                        documentation = c.ToolTip,
+                        detail = GetCompletionDetail(c.ResultType),
+                        data = c
+                    };
                 }).ToList();
 
                 var response = new
@@ -337,6 +387,41 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error handling completion request: {ex.Message}");
+            }
+        }
+
+        private async Task HandleResolveCompletionRequestAsync(string message, WebView2 senderWebView)
+        {
+            try
+            {
+                var jsonDoc = JsonDocument.Parse(message);
+                var root = jsonDoc.RootElement;
+
+                string requestId = root.GetProperty("requestId").GetString();
+                var itemElement = root.GetProperty("item");
+                
+                var item = JsonSerializer.Deserialize<CompletionItem>(itemElement.GetRawText());
+
+                CompletionItem resolvedItem = item;
+                if (_completionService != null)
+                {
+                    resolvedItem = await _completionService.GetCompletionDetailsAsync(item);
+                }
+
+                var response = new
+                {
+                    action = "completionResponse",
+                    requestId = requestId,
+                    completions = resolvedItem
+                };
+
+                string responseJson = JsonSerializer.Serialize(response);
+                await senderWebView.CoreWebView2.ExecuteScriptAsync(
+                    $"window.handleCompletionResponse({responseJson})");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error handling resolve request: {ex.Message}");
             }
         }
 
