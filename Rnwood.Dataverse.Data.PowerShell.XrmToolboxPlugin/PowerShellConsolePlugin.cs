@@ -71,8 +71,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 
                 helpControl.LoadAndShowHelp();
 
-                // Set splitter to 50/50
-                innerSplitContainer.SplitterDistance = innerSplitContainer.Height / 2;
+                splitContainer.SplitterDistance = (splitContainer.Width / 3)*2;
+                innerSplitContainer.SplitterDistance = (innerSplitContainer.Height / 3) * 2;
 
                 // Wire up script editor events
                 scriptEditorControl.RunScriptRequested += ScriptEditorControl_RunScriptRequested;

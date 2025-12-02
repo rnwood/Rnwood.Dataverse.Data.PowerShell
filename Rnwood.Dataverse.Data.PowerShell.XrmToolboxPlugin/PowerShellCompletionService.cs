@@ -180,6 +180,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         public async Task<CompletionItem> GetCompletionDetailsAsync(CompletionItem item)
         {
+            if (string.IsNullOrEmpty(item.CompletionText)) return item;
+
             if (item.ResultType == CompletionResultType.Command)
             {
                 string help = await GetHelpContentAsync(item.CompletionText, null);
@@ -200,26 +202,49 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 string script;
                 if (string.IsNullOrEmpty(parameter))
                 {
-                    script = $"Get-Help '{command}'";
+                    script = $@"
+$ErrorActionPreference = 'Stop'
+$cmd = Get-Command '{command}' -ErrorAction SilentlyContinue
+if (-not $cmd) {{ 
+    ""Command '{command}' not found. Loaded modules: $((Get-Module).Name -join ', ')"" 
+}} else {{
+    $help = Get-Help '{command}' -ErrorAction SilentlyContinue
+    if ($help) {{
+        $help | Out-String
+    }} else {{
+        ""No help object returned for '{command}'. Syntax:`n$($cmd.Definition)""
+    }}
+}}
+";
                 }
                 else
                 {
-                    script = $"Get-Help '{command}' -Parameter '{parameter.TrimStart('-')}'";
+                    string paramName = parameter.TrimStart('-');
+                    script = $@"
+$ErrorActionPreference = 'Stop'
+$help = Get-Help '{command}' -Parameter '{paramName}' -ErrorAction SilentlyContinue
+if ($help) {{
+    $help | Out-String
+}} else {{
+    ""No help found for parameter '{paramName}'""
+}}
+";
                 }
 
-                var results = await _powerShellContext.ExecuteScriptString(script);
+                var results = await _powerShellContext.ExecuteScriptString(script, false, false);
                 
-                if (results != null)
+                if (results != null && results.Any())
                 {
                     var text = string.Join(Environment.NewLine, results.Select(r => r?.ToString()));
-                    return string.IsNullOrWhiteSpace(text) ? null : text;
+                    return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
                 }
+                
+                return "No results returned from help script.";
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error fetching help: {ex.Message}");
+                return $"Error fetching help: {ex.Message}";
             }
-            return null;
         }
 
         public void Dispose()
