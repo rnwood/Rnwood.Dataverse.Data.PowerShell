@@ -222,6 +222,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                                 documentation: c.documentation,
                                 detail: c.detail,
                                 insertText: c.insertText,
+                                filterText: c.filterText,
                                 range: range
                             };
                         })
@@ -314,13 +315,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     completions = await _completionService.GetCompletionsAsync(script, cursorPosition);
                 }
 
-                var monacoCompletions = completions.Select(c => new
-                {
-                    label = c.ListItemText ?? c.CompletionText,
-                    insertText = c.CompletionText,
-                    kind = MapCompletionTypeToMonacoKind(c.ResultType),
-                    documentation = c.ToolTip,
-                    detail = GetCompletionDetail(c.ResultType)
+                var monacoCompletions = completions.Select(c => {
+                    // For parameter name completions, Monaco's getWordUntilPosition doesn't include '-'
+                    // So if user types "-V", the word is "V" and the range covers just "V".
+                    // If we return insertText="-Verbose", Monaco filters it out because it doesn't start with "V".
+                    // The fix: for parameter completions starting with '-', use the text after '-' for
+                    // insertText and filterText, keeping the full text as the label for display.
+                    bool isParameterWithDash = c.ResultType == CompletionResultType.ParameterName 
+                        && !string.IsNullOrEmpty(c.CompletionText) 
+                        && c.CompletionText.StartsWith("-");
+                    
+                    string textForInsertAndFilter = isParameterWithDash 
+                        ? c.CompletionText.Substring(1) 
+                        : c.CompletionText;
+
+                    return new
+                    {
+                        label = c.ListItemText ?? c.CompletionText,
+                        insertText = textForInsertAndFilter,
+                        filterText = textForInsertAndFilter,
+                        kind = MapCompletionTypeToMonacoKind(c.ResultType),
+                        documentation = c.ToolTip,
+                        detail = GetCompletionDetail(c.ResultType)
+                    };
                 }).ToList();
 
                 var response = new
