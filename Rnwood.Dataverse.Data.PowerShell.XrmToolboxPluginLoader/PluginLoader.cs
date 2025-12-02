@@ -1,10 +1,13 @@
 using System;
 using System.IO;
 using System.Reflection;
+using System.Linq;
+using System.IO.Compression;
 using Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin;
 using XrmToolBox.Extensibility;
 using XrmToolBox.Extensibility.Interfaces;
 using System.ComponentModel.Composition;
+using System.Windows.Forms;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader
 {
@@ -20,38 +23,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader
     ExportMetadata("SecondaryFontColor", "Gray")]   
     public class PluginLoader : PluginBase
     {
-        static PluginLoader()
-        {
-            try
-            {
-                string loaderDir = Path.GetDirectoryName(AppContext.BaseDirectory);
-                string pluginSubdir = Path.Combine(loaderDir, "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader");
-
-                AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
-                {
-
-                    string assemblyName = new AssemblyName(args.Name).Name;
-                    string dllPath = Path.Combine(pluginSubdir, assemblyName + ".dll");
-
-                    if (File.Exists(dllPath))
-                    {
-                        return Assembly.LoadFrom(dllPath);
-                    }
-
-
-                    return null;
-                };
-            }
-            catch (Exception ex)
-            {
-                // Log or handle the exception as needed
-                Console.WriteLine($"Failed to set up assembly resolve event: {ex.Message}");
-            }
-        }
-
         public override IXrmToolBoxPluginControl GetControl()
         {
-            return new PowerShellConsolePlugin();
+            return new PluginLoadingControl();
         }
     }
 }
