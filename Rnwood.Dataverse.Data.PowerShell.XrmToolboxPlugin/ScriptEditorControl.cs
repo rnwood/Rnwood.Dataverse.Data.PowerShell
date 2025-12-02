@@ -26,6 +26,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         public event EventHandler NewScriptRequested;
         public event EventHandler OpenScriptRequested;
         public event EventHandler SaveScriptRequested;
+        public event EventHandler<CompletionItem> CompletionResolved;
 
         public ScriptEditorControl()
         {
@@ -51,6 +52,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             content.CompletionService = _completionService;
             content.RunRequested += (s, e) => RunScriptRequested?.Invoke(this, EventArgs.Empty);
             content.SaveRequested += (s, e) => SaveScriptRequested?.Invoke(this, EventArgs.Empty);
+            content.CompletionResolved += (s, e) => CompletionResolved?.Invoke(this, e);
             content.CloseRequested += (s, e) => {
                 tabControl.TabPages.Remove(tabPage);
                 if (tabData.ContainsKey(tabPage))

@@ -79,6 +79,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 scriptEditorControl.NewScriptRequested += ScriptEditorControl_NewScriptRequested;
                 scriptEditorControl.OpenScriptRequested += ScriptEditorControl_OpenScriptRequested;
                 scriptEditorControl.SaveScriptRequested += ScriptEditorControl_SaveScriptRequested;
+                scriptEditorControl.CompletionResolved += ScriptEditorControl_CompletionResolved;
+            }
+        }
+
+        private void ScriptEditorControl_CompletionResolved(object sender, CompletionItem e)
+        {
+            if (e == null) return;
+
+            if (e.ResultType == CompletionResultType.Command)
+            {
+                helpControl.SelectHelpItem(e.CompletionText, null);
+            }
+            else if (e.ResultType == CompletionResultType.ParameterName && !string.IsNullOrEmpty(e.RelatedCommand))
+            {
+                helpControl.SelectHelpItem(e.RelatedCommand, e.CompletionText);
             }
         }
 

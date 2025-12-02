@@ -25,6 +25,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         public event EventHandler RunRequested;
         public event EventHandler SaveRequested;
         public event EventHandler CloseRequested;
+        public event EventHandler<CompletionItem> CompletionResolved;
 
         public ScriptTabContentControl()
         {
@@ -407,6 +408,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 {
                     resolvedItem = await _completionService.GetCompletionDetailsAsync(item);
                 }
+
+                CompletionResolved?.Invoke(this, resolvedItem);
 
                 var response = new
                 {

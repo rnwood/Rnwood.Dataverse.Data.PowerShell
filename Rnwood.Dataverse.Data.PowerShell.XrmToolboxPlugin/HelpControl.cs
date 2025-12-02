@@ -17,6 +17,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     {
         private bool comboPopulated = false;
         private string pendingScrollId = null;
+        private string pendingScrollParamName = null;
+        private bool suppressAnchorsScroll = false;
 
         private class ComboItem
         {
@@ -30,6 +32,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             InitializeComponent();
             this.Load += new EventHandler(this.HelpControl_Load);
+            this.searchCombo.AutoSize = false;
+            this.anchorsCombo.AutoSize = false;
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (searchCombo != null && anchorsCombo != null)
+            {
+                int width = (this.Width - 20) / 2;
+                searchCombo.Size = new System.Drawing.Size(width, searchCombo.Height);
+                anchorsCombo.Size = new System.Drawing.Size(width, anchorsCombo.Height);
+            }
         }
 
         private void HomeButton_Click(object sender, EventArgs e)
@@ -55,11 +70,31 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private void HelpWebView2_NavigationCompleted(object sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e)
         {
+            progressBar.Visible = false;
             backButton.Enabled = helpWebView2.CoreWebView2?.CanGoBack == true;
             forwardButton.Enabled = helpWebView2.CoreWebView2?.CanGoForward == true;
-            if (pendingScrollId != null)
+            
+            if (pendingScrollParamName != null)
+            {
+                ScrollToParameter(pendingScrollParamName);
+                SelectAnchor(pendingScrollParamName);
+                pendingScrollParamName = null;
+            }
+            else if (pendingScrollId != null)
             {
                 helpWebView2.CoreWebView2.ExecuteScriptAsync($"document.getElementById('{pendingScrollId}').scrollIntoView();");
+                
+                foreach (ComboItem item in anchorsCombo.Items)
+                {
+                    if (item.ScrollId == pendingScrollId)
+                    {
+                        suppressAnchorsScroll = true;
+                        anchorsCombo.SelectedItem = item;
+                        suppressAnchorsScroll = false;
+                        break;
+                    }
+                }
+
                 pendingScrollId = null;
             }
         }
@@ -73,6 +108,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             try
             {
+                progressBar.Visible = true;
                 string helpContent;
                 if (!comboPopulated)
                 {
@@ -107,6 +143,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 // Convert markdown to HTML using Markdig with auto identifiers and table support
                 var pipeline = new MarkdownPipelineBuilder().UseAutoIdentifiers().UsePipeTables().Build();
                 string htmlContent = Markdown.ToHtml(helpContent, pipeline);
+
+                PopulateAnchorsCombo(helpContent);
 
                 // Wrap in basic HTML structure
                 string html = $@"<html>
@@ -239,12 +277,106 @@ hr {{
             }
         }
 
+        public void SelectHelpItem(string commandName, string parameterName)
+        {
+            if (!autoHelpButton.Checked) return;
+
+            if (string.IsNullOrEmpty(commandName)) return;
+
+            foreach (ComboItem item in searchCombo.Items)
+            {
+                if (item.Text.Trim().Equals(commandName, StringComparison.OrdinalIgnoreCase))
+                {
+                    bool selectionChanged = searchCombo.SelectedItem != item;
+                    
+                    if (!string.IsNullOrEmpty(parameterName))
+                    {
+                        pendingScrollParamName = parameterName;
+                    }
+                    else
+                    {
+                        pendingScrollParamName = null;
+                    }
+
+                    if (selectionChanged)
+                    {
+                        searchCombo.SelectedItem = item;
+                        // LoadAndShowHelp will be called by event handler
+                    }
+                    else
+                    {
+                        // Already selected, try to scroll if needed
+                        if (pendingScrollParamName != null)
+                        {
+                            ScrollToParameter(pendingScrollParamName);
+                            SelectAnchor(pendingScrollParamName);
+                            pendingScrollParamName = null;
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+
+        private void ScrollToParameter(string paramName)
+        {
+             if (helpWebView2.CoreWebView2 != null)
+             {
+                 string script = $@"
+                    (function() {{
+                        var paramName = '{paramName.TrimStart('-').ToLower()}';
+                        var headers = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+                        for (var i = 0; i < headers.length; i++) {{
+                            var text = headers[i].innerText.trim().toLowerCase();
+                            if (text === paramName || text === '-' + paramName) {{
+                                headers[i].scrollIntoView();
+                                return;
+                            }}
+                        }}
+                        // Fallback to ID search if header text match fails
+                        var el = document.getElementById(paramName) || document.getElementById('-' + paramName);
+                        if (el) el.scrollIntoView();
+                    }})();
+                 ";
+                 helpWebView2.CoreWebView2.ExecuteScriptAsync(script);
+             }
+        }
+
+        private void SelectAnchor(string paramName)
+        {
+            string searchName = paramName.TrimStart('-').ToLower();
+            foreach (ComboItem item in anchorsCombo.Items)
+            {
+                string itemText = item.Text.Trim().ToLower();
+                if (itemText == searchName || itemText == "-" + searchName)
+                {
+                    suppressAnchorsScroll = true;
+                    anchorsCombo.SelectedItem = item;
+                    suppressAnchorsScroll = false;
+                    return;
+                }
+            }
+        }
+
         private void SearchCombo_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (searchCombo.SelectedItem is ComboItem item && helpWebView2.CoreWebView2 != null)
             {
                 pendingScrollId = item.ScrollId;
                 LoadAndShowHelp(item.Url);
+            }
+        }
+
+        private void AnchorsCombo_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (suppressAnchorsScroll) return;
+
+            if (anchorsCombo.SelectedItem is ComboItem item && helpWebView2.CoreWebView2 != null)
+            {
+                if (!string.IsNullOrEmpty(item.ScrollId))
+                {
+                    helpWebView2.CoreWebView2.ExecuteScriptAsync($"document.getElementById('{item.ScrollId}').scrollIntoView();");
+                }
             }
         }
 
@@ -287,6 +419,25 @@ hr {{
                 {
                     string id = GenerateId(heading);
                     searchCombo.Items.Add(new ComboItem { Text = new string(' ', (headingBlock.Level - 1) * 2) + heading, Url = "https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/main/README.md", ScrollId = id });
+                }
+            }
+        }
+
+        private void PopulateAnchorsCombo(string markdown)
+        {
+            anchorsCombo.Items.Clear();
+            if (string.IsNullOrEmpty(markdown))
+            {
+                return;
+            }
+            var document = Markdown.Parse(markdown);
+            foreach (var headingBlock in document.Descendants<Markdig.Syntax.HeadingBlock>())
+            {
+                string heading = GetPlainText(headingBlock.Inline);
+                if (!string.IsNullOrEmpty(heading))
+                {
+                    string id = GenerateId(heading);
+                    anchorsCombo.Items.Add(new ComboItem { Text = new string(' ', (headingBlock.Level - 1) * 2) + heading, Url = null, ScrollId = id });
                 }
             }
         }

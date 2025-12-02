@@ -40,9 +40,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.toolStrip = new System.Windows.Forms.ToolStrip();
             this.forwardButton = new System.Windows.Forms.ToolStripButton();
             this.searchCombo = new System.Windows.Forms.ToolStripComboBox();
+            this.anchorsCombo = new System.Windows.Forms.ToolStripComboBox();
+            this.comboToolStrip = new System.Windows.Forms.ToolStrip();
             this.helpWebView2 = new Microsoft.Web.WebView2.WinForms.WebView2();
             this.homeButton = new System.Windows.Forms.ToolStripButton();
             this.backButton = new System.Windows.Forms.ToolStripButton();
+            this.autoHelpButton = new System.Windows.Forms.ToolStripButton();
+            this.progressBar = new System.Windows.Forms.ToolStripProgressBar();
             this.toolStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpWebView2)).BeginInit();
             this.SuspendLayout();
@@ -54,12 +58,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.homeButton,
             this.backButton,
             this.forwardButton,
-            this.searchCombo});
+            this.autoHelpButton,
+            this.progressBar});
             this.toolStrip.Location = new System.Drawing.Point(0, 0);
             this.toolStrip.Name = "toolStrip";
             this.toolStrip.Size = new System.Drawing.Size(400, 25);
             this.toolStrip.TabIndex = 0;
             this.toolStrip.Text = "toolStrip";
+            // 
+            // comboToolStrip
+            // 
+            this.comboToolStrip.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
+            this.comboToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.searchCombo,
+            this.anchorsCombo});
+            this.comboToolStrip.Location = new System.Drawing.Point(0, 25);
+            this.comboToolStrip.Name = "comboToolStrip";
+            this.comboToolStrip.Size = new System.Drawing.Size(400, 25);
+            this.comboToolStrip.TabIndex = 1;
+            this.comboToolStrip.Text = "comboToolStrip";
             // 
             // forwardButton
             // 
@@ -72,13 +89,38 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.forwardButton.ToolTipText = "Forward";
             this.forwardButton.Click += new System.EventHandler(this.ForwardButton_Click);
             // 
+            // autoHelpButton
+            // 
+            this.autoHelpButton.CheckOnClick = true;
+            this.autoHelpButton.Checked = true;
+            this.autoHelpButton.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.autoHelpButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.ImageAndText;
+            this.autoHelpButton.Name = "autoHelpButton";
+            this.autoHelpButton.Size = new System.Drawing.Size(23, 22);
+            this.autoHelpButton.Text = "Auto follow editor";
+            // 
+            // progressBar
+            // 
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(100, 22);
+            this.progressBar.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
+            this.progressBar.Visible = false;
+            // 
             // searchCombo
             // 
-            this.searchCombo.DropDownWidth = 1000;
+            this.searchCombo.DropDownWidth = 600;
             this.searchCombo.Name = "searchCombo";
-            this.searchCombo.Size = new System.Drawing.Size(300, 25);
+            this.searchCombo.Size = new System.Drawing.Size(200, 25);
             this.searchCombo.ToolTipText = "Search";
             this.searchCombo.SelectedIndexChanged += new System.EventHandler(this.SearchCombo_SelectedIndexChanged);
+            // 
+            // anchorsCombo
+            // 
+            this.anchorsCombo.DropDownWidth = 600;
+            this.anchorsCombo.Name = "anchorsCombo";
+            this.anchorsCombo.Size = new System.Drawing.Size(200, 25);
+            this.anchorsCombo.ToolTipText = "Anchors";
+            this.anchorsCombo.SelectedIndexChanged += new System.EventHandler(this.AnchorsCombo_SelectedIndexChanged);
             // 
             // helpWebView2
             // 
@@ -117,11 +159,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // HelpControl
             // 
             this.Controls.Add(this.helpWebView2);
+            this.Controls.Add(this.comboToolStrip);
             this.Controls.Add(this.toolStrip);
             this.Name = "HelpControl";
             this.Size = new System.Drawing.Size(400, 600);
             this.toolStrip.ResumeLayout(false);
             this.toolStrip.PerformLayout();
+            this.comboToolStrip.ResumeLayout(false);
+            this.comboToolStrip.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpWebView2)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -134,7 +179,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private ToolStripButton homeButton;
         private ToolStripButton backButton;
         private ToolStripButton forwardButton;
+        private ToolStripButton autoHelpButton;
         private ToolStripComboBox searchCombo;
+        private ToolStripComboBox anchorsCombo;
+        private ToolStripProgressBar progressBar;
+        private ToolStrip comboToolStrip;
         private WebView2 helpWebView2;
     }
 }
