@@ -118,6 +118,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     <style>
         body { margin: 0; padding: 0; overflow: hidden; }
         #container { width: 100%; height: 100vh; }
+
+        /* make the suggest widget taller and wider so multiple items show */
+        .monaco-editor .suggest-widget .monaco-list,
+        .monaco-editor .suggest-widget .monaco-tree {
+          max-height: 240px !important;   /* show ~8–10 items depending on row height */
+          min-width: 320px !important;    /* optional: widen the widget */
+        }
+
+        /* reduce row height to fit more items if desired */
+        .monaco-editor .suggest-widget .monaco-list .monaco-list-row {
+          height: 24px !important;
+          line-height: 24px !important;
+        }
+
     </style>
 </head>
 <body>
@@ -316,25 +330,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 }
 
                 var monacoCompletions = completions.Select(c => {
-                    // For parameter name completions, Monaco's getWordUntilPosition doesn't include '-'
-                    // So if user types "-V", the word is "V" and the range covers just "V".
-                    // If we return insertText="-Verbose", Monaco filters it out because it doesn't start with "V".
-                    // The fix: for parameter completions starting with '-', use the text after '-' for
-                    // insertText and filterText, keeping the full text as the label for display.
-                    bool isParameterWithDash = c.ResultType == CompletionResultType.ParameterName 
-                        && !string.IsNullOrEmpty(c.CompletionText) 
-                        && c.CompletionText.Length > 1
-                        && c.CompletionText.StartsWith("-");
-                    
-                    string textForInsertAndFilter = isParameterWithDash 
-                        ? c.CompletionText.Substring(1) 
-                        : c.CompletionText;
-
                     return new
                     {
                         label = c.ListItemText ?? c.CompletionText,
-                        insertText = textForInsertAndFilter,
-                        filterText = textForInsertAndFilter,
+                        insertText = c.CompletionText,
+                        filterText = c.CompletionText,
                         kind = MapCompletionTypeToMonacoKind(c.ResultType),
                         documentation = c.ToolTip,
                         detail = GetCompletionDetail(c.ResultType)
@@ -360,6 +360,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private int MapCompletionTypeToMonacoKind(CompletionResultType resultType)
         {
+            return 18; // Text
+
             switch (resultType)
             {
                 case CompletionResultType.Command:

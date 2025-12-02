@@ -147,16 +147,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             switch (type)
             {
-                case CompletionType.Command: return CompletionResultType.Command;
-                case CompletionType.Method: return CompletionResultType.Method;
-                case CompletionType.ParameterName: return CompletionResultType.ParameterName;
-                case CompletionType.ParameterValue: return CompletionResultType.ParameterValue;
-                case CompletionType.Property: return CompletionResultType.Property;
-                case CompletionType.Variable: return CompletionResultType.Variable;
-                case CompletionType.Namespace: return CompletionResultType.Namespace;
-                case CompletionType.Type: return CompletionResultType.Type;
-                case CompletionType.Keyword: return CompletionResultType.Keyword;
-                case CompletionType.Path: return CompletionResultType.ProviderItem;
                 default: return CompletionResultType.Text;
             }
         }
