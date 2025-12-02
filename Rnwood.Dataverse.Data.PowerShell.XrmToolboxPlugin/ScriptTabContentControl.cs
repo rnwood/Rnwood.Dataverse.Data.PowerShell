@@ -323,6 +323,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     // insertText and filterText, keeping the full text as the label for display.
                     bool isParameterWithDash = c.ResultType == CompletionResultType.ParameterName 
                         && !string.IsNullOrEmpty(c.CompletionText) 
+                        && c.CompletionText.Length > 1
                         && c.CompletionText.StartsWith("-");
                     
                     string textForInsertAndFilter = isParameterWithDash 
