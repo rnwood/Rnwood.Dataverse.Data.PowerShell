@@ -29,8 +29,9 @@
     <PackageReference Include="Markdig" Version="0.43.0" />
     <PackageReference Include="System.Text.Json" Version="9.0.9" />
     <PackageReference Include="System.Resources.Extensions" Version="4.6.0" />
+    <PackageReference Include="MscrmTools.Xrm.Connection" Version="1.2025.9.64" />
     <PackageReference Include="XrmToolBoxPackage" Version="1.2025.10.74">
-      <PrivateAssets>all</PrivateAssets>
+      <PrivateAssets>all</PrivateAssets>      
       <ExcludeAssets>build;runtime</ExcludeAssets>
     </PackageReference>
     <PackageReference Include="ConEmu.Control.WinForms" Version="1.21.9.5" />

@@ -1,10 +1,11 @@
-using System;
-using System.Windows.Forms;
 using ConEmu.WinForms;
+using System;
+using System.Drawing;
 using System.IO;
 using System.Reflection;
-using System.Threading.Tasks;
 using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
@@ -71,15 +72,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 var assembly = Assembly.GetExecutingAssembly();
                 using (Stream stream = assembly.GetManifestResourceStream("Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.conemu.xml"))
                 {
-                    if (stream != null)
-                    {
                         configXml.Load(stream);
-                    }
-                    else
-                    {
-                        // Fallback to inline XML if resource not found
-                        configXml.LoadXml("<?xml version=\"1.0\" encoding=\"utf-8\"?><key name=\"Software\"><key name=\"ConEmu\"><key name=\"Vanilla\"><value name=\"FontSize\" type=\"dword\" data=\"00000008\"/></key></key></key>");
-                    }
                 }
 
                 startInfo.BaseConfiguration = configXml;

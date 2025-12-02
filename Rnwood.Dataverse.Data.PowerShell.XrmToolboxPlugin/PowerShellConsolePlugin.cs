@@ -25,7 +25,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         protected override void OnConnectionUpdated(ConnectionUpdatedEventArgs e)
         {
             base.OnConnectionUpdated(e);
-            service = Service as CrmServiceClient;
+            service = e.Service as CrmServiceClient;
             consoleControl.SetService(service);
         }
 

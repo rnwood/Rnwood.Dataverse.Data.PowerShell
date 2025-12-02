@@ -29,7 +29,16 @@
 
   <ItemGroup>
     <None Include="..\icon_80.png" Pack="true" PackagePath="" />
+    <PackageReference Include="MscrmTools.Xrm.Connection" Version="1.2025.9.64" />
     <PackageReference Include="XrmToolBoxPackage" Version="$(XrmToolBoxVersion)"/>
+  </ItemGroup>
+
+  <!-- o.zip is generated during build from the plugin files in the plugin output folder -->
+  <ItemGroup>
+    <!-- Add compression assembly references for zip handling on .NET Framework -->
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
 
   <!-- Add XrmToolBox as a package dependency (special case for XrmToolBox plugin store - not a real NuGet package) -->
@@ -61,6 +70,33 @@
     <Copy SourceFiles="@(XrmToolboxPluginFiles)" DestinationFolder="$(OutDir)plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 
+  <Target Name="CreatePluginZip" AfterTargets="BuildXrmToolboxPlugin" Condition=" '$(Configuration)' == 'Release' ">
+    <!-- plugin folder to compress -->
+    <PropertyGroup>
+      <PluginFolder>$(OutDir)plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader</PluginFolder>
+      <PluginZip>$(PluginFolder)\o.zip</PluginZip>
+    </PropertyGroup>
+
+    <!-- Ensure folder exists -->
+    <MakeDir Directories="$(PluginFolder)" />
+
+    <!-- Create or update assemblyversion.stamp inside plugin folder -->
+    <WriteLinesToFile File="$(PluginFolder)\assemblyversion.stamp" Lines="$(Version)" Overwrite="true" Encoding="UTF-8" />
+
+    <!-- Remove any existing o.zip so Compress-Archive doesn't include it in itself -->
+    <Delete Files="$(PluginZip)" Condition="Exists('$(PluginZip)')" />
+
+    <!-- Compress the plugin folder into o.zip: use a project script to avoid escaping issues -->
+    <Exec Command="pwsh -NoProfile -File &quot;$(ProjectDir)Create-PluginZip.ps1&quot; -PluginFolder &quot;$(PluginFolder)&quot; -PluginZip &quot;$(PluginZip)&quot;" ContinueOnError="false" Condition="Exists('$(PluginFolder)')" />
+    <Exec Command="powershell.exe -NoProfile -File &quot;$(ProjectDir)Create-PluginZip.ps1&quot; -PluginFolder &quot;$(PluginFolder)&quot; -PluginZip &quot;$(PluginZip)&quot;" ContinueOnError="false" Condition=" '$(OS)' == 'Windows_NT' AND Exists('$(PluginFolder)') " />
+
+    <!-- Ensure compress created the file; if not, don't fail the build, but log it -->
+    <Message Text="Created plugin zip: $(PluginZip)" Condition="Exists('$(PluginZip)')" Importance="high" />
+
+    <!-- Delete all files and subdirectories in the plugin folder except o.zip -->
+    <Exec Command="powershell -Command &quot;Get-ChildItem -Path '$(PluginFolder)' -Exclude 'o.zip' | Remove-Item -Recurse -Force&quot;" />
+  </Target>
+
   <Target Name="AddPluginFilesToPackage" BeforeTargets="GenerateNuspec" DependsOnTargets="BuildXrmToolboxPlugin">
         <Message Text="Adding plugin files to package from $(OutDir)plugins" Importance="high" />
     <ItemGroup>
@@ -79,6 +115,8 @@
         <Private>false</Private>
     </ProjectReference>
   </ItemGroup>
+
+  <!-- UsingTask for inline ZipFolder removed: we use a project script to do the zip instead for portability -->
 
 
 
