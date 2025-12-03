@@ -41,7 +41,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.warningLabel = new System.Windows.Forms.Label();
             this.signInButton = new System.Windows.Forms.Button();
             this.userLabel = new System.Windows.Forms.Label();
-            this.manageGistsLink = new System.Windows.Forms.LinkLabel();
+            this.managePastesLink = new System.Windows.Forms.LinkLabel();
             this.refreshButton = new System.Windows.Forms.Button();
             this.openButton = new System.Windows.Forms.Button();
             this.myScriptsCheckBox = new System.Windows.Forms.CheckBox();
@@ -88,7 +88,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.warningLabel.Name = "warningLabel";
             this.warningLabel.Size = new System.Drawing.Size(498, 32);
             this.warningLabel.TabIndex = 0;
-            this.warningLabel.Text = "⚠ Warning: Community scripts are not moderated. Review code before running and only use scripts from trusted sources.";
+            this.warningLabel.Text = "⚠ Warning: Community pastes are not moderated. Review code before running and only use scripts from trusted sources.";
             this.warningLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             
             // 
@@ -96,7 +96,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // 
             this.topPanel.Controls.Add(this.signInButton);
             this.topPanel.Controls.Add(this.userLabel);
-            this.topPanel.Controls.Add(this.manageGistsLink);
+            this.topPanel.Controls.Add(this.managePastesLink);
             this.topPanel.Controls.Add(this.refreshButton);
             this.topPanel.Controls.Add(this.openButton);
             this.topPanel.Controls.Add(this.myScriptsCheckBox);
@@ -133,17 +133,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.userLabel.Visible = false;
             
             // 
-            // manageGistsLink
+            // managePastesLink
             // 
-            this.manageGistsLink.AutoSize = true;
-            this.manageGistsLink.Location = new System.Drawing.Point(220, 20);
-            this.manageGistsLink.Name = "manageGistsLink";
-            this.manageGistsLink.Size = new System.Drawing.Size(100, 13);
-            this.manageGistsLink.TabIndex = 2;
-            this.manageGistsLink.TabStop = true;
-            this.manageGistsLink.Text = "Manage on GitHub";
-            this.manageGistsLink.Visible = false;
-            this.manageGistsLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.ManageGistsLink_LinkClicked);
+            this.managePastesLink.AutoSize = true;
+            this.managePastesLink.Location = new System.Drawing.Point(220, 20);
+            this.managePastesLink.Name = "managePastesLink";
+            this.managePastesLink.Size = new System.Drawing.Size(100, 13);
+            this.managePastesLink.TabIndex = 2;
+            this.managePastesLink.TabStop = true;
+            this.managePastesLink.Text = "Manage on PasteBin";
+            this.managePastesLink.Visible = false;
+            this.managePastesLink.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.ManagePastesLink_LinkClicked);
             
             // 
             // refreshButton
@@ -333,7 +333,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private Panel topPanel;
         private Button signInButton;
         private Label userLabel;
-        private LinkLabel manageGistsLink;
+        private LinkLabel managePastesLink;
         private Button refreshButton;
         private Button openButton;
         private CheckBox myScriptsCheckBox;

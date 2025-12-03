@@ -80,7 +80,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.saveToGistButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.mdi__invoice_new;
             this.saveToGistButton.Name = "saveToGistButton";
             this.saveToGistButton.Size = new System.Drawing.Size(100, 28);
-            this.saveToGistButton.Text = "Save to Gist";
+            this.saveToGistButton.Text = "Save to PasteBin";
             this.saveToGistButton.ToolTipText = "Save current script to GitHub Gist";
             this.saveToGistButton.Click += new System.EventHandler(this.SaveToGistButton_Click);
             // 

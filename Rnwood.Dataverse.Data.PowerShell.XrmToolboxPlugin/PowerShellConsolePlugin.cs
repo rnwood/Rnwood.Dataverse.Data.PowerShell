@@ -10,13 +10,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     public partial class PowerShellConsolePlugin : PluginControlBase, IGitHubPlugin, IPayPalPlugin
     {
         private CrmServiceClient service;
-        private GitHubGistService _gistService;
+        private PasteBinService _pasteService;
 
         public PowerShellConsolePlugin()
         {
             InitializeComponent();
             this.Load += PowerShellConsolePlugin_Load;
-            _gistService = new GitHubGistService();
+            _pasteService = new PasteBinService();
         }
 
         public string RepositoryName => "Rnwood.Dataverse.Data.PowerShell";
@@ -81,11 +81,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 scriptEditorControl.NewScriptRequested += ScriptEditorControl_NewScriptRequested;
                 scriptEditorControl.OpenScriptRequested += ScriptEditorControl_OpenScriptRequested;
                 scriptEditorControl.SaveScriptRequested += ScriptEditorControl_SaveScriptRequested;
-                scriptEditorControl.SaveToGistRequested += ScriptEditorControl_SaveToGistRequested;
+                scriptEditorControl.SaveToPasteRequested += ScriptEditorControl_SaveToPasteRequested;
                 scriptEditorControl.CompletionResolved += ScriptEditorControl_CompletionResolved;
 
                 // Wire up script gallery events
-                scriptGalleryControl.OpenGistRequested += ScriptGalleryControl_OpenGistRequested;
+                scriptGalleryControl.OpenPasteRequested += ScriptGalleryControl_OpenPasteRequested;
             }
         }
 
@@ -143,35 +143,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             scriptEditorControl.SaveScript();
         }
 
-        private async void ScriptEditorControl_SaveToGistRequested(object sender, EventArgs e)
+        private async void ScriptEditorControl_SaveToPasteRequested(object sender, EventArgs e)
         {
             try
             {
-                // Get auth service from gallery control
-                var authService = scriptGalleryControl.GetAuthService();
-
-                // Check if authenticated, if not prompt to sign in
-                if (!authService.IsAuthenticated)
-                {
-                    var signInResult = MessageBox.Show(
-                        "You need to sign in to GitHub to save scripts to Gists.\n\n" +
-                        "Would you like to sign in now?",
-                        "Authentication Required",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Question);
-
-                    if (signInResult == DialogResult.Yes)
-                    {
-                        // Switch to gallery tab to trigger sign in
-                        tabControl.SelectedIndex = 1; // Switch to Script Gallery tab
-                        return;
-                    }
-                    else
-                    {
-                        return;
-                    }
-                }
-
                 // Get script content
                 string script = await scriptEditorControl.GetScriptContentAsync();
 
@@ -182,60 +157,45 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     return;
                 }
 
-                // Check if this is an existing gist
-                var existingGist = scriptEditorControl.GetCurrentTabGist();
-
-                // Prompt for description and filename (no token needed)
-                using (var dialog = new GistSaveDialog(existingGist))
+                // Prompt for title and API key
+                using (var dialog = new PasteSaveDialog())
                 {
                     if (dialog.ShowDialog() == DialogResult.OK)
                     {
-                        _gistService.SetAccessToken(authService.AccessToken);
+                        // Create new paste
+                        var result = await _pasteService.CreatePasteAsync(
+                            dialog.Title,
+                            script,
+                            dialog.IsPublic,
+                            dialog.ApiKey);
 
-                        GistInfo result;
-                        if (existingGist != null && dialog.UpdateExisting)
-                        {
-                            // Update existing gist
-                            result = await _gistService.UpdateGistAsync(
-                                existingGist.Id,
-                                dialog.Description,
-                                dialog.FileName,
-                                script);
-
-                            MessageBox.Show($"Gist updated successfully!\n\nURL: {result.HtmlUrl}",
-                                "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
-                        else
-                        {
-                            // Create new gist
-                            result = await _gistService.CreateGistAsync(
-                                dialog.Description,
-                                dialog.FileName,
-                                script,
-                                dialog.IsPublic);
-
-                            MessageBox.Show($"Gist created successfully!\n\nURL: {result.HtmlUrl}",
-                                "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
+                        MessageBox.Show($"Paste created successfully!\n\nURL: {result.Url}",
+                            "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to save gist: {ex.Message}",
+                MessageBox.Show($"Failed to save paste: {ex.Message}",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private async void ScriptGalleryControl_OpenGistRequested(object sender, GistInfo gist)
+        private async void ScriptGalleryControl_OpenPasteRequested(object sender, PasteInfo paste)
         {
             try
             {
-                await scriptEditorControl.OpenFromGistAsync(gist);
+                // Fetch full content if not already loaded
+                if (string.IsNullOrEmpty(paste.Content))
+                {
+                    paste = await _pasteService.GetPasteAsync(paste.Key);
+                }
+                
+                await scriptEditorControl.OpenFromPasteAsync(paste);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to open gist: {ex.Message}",
+                MessageBox.Show($"Failed to open paste: {ex.Message}",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }

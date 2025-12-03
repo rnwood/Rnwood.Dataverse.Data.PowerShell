@@ -26,7 +26,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         public event EventHandler NewScriptRequested;
         public event EventHandler OpenScriptRequested;
         public event EventHandler SaveScriptRequested;
-        public event EventHandler SaveToGistRequested;
+        public event EventHandler SaveToPasteRequested;
         public event EventHandler<CompletionItem> CompletionResolved;
 
         public ScriptEditorControl()
@@ -119,7 +119,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private void SaveToGistButton_Click(object sender, EventArgs e)
         {
-            SaveToGist();
+            SaveToPaste();
         }
 
         public async Task<string> GetScriptContentAsync()
@@ -342,27 +342,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         /// <summary>
         /// Opens a script from a GitHub Gist in a new editor tab
         /// </summary>
-        public async Task OpenFromGistAsync(GistInfo gist)
+        public async Task OpenFromPasteAsync(PasteInfo paste)
         {
             try
             {
-                var content = gist.GetFirstPowerShellContent();
+                var content = paste.Content;
                 if (string.IsNullOrEmpty(content))
                 {
-                    MessageBox.Show("No PowerShell content found in this gist.",
+                    MessageBox.Show("No content found in this paste.",
                         "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
-                var fileName = gist.GetFirstPowerShellFile() ?? "script.ps1";
-                var title = GetGistTitle(gist);
+                var title = paste.GetDisplayTitle();
                 
                 TabPage tabPage = CreateScriptTab(title, null);
                 tabControl.TabPages.Add(tabPage);
                 tabControl.SelectedTab = tabPage;
 
-                // Store gist info in tab for later save
-                tabPage.Tag = gist;
+                // Store paste info in tab for later save
+                tabPage.Tag = paste;
 
                 // Initialize the webView
                 await tabData[tabPage].InitializeWebView();
@@ -370,44 +369,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to open gist: {ex.Message}",
+                MessageBox.Show($"Failed to open paste: {ex.Message}",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private string GetGistTitle(GistInfo gist)
-        {
-            if (!string.IsNullOrEmpty(gist.Description))
-            {
-                var title = gist.Description.Replace("#rnwdataversepowershell", "").Trim();
-                if (!string.IsNullOrWhiteSpace(title))
-                {
-                    return title;
-                }
-            }
-
-            var fileName = gist.GetFirstPowerShellFile();
-            return !string.IsNullOrEmpty(fileName) ? fileName : "Untitled Script";
-        }
-
         /// <summary>
-        /// Gets the current tab's associated gist (if opened from gallery)
+        /// Gets the current tab's associated paste (if opened from gallery)
         /// </summary>
-        public GistInfo GetCurrentTabGist()
+        public PasteInfo GetCurrentTabPaste()
         {
             if (tabControl.SelectedTab != null)
             {
-                return tabControl.SelectedTab.Tag as GistInfo;
+                return tabControl.SelectedTab.Tag as PasteInfo;
             }
             return null;
         }
 
         /// <summary>
-        /// Saves the current script to a GitHub Gist
+        /// Saves the current script to PasteBin
         /// </summary>
-        public void SaveToGist()
+        public void SaveToPaste()
         {
-            SaveToGistRequested?.Invoke(this, EventArgs.Empty);
+            SaveToPasteRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 }

@@ -10,20 +10,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
     public partial class ScriptGalleryControl : UserControl
     {
-        private GitHubGistService _gistService;
-        private GitHubAuthService _authService;
-        private List<GistInfo> _currentGists;
-        private List<GistInfo> _allGists;
+        private PasteBinService _pasteService;
+        private List<PasteInfo> _currentPastes;
+        private List<PasteInfo> _allPastes;
 
-        public event EventHandler<GistInfo> OpenGistRequested;
+        public event EventHandler<PasteInfo> OpenPasteRequested;
 
         public ScriptGalleryControl()
         {
             InitializeComponent();
-            _gistService = new GitHubGistService();
-            _authService = new GitHubAuthService();
-            _currentGists = new List<GistInfo>();
-            _allGists = new List<GistInfo>();
+            _pasteService = new PasteBinService();
+            _currentPastes = new List<PasteInfo>();
+            _allPastes = new List<PasteInfo>();
         }
 
         protected override void OnLoad(EventArgs e)
@@ -32,28 +30,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             if (!DesignMode)
             {
                 UpdateAuthUI();
-                LoadGistsAsync();
+                LoadPastesAsync();
             }
         }
 
-        public void SetGitHubToken(string token)
+        public void SetApiKey(string apiKey)
         {
-            _gistService.SetAccessToken(token);
+            _pasteService.SetApiKey(apiKey);
         }
 
-        public GitHubAuthService GetAuthService()
+        public PasteBinService GetPasteService()
         {
-            return _authService;
+            return _pasteService;
         }
 
         private void UpdateAuthUI()
         {
-            if (_authService.IsAuthenticated)
+            if (_pasteService.IsAuthenticated)
             {
                 signInButton.Text = "Sign Out";
-                userLabel.Text = $"Signed in as: {_authService.CurrentUser.Login}";
+                userLabel.Text = $"Signed in as: {_pasteService.CurrentUser}";
                 userLabel.Visible = true;
-                manageGistsLink.Visible = true;
+                managePastesLink.Visible = true;
                 myScriptsCheckBox.Enabled = true;
             }
             else
@@ -61,26 +59,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 signInButton.Text = "Sign In";
                 userLabel.Text = "";
                 userLabel.Visible = false;
-                manageGistsLink.Visible = false;
+                managePastesLink.Visible = false;
                 myScriptsCheckBox.Enabled = false;
                 myScriptsCheckBox.Checked = false;
             }
         }
 
-        private async void LoadGistsAsync()
+        private async void LoadPastesAsync()
         {
             try
             {
-                statusLabel.Text = "Loading scripts from GitHub Gists...";
+                statusLabel.Text = "Loading scripts from PasteBin...";
                 statusLabel.ForeColor = SystemColors.ControlText;
                 refreshButton.Enabled = false;
                 scriptListView.Items.Clear();
 
-                var gists = await _gistService.SearchScriptGistsAsync();
-                _allGists = gists;
+                var pastes = await _pasteService.SearchScriptPastesAsync();
+                _allPastes = pastes;
                 
                 // Apply filters
-                FilterAndDisplayGists();
+                FilterAndDisplayPastes();
             }
             catch (Exception ex)
             {
@@ -93,152 +91,127 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        private void FilterAndDisplayGists()
+        private void FilterAndDisplayPastes()
         {
-            var filteredGists = _allGists.AsEnumerable();
+            var filteredPastes = _allPastes.AsEnumerable();
 
             // Filter by current user if checkbox is checked
-            if (myScriptsCheckBox.Checked && _authService.IsAuthenticated)
+            if (myScriptsCheckBox.Checked && _pasteService.IsAuthenticated)
             {
-                var currentUserLogin = _authService.CurrentUser.Login;
-                filteredGists = filteredGists.Where(g => 
-                    g.Owner?.Login?.Equals(currentUserLogin, StringComparison.OrdinalIgnoreCase) == true);
+                var currentUser = _pasteService.CurrentUser;
+                filteredPastes = filteredPastes.Where(p => 
+                    p.Author?.Equals(currentUser, StringComparison.OrdinalIgnoreCase) == true);
             }
 
             // Filter by search text
             if (!string.IsNullOrWhiteSpace(searchTextBox.Text))
             {
                 var searchText = searchTextBox.Text.ToLower();
-                filteredGists = filteredGists.Where(g =>
-                    (g.Description?.ToLower().Contains(searchText) == true) ||
-                    (g.Owner?.Login?.ToLower().Contains(searchText) == true) ||
-                    (g.GetFirstPowerShellFile()?.ToLower().Contains(searchText) == true));
+                filteredPastes = filteredPastes.Where(p =>
+                    (p.Title?.ToLower().Contains(searchText) == true) ||
+                    (p.Author?.ToLower().Contains(searchText) == true));
             }
 
-            _currentGists = filteredGists.ToList();
+            _currentPastes = filteredPastes.ToList();
 
-            if (_currentGists.Count == 0)
+            if (_currentPastes.Count == 0)
             {
-                statusLabel.Text = "No scripts found. Try adjusting your filters or search terms.";
+                statusLabel.Text = "No scripts found. Sign in to see your pastes.";
                 statusLabel.ForeColor = Color.Gray;
                 scriptListView.Items.Clear();
             }
             else
             {
-                PopulateGistList(_currentGists);
-                statusLabel.Text = $"Found {_currentGists.Count} script(s)";
-                if (_currentGists.Count != _allGists.Count)
+                PopulatePasteList(_currentPastes);
+                statusLabel.Text = $"Found {_currentPastes.Count} script(s)";
+                if (_currentPastes.Count != _allPastes.Count)
                 {
-                    statusLabel.Text += $" (filtered from {_allGists.Count} total)";
+                    statusLabel.Text += $" (filtered from {_allPastes.Count} total)";
                 }
                 statusLabel.ForeColor = SystemColors.ControlText;
             }
         }
 
-        private void PopulateGistList(List<GistInfo> gists)
+        private void PopulatePasteList(List<PasteInfo> pastes)
         {
             scriptListView.Items.Clear();
 
-            foreach (var gist in gists)
+            foreach (var paste in pastes)
             {
                 var item = new ListViewItem(new[]
                 {
-                    GetGistTitle(gist),
-                    gist.Owner?.Login ?? "Unknown",
-                    gist.UpdatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                    paste.GetDisplayTitle(),
+                    paste.Author ?? "Unknown",
+                    paste.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
                 });
-                item.Tag = gist;
+                item.Tag = paste;
                 scriptListView.Items.Add(item);
             }
-
-            // Auto-resize columns
-            if (scriptListView.Items.Count > 0)
-            {
-                scriptListView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
-                scriptListView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
-            }
-        }
-
-        private string GetGistTitle(GistInfo gist)
-        {
-            if (!string.IsNullOrEmpty(gist.Description))
-            {
-                // Remove the hashtag from display
-                var title = gist.Description.Replace("#rnwdataversepowershell", "").Trim();
-                if (!string.IsNullOrWhiteSpace(title))
-                {
-                    return title;
-                }
-            }
-
-            // Fallback to first PowerShell file name
-            var fileName = gist.GetFirstPowerShellFile();
-            return !string.IsNullOrEmpty(fileName) ? fileName : "Untitled Script";
         }
 
         private void RefreshButton_Click(object sender, EventArgs e)
         {
-            LoadGistsAsync();
+            LoadPastesAsync();
         }
 
         private void OpenButton_Click(object sender, EventArgs e)
         {
-            OpenSelectedGist();
-        }
-
-        private void ScriptListView_DoubleClick(object sender, EventArgs e)
-        {
-            OpenSelectedGist();
-        }
-
-        private void OpenSelectedGist()
-        {
             if (scriptListView.SelectedItems.Count > 0)
             {
-                var gist = scriptListView.SelectedItems[0].Tag as GistInfo;
-                if (gist != null)
+                var selectedItem = scriptListView.SelectedItems[0];
+                var paste = selectedItem.Tag as PasteInfo;
+                if (paste != null)
                 {
-                    OpenGistRequested?.Invoke(this, gist);
+                    OpenPasteRequested?.Invoke(this, paste);
                 }
             }
         }
 
         private void ScriptListView_SelectedIndexChanged(object sender, EventArgs e)
         {
-            openButton.Enabled = scriptListView.SelectedItems.Count > 0;
-            
             if (scriptListView.SelectedItems.Count > 0)
             {
-                var gist = scriptListView.SelectedItems[0].Tag as GistInfo;
-                if (gist != null)
+                var selectedItem = scriptListView.SelectedItems[0];
+                var paste = selectedItem.Tag as PasteInfo;
+                if (paste != null)
                 {
-                    UpdateDescriptionPanel(gist);
+                    UpdateDescriptionPanel(paste);
+                    openButton.Enabled = true;
                 }
             }
             else
             {
-                descriptionTextBox.Clear();
+                openButton.Enabled = false;
             }
         }
 
-        private void UpdateDescriptionPanel(GistInfo gist)
+        private void ScriptListView_DoubleClick(object sender, EventArgs e)
         {
-            var description = gist.Description ?? "No description available";
-            var fileName = gist.GetFirstPowerShellFile() ?? "N/A";
-            var fileSize = gist.Files?.Values.FirstOrDefault()?.Size ?? 0;
+            if (scriptListView.SelectedItems.Count > 0)
+            {
+                var selectedItem = scriptListView.SelectedItems[0];
+                var paste = selectedItem.Tag as PasteInfo;
+                if (paste != null)
+                {
+                    OpenPasteRequested?.Invoke(this, paste);
+                }
+            }
+        }
+
+        private void UpdateDescriptionPanel(PasteInfo paste)
+        {
+            var description = paste.Title ?? "No description available";
             
             descriptionTextBox.Text = $"Description: {description}\r\n\r\n" +
-                                     $"File: {fileName}\r\n" +
-                                     $"Size: {fileSize} bytes\r\n" +
-                                     $"Owner: {gist.Owner?.Login ?? "Unknown"}\r\n" +
-                                     $"Created: {gist.CreatedAt.ToLocalTime():yyyy-MM-dd HH:mm}\r\n" +
-                                     $"Updated: {gist.UpdatedAt.ToLocalTime():yyyy-MM-dd HH:mm}\r\n" +
-                                     $"URL: {gist.HtmlUrl}";
+                                     $"Size: {paste.Size} bytes\r\n" +
+                                     $"Author: {paste.Author ?? "Unknown"}\r\n" +
+                                     $"Created: {paste.CreatedAt.ToLocalTime():yyyy-MM-dd HH:mm}\r\n" +
+                                     $"URL: {paste.Url}";
         }
 
         private async void SignInButton_Click(object sender, EventArgs e)
         {
-            if (_authService.IsAuthenticated)
+            if (_pasteService.IsAuthenticated)
             {
                 // Sign out
                 var result = MessageBox.Show("Are you sure you want to sign out?", 
@@ -246,188 +219,48 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 
                 if (result == DialogResult.Yes)
                 {
-                    _authService.SignOut();
-                    _gistService.SetAccessToken(null);
+                    _pasteService.SignOut();
                     UpdateAuthUI();
+                    LoadPastesAsync();
                 }
             }
             else
             {
-                // Sign in - show options
-                await ShowSignInOptionsAsync();
+                // Sign in
+                await SignInToPasteBinAsync();
             }
         }
 
-        private async Task ShowSignInOptionsAsync()
+        private async Task SignInToPasteBinAsync()
         {
-            using (var optionsDialog = new Form())
+            using (var dialog = new PasteBinAuthDialog())
             {
-                optionsDialog.Text = "Sign In to GitHub";
-                optionsDialog.Size = new System.Drawing.Size(400, 200);
-                optionsDialog.FormBorderStyle = FormBorderStyle.FixedDialog;
-                optionsDialog.StartPosition = FormStartPosition.CenterParent;
-                optionsDialog.MaximizeBox = false;
-                optionsDialog.MinimizeBox = false;
-
-                var label = new Label
-                {
-                    Text = "Choose your sign-in method:",
-                    Location = new System.Drawing.Point(20, 20),
-                    Size = new System.Drawing.Size(350, 20)
-                };
-
-                var browserButton = new Button
-                {
-                    Text = "Sign in with Browser (Recommended)",
-                    Location = new System.Drawing.Point(20, 50),
-                    Size = new System.Drawing.Size(340, 35)
-                };
-                browserButton.Click += async (s, e) =>
-                {
-                    optionsDialog.DialogResult = DialogResult.OK;
-                    optionsDialog.Tag = "browser";
-                    optionsDialog.Close();
-                };
-
-                var tokenButton = new Button
-                {
-                    Text = "Sign in with Personal Access Token",
-                    Location = new System.Drawing.Point(20, 90),
-                    Size = new System.Drawing.Size(340, 35)
-                };
-                tokenButton.Click += (s, e) =>
-                {
-                    optionsDialog.DialogResult = DialogResult.OK;
-                    optionsDialog.Tag = "token";
-                    optionsDialog.Close();
-                };
-
-                var cancelButton = new Button
-                {
-                    Text = "Cancel",
-                    Location = new System.Drawing.Point(250, 130),
-                    Size = new System.Drawing.Size(110, 30),
-                    DialogResult = DialogResult.Cancel
-                };
-
-                optionsDialog.Controls.AddRange(new Control[] { label, browserButton, tokenButton, cancelButton });
-                optionsDialog.CancelButton = cancelButton;
-
-                var result = optionsDialog.ShowDialog();
-                if (result == DialogResult.OK)
-                {
-                    var method = optionsDialog.Tag as string;
-                    if (method == "browser")
-                    {
-                        await SignInWithBrowserAsync();
-                    }
-                    else if (method == "token")
-                    {
-                        await SignInWithTokenAsync();
-                    }
-                }
-            }
-        }
-
-        private async Task SignInWithBrowserAsync()
-        {
-            try
-            {
-                if (await _authService.AuthenticateWithDeviceFlowAsync())
-                {
-                    _gistService.SetAccessToken(_authService.AccessToken);
-                    UpdateAuthUI();
-                    MessageBox.Show($"Successfully signed in as {_authService.CurrentUser.Login}!",
-                        "Sign In Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Sign in failed: {ex.Message}",
-                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private async Task SignInWithTokenAsync()
-        {
-            using (var tokenDialog = new Form())
-            {
-                tokenDialog.Text = "Sign in with Personal Access Token";
-                tokenDialog.Size = new System.Drawing.Size(500, 250);
-                tokenDialog.FormBorderStyle = FormBorderStyle.FixedDialog;
-                tokenDialog.StartPosition = FormStartPosition.CenterParent;
-                tokenDialog.MaximizeBox = false;
-                tokenDialog.MinimizeBox = false;
-
-                var label = new Label
-                {
-                    Text = "Enter your GitHub Personal Access Token:",
-                    Location = new System.Drawing.Point(20, 20),
-                    Size = new System.Drawing.Size(450, 20)
-                };
-
-                var tokenTextBox = new TextBox
-                {
-                    Location = new System.Drawing.Point(20, 50),
-                    Size = new System.Drawing.Size(440, 20),
-                    UseSystemPasswordChar = true
-                };
-
-                var linkLabel = new LinkLabel
-                {
-                    Text = "Create token at: https://github.com/settings/tokens (scope: gist)",
-                    Location = new System.Drawing.Point(20, 80),
-                    Size = new System.Drawing.Size(450, 20)
-                };
-                linkLabel.LinkClicked += (s, e) =>
+                if (dialog.ShowDialog() == DialogResult.OK)
                 {
                     try
                     {
-                        Process.Start(new ProcessStartInfo
+                        var success = await _pasteService.AuthenticateAsync(
+                            dialog.ApiKey, 
+                            dialog.Username, 
+                            dialog.Password);
+
+                        if (success)
                         {
-                            FileName = "https://github.com/settings/tokens",
-                            UseShellExecute = true
-                        });
+                            UpdateAuthUI();
+                            MessageBox.Show($"Successfully signed in as {_pasteService.CurrentUser}!",
+                                "Sign In Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            LoadPastesAsync();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Sign in failed. Please check your credentials and try again.",
+                                "Sign In Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
-                    catch { }
-                };
-
-                var infoLabel = new Label
-                {
-                    Text = "The token will be validated when you click OK.",
-                    Location = new System.Drawing.Point(20, 110),
-                    Size = new System.Drawing.Size(450, 40),
-                    ForeColor = Color.Gray
-                };
-
-                var okButton = new Button
-                {
-                    Text = "OK",
-                    Location = new System.Drawing.Point(250, 160),
-                    Size = new System.Drawing.Size(100, 30),
-                    DialogResult = DialogResult.OK
-                };
-
-                var cancelButton = new Button
-                {
-                    Text = "Cancel",
-                    Location = new System.Drawing.Point(360, 160),
-                    Size = new System.Drawing.Size(100, 30),
-                    DialogResult = DialogResult.Cancel
-                };
-
-                tokenDialog.Controls.AddRange(new Control[] { label, tokenTextBox, linkLabel, infoLabel, okButton, cancelButton });
-                tokenDialog.AcceptButton = okButton;
-                tokenDialog.CancelButton = cancelButton;
-
-                if (tokenDialog.ShowDialog() == DialogResult.OK && !string.IsNullOrWhiteSpace(tokenTextBox.Text))
-                {
-                    if (await _authService.AuthenticateWithTokenAsync(tokenTextBox.Text))
+                    catch (Exception ex)
                     {
-                        _gistService.SetAccessToken(_authService.AccessToken);
-                        UpdateAuthUI();
-                        MessageBox.Show($"Successfully signed in as {_authService.CurrentUser.Login}!",
-                            "Sign In Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show($"Sign in error: {ex.Message}",
+                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -435,7 +268,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private void MyScriptsCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            FilterAndDisplayGists();
+            FilterAndDisplayPastes();
         }
 
         private void SearchTextBox_TextChanged(object sender, EventArgs e)
@@ -452,18 +285,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             _searchTimer.Tick += (s, args) =>
             {
                 _searchTimer.Stop();
-                FilterAndDisplayGists();
+                FilterAndDisplayPastes();
             };
             _searchTimer.Start();
         }
 
         private Timer _searchTimer;
 
-        private void ManageGistsLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void ManagePastesLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             try
             {
-                var url = $"https://gist.github.com/{_authService.CurrentUser.Login}";
+                var url = $"https://pastebin.com/u/{_pasteService.CurrentUser}";
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = url,
