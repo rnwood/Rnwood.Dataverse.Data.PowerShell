@@ -39,6 +39,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.editorToolbar = new System.Windows.Forms.ToolStrip();
             this.newScriptButton = new System.Windows.Forms.ToolStripButton();
             this.openScriptButton = new System.Windows.Forms.ToolStripButton();
+            this.saveToGistButton = new System.Windows.Forms.ToolStripButton();
             this.tabControl = new System.Windows.Forms.TabControl();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.completionStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
@@ -51,7 +52,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.editorToolbar.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.editorToolbar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newScriptButton,
-            this.openScriptButton});
+            this.openScriptButton,
+            this.saveToGistButton});
             this.editorToolbar.Location = new System.Drawing.Point(0, 0);
             this.editorToolbar.Name = "editorToolbar";
             this.editorToolbar.Size = new System.Drawing.Size(800, 31);
@@ -72,6 +74,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.openScriptButton.Size = new System.Drawing.Size(64, 28);
             this.openScriptButton.Text = "Open";
             this.openScriptButton.Click += new System.EventHandler(this.OpenScriptButton_Click);
+            // 
+            // saveToGistButton
+            // 
+            this.saveToGistButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.mdi__invoice_new;
+            this.saveToGistButton.Name = "saveToGistButton";
+            this.saveToGistButton.Size = new System.Drawing.Size(100, 28);
+            this.saveToGistButton.Text = "Save to Gist";
+            this.saveToGistButton.ToolTipText = "Save current script to GitHub Gist";
+            this.saveToGistButton.Click += new System.EventHandler(this.SaveToGistButton_Click);
             // 
             // tabControl
             // 
@@ -120,6 +131,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private ToolStrip editorToolbar;
         private ToolStripButton newScriptButton;
         private ToolStripButton openScriptButton;
+        private ToolStripButton saveToGistButton;
         private TabControl tabControl;
     }
 }

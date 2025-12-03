@@ -26,6 +26,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         public event EventHandler NewScriptRequested;
         public event EventHandler OpenScriptRequested;
         public event EventHandler SaveScriptRequested;
+        public event EventHandler SaveToGistRequested;
         public event EventHandler<CompletionItem> CompletionResolved;
 
         public ScriptEditorControl()
@@ -114,6 +115,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private void OpenScriptButton_Click(object sender, EventArgs e)
         {
             OpenScriptTab();
+        }
+
+        private void SaveToGistButton_Click(object sender, EventArgs e)
+        {
+            SaveToGist();
         }
 
         public async Task<string> GetScriptContentAsync()
@@ -331,6 +337,77 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
 
             return $"{baseStatus} ({_activeCompletionRequests} active)";
+        }
+
+        /// <summary>
+        /// Opens a script from a GitHub Gist in a new editor tab
+        /// </summary>
+        public async Task OpenFromGistAsync(GistInfo gist)
+        {
+            try
+            {
+                var content = gist.GetFirstPowerShellContent();
+                if (string.IsNullOrEmpty(content))
+                {
+                    MessageBox.Show("No PowerShell content found in this gist.",
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                var fileName = gist.GetFirstPowerShellFile() ?? "script.ps1";
+                var title = GetGistTitle(gist);
+                
+                TabPage tabPage = CreateScriptTab(title, null);
+                tabControl.TabPages.Add(tabPage);
+                tabControl.SelectedTab = tabPage;
+
+                // Store gist info in tab for later save
+                tabPage.Tag = gist;
+
+                // Initialize the webView
+                await tabData[tabPage].InitializeWebView();
+                tabData[tabPage].SetScriptContentAsync(content);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to open gist: {ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private string GetGistTitle(GistInfo gist)
+        {
+            if (!string.IsNullOrEmpty(gist.Description))
+            {
+                var title = gist.Description.Replace("#rnwdataversepowershell", "").Trim();
+                if (!string.IsNullOrWhiteSpace(title))
+                {
+                    return title;
+                }
+            }
+
+            var fileName = gist.GetFirstPowerShellFile();
+            return !string.IsNullOrEmpty(fileName) ? fileName : "Untitled Script";
+        }
+
+        /// <summary>
+        /// Gets the current tab's associated gist (if opened from gallery)
+        /// </summary>
+        public GistInfo GetCurrentTabGist()
+        {
+            if (tabControl.SelectedTab != null)
+            {
+                return tabControl.SelectedTab.Tag as GistInfo;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Saves the current script to a GitHub Gist
+        /// </summary>
+        public void SaveToGist()
+        {
+            SaveToGistRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 }

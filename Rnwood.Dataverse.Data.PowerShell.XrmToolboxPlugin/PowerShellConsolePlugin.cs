@@ -10,11 +10,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     public partial class PowerShellConsolePlugin : PluginControlBase, IGitHubPlugin, IPayPalPlugin
     {
         private CrmServiceClient service;
+        private GitHubGistService _gistService;
 
         public PowerShellConsolePlugin()
         {
             InitializeComponent();
             this.Load += PowerShellConsolePlugin_Load;
+            _gistService = new GitHubGistService();
         }
 
         public string RepositoryName => "Rnwood.Dataverse.Data.PowerShell";
@@ -79,7 +81,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 scriptEditorControl.NewScriptRequested += ScriptEditorControl_NewScriptRequested;
                 scriptEditorControl.OpenScriptRequested += ScriptEditorControl_OpenScriptRequested;
                 scriptEditorControl.SaveScriptRequested += ScriptEditorControl_SaveScriptRequested;
+                scriptEditorControl.SaveToGistRequested += ScriptEditorControl_SaveToGistRequested;
                 scriptEditorControl.CompletionResolved += ScriptEditorControl_CompletionResolved;
+
+                // Wire up script gallery events
+                scriptGalleryControl.OpenGistRequested += ScriptGalleryControl_OpenGistRequested;
             }
         }
 
@@ -135,6 +141,88 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private void ScriptEditorControl_SaveScriptRequested(object sender, EventArgs e)
         {
             scriptEditorControl.SaveScript();
+        }
+
+        private async void ScriptEditorControl_SaveToGistRequested(object sender, EventArgs e)
+        {
+            try
+            {
+                // Get script content
+                string script = await scriptEditorControl.GetScriptContentAsync();
+
+                if (string.IsNullOrWhiteSpace(script))
+                {
+                    MessageBox.Show("Script is empty. Please enter some PowerShell commands.",
+                        "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                // Check if this is an existing gist
+                var existingGist = scriptEditorControl.GetCurrentTabGist();
+
+                // Prompt for description and filename
+                using (var dialog = new GistSaveDialog(existingGist))
+                {
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                    {
+                        // Check if token is set
+                        if (string.IsNullOrEmpty(dialog.GitHubToken))
+                        {
+                            MessageBox.Show("GitHub Personal Access Token is required to save gists.\n\n" +
+                                          "Create a token at: https://github.com/settings/tokens\n" +
+                                          "Required scope: gist",
+                                "GitHub Token Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+
+                        _gistService.SetAccessToken(dialog.GitHubToken);
+
+                        GistInfo result;
+                        if (existingGist != null && dialog.UpdateExisting)
+                        {
+                            // Update existing gist
+                            result = await _gistService.UpdateGistAsync(
+                                existingGist.Id,
+                                dialog.Description,
+                                dialog.FileName,
+                                script);
+
+                            MessageBox.Show($"Gist updated successfully!\n\nURL: {result.HtmlUrl}",
+                                "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            // Create new gist
+                            result = await _gistService.CreateGistAsync(
+                                dialog.Description,
+                                dialog.FileName,
+                                script,
+                                dialog.IsPublic);
+
+                            MessageBox.Show($"Gist created successfully!\n\nURL: {result.HtmlUrl}",
+                                "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to save gist: {ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void ScriptGalleryControl_OpenGistRequested(object sender, GistInfo gist)
+        {
+            try
+            {
+                await scriptEditorControl.OpenFromGistAsync(gist);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to open gist: {ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         public override void ClosingPlugin(PluginCloseInfo info)
