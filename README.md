@@ -44,42 +44,31 @@ For detailed installation instructions, including versioning, see [Installation 
 ### Basic Usage
 
 ```powershell
-# Connect to Dataverse
-$c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive
+# Connect to Dataverse and set as default
+# omit the -Url for a menu
+Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive -setasdefault
 
 # Query records
-Get-DataverseRecord -Connection $c -TableName contact -FilterValues @{ lastname = 'Smith' }
+Get-DataverseRecord -TableName contact -FilterValues @{ lastname = 'Smith' }
 
 # Create a record
-Set-DataverseRecord -Connection $c -TableName contact -InputObject @{ 
+Set-DataverseRecord -TableName contact -InputObject @{ 
     firstname = 'John'
     lastname = 'Doe'
     emailaddress1 = 'john.doe@example.com'
 } -CreateOnly
 
 # Update a record
-Set-DataverseRecord -Connection $c -TableName contact -Id $contactId -InputObject @{ 
+Set-DataverseRecord -TableName contact -Id $contactId -InputObject @{ 
     description = 'Updated via PowerShell'
 }
 
 # Delete a record
-Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
+Remove-DataverseRecord -TableName contact -Id $contactId
 
-# Manage web resources
-# Upload a JavaScript file
-Set-DataverseWebResource -Connection $c -Name "new_myscript" -Path "./script.js" -DisplayName "My Script"
-
-# Download a web resource
-Get-DataverseWebResource -Connection $c -Name "new_myscript" -Path "./downloaded-script.js"
-
-# Upload all files from a folder (only if newer)
-Set-DataverseWebResource -Connection $c -Folder "./webresources" -PublisherPrefix "new" -IfNewer
-
-# Download all JavaScript web resources
-Get-DataverseWebResource -Connection $c -WebResourceType 3 -Folder "./downloaded"
 ```
 
-For more advanced scenarios including view management and app module management, see the [documentation](#documentation) section below.
+For more advanced scenarios including metadata and customisations, see the [documentation](#documentation) section below.
 
 ## Documentation
 
