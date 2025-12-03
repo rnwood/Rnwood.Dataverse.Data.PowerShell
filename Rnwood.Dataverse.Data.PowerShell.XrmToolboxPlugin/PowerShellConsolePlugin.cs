@@ -147,6 +147,31 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             try
             {
+                // Get auth service from gallery control
+                var authService = scriptGalleryControl.GetAuthService();
+
+                // Check if authenticated, if not prompt to sign in
+                if (!authService.IsAuthenticated)
+                {
+                    var signInResult = MessageBox.Show(
+                        "You need to sign in to GitHub to save scripts to Gists.\n\n" +
+                        "Would you like to sign in now?",
+                        "Authentication Required",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question);
+
+                    if (signInResult == DialogResult.Yes)
+                    {
+                        // Switch to gallery tab to trigger sign in
+                        tabControl.SelectedIndex = 1; // Switch to Script Gallery tab
+                        return;
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+
                 // Get script content
                 string script = await scriptEditorControl.GetScriptContentAsync();
 
@@ -160,22 +185,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 // Check if this is an existing gist
                 var existingGist = scriptEditorControl.GetCurrentTabGist();
 
-                // Prompt for description and filename
+                // Prompt for description and filename (no token needed)
                 using (var dialog = new GistSaveDialog(existingGist))
                 {
                     if (dialog.ShowDialog() == DialogResult.OK)
                     {
-                        // Check if token is set
-                        if (string.IsNullOrEmpty(dialog.GitHubToken))
-                        {
-                            MessageBox.Show("GitHub Personal Access Token is required to save gists.\n\n" +
-                                          "Create a token at: https://github.com/settings/tokens\n" +
-                                          "Required scope: gist",
-                                "GitHub Token Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
-
-                        _gistService.SetAccessToken(dialog.GitHubToken);
+                        _gistService.SetAccessToken(authService.AccessToken);
 
                         GistInfo result;
                         if (existingGist != null && dialog.UpdateExisting)

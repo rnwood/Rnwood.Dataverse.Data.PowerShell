@@ -35,9 +35,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.visibilityLabel = new System.Windows.Forms.Label();
             this.publicRadioButton = new System.Windows.Forms.RadioButton();
             this.privateRadioButton = new System.Windows.Forms.RadioButton();
-            this.tokenLabel = new System.Windows.Forms.Label();
-            this.tokenTextBox = new System.Windows.Forms.TextBox();
-            this.tokenLinkLabel = new System.Windows.Forms.LinkLabel();
             this.updateExistingCheckBox = new System.Windows.Forms.CheckBox();
             this.infoLabel = new System.Windows.Forms.Label();
             this.saveButton = new System.Windows.Forms.Button();
@@ -109,42 +106,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.privateRadioButton.Text = "Private (not visible in script gallery)";
             this.privateRadioButton.UseVisualStyleBackColor = true;
             // 
-            // tokenLabel
-            // 
-            this.tokenLabel.AutoSize = true;
-            this.tokenLabel.Location = new System.Drawing.Point(12, 252);
-            this.tokenLabel.Name = "tokenLabel";
-            this.tokenLabel.Size = new System.Drawing.Size(165, 13);
-            this.tokenLabel.TabIndex = 7;
-            this.tokenLabel.Text = "GitHub Personal Access Token:";
-            // 
-            // tokenTextBox
-            // 
-            this.tokenTextBox.Location = new System.Drawing.Point(15, 268);
-            this.tokenTextBox.Name = "tokenTextBox";
-            this.tokenTextBox.Size = new System.Drawing.Size(457, 20);
-            this.tokenTextBox.TabIndex = 8;
-            this.tokenTextBox.UseSystemPasswordChar = true;
-            // 
-            // tokenLinkLabel
-            // 
-            this.tokenLinkLabel.AutoSize = true;
-            this.tokenLinkLabel.Location = new System.Drawing.Point(12, 291);
-            this.tokenLinkLabel.Name = "tokenLinkLabel";
-            this.tokenLinkLabel.Size = new System.Drawing.Size(316, 13);
-            this.tokenLinkLabel.TabIndex = 9;
-            this.tokenLinkLabel.TabStop = true;
-            this.tokenLinkLabel.Text = "Create token at: https://github.com/settings/tokens (scope: gist)";
-            this.tokenLinkLabel.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler((s, e) => 
-                System.Diagnostics.Process.Start("https://github.com/settings/tokens"));
-            // 
             // updateExistingCheckBox
             // 
             this.updateExistingCheckBox.AutoSize = true;
-            this.updateExistingCheckBox.Location = new System.Drawing.Point(15, 320);
+            this.updateExistingCheckBox.Location = new System.Drawing.Point(15, 255);
             this.updateExistingCheckBox.Name = "updateExistingCheckBox";
             this.updateExistingCheckBox.Size = new System.Drawing.Size(245, 17);
-            this.updateExistingCheckBox.TabIndex = 10;
+            this.updateExistingCheckBox.TabIndex = 7;
             this.updateExistingCheckBox.Text = "Update existing gist (instead of creating new)";
             this.updateExistingCheckBox.UseVisualStyleBackColor = true;
             // 
@@ -156,15 +124,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.infoLabel.Location = new System.Drawing.Point(12, 15);
             this.infoLabel.Name = "infoLabel";
             this.infoLabel.Size = new System.Drawing.Size(100, 13);
-            this.infoLabel.TabIndex = 11;
+            this.infoLabel.TabIndex = 8;
             this.infoLabel.Text = "Opened from gist";
             // 
             // saveButton
             // 
-            this.saveButton.Location = new System.Drawing.Point(316, 353);
+            this.saveButton.Location = new System.Drawing.Point(316, 288);
             this.saveButton.Name = "saveButton";
             this.saveButton.Size = new System.Drawing.Size(75, 30);
-            this.saveButton.TabIndex = 12;
+            this.saveButton.TabIndex = 9;
             this.saveButton.Text = "Save";
             this.saveButton.UseVisualStyleBackColor = true;
             this.saveButton.Click += new System.EventHandler(this.SaveButton_Click);
@@ -172,10 +140,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // cancelButton
             // 
             this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancelButton.Location = new System.Drawing.Point(397, 353);
+            this.cancelButton.Location = new System.Drawing.Point(397, 288);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(75, 30);
-            this.cancelButton.TabIndex = 13;
+            this.cancelButton.TabIndex = 10;
             this.cancelButton.Text = "Cancel";
             this.cancelButton.UseVisualStyleBackColor = true;
             this.cancelButton.Click += new System.EventHandler(this.CancelButton_Click);
@@ -186,14 +154,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.cancelButton;
-            this.ClientSize = new System.Drawing.Size(484, 395);
+            this.ClientSize = new System.Drawing.Size(484, 330);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.saveButton);
             this.Controls.Add(this.infoLabel);
             this.Controls.Add(this.updateExistingCheckBox);
-            this.Controls.Add(this.tokenLinkLabel);
-            this.Controls.Add(this.tokenTextBox);
-            this.Controls.Add(this.tokenLabel);
             this.Controls.Add(this.privateRadioButton);
             this.Controls.Add(this.publicRadioButton);
             this.Controls.Add(this.visibilityLabel);
@@ -221,9 +186,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private System.Windows.Forms.Label visibilityLabel;
         private System.Windows.Forms.RadioButton publicRadioButton;
         private System.Windows.Forms.RadioButton privateRadioButton;
-        private System.Windows.Forms.Label tokenLabel;
-        private System.Windows.Forms.TextBox tokenTextBox;
-        private System.Windows.Forms.LinkLabel tokenLinkLabel;
         private System.Windows.Forms.CheckBox updateExistingCheckBox;
         private System.Windows.Forms.Label infoLabel;
         private System.Windows.Forms.Button saveButton;

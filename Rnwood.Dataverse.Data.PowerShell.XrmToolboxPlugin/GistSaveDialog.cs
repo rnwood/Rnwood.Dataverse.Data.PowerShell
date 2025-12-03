@@ -11,7 +11,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         public string FileName => fileNameTextBox.Text;
         public bool IsPublic => publicRadioButton.Checked;
         public bool UpdateExisting => updateExistingCheckBox.Checked;
-        public string GitHubToken => tokenTextBox.Text;
 
         public GistSaveDialog(GistInfo existingGist = null)
         {
@@ -69,16 +68,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 MessageBox.Show("File name must have .ps1 extension.", "Validation Error", 
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 fileNameTextBox.Focus();
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(tokenTextBox.Text))
-            {
-                MessageBox.Show("GitHub Personal Access Token is required.\n\n" +
-                              "Create a token at: https://github.com/settings/tokens\n" +
-                              "Required scope: gist", "Validation Error", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                tokenTextBox.Focus();
                 return;
             }
 

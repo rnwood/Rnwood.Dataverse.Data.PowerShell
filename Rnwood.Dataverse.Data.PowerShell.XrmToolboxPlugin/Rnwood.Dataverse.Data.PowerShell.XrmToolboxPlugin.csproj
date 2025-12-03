@@ -39,6 +39,7 @@
     <PackageReference Include="CliWrap" Version="3.9.0" />
     <PackageReference Include="Microsoft.PowerShell.EditorServices" Version="0.6.2.389" />
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" />
+    <PackageReference Include="Octokit" Version="13.0.1" />
   </ItemGroup>
 
   <ItemGroup>
