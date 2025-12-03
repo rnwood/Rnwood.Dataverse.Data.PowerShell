@@ -38,15 +38,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         /// <summary>
         /// Search for public gists containing the script tag in their description
+        /// Note: GitHub API doesn't support searching gists by description.
+        /// This method uses the code search API to find PowerShell files containing the tag,
+        /// then filters to gists only.
         /// </summary>
         public async Task<List<GistInfo>> SearchScriptGistsAsync()
         {
             try
             {
-                // GitHub API doesn't support searching gists by description directly
-                // We need to get public gists and filter them
-                // For a more targeted search, we'll use GitHub's search API for code
-                var searchUrl = $"{GITHUB_API_BASE}/search/code?q={Uri.EscapeDataString(SCRIPT_TAG)}+in:file+language:PowerShell&per_page=100";
+                // Strategy: Search for the hashtag in PowerShell code files
+                // The code search will find files in both repos and gists
+                var searchUrl = $"{GITHUB_API_BASE}/search/code?q={Uri.EscapeDataString(SCRIPT_TAG)}+language:PowerShell&per_page=100";
                 
                 var response = await _httpClient.GetAsync(searchUrl);
                 
@@ -59,24 +61,43 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 var content = await response.Content.ReadAsStringAsync();
                 var searchResult = JsonSerializer.Deserialize<GitHubSearchResult>(content);
 
-                // Get unique gist URLs from search results
-                var gistUrls = searchResult?.Items?
-                    .Where(item => item.Url != null && item.Url.Contains("/gists/"))
-                    .Select(item => ExtractGistIdFromUrl(item.Url))
-                    .Where(id => !string.IsNullOrEmpty(id))
-                    .Distinct()
-                    .ToList() ?? new List<string>();
+                // Extract gist IDs from search results
+                // GitHub URLs for gists look like: https://gist.github.com/{user}/{gist_id}
+                var gistIds = new HashSet<string>();
+                
+                if (searchResult?.Items != null)
+                {
+                    foreach (var item in searchResult.Items)
+                    {
+                        // Check if the HTML URL contains gist.github.com
+                        if (item.HtmlUrl != null && item.HtmlUrl.Contains("gist.github.com"))
+                        {
+                            var gistId = ExtractGistIdFromGistUrl(item.HtmlUrl);
+                            if (!string.IsNullOrEmpty(gistId))
+                            {
+                                gistIds.Add(gistId);
+                            }
+                        }
+                    }
+                }
 
                 // Fetch full gist details
                 var gists = new List<GistInfo>();
-                foreach (var gistId in gistUrls.Take(50)) // Limit to prevent too many API calls
+                foreach (var gistId in gistIds.Take(50)) // Limit to prevent too many API calls
                 {
                     try
                     {
                         var gist = await GetGistAsync(gistId);
-                        if (gist != null && gist.Description != null && gist.Description.Contains(SCRIPT_TAG))
+                        if (gist != null)
                         {
-                            gists.Add(gist);
+                            // Verify the gist contains the tag (in description or content)
+                            bool hasTag = (gist.Description != null && gist.Description.Contains(SCRIPT_TAG)) ||
+                                         (gist.GetFirstPowerShellContent()?.Contains(SCRIPT_TAG) == true);
+                            
+                            if (hasTag)
+                            {
+                                gists.Add(gist);
+                            }
                         }
                     }
                     catch
@@ -92,6 +113,32 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 return new List<GistInfo>();
             }
         }
+
+        private string ExtractGistIdFromGistUrl(string htmlUrl)
+        {
+            // Extract gist ID from URLs like: https://gist.github.com/username/1234567890abcdef
+            // or https://gist.github.com/1234567890abcdef
+            try
+            {
+                var uri = new Uri(htmlUrl);
+                var segments = uri.Segments;
+                // The gist ID is typically the last segment
+                var lastSegment = segments[segments.Length - 1].TrimEnd('/');
+                
+                // Gist IDs are typically 32 character hex strings or shorter alphanumeric
+                if (lastSegment.Length >= 20 && lastSegment.All(c => char.IsLetterOrDigit(c)))
+                {
+                    return lastSegment;
+                }
+            }
+            catch
+            {
+                // Return null on error
+            }
+            
+            return null;
+        }
+
 
         private string ExtractGistIdFromUrl(string url)
         {
