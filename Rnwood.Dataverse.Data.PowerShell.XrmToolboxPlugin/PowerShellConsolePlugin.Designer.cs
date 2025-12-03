@@ -41,6 +41,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.scriptEditorControl = new Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.ScriptEditorControl();
             this.consoleControl = new Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.ConsoleControl();
             this.helpControl = new Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.HelpControl();
+            this.discussionsControl = new Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.DiscussionsControl();
             this.tabControl = new System.Windows.Forms.TabControl();
             this.scriptGalleryControl = new Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.ScriptGalleryControl();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
@@ -140,6 +141,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             tabPageHelp.Text = "Help";
             tabPageHelp.UseVisualStyleBackColor = true;
             // 
+            // tabPageDiscussions
+            // 
+            var tabPageDiscussions = new System.Windows.Forms.TabPage();
+            tabPageDiscussions.Controls.Add(this.discussionsControl);
+            tabPageDiscussions.Location = new System.Drawing.Point(4, 24);
+            tabPageDiscussions.Name = "tabPageDiscussions";
+            tabPageDiscussions.Padding = new System.Windows.Forms.Padding(3);
+            tabPageDiscussions.Size = new System.Drawing.Size(516, 1044);
+            tabPageDiscussions.TabIndex = 2;
+            tabPageDiscussions.Text = "Discussions";
+            tabPageDiscussions.UseVisualStyleBackColor = true;
+            this.discussionsControl.Dock = DockStyle.Fill;
+            // 
             // tabPageScriptGallery
             // 
             var tabPageScriptGallery = new System.Windows.Forms.TabPage();
@@ -154,6 +168,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             tabPageScriptGallery.Controls.Add(this.scriptGalleryControl);
             // 
             this.tabControl.Controls.Add(tabPageHelp);
+            this.tabControl.Controls.Add(tabPageDiscussions);
             this.tabControl.Controls.Add(tabPageScriptGallery);
             this.tabControl.SuspendLayout();
             // 
@@ -184,6 +199,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private SplitContainer innerSplitContainer;
         private ConsoleControl consoleControl;
         private HelpControl helpControl;
+        private DiscussionsControl discussionsControl;
         private ScriptEditorControl scriptEditorControl;
         private TabControl tabControl;
         private ScriptGalleryControl scriptGalleryControl;

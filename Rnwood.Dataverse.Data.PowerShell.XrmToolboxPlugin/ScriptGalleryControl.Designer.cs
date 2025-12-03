@@ -37,6 +37,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private void InitializeComponent()
         {
             this.topPanel = new System.Windows.Forms.Panel();
+            this.warningPanel = new System.Windows.Forms.Panel();
+            this.warningLabel = new System.Windows.Forms.Label();
             this.signInButton = new System.Windows.Forms.Button();
             this.userLabel = new System.Windows.Forms.Label();
             this.manageGistsLink = new System.Windows.Forms.LinkLabel();
@@ -56,12 +58,38 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.descriptionLabel = new System.Windows.Forms.Label();
             
             this.topPanel.SuspendLayout();
+            this.warningPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
             this.splitContainer.Panel2.SuspendLayout();
             this.splitContainer.SuspendLayout();
             this.descriptionPanel.SuspendLayout();
             this.SuspendLayout();
+            
+            // 
+            // warningPanel
+            // 
+            this.warningPanel.BackColor = System.Drawing.Color.FromArgb(255, 243, 205);
+            this.warningPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.warningPanel.Controls.Add(this.warningLabel);
+            this.warningPanel.Dock = System.Windows.Forms.DockStyle.Top;
+            this.warningPanel.Location = new System.Drawing.Point(0, 0);
+            this.warningPanel.Name = "warningPanel";
+            this.warningPanel.Padding = new System.Windows.Forms.Padding(8);
+            this.warningPanel.Size = new System.Drawing.Size(516, 50);
+            this.warningPanel.TabIndex = 0;
+            
+            // 
+            // warningLabel
+            // 
+            this.warningLabel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.warningLabel.ForeColor = System.Drawing.Color.FromArgb(133, 100, 4);
+            this.warningLabel.Location = new System.Drawing.Point(8, 8);
+            this.warningLabel.Name = "warningLabel";
+            this.warningLabel.Size = new System.Drawing.Size(498, 32);
+            this.warningLabel.TabIndex = 0;
+            this.warningLabel.Text = "⚠ Warning: Community scripts are not moderated. Review code before running and only use scripts from trusted sources.";
+            this.warningLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             
             // 
             // topPanel
@@ -76,11 +104,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.topPanel.Controls.Add(this.searchTextBox);
             this.topPanel.Controls.Add(this.statusLabel);
             this.topPanel.Dock = System.Windows.Forms.DockStyle.Top;
-            this.topPanel.Location = new System.Drawing.Point(0, 0);
+            this.topPanel.Location = new System.Drawing.Point(0, 50);
             this.topPanel.Name = "topPanel";
             this.topPanel.Padding = new System.Windows.Forms.Padding(5);
             this.topPanel.Size = new System.Drawing.Size(516, 100);
-            this.topPanel.TabIndex = 0;
+            this.topPanel.TabIndex = 1;
             
             // 
             // signInButton
@@ -186,7 +214,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // splitContainer
             // 
             this.splitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer.Location = new System.Drawing.Point(0, 100);
+            this.splitContainer.Location = new System.Drawing.Point(0, 150);
             this.splitContainer.Name = "splitContainer";
             this.splitContainer.Orientation = System.Windows.Forms.Orientation.Horizontal;
             // 
@@ -197,9 +225,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // splitContainer.Panel2
             // 
             this.splitContainer.Panel2.Controls.Add(this.descriptionPanel);
-            this.splitContainer.Size = new System.Drawing.Size(516, 944);
-            this.splitContainer.SplitterDistance = 600;
-            this.splitContainer.TabIndex = 1;
+            this.splitContainer.Size = new System.Drawing.Size(516, 894);
+            this.splitContainer.SplitterDistance = 550;
+            this.splitContainer.TabIndex = 2;
             
             // 
             // scriptListView
@@ -281,10 +309,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // 
             this.Controls.Add(this.splitContainer);
             this.Controls.Add(this.topPanel);
+            this.Controls.Add(this.warningPanel);
             this.Name = "ScriptGalleryControl";
             this.Size = new System.Drawing.Size(516, 1044);
             this.BackColor = System.Drawing.SystemColors.Control;
             
+            this.warningPanel.ResumeLayout(false);
             this.topPanel.ResumeLayout(false);
             this.topPanel.PerformLayout();
             this.splitContainer.Panel1.ResumeLayout(false);
@@ -298,6 +328,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         #endregion
 
+        private Panel warningPanel;
+        private Label warningLabel;
         private Panel topPanel;
         private Button signInButton;
         private Label userLabel;
