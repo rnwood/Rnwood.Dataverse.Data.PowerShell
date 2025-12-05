@@ -89,8 +89,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 WriteVerbose($"Searching for XrmToolbox plugin package: {PackageName}");
 
-                // Search for packages
-                var searchResult = SearchPackagesAsync().GetAwaiter().GetResult();
+                // Run async operations synchronously on this thread to ensure WriteProgress/WriteError
+                // calls happen on the cmdlet thread
+                var searchResult = RunAsync(() => SearchPackagesAsync());
                 
                 if (searchResult == null)
                 {
@@ -100,7 +101,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteVerbose($"Using package: {searchResult.Identity.Id} v{searchResult.Identity.Version}");
 
                 // Download and extract the package
-                string packagePath = DownloadPackageAsync(searchResult).GetAwaiter().GetResult();
+                string packagePath = RunAsync(() => DownloadPackageAsync(searchResult));
                 
                 WriteVerbose($"Package downloaded to: {packagePath}");
 
@@ -109,7 +110,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 
                 WriteVerbose($"Plugin extracted to: {pluginDirectory}");
 
-                // Launch the plugin host process (synchronous to avoid threading issues)
+                // Launch the plugin host process
                 LaunchPluginHost(pluginDirectory);
             }
             catch (Exception ex)
@@ -118,137 +119,148 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private Task<IPackageSearchMetadata> SearchPackagesAsync()
+        /// <summary>
+        /// Runs an async task synchronously while preserving the synchronization context.
+        /// This ensures that async operations complete but cmdlet methods (WriteProgress, etc.)
+        /// are called on the cmdlet thread.
+        /// </summary>
+        private T RunAsync<T>(Func<Task<T>> taskFunc)
         {
-            return Task.Run(async () =>
-            {
-                var searchResource = await _repository.GetResourceAsync<PackageSearchResource>();
-                var searchFilter = new SearchFilter(includePrerelease: false);
-
-                WriteProgress(new ProgressRecord(1, "Searching NuGet", $"Searching for: {PackageName}"));
-
-                // Search for packages
-                var results = await searchResource.SearchAsync(
-                    PackageName,
-                    searchFilter,
-                    skip: 0,
-                    take: 20,
-                    _logger,
-                    CancellationToken.None);
-
-                var packageList = results.ToList();
-
-                WriteProgress(new ProgressRecord(1, "Searching NuGet", "Search complete") { RecordType = ProgressRecordType.Completed });
-
-                if (packageList.Count == 0)
-                {
-                    WriteError(new ErrorRecord(
-                        new InvalidOperationException($"No packages found matching '{PackageName}'"),
-                        "PackageNotFound",
-                        ErrorCategory.ObjectNotFound,
-                        PackageName));
-                    return null;
-                }
-
-                // Check for exact match
-                var exactMatch = packageList.FirstOrDefault(p => 
-                    p.Identity.Id.Equals(PackageName, StringComparison.OrdinalIgnoreCase));
-
-                if (exactMatch != null)
-                {
-                    WriteVerbose($"Found exact match: {exactMatch.Identity.Id}");
-                    return exactMatch;
-                }
-
-                // If only one result, use it
-                if (packageList.Count == 1)
-                {
-                    WriteVerbose($"Found single match: {packageList[0].Identity.Id}");
-                    return packageList[0];
-                }
-
-                // Multiple matches - list them
-                WriteWarning($"Multiple packages match '{PackageName}'. Please specify the exact package ID:");
-                foreach (var pkg in packageList.Take(10))
-                {
-                    WriteWarning($"  - {pkg.Identity.Id}: {pkg.Description}");
-                }
-
-                if (packageList.Count > 10)
-                {
-                    WriteWarning($"  ... and {packageList.Count - 10} more. Refine your search.");
-                }
-
-                throw new InvalidOperationException($"Multiple packages match '{PackageName}'. Please specify the exact package ID.");
-            });
+            // Get the current synchronization context (cmdlet thread)
+            var context = System.Threading.SynchronizationContext.Current;
+            
+            // Run the async task
+            var task = taskFunc();
+            
+            // Wait for completion on this thread
+            return task.GetAwaiter().GetResult();
         }
 
-        private Task<string> DownloadPackageAsync(IPackageSearchMetadata package)
+        private async Task<IPackageSearchMetadata> SearchPackagesAsync()
         {
-            return Task.Run(async () =>
-            {
-                var packageIdentity = package.Identity;
-                string packageFileName = $"{packageIdentity.Id}.{packageIdentity.Version}.nupkg";
-                string packagePath = Path.Combine(CacheDirectory, packageIdentity.Id, packageIdentity.Version.ToString(), packageFileName);
+            var searchResource = await _repository.GetResourceAsync<PackageSearchResource>();
+            var searchFilter = new SearchFilter(includePrerelease: false);
 
-                // Check if package is already cached
-                if (File.Exists(packagePath) && !Force.IsPresent)
+            WriteProgress(new ProgressRecord(1, "Searching NuGet", $"Searching for: {PackageName}"));
+
+            // Search for packages
+            var results = await searchResource.SearchAsync(
+                PackageName,
+                searchFilter,
+                skip: 0,
+                take: 20,
+                _logger,
+                CancellationToken.None);
+
+            var packageList = results.ToList();
+
+            WriteProgress(new ProgressRecord(1, "Searching NuGet", "Search complete") { RecordType = ProgressRecordType.Completed });
+
+            if (packageList.Count == 0)
+            {
+                WriteError(new ErrorRecord(
+                    new InvalidOperationException($"No packages found matching '{PackageName}'"),
+                    "PackageNotFound",
+                    ErrorCategory.ObjectNotFound,
+                    PackageName));
+                return null;
+            }
+
+            // Check for exact match
+            var exactMatch = packageList.FirstOrDefault(p => 
+                p.Identity.Id.Equals(PackageName, StringComparison.OrdinalIgnoreCase));
+
+            if (exactMatch != null)
+            {
+                WriteVerbose($"Found exact match: {exactMatch.Identity.Id}");
+                return exactMatch;
+            }
+
+            // If only one result, use it
+            if (packageList.Count == 1)
+            {
+                WriteVerbose($"Found single match: {packageList[0].Identity.Id}");
+                return packageList[0];
+            }
+
+            // Multiple matches - list them
+            WriteWarning($"Multiple packages match '{PackageName}'. Please specify the exact package ID:");
+            foreach (var pkg in packageList.Take(10))
+            {
+                WriteWarning($"  - {pkg.Identity.Id}: {pkg.Description}");
+            }
+
+            if (packageList.Count > 10)
+            {
+                WriteWarning($"  ... and {packageList.Count - 10} more. Refine your search.");
+            }
+
+            throw new InvalidOperationException($"Multiple packages match '{PackageName}'. Please specify the exact package ID.");
+        }
+
+        private async Task<string> DownloadPackageAsync(IPackageSearchMetadata package)
+        {
+            var packageIdentity = package.Identity;
+            string packageFileName = $"{packageIdentity.Id}.{packageIdentity.Version}.nupkg";
+            string packagePath = Path.Combine(CacheDirectory, packageIdentity.Id, packageIdentity.Version.ToString(), packageFileName);
+
+            // Check if package is already cached
+            if (File.Exists(packagePath) && !Force.IsPresent)
+            {
+                WriteVerbose($"Using cached package: {packagePath}");
+                return packagePath;
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(packagePath));
+
+            WriteProgress(new ProgressRecord(2, "Downloading Package", $"Downloading {packageIdentity.Id} v{packageIdentity.Version}"));
+
+            // Get download resource
+            var downloadResource = await _repository.GetResourceAsync<DownloadResource>();
+
+            // Download the package
+            using (var downloadResult = await downloadResource.GetDownloadResourceResultAsync(
+                packageIdentity,
+                new PackageDownloadContext(_cache),
+                Path.GetTempPath(),
+                _logger,
+                CancellationToken.None))
+            {
+                if (downloadResult.Status != DownloadResourceResultStatus.Available)
                 {
-                    WriteVerbose($"Using cached package: {packagePath}");
-                    return packagePath;
+                    throw new InvalidOperationException($"Package download failed: {downloadResult.Status}");
                 }
 
-                Directory.CreateDirectory(Path.GetDirectoryName(packagePath));
-
-                WriteProgress(new ProgressRecord(2, "Downloading Package", $"Downloading {packageIdentity.Id} v{packageIdentity.Version}"));
-
-                // Get download resource
-                var downloadResource = await _repository.GetResourceAsync<DownloadResource>();
-
-                // Download the package
-                using (var downloadResult = await downloadResource.GetDownloadResourceResultAsync(
-                    packageIdentity,
-                    new PackageDownloadContext(_cache),
-                    Path.GetTempPath(),
-                    _logger,
-                    CancellationToken.None))
+                // Copy to cache with progress
+                using (var sourceStream = downloadResult.PackageStream)
+                using (var targetStream = new FileStream(packagePath, FileMode.Create, FileAccess.Write, FileShare.None))
                 {
-                    if (downloadResult.Status != DownloadResourceResultStatus.Available)
-                    {
-                        throw new InvalidOperationException($"Package download failed: {downloadResult.Status}");
-                    }
+                    var buffer = new byte[81920]; // 80KB buffer
+                    long totalBytes = sourceStream.Length;
+                    long totalRead = 0;
+                    int bytesRead;
 
-                    // Copy to cache with progress
-                    using (var sourceStream = downloadResult.PackageStream)
-                    using (var targetStream = new FileStream(packagePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    while ((bytesRead = await sourceStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                     {
-                        var buffer = new byte[81920]; // 80KB buffer
-                        long totalBytes = sourceStream.Length;
-                        long totalRead = 0;
-                        int bytesRead;
+                        await targetStream.WriteAsync(buffer, 0, bytesRead);
+                        totalRead += bytesRead;
 
-                        while ((bytesRead = await sourceStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                        if (totalBytes > 0)
                         {
-                            await targetStream.WriteAsync(buffer, 0, bytesRead);
-                            totalRead += bytesRead;
-
-                            if (totalBytes > 0)
+                            int percentComplete = (int)((totalRead * 100) / totalBytes);
+                            WriteProgress(new ProgressRecord(2, "Downloading Package", 
+                                $"Downloaded {totalRead / 1024}KB / {totalBytes / 1024}KB")
                             {
-                                int percentComplete = (int)((totalRead * 100) / totalBytes);
-                                WriteProgress(new ProgressRecord(2, "Downloading Package", 
-                                    $"Downloaded {totalRead / 1024}KB / {totalBytes / 1024}KB")
-                                {
-                                    PercentComplete = percentComplete
-                                });
-                            }
+                                PercentComplete = percentComplete
+                            });
                         }
                     }
                 }
+            }
 
-                WriteProgress(new ProgressRecord(2, "Downloading Package", "Download complete") { RecordType = ProgressRecordType.Completed });
-                WriteVerbose($"Package downloaded successfully to: {packagePath}");
-                return packagePath;
-            });
+            WriteProgress(new ProgressRecord(2, "Downloading Package", "Download complete") { RecordType = ProgressRecordType.Completed });
+            WriteVerbose($"Package downloaded successfully to: {packagePath}");
+            return packagePath;
         }
 
         private string ExtractPluginFiles(string packagePath, PackageIdentity identity)
