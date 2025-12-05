@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.10" />
+    <PackageReference Include="MscrmTools.Xrm.Connection" Version="1.2025.9.64" />
     <PackageReference Include="XrmToolBoxPackage" Version="1.2025.10.74">
       <PrivateAssets>all</PrivateAssets>
       <ExcludeAssets>build;runtime</ExcludeAssets>

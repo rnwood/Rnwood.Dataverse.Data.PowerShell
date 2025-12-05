@@ -401,23 +401,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private string BuildConnectionString()
         {
             // Build a connection string from the current connection
-            // This is a simplified version - in production, you'd want to extract
-            // the actual connection details from the ServiceClient
             
             if (Connection == null)
             {
                 throw new InvalidOperationException("No connection available. Use Get-DataverseConnection first.");
             }
 
-            // For now, return a placeholder
-            // In a full implementation, you would extract:
-            // - Organization URL
-            // - Authentication type
-            // - Credentials (if applicable)
-            // And build a proper connection string
-            
+            // Extract URL
             var url = Connection.ConnectedOrgUriActual?.ToString() ?? "unknown";
-            return $"Url={url};";
+            
+            // Try to extract access token
+            string accessToken = null;
+            try
+            {
+                accessToken = Connection.CurrentAccessToken;
+            }
+            catch
+            {
+                // If we can't get the token, that's okay - the host will fall back to interactive auth
+            }
+
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                return $"Url={url};AccessToken={accessToken}";
+            }
+            else
+            {
+                return $"Url={url};";
+            }
         }
 
         /// <summary>
