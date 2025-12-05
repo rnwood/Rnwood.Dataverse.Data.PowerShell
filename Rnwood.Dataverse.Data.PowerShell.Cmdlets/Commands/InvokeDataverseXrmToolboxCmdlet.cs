@@ -109,7 +109,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 
                 WriteVerbose($"Plugin extracted to: {pluginDirectory}");
 
-                // Launch the plugin host process
+                // Launch the plugin host process (synchronous to avoid threading issues)
                 LaunchPluginHost(pluginDirectory);
             }
             catch (Exception ex)
@@ -118,131 +118,137 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private async Task<IPackageSearchMetadata> SearchPackagesAsync()
+        private Task<IPackageSearchMetadata> SearchPackagesAsync()
         {
-            var searchResource = await _repository.GetResourceAsync<PackageSearchResource>();
-            var searchFilter = new SearchFilter(includePrerelease: false);
-
-            WriteProgress(new ProgressRecord(1, "Searching NuGet", $"Searching for: {PackageName}"));
-
-            // Search for packages
-            var results = await searchResource.SearchAsync(
-                PackageName,
-                searchFilter,
-                skip: 0,
-                take: 20,
-                _logger,
-                CancellationToken.None);
-
-            var packageList = results.ToList();
-
-            WriteProgress(new ProgressRecord(1, "Searching NuGet", "Search complete") { RecordType = ProgressRecordType.Completed });
-
-            if (packageList.Count == 0)
+            return Task.Run(async () =>
             {
-                WriteError(new ErrorRecord(
-                    new InvalidOperationException($"No packages found matching '{PackageName}'"),
-                    "PackageNotFound",
-                    ErrorCategory.ObjectNotFound,
-                    PackageName));
-                return null;
-            }
+                var searchResource = await _repository.GetResourceAsync<PackageSearchResource>();
+                var searchFilter = new SearchFilter(includePrerelease: false);
 
-            // Check for exact match
-            var exactMatch = packageList.FirstOrDefault(p => 
-                p.Identity.Id.Equals(PackageName, StringComparison.OrdinalIgnoreCase));
+                WriteProgress(new ProgressRecord(1, "Searching NuGet", $"Searching for: {PackageName}"));
 
-            if (exactMatch != null)
-            {
-                WriteVerbose($"Found exact match: {exactMatch.Identity.Id}");
-                return exactMatch;
-            }
+                // Search for packages
+                var results = await searchResource.SearchAsync(
+                    PackageName,
+                    searchFilter,
+                    skip: 0,
+                    take: 20,
+                    _logger,
+                    CancellationToken.None);
 
-            // If only one result, use it
-            if (packageList.Count == 1)
-            {
-                WriteVerbose($"Found single match: {packageList[0].Identity.Id}");
-                return packageList[0];
-            }
+                var packageList = results.ToList();
 
-            // Multiple matches - list them
-            WriteWarning($"Multiple packages match '{PackageName}'. Please specify the exact package ID:");
-            foreach (var pkg in packageList.Take(10))
-            {
-                WriteWarning($"  - {pkg.Identity.Id}: {pkg.Description}");
-            }
+                WriteProgress(new ProgressRecord(1, "Searching NuGet", "Search complete") { RecordType = ProgressRecordType.Completed });
 
-            if (packageList.Count > 10)
-            {
-                WriteWarning($"  ... and {packageList.Count - 10} more. Refine your search.");
-            }
-
-            throw new InvalidOperationException($"Multiple packages match '{PackageName}'. Please specify the exact package ID.");
-        }
-
-        private async Task<string> DownloadPackageAsync(IPackageSearchMetadata package)
-        {
-            var packageIdentity = package.Identity;
-            string packageFileName = $"{packageIdentity.Id}.{packageIdentity.Version}.nupkg";
-            string packagePath = Path.Combine(CacheDirectory, packageIdentity.Id, packageIdentity.Version.ToString(), packageFileName);
-
-            // Check if package is already cached
-            if (File.Exists(packagePath) && !Force.IsPresent)
-            {
-                WriteVerbose($"Using cached package: {packagePath}");
-                return packagePath;
-            }
-
-            Directory.CreateDirectory(Path.GetDirectoryName(packagePath));
-
-            WriteProgress(new ProgressRecord(2, "Downloading Package", $"Downloading {packageIdentity.Id} v{packageIdentity.Version}"));
-
-            // Get download resource
-            var downloadResource = await _repository.GetResourceAsync<DownloadResource>();
-
-            // Download the package
-            using (var downloadResult = await downloadResource.GetDownloadResourceResultAsync(
-                packageIdentity,
-                new PackageDownloadContext(_cache),
-                Path.GetTempPath(),
-                _logger,
-                CancellationToken.None))
-            {
-                if (downloadResult.Status != DownloadResourceResultStatus.Available)
+                if (packageList.Count == 0)
                 {
-                    throw new InvalidOperationException($"Package download failed: {downloadResult.Status}");
+                    WriteError(new ErrorRecord(
+                        new InvalidOperationException($"No packages found matching '{PackageName}'"),
+                        "PackageNotFound",
+                        ErrorCategory.ObjectNotFound,
+                        PackageName));
+                    return null;
                 }
 
-                // Copy to cache with progress
-                using (var sourceStream = downloadResult.PackageStream)
-                using (var targetStream = new FileStream(packagePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                // Check for exact match
+                var exactMatch = packageList.FirstOrDefault(p => 
+                    p.Identity.Id.Equals(PackageName, StringComparison.OrdinalIgnoreCase));
+
+                if (exactMatch != null)
                 {
-                    var buffer = new byte[81920]; // 80KB buffer
-                    long totalBytes = sourceStream.Length;
-                    long totalRead = 0;
-                    int bytesRead;
+                    WriteVerbose($"Found exact match: {exactMatch.Identity.Id}");
+                    return exactMatch;
+                }
 
-                    while ((bytesRead = await sourceStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                // If only one result, use it
+                if (packageList.Count == 1)
+                {
+                    WriteVerbose($"Found single match: {packageList[0].Identity.Id}");
+                    return packageList[0];
+                }
+
+                // Multiple matches - list them
+                WriteWarning($"Multiple packages match '{PackageName}'. Please specify the exact package ID:");
+                foreach (var pkg in packageList.Take(10))
+                {
+                    WriteWarning($"  - {pkg.Identity.Id}: {pkg.Description}");
+                }
+
+                if (packageList.Count > 10)
+                {
+                    WriteWarning($"  ... and {packageList.Count - 10} more. Refine your search.");
+                }
+
+                throw new InvalidOperationException($"Multiple packages match '{PackageName}'. Please specify the exact package ID.");
+            });
+        }
+
+        private Task<string> DownloadPackageAsync(IPackageSearchMetadata package)
+        {
+            return Task.Run(async () =>
+            {
+                var packageIdentity = package.Identity;
+                string packageFileName = $"{packageIdentity.Id}.{packageIdentity.Version}.nupkg";
+                string packagePath = Path.Combine(CacheDirectory, packageIdentity.Id, packageIdentity.Version.ToString(), packageFileName);
+
+                // Check if package is already cached
+                if (File.Exists(packagePath) && !Force.IsPresent)
+                {
+                    WriteVerbose($"Using cached package: {packagePath}");
+                    return packagePath;
+                }
+
+                Directory.CreateDirectory(Path.GetDirectoryName(packagePath));
+
+                WriteProgress(new ProgressRecord(2, "Downloading Package", $"Downloading {packageIdentity.Id} v{packageIdentity.Version}"));
+
+                // Get download resource
+                var downloadResource = await _repository.GetResourceAsync<DownloadResource>();
+
+                // Download the package
+                using (var downloadResult = await downloadResource.GetDownloadResourceResultAsync(
+                    packageIdentity,
+                    new PackageDownloadContext(_cache),
+                    Path.GetTempPath(),
+                    _logger,
+                    CancellationToken.None))
+                {
+                    if (downloadResult.Status != DownloadResourceResultStatus.Available)
                     {
-                        await targetStream.WriteAsync(buffer, 0, bytesRead);
-                        totalRead += bytesRead;
+                        throw new InvalidOperationException($"Package download failed: {downloadResult.Status}");
+                    }
 
-                        if (totalBytes > 0)
+                    // Copy to cache with progress
+                    using (var sourceStream = downloadResult.PackageStream)
+                    using (var targetStream = new FileStream(packagePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        var buffer = new byte[81920]; // 80KB buffer
+                        long totalBytes = sourceStream.Length;
+                        long totalRead = 0;
+                        int bytesRead;
+
+                        while ((bytesRead = await sourceStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                         {
-                            int percentComplete = (int)((totalRead * 100) / totalBytes);
-                            WriteProgress(new ProgressRecord(2, "Downloading Package", 
-                                $"Downloaded {totalRead / 1024}KB / {totalBytes / 1024}KB")
+                            await targetStream.WriteAsync(buffer, 0, bytesRead);
+                            totalRead += bytesRead;
+
+                            if (totalBytes > 0)
                             {
-                                PercentComplete = percentComplete
-                            });
+                                int percentComplete = (int)((totalRead * 100) / totalBytes);
+                                WriteProgress(new ProgressRecord(2, "Downloading Package", 
+                                    $"Downloaded {totalRead / 1024}KB / {totalBytes / 1024}KB")
+                                {
+                                    PercentComplete = percentComplete
+                                });
+                            }
                         }
                     }
                 }
-            }
 
-            WriteProgress(new ProgressRecord(2, "Downloading Package", "Download complete") { RecordType = ProgressRecordType.Completed });
-            WriteVerbose($"Package downloaded successfully to: {packagePath}");
-            return packagePath;
+                WriteProgress(new ProgressRecord(2, "Downloading Package", "Download complete") { RecordType = ProgressRecordType.Completed });
+                WriteVerbose($"Package downloaded successfully to: {packagePath}");
+                return packagePath;
+            });
         }
 
         private string ExtractPluginFiles(string packagePath, PackageIdentity identity)
@@ -328,6 +334,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             WriteVerbose($"  Plugin directory: {pluginsPath}");
             WriteVerbose($"  Pipe name: {pipeName}");
 
+            // Start token provider server
+            var tokenServerTask = Task.Run(() => StartTokenServer(pipeName));
+
             // Launch the host process
             var processStartInfo = new System.Diagnostics.ProcessStartInfo
             {
@@ -346,20 +355,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     WriteVerbose("Plugin host process started");
                     WriteProgress(new ProgressRecord(4, "Launching Plugin", "Plugin host started") { RecordType = ProgressRecordType.Completed });
                     
-                    // Read output
-                    string output = process.StandardOutput.ReadToEnd();
-                    string error = process.StandardError.ReadToEnd();
-                    
-                    if (!string.IsNullOrEmpty(output))
+                    // Monitor process output in background
+                    var outputTask = Task.Run(() =>
                     {
-                        WriteVerbose($"Host output: {output}");
-                    }
-                    
-                    if (!string.IsNullOrEmpty(error))
+                        string line;
+                        while ((line = process.StandardOutput.ReadLine()) != null)
+                        {
+                            WriteVerbose($"Host: {line}");
+                        }
+                    });
+
+                    var errorTask = Task.Run(() =>
                     {
-                        WriteWarning($"Host errors: {error}");
-                    }
+                        string line;
+                        while ((line = process.StandardError.ReadLine()) != null)
+                        {
+                            WriteWarning($"Host: {line}");
+                        }
+                    });
                     
+                    // Wait for process to exit
                     process.WaitForExit();
                     
                     if (process.ExitCode != 0)
@@ -371,6 +386,68 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     throw new InvalidOperationException("Failed to start plugin host process");
                 }
+            }
+        }
+
+        private void StartTokenServer(string pipeName)
+        {
+            try
+            {
+                WriteVerbose($"Starting token server on pipe: {pipeName}");
+                
+                // Create named pipe server that provides tokens on demand
+                while (true)
+                {
+                    try
+                    {
+                        using (var pipeServer = new System.IO.Pipes.NamedPipeServerStream(
+                            pipeName,
+                            System.IO.Pipes.PipeDirection.Out,
+                            System.IO.Pipes.NamedPipeServerStream.MaxAllowedServerInstances,
+                            System.IO.Pipes.PipeTransmissionMode.Message,
+                            System.IO.Pipes.PipeOptions.Asynchronous))
+                        {
+                            WriteVerbose("Token server: Waiting for connection...");
+                            pipeServer.WaitForConnection();
+                            WriteVerbose("Token server: Client connected, providing token");
+
+                            try
+                            {
+                                // Get fresh token from connection
+                                string token = Connection?.CurrentAccessToken;
+
+                                if (!string.IsNullOrEmpty(token))
+                                {
+                                    using (var writer = new System.IO.StreamWriter(pipeServer))
+                                    {
+                                        writer.AutoFlush = true;
+                                        writer.Write(token);
+                                    }
+                                    WriteVerbose($"Token server: Token sent ({token.Length} characters)");
+                                }
+                                else
+                                {
+                                    WriteWarning("Token server: No token available");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                WriteVerbose($"Token server: Error sending token: {ex.Message}");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        WriteVerbose($"Token server: Connection error: {ex.Message}");
+                        break;
+                    }
+                }
+                
+                WriteVerbose("Token server stopped");
+            }
+            catch (Exception ex)
+            {
+                WriteWarning($"Token server failed: {ex.Message}");
             }
         }
 
@@ -407,28 +484,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 throw new InvalidOperationException("No connection available. Use Get-DataverseConnection first.");
             }
 
-            // Extract URL
+            // Extract URL - token will be provided through named pipe on demand
             var url = Connection.ConnectedOrgUriActual?.ToString() ?? "unknown";
             
-            // Try to extract access token
-            string accessToken = null;
-            try
-            {
-                accessToken = Connection.CurrentAccessToken;
-            }
-            catch
-            {
-                // If we can't get the token, that's okay - the host will fall back to interactive auth
-            }
-
-            if (!string.IsNullOrEmpty(accessToken))
-            {
-                return $"Url={url};AccessToken={accessToken}";
-            }
-            else
-            {
-                return $"Url={url};";
-            }
+            return $"Url={url};";
         }
 
         /// <summary>

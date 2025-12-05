@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using McTools.Xrm.Connection;
-using Microsoft.Xrm.Tooling.Connector;
+using Microsoft.PowerPlatform.Dataverse.Client;
 using XrmToolBox.Extensibility;
 using XrmToolBox.Extensibility.Interfaces;
 
@@ -20,9 +20,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
     /// </summary>
     class Program
     {
-        private static CancellationTokenSource _namedPipeCancellation;
         private static string _pipeName;
-        private static CrmServiceClient _serviceClient;
+        private static ServiceClient _serviceClient;
 
         [STAThread]
         static int Main(string[] args)
@@ -58,7 +57,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
 
                 Console.WriteLine($"Plugin loaded: {plugin.GetType().FullName}");
 
-                // Create connection
+                // Create connection with external token management
                 _serviceClient = CreateConnection(connectionString);
 
                 if (_serviceClient == null)
@@ -68,9 +67,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
                 }
 
                 Console.WriteLine("Connection established");
-
-                // Start named pipe server for token refresh
-                StartNamedPipeServer();
 
                 // Show the plugin in a form
                 Application.EnableVisualStyles();
@@ -99,8 +95,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
                     form.Controls.Add(control);
                 }
 
-                form.FormClosing += (s, e) => StopNamedPipeServer();
-
                 // Update connection using reflection to call OnConnectionUpdated
                 try
                 {
@@ -119,7 +113,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
 
                     if (eventArgsType != null)
                     {
-                        var constructor = eventArgsType.GetConstructor(new[] { typeof(object), typeof(CrmServiceClient) });
+                        // Try to find a constructor that accepts ServiceClient or its base types
+                        var constructor = eventArgsType.GetConstructor(new[] { typeof(object), typeof(ServiceClient) });
+                        
+                        if (constructor == null)
+                        {
+                            // Try with IOrganizationService
+                            constructor = eventArgsType.GetConstructor(new[] { typeof(object), typeof(Microsoft.Xrm.Sdk.IOrganizationService) });
+                        }
+                        
                         if (constructor != null)
                         {
                             var eventArgs = constructor.Invoke(new object[] { null, _serviceClient });
@@ -140,6 +142,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
                                 baseType = baseType.BaseType;
                             }
                         }
+                        else
+                        {
+                            Console.WriteLine("Warning: Could not find suitable constructor for ConnectionUpdatedEventArgs");
+                        }
                     }
                     else
                     {
@@ -154,7 +160,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
                 Application.Run(form);
 
                 Console.WriteLine("Plugin host exiting");
-                StopNamedPipeServer();
                 return 0;
             }
             catch (Exception ex)
@@ -165,17 +170,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
             }
         }
 
-        static CrmServiceClient CreateConnection(string connectionString)
+        static ServiceClient CreateConnection(string connectionString)
         {
             try
             {
                 Console.WriteLine("Creating connection from connection string...");
                 
                 // Parse simple connection string format
-                // Expected format: "Url=https://org.crm.dynamics.com;AccessToken=token"
+                // Expected format: "Url=https://org.crm.dynamics.com"
                 var parts = connectionString.Split(';');
                 string url = null;
-                string accessToken = null;
 
                 foreach (var part in parts)
                 {
@@ -189,10 +193,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
                         {
                             url = value;
                         }
-                        else if (key.Equals("AccessToken", StringComparison.OrdinalIgnoreCase))
-                        {
-                            accessToken = value;
-                        }
                     }
                 }
 
@@ -204,20 +204,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
 
                 Console.WriteLine($"Connecting to: {url}");
 
-                // Create client - will use interactive auth if no token provided
-                CrmServiceClient client;
-                
-                if (!string.IsNullOrEmpty(accessToken) && accessToken != "unknown")
-                {
-                    // Use provided access token
-                    client = new CrmServiceClient($"AuthType=OAuth;Url={url};AccessToken={accessToken};RequireNewInstance=True");
-                }
-                else
-                {
-                    // Fall back to interactive auth
-                    Console.WriteLine("No access token provided, using interactive authentication");
-                    client = new CrmServiceClient($"AuthType=OAuth;Url={url};AppId=51f81489-12ee-4a9e-aaae-a2591f45987d;RedirectUri=app://58145B91-0C36-4500-8554-080854F2AC97;LoginPrompt=Auto");
-                }
+                // Create client with external token management
+                // The token provider function will request tokens through the named pipe
+                var client = new ServiceClient(
+                    instanceUrl: new Uri(url),
+                    tokenProviderFunction: async (instanceUrl) =>
+                    {
+                        Console.WriteLine("Token requested - fetching from named pipe...");
+                        return await GetTokenFromPipeAsync();
+                    }
+                );
 
                 if (client.IsReady)
                 {
@@ -226,7 +222,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
                 }
                 else
                 {
-                    Console.Error.WriteLine($"Connection failed: {client.LastCrmError}");
+                    Console.Error.WriteLine($"Connection failed: {client.LastError}");
                     return null;
                 }
             }
@@ -237,68 +233,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
             }
         }
 
-        static void StartNamedPipeServer()
+        static async Task<string> GetTokenFromPipeAsync()
         {
-            _namedPipeCancellation = new CancellationTokenSource();
-
-            Task.Run(async () =>
+            try
             {
-                while (!_namedPipeCancellation.Token.IsCancellationRequested)
+                // Request token from parent process through named pipe
+                using (var pipeClient = new NamedPipeClientStream(".", _pipeName, PipeDirection.In))
                 {
-                    try
+                    await pipeClient.ConnectAsync(5000); // 5 second timeout
+                    
+                    using (var reader = new StreamReader(pipeClient))
                     {
-                        using (var pipeServer = new NamedPipeServerStream(
-                            _pipeName,
-                            PipeDirection.Out,
-                            NamedPipeServerStream.MaxAllowedServerInstances,
-                            PipeTransmissionMode.Message,
-                            PipeOptions.Asynchronous))
-                        {
-                            // Wait for client connection
-                            await pipeServer.WaitForConnectionAsync(_namedPipeCancellation.Token);
-
-                            try
-                            {
-                                // Extract fresh token
-                                string token = _serviceClient?.CurrentAccessToken;
-
-                                if (!string.IsNullOrEmpty(token))
-                                {
-                                    byte[] tokenBytes = Encoding.UTF8.GetBytes(token);
-                                    await pipeServer.WriteAsync(tokenBytes, 0, tokenBytes.Length, _namedPipeCancellation.Token);
-                                    await pipeServer.FlushAsync(_namedPipeCancellation.Token);
-                                    Console.WriteLine("Token sent via named pipe");
-                                }
-                            }
-                            catch (Exception)
-                            {
-                                // Ignore errors writing to pipe
-                            }
-                        }
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Named pipe error: {ex.Message}");
-                        // Ignore errors and retry
-                        if (!_namedPipeCancellation.Token.IsCancellationRequested)
-                        {
-                            await Task.Delay(100);
-                        }
+                        string token = await reader.ReadToEndAsync();
+                        Console.WriteLine($"Token received from named pipe ({token?.Length ?? 0} characters)");
+                        return token;
                     }
                 }
-            }, _namedPipeCancellation.Token);
-
-            Console.WriteLine($"Named pipe server started: {_pipeName}");
-        }
-
-        static void StopNamedPipeServer()
-        {
-            _namedPipeCancellation?.Cancel();
-            Console.WriteLine("Named pipe server stopped");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to retrieve token from named pipe: {ex.Message}");
+                throw;
+            }
         }
     }
 
