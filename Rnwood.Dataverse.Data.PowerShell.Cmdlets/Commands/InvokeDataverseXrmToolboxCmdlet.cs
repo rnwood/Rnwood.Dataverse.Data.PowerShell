@@ -4,10 +4,14 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Management.Automation;
-using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using Microsoft.PowerPlatform.Dataverse.Client;
+using NuGet.Common;
+using NuGet.Packaging.Core;
+using NuGet.Protocol;
+using NuGet.Protocol.Core.Types;
+using NuGet.Versioning;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -19,9 +23,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     public class InvokeDataverseXrmToolboxCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
-        /// The NuGet package ID of the XrmToolbox plugin to execute (e.g., "Cinteros.Xrm.FetchXMLBuilder").
+        /// The NuGet package ID of the XrmToolbox plugin to execute (e.g., "Cinteros.Xrm.FetchXMLBuilder"). Supports partial matching.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, HelpMessage = "The NuGet package ID of the XrmToolbox plugin to execute (e.g., \"Cinteros.Xrm.FetchXMLBuilder\").")]
+        [Parameter(Mandatory = true, Position = 0, HelpMessage = "The NuGet package ID of the XrmToolbox plugin to execute (e.g., \"Cinteros.Xrm.FetchXMLBuilder\"). Supports partial matching.")]
         [ValidateNotNullOrEmpty]
         public string PackageName { get; set; }
 
@@ -43,8 +47,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = false, HelpMessage = "Force re-download of the package even if it's already cached.")]
         public SwitchParameter Force { get; set; }
 
-        private static readonly HttpClient _httpClient = new HttpClient();
         private string _defaultCacheDirectory;
+        private SourceCacheContext _cache;
+        private SourceRepository _repository;
+        private ILogger _logger;
 
         /// <summary>
         /// Initializes the cmdlet and sets up the cache directory.
@@ -67,6 +73,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Ensure cache directory exists
             Directory.CreateDirectory(CacheDirectory);
+
+            // Initialize NuGet components
+            _cache = new SourceCacheContext();
+            _repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+            _logger = new NuGetLogger(this);
         }
 
         /// <summary>
@@ -76,15 +87,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             try
             {
-                WriteVerbose($"Looking for XrmToolbox plugin package: {PackageName}");
+                WriteVerbose($"Searching for XrmToolbox plugin package: {PackageName}");
+
+                // Search for packages
+                var searchResult = SearchPackagesAsync().GetAwaiter().GetResult();
+                
+                if (searchResult == null)
+                {
+                    return; // Error already written
+                }
+
+                WriteVerbose($"Using package: {searchResult.Identity.Id} v{searchResult.Identity.Version}");
 
                 // Download and extract the package
-                string packagePath = DownloadPackageAsync().GetAwaiter().GetResult();
+                string packagePath = DownloadPackageAsync(searchResult).GetAwaiter().GetResult();
                 
                 WriteVerbose($"Package downloaded to: {packagePath}");
 
                 // Extract plugin files
-                string pluginDirectory = ExtractPluginFiles(packagePath);
+                string pluginDirectory = ExtractPluginFiles(packagePath, searchResult.Identity);
                 
                 WriteVerbose($"Plugin extracted to: {pluginDirectory}");
 
@@ -97,81 +118,134 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private async Task<string> DownloadPackageAsync()
+        private async Task<IPackageSearchMetadata> SearchPackagesAsync()
         {
-            string effectiveVersion = Version;
+            var searchResource = await _repository.GetResourceAsync<PackageSearchResource>();
+            var searchFilter = new SearchFilter(includePrerelease: false);
 
-            // If no version specified, get the latest
-            if (string.IsNullOrEmpty(effectiveVersion))
+            WriteProgress(new ProgressRecord(1, "Searching NuGet", $"Searching for: {PackageName}"));
+
+            // Search for packages
+            var results = await searchResource.SearchAsync(
+                PackageName,
+                searchFilter,
+                skip: 0,
+                take: 20,
+                _logger,
+                CancellationToken.None);
+
+            var packageList = results.ToList();
+
+            WriteProgress(new ProgressRecord(1, "Searching NuGet", "Search complete") { RecordType = ProgressRecordType.Completed });
+
+            if (packageList.Count == 0)
             {
-                WriteVerbose($"No version specified, finding latest version for {PackageName}");
-                effectiveVersion = await GetLatestVersionAsync(PackageName);
-                WriteVerbose($"Latest version: {effectiveVersion}");
+                WriteError(new ErrorRecord(
+                    new InvalidOperationException($"No packages found matching '{PackageName}'"),
+                    "PackageNotFound",
+                    ErrorCategory.ObjectNotFound,
+                    PackageName));
+                return null;
             }
 
-            // Check if package is already cached
-            string packageFileName = $"{PackageName}.{effectiveVersion}.nupkg";
-            string packagePath = Path.Combine(CacheDirectory, PackageName, effectiveVersion, packageFileName);
+            // Check for exact match
+            var exactMatch = packageList.FirstOrDefault(p => 
+                p.Identity.Id.Equals(PackageName, StringComparison.OrdinalIgnoreCase));
 
+            if (exactMatch != null)
+            {
+                WriteVerbose($"Found exact match: {exactMatch.Identity.Id}");
+                return exactMatch;
+            }
+
+            // If only one result, use it
+            if (packageList.Count == 1)
+            {
+                WriteVerbose($"Found single match: {packageList[0].Identity.Id}");
+                return packageList[0];
+            }
+
+            // Multiple matches - list them
+            WriteWarning($"Multiple packages match '{PackageName}'. Please specify the exact package ID:");
+            foreach (var pkg in packageList.Take(10))
+            {
+                WriteWarning($"  - {pkg.Identity.Id}: {pkg.Description}");
+            }
+
+            if (packageList.Count > 10)
+            {
+                WriteWarning($"  ... and {packageList.Count - 10} more. Refine your search.");
+            }
+
+            throw new InvalidOperationException($"Multiple packages match '{PackageName}'. Please specify the exact package ID.");
+        }
+
+        private async Task<string> DownloadPackageAsync(IPackageSearchMetadata package)
+        {
+            var packageIdentity = package.Identity;
+            string packageFileName = $"{packageIdentity.Id}.{packageIdentity.Version}.nupkg";
+            string packagePath = Path.Combine(CacheDirectory, packageIdentity.Id, packageIdentity.Version.ToString(), packageFileName);
+
+            // Check if package is already cached
             if (File.Exists(packagePath) && !Force.IsPresent)
             {
                 WriteVerbose($"Using cached package: {packagePath}");
                 return packagePath;
             }
 
-            // Download the package
-            WriteVerbose($"Downloading package: {PackageName} version {effectiveVersion}");
-            
-            string downloadUrl = $"https://www.nuget.org/api/v2/package/{PackageName}/{effectiveVersion}";
-            
             Directory.CreateDirectory(Path.GetDirectoryName(packagePath));
 
-            using (var response = await _httpClient.GetAsync(downloadUrl))
+            WriteProgress(new ProgressRecord(2, "Downloading Package", $"Downloading {packageIdentity.Id} v{packageIdentity.Version}"));
+
+            // Get download resource
+            var downloadResource = await _repository.GetResourceAsync<DownloadResource>();
+
+            // Download the package
+            using (var downloadResult = await downloadResource.GetDownloadResourceResultAsync(
+                packageIdentity,
+                new PackageDownloadContext(_cache),
+                Path.GetTempPath(),
+                _logger,
+                CancellationToken.None))
             {
-                response.EnsureSuccessStatusCode();
-                
-                using (var fileStream = new FileStream(packagePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                if (downloadResult.Status != DownloadResourceResultStatus.Available)
                 {
-                    await response.Content.CopyToAsync(fileStream);
+                    throw new InvalidOperationException($"Package download failed: {downloadResult.Status}");
+                }
+
+                // Copy to cache with progress
+                using (var sourceStream = downloadResult.PackageStream)
+                using (var targetStream = new FileStream(packagePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    var buffer = new byte[81920]; // 80KB buffer
+                    long totalBytes = sourceStream.Length;
+                    long totalRead = 0;
+                    int bytesRead;
+
+                    while ((bytesRead = await sourceStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                    {
+                        await targetStream.WriteAsync(buffer, 0, bytesRead);
+                        totalRead += bytesRead;
+
+                        if (totalBytes > 0)
+                        {
+                            int percentComplete = (int)((totalRead * 100) / totalBytes);
+                            WriteProgress(new ProgressRecord(2, "Downloading Package", 
+                                $"Downloaded {totalRead / 1024}KB / {totalBytes / 1024}KB")
+                            {
+                                PercentComplete = percentComplete
+                            });
+                        }
+                    }
                 }
             }
 
+            WriteProgress(new ProgressRecord(2, "Downloading Package", "Download complete") { RecordType = ProgressRecordType.Completed });
             WriteVerbose($"Package downloaded successfully to: {packagePath}");
             return packagePath;
         }
 
-        private async Task<string> GetLatestVersionAsync(string packageName)
-        {
-            // Query NuGet API to get latest version
-            string apiUrl = $"https://api.nuget.org/v3-flatcontainer/{packageName.ToLowerInvariant()}/index.json";
-            
-            using (var response = await _httpClient.GetAsync(apiUrl))
-            {
-                response.EnsureSuccessStatusCode();
-                
-                string json = await response.Content.ReadAsStringAsync();
-                
-                // Parse JSON to get versions array
-                // Simple JSON parsing - look for "versions" array
-                var doc = System.Text.Json.JsonDocument.Parse(json);
-                var versions = doc.RootElement.GetProperty("versions");
-                
-                string latestVersion = null;
-                foreach (var version in versions.EnumerateArray())
-                {
-                    latestVersion = version.GetString();
-                }
-                
-                if (string.IsNullOrEmpty(latestVersion))
-                {
-                    throw new InvalidOperationException($"Could not determine latest version for package {packageName}");
-                }
-                
-                return latestVersion;
-            }
-        }
-
-        private string ExtractPluginFiles(string packagePath)
+        private string ExtractPluginFiles(string packagePath, PackageIdentity identity)
         {
             // Extract the .nupkg (which is a ZIP file) to get the plugin files
             string extractPath = Path.Combine(
@@ -187,11 +261,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (Directory.Exists(extractPath))
             {
+                WriteProgress(new ProgressRecord(3, "Extracting Package", "Cleaning previous extraction"));
                 Directory.Delete(extractPath, true);
             }
 
+            WriteProgress(new ProgressRecord(3, "Extracting Package", $"Extracting {identity.Id}"));
             WriteVerbose($"Extracting package to: {extractPath}");
+            
             ZipFile.ExtractToDirectory(packagePath, extractPath);
+
+            WriteProgress(new ProgressRecord(3, "Extracting Package", "Extraction complete") { RecordType = ProgressRecordType.Completed });
 
             return extractPath;
         }
@@ -244,6 +323,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Get connection string from current connection
             string connectionString = BuildConnectionString();
 
+            WriteProgress(new ProgressRecord(4, "Launching Plugin", "Starting XrmToolbox plugin host"));
             WriteVerbose($"Launching plugin host...");
             WriteVerbose($"  Plugin directory: {pluginsPath}");
             WriteVerbose($"  Pipe name: {pipeName}");
@@ -264,6 +344,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (process != null)
                 {
                     WriteVerbose("Plugin host process started");
+                    WriteProgress(new ProgressRecord(4, "Launching Plugin", "Plugin host started") { RecordType = ProgressRecordType.Completed });
                     
                     // Read output
                     string output = process.StandardOutput.ReadToEnd();
@@ -337,6 +418,102 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             
             var url = Connection.ConnectedOrgUriActual?.ToString() ?? "unknown";
             return $"Url={url};";
+        }
+
+        /// <summary>
+        /// NuGet logger that writes to PowerShell
+        /// </summary>
+        private class NuGetLogger : ILogger
+        {
+            private readonly InvokeDataverseXrmToolboxCmdlet _cmdlet;
+
+            public NuGetLogger(InvokeDataverseXrmToolboxCmdlet cmdlet)
+            {
+                _cmdlet = cmdlet;
+            }
+
+            public void LogDebug(string data)
+            {
+                _cmdlet.WriteVerbose(data);
+            }
+
+            public void LogVerbose(string data)
+            {
+                _cmdlet.WriteVerbose(data);
+            }
+
+            public void LogInformation(string data)
+            {
+                _cmdlet.WriteVerbose(data);
+            }
+
+            public void LogMinimal(string data)
+            {
+                _cmdlet.WriteVerbose(data);
+            }
+
+            public void LogWarning(string data)
+            {
+                _cmdlet.WriteWarning(data);
+            }
+
+            public void LogError(string data)
+            {
+                _cmdlet.WriteWarning($"NuGet Error: {data}");
+            }
+
+            public void LogInformationSummary(string data)
+            {
+                _cmdlet.WriteVerbose(data);
+            }
+
+            public void Log(LogLevel level, string data)
+            {
+                switch (level)
+                {
+                    case LogLevel.Error:
+                        LogError(data);
+                        break;
+                    case LogLevel.Warning:
+                        LogWarning(data);
+                        break;
+                    case LogLevel.Information:
+                        LogInformation(data);
+                        break;
+                    case LogLevel.Verbose:
+                        LogVerbose(data);
+                        break;
+                    case LogLevel.Debug:
+                        LogDebug(data);
+                        break;
+                    case LogLevel.Minimal:
+                        LogMinimal(data);
+                        break;
+                }
+            }
+
+            public Task LogAsync(LogLevel level, string data)
+            {
+                Log(level, data);
+                return Task.CompletedTask;
+            }
+
+            public void Log(ILogMessage message)
+            {
+                Log(message.Level, message.Message);
+            }
+
+            public Task LogAsync(ILogMessage message)
+            {
+                Log(message);
+                return Task.CompletedTask;
+            }
+        }
+
+        protected override void EndProcessing()
+        {
+            base.EndProcessing();
+            _cache?.Dispose();
         }
     }
 }
