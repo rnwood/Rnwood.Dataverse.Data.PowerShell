@@ -19,6 +19,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private Func<string> _accessTokenProvider;
         private string _url;
+        
+        // Gallery control reference
+        private ScriptGalleryControl _galleryControl;
 
         // Tab data
         private Dictionary<TabPage, ScriptTabContentControl> tabData = new Dictionary<TabPage, ScriptTabContentControl>();
@@ -30,6 +33,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         public ScriptEditorControl()
         {
             InitializeComponent();
+        }
+        
+        public void SetGalleryControl(ScriptGalleryControl galleryControl)
+        {
+            _galleryControl = galleryControl;
         }
 
         protected override void OnLoad(EventArgs e)
@@ -336,6 +344,87 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
 
             return $"{baseStatus} ({_activeCompletionRequests} active)";
+        }
+        
+        private async void SaveToGalleryButton_Click(object sender, EventArgs e)
+        {
+            if (_galleryControl == null)
+            {
+                MessageBox.Show("Gallery control not available", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            
+            // Get current script content
+            string scriptContent = await GetScriptContentAsync();
+            
+            if (string.IsNullOrWhiteSpace(scriptContent))
+            {
+                MessageBox.Show("Script is empty. Please write some PowerShell code first.", 
+                    "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            
+            // Prompt for title
+            using (var titleForm = new Form
+            {
+                Text = "Save to Gallery",
+                Width = 400,
+                Height = 150,
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false
+            })
+            {
+                var titleLabel = new Label
+                {
+                    Text = "Script Title:",
+                    Location = new System.Drawing.Point(10, 20),
+                    AutoSize = true
+                };
+                
+                var titleTextBox = new TextBox
+                {
+                    Location = new System.Drawing.Point(10, 40),
+                    Width = 360,
+                    Text = tabControl.SelectedTab?.Text ?? "Untitled Script"
+                };
+                
+                var saveButton = new Button
+                {
+                    Text = "Save",
+                    DialogResult = DialogResult.OK,
+                    Location = new System.Drawing.Point(210, 75),
+                    Width = 75
+                };
+                
+                var cancelButton = new Button
+                {
+                    Text = "Cancel",
+                    DialogResult = DialogResult.Cancel,
+                    Location = new System.Drawing.Point(295, 75),
+                    Width = 75
+                };
+                
+                titleForm.Controls.Add(titleLabel);
+                titleForm.Controls.Add(titleTextBox);
+                titleForm.Controls.Add(saveButton);
+                titleForm.Controls.Add(cancelButton);
+                titleForm.AcceptButton = saveButton;
+                titleForm.CancelButton = cancelButton;
+                
+                if (titleForm.ShowDialog() == DialogResult.OK)
+                {
+                    string title = titleTextBox.Text;
+                    if (string.IsNullOrWhiteSpace(title))
+                    {
+                        MessageBox.Show("Please enter a title", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+                    
+                    await _galleryControl.SaveScriptToGalleryAsync(title, scriptContent);
+                }
+            }
         }
     }
 }

@@ -79,6 +79,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 // Wire up script editor events
                 scriptEditorControl.RunScriptRequested += ScriptEditorControl_RunScriptRequested;
                 scriptEditorControl.CompletionResolved += ScriptEditorControl_CompletionResolved;
+                
+                // Wire up gallery control
+                scriptEditorControl.SetGalleryControl(scriptGalleryControl);
+                scriptGalleryControl.LoadScriptRequested += ScriptGalleryControl_LoadScriptRequested;
             }
         }
 
@@ -122,6 +126,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 MessageBox.Show($"Failed to run script: {ex.Message}",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void ScriptEditorControl_NewScriptRequested(object sender, EventArgs e)
+        {
+            scriptEditorControl.CreateNewScript();
+        }
+
+        private void ScriptEditorControl_OpenScriptRequested(object sender, EventArgs e)
+        {
+            scriptEditorControl.OpenScript();
+        }
+
+        private void ScriptEditorControl_SaveScriptRequested(object sender, EventArgs e)
+        {
+            scriptEditorControl.SaveScript();
+        }
+        
+        private void ScriptGalleryControl_LoadScriptRequested(object sender, string scriptContent)
+        {
+            // Load script content into a new editor tab
+            scriptEditorControl.CreateNewScript();
+            scriptEditorControl.SetScriptContentAsync(scriptContent);
         }
 
         public override void ClosingPlugin(PluginCloseInfo info)
