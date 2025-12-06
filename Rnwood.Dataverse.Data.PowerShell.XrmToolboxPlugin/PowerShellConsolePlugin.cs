@@ -80,6 +80,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 scriptEditorControl.OpenScriptRequested += ScriptEditorControl_OpenScriptRequested;
                 scriptEditorControl.SaveScriptRequested += ScriptEditorControl_SaveScriptRequested;
                 scriptEditorControl.CompletionResolved += ScriptEditorControl_CompletionResolved;
+                
+                // Wire up gallery control
+                scriptEditorControl.SetGalleryControl(scriptGalleryControl);
+                scriptGalleryControl.LoadScriptRequested += ScriptGalleryControl_LoadScriptRequested;
             }
         }
 
@@ -135,6 +139,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private void ScriptEditorControl_SaveScriptRequested(object sender, EventArgs e)
         {
             scriptEditorControl.SaveScript();
+        }
+        
+        private void ScriptGalleryControl_LoadScriptRequested(object sender, string scriptContent)
+        {
+            // Load script content into a new editor tab
+            scriptEditorControl.CreateNewScript();
+            scriptEditorControl.SetScriptContentAsync(scriptContent);
         }
 
         public override void ClosingPlugin(PluginCloseInfo info)
