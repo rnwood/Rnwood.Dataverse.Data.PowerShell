@@ -271,6 +271,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             searchTextBox.Text = "";
             tagFilterComboBox.SelectedIndex = 0;
+            mySubmissionsCheckBox.Checked = false;
             _currentSearchText = null;
             _currentFilterTags.Clear();
             await RefreshDiscussionsAsync();
@@ -283,7 +284,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 statusLabel.Text = "Loading discussions...";
                 listView.Items.Clear();
 
-                _discussions = await _githubService.GetDiscussionsAsync(_currentSearchText, _currentFilterTags);
+                bool onlyMySubmissions = mySubmissionsCheckBox.Checked;
+                _discussions = await _githubService.GetDiscussionsAsync(_currentSearchText, _currentFilterTags, onlyMySubmissions);
 
                 foreach (var discussion in _discussions)
                 {
@@ -321,6 +323,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             {
                 // Load full discussion details
                 _selectedItem = await _githubService.GetDiscussionAsync(discussion.Number);
+                
+                // Show/hide edit and close buttons based on ownership
+                bool isOwner = _githubService.IsAuthenticated && 
+                              _selectedItem.Author == _githubService.CurrentUsername;
+                editButton.Visible = isOwner;
+                closeButton.Visible = isOwner;
                 
                 // Display in WebView2
                 await DisplayDiscussionAsync(_selectedItem);
@@ -538,6 +546,170 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             {
                 MessageBox.Show($"Failed to save script to gallery: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
+            }
+        }
+        
+        private async void ThumbsDownButton_Click(object sender, EventArgs e)
+        {
+            if (_selectedItem == null)
+            {
+                MessageBox.Show("Please select a script first", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (!_githubService.IsAuthenticated)
+            {
+                MessageBox.Show("You must be logged in to react", "Authentication Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                await _githubService.AddReactionAsync(_selectedItem.Id, "THUMBS_DOWN");
+                MessageBox.Show("Reaction added!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                
+                // Refresh discussion to update reaction counts
+                await RefreshDiscussionsAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to add reaction: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        
+        private async void EditButton_Click(object sender, EventArgs e)
+        {
+            if (_selectedItem == null)
+            {
+                MessageBox.Show("Please select a script first", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (!_githubService.IsAuthenticated)
+            {
+                MessageBox.Show("You must be logged in to edit", "Authentication Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Show edit dialog
+            using (var editForm = new Form
+            {
+                Text = "Edit Script",
+                Width = 600,
+                Height = 500,
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false
+            })
+            {
+                var titleLabel = new Label
+                {
+                    Text = "Title:",
+                    Location = new System.Drawing.Point(10, 20),
+                    AutoSize = true
+                };
+                
+                var titleTextBox = new TextBox
+                {
+                    Location = new System.Drawing.Point(10, 40),
+                    Width = 560,
+                    Text = _selectedItem.Title
+                };
+                
+                var bodyLabel = new Label
+                {
+                    Text = "Body:",
+                    Location = new System.Drawing.Point(10, 70),
+                    AutoSize = true
+                };
+                
+                var bodyTextBox = new TextBox
+                {
+                    Location = new System.Drawing.Point(10, 90),
+                    Width = 560,
+                    Height = 300,
+                    Multiline = true,
+                    ScrollBars = ScrollBars.Vertical,
+                    Text = _selectedItem.Body
+                };
+                
+                var saveButton = new Button
+                {
+                    Text = "Save",
+                    DialogResult = DialogResult.OK,
+                    Location = new System.Drawing.Point(415, 410),
+                    Width = 75
+                };
+                
+                var cancelButton = new Button
+                {
+                    Text = "Cancel",
+                    DialogResult = DialogResult.Cancel,
+                    Location = new System.Drawing.Point(495, 410),
+                    Width = 75
+                };
+                
+                editForm.Controls.Add(titleLabel);
+                editForm.Controls.Add(titleTextBox);
+                editForm.Controls.Add(bodyLabel);
+                editForm.Controls.Add(bodyTextBox);
+                editForm.Controls.Add(saveButton);
+                editForm.Controls.Add(cancelButton);
+                editForm.AcceptButton = saveButton;
+                editForm.CancelButton = cancelButton;
+                
+                if (editForm.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        await _githubService.UpdateDiscussionAsync(_selectedItem.Id, titleTextBox.Text, bodyTextBox.Text);
+                        MessageBox.Show("Script updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        
+                        // Refresh
+                        await RefreshDiscussionsAsync();
+                        _selectedItem = await _githubService.GetDiscussionAsync(_selectedItem.Number);
+                        await DisplayDiscussionAsync(_selectedItem);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Failed to update script: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+        
+        private async void CloseButton_Click(object sender, EventArgs e)
+        {
+            if (_selectedItem == null)
+            {
+                MessageBox.Show("Please select a script first", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (!_githubService.IsAuthenticated)
+            {
+                MessageBox.Show("You must be logged in to close", "Authentication Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var result = MessageBox.Show("Are you sure you want to close this discussion?\n\nClosed discussions will be hidden from the gallery.",
+                "Confirm Close", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            
+            if (result == DialogResult.Yes)
+            {
+                try
+                {
+                    await _githubService.CloseDiscussionAsync(_selectedItem.Id);
+                    MessageBox.Show("Discussion closed successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    
+                    // Refresh to remove from list
+                    await RefreshDiscussionsAsync();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to close discussion: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
     }

@@ -135,7 +135,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         /// <summary>
         /// Gets all discussions from the repository filtered by "Show and tell" category
         /// </summary>
-        public async Task<List<ScriptGalleryItem>> GetDiscussionsAsync(string searchText = null, List<string> filterTags = null)
+        public async Task<List<ScriptGalleryItem>> GetDiscussionsAsync(string searchText = null, List<string> filterTags = null, bool onlyMySubmissions = false)
         {
             try
             {
@@ -155,6 +155,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                                     createdAt
                                     updatedAt
                                     upvoteCount
+                                    closed
                                     comments(first: 1) {
                                         totalCount
                                     }
@@ -164,6 +165,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                                     labels(first: 20) {
                                         nodes {
                                             name
+                                        }
+                                    }
+                                    reactions(first: 100) {
+                                        totalCount
+                                        nodes {
+                                            content
                                         }
                                     }
                                 }
@@ -196,6 +203,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                         continue;
                     }
                     
+                    // Always hide closed discussions
+                    bool isClosed = node.closed != null && (bool)node.closed;
+                    if (isClosed)
+                    {
+                        continue;
+                    }
+                    
                     // Extract tags from labels
                     var tags = new List<string>();
                     if (node.labels?.nodes != null)
@@ -211,19 +225,53 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                         }
                     }
                     
+                    // Count reactions
+                    int thumbsUpCount = 0;
+                    int thumbsDownCount = 0;
+                    int totalReactionCount = 0;
+                    
+                    if (node.reactions?.nodes != null)
+                    {
+                        totalReactionCount = node.reactions.totalCount;
+                        foreach (var reaction in node.reactions.nodes)
+                        {
+                            string content = reaction.content?.ToString() ?? "";
+                            if (content == "THUMBS_UP")
+                            {
+                                thumbsUpCount++;
+                            }
+                            else if (content == "THUMBS_DOWN")
+                            {
+                                thumbsDownCount++;
+                            }
+                        }
+                    }
+                    
+                    var author = node.author?.login?.ToString() ?? "Unknown";
+                    
+                    // Filter by author if onlyMySubmissions is true
+                    if (onlyMySubmissions && IsAuthenticated && author != CurrentUsername)
+                    {
+                        continue;
+                    }
+                    
                     var item = new ScriptGalleryItem
                     {
                         Id = node.id,
                         Number = node.number,
                         Title = node.title,
                         Body = node.body,
-                        Author = node.author?.login ?? "Unknown",
+                        Author = author,
                         CreatedAt = DateTime.Parse(node.createdAt.ToString()),
                         UpdatedAt = DateTime.Parse(node.updatedAt.ToString()),
                         UpvoteCount = node.upvoteCount,
                         CommentCount = node.comments.totalCount,
                         Category = categoryName,
-                        Tags = tags
+                        Tags = tags,
+                        IsClosed = isClosed,
+                        ThumbsUpCount = thumbsUpCount,
+                        ThumbsDownCount = thumbsDownCount,
+                        TotalReactionCount = totalReactionCount
                     };
                     
                     // Apply search filter
@@ -258,6 +306,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     
                     discussions.Add(item);
                 }
+
+                // Sort by thumbs up count (descending), then by comment count (descending)
+                discussions = discussions
+                    .OrderByDescending(d => d.ThumbsUpCount)
+                    .ThenByDescending(d => d.CommentCount)
+                    .ToList();
 
                 return discussions;
             }
@@ -667,6 +721,107 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         }
 
         /// <summary>
+        /// Adds a reaction to a discussion
+        /// </summary>
+        public async Task AddReactionAsync(string discussionId, string reactionType)
+        {
+            if (!IsAuthenticated)
+            {
+                throw new InvalidOperationException("You must be authenticated to add reactions");
+            }
+
+            try
+            {
+                var mutation = @"
+                    mutation($discussionId: ID!, $content: ReactionContent!) {
+                        addReaction(input: {subjectId: $discussionId, content: $content}) {
+                            reaction {
+                                id
+                            }
+                        }
+                    }";
+
+                await _client.Connection.Post<dynamic>(
+                    new Uri(GraphQLEndpoint),
+                    new { query = mutation, variables = new { discussionId, content = reactionType } },
+                    "application/json",
+                    "application/json");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to add reaction: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Updates a discussion (title and body)
+        /// </summary>
+        public async Task UpdateDiscussionAsync(string discussionId, string title, string body)
+        {
+            if (!IsAuthenticated)
+            {
+                throw new InvalidOperationException("You must be authenticated to update discussions");
+            }
+
+            try
+            {
+                var mutation = @"
+                    mutation($discussionId: ID!, $title: String, $body: String) {
+                        updateDiscussion(input: {discussionId: $discussionId, title: $title, body: $body}) {
+                            discussion {
+                                id
+                                number
+                            }
+                        }
+                    }";
+
+                await _client.Connection.Post<dynamic>(
+                    new Uri(GraphQLEndpoint),
+                    new { query = mutation, variables = new { discussionId, title, body } },
+                    "application/json",
+                    "application/json");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to update discussion: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Closes a discussion
+        /// </summary>
+        public async Task CloseDiscussionAsync(string discussionId)
+        {
+            if (!IsAuthenticated)
+            {
+                throw new InvalidOperationException("You must be authenticated to close discussions");
+            }
+
+            try
+            {
+                var mutation = @"
+                    mutation($discussionId: ID!) {
+                        closeDiscussion(input: {discussionId: $discussionId}) {
+                            discussion {
+                                id
+                                closed
+                            }
+                        }
+                    }";
+
+                await _client.Connection.Post<dynamic>(
+                    new Uri(GraphQLEndpoint),
+                    new { query = mutation, variables = new { discussionId } },
+                    "application/json",
+                    "application/json");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to close discussion: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
         /// Gets all available tags from repository labels
         /// </summary>
         public async Task<List<string>> GetAvailableTagsAsync()
@@ -735,6 +890,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         public string Category { get; set; }
         public List<string> Tags { get; set; } = new List<string>();
         public List<DiscussionComment> Comments { get; set; }
+        public bool IsClosed { get; set; }
+        public int ThumbsUpCount { get; set; }
+        public int ThumbsDownCount { get; set; }
+        public int TotalReactionCount { get; set; }
 
         /// <summary>
         /// Extracts the PowerShell script content from the discussion body
