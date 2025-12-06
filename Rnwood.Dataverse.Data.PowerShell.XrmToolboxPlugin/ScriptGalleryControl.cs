@@ -42,7 +42,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to initialize WebView2: {ex.Message}\n\nWebView2 Runtime may not be installed.",
+                MessageBox.Show($"Failed to initialize WebView2: {ex.Message}\n\nWebView2 Runtime may not be installed.\n\nPlease download and install it from:\nhttps://developer.microsoft.com/microsoft-edge/webview2/",
                     "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
@@ -78,7 +78,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 {
                     var instructionLabel = new Label
                     {
-                        Text = "Please enter your GitHub Personal Access Token.\n\nTo create one:\n1. Go to github.com/settings/tokens\n2. Click 'Generate new token' (classic)\n3. Select 'repo' and 'read:discussion' scopes\n4. Generate and copy the token",
+                        Text = "Please enter your GitHub Personal Access Token.\n\nTo create one:\n1. Go to github.com/settings/tokens\n2. Click 'Generate new token' (classic)\n3. Select scopes:\n   - 'public_repo' (for public repositories) OR 'repo' (for private repositories)\n   - 'read:discussion' and 'write:discussion'\n4. Generate and copy the token",
                         AutoSize = false,
                         Location = new System.Drawing.Point(20, 20),
                         Size = new System.Drawing.Size(440, 100)
