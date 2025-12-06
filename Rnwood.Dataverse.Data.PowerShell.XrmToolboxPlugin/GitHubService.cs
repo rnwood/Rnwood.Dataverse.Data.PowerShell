@@ -13,14 +13,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     {
         private GitHubClient _client;
         private string _currentUsername;
-        private const string RepositoryOwner = "rnwood";
-        private const string RepositoryName = "Rnwood.Dataverse.Data.PowerShell";
+        private readonly string _repositoryOwner;
+        private readonly string _repositoryName;
+        private const string GraphQLEndpoint = "https://api.github.com/graphql";
+        private const string DefaultCategoryName = "Scripts";
+        private const string FallbackCategoryName = "General";
 
         public bool IsAuthenticated => _client != null && !string.IsNullOrEmpty(_currentUsername);
         public string CurrentUsername => _currentUsername;
 
-        public GitHubService()
+        public GitHubService(string repositoryOwner = "rnwood", string repositoryName = "Rnwood.Dataverse.Data.PowerShell")
         {
+            _repositoryOwner = repositoryOwner;
+            _repositoryName = repositoryName;
             // Create an unauthenticated client initially
             _client = new GitHubClient(new ProductHeaderValue("XrmToolbox-PowerShell-Plugin"));
         }
@@ -95,13 +100,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
                 var variables = new
                 {
-                    owner = RepositoryOwner,
-                    name = RepositoryName,
+                    owner = _repositoryOwner,
+                    name = _repositoryName,
                     first = 100
                 };
 
                 var result = await _client.Connection.Post<dynamic>(
-                    new Uri("https://api.github.com/graphql"),
+                    new Uri(GraphQLEndpoint),
                     new { query, variables },
                     "application/json",
                     "application/json");
@@ -174,13 +179,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
                 var variables = new
                 {
-                    owner = RepositoryOwner,
-                    name = RepositoryName,
+                    owner = _repositoryOwner,
+                    name = _repositoryName,
                     number
                 };
 
                 var result = await _client.Connection.Post<dynamic>(
-                    new Uri("https://api.github.com/graphql"),
+                    new Uri(GraphQLEndpoint),
                     new { query, variables },
                     "application/json",
                     "application/json");
@@ -248,8 +253,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     }";
 
                 var repoResult = await _client.Connection.Post<dynamic>(
-                    new Uri("https://api.github.com/graphql"),
-                    new { query = repoQuery, variables = new { owner = RepositoryOwner, name = RepositoryName } },
+                    new Uri(GraphQLEndpoint),
+                    new { query = repoQuery, variables = new { owner = _repositoryOwner, name = _repositoryName } },
                     "application/json",
                     "application/json");
 
@@ -260,7 +265,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 {
                     foreach (var cat in repoResult.Body.data.repository.discussionCategories.nodes)
                     {
-                        if (cat.name == "Scripts" || cat.name == "General")
+                        if (cat.name == DefaultCategoryName || cat.name == FallbackCategoryName)
                         {
                             categoryId = cat.id;
                             break;
@@ -296,7 +301,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     }";
 
                 var createResult = await _client.Connection.Post<dynamic>(
-                    new Uri("https://api.github.com/graphql"),
+                    new Uri(GraphQLEndpoint),
                     new { query = mutation, variables = new { repositoryId, categoryId, title, body } },
                     "application/json",
                     "application/json");
@@ -350,7 +355,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     }";
 
                 var result = await _client.Connection.Post<dynamic>(
-                    new Uri("https://api.github.com/graphql"),
+                    new Uri(GraphQLEndpoint),
                     new { query = mutation, variables = new { discussionId, body } },
                     "application/json",
                     "application/json");
@@ -393,7 +398,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     }";
 
                 await _client.Connection.Post<dynamic>(
-                    new Uri("https://api.github.com/graphql"),
+                    new Uri(GraphQLEndpoint),
                     new { query = mutation, variables = new { discussionId } },
                     "application/json",
                     "application/json");
@@ -406,7 +411,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         public void Dispose()
         {
-            // Nothing to dispose
+            // Clear sensitive data
+            _currentUsername = null;
+            
+            // Create new unauthenticated client to clear credentials
+            _client = new GitHubClient(new ProductHeaderValue("XrmToolbox-PowerShell-Plugin"));
         }
     }
 
