@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -51,6 +52,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private SourceCacheContext _cache;
         private SourceRepository _repository;
         private ILogger _logger;
+        private readonly ConcurrentQueue<LogMessage> _pendingMessages = new ConcurrentQueue<LogMessage>();
+        private volatile bool _stopTokenServer;
+
+        private struct LogMessage
+        {
+            public LogLevel Level;
+            public string Message;
+        }
+
+        private enum LogLevel
+        {
+            Verbose,
+            Warning,
+            Error,
+            Progress
+        }
 
         /// <summary>
         /// Initializes the cmdlet and sets up the cache directory.
@@ -89,25 +106,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 WriteVerbose($"Searching for XrmToolbox plugin package: {PackageName}");
 
-                // Run async operations synchronously on this thread to ensure WriteProgress/WriteError
-                // calls happen on the cmdlet thread
-                var searchResult = RunAsync(() => SearchPackagesAsync());
-                
+                // Run async operations synchronously, flushing messages on the main thread
+                var searchResult = RunAsyncWithMainThreadFlush(() => SearchPackagesAsync());
+
                 if (searchResult == null)
                 {
-                    return; // Error already written
+                    // Error was queued, flush it
+                    FlushPendingMessages();
+                    return;
                 }
 
                 WriteVerbose($"Using package: {searchResult.Identity.Id} v{searchResult.Identity.Version}");
 
                 // Download and extract the package
-                string packagePath = RunAsync(() => DownloadPackageAsync(searchResult));
-                
+                string packagePath = RunAsyncWithMainThreadFlush(() => DownloadPackageAsync(searchResult));
+
                 WriteVerbose($"Package downloaded to: {packagePath}");
 
-                // Extract plugin files
+                // Extract plugin files (synchronous)
                 string pluginDirectory = ExtractPluginFiles(packagePath, searchResult.Identity);
-                
+
                 WriteVerbose($"Plugin extracted to: {pluginDirectory}");
 
                 // Launch the plugin host process
@@ -117,22 +135,102 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 WriteError(new ErrorRecord(ex, "InvokeXrmToolboxPluginFailed", ErrorCategory.InvalidOperation, PackageName));
             }
+            finally
+            {
+                _stopTokenServer = true;
+                FlushPendingMessages();
+            }
         }
 
         /// <summary>
-        /// Runs an async task synchronously while preserving the synchronization context.
-        /// This ensures that async operations complete but cmdlet methods (WriteProgress, etc.)
-        /// are called on the cmdlet thread.
+        /// Flushes any queued messages to the PowerShell output streams.
+        /// MUST be called from the main cmdlet thread only.
         /// </summary>
-        private T RunAsync<T>(Func<Task<T>> taskFunc)
+        private void FlushPendingMessages()
         {
-            // Get the current synchronization context (cmdlet thread)
-            var context = System.Threading.SynchronizationContext.Current;
-            
-            // Run the async task
+            while (_pendingMessages.TryDequeue(out LogMessage message))
+            {
+                switch (message.Level)
+                {
+                    case LogLevel.Verbose:
+                        WriteVerbose(message.Message);
+                        break;
+                    case LogLevel.Warning:
+                        WriteWarning(message.Message);
+                        break;
+                    case LogLevel.Error:
+                        WriteError(new ErrorRecord(
+                            new InvalidOperationException(message.Message),
+                            "BackgroundTaskError",
+                            ErrorCategory.InvalidOperation,
+                            null));
+                        break;
+                    case LogLevel.Progress:
+                        // Progress messages are formatted as "id|activity|status|percentComplete"
+                        var parts = message.Message.Split('|');
+                        if (parts.Length >= 3)
+                        {
+                            int id = int.Parse(parts[0]);
+                            string activity = parts[1];
+                            string status = parts[2];
+                            var progressRecord = new ProgressRecord(id, activity, status);
+
+                            if (parts.Length > 3 && int.TryParse(parts[3], out int percentComplete))
+                            {
+                                progressRecord.PercentComplete = percentComplete;
+                            }
+
+                            if (status.IndexOf("complete", StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                progressRecord.RecordType = ProgressRecordType.Completed;
+                            }
+
+                            WriteProgress(progressRecord);
+                        }
+                        break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Queues a message to be written on the main thread later.
+        /// Safe to call from any thread.
+        /// </summary>
+        private void QueueMessage(LogLevel level, string message)
+        {
+            _pendingMessages.Enqueue(new LogMessage { Level = level, Message = message });
+        }
+
+        /// <summary>
+        /// Queues a progress message to be written on the main thread.
+        /// </summary>
+        private void QueueProgress(int id, string activity, string status, int percentComplete = -1)
+        {
+            string message = percentComplete >= 0
+                ? $"{id}|{activity}|{status}|{percentComplete}"
+                : $"{id}|{activity}|{status}";
+            QueueMessage(LogLevel.Progress, message);
+        }
+
+        /// <summary>
+        /// Runs an async task while polling and flushing messages on the main thread.
+        /// This ensures all Write* calls happen on the pipeline thread.
+        /// </summary>
+        private T RunAsyncWithMainThreadFlush<T>(Func<Task<T>> taskFunc)
+        {
             var task = taskFunc();
-            
-            // Wait for completion on this thread
+
+            // Poll until complete, flushing messages on this (main) thread
+            while (!task.IsCompleted)
+            {
+                FlushPendingMessages();
+                Thread.Sleep(50); // Brief sleep to avoid busy-waiting
+            }
+
+            // Final flush
+            FlushPendingMessages();
+
+            // Propagate any exception
             return task.GetAwaiter().GetResult();
         }
 
@@ -141,7 +239,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var searchResource = await _repository.GetResourceAsync<PackageSearchResource>();
             var searchFilter = new SearchFilter(includePrerelease: false);
 
-            WriteProgress(new ProgressRecord(1, "Searching NuGet", $"Searching for: {PackageName}"));
+            QueueProgress(1, "Searching NuGet", $"Searching for: {PackageName}");
 
             // Search for packages
             var results = await searchResource.SearchAsync(
@@ -154,45 +252,41 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             var packageList = results.ToList();
 
-            WriteProgress(new ProgressRecord(1, "Searching NuGet", "Search complete") { RecordType = ProgressRecordType.Completed });
+            QueueProgress(1, "Searching NuGet", "Search complete");
 
             if (packageList.Count == 0)
             {
-                WriteError(new ErrorRecord(
-                    new InvalidOperationException($"No packages found matching '{PackageName}'"),
-                    "PackageNotFound",
-                    ErrorCategory.ObjectNotFound,
-                    PackageName));
+                QueueMessage(LogLevel.Error, $"No packages found matching '{PackageName}'");
                 return null;
             }
 
             // Check for exact match
-            var exactMatch = packageList.FirstOrDefault(p => 
+            var exactMatch = packageList.FirstOrDefault(p =>
                 p.Identity.Id.Equals(PackageName, StringComparison.OrdinalIgnoreCase));
 
             if (exactMatch != null)
             {
-                WriteVerbose($"Found exact match: {exactMatch.Identity.Id}");
+                QueueMessage(LogLevel.Verbose, $"Found exact match: {exactMatch.Identity.Id}");
                 return exactMatch;
             }
 
             // If only one result, use it
             if (packageList.Count == 1)
             {
-                WriteVerbose($"Found single match: {packageList[0].Identity.Id}");
+                QueueMessage(LogLevel.Verbose, $"Found single match: {packageList[0].Identity.Id}");
                 return packageList[0];
             }
 
             // Multiple matches - list them
-            WriteWarning($"Multiple packages match '{PackageName}'. Please specify the exact package ID:");
+            QueueMessage(LogLevel.Warning, $"Multiple packages match '{PackageName}'. Please specify the exact package ID:");
             foreach (var pkg in packageList.Take(10))
             {
-                WriteWarning($"  - {pkg.Identity.Id}: {pkg.Description}");
+                QueueMessage(LogLevel.Warning, $"  - {pkg.Identity.Id}: {pkg.Description}");
             }
 
             if (packageList.Count > 10)
             {
-                WriteWarning($"  ... and {packageList.Count - 10} more. Refine your search.");
+                QueueMessage(LogLevel.Warning, $"  ... and {packageList.Count - 10} more. Refine your search.");
             }
 
             throw new InvalidOperationException($"Multiple packages match '{PackageName}'. Please specify the exact package ID.");
@@ -207,13 +301,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Check if package is already cached
             if (File.Exists(packagePath) && !Force.IsPresent)
             {
-                WriteVerbose($"Using cached package: {packagePath}");
+                QueueMessage(LogLevel.Verbose, $"Using cached package: {packagePath}");
                 return packagePath;
             }
 
             Directory.CreateDirectory(Path.GetDirectoryName(packagePath));
 
-            WriteProgress(new ProgressRecord(2, "Downloading Package", $"Downloading {packageIdentity.Id} v{packageIdentity.Version}"));
+            QueueProgress(2, "Downloading Package", $"Downloading {packageIdentity.Id} v{packageIdentity.Version}");
 
             // Get download resource
             var downloadResource = await _repository.GetResourceAsync<DownloadResource>();
@@ -248,18 +342,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         if (totalBytes > 0)
                         {
                             int percentComplete = (int)((totalRead * 100) / totalBytes);
-                            WriteProgress(new ProgressRecord(2, "Downloading Package", 
-                                $"Downloaded {totalRead / 1024}KB / {totalBytes / 1024}KB")
-                            {
-                                PercentComplete = percentComplete
-                            });
+                            QueueProgress(2, "Downloading Package",
+                                $"Downloaded {totalRead / 1024}KB / {totalBytes / 1024}KB",
+                                percentComplete);
                         }
                     }
                 }
             }
 
-            WriteProgress(new ProgressRecord(2, "Downloading Package", "Download complete") { RecordType = ProgressRecordType.Completed });
-            WriteVerbose($"Package downloaded successfully to: {packagePath}");
+            QueueProgress(2, "Downloading Package", "Download complete");
+            QueueMessage(LogLevel.Verbose, $"Package downloaded successfully to: {packagePath}");
             return packagePath;
         }
 
@@ -285,7 +377,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteProgress(new ProgressRecord(3, "Extracting Package", $"Extracting {identity.Id}"));
             WriteVerbose($"Extracting package to: {extractPath}");
-            
+
             ZipFile.ExtractToDirectory(packagePath, extractPath);
 
             WriteProgress(new ProgressRecord(3, "Extracting Package", "Extraction complete") { RecordType = ProgressRecordType.Completed });
@@ -296,25 +388,46 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private void LaunchPluginHost(string pluginDirectory)
         {
             // Find the XrmToolbox plugin DLL in the extracted files
-            // XrmToolbox plugins are typically in lib/net48/Plugins/ directory
-            string pluginsPath = Path.Combine(pluginDirectory, "lib", "net48", "Plugins");
-            
-            if (!Directory.Exists(pluginsPath))
+            // XrmToolbox plugins are typically in lib/net*/Plugins/ directory
+            string pluginsPath = null;
+
+            var topLevelPluginsPath = Path.Combine(pluginDirectory, "Plugins");
+            if (Directory.Exists(topLevelPluginsPath))
             {
-                // Try alternate location
-                pluginsPath = Path.Combine(pluginDirectory, "lib", "net462", "Plugins");
+                pluginsPath = topLevelPluginsPath;
+            }
+            else
+            {
+
+                string libPath = Path.Combine(pluginDirectory, "lib");
+                if (Directory.Exists(libPath))
+                {
+
+
+                    var netDirs = Directory.GetDirectories(libPath, "net*", SearchOption.TopDirectoryOnly);
+
+                    foreach (var netDir in netDirs)
+                    {
+                        string potentialPluginsPath = Path.Combine(netDir, "Plugins");
+                        if (Directory.Exists(potentialPluginsPath))
+                        {
+                            pluginsPath = potentialPluginsPath;
+                            break;
+                        }
+                    }
+                }
             }
 
-            if (!Directory.Exists(pluginsPath))
+            if (string.IsNullOrEmpty(pluginsPath))
             {
-                throw new InvalidOperationException($"Could not find Plugins directory in package. Expected location: {pluginsPath}");
+                throw new InvalidOperationException($"Could not find Plugins directory in package. Searched for lib/net*/Plugins in {pluginDirectory}");
             }
 
             WriteVerbose($"Found plugins directory: {pluginsPath}");
 
             // Find the plugin loader DLL (the one that implements IXrmToolBoxPlugin)
             var pluginFiles = Directory.GetFiles(pluginsPath, "*.dll", SearchOption.AllDirectories);
-            
+
             if (pluginFiles.Length == 0)
             {
                 throw new InvalidOperationException($"No plugin DLLs found in {pluginsPath}");
@@ -324,7 +437,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Find the host executable
             string hostExePath = FindPluginHost();
-            
+
             if (string.IsNullOrEmpty(hostExePath) || !File.Exists(hostExePath))
             {
                 throw new InvalidOperationException(
@@ -346,8 +459,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             WriteVerbose($"  Plugin directory: {pluginsPath}");
             WriteVerbose($"  Pipe name: {pipeName}");
 
-            // Start token provider server
-            var tokenServerTask = Task.Run(() => StartTokenServer(pipeName));
+            // Start token provider server in background (does not call Write* methods)
+            Task.Run(() => StartTokenServer(pipeName));
 
             // Launch the host process
             var processStartInfo = new System.Diagnostics.ProcessStartInfo
@@ -366,32 +479,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     WriteVerbose("Plugin host process started");
                     WriteProgress(new ProgressRecord(4, "Launching Plugin", "Plugin host started") { RecordType = ProgressRecordType.Completed });
-                    
-                    // Monitor process output in background
-                    var outputTask = Task.Run(() =>
-                    {
-                        string line;
-                        while ((line = process.StandardOutput.ReadLine()) != null)
-                        {
-                            WriteVerbose($"Host: {line}");
-                        }
-                    });
 
-                    var errorTask = Task.Run(() =>
+                    // Start background tasks to read output and queue messages (no Write* calls)
+                    Task.Run(() => ReadProcessOutput(process));
+                    Task.Run(() => ReadProcessError(process));
+
+                    // Poll on main thread, flushing queued messages
+                    while (!process.HasExited)
                     {
-                        string line;
-                        while ((line = process.StandardError.ReadLine()) != null)
-                        {
-                            WriteWarning($"Host: {line}");
-                        }
-                    });
-                    
-                    // Wait for process to exit
-                    process.WaitForExit();
-                    
+                        FlushPendingMessages();
+                        Thread.Sleep(100);
+                    }
+
+                    // Wait a moment for output tasks to finish queueing, then flush
+                    Thread.Sleep(200);
+                    FlushPendingMessages();
+
                     if (process.ExitCode != 0)
                     {
-                        WriteWarning($"Plugin host exited with code: {process.ExitCode}");
+                        throw new InvalidOperationException($"Plugin host exited with code: {process.ExitCode}");
                     }
                 }
                 else
@@ -401,14 +507,55 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
+        /// <summary>
+        /// Reads stdout from the process and queues messages. Does NOT call Write* methods.
+        /// </summary>
+        private void ReadProcessOutput(System.Diagnostics.Process process)
+        {
+            try
+            {
+                string line;
+                while ((line = process.StandardOutput.ReadLine()) != null)
+                {
+                    QueueMessage(LogLevel.Verbose, $"Host: {line}");
+                }
+            }
+            catch (Exception ex)
+            {
+                QueueMessage(LogLevel.Error, $"Error reading host output: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Reads stderr from the process and queues messages. Does NOT call Write* methods.
+        /// </summary>
+        private void ReadProcessError(System.Diagnostics.Process process)
+        {
+            try
+            {
+                string line;
+                while ((line = process.StandardError.ReadLine()) != null)
+                {
+                    QueueMessage(LogLevel.Warning, $"Host: {line}");
+                }
+            }
+            catch (Exception ex)
+            {
+                QueueMessage(LogLevel.Error, $"Error reading host error output: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Runs a token server on a background thread. Only queues messages, does NOT call Write* methods.
+        /// </summary>
         private void StartTokenServer(string pipeName)
         {
             try
             {
-                WriteVerbose($"Starting token server on pipe: {pipeName}");
-                
+                QueueMessage(LogLevel.Verbose, $"Starting token server on pipe: {pipeName}");
+
                 // Create named pipe server that provides tokens on demand
-                while (true)
+                while (!_stopTokenServer)
                 {
                     try
                     {
@@ -419,14 +566,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             System.IO.Pipes.PipeTransmissionMode.Message,
                             System.IO.Pipes.PipeOptions.Asynchronous))
                         {
-                            WriteVerbose("Token server: Waiting for connection...");
+                            QueueMessage(LogLevel.Verbose, "Token server: Waiting for connection...");
+
                             pipeServer.WaitForConnection();
-                            WriteVerbose("Token server: Client connected, providing token");
+
+                            QueueMessage(LogLevel.Verbose, "Token server: Client connected, providing token");
 
                             try
                             {
                                 // Get fresh token from connection
                                 string token = Connection?.CurrentAccessToken;
+
+                                if (string.IsNullOrEmpty(token) && Connection is ServiceClientWithTokenProvider serviceClientWithTokenProvider)
+                                {
+                                    token =
+                                        serviceClientWithTokenProvider.TokenProviderFunction(Connection.ConnectedOrgUriActual.Host).Result;
+                                }
 
                                 if (!string.IsNullOrEmpty(token))
                                 {
@@ -435,31 +590,31 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                         writer.AutoFlush = true;
                                         writer.Write(token);
                                     }
-                                    WriteVerbose($"Token server: Token sent ({token.Length} characters)");
+                                    QueueMessage(LogLevel.Verbose, $"Token server: Token sent ({token.Length} characters)");
                                 }
                                 else
                                 {
-                                    WriteWarning("Token server: No token available");
+                                    QueueMessage(LogLevel.Warning, "Token server: No token available");
                                 }
                             }
                             catch (Exception ex)
                             {
-                                WriteVerbose($"Token server: Error sending token: {ex.Message}");
+                                QueueMessage(LogLevel.Verbose, $"Token server: Error sending token: {ex.Message}");
                             }
                         }
                     }
                     catch (Exception ex)
                     {
-                        WriteVerbose($"Token server: Connection error: {ex.Message}");
+                        QueueMessage(LogLevel.Verbose, $"Token server: Connection error: {ex.Message}");
                         break;
                     }
                 }
-                
-                WriteVerbose("Token server stopped");
+
+                QueueMessage(LogLevel.Verbose, "Token server stopped");
             }
             catch (Exception ex)
             {
-                WriteWarning($"Token server failed: {ex.Message}");
+                QueueMessage(LogLevel.Warning, $"Token server failed: {ex.Message}");
             }
         }
 
@@ -467,10 +622,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             // Look for the host executable in the module directory
             string moduleDirectory = Path.GetDirectoryName(this.GetType().Assembly.Location);
-            
+
             // Check in the module's bin directory
             string hostExe = Path.Combine(moduleDirectory, "XrmToolboxPluginHost", "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost.exe");
-            
+
             if (File.Exists(hostExe))
             {
                 return hostExe;
@@ -478,7 +633,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Check relative to cmdlets assembly
             hostExe = Path.Combine(moduleDirectory, "..", "..", "XrmToolboxPluginHost", "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost.exe");
-            
+
             if (File.Exists(hostExe))
             {
                 return Path.GetFullPath(hostExe);
@@ -490,7 +645,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private string BuildConnectionString()
         {
             // Build a connection string from the current connection
-            
+
             if (Connection == null)
             {
                 throw new InvalidOperationException("No connection available. Use Get-DataverseConnection first.");
@@ -498,12 +653,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Extract URL - token will be provided through named pipe on demand
             var url = Connection.ConnectedOrgUriActual?.ToString() ?? "unknown";
-            
+
             return $"Url={url};";
         }
 
         /// <summary>
-        /// NuGet logger that writes to PowerShell
+        /// NuGet logger that queues messages for the main thread.
         /// </summary>
         private class NuGetLogger : ILogger
         {
@@ -516,65 +671,65 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             public void LogDebug(string data)
             {
-                _cmdlet.WriteVerbose(data);
+                _cmdlet.QueueMessage(LogLevel.Verbose, data);
             }
 
             public void LogVerbose(string data)
             {
-                _cmdlet.WriteVerbose(data);
+                _cmdlet.QueueMessage(LogLevel.Verbose, data);
             }
 
             public void LogInformation(string data)
             {
-                _cmdlet.WriteVerbose(data);
+                _cmdlet.QueueMessage(LogLevel.Verbose, data);
             }
 
             public void LogMinimal(string data)
             {
-                _cmdlet.WriteVerbose(data);
+                _cmdlet.QueueMessage(LogLevel.Verbose, data);
             }
 
             public void LogWarning(string data)
             {
-                _cmdlet.WriteWarning(data);
+                _cmdlet.QueueMessage(LogLevel.Warning, data);
             }
 
             public void LogError(string data)
             {
-                _cmdlet.WriteWarning($"NuGet Error: {data}");
+                _cmdlet.QueueMessage(LogLevel.Warning, $"NuGet Error: {data}");
             }
 
             public void LogInformationSummary(string data)
             {
-                _cmdlet.WriteVerbose(data);
+                _cmdlet.QueueMessage(LogLevel.Verbose, data);
             }
 
-            public void Log(LogLevel level, string data)
+            public void Log(NuGet.Common.LogLevel level, string data)
             {
                 switch (level)
                 {
-                    case LogLevel.Error:
+                    case NuGet.Common.LogLevel.Error:
                         LogError(data);
                         break;
-                    case LogLevel.Warning:
+                    case NuGet.Common.LogLevel.Warning:
                         LogWarning(data);
                         break;
-                    case LogLevel.Information:
+                    case NuGet.Common.LogLevel.Information:
                         LogInformation(data);
                         break;
-                    case LogLevel.Verbose:
+                    case NuGet.Common.LogLevel.Verbose:
                         LogVerbose(data);
                         break;
-                    case LogLevel.Debug:
+                    case NuGet.Common.LogLevel.Debug:
                         LogDebug(data);
                         break;
-                    case LogLevel.Minimal:
+                    case NuGet.Common.LogLevel.Minimal:
                         LogMinimal(data);
                         break;
                 }
             }
 
-            public Task LogAsync(LogLevel level, string data)
+            public Task LogAsync(NuGet.Common.LogLevel level, string data)
             {
                 Log(level, data);
                 return Task.CompletedTask;

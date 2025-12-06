@@ -1,14 +1,16 @@
+using McTools.Xrm.Connection;
+using Microsoft.Crm.Sdk.Messages;
+using Microsoft.Xrm.Sdk.Discovery;
+using Microsoft.Xrm.Sdk.WebServiceClient;
+using Microsoft.Xrm.Tooling.Connector;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using McTools.Xrm.Connection;
-using Microsoft.PowerPlatform.Dataverse.Client;
+using XrmToolBox;
 using XrmToolBox.Extensibility;
 using XrmToolBox.Extensibility.Interfaces;
 
@@ -21,7 +23,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
     class Program
     {
         private static string _pipeName;
-        private static ServiceClient _serviceClient;
+        private static CrmServiceClient _serviceClient;
 
         [STAThread]
         static int Main(string[] args)
@@ -45,15 +47,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
                 Console.WriteLine($"Plugin directory: {pluginDirectory}");
                 Console.WriteLine($"Named pipe: {_pipeName}");
 
+                // Set up assembly redirection for XrmToolbox assemblies
+                AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
+
+                PluginManagerExtended.Instance.Plugins = [];
+                PluginManagerExtended.Instance.PluginsExt = [];
+
                 // Load the plugin
                 var pluginLoader = new PluginLoader();
                 var plugin = pluginLoader.LoadPlugin(pluginDirectory);
-
-                if (plugin == null)
-                {
-                    Console.Error.WriteLine("Failed to load plugin from directory");
-                    return 1;
-                }
 
                 Console.WriteLine($"Plugin loaded: {plugin.GetType().FullName}");
 
@@ -73,7 +75,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
                 Application.SetCompatibleTextRenderingDefault(false);
 
                 var pluginControl = plugin.GetControl();
-                
+
                 if (pluginControl == null)
                 {
                     Console.Error.WriteLine("Plugin returned null control");
@@ -95,67 +97,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
                     form.Controls.Add(control);
                 }
 
-                // Update connection using reflection to call OnConnectionUpdated
-                try
-                {
-                    // Create a simple event args object since we may not have access to the actual type
-                    var eventArgsType = pluginControl.GetType().Assembly.GetType("XrmToolBox.Extensibility.ConnectionUpdatedEventArgs");
-                    
-                    if (eventArgsType == null)
-                    {
-                        // Try to find it in loaded assemblies
-                        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-                        {
-                            eventArgsType = asm.GetType("XrmToolBox.Extensibility.ConnectionUpdatedEventArgs");
-                            if (eventArgsType != null) break;
-                        }
-                    }
+                Debugger.Launch();
 
-                    if (eventArgsType != null)
-                    {
-                        // Try to find a constructor that accepts ServiceClient or its base types
-                        var constructor = eventArgsType.GetConstructor(new[] { typeof(object), typeof(ServiceClient) });
-                        
-                        if (constructor == null)
-                        {
-                            // Try with IOrganizationService
-                            constructor = eventArgsType.GetConstructor(new[] { typeof(object), typeof(Microsoft.Xrm.Sdk.IOrganizationService) });
-                        }
-                        
-                        if (constructor != null)
-                        {
-                            var eventArgs = constructor.Invoke(new object[] { null, _serviceClient });
-                            
-                            var baseType = pluginControl.GetType().BaseType;
-                            while (baseType != null && baseType != typeof(object))
-                            {
-                                var method = baseType.GetMethod("OnConnectionUpdated", 
-                                    BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public);
-                                
-                                if (method != null)
-                                {
-                                    method.Invoke(pluginControl, new object[] { eventArgs });
-                                    Console.WriteLine("Connection injected successfully");
-                                    break;
-                                }
-                                
-                                baseType = baseType.BaseType;
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("Warning: Could not find suitable constructor for ConnectionUpdatedEventArgs");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Warning: Could not find ConnectionUpdatedEventArgs type");
-                    }
-                }
-                catch (Exception ex)
+                // Use CrmServiceClient for XrmToolbox plugin compatibility
+                pluginControl.UpdateConnection(_serviceClient, new ConnectionDetail()
                 {
-                    Console.WriteLine($"Warning: Could not inject connection: {ex.Message}");
-                }
+                    AuthType = Microsoft.Xrm.Sdk.Client.AuthenticationProviderType.None,
+                    ConnectionName = _serviceClient.ConnectedOrgFriendlyName,
+                    EnvironmentText = _serviceClient.ConnectedOrgFriendlyName,
+                    OrganizationVersion = _serviceClient.ConnectedOrgVersion?.ToString(),
+                    OrganizationDataServiceUrl = _serviceClient.ConnectedOrgPublishedEndpoints?[EndpointType.OrganizationDataService],
+                    ConnectionId = Guid.NewGuid(),
+                    IsCustomAuth = true,
+                    WebApplicationUrl = _serviceClient.ConnectedOrgPublishedEndpoints?[EndpointType.WebApplication],
+                    ServiceClient = _serviceClient
+                });
 
                 Application.Run(form);
 
@@ -170,81 +126,178 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
             }
         }
 
-        static ServiceClient CreateConnection(string connectionString)
+        static CrmServiceClient CreateConnection(string connectionString)
         {
-            try
+
+            Console.WriteLine("Creating connection...");
+
+            // Parse simple connection string format
+            // Expected format: "Url=https://org.crm.dynamics.com"
+            var parts = connectionString.Split(';');
+            string url = null;
+
+            foreach (var part in parts)
             {
-                Console.WriteLine("Creating connection from connection string...");
-                
-                // Parse simple connection string format
-                // Expected format: "Url=https://org.crm.dynamics.com"
-                var parts = connectionString.Split(';');
-                string url = null;
-
-                foreach (var part in parts)
+                var keyValue = part.Split(new[] { '=' }, 2);
+                if (keyValue.Length == 2)
                 {
-                    var keyValue = part.Split(new[] { '=' }, 2);
-                    if (keyValue.Length == 2)
+                    var key = keyValue[0].Trim();
+                    var value = keyValue[1].Trim();
+
+                    if (key.Equals("Url", StringComparison.OrdinalIgnoreCase))
                     {
-                        var key = keyValue[0].Trim();
-                        var value = keyValue[1].Trim();
-
-                        if (key.Equals("Url", StringComparison.OrdinalIgnoreCase))
-                        {
-                            url = value;
-                        }
+                        url = value;
                     }
-                }
-
-                if (string.IsNullOrEmpty(url))
-                {
-                    Console.Error.WriteLine("No URL found in connection string");
-                    return null;
-                }
-
-                Console.WriteLine($"Connecting to: {url}");
-
-                // Create client with external token management
-                // The token provider function will request tokens through the named pipe
-                var client = new ServiceClient(
-                    instanceUrl: new Uri(url),
-                    tokenProviderFunction: async (instanceUrl) =>
-                    {
-                        Console.WriteLine("Token requested - fetching from named pipe...");
-                        return await GetTokenFromPipeAsync();
-                    }
-                );
-
-                if (client.IsReady)
-                {
-                    Console.WriteLine($"Connected to: {client.ConnectedOrgFriendlyName}");
-                    return client;
-                }
-                else
-                {
-                    Console.Error.WriteLine($"Connection failed: {client.LastError}");
-                    return null;
                 }
             }
-            catch (Exception ex)
+
+            if (string.IsNullOrEmpty(url))
             {
-                Console.Error.WriteLine($"Failed to create connection: {ex.Message}");
+                Console.Error.WriteLine("No URL found in connection string");
                 return null;
             }
+
+            Console.WriteLine($"Connecting to: {url}");
+
+            // Create CrmServiceClient using the factory
+            var client = CrmServiceClientFactory.Create(url, _pipeName);
+
+            // Verify connection by executing WhoAmI request
+            client.Execute(new WhoAmIRequest());
+
+            if (client.IsReady)
+            {
+                Console.WriteLine($"Connected to: {client.ConnectedOrgFriendlyName}");
+                return client;
+            }
+            else
+            {
+                throw new InvalidOperationException($"Connection failed: {client.LastCrmError}");
+            }
+
         }
 
-        static async Task<string> GetTokenFromPipeAsync()
+        private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            var assemblyName = new AssemblyName(args.Name);
+
+            // List of assemblies to redirect (same as XrmToolbox)
+            var assembliesToRedirect = new[]
+            {
+                "Newtonsoft.Json",
+                "McTools.Xrm.Connection",
+                "McTools.Xrm.Connection.WinForms",
+                "XrmToolBox.Extensibility",
+                "XrmToolBox.ToolLibrary",
+                "Microsoft.Xrm.Sdk",
+                "Microsoft.Xrm.Sdk.Workflow",
+                "Microsoft.Crm.Sdk.Proxy",
+                "Microsoft.Xrm.Tooling.Connector",
+                "Microsoft.Xrm.Tooling.Ui.Styles",
+                "Microsoft.Xrm.Tooling.CrmConnectControl",
+                "Microsoft.IdentityModel.Clients.ActiveDirectory",
+                "WeifenLuo.WinFormsUI.Docking",
+                "WeifenLuo.WinFormsUI.Docking.ThemeVS2015",
+                "ScintillaNET",
+                "Microsoft.Web.WebView2.Core",
+                "Microsoft.Web.WebView2.WinForms",
+                "Microsoft.Toolkit.Uwp.Notifications"
+            };
+
+            if (assembliesToRedirect.Contains(assemblyName.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                // Try to load from the current directory
+                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, assemblyName.Name + ".dll");
+                if (File.Exists(path))
+                {
+                    Console.WriteLine($"Redirecting assembly load: {assemblyName.Name} -> {path}");
+                    return Assembly.LoadFrom(path);
+                }
+            }
+
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Factory for creating CrmServiceClient with external token via named pipe.
+    /// Uses OrganizationWebProxyClient internally since the older SDK version doesn't have
+    /// the token provider constructor pattern.
+    /// </summary>
+    static class CrmServiceClientFactory
+    {
+        /// <summary>
+        /// Creates a CrmServiceClient using an access token from the named pipe.
+        /// </summary>
+        /// <param name="url">The Dataverse organization URL</param>
+        /// <param name="pipeName">The named pipe to use for token retrieval</param>
+        /// <returns>A configured CrmServiceClient</returns>
+        public static CrmServiceClient Create(string url, string pipeName)
+        {
+            string token = GetTokenFromPipe(pipeName);
+            
+            // Build the organization service URI
+            // The URL might be:
+            // - Base URL: https://org.crm.dynamics.com/
+            // - Full service URL: https://org.crm.dynamics.com/XRMServices/2011/Organization.svc
+            // - Web endpoint URL: https://org.crm.dynamics.com/XRMServices/2011/Organization.svc/web
+            
+            Uri baseUri = new Uri(url);
+            Uri orgServiceUri;
+            
+            string path = baseUri.AbsolutePath.TrimEnd('/');
+            
+            if (path.EndsWith("/Organization.svc/web", StringComparison.OrdinalIgnoreCase))
+            {
+                // Already the correct web endpoint
+                orgServiceUri = baseUri;
+            }
+            else if (path.EndsWith("/Organization.svc", StringComparison.OrdinalIgnoreCase))
+            {
+                // Need to add /web
+                orgServiceUri = new Uri(url.TrimEnd('/') + "/web");
+            }
+            else
+            {
+                // Base URL - need to add the full path
+                string baseUrl = baseUri.GetLeftPart(UriPartial.Authority);
+                orgServiceUri = new Uri(baseUrl + "/XRMServices/2011/Organization.svc/web");
+            }
+            
+            Console.WriteLine($"Creating OrganizationWebProxyClient for: {orgServiceUri}");
+            
+            // Create an OrganizationWebProxyClient with the access token
+            var webProxyClient = new OrganizationWebProxyClient(orgServiceUri, false);
+            webProxyClient.HeaderToken = token;
+            
+            Console.WriteLine($"OrganizationWebProxyClient created with token ({token?.Length ?? 0} characters)");
+            
+            // Create CrmServiceClient from the web proxy client
+            var client = new CrmServiceClient(webProxyClient);
+            
+            Console.WriteLine($"CrmServiceClient created, IsReady: {client.IsReady}");
+            
+            if (!client.IsReady)
+            {
+                Console.WriteLine($"Connection not ready, error: {client.LastCrmError}");
+                throw new InvalidOperationException($"Failed to create CrmServiceClient: {client.LastCrmError}");
+            }
+            
+            return client;
+        }
+
+        private static string GetTokenFromPipe(string pipeName)
         {
             try
             {
-                // Request token from parent process through named pipe
-                using (var pipeClient = new NamedPipeClientStream(".", _pipeName, PipeDirection.In))
+                Console.WriteLine("Fetching token from named pipe...");
+                using (var pipeClient = new NamedPipeClientStream(".", pipeName, PipeDirection.In))
                 {
-                    await pipeClient.ConnectAsync(5000); // 5 second timeout
-                    
+                    pipeClient.Connect(30000);
+
                     using (var reader = new StreamReader(pipeClient))
                     {
-                        string token = await reader.ReadToEndAsync();
+                        string token = reader.ReadToEnd();
                         Console.WriteLine($"Token received from named pipe ({token?.Length ?? 0} characters)");
                         return token;
                     }
@@ -270,72 +323,52 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
                 throw new DirectoryNotFoundException($"Plugin directory not found: {pluginDirectory}");
             }
 
-            // Load all DLLs in the directory
-            var dllFiles = Directory.GetFiles(pluginDirectory, "*.dll", SearchOption.AllDirectories);
+            // Get DLLs only in the root directory (ignore subfolders)
+            var dllFiles = Directory.GetFiles(pluginDirectory, "*.dll", SearchOption.TopDirectoryOnly);
 
-            Console.WriteLine($"Searching {dllFiles.Length} DLLs for XrmToolbox plugins...");
-
-            // Try to load XrmToolBox assemblies first to ensure they're available
-            foreach (var dllFile in dllFiles)
+            if (dllFiles.Length != 1)
             {
-                try
-                {
-                    var fileName = Path.GetFileNameWithoutExtension(dllFile);
-                    if (fileName.StartsWith("XrmToolBox", StringComparison.OrdinalIgnoreCase) ||
-                        fileName.StartsWith("McTools", StringComparison.OrdinalIgnoreCase))
-                    {
-                        Assembly.LoadFrom(dllFile);
-                        Console.WriteLine($"Pre-loaded: {fileName}");
-                    }
-                }
-                catch
-                {
-                    // Ignore errors pre-loading
-                }
+                throw new InvalidOperationException($"Expected exactly 1 DLL in plugin directory '{pluginDirectory}', but found {dllFiles.Length}.");
             }
 
-            // Now search for plugin types
-            foreach (var dllFile in dllFiles)
-            {
-                try
-                {
-                    var assembly = Assembly.LoadFrom(dllFile);
-                    
-                    // Find types that implement IXrmToolBoxPlugin
-                    var pluginTypes = assembly.GetTypes()
-                        .Where(t => typeof(IXrmToolBoxPlugin).IsAssignableFrom(t) && 
-                                   !t.IsAbstract && 
-                                   !t.IsInterface &&
-                                   t.GetConstructor(Type.EmptyTypes) != null)
-                        .ToList();
+            var dllFile = dllFiles[0];
+            Console.WriteLine($"Loading plugin from: {Path.GetFileName(dllFile)}");
 
-                    if (pluginTypes.Any())
-                    {
-                        var pluginType = pluginTypes.First();
-                        Console.WriteLine($"Found plugin type: {pluginType.FullName}");
-                        
-                        var plugin = Activator.CreateInstance(pluginType) as IXrmToolBoxPlugin;
-                        return plugin;
-                    }
-                }
-                catch (ReflectionTypeLoadException ex)
-                {
-                    Console.WriteLine($"Skipping {Path.GetFileName(dllFile)}: Type load errors");
-                    foreach (var loaderEx in ex.LoaderExceptions.Take(3))
-                    {
-                        if (loaderEx != null)
-                        {
-                            Console.WriteLine($"  {loaderEx.Message}");
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Skipping {Path.GetFileName(dllFile)}: {ex.Message}");
-                }
+            Assembly assembly;
+            try
+            {
+                assembly = Assembly.LoadFrom(dllFile);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to load assembly from '{dllFile}': {ex.Message}", ex);
             }
 
-            return null;
+            // Find types that implement IXrmToolBoxPlugin
+            var pluginTypes = assembly.GetTypes()
+                .Where(t => typeof(IXrmToolBoxPlugin).IsAssignableFrom(t) &&
+                           !t.IsAbstract &&
+                           !t.IsInterface &&
+                           t.GetConstructor(Type.EmptyTypes) != null)
+                .ToList();
+
+            if (pluginTypes.Count != 1)
+            {
+                throw new InvalidOperationException($"Expected exactly 1 constructible plugin type in '{Path.GetFileName(dllFile)}', but found {pluginTypes.Count}.");
+            }
+
+            var pluginType = pluginTypes[0];
+            Console.WriteLine($"Found plugin type: {pluginType.FullName}");
+
+            try
+            {
+                var plugin = Activator.CreateInstance(pluginType) as IXrmToolBoxPlugin;
+                return plugin;
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to instantiate plugin type '{pluginType.FullName}': {ex.Message}", ex);
+            }
         }
     }
 }
