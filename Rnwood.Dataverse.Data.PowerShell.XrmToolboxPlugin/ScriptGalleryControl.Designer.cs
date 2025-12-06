@@ -41,10 +41,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.refreshButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.statusLabel = new System.Windows.Forms.ToolStripLabel();
+            this.filterPanel = new System.Windows.Forms.Panel();
+            this.searchTextBox = new System.Windows.Forms.TextBox();
+            this.searchLabel = new System.Windows.Forms.Label();
+            this.tagFilterComboBox = new System.Windows.Forms.ComboBox();
+            this.tagFilterLabel = new System.Windows.Forms.Label();
+            this.applyFilterButton = new System.Windows.Forms.Button();
+            this.clearFilterButton = new System.Windows.Forms.Button();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.listView = new System.Windows.Forms.ListView();
             this.titleColumn = new System.Windows.Forms.ColumnHeader();
             this.authorColumn = new System.Windows.Forms.ColumnHeader();
+            this.tagsColumn = new System.Windows.Forms.ColumnHeader();
             this.votesColumn = new System.Windows.Forms.ColumnHeader();
             this.commentsColumn = new System.Windows.Forms.ColumnHeader();
             this.dateColumn = new System.Windows.Forms.ColumnHeader();
@@ -108,10 +116,85 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.statusLabel.Text = "Not logged in";
             
             // 
+            // filterPanel
+            // 
+            this.filterPanel.Controls.Add(this.searchLabel);
+            this.filterPanel.Controls.Add(this.searchTextBox);
+            this.filterPanel.Controls.Add(this.tagFilterLabel);
+            this.filterPanel.Controls.Add(this.tagFilterComboBox);
+            this.filterPanel.Controls.Add(this.applyFilterButton);
+            this.filterPanel.Controls.Add(this.clearFilterButton);
+            this.filterPanel.Dock = System.Windows.Forms.DockStyle.Top;
+            this.filterPanel.Location = new System.Drawing.Point(0, 31);
+            this.filterPanel.Name = "filterPanel";
+            this.filterPanel.Size = new System.Drawing.Size(516, 60);
+            this.filterPanel.TabIndex = 1;
+            
+            // 
+            // searchLabel
+            // 
+            this.searchLabel.AutoSize = true;
+            this.searchLabel.Location = new System.Drawing.Point(10, 12);
+            this.searchLabel.Name = "searchLabel";
+            this.searchLabel.Size = new System.Drawing.Size(50, 13);
+            this.searchLabel.TabIndex = 0;
+            this.searchLabel.Text = "Search:";
+            
+            // 
+            // searchTextBox
+            // 
+            this.searchTextBox.Location = new System.Drawing.Point(70, 9);
+            this.searchTextBox.Name = "searchTextBox";
+            this.searchTextBox.Size = new System.Drawing.Size(200, 20);
+            this.searchTextBox.TabIndex = 1;
+            
+            // 
+            // tagFilterLabel
+            // 
+            this.tagFilterLabel.AutoSize = true;
+            this.tagFilterLabel.Location = new System.Drawing.Point(10, 37);
+            this.tagFilterLabel.Name = "tagFilterLabel";
+            this.tagFilterLabel.Size = new System.Drawing.Size(30, 13);
+            this.tagFilterLabel.TabIndex = 2;
+            this.tagFilterLabel.Text = "Tag:";
+            
+            // 
+            // tagFilterComboBox
+            // 
+            this.tagFilterComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.tagFilterComboBox.FormattingEnabled = true;
+            this.tagFilterComboBox.Location = new System.Drawing.Point(70, 34);
+            this.tagFilterComboBox.Name = "tagFilterComboBox";
+            this.tagFilterComboBox.Size = new System.Drawing.Size(200, 21);
+            this.tagFilterComboBox.TabIndex = 3;
+            
+            // 
+            // applyFilterButton
+            // 
+            this.applyFilterButton.Location = new System.Drawing.Point(280, 9);
+            this.applyFilterButton.Name = "applyFilterButton";
+            this.applyFilterButton.Size = new System.Drawing.Size(75, 46);
+            this.applyFilterButton.TabIndex = 4;
+            this.applyFilterButton.Text = "Apply";
+            this.applyFilterButton.UseVisualStyleBackColor = true;
+            this.applyFilterButton.Click += new System.EventHandler(this.ApplyFilterButton_Click);
+            
+            // 
+            // clearFilterButton
+            // 
+            this.clearFilterButton.Location = new System.Drawing.Point(365, 9);
+            this.clearFilterButton.Name = "clearFilterButton";
+            this.clearFilterButton.Size = new System.Drawing.Size(75, 46);
+            this.clearFilterButton.TabIndex = 5;
+            this.clearFilterButton.Text = "Clear";
+            this.clearFilterButton.UseVisualStyleBackColor = true;
+            this.clearFilterButton.Click += new System.EventHandler(this.ClearFilterButton_Click);
+            
+            // 
             // splitContainer
             // 
             this.splitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer.Location = new System.Drawing.Point(0, 31);
+            this.splitContainer.Location = new System.Drawing.Point(0, 91);
             this.splitContainer.Name = "splitContainer";
             this.splitContainer.Orientation = System.Windows.Forms.Orientation.Horizontal;
             // 
@@ -132,6 +215,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.listView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
                 this.titleColumn,
                 this.authorColumn,
+                this.tagsColumn,
                 this.votesColumn,
                 this.commentsColumn,
                 this.dateColumn});
@@ -155,6 +239,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // 
             this.authorColumn.Text = "Author";
             this.authorColumn.Width = 100;
+            
+            // 
+            // tagsColumn
+            // 
+            this.tagsColumn.Text = "Tags";
+            this.tagsColumn.Width = 120;
             
             // 
             // votesColumn
@@ -270,11 +360,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // ScriptGalleryControl
             // 
             this.Controls.Add(this.splitContainer);
+            this.Controls.Add(this.filterPanel);
             this.Controls.Add(this.toolbar);
             this.Name = "ScriptGalleryControl";
             this.Size = new System.Drawing.Size(516, 1044);
             this.toolbar.ResumeLayout(false);
             this.toolbar.PerformLayout();
+            this.filterPanel.ResumeLayout(false);
+            this.filterPanel.PerformLayout();
             this.splitContainer.Panel1.ResumeLayout(false);
             this.splitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).EndInit();
@@ -296,10 +389,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private ToolStripButton refreshButton;
         private ToolStripSeparator toolStripSeparator;
         private ToolStripLabel statusLabel;
+        private Panel filterPanel;
+        private Label searchLabel;
+        private TextBox searchTextBox;
+        private Label tagFilterLabel;
+        private ComboBox tagFilterComboBox;
+        private Button applyFilterButton;
+        private Button clearFilterButton;
         private SplitContainer splitContainer;
         private ListView listView;
         private ColumnHeader titleColumn;
         private ColumnHeader authorColumn;
+        private ColumnHeader tagsColumn;
         private ColumnHeader votesColumn;
         private ColumnHeader commentsColumn;
         private ColumnHeader dateColumn;
