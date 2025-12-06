@@ -49,6 +49,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = false, HelpMessage = "Force re-download of the package even if it's already cached.")]
         public SwitchParameter Force { get; set; }
 
+        /// <summary>
+        /// The name of the plugin to load if the assembly contains multiple plugins.
+        /// </summary>
+        [Parameter(Mandatory = false, HelpMessage = "The name of the plugin to load if the assembly contains multiple plugins.")]
+        public string Name { get; set; }
+
         private string _defaultCacheDirectory;
         private SourceCacheContext _cache;
         private SourceRepository _repository;
@@ -471,7 +477,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var processStartInfo = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = hostExePath,
-                Arguments = $"\"{pluginsPath}\" \"{pipeName}\" \"{url}\"",
+                Arguments = $"\"{pluginsPath}\" \"{pipeName}\" \"{url}\" \"{Name ?? ""}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,

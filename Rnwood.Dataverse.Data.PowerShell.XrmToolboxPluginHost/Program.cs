@@ -12,6 +12,7 @@ using System.Windows.Forms;
 using XrmToolBox;
 using XrmToolBox.Extensibility;
 using XrmToolBox.Extensibility.Interfaces;
+using System.ComponentModel.Composition;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
 {
@@ -31,20 +32,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
             {
                 if (args.Length < 3)
                 {
-                    Console.Error.WriteLine("Usage: XrmToolboxPluginHost <plugin-directory> <pipe-name> <url>");
+                    Console.Error.WriteLine("Usage: XrmToolboxPluginHost <plugin-directory> <pipe-name> <url> [name]");
                     Console.Error.WriteLine("  plugin-directory: Path to the directory containing the plugin DLLs");
                     Console.Error.WriteLine("  pipe-name: Named pipe to use for token retrieval");
                     Console.Error.WriteLine("  url: Dataverse organization URL");
+                    Console.Error.WriteLine("  name: Optional name of the plugin to load if multiple are present");
                     return 1;
                 }
 
                 string pluginDirectory = args[0];
                 _pipeName = args[1];
                 string url = args[2];
+                string name = args.Length > 3 && !string.IsNullOrEmpty(args[3]) ? args[3] : null;
 
                 Console.WriteLine($"XrmToolbox Plugin Host starting...");
                 Console.WriteLine($"Plugin directory: {pluginDirectory}");
                 Console.WriteLine($"Named pipe: {_pipeName}");
+
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
 
                 // Set up assembly redirection for XrmToolbox assemblies
                 AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
@@ -54,9 +60,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
 
                 // Load the plugin
                 var pluginLoader = new PluginLoader();
-                var plugin = pluginLoader.LoadPlugin(pluginDirectory);
+                var plugin = pluginLoader.LoadPlugin(pluginDirectory, name);
 
                 Console.WriteLine($"Plugin loaded: {plugin.GetType().FullName}");
+
+                // Get the plugin name for the window title
+                string pluginName = GetPluginName(plugin.GetType()) ?? plugin.GetType().Name;
+
+                // Get the plugin image for the window icon
+                string pluginImage = GetPluginImage(plugin.GetType());
 
                 // Create connection with external token management
                 _serviceClient = CreateConnection(url);
@@ -69,9 +81,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
 
                 Console.WriteLine("Connection established");
 
+                // Get the web application URL for the title
+                string webAppUrl = _serviceClient.ConnectedOrgPublishedEndpoints?[EndpointType.WebApplication] ?? new Uri(new Uri(url), "/").ToString();
+
                 // Show the plugin in a form
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
+
 
                 var pluginControl = plugin.GetControl();
 
@@ -89,24 +103,77 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
                     };
                 }
 
+                if (pluginControl is IStatusBarMessager statusBarMessager)
+                {
+                    statusBarMessager.SendMessageToStatusBar += (s, ea) =>
+                    {
+                        Console.WriteLine($"StatusBar Message: {ea.Message}");
+                    };
+                }
+
                 if (pluginControl is IMessageBusHost messageBusHost)
                 {
                     messageBusHost.OnOutgoingMessage += (s, ea) =>
                     {
                         Console.WriteLine($"MessageBus Message: {ea.TargetArgument}");
-
-                        ea.
                     };
                 }
+
+                if (pluginControl is IDuplicatableTool duplicatableTool)
+                {
+                    duplicatableTool.DuplicateRequested += (s, ea) =>
+                    {
+                        Console.WriteLine("Duplicate requested - not supported in this host");
+                    };
+                }
+
+                pluginControl.OnRequestConnection += (s, ea) =>
+                {
+                    Console.WriteLine("Plugin requested connection update");
+                };
+
+                pluginControl.OnWorkAsync += (s, ea) =>
+                {
+                    Console.WriteLine("Plugin started async work");
+                };
+
+                pluginControl.OnCloseTool += (s, ea) =>
+                {
+                    Console.WriteLine("Plugin requested close");
+                    Application.Exit();
+                };
 
 
                 var form = new Form
                 {
-                    Text = $"XrmToolbox Plugin: {plugin.GetType().Name}",
+                    Text = $"XrmToolbox Plugin: {pluginName} [{webAppUrl}]",
                     Width = 1200,
                     Height = 800,
                     StartPosition = FormStartPosition.CenterScreen
                 };
+
+                // Set the plugin icon if available
+                if (!string.IsNullOrEmpty(pluginImage))
+                {
+                    try
+                    {
+                        var assembly = plugin.GetType().Assembly;
+                        using (var stream = new MemoryStream(Convert.FromBase64String(pluginImage)))
+                        {
+                            using (var bitmap = new System.Drawing.Bitmap(stream))
+                            {
+                                form.Icon = System.Drawing.Icon.FromHandle(bitmap.GetHicon());
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+
+                        // Ignore if can't load the icon
+                        Console.WriteLine("Failed to load plugin icon: " + ex.Message);
+
+                    }
+                }
 
                 Control control = pluginControl as Control;
                 if (control != null)
@@ -148,6 +215,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
                 Console.Error.WriteLine(ex.StackTrace);
                 return 1;
             }
+        }
+
+        private static void PluginControl_OnCloseTool(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static void PluginControl_OnWorkAsync(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static string GetPluginName(Type type)
+        {
+            var attrs = type.GetCustomAttributes(typeof(ExportMetadataAttribute), false)
+                .Cast<ExportMetadataAttribute>()
+                .Where(attr => attr.Name == "Name")
+                .Select(attr => attr.Value as string)
+                .FirstOrDefault();
+            return attrs;
+        }
+
+        private static string GetPluginImage(Type type)
+        {
+            var attrs = type.GetCustomAttributes(typeof(ExportMetadataAttribute), false)
+                .Cast<ExportMetadataAttribute>()
+                .Where(attr => attr.Name == "SmallImageBase64")
+                .Select(attr => attr.Value as string)
+                .FirstOrDefault();
+            return attrs;
         }
 
         static CrmServiceClient CreateConnection(string url)
