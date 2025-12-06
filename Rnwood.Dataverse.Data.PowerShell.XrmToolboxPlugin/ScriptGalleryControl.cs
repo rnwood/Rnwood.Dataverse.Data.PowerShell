@@ -13,6 +13,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private List<ScriptGalleryItem> _discussions;
         private ScriptGalleryItem _selectedItem;
         private bool _webViewInitialized;
+        private string _currentSearchText;
+        private List<string> _currentFilterTags;
 
         public event EventHandler<string> LoadScriptRequested;
 
@@ -20,9 +22,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             InitializeComponent();
             _githubService = new GitHubService();
+            _currentFilterTags = new List<string>();
             
             // Initialize WebView2
             InitializeWebViewAsync();
+            
+            // Load available tags
+            LoadAvailableTagsAsync();
         }
         
         protected override void OnHandleDestroyed(EventArgs e)
@@ -51,6 +57,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             // Will be used to enable save to gallery from editor
         }
+        
+        private async Task LoadAvailableTagsAsync()
+        {
+            try
+            {
+                var tags = await _githubService.GetAvailableTagsAsync();
+                tagFilterComboBox.Items.Clear();
+                tagFilterComboBox.Items.Add("(All)");
+                foreach (var tag in tags)
+                {
+                    tagFilterComboBox.Items.Add(tag);
+                }
+                if (tagFilterComboBox.Items.Count > 0)
+                {
+                    tagFilterComboBox.SelectedIndex = 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load tags: {ex.Message}");
+            }
+        }
 
         private async void LoginButton_Click(object sender, EventArgs e)
         {
@@ -64,11 +92,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
             else
             {
-                // Show token input dialog
-                using (var tokenForm = new Form
+                // Use Device Flow authentication
+                var (success, message, userCode, verificationUri) = await _githubService.InitiateDeviceFlowAsync();
+                
+                if (!success)
                 {
-                    Text = "GitHub Authentication",
-                    Width = 500,
+                    MessageBox.Show(message, "Authentication Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Show device flow dialog
+                using (var deviceFlowForm = new Form
+                {
+                    Text = "GitHub Device Flow Authentication",
+                    Width = 550,
                     Height = 250,
                     StartPosition = FormStartPosition.CenterParent,
                     FormBorderStyle = FormBorderStyle.FixedDialog,
@@ -78,71 +115,135 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 {
                     var instructionLabel = new Label
                     {
-                        Text = "Please enter your GitHub Personal Access Token.\n\nTo create one:\n1. Go to github.com/settings/tokens\n2. Click 'Generate new token' (classic)\n3. Select scopes:\n   - 'public_repo' (for public repositories) OR 'repo' (for private repositories)\n   - 'read:discussion' and 'write:discussion'\n4. Generate and copy the token",
+                        Text = $"Please visit the following URL and enter the code:\n\n{verificationUri}\n\nCode: {userCode}\n\nThis window will close automatically when you authorize.",
                         AutoSize = false,
                         Location = new System.Drawing.Point(20, 20),
-                        Size = new System.Drawing.Size(440, 100)
+                        Size = new System.Drawing.Size(500, 100)
                     };
 
-                    var tokenLabel = new Label
+                    var copyCodeButton = new Button
                     {
-                        Text = "Token:",
+                        Text = "Copy Code",
                         Location = new System.Drawing.Point(20, 130),
+                        Size = new System.Drawing.Size(100, 30)
+                    };
+                    copyCodeButton.Click += (s, ev) =>
+                    {
+                        Clipboard.SetText(userCode);
+                        MessageBox.Show("Code copied to clipboard", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    };
+
+                    var openBrowserButton = new Button
+                    {
+                        Text = "Open Browser",
+                        Location = new System.Drawing.Point(130, 130),
+                        Size = new System.Drawing.Size(120, 30)
+                    };
+                    openBrowserButton.Click += (s, ev) =>
+                    {
+                        try
+                        {
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = verificationUri,
+                                UseShellExecute = true
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Failed to open browser: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    };
+
+                    var statusLabelForm = new Label
+                    {
+                        Text = "Waiting for authorization...",
+                        Location = new System.Drawing.Point(20, 170),
                         AutoSize = true
-                    };
-
-                    var tokenTextBox = new TextBox
-                    {
-                        Location = new System.Drawing.Point(80, 127),
-                        Width = 380,
-                        UseSystemPasswordChar = true
-                    };
-
-                    var loginButton2 = new Button
-                    {
-                        Text = "Login",
-                        DialogResult = DialogResult.OK,
-                        Location = new System.Drawing.Point(305, 165),
-                        Width = 75
                     };
 
                     var cancelButton = new Button
                     {
                         Text = "Cancel",
-                        DialogResult = DialogResult.Cancel,
-                        Location = new System.Drawing.Point(385, 165),
-                        Width = 75
+                        Location = new System.Drawing.Point(430, 130),
+                        Size = new System.Drawing.Size(90, 30)
+                    };
+                    cancelButton.Click += (s, ev) =>
+                    {
+                        deviceFlowForm.Close();
                     };
 
-                    tokenForm.Controls.Add(instructionLabel);
-                    tokenForm.Controls.Add(tokenLabel);
-                    tokenForm.Controls.Add(tokenTextBox);
-                    tokenForm.Controls.Add(loginButton2);
-                    tokenForm.Controls.Add(cancelButton);
-                    tokenForm.AcceptButton = loginButton2;
-                    tokenForm.CancelButton = cancelButton;
+                    deviceFlowForm.Controls.Add(instructionLabel);
+                    deviceFlowForm.Controls.Add(copyCodeButton);
+                    deviceFlowForm.Controls.Add(openBrowserButton);
+                    deviceFlowForm.Controls.Add(statusLabelForm);
+                    deviceFlowForm.Controls.Add(cancelButton);
 
-                    if (tokenForm.ShowDialog() == DialogResult.OK)
+                    // Poll for authentication in background
+                    var pollingTask = Task.Run(async () =>
                     {
-                        if (string.IsNullOrWhiteSpace(tokenTextBox.Text))
+                        // Wait a bit before starting to poll
+                        await Task.Delay(5000);
+
+                        for (int i = 0; i < 120; i++) // Poll for up to 10 minutes
                         {
-                            MessageBox.Show("Please enter a token", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            return;
+                            try
+                            {
+                                var (authSuccess, authMessage, pending) = await _githubService.PollDeviceFlowAsync();
+
+                                if (authSuccess)
+                                {
+                                    deviceFlowForm.Invoke((MethodInvoker)delegate
+                                    {
+                                        statusLabelForm.Text = authMessage;
+                                        deviceFlowForm.Close();
+                                    });
+                                    break;
+                                }
+                                else if (!pending)
+                                {
+                                    // Error occurred
+                                    deviceFlowForm.Invoke((MethodInvoker)delegate
+                                    {
+                                        statusLabelForm.Text = authMessage;
+                                    });
+                                    break;
+                                }
+
+                                await Task.Delay(5000); // Poll every 5 seconds
+                            }
+                            catch (Exception ex)
+                            {
+                                deviceFlowForm.Invoke((MethodInvoker)delegate
+                                {
+                                    statusLabelForm.Text = $"Error: {ex.Message}";
+                                });
+                                break;
+                            }
                         }
 
-                        var (success, message) = await _githubService.AuthenticateWithTokenAsync(tokenTextBox.Text);
+                        // Timeout
+                        if (!_githubService.IsAuthenticated)
+                        {
+                            try
+                            {
+                                deviceFlowForm.Invoke((MethodInvoker)delegate
+                                {
+                                    statusLabelForm.Text = "Authentication timed out";
+                                });
+                            }
+                            catch { }
+                        }
+                    });
 
-                        if (success)
-                        {
-                            loginButton.Text = $"Logout ({_githubService.CurrentUsername})";
-                            statusLabel.Text = $"Logged in as {_githubService.CurrentUsername}";
-                            await RefreshDiscussionsAsync();
-                            MessageBox.Show(message, "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
-                        else
-                        {
-                            MessageBox.Show(message, "Authentication Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
+                    deviceFlowForm.ShowDialog();
+
+                    if (_githubService.IsAuthenticated)
+                    {
+                        loginButton.Text = $"Logout ({_githubService.CurrentUsername})";
+                        statusLabel.Text = $"Logged in as {_githubService.CurrentUsername}";
+                        await RefreshDiscussionsAsync();
+                        MessageBox.Show($"Successfully authenticated as {_githubService.CurrentUsername}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             }
@@ -150,6 +251,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private async void RefreshButton_Click(object sender, EventArgs e)
         {
+            await RefreshDiscussionsAsync();
+        }
+        
+        private async void ApplyFilterButton_Click(object sender, EventArgs e)
+        {
+            _currentSearchText = searchTextBox.Text;
+            _currentFilterTags.Clear();
+            
+            if (tagFilterComboBox.SelectedIndex > 0) // 0 is "(All)"
+            {
+                _currentFilterTags.Add(tagFilterComboBox.SelectedItem.ToString());
+            }
+            
+            await RefreshDiscussionsAsync();
+        }
+        
+        private async void ClearFilterButton_Click(object sender, EventArgs e)
+        {
+            searchTextBox.Text = "";
+            tagFilterComboBox.SelectedIndex = 0;
+            _currentSearchText = null;
+            _currentFilterTags.Clear();
             await RefreshDiscussionsAsync();
         }
 
@@ -160,12 +283,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 statusLabel.Text = "Loading discussions...";
                 listView.Items.Clear();
 
-                _discussions = await _githubService.GetDiscussionsAsync();
+                _discussions = await _githubService.GetDiscussionsAsync(_currentSearchText, _currentFilterTags);
 
                 foreach (var discussion in _discussions)
                 {
                     var item = new ListViewItem(discussion.Title);
                     item.SubItems.Add(discussion.Author);
+                    item.SubItems.Add(string.Join(", ", discussion.Tags));
                     item.SubItems.Add(discussion.UpvoteCount.ToString());
                     item.SubItems.Add(discussion.CommentCount.ToString());
                     item.SubItems.Add(discussion.CreatedAt.ToShortDateString());
@@ -390,7 +514,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        public async Task<bool> SaveScriptToGalleryAsync(string title, string scriptContent)
+        public async Task<bool> SaveScriptToGalleryAsync(string title, string scriptContent, List<string> tags = null)
         {
             if (!_githubService.IsAuthenticated)
             {
@@ -400,11 +524,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
             try
             {
-                var newItem = await _githubService.CreateDiscussionAsync(title, scriptContent);
+                var newItem = await _githubService.CreateDiscussionAsync(title, scriptContent, tags);
                 MessageBox.Show($"Script saved to gallery successfully!\n\nDiscussion #{newItem.Number}: {newItem.Title}", 
                     "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 
-                // Refresh the list
+                // Refresh the list and tags
+                await LoadAvailableTagsAsync();
                 await RefreshDiscussionsAsync();
                 
                 return true;
