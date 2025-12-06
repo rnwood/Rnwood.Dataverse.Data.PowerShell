@@ -46,6 +46,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.searchLabel = new System.Windows.Forms.Label();
             this.tagFilterComboBox = new System.Windows.Forms.ComboBox();
             this.tagFilterLabel = new System.Windows.Forms.Label();
+            this.mySubmissionsCheckBox = new System.Windows.Forms.CheckBox();
             this.applyFilterButton = new System.Windows.Forms.Button();
             this.clearFilterButton = new System.Windows.Forms.Button();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
@@ -60,6 +61,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.detailToolbar = new System.Windows.Forms.ToolStrip();
             this.loadToEditorButton = new System.Windows.Forms.ToolStripButton();
             this.upvoteButton = new System.Windows.Forms.ToolStripButton();
+            this.thumbsDownButton = new System.Windows.Forms.ToolStripButton();
+            this.editButton = new System.Windows.Forms.ToolStripButton();
+            this.closeButton = new System.Windows.Forms.ToolStripButton();
             this.detailWebView = new Microsoft.Web.WebView2.WinForms.WebView2();
             this.commentPanel = new System.Windows.Forms.Panel();
             this.addCommentButton = new System.Windows.Forms.Button();
@@ -122,6 +126,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.filterPanel.Controls.Add(this.searchTextBox);
             this.filterPanel.Controls.Add(this.tagFilterLabel);
             this.filterPanel.Controls.Add(this.tagFilterComboBox);
+            this.filterPanel.Controls.Add(this.mySubmissionsCheckBox);
             this.filterPanel.Controls.Add(this.applyFilterButton);
             this.filterPanel.Controls.Add(this.clearFilterButton);
             this.filterPanel.Dock = System.Windows.Forms.DockStyle.Top;
@@ -145,7 +150,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // 
             this.searchTextBox.Location = new System.Drawing.Point(70, 9);
             this.searchTextBox.Name = "searchTextBox";
-            this.searchTextBox.Size = new System.Drawing.Size(200, 20);
+            this.searchTextBox.Size = new System.Drawing.Size(150, 20);
             this.searchTextBox.TabIndex = 1;
             
             // 
@@ -165,13 +170,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.tagFilterComboBox.FormattingEnabled = true;
             this.tagFilterComboBox.Location = new System.Drawing.Point(70, 34);
             this.tagFilterComboBox.Name = "tagFilterComboBox";
-            this.tagFilterComboBox.Size = new System.Drawing.Size(200, 21);
+            this.tagFilterComboBox.Size = new System.Drawing.Size(150, 21);
             this.tagFilterComboBox.TabIndex = 3;
+            
+            // 
+            // mySubmissionsCheckBox
+            // 
+            this.mySubmissionsCheckBox.AutoSize = true;
+            this.mySubmissionsCheckBox.Location = new System.Drawing.Point(230, 11);
+            this.mySubmissionsCheckBox.Name = "mySubmissionsCheckBox";
+            this.mySubmissionsCheckBox.Size = new System.Drawing.Size(110, 17);
+            this.mySubmissionsCheckBox.TabIndex = 4;
+            this.mySubmissionsCheckBox.Text = "My Submissions";
+            this.mySubmissionsCheckBox.UseVisualStyleBackColor = true;
             
             // 
             // applyFilterButton
             // 
-            this.applyFilterButton.Location = new System.Drawing.Point(280, 9);
+            this.applyFilterButton.Location = new System.Drawing.Point(350, 9);
             this.applyFilterButton.Name = "applyFilterButton";
             this.applyFilterButton.Size = new System.Drawing.Size(75, 46);
             this.applyFilterButton.TabIndex = 4;
@@ -182,7 +198,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // 
             // clearFilterButton
             // 
-            this.clearFilterButton.Location = new System.Drawing.Point(365, 9);
+            this.clearFilterButton.Location = new System.Drawing.Point(435, 9);
             this.clearFilterButton.Name = "clearFilterButton";
             this.clearFilterButton.Size = new System.Drawing.Size(75, 46);
             this.clearFilterButton.TabIndex = 5;
@@ -282,7 +298,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.detailToolbar.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.detailToolbar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
                 this.loadToEditorButton,
-                this.upvoteButton});
+                this.upvoteButton,
+                this.thumbsDownButton,
+                this.editButton,
+                this.closeButton});
             this.detailToolbar.Location = new System.Drawing.Point(0, 0);
             this.detailToolbar.Name = "detailToolbar";
             this.detailToolbar.Size = new System.Drawing.Size(516, 31);
@@ -298,9 +317,32 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // 
             // upvoteButton
             // 
-            this.upvoteButton.Text = "👍 Upvote";
+            this.upvoteButton.Text = "👍 Thumbs Up";
             this.upvoteButton.Name = "upvoteButton";
             this.upvoteButton.Click += new System.EventHandler(this.UpvoteButton_Click);
+            
+            // 
+            // thumbsDownButton
+            // 
+            this.thumbsDownButton.Text = "👎 Thumbs Down";
+            this.thumbsDownButton.Name = "thumbsDownButton";
+            this.thumbsDownButton.Click += new System.EventHandler(this.ThumbsDownButton_Click);
+            
+            // 
+            // editButton
+            // 
+            this.editButton.Text = "Edit";
+            this.editButton.Name = "editButton";
+            this.editButton.Click += new System.EventHandler(this.EditButton_Click);
+            this.editButton.Visible = false;
+            
+            // 
+            // closeButton
+            // 
+            this.closeButton.Text = "Close";
+            this.closeButton.Name = "closeButton";
+            this.closeButton.Click += new System.EventHandler(this.CloseButton_Click);
+            this.closeButton.Visible = false;
             
             // 
             // detailWebView
@@ -394,6 +436,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private TextBox searchTextBox;
         private Label tagFilterLabel;
         private ComboBox tagFilterComboBox;
+        private CheckBox mySubmissionsCheckBox;
         private Button applyFilterButton;
         private Button clearFilterButton;
         private SplitContainer splitContainer;
@@ -408,6 +451,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private ToolStrip detailToolbar;
         private ToolStripButton loadToEditorButton;
         private ToolStripButton upvoteButton;
+        private ToolStripButton thumbsDownButton;
+        private ToolStripButton editButton;
+        private ToolStripButton closeButton;
         private Microsoft.Web.WebView2.WinForms.WebView2 detailWebView;
         private Panel commentPanel;
         private Label commentLabel;
