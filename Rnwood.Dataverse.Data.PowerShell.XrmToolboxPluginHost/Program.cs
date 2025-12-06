@@ -9,6 +9,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 using XrmToolBox;
 using XrmToolBox.Extensibility;
@@ -32,16 +33,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
             {
                 if (args.Length < 3)
                 {
-                    Console.Error.WriteLine("Usage: XrmToolboxPluginHost <plugin-directory> <pipe-name> <connection-string>");
+                    Console.Error.WriteLine("Usage: XrmToolboxPluginHost <plugin-directory> <pipe-name> <url>");
                     Console.Error.WriteLine("  plugin-directory: Path to the directory containing the plugin DLLs");
                     Console.Error.WriteLine("  pipe-name: Named pipe to use for token retrieval");
-                    Console.Error.WriteLine("  connection-string: Connection string for Dataverse");
+                    Console.Error.WriteLine("  url: Dataverse organization URL");
                     return 1;
                 }
 
                 string pluginDirectory = args[0];
                 _pipeName = args[1];
-                string connectionString = args[2];
+                string url = args[2];
 
                 Console.WriteLine($"XrmToolbox Plugin Host starting...");
                 Console.WriteLine($"Plugin directory: {pluginDirectory}");
@@ -60,7 +61,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
                 Console.WriteLine($"Plugin loaded: {plugin.GetType().FullName}");
 
                 // Create connection with external token management
-                _serviceClient = CreateConnection(connectionString);
+                _serviceClient = CreateConnection(url);
 
                 if (_serviceClient == null)
                 {
@@ -97,21 +98,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
                     form.Controls.Add(control);
                 }
 
-                Debugger.Launch();
 
-                // Use CrmServiceClient for XrmToolbox plugin compatibility
-                pluginControl.UpdateConnection(_serviceClient, new ConnectionDetail()
+                form.Load += (s, ea) =>
                 {
-                    AuthType = Microsoft.Xrm.Sdk.Client.AuthenticationProviderType.None,
-                    ConnectionName = _serviceClient.ConnectedOrgFriendlyName,
-                    EnvironmentText = _serviceClient.ConnectedOrgFriendlyName,
-                    OrganizationVersion = _serviceClient.ConnectedOrgVersion?.ToString(),
-                    OrganizationDataServiceUrl = _serviceClient.ConnectedOrgPublishedEndpoints?[EndpointType.OrganizationDataService],
-                    ConnectionId = Guid.NewGuid(),
-                    IsCustomAuth = true,
-                    WebApplicationUrl = _serviceClient.ConnectedOrgPublishedEndpoints?[EndpointType.WebApplication],
-                    ServiceClient = _serviceClient
-                });
+
+                    // Use CrmServiceClient for XrmToolbox plugin compatibility
+                    pluginControl.UpdateConnection(_serviceClient, new ConnectionDetail()
+                    {
+                        AuthType = Microsoft.Xrm.Sdk.Client.AuthenticationProviderType.None,
+                        ConnectionName = _serviceClient.ConnectedOrgFriendlyName ?? url,
+                        EnvironmentText = _serviceClient.ConnectedOrgFriendlyName ?? url,
+                        OrganizationVersion = _serviceClient.ConnectedOrgVersion?.ToString(),
+                        OrganizationFriendlyName = _serviceClient.ConnectedOrgFriendlyName ?? "powershell",
+                        OrganizationServiceUrl = _serviceClient.ConnectedOrgPublishedEndpoints?[EndpointType.OrganizationService] ?? url,
+                        OrganizationDataServiceUrl = _serviceClient.ConnectedOrgPublishedEndpoints?[EndpointType.OrganizationDataService] ?? url,
+                        ConnectionId = Guid.NewGuid(),
+                        IsCustomAuth = true,
+                        WebApplicationUrl = _serviceClient.ConnectedOrgPublishedEndpoints?[EndpointType.WebApplication] ?? url,
+                        ServiceClient = _serviceClient,
+                        OriginalUrl = _serviceClient.CrmConnectOrgUriActual?.ToString() ?? url
+                    });
+                };
 
                 Application.Run(form);
 
@@ -126,36 +133,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
             }
         }
 
-        static CrmServiceClient CreateConnection(string connectionString)
+        private static void Form_Load(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        static CrmServiceClient CreateConnection(string url)
         {
 
             Console.WriteLine("Creating connection...");
-
-            // Parse simple connection string format
-            // Expected format: "Url=https://org.crm.dynamics.com"
-            var parts = connectionString.Split(';');
-            string url = null;
-
-            foreach (var part in parts)
-            {
-                var keyValue = part.Split(new[] { '=' }, 2);
-                if (keyValue.Length == 2)
-                {
-                    var key = keyValue[0].Trim();
-                    var value = keyValue[1].Trim();
-
-                    if (key.Equals("Url", StringComparison.OrdinalIgnoreCase))
-                    {
-                        url = value;
-                    }
-                }
-            }
-
-            if (string.IsNullOrEmpty(url))
-            {
-                Console.Error.WriteLine("No URL found in connection string");
-                return null;
-            }
 
             Console.WriteLine($"Connecting to: {url}");
 
@@ -372,3 +358,4 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
         }
     }
 }
+

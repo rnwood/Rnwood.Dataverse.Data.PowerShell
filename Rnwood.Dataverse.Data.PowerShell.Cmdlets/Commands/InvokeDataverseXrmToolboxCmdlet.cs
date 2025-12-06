@@ -18,15 +18,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
     /// Invokes an XrmToolbox plugin downloaded from NuGet with the current Dataverse connection injected.
+    /// Searches for packages with XrmToolBox tag filter.
     /// </summary>
     [Cmdlet(VerbsLifecycle.Invoke, "DataverseXrmToolbox")]
     [OutputType(typeof(void))]
     public class InvokeDataverseXrmToolboxCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
-        /// The NuGet package ID of the XrmToolbox plugin to execute (e.g., "Cinteros.Xrm.FetchXMLBuilder"). Supports partial matching.
+        /// The NuGet package ID of the XrmToolbox plugin to execute. Searches for packages with XrmToolBox tag filter, first checking for exact match by package ID.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, HelpMessage = "The NuGet package ID of the XrmToolbox plugin to execute (e.g., \"Cinteros.Xrm.FetchXMLBuilder\"). Supports partial matching.")]
+        [Parameter(Mandatory = true, Position = 0, HelpMessage = "The NuGet package ID of the XrmToolbox plugin to execute. Searches for packages with XrmToolBox tag filter, first checking for exact match by package ID.")]
         [ValidateNotNullOrEmpty]
         public string PackageName { get; set; }
 
@@ -239,11 +240,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var searchResource = await _repository.GetResourceAsync<PackageSearchResource>();
             var searchFilter = new SearchFilter(includePrerelease: false);
 
-            QueueProgress(1, "Searching NuGet", $"Searching for: {PackageName}");
+            QueueProgress(1, "Searching NuGet", $"Searching with XrmToolBox tag: {PackageName}");
 
-            // Search for packages
+            // Search for packages with XrmToolBox tag
             var results = await searchResource.SearchAsync(
-                PackageName,
+                $"{PackageName} tag:XrmToolBox",
                 searchFilter,
                 skip: 0,
                 take: 20,
@@ -256,7 +257,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (packageList.Count == 0)
             {
-                QueueMessage(LogLevel.Error, $"No packages found matching '{PackageName}'");
+                QueueMessage(LogLevel.Error, $"No packages found matching '{PackageName}' with XrmToolBox tag");
                 return null;
             }
 
@@ -273,12 +274,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // If only one result, use it
             if (packageList.Count == 1)
             {
-                QueueMessage(LogLevel.Verbose, $"Found single match: {packageList[0].Identity.Id}");
+                QueueMessage(LogLevel.Verbose, $"Found single match with XrmToolBox tag: {packageList[0].Identity.Id}");
                 return packageList[0];
             }
 
             // Multiple matches - list them
-            QueueMessage(LogLevel.Warning, $"Multiple packages match '{PackageName}'. Please specify the exact package ID:");
+            QueueMessage(LogLevel.Warning, $"Multiple packages match '{PackageName}' with XrmToolBox tag. Please specify the exact package ID:");
             foreach (var pkg in packageList.Take(10))
             {
                 QueueMessage(LogLevel.Warning, $"  - {pkg.Identity.Id}: {pkg.Description}");
@@ -289,7 +290,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 QueueMessage(LogLevel.Warning, $"  ... and {packageList.Count - 10} more. Refine your search.");
             }
 
-            throw new InvalidOperationException($"Multiple packages match '{PackageName}'. Please specify the exact package ID.");
+            throw new InvalidOperationException($"Multiple packages match '{PackageName}' with XrmToolBox tag. Please specify the exact package ID.");
         }
 
         private async Task<string> DownloadPackageAsync(IPackageSearchMetadata package)
@@ -413,6 +414,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             pluginsPath = potentialPluginsPath;
                             break;
+                        } else
+                        {
+                            pluginsPath = netDir;
+                            break;
                         }
                     }
                 }
@@ -452,7 +457,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             string pipeName = $"DataversePowerShell_{Guid.NewGuid():N}";
 
             // Get connection string from current connection
-            string connectionString = BuildConnectionString();
+            string url = GetUrl();
 
             WriteProgress(new ProgressRecord(4, "Launching Plugin", "Starting XrmToolbox plugin host"));
             WriteVerbose($"Launching plugin host...");
@@ -466,7 +471,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var processStartInfo = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = hostExePath,
-                Arguments = $"\"{pluginsPath}\" \"{pipeName}\" \"{connectionString}\"",
+                Arguments = $"\"{pluginsPath}\" \"{pipeName}\" \"{url}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -642,9 +647,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return null;
         }
 
-        private string BuildConnectionString()
+        private string GetUrl()
         {
-            // Build a connection string from the current connection
+            // Get the URL from the current connection
 
             if (Connection == null)
             {
@@ -654,7 +659,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Extract URL - token will be provided through named pipe on demand
             var url = Connection.ConnectedOrgUriActual?.ToString() ?? "unknown";
 
-            return $"Url={url};";
+            return url;
         }
 
         /// <summary>
