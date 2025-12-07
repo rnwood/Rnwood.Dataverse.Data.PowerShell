@@ -24,10 +24,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             _githubService = new GitHubService();
             _currentFilterTags = new List<string>();
             
+            // Update UI based on authentication state
+            UpdateUIState();
+            
             // Initialize WebView2
             InitializeWebViewAsync();
-            
-            // Update UI based on authentication state
         }
         
         private void UpdateUIState()
@@ -36,6 +37,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             
             if (isAuthenticated)
             {
+                // Update login button and status
+                loginButton.Text = $"Logout ({_githubService.CurrentUsername})";
+                statusLabel.Text = $"Logged in as {_githubService.CurrentUsername}";
+                
                 // Enable controls
                 refreshButton.Enabled = true;
                 searchTextBox.Enabled = true;
@@ -60,6 +65,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
             else
             {
+                // Update login button and status
+                loginButton.Text = "Login to GitHub";
+                statusLabel.Text = "Not logged in";
+                
                 // Disable controls
                 refreshButton.Enabled = false;
                 searchTextBox.Enabled = false;
