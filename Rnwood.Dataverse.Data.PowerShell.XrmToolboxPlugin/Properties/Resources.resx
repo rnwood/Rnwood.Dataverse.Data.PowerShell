@@ -124,31 +124,34 @@
   <data name="mdi--play" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\mdi--play.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="mdi--people-group" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\mdi--people-group.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="mdi--content-save" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\mdi--content-save.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="mdi--terminal-line" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--terminal-line.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="mdi--arrow-back" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--arrow-back.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="mdi--folder-open" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--folder-open.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="mdi--invoice-new" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--invoice-new.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="mdi--close" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\mdi--close.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="mdi--arrow-back" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\mdi--arrow-back.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="mdi--arrow-forward" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\mdi--arrow-forward.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="mdi--people-group" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--people-group.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="mdi--folder-open" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\mdi--folder-open.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="mdi--help" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\mdi--help.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="mdi--invoice-new" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\mdi--invoice-new.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="mdi--terminal-line" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\mdi--terminal-line.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="share-variant-custom" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\share-variant-custom.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

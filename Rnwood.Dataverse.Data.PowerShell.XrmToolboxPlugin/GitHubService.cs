@@ -48,9 +48,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         /// </summary>
         private async Task<JObject> PostGraphQLAsync(object payload)
         {
+            string payloadJson = Newtonsoft.Json.JsonConvert.SerializeObject(payload);
+
             var response = await _client.Connection.Post<string>(
                 new Uri(GraphQLEndpoint),
-                payload,
+                payloadJson,
                 "application/json",
                 "application/json");
 
