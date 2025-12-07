@@ -104,9 +104,11 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.String
+
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
+
 ## NOTES
 - This cmdlet retrieves only value records
 - Use Get-DataverseEnvironmentVariableDefinition to get both definitions and values together

@@ -42,6 +42,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.tabControl = new System.Windows.Forms.TabControl();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.completionStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.saveToGalleryButton = new System.Windows.Forms.ToolStripButton();
             this.editorToolbar.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.SuspendLayout();

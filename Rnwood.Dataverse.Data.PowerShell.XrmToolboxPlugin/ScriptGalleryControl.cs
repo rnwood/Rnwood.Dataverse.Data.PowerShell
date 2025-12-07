@@ -27,8 +27,65 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // Initialize WebView2
             InitializeWebViewAsync();
             
-            // Load available tags
-            LoadAvailableTagsAsync();
+            // Update UI based on authentication state
+        }
+        
+        private void UpdateUIState()
+        {
+            bool isAuthenticated = _githubService.IsAuthenticated;
+            
+            if (isAuthenticated)
+            {
+                // Enable controls
+                refreshButton.Enabled = true;
+                searchTextBox.Enabled = true;
+                tagFilterComboBox.Enabled = true;
+                applyFilterButton.Enabled = true;
+                clearFilterButton.Enabled = true;
+                mySubmissionsCheckBox.Enabled = true;
+                listView.Enabled = true;
+                loadToEditorButton.Enabled = true;
+                upvoteButton.Enabled = true;
+                addCommentButton.Enabled = true;
+                commentTextBox.Enabled = true;
+                thumbsDownButton.Enabled = true;
+                editButton.Enabled = true;
+                closeButton.Enabled = true;
+                
+                // Load data if not already loaded
+                if (tagFilterComboBox.Items.Count <= 1) // Only "(All)" or empty
+                {
+                    LoadAvailableTagsAsync();
+                }
+            }
+            else
+            {
+                // Disable controls
+                refreshButton.Enabled = false;
+                searchTextBox.Enabled = false;
+                tagFilterComboBox.Enabled = false;
+                applyFilterButton.Enabled = false;
+                clearFilterButton.Enabled = false;
+                mySubmissionsCheckBox.Enabled = false;
+                listView.Enabled = false;
+                loadToEditorButton.Enabled = false;
+                upvoteButton.Enabled = false;
+                addCommentButton.Enabled = false;
+                commentTextBox.Enabled = false;
+                thumbsDownButton.Enabled = false;
+                editButton.Enabled = false;
+                closeButton.Enabled = false;
+                
+                // Clear data
+                listView.Items.Clear();
+                if (_webViewInitialized)
+                {
+                    detailWebView.NavigateToString("<html><body><p>Please log in to GitHub to access the script gallery.</p></body></html>");
+                }
+                
+                // Update status
+                statusLabel.Text = "Please log in to GitHub to access the script gallery.";
+            }
         }
         
         protected override void OnHandleDestroyed(EventArgs e)
@@ -45,11 +102,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 _webViewInitialized = true;
                 detailWebView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
                 detailWebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
+                UpdateUIState();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to initialize WebView2: {ex.Message}\n\nWebView2 Runtime may not be installed.\n\nPlease download and install it from:\nhttps://developer.microsoft.com/microsoft-edge/webview2/",
                     "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UpdateUIState();
             }
         }
 
@@ -89,6 +148,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 loginButton.Text = "Login to GitHub";
                 statusLabel.Text = "Not logged in";
                 MessageBox.Show("Logged out successfully", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                UpdateUIState();
             }
             else
             {
@@ -244,6 +304,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                         statusLabel.Text = $"Logged in as {_githubService.CurrentUsername}";
                         await RefreshDiscussionsAsync();
                         MessageBox.Show($"Successfully authenticated as {_githubService.CurrentUsername}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        UpdateUIState();
                     }
                 }
             }
