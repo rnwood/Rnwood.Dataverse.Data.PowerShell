@@ -59,6 +59,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             content.CompletionService = _completionService;
             content.RunRequested += (s, e) => RunScriptRequested?.Invoke(this, EventArgs.Empty);
             content.CompletionResolved += (s, e) => CompletionResolved?.Invoke(this, e);
+            content.SaveToGalleryRequested += async (s, e) => await SaveToGalleryFromTabAsync(content);
             content.CloseRequested += (s, e) => {
                 tabControl.TabPages.Remove(tabPage);
                 if (tabData.ContainsKey(tabPage))
@@ -454,3 +455,5 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         }
     }
 }
+
+

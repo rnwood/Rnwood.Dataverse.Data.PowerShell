@@ -45,6 +45,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.saveButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.powerShellVersionButton = new System.Windows.Forms.ToolStripButton();
+            this.saveToGalleryButton = new System.Windows.Forms.ToolStripButton();
             this.panel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.webView)).BeginInit();
             this.tabToolbar.SuspendLayout();
@@ -80,7 +81,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.runButton,
             this.saveButton,
             this.toolStripSeparator1,
-            this.powerShellVersionButton});
+            this.powerShellVersionButton,
+            this.saveToGalleryButton});
             this.tabToolbar.Location = new System.Drawing.Point(0, 0);
             this.tabToolbar.Name = "tabToolbar";
             this.tabToolbar.Size = new System.Drawing.Size(632, 35);
@@ -127,6 +129,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.powerShellVersionButton.Text = "PowerShell 5.1";
             this.powerShellVersionButton.ToolTipText = "Click to switch PowerShell version for script execution (completion always uses PowerShell 5.1)";
             this.powerShellVersionButton.Click += new System.EventHandler(this.PowerShellVersionButton_Click);
+            // saveToGalleryButton
+            // 
+            this.saveToGalleryButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.mdi__image_album;
+            this.saveToGalleryButton.Name = "saveToGalleryButton";
+            this.saveToGalleryButton.Size = new System.Drawing.Size(112, 32);
+            this.saveToGalleryButton.Text = "Save to Gallery";
+            this.saveToGalleryButton.Click += new System.EventHandler(this.SaveToGalleryButton_Click);
             // 
             // ScriptTabContentControl
             // 
@@ -149,6 +158,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private ToolStrip tabToolbar;
         private ToolStripButton runButton;
         private ToolStripButton saveButton;
+        private ToolStripButton saveToGalleryButton;
         private Button closeButton;
         private ToolStripSeparator toolStripSeparator1;
         private ToolStripButton powerShellVersionButton;

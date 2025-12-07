@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
+using System.Net;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
@@ -15,6 +16,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private bool _webViewInitialized;
         private string _currentSearchText;
         private List<string> _currentFilterTags;
+        private string _currentReplyToId;
 
         public event EventHandler<string> LoadScriptRequested;
 
@@ -29,6 +31,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             
             // Initialize WebView2
             InitializeWebViewAsync();
+
+            commentPanel.Visible = false;
         }
         
         private void UpdateUIState()
@@ -51,8 +55,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 listView.Enabled = true;
                 loadToEditorButton.Enabled = true;
                 upvoteButton.Enabled = true;
-                addCommentButton.Enabled = true;
-                commentTextBox.Enabled = true;
                 thumbsDownButton.Enabled = true;
                 editButton.Enabled = true;
                 closeButton.Enabled = true;
@@ -79,8 +81,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 listView.Enabled = false;
                 loadToEditorButton.Enabled = false;
                 upvoteButton.Enabled = false;
-                addCommentButton.Enabled = false;
-                commentTextBox.Enabled = false;
                 thumbsDownButton.Enabled = false;
                 editButton.Enabled = false;
                 closeButton.Enabled = false;
@@ -112,6 +112,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 detailWebView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
                 detailWebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
                 UpdateUIState();
+                if (_githubService.IsAuthenticated)
+                {
+                    await RefreshDiscussionsAsync();
+                }
+
+                detailWebView.CoreWebView2.AddHostObjectToScript("gallery", new GalleryHostObject(this));
             }
             catch (Exception ex)
             {
@@ -420,18 +426,51 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             var commentsHtml = "";
             if (item.Comments != null && item.Comments.Any())
             {
-                commentsHtml = "<h2>Comments</h2>";
-                foreach (var comment in item.Comments)
-                {
-                    var commentBodyHtml = Markdig.Markdown.ToHtml(comment.Body ?? "");
-                    commentsHtml += $@"
-                        <div style='border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px;'>
-                            <div style='font-weight: bold; color: #0366d6;'>{comment.Author}</div>
-                            <div style='font-size: 0.9em; color: #666;'>{comment.CreatedAt.ToString("g")}</div>
-                            <div style='margin-top: 10px;'>{commentBodyHtml}</div>
-                        </div>";
-                }
+                commentsHtml = "<h2>Comments</h2>" + GenerateCommentsHtml(item.Comments, 0);
             }
+
+            var script = @"
+    <script>
+        var currentReplyToId = null;
+
+        function toggleReplies(button, count) {
+            var repliesDiv = button.parentElement.querySelector('.replies');
+            if (repliesDiv.style.display === 'none') {
+                repliesDiv.style.display = 'block';
+                button.textContent = '▼ ' + count + ' replies';
+            } else {
+                repliesDiv.style.display = 'none';
+                button.textContent = '▶ ' + count + ' replies';
+            }
+        }
+
+        function showCommentForm() {
+            currentReplyToId = null;
+            document.getElementById('commentForm').style.display = 'block';
+            document.getElementById('commentText').focus();
+        }
+
+        function showReplyForm(replyToId) {
+            currentReplyToId = replyToId;
+            document.getElementById('commentForm').style.display = 'block';
+            document.getElementById('commentText').focus();
+        }
+
+        function submitComment() {
+            var text = document.getElementById('commentText').value.trim();
+            if (text) {
+                window.gallery.AddComment(text, currentReplyToId);
+                document.getElementById('commentText').value = '';
+                document.getElementById('commentForm').style.display = 'none';
+            }
+        }
+
+        function cancelComment() {
+            document.getElementById('commentText').value = '';
+            document.getElementById('commentForm').style.display = 'none';
+            currentReplyToId = null;
+        }
+    </script>";
 
             var html = $@"
 <!DOCTYPE html>
@@ -441,28 +480,35 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     <style>
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-            padding: 20px;
+            font-size: 14px;
+            padding: 10px;
             background: white;
         }}
         h1 {{
             color: #24292e;
             border-bottom: 1px solid #e1e4e8;
-            padding-bottom: 10px;
+            padding-bottom: 5px;
+            font-size: 1.2em;
+        }}
+        h2 {{
+            font-size: 1.1em;
+            margin-top: 15px;
+            margin-bottom: 10px;
         }}
         .meta {{
             color: #586069;
-            font-size: 14px;
-            margin-bottom: 20px;
+            font-size: 12px;
+            margin-bottom: 15px;
         }}
         pre {{
             background: #f6f8fa;
-            padding: 16px;
+            padding: 12px;
             border-radius: 6px;
             overflow-x: auto;
         }}
         code {{
             background: #f6f8fa;
-            padding: 2px 6px;
+            padding: 2px 4px;
             border-radius: 3px;
             font-family: 'Courier New', monospace;
         }}
@@ -470,9 +516,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             background: transparent;
             padding: 0;
         }}
+        .warning {{
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }}
     </style>
 </head>
 <body>
+    <div class='warning'>
+        ⚠️ <strong>Warning:</strong> These are unreviewed community submissions. Use at your own risk.
+    </div>
     <h1>{item.Title}</h1>
     <div class='meta'>
         By <strong>{item.Author}</strong> • 
@@ -481,11 +538,60 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         💬 {item.CommentCount}
     </div>
     <div>{bodyHtml}</div>
+    <button onclick='showCommentForm()' style='margin-top: 10px;'>Leave a comment</button>
     {commentsHtml}
+    <div id='commentForm' style='display: none; margin-top: 20px; border: 1px solid #ddd; padding: 10px; border-radius: 5px;'>
+        <textarea id='commentText' rows='4' style='width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;' placeholder='Write your comment...'></textarea>
+        <button onclick='submitComment()' style='margin-top: 5px; padding: 2px 8px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;'>Submit Comment</button>
+        <button onclick='cancelComment()' style='margin-top: 10px; margin-left: 10px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;'>Cancel</button>
+    </div>
+    {script}
 </body>
 </html>";
 
             detailWebView.NavigateToString(html);
+        }
+
+        private string GenerateCommentsHtml(List<DiscussionComment> comments, int depth)
+        {
+            if (comments == null || !comments.Any())
+                return "";
+
+            var html = "";
+            foreach (var comment in comments)
+            {
+                var indentStyle = depth > 0 ? $"margin-left: {depth * 20}px; border-left: 2px solid #ddd; padding-left: 10px;" : "";
+                var repliesHtml = comment.Replies.Any() ? GenerateCommentsHtml(comment.Replies, depth + 1) : "";
+                var repliesStyle = comment.Replies.Any() ? "display: none;" : "";
+
+                // Inline author and date
+                var commentBodyHtml = Markdig.Markdown.ToHtml(comment.Body ?? "");
+                html += $@"
+                    <div style='border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px; {indentStyle}'>
+
+                        <div style='font-weight: bold; color: #0366d6; display: inline;'>{WebUtility.HtmlEncode(comment.Author)}</div>
+                        <span style='font-size: 0.9em; color: #666; margin-left: 10px;'>{WebUtility.HtmlEncode(comment.CreatedAt.ToString("g"))}</span>
+                        <div style='margin-top: 10px;'>{commentBodyHtml}</div>
+                        <button onclick='showReplyForm(""{WebUtility.HtmlEncode(comment.Id)}"")' style='margin-top: 5px; font-size: 0.8em; padding: 2px 8px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;'>Reply</button>
+                        <button class='toggleRepliesButton' onclick='toggleReplies(this, {CountTotalReplies(comment)})' style='margin-top: 5px; font-size: 0.8em; padding: 2px 8px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;'>
+                            \u25B2 {CountTotalReplies(comment)} replies
+                        </button>
+                        <div class='replies' style='{repliesStyle}'>
+                            {repliesHtml}
+                        </div>
+                    </div>";
+            }
+            return html;
+        }
+
+        private int CountTotalReplies(DiscussionComment comment)
+        {
+            int count = comment.Replies.Count;
+            foreach (var reply in comment.Replies)
+            {
+                count += CountTotalReplies(reply);
+            }
+            return count;
         }
 
         private void LoadToEditorButton_Click(object sender, EventArgs e)
@@ -542,53 +648,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to upvote: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private async void AddCommentButton_Click(object sender, EventArgs e)
-        {
-            if (_selectedItem == null)
-            {
-                MessageBox.Show("Please select a script first", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            if (!_githubService.IsAuthenticated)
-            {
-                MessageBox.Show("You must be logged in to comment", "Authentication Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(commentTextBox.Text))
-            {
-                MessageBox.Show("Please enter a comment", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            try
-            {
-                var comment = await _githubService.AddCommentAsync(_selectedItem.Id, commentTextBox.Text);
-                commentTextBox.Clear();
-                
-                MessageBox.Show("Comment added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                
-                // Refresh the current discussion
-                _selectedItem = await _githubService.GetDiscussionAsync(_selectedItem.Number);
-                await DisplayDiscussionAsync(_selectedItem);
-                
-                // Update list view comment count
-                foreach (ListViewItem item in listView.Items)
-                {
-                    if ((item.Tag as ScriptGalleryItem)?.Number == _selectedItem.Number)
-                    {
-                        item.SubItems[3].Text = _selectedItem.CommentCount.ToString();
-                        break;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to add comment: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -781,6 +840,92 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     MessageBox.Show($"Failed to close discussion: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
+        }
+
+        public class GalleryHostObject
+        {
+            private readonly ScriptGalleryControl _control;
+
+            public GalleryHostObject(ScriptGalleryControl control)
+            {
+                _control = control;
+            }
+
+            public async void AddComment(string body, string replyToId)
+            {
+                await _control.AddCommentAsync(body, replyToId);
+            }
+
+            public void ShowCommentPanel()
+            {
+                _control.ShowCommentPanel();
+            }
+
+            public void HideCommentPanel()
+            {
+                _control.HideCommentPanel();
+            }
+        }
+
+        public async Task AddCommentAsync(string body, string replyToId)
+        {
+            if (_selectedItem == null)
+            {
+                MessageBox.Show("Please select a script first", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (!_githubService.IsAuthenticated)
+            {
+                MessageBox.Show("You must be logged in to comment", "Authentication Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(body))
+            {
+                MessageBox.Show("Please enter a comment", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                var comment = await _githubService.AddCommentAsync(_selectedItem.Id, body, replyToId);
+                
+                MessageBox.Show("Comment added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                
+                // Refresh the current discussion
+                _selectedItem = await _githubService.GetDiscussionAsync(_selectedItem.Number);
+                await DisplayDiscussionAsync(_selectedItem);
+                
+                // Update list view comment count
+                foreach (ListViewItem item in listView.Items)
+                {
+                    if ((item.Tag as ScriptGalleryItem)?.Number == _selectedItem.Number)
+                    {
+                        item.SubItems[3].Text = _selectedItem.CommentCount.ToString();
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to add comment: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        public void ShowCommentPanel()
+        {
+            // This will be called from JS, but since we're using HTML form, maybe not needed
+        }
+
+        public void HideCommentPanel()
+        {
+            // This will be called from JS
+        }
+
+        private async void AddCommentButton_Click(object sender, EventArgs e)
+        {
+            // Not used, using HTML version
         }
     }
 }

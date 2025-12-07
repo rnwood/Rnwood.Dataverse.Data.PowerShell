@@ -42,6 +42,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         public event EventHandler RunRequested;
         public event EventHandler SaveRequested;
         public event EventHandler CloseRequested;
+        public event EventHandler SaveToGalleryRequested;
         public event EventHandler<CompletionItem> CompletionResolved;
 
         public ScriptTabContentControl()
@@ -73,6 +74,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private void CloseButton_Click(object sender, EventArgs e)
         {
             CloseRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void SaveToGalleryButton_Click(object sender, EventArgs e)
+        {
+            SaveToGalleryRequested?.Invoke(this, EventArgs.Empty);
         }
 
         public async Task InitializeWebView()
@@ -531,3 +537,4 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         }
     }
 }
+
