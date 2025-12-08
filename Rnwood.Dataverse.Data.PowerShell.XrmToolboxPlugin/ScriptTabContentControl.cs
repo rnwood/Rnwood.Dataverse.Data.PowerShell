@@ -15,11 +15,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     {
         private PowerShellCompletionService _completionService;
         private TaskCompletionSource<bool> _webViewReadyTask = new TaskCompletionSource<bool>();
+        private readonly System.Threading.SynchronizationContext _syncContext;
         private string _path;
         private PowerShellVersion _powerShellVersion = PowerShellDetector.GetDefaultVersion();
+        private ScriptGalleryItem _galleryItem;
 
         public WebView2 WebView => webView;
         public string Path { get => _path; set => _path = value; }
+        public ScriptGalleryItem GalleryItem { get => _galleryItem; set => _galleryItem = value; }
 
         public PowerShellCompletionService CompletionService { get => _completionService; set => _completionService = value; }
 
@@ -58,6 +61,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             {
                 powerShellVersionButton.Text = PowerShellDetector.GetDisplayName(_powerShellVersion);
             }
+            _syncContext = System.Threading.SynchronizationContext.Current;
         }
 
         // Named event handlers referenced by designer
@@ -87,7 +91,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
             try
             {
-                await webView.EnsureCoreWebView2Async(null);
+                // Initialize WebView2 directly (previously via MarkdownEditorHelper)
+                await webView.EnsureCoreWebView2Async();
 
                 string monacoPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "monaco-editor");
                 webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
@@ -123,7 +128,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        public async void SetScriptContentAsync(string content)
+        public async Task SetScriptContentAsync(string content)
         {
             try
             {
@@ -354,11 +359,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 }
                 else if (message.Contains("\"action\":\"run\""))
                 {
-                    RunRequested?.Invoke(this, EventArgs.Empty);
+                    if (_syncContext != null)
+                    {
+                        _syncContext.Post(_ => RunRequested?.Invoke(this, EventArgs.Empty), null);
+                    }
+                    else
+                    {
+                        RunRequested?.Invoke(this, EventArgs.Empty);
+                    }
                 }
                 else if (message.Contains("\"action\":\"save\""))
                 {
-                    SaveRequested?.Invoke(this, EventArgs.Empty);
+                    if (_syncContext != null)
+                    {
+                        _syncContext.Post(_ => SaveRequested?.Invoke(this, EventArgs.Empty), null);
+                    }
+                    else
+                    {
+                        SaveRequested?.Invoke(this, EventArgs.Empty);
+                    }
                 }
                 else if (message.Contains("\"action\":\"new\""))
                 {
@@ -366,8 +385,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 }
                 else if (message.Contains("\"action\":\"ready\""))
                 {
-                    webView.Visible = true;
-                    _webViewReadyTask.TrySetResult(true);
+                    if (_syncContext != null)
+                    {
+                        _syncContext.Post(_ =>
+                        {
+                            webView.Visible = true;
+                            _webViewReadyTask.TrySetResult(true);
+                        }, null);
+                    }
+                    else
+                    {
+                        webView.Visible = true;
+                        _webViewReadyTask.TrySetResult(true);
+                    }
                 }
             }
             catch (Exception ex)

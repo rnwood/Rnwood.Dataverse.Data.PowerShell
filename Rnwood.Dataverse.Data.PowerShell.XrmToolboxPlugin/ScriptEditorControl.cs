@@ -45,7 +45,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             base.OnLoad(e);
 
             // Create initial tab
-            CreateNewScriptTab();
+            var _ = CreateNewScript();
         }
 
         private TabPage CreateScriptTab(string title, string path)
@@ -77,7 +77,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             return tabPage;
         }
 
-        public async void InitializeMonacoEditor(Func<string> accessTokenProvider = null, string url = null)
+        public async Task InitializeMonacoEditor(Func<string> accessTokenProvider = null, string url = null)
         {
             this._accessTokenProvider = accessTokenProvider;
             this._url = url;
@@ -116,12 +116,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private void NewScriptButton_Click(object sender, EventArgs e)
         {
-            CreateNewScriptTab();
+            var _ = CreateNewScript();
         }
 
         private void OpenScriptButton_Click(object sender, EventArgs e)
         {
-            OpenScriptTab();
+            var _ = OpenScriptTab();
         }
 
         public async Task<string> GetScriptContentAsync()
@@ -133,13 +133,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             return await content.GetScriptContentAsync();
         }
 
-        public async void SetScriptContentAsync(string content)
+        public async Task SetScriptContentAsync(string content)
         {
             if (tabControl.SelectedTab == null || !tabData.ContainsKey(tabControl.SelectedTab))
                 return;
 
             var control = tabData[tabControl.SelectedTab];
-            control.SetScriptContentAsync(content);
+            await control.SetScriptContentAsync(content);
         }
 
         public PowerShellVersion GetCurrentPowerShellVersion()
@@ -166,7 +166,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             try
             {
-                string title = $"Untitled-{untitledCounter++}";
+                string title = galleryItem?.Title ?? $"Untitled-{untitledCounter++}";
                 TabPage tabPage = CreateScriptTab(title, null);
                 tabControl.TabPages.Add(tabPage);
                 tabControl.SelectedTab = tabPage;
@@ -174,7 +174,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 // Initialize the webView
                 await tabData[tabPage].InitializeWebView();
 
-                // Default content is already set in the HTML
+                if (galleryItem != null)
+                {
+                    tabData[tabPage].GalleryItem = galleryItem;
+                    await tabData[tabPage].SetScriptContentAsync(galleryItem.GetScriptContent());
+                }
             }
             catch (Exception ex)
             {
@@ -203,7 +207,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                         // Initialize the webView
                         await tabData[tabPage].InitializeWebView();
 
-                        tabData[tabPage].SetScriptContentAsync(content);
+                        await tabData[tabPage].SetScriptContentAsync(content);
                     }
                 }
             }
@@ -259,6 +263,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 MessageBox.Show($"Failed to save script: {ex.Message}",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        public async Task OpenScript()
+        {
+            await OpenScriptTab();
+        }
+
+        public async Task SaveScript()
+        {
+            await SaveCurrentScript();
         }
 
         public void DisposeResources()
@@ -364,105 +378,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-            
-            // Find the tab page for this content to get the title
-            string tabTitle = "Untitled Script";
-            foreach (var kvp in tabData)
-            {
-                if (kvp.Value == tabContent)
-                {
-                    tabTitle = kvp.Key.Text;
-                    break;
-                }
-            }
-            
-            // Prompt for title and tags
-            using (var titleForm = new Form
-            {
-                Text = "Save to Gallery",
-                Width = 400,
-                Height = 220,
-                StartPosition = FormStartPosition.CenterParent,
-                FormBorderStyle = FormBorderStyle.FixedDialog,
-                MaximizeBox = false,
-                MinimizeBox = false
-            })
-            {
-                var titleLabel = new Label
-                {
-                    Text = "Script Title:",
-                    Location = new System.Drawing.Point(10, 20),
-                    AutoSize = true
-                };
-                
-                var titleTextBox = new TextBox
-                {
-                    Location = new System.Drawing.Point(10, 40),
-                    Width = 360,
-                    Text = tabTitle
-                };
-                
-                var tagsLabel = new Label
-                {
-                    Text = "Tags (comma-separated, e.g. sql, data-migration):",
-                    Location = new System.Drawing.Point(10, 70),
-                    AutoSize = true,
-                    Width = 360
-                };
-                
-                var tagsTextBox = new TextBox
-                {
-                    Location = new System.Drawing.Point(10, 90),
-                    Width = 360
-                };
-                
-                var saveButton = new Button
-                {
-                    Text = "Save",
-                    DialogResult = DialogResult.OK,
-                    Location = new System.Drawing.Point(210, 145),
-                    Width = 75
-                };
-                
-                var cancelButton = new Button
-                {
-                    Text = "Cancel",
-                    DialogResult = DialogResult.Cancel,
-                    Location = new System.Drawing.Point(295, 145),
-                    Width = 75
-                };
-                
-                titleForm.Controls.Add(titleLabel);
-                titleForm.Controls.Add(titleTextBox);
-                titleForm.Controls.Add(tagsLabel);
-                titleForm.Controls.Add(tagsTextBox);
-                titleForm.Controls.Add(saveButton);
-                titleForm.Controls.Add(cancelButton);
-                titleForm.AcceptButton = saveButton;
-                titleForm.CancelButton = cancelButton;
-                
-                if (titleForm.ShowDialog() == DialogResult.OK)
-                {
-                    string title = titleTextBox.Text;
-                    if (string.IsNullOrWhiteSpace(title))
-                    {
-                        MessageBox.Show("Please enter a title", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        return;
-                    }
-                    
-                    // Parse tags
-                    var tags = new List<string>();
-                    if (!string.IsNullOrWhiteSpace(tagsTextBox.Text))
-                    {
-                        tags = tagsTextBox.Text.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
-                            .Select(t => t.Trim())
-                            .Where(t => !string.IsNullOrEmpty(t))
-                            .ToList();
-                    }
-                    
-                    await _galleryControl.SaveScriptToGalleryAsync(title, scriptContent, tags);
-                }
-            }
+
+            await _galleryControl.ShowSaveScriptDialog(scriptContent, tabContent.GalleryItem);
         }
 
         private async void SaveToGalleryButton_Click(object sender, EventArgs e)
@@ -473,103 +390,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 return;
             }
             
-            // Get current script content
-            string scriptContent = await GetScriptContentAsync();
-            
-            if (string.IsNullOrWhiteSpace(scriptContent))
-            {
-                MessageBox.Show("Script is empty. Please write some PowerShell code first.", 
-                    "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (tabControl.SelectedTab == null || !tabData.ContainsKey(tabControl.SelectedTab))
                 return;
-            }
-            
-            // Prompt for title and tags
-            using (var titleForm = new Form
-            {
-                Text = "Save to Gallery",
-                Width = 400,
-                Height = 220,
-                StartPosition = FormStartPosition.CenterParent,
-                FormBorderStyle = FormBorderStyle.FixedDialog,
-                MaximizeBox = false,
-                MinimizeBox = false
-            })
-            {
-                var titleLabel = new Label
-                {
-                    Text = "Script Title:",
-                    Location = new System.Drawing.Point(10, 20),
-                    AutoSize = true
-                };
-                
-                var titleTextBox = new TextBox
-                {
-                    Location = new System.Drawing.Point(10, 40),
-                    Width = 360,
-                    Text = tabControl.SelectedTab?.Text ?? "Untitled Script"
-                };
-                
-                var tagsLabel = new Label
-                {
-                    Text = "Tags (comma-separated, e.g. sql, data-migration):",
-                    Location = new System.Drawing.Point(10, 70),
-                    AutoSize = true,
-                    Width = 360
-                };
-                
-                var tagsTextBox = new TextBox
-                {
-                    Location = new System.Drawing.Point(10, 90),
-                    Width = 360
-                };
-                
-                var saveButton = new Button
-                {
-                    Text = "Save",
-                    DialogResult = DialogResult.OK,
-                    Location = new System.Drawing.Point(210, 145),
-                    Width = 75
-                };
-                
-                var cancelButton = new Button
-                {
-                    Text = "Cancel",
-                    DialogResult = DialogResult.Cancel,
-                    Location = new System.Drawing.Point(295, 145),
-                    Width = 75
-                };
-                
-                titleForm.Controls.Add(titleLabel);
-                titleForm.Controls.Add(titleTextBox);
-                titleForm.Controls.Add(tagsLabel);
-                titleForm.Controls.Add(tagsTextBox);
-                titleForm.Controls.Add(saveButton);
-                titleForm.Controls.Add(cancelButton);
-                titleForm.AcceptButton = saveButton;
-                titleForm.CancelButton = cancelButton;
-                
-                if (titleForm.ShowDialog() == DialogResult.OK)
-                {
-                    string title = titleTextBox.Text;
-                    if (string.IsNullOrWhiteSpace(title))
-                    {
-                        MessageBox.Show("Please enter a title", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        return;
-                    }
-                    
-                    // Parse tags
-                    var tags = new List<string>();
-                    if (!string.IsNullOrWhiteSpace(tagsTextBox.Text))
-                    {
-                        tags = tagsTextBox.Text.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
-                            .Select(t => t.Trim())
-                            .Where(t => !string.IsNullOrEmpty(t))
-                            .ToList();
-                    }
-                    
-                    await _galleryControl.SaveScriptToGalleryAsync(title, scriptContent, tags);
-                }
-            }
+
+            var content = tabData[tabControl.SelectedTab];
+            await SaveToGalleryFromTabAsync(content);
         }
     }
 }

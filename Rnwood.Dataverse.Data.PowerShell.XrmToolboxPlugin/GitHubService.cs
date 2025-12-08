@@ -728,7 +728,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     existingLabels[label.name.ToString()] = label.id.ToString();
                 }
 
-                // For each tag, ensure label exists and add to discussion
+                // For each tag, ensure label exists and collect label IDs
+                var labelIds = new List<string>();
                 foreach (var tag in tags)
                 {
                     var labelName = TagPrefix + tag;
@@ -757,18 +758,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                         labelId = existingLabels[labelName];
                     }
 
-                    // Add label to discussion using REST API (GraphQL doesn't support this)
-                    try
-                    {
-                        await _client.Issue.Labels.AddToIssue(_repositoryOwner, _repositoryName, Convert.ToInt32(discussionId), new[] { labelName });
-                    }
-                    catch
-                    {
-                        // GitHub Discussions don't support labels via REST API directly
-                        // This is a known limitation - labels need to be added manually or via GitHub UI
-                        System.Diagnostics.Debug.WriteLine($"Note: Labels for discussions must be added via GitHub UI");
-                    }
+                    labelIds.Add(labelId);
                 }
+
+                // Add labels to discussion using GraphQL
+                var addLabelsMutation = @"
+                    mutation($labelableId: ID!, $labelIds: [ID!]!) {
+                        addLabelsToLabelable(input: {labelableId: $labelableId, labelIds: $labelIds}) {
+                            clientMutationId
+                        }
+                    }";
+
+                await PostGraphQLAsync(new { query = addLabelsMutation, variables = new { labelableId = discussionId, labelIds } });
             }
             catch (Exception ex)
             {

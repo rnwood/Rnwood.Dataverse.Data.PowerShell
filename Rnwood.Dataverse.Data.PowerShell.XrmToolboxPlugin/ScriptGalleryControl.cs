@@ -16,9 +16,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private bool _webViewInitialized;
         private string _currentSearchText;
         private List<string> _currentFilterTags;
-        private string _currentReplyToId;
 
-        public event EventHandler<string> LoadScriptRequested;
+        public event EventHandler<ScriptGalleryItem> LoadScriptRequested;
 
         public ScriptGalleryControl()
         {
@@ -107,7 +106,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             try
             {
-                await detailWebView.EnsureCoreWebView2Async(null);
+                // Initialize WebView2 directly instead of using MarkdownEditorHelper
+                await detailWebView.EnsureCoreWebView2Async();
                 _webViewInitialized = true;
                 detailWebView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
                 detailWebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
@@ -116,8 +116,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 {
                     await RefreshDiscussionsAsync();
                 }
-
-                detailWebView.CoreWebView2.AddHostObjectToScript("gallery", new GalleryHostObject(this));
             }
             catch (Exception ex)
             {
@@ -420,6 +418,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             if (!_webViewInitialized)
                 return;
 
+            detailWebView.CoreWebView2.AddHostObjectToScript("gallery", new GalleryHostObject(this, System.Threading.SynchronizationContext.Current));
+
             // Convert markdown to HTML using Markdig with default pipeline
             var bodyHtml = Markdig.Markdown.ToHtml(item.Body ?? "");
             
@@ -446,29 +446,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         function showCommentForm() {
             currentReplyToId = null;
-            document.getElementById('commentForm').style.display = 'block';
-            document.getElementById('commentText').focus();
+            if (window.chrome && window.chrome.webview && window.chrome.webview.hostObjects && window.chrome.webview.hostObjects.gallery) {
+                window.chrome.webview.hostObjects.gallery.ShowCommentDialog(null);
+            }
         }
 
         function showReplyForm(replyToId) {
             currentReplyToId = replyToId;
-            document.getElementById('commentForm').style.display = 'block';
-            document.getElementById('commentText').focus();
-        }
-
-        function submitComment() {
-            var text = document.getElementById('commentText').value.trim();
-            if (text) {
-                window.gallery.AddComment(text, currentReplyToId);
-                document.getElementById('commentText').value = '';
-                document.getElementById('commentForm').style.display = 'none';
+            if (window.chrome && window.chrome.webview && window.chrome.webview.hostObjects && window.chrome.webview.hostObjects.gallery) {
+                window.chrome.webview.hostObjects.gallery.ShowCommentDialog(replyToId);
             }
-        }
-
-        function cancelComment() {
-            document.getElementById('commentText').value = '';
-            document.getElementById('commentForm').style.display = 'none';
-            currentReplyToId = null;
         }
     </script>";
 
@@ -477,6 +464,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 <html>
 <head>
     <meta charset='utf-8'>
+    <link rel=""stylesheet"" href=""https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs.min.css"">
+    <script src=""https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js""></script>
+    <script src=""https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/powershell.min.js""></script>
     <style>
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
@@ -507,29 +497,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             overflow-x: auto;
         }}
         code {{
-            background: #f6f8fa;
-            padding: 2px 4px;
-            border-radius: 3px;
             font-family: 'Courier New', monospace;
         }}
         pre code {{
             background: transparent;
             padding: 0;
         }}
-        .warning {{
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            padding: 8px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-        }}
+
     </style>
 </head>
 <body>
-    <div class='warning'>
-        ⚠️ <strong>Warning:</strong> These are unreviewed community submissions. Use at your own risk.
-    </div>
+
     <h1>{item.Title}</h1>
     <div class='meta'>
         By <strong>{item.Author}</strong> • 
@@ -540,12 +518,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     <div>{bodyHtml}</div>
     <button onclick='showCommentForm()' style='margin-top: 10px;'>Leave a comment</button>
     {commentsHtml}
-    <div id='commentForm' style='display: none; margin-top: 20px; border: 1px solid #ddd; padding: 10px; border-radius: 5px;'>
-        <textarea id='commentText' rows='4' style='width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;' placeholder='Write your comment...'></textarea>
-        <button onclick='submitComment()' style='margin-top: 5px; padding: 2px 8px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;'>Submit Comment</button>
-        <button onclick='cancelComment()' style='margin-top: 10px; margin-left: 10px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;'>Cancel</button>
-    </div>
     {script}
+    <script>hljs.highlightAll();</script>
 </body>
 </html>";
 
@@ -568,13 +542,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 var commentBodyHtml = Markdig.Markdown.ToHtml(comment.Body ?? "");
                 html += $@"
                     <div style='border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px; {indentStyle}'>
-
+                        
                         <div style='font-weight: bold; color: #0366d6; display: inline;'>{WebUtility.HtmlEncode(comment.Author)}</div>
                         <span style='font-size: 0.9em; color: #666; margin-left: 10px;'>{WebUtility.HtmlEncode(comment.CreatedAt.ToString("g"))}</span>
                         <div style='margin-top: 10px;'>{commentBodyHtml}</div>
                         <button onclick='showReplyForm(""{WebUtility.HtmlEncode(comment.Id)}"")' style='margin-top: 5px; font-size: 0.8em; padding: 2px 8px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;'>Reply</button>
                         <button class='toggleRepliesButton' onclick='toggleReplies(this, {CountTotalReplies(comment)})' style='margin-top: 5px; font-size: 0.8em; padding: 2px 8px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;'>
-                            \u25B2 {CountTotalReplies(comment)} replies
+                            ▶ {CountTotalReplies(comment)} replies
                         </button>
                         <div class='replies' style='{repliesStyle}'>
                             {repliesHtml}
@@ -609,7 +583,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 return;
             }
 
-            LoadScriptRequested?.Invoke(this, scriptContent);
+            LoadScriptRequested?.Invoke(this, _selectedItem);
         }
 
         private async void UpvoteButton_Click(object sender, EventArgs e)
@@ -651,33 +625,80 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        public async Task<bool> SaveScriptToGalleryAsync(string title, string scriptContent, List<string> tags = null)
+        public async Task ShowSaveScriptDialog(string scriptContent, ScriptGalleryItem existingItem = null)
         {
             if (!_githubService.IsAuthenticated)
             {
                 MessageBox.Show("You must be logged in to save scripts to the gallery", "Authentication Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
+                return;
             }
 
-            try
+            // Prepare initial values
+            string title = existingItem?.Title ?? "Untitled Script";
+            string description = "";
+            List<string> selectedTags = existingItem?.Tags ?? new List<string>();
+
+            if (existingItem != null)
             {
-                var newItem = await _githubService.CreateDiscussionAsync(title, scriptContent, tags);
-                MessageBox.Show($"Script saved to gallery successfully!\n\nDiscussion #{newItem.Number}: {newItem.Title}", 
-                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                
-                // Refresh the list and tags
-                await LoadAvailableTagsAsync();
-                await RefreshDiscussionsAsync();
-                
-                return true;
+                // Extract description from body (remove script block)
+                var parts = existingItem.Body.Split(new[] { "```powershell", "```ps1" }, StringSplitOptions.None);
+                if (parts.Length > 0)
+                {
+                    description = parts[0].Trim();
+                }
             }
-            catch (Exception ex)
+
+            // Get available tags
+            var availableTags = new List<string>();
+            foreach (var item in tagFilterComboBox.Items)
             {
-                MessageBox.Show($"Failed to save script to gallery: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
+                availableTags.Add(item.ToString());
+            }
+
+            using (var dialog = new ScriptSaveDialog(title, description, availableTags, selectedTags))
+            {
+                // No async initialization required for dialog
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        string newTitle = dialog.ScriptTitle;
+                        string newDescription = await dialog.GetDescriptionAsync();
+                        List<string> newTags = dialog.SelectedTags;
+
+                        // Combine description and script
+                        string newBody = $"{newDescription}\n\n```powershell\n{scriptContent}\n```";
+
+                        if (existingItem != null)
+                        {
+                            await _githubService.UpdateDiscussionAsync(existingItem.Id, newTitle, newBody);
+                            MessageBox.Show("Script updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            var newItem = await _githubService.CreateDiscussionAsync(newTitle, newBody, newTags);
+                            MessageBox.Show($"Script saved to gallery successfully!\n\nDiscussion #{newItem.Number}: {newItem.Title}",
+                                "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+
+                        // Refresh
+                        await LoadAvailableTagsAsync();
+                        await RefreshDiscussionsAsync();
+
+                        if (existingItem != null && _selectedItem?.Id == existingItem.Id)
+                        {
+                            _selectedItem = await _githubService.GetDiscussionAsync(_selectedItem.Number);
+                            await DisplayDiscussionAsync(_selectedItem);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Failed to save script: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
             }
         }
-        
+
         private async void ThumbsDownButton_Click(object sender, EventArgs e)
         {
             if (_selectedItem == null)
@@ -720,92 +741,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 return;
             }
 
-            // Show edit dialog
-            using (var editForm = new Form
-            {
-                Text = "Edit Script",
-                Width = 600,
-                Height = 500,
-                StartPosition = FormStartPosition.CenterParent,
-                FormBorderStyle = FormBorderStyle.FixedDialog,
-                MaximizeBox = false,
-                MinimizeBox = false
-            })
-            {
-                var titleLabel = new Label
-                {
-                    Text = "Title:",
-                    Location = new System.Drawing.Point(10, 20),
-                    AutoSize = true
-                };
-                
-                var titleTextBox = new TextBox
-                {
-                    Location = new System.Drawing.Point(10, 40),
-                    Width = 560,
-                    Text = _selectedItem.Title
-                };
-                
-                var bodyLabel = new Label
-                {
-                    Text = "Body:",
-                    Location = new System.Drawing.Point(10, 70),
-                    AutoSize = true
-                };
-                
-                var bodyTextBox = new TextBox
-                {
-                    Location = new System.Drawing.Point(10, 90),
-                    Width = 560,
-                    Height = 300,
-                    Multiline = true,
-                    ScrollBars = ScrollBars.Vertical,
-                    Text = _selectedItem.Body
-                };
-                
-                var saveButton = new Button
-                {
-                    Text = "Save",
-                    DialogResult = DialogResult.OK,
-                    Location = new System.Drawing.Point(415, 410),
-                    Width = 75
-                };
-                
-                var cancelButton = new Button
-                {
-                    Text = "Cancel",
-                    DialogResult = DialogResult.Cancel,
-                    Location = new System.Drawing.Point(495, 410),
-                    Width = 75
-                };
-                
-                editForm.Controls.Add(titleLabel);
-                editForm.Controls.Add(titleTextBox);
-                editForm.Controls.Add(bodyLabel);
-                editForm.Controls.Add(bodyTextBox);
-                editForm.Controls.Add(saveButton);
-                editForm.Controls.Add(cancelButton);
-                editForm.AcceptButton = saveButton;
-                editForm.CancelButton = cancelButton;
-                
-                if (editForm.ShowDialog() == DialogResult.OK)
-                {
-                    try
-                    {
-                        await _githubService.UpdateDiscussionAsync(_selectedItem.Id, titleTextBox.Text, bodyTextBox.Text);
-                        MessageBox.Show("Script updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        
-                        // Refresh
-                        await RefreshDiscussionsAsync();
-                        _selectedItem = await _githubService.GetDiscussionAsync(_selectedItem.Number);
-                        await DisplayDiscussionAsync(_selectedItem);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Failed to update script: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-            }
+            var scriptContent = _selectedItem.GetScriptContent();
+            await ShowSaveScriptDialog(scriptContent, _selectedItem);
         }
         
         private async void CloseButton_Click(object sender, EventArgs e)
@@ -842,32 +779,41 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
+        [System.Runtime.InteropServices.ComVisible(true)]
         public class GalleryHostObject
         {
             private readonly ScriptGalleryControl _control;
+            private readonly System.Threading.SynchronizationContext _syncContext;
 
             public GalleryHostObject(ScriptGalleryControl control)
             {
                 _control = control;
             }
 
-            public async void AddComment(string body, string replyToId)
+            public GalleryHostObject(ScriptGalleryControl control, System.Threading.SynchronizationContext syncContext)
             {
-                await _control.AddCommentAsync(body, replyToId);
+                _control = control;
+                _syncContext = syncContext;
             }
 
-            public void ShowCommentPanel()
+            public void ShowCommentDialog(string replyToId)
             {
-                _control.ShowCommentPanel();
-            }
-
-            public void HideCommentPanel()
-            {
-                _control.HideCommentPanel();
+                if (_syncContext != null)
+                {
+                    _syncContext.Post(_ => _control.ShowCommentDialog(replyToId), null);
+                }
+                else if (_control.InvokeRequired)
+                {
+                    _control.Invoke(new Action(() => { var _ = _control.ShowCommentDialog(replyToId); }));
+                }
+                else
+                {
+                    var _ = _control.ShowCommentDialog(replyToId);
+                }
             }
         }
 
-        public async Task AddCommentAsync(string body, string replyToId)
+        public async Task ShowCommentDialog(string replyToId)
         {
             if (_selectedItem == null)
             {
@@ -881,46 +827,44 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(body))
+            using (var dialog = new CommentDialog())
             {
-                MessageBox.Show("Please enter a comment", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            try
-            {
-                var comment = await _githubService.AddCommentAsync(_selectedItem.Id, body, replyToId);
-                
-                MessageBox.Show("Comment added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                
-                // Refresh the current discussion
-                _selectedItem = await _githubService.GetDiscussionAsync(_selectedItem.Number);
-                await DisplayDiscussionAsync(_selectedItem);
-                
-                // Update list view comment count
-                foreach (ListViewItem item in listView.Items)
+                // No async initialization required for dialog
+                if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    if ((item.Tag as ScriptGalleryItem)?.Number == _selectedItem.Number)
+                    string body = await dialog.GetCommentAsync();
+                    if (string.IsNullOrWhiteSpace(body))
                     {
-                        item.SubItems[3].Text = _selectedItem.CommentCount.ToString();
-                        break;
+                        MessageBox.Show("Please enter a comment", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+
+                    try
+                    {
+                        var comment = await _githubService.AddCommentAsync(_selectedItem.Id, body, replyToId);
+                        
+                        MessageBox.Show("Comment added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        
+                        // Refresh the current discussion
+                        _selectedItem = await _githubService.GetDiscussionAsync(_selectedItem.Number);
+                        await DisplayDiscussionAsync(_selectedItem);
+                        
+                        // Update list view comment count
+                        foreach (ListViewItem item in listView.Items)
+                        {
+                            if ((item.Tag as ScriptGalleryItem)?.Number == _selectedItem.Number)
+                            {
+                                item.SubItems[3].Text = _selectedItem.CommentCount.ToString();
+                                break;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Failed to add comment: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to add comment: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        public void ShowCommentPanel()
-        {
-            // This will be called from JS, but since we're using HTML form, maybe not needed
-        }
-
-        public void HideCommentPanel()
-        {
-            // This will be called from JS
         }
 
         private async void AddCommentButton_Click(object sender, EventArgs e)

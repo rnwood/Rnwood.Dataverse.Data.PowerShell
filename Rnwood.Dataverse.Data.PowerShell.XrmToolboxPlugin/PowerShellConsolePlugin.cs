@@ -64,14 +64,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                         }
                     };
                     
-                    scriptEditorControl.InitializeMonacoEditor(tokenProvider, connectionInfo.Url);
+                    _ = scriptEditorControl.InitializeMonacoEditor(tokenProvider, connectionInfo.Url)
+                        .ContinueWith(t => {
+                            if (t.IsFaulted)
+                            {
+                                var ex = t.Exception?.InnerException ?? t.Exception;
+                                System.Diagnostics.Debug.WriteLine($"InitializeMonacoEditor failed: {ex}");
+                                MessageBox.Show($"Failed to initialize script editor: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }, TaskScheduler.Default);
                 }
                 else
                 {
-                    scriptEditorControl.InitializeMonacoEditor();
+                    _ = scriptEditorControl.InitializeMonacoEditor()
+                        .ContinueWith(t => {
+                            if (t.IsFaulted)
+                            {
+                                var ex = t.Exception?.InnerException ?? t.Exception;
+                                System.Diagnostics.Debug.WriteLine($"InitializeMonacoEditor failed: {ex}");
+                                MessageBox.Show($"Failed to initialize script editor: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }, TaskScheduler.Default);
                 }
                 
-                helpControl.LoadAndShowHelp();
+                _ = helpControl.LoadAndShowHelp().ContinueWith(t => {
+                    if (t.IsFaulted)
+                    {
+                        var ex = t.Exception?.InnerException ?? t.Exception;
+                        System.Diagnostics.Debug.WriteLine($"LoadAndShowHelp failed: {ex}");
+                    }
+                }, TaskScheduler.Default);
 
                 splitContainer.SplitterDistance = (splitContainer.Width / 3)*2;
                 innerSplitContainer.SplitterDistance = (innerSplitContainer.Height / 3) * 2;
@@ -130,24 +152,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private void ScriptEditorControl_NewScriptRequested(object sender, EventArgs e)
         {
-            scriptEditorControl.CreateNewScript();
+            _ = scriptEditorControl.CreateNewScript();
         }
-
         private void ScriptEditorControl_OpenScriptRequested(object sender, EventArgs e)
         {
-            scriptEditorControl.OpenScript();
+            _ = scriptEditorControl.OpenScript();
         }
 
         private void ScriptEditorControl_SaveScriptRequested(object sender, EventArgs e)
         {
-            scriptEditorControl.SaveScript();
+            _ = scriptEditorControl.SaveScript();
         }
         
-        private void ScriptGalleryControl_LoadScriptRequested(object sender, string scriptContent)
+        private void ScriptGalleryControl_LoadScriptRequested(object sender, ScriptGalleryItem item)
         {
             // Load script content into a new editor tab
-            scriptEditorControl.CreateNewScript();
-            scriptEditorControl.SetScriptContentAsync(scriptContent);
+            _ = scriptEditorControl.CreateNewScript(item);
         }
 
         public override void ClosingPlugin(PluginCloseInfo info)

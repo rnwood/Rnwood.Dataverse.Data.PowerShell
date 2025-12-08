@@ -25,6 +25,7 @@
     <PackageIcon>icon_80.png</PackageIcon>
     <PackageIconUrl>https://raw.githu busercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/refs/heads/main/icon_80.png</PackageIconUrl>
     <Title>PowerShell Scripting Workspace</Title>
+	<GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
    </PropertyGroup>
 
   <ItemGroup>
