@@ -408,32 +408,35 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Executes a query for both unpublished and published records, deduplicating results by ID.
         /// Unpublished records take precedence over published records when both exist for the same ID.
+        /// Deduplication is based on entity ID (Guid), not entity type or logical name.
+        /// This method is designed for single-entity queries where all results share the same entity type.
         /// </summary>
-        /// <param name="query">The query to execute</param>
+        /// <param name="query">The query to execute (should target a single entity type)</param>
         /// <param name="connection">The organization service connection</param>
         /// <param name="writeVerbose">Action to write verbose messages</param>
         /// <returns>Enumerable of deduplicated entities, with unpublished records preferred</returns>
         public static IEnumerable<Entity> ExecuteQueryWithPublishedAndUnpublished(QueryBase query, IOrganizationService connection, Action<string> writeVerbose)
         {
-            // First get unpublished records - these take precedence
-            var unpublishedRecords = ExecuteQueryWithPaging(query, connection, writeVerbose, unpublished: true).ToList();
-            writeVerbose($"Retrieved {unpublishedRecords.Count} unpublished record(s)");
+            // Track IDs we've seen in unpublished results for deduplication
+            var unpublishedIds = new HashSet<Guid>();
+            int unpublishedCount = 0;
 
-            // Track IDs we've seen in unpublished results
-            var unpublishedIds = new HashSet<Guid>(unpublishedRecords.Select(e => e.Id));
-
-            // Return unpublished records first
-            foreach (var entity in unpublishedRecords)
+            // First yield unpublished records - these take precedence
+            // Build the ID set as we stream through the results to minimize memory usage
+            foreach (var entity in ExecuteQueryWithPaging(query, connection, writeVerbose, unpublished: true))
             {
+                unpublishedIds.Add(entity.Id);
+                unpublishedCount++;
                 yield return entity;
             }
+            
+            writeVerbose($"Retrieved {unpublishedCount} unpublished record(s)");
 
             // Now get published records and filter out duplicates
-            var publishedRecords = ExecuteQueryWithPaging(query, connection, writeVerbose, unpublished: false);
             int publishedCount = 0;
             int filteredCount = 0;
             
-            foreach (var entity in publishedRecords)
+            foreach (var entity in ExecuteQueryWithPaging(query, connection, writeVerbose, unpublished: false))
             {
                 publishedCount++;
                 // Only return if this ID wasn't in unpublished results
