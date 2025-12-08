@@ -14,7 +14,7 @@ schema: 2.0.0
 
 ```
 Invoke-DataverseXrmToolbox [-PackageName] <String> [-Version <String>] [-CacheDirectory <String>] [-Force]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Name <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -68,6 +68,21 @@ Force re-download of the package even if it's already cached.
 
 ```yaml
 Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Name
+The name of the plugin to load if the assembly contains multiple plugins.
+
+```yaml
+Type: String
 Parameter Sets: (All)
 Aliases:
 
