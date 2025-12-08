@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 using Microsoft.Xrm.Sdk;
@@ -82,17 +83,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Execute query with paging
-            var sitemaps = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose).ToList();
-
+            IEnumerable<Entity> sitemaps;
             if (!Published.IsPresent)
             {
-                sitemaps.AddRange(QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, true));
+                // Get both unpublished and published, with deduplication (unpublished preferred)
+                sitemaps = QueryHelpers.ExecuteQueryWithPublishedAndUnpublished(query, Connection, WriteVerbose);
+            }
+            else
+            {
+                // Get only published records
+                sitemaps = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose);
             }
 
-            WriteVerbose($"Found {sitemaps.Count} sitemap(s)");
+            var sitemapsList = sitemaps.ToList();
+            WriteVerbose($"Found {sitemapsList.Count} sitemap(s)");
 
             // Convert to SitemapInfo objects
-            foreach (var sitemap in sitemaps)
+            foreach (var sitemap in sitemapsList)
             {
                 var sitemapInfo = new SitemapInfo
                 {
