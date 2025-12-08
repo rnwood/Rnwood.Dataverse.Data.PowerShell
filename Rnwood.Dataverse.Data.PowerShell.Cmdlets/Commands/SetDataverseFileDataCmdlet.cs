@@ -17,6 +17,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     {
         private const string PARAMSET_FILEPATH = "FilePath";
         private const string PARAMSET_BYTES = "Bytes";
+        private const string UPLOAD_BLOCK_REQUEST = "UploadBlock";
+        private const int BLOCK_SIZE = 4 * 1024 * 1024; // 4MB blocks
 
         /// <summary>
         /// Gets or sets the logical name of the table containing the file column.
@@ -112,8 +114,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void UploadFile(byte[] fileData, string fileName)
         {
-            const int blockSize = 4 * 1024 * 1024; // 4MB blocks
-
             // Step 1: Initialize the upload
             var initRequest = new InitializeFileBlocksUploadRequest
             {
@@ -132,14 +132,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             while (offset < fileData.Length)
             {
-                int currentBlockSize = Math.Min(blockSize, fileData.Length - offset);
+                int currentBlockSize = Math.Min(BLOCK_SIZE, fileData.Length - offset);
                 byte[] blockData = new byte[currentBlockSize];
                 Array.Copy(fileData, offset, blockData, 0, currentBlockSize);
 
                 string blockId = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"block-{blockNumber:D6}"));
                 blockList.Add(blockId);
 
-                var uploadRequest = new OrganizationRequest("UploadBlock");
+                var uploadRequest = new OrganizationRequest(UPLOAD_BLOCK_REQUEST);
                 uploadRequest.Parameters["BlockId"] = blockId;
                 uploadRequest.Parameters["BlockData"] = blockData;
                 uploadRequest.Parameters["FileContinuationToken"] = fileContinuationToken;
@@ -149,7 +149,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 offset += currentBlockSize;
                 blockNumber++;
 
-                WriteVerbose($"Uploaded block {blockNumber}/{Math.Ceiling((double)fileData.Length / blockSize)}");
+                WriteVerbose($"Uploaded block {blockNumber}/{Math.Ceiling((double)fileData.Length / BLOCK_SIZE)}");
             }
 
             // Step 3: Commit the upload

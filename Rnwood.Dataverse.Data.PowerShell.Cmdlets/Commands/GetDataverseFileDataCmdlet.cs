@@ -17,6 +17,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private const string PARAMSET_FILEPATH = "FilePath";
         private const string PARAMSET_FOLDER = "Folder";
         private const string PARAMSET_BYTES = "Bytes";
+        private const string DOWNLOAD_BLOCK_REQUEST = "DownloadBlock";
+        private const int BLOCK_SIZE = 4 * 1024 * 1024; // 4MB blocks
 
         /// <summary>
         /// Gets or sets the logical name of the table containing the file column.
@@ -111,14 +113,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             using (var memoryStream = new MemoryStream())
             {
                 long offset = 0;
-                const int blockSize = 4 * 1024 * 1024; // 4MB blocks
 
                 while (true)
                 {
-                    var downloadRequest = new OrganizationRequest("DownloadBlock");
+                    var downloadRequest = new OrganizationRequest(DOWNLOAD_BLOCK_REQUEST);
                     downloadRequest.Parameters["FileContinuationToken"] = fileContinuationToken;
                     downloadRequest.Parameters["Offset"] = offset;
-                    downloadRequest.Parameters["BlockLength"] = (long)blockSize;
+                    downloadRequest.Parameters["BlockLength"] = (long)BLOCK_SIZE;
 
                     var downloadResponse = Connection.Execute(downloadRequest);
 
