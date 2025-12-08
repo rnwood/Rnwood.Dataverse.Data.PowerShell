@@ -489,6 +489,54 @@ Describe 'Sitemap Entry XML Generation and Parsing' {
             $entry = Get-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "TypoTestSitemap" -EntryId "TypoTestArea"
             $entry.ToolTipResourceId | Should -Be "TypoTest_ToolTip"
         }
+
+        It "Places Titles and Descriptions elements before Group elements per XSD schema" {
+            # Create test sitemap with existing Area and Group
+            $sitemapXml = @"
+<SiteMap>
+    <Area Id="OrderTestArea" ShowGroups="true">
+        <Group Id="ExistingGroup" ResourceId="Group_Existing" />
+    </Area>
+</SiteMap>
+"@
+            $sitemapEntity = New-Object Microsoft.Xrm.Sdk.Entity("sitemap", [guid]::NewGuid())
+            $sitemapEntity["sitemapname"] = "OrderTestSitemap"
+            $sitemapEntity["sitemapnameunique"] = "OrderTestSitemap"
+            $sitemapEntity["sitemapxml"] = $sitemapXml
+            $sitemapId = $connection.Create($sitemapEntity)
+            
+            # Update Area to add Titles and Descriptions
+            $titles = @{ 1033 = "Test Area" }
+            $descriptions = @{ 1033 = "Test description" }
+            Set-DataverseSitemapEntry -Connection $connection -SitemapUniqueName "OrderTestSitemap" `
+                -Area -EntryId "OrderTestArea" -Titles $titles -Descriptions $descriptions -Confirm:$false
+            
+            # Retrieve updated sitemap XML directly
+            $updatedSitemap = $connection.Retrieve("sitemap", $sitemapId, [Microsoft.Xrm.Sdk.Query.ColumnSet]::new("sitemapxml"))
+            $xmlContent = $updatedSitemap["sitemapxml"]
+            
+            # Parse XML to check element order
+            [xml]$xmlDoc = $xmlContent
+            $areaElement = $xmlDoc.SiteMap.Area | Where-Object { $_.Id -eq "OrderTestArea" }
+            $areaElement | Should -Not -BeNullOrEmpty
+            
+            # Get child elements in order
+            $children = $areaElement.ChildNodes
+            $elementNames = @($children | ForEach-Object { $_.Name })
+            
+            # Verify Titles comes before Group
+            $titlesIndex = [array]::IndexOf($elementNames, "Titles")
+            $descriptionsIndex = [array]::IndexOf($elementNames, "Descriptions")
+            $groupIndex = [array]::IndexOf($elementNames, "Group")
+            
+            $titlesIndex | Should -BeGreaterThan -1 -Because "Titles element should exist"
+            $descriptionsIndex | Should -BeGreaterThan -1 -Because "Descriptions element should exist"
+            $groupIndex | Should -BeGreaterThan -1 -Because "Group element should exist"
+            
+            # Verify order: Titles < Descriptions < Group
+            $titlesIndex | Should -BeLessThan $descriptionsIndex -Because "Titles should come before Descriptions"
+            $descriptionsIndex | Should -BeLessThan $groupIndex -Because "Descriptions should come before Group"
+        }
     }
 
     Context 'Privilege Parsing and Management' {
