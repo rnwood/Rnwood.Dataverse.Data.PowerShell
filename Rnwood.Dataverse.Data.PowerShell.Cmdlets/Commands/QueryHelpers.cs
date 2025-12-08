@@ -404,5 +404,50 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             return false;
         }
+
+        /// <summary>
+        /// Executes a query for both unpublished and published records, deduplicating results by ID.
+        /// Unpublished records take precedence over published records when both exist for the same ID.
+        /// </summary>
+        /// <param name="query">The query to execute</param>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="writeVerbose">Action to write verbose messages</param>
+        /// <returns>Enumerable of deduplicated entities, with unpublished records preferred</returns>
+        public static IEnumerable<Entity> ExecuteQueryWithPublishedAndUnpublished(QueryBase query, IOrganizationService connection, Action<string> writeVerbose)
+        {
+            // First get unpublished records - these take precedence
+            var unpublishedRecords = ExecuteQueryWithPaging(query, connection, writeVerbose, unpublished: true).ToList();
+            writeVerbose($"Retrieved {unpublishedRecords.Count} unpublished record(s)");
+
+            // Track IDs we've seen in unpublished results
+            var unpublishedIds = new HashSet<Guid>(unpublishedRecords.Select(e => e.Id));
+
+            // Return unpublished records first
+            foreach (var entity in unpublishedRecords)
+            {
+                yield return entity;
+            }
+
+            // Now get published records and filter out duplicates
+            var publishedRecords = ExecuteQueryWithPaging(query, connection, writeVerbose, unpublished: false);
+            int publishedCount = 0;
+            int filteredCount = 0;
+            
+            foreach (var entity in publishedRecords)
+            {
+                publishedCount++;
+                // Only return if this ID wasn't in unpublished results
+                if (!unpublishedIds.Contains(entity.Id))
+                {
+                    yield return entity;
+                }
+                else
+                {
+                    filteredCount++;
+                }
+            }
+
+            writeVerbose($"Retrieved {publishedCount} published record(s), filtered {filteredCount} duplicate(s)");
+        }
     }
 }
