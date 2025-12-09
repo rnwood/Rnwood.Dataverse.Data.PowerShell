@@ -36,7 +36,7 @@ Set-DataverseFileData -TableName <String> -Id <Guid> -ColumnName <String> -Input
 ## DESCRIPTION
 The Set-DataverseFileData cmdlet uploads file data to a Dataverse file column. You can upload from a file path, from a byte array in memory, or from a byte stream piped from another cmdlet. The cmdlet uses block-based uploading (4MB blocks) for efficient transfer of large files. MIME types are automatically detected from file extensions using the MimeTypesMap package, but can be manually overridden if needed.
 
-When using byte stream mode (via pipeline), bytes are accumulated during pipeline processing and uploaded when all input has been received, allowing efficient transfer of data from cmdlets like Get-Content -AsByteStream or Get-DataverseFileData -AsByteStream.
+When using byte stream mode (via pipeline), bytes are accumulated in a buffer and uploaded as 4MB blocks automatically as the buffer fills, minimizing memory usage. The final partial block is uploaded when all pipeline input has been received, allowing efficient transfer of large files from cmdlets like Get-Content -AsByteStream or Get-DataverseFileData -AsByteStream.
 
 ## EXAMPLES
 
