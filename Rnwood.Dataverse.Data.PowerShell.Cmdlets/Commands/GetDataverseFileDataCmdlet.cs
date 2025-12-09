@@ -154,6 +154,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     WriteVerbose($"Downloaded {data.Length} bytes in block {blockNumber}");
                     memoryStream.Write(data, 0, data.Length);
                     offset += data.Length;
+
+                    // If we received less data than requested, we've reached the end of the file
+                    if (data.Length < BLOCK_SIZE)
+                    {
+                        WriteVerbose($"Received {data.Length} bytes (less than block size {BLOCK_SIZE}), download complete");
+                        break;
+                    }
                 }
 
                 WriteVerbose($"Total download: {memoryStream.Length} bytes in {blockNumber} blocks");
