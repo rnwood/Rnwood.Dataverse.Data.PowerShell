@@ -11,12 +11,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// Downloads file data from a Dataverse file column.
     /// </summary>
     [Cmdlet(VerbsCommon.Get, "DataverseFileData")]
-    [OutputType(typeof(byte[]), typeof(FileInfo))]
+    [OutputType(typeof(byte[]), typeof(FileInfo), typeof(byte))]
     public class GetDataverseFileDataCmdlet : OrganizationServiceCmdlet
     {
         private const string PARAMSET_FILEPATH = "FilePath";
         private const string PARAMSET_FOLDER = "Folder";
         private const string PARAMSET_BYTES = "Bytes";
+        private const string PARAMSET_BYTESTREAM = "ByteStream";
         private const string DOWNLOAD_BLOCK_REQUEST = "DownloadBlock";
         private const int DEFAULT_BLOCK_SIZE = 4 * 1024 * 1024; // 4MB blocks
 
@@ -60,6 +61,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter AsBytes { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to output the file content as a byte stream to the pipeline (one byte at a time).
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_BYTESTREAM, Mandatory = true, HelpMessage = "Output the file content as a byte stream to the pipeline (one byte at a time)")]
+        public SwitchParameter AsByteStream { get; set; }
+
+        /// <summary>
         /// Gets or sets the block size for downloading files. Default is 4MB.
         /// </summary>
         [Parameter(Mandatory = false, HelpMessage = "Block size for downloading files in bytes. Default is 4MB (4194304 bytes)")]
@@ -95,23 +102,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 // Download the file data
                 WriteVerbose($"Starting file download with continuation token using block size of {BlockSize} bytes");
-                byte[] fileData = DownloadFileData(initResponse.FileContinuationToken, initResponse.FileSizeInBytes, initResponse.IsChunkingSupported);
-                WriteVerbose($"File download completed - Downloaded {fileData.Length} bytes");
-
-                // Handle output based on parameter set
-                switch (ParameterSetName)
+                
+                // For byte stream, we handle differently - output bytes as we download
+                if (ParameterSetName == PARAMSET_BYTESTREAM)
                 {
-                    case PARAMSET_FILEPATH:
-                        SaveToFilePath(fileData, FilePath, initResponse.FileName);
-                        break;
+                    DownloadFileDataAsByteStream(initResponse.FileContinuationToken, initResponse.FileSizeInBytes, initResponse.IsChunkingSupported);
+                    WriteVerbose($"File download completed - All bytes streamed to pipeline");
+                }
+                else
+                {
+                    byte[] fileData = DownloadFileData(initResponse.FileContinuationToken, initResponse.FileSizeInBytes, initResponse.IsChunkingSupported);
+                    WriteVerbose($"File download completed - Downloaded {fileData.Length} bytes");
 
-                    case PARAMSET_FOLDER:
-                        SaveToFolder(fileData, FolderPath, initResponse.FileName);
-                        break;
+                    // Handle output based on parameter set
+                    switch (ParameterSetName)
+                    {
+                        case PARAMSET_FILEPATH:
+                            SaveToFilePath(fileData, FilePath, initResponse.FileName);
+                            break;
 
-                    case PARAMSET_BYTES:
-                        WriteObject(fileData);
-                        break;
+                        case PARAMSET_FOLDER:
+                            SaveToFolder(fileData, FolderPath, initResponse.FileName);
+                            break;
+
+                        case PARAMSET_BYTES:
+                            WriteObject(fileData);
+                            break;
+                    }
                 }
             }
             catch (Exception ex)
@@ -182,6 +199,68 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteVerbose($"Total download: {memoryStream.Length} bytes in {blockNumber} blocks");
                 return memoryStream.ToArray();
             }
+        }
+
+        private void DownloadFileDataAsByteStream(string fileContinuationToken, long fileSizeInBytes, bool isChunkingSupported)
+        {
+            // If chunking is not supported, block size will be full size of the file.
+            long blockSizeDownload = !isChunkingSupported ? fileSizeInBytes : BlockSize;
+
+            // File size may be smaller than defined block size
+            if (fileSizeInBytes < blockSizeDownload)
+            {
+                blockSizeDownload = fileSizeInBytes;
+            }
+
+            WriteVerbose($"Using block size: {blockSizeDownload} bytes for byte stream download");
+
+            long offset = 0;
+            int blockNumber = 0;
+            long totalBytesStreamed = 0;
+
+            while (fileSizeInBytes > 0)
+            {
+                blockNumber++;
+                WriteVerbose($"Downloading block {blockNumber} at offset {offset}, remaining: {fileSizeInBytes} bytes");
+                
+                var downloadRequest = new OrganizationRequest(DOWNLOAD_BLOCK_REQUEST);
+                downloadRequest.Parameters["FileContinuationToken"] = fileContinuationToken;
+                downloadRequest.Parameters["Offset"] = offset;
+                downloadRequest.Parameters["BlockLength"] = blockSizeDownload;
+
+                var downloadResponse = Connection.Execute(downloadRequest);
+
+                if (!downloadResponse.Results.Contains("Data"))
+                {
+                    WriteVerbose($"No data in response");
+                    break;
+                }
+
+                var data = downloadResponse.Results["Data"] as byte[];
+                if (data == null || data.Length == 0)
+                {
+                    WriteVerbose($"Empty data block received");
+                    break;
+                }
+
+                WriteVerbose($"Downloaded {data.Length} bytes in block {blockNumber}, streaming to pipeline");
+                
+                // Stream each byte to the pipeline
+                foreach (byte b in data)
+                {
+                    WriteObject(b);
+                    totalBytesStreamed++;
+                }
+
+                // Subtract the amount downloaded,
+                // which may make fileSizeInBytes < 0 and indicate
+                // no further blocks to download
+                fileSizeInBytes -= blockSizeDownload;
+                // Increment the offset to start at the beginning of the next block.
+                offset += blockSizeDownload;
+            }
+
+            WriteVerbose($"Total streamed: {totalBytesStreamed} bytes in {blockNumber} blocks");
         }
 
         private void SaveToFilePath(byte[] fileData, string filePath, string originalFileName)

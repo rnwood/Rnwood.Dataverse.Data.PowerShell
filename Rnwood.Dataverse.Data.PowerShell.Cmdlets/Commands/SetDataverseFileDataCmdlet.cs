@@ -18,8 +18,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     {
         private const string PARAMSET_FILEPATH = "FilePath";
         private const string PARAMSET_BYTES = "Bytes";
+        private const string PARAMSET_BYTESTREAM = "ByteStream";
         private const string UPLOAD_BLOCK_REQUEST = "UploadBlock";
         private const int BLOCK_SIZE = 4 * 1024 * 1024; // 4MB blocks
+
+        // For byte stream mode, we accumulate bytes in BeginProcessing/ProcessRecord/EndProcessing
+        private List<byte> _byteStreamBuffer;
+        private bool _byteStreamMode;
 
         /// <summary>
         /// Gets or sets the logical name of the table containing the file column.
@@ -55,9 +60,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public byte[] FileContent { get; set; }
 
         /// <summary>
+        /// Gets or sets the byte stream input from the pipeline.
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_BYTESTREAM, Mandatory = true, ValueFromPipeline = true, HelpMessage = "Byte stream input from the pipeline")]
+        public byte InputByte { get; set; }
+
+        /// <summary>
         /// Gets or sets the filename to use when uploading from byte array.
         /// </summary>
         [Parameter(ParameterSetName = PARAMSET_BYTES, HelpMessage = "Filename to use when uploading from byte array")]
+        [Parameter(ParameterSetName = PARAMSET_BYTESTREAM, HelpMessage = "Filename to use when uploading from byte stream")]
         public string FileName { get; set; }
 
         /// <summary>
@@ -67,11 +79,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string MimeType { get; set; }
 
         /// <summary>
+        /// Begins processing - initialize byte stream buffer if in ByteStream mode.
+        /// </summary>
+        protected override void BeginProcessing()
+        {
+            base.BeginProcessing();
+
+            if (ParameterSetName == PARAMSET_BYTESTREAM)
+            {
+                _byteStreamMode = true;
+                _byteStreamBuffer = new List<byte>();
+                WriteVerbose("Initialized byte stream buffer for incoming bytes");
+            }
+        }
+
+        /// <summary>
         /// Processes each record in the pipeline to upload file data.
         /// </summary>
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
+
+            // In byte stream mode, accumulate bytes
+            if (_byteStreamMode)
+            {
+                _byteStreamBuffer.Add(InputByte);
+                return;
+            }
 
             byte[] fileData;
             string fileName;
@@ -116,6 +150,43 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             catch (Exception ex)
             {
                 WriteError(new ErrorRecord(ex, "FileUploadError", ErrorCategory.WriteError, Id));
+            }
+        }
+
+        /// <summary>
+        /// Ends processing - upload the accumulated byte stream if in ByteStream mode.
+        /// </summary>
+        protected override void EndProcessing()
+        {
+            base.EndProcessing();
+
+            if (_byteStreamMode)
+            {
+                if (_byteStreamBuffer == null || _byteStreamBuffer.Count == 0)
+                {
+                    WriteWarning("No bytes received from pipeline to upload");
+                    return;
+                }
+
+                byte[] fileData = _byteStreamBuffer.ToArray();
+                string fileName = FileName ?? "file.bin";
+
+                WriteVerbose($"Received {fileData.Length} bytes from byte stream");
+
+                if (!ShouldProcess($"{TableName} record {Id}, column {ColumnName}", $"Upload file '{fileName}' ({fileData.Length} bytes from byte stream)"))
+                {
+                    return;
+                }
+
+                try
+                {
+                    UploadFile(fileData, fileName);
+                    WriteVerbose($"Successfully uploaded file '{fileName}' ({fileData.Length} bytes) from byte stream to {TableName} record {Id}, column {ColumnName}");
+                }
+                catch (Exception ex)
+                {
+                    WriteError(new ErrorRecord(ex, "FileUploadError", ErrorCategory.WriteError, Id));
+                }
             }
         }
 
