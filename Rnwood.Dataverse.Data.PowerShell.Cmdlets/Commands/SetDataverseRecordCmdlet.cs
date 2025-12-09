@@ -151,6 +151,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "Maximum number of parallel set operations. Default is 1 (parallel processing disabled). When set to a value greater than 1, records are processed in parallel using multiple connections.")]
         public int MaxDegreeOfParallelism { get; set; } = 1;
 
+        /// <summary>
+        /// If specified, duplicate detection will be enabled by setting SuppressDuplicateDetection to false in create, update, and upsert requests.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, duplicate detection will be enabled by setting SuppressDuplicateDetection to false in create, update, and upsert requests.")]
+        public SwitchParameter EnableDuplicateDetection { get; set; }
+
         // Explicit interface implementations for ISetOperationParameters
         bool ISetOperationParameters.NoUpdate => NoUpdate.IsPresent;
         bool ISetOperationParameters.NoCreate => NoCreate.IsPresent;
@@ -166,6 +172,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         string[][] ISetOperationParameters.MatchOn => MatchOn;
         Guid ISetOperationParameters.Id => Id;
         bool ISetOperationParameters.AllowMultipleMatches => AllowMultipleMatches.IsPresent;
+        bool ISetOperationParameters.EnableDuplicateDetection => EnableDuplicateDetection.IsPresent;
 
         private SetBatchProcessor _setBatchProcessor;
         private RetrievalBatchProcessor _retrievalBatchProcessor;
