@@ -109,10 +109,9 @@ Describe "File Data E2E Tests" {
             Write-Host "✓ File column created"
                 
             Write-Host "Step 3: Creating a test record..."
-            $record = $null
-            Invoke-WithRetry {
+            $record = Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
-                $script:record = @{
+                @{
                     new_name = "Test File Record $testRunId"
                 } | Set-DataverseRecord -Connection $connection -TableName $entityName -PassThru -Confirm:$false
             }
@@ -137,9 +136,8 @@ Describe "File Data E2E Tests" {
             Write-Host "✓ File uploaded from byte array"
                 
             Write-Host "Step 5: Downloading file as byte array..."
-            $downloadedBytes = $null
-            Invoke-WithRetry {
-                $script:downloadedBytes = Get-DataverseFileData -Connection $connection `
+            $downloadedBytes = Invoke-WithRetry {
+                Get-DataverseFileData -Connection $connection `
                     -TableName $entityName `
                     -Id $recordId `
                     -ColumnName "new_document" `
@@ -160,9 +158,8 @@ Describe "File Data E2E Tests" {
             $tempFolder = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [guid]::NewGuid().ToString())
             New-Item -ItemType Directory -Path $tempFolder -Force | Out-Null
             
-            $downloadedFile = $null
-            Invoke-WithRetry {
-                $script:downloadedFile = Get-DataverseFileData -Connection $connection `
+            $downloadedFile = Invoke-WithRetry {
+                Get-DataverseFileData -Connection $connection `
                     -TableName $entityName `
                     -Id $recordId `
                     -ColumnName "new_document" `
@@ -199,9 +196,8 @@ Describe "File Data E2E Tests" {
                 
             # Verify updated content
             Write-Host "Step 8: Verifying updated file content..."
-            $updatedBytes = $null
-            Invoke-WithRetry {
-                $script:updatedBytes = Get-DataverseFileData -Connection $connection `
+            $updatedBytes = Invoke-WithRetry {
+                Get-DataverseFileData -Connection $connection `
                     -TableName $entityName `
                     -Id $recordId `
                     -ColumnName "new_document" `
