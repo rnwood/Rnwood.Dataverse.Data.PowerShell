@@ -125,7 +125,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.powerShellVersionButton.Name = "powerShellVersionButton";
             this.powerShellVersionButton.Size = new System.Drawing.Size(95, 32);
             this.powerShellVersionButton.Text = "PowerShell 5.1";
-            this.powerShellVersionButton.ToolTipText = "Click to switch PowerShell version";
+            this.powerShellVersionButton.ToolTipText = "Click to switch PowerShell version for script execution (completion always uses PowerShell 5.1)";
             this.powerShellVersionButton.Click += new System.EventHandler(this.PowerShellVersionButton_Click);
             // 
             // ScriptTabContentControl
