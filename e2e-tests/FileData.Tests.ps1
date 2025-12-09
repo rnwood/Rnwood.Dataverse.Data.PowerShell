@@ -109,14 +109,14 @@ Describe "File Data E2E Tests" {
             Write-Host "✓ File column created"
                 
             Write-Host "Step 3: Creating a test record..."
-            $recordId = $null
+            $record = $null
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
-                $record = @{
+                $script:record = @{
                     new_name = "Test File Record $testRunId"
                 } | Set-DataverseRecord -Connection $connection -TableName $entityName -PassThru -Confirm:$false
-                $script:recordId = $record.Id
             }
+            $recordId = $record.Id
             Write-Host "✓ Test record created with ID: $recordId"
                 
             # Create test file content
