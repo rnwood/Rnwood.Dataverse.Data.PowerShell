@@ -134,6 +134,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             control.SetScriptContentAsync(content);
         }
 
+        public PowerShellVersion GetCurrentPowerShellVersion()
+        {
+            if (tabControl.SelectedTab == null || !tabData.ContainsKey(tabControl.SelectedTab))
+                return PowerShellDetector.GetDefaultVersion();
+
+            var content = tabData[tabControl.SelectedTab];
+            return content.PowerShellVersion;
+        }
+
         public async void CreateNewScriptTab()
         {
             try

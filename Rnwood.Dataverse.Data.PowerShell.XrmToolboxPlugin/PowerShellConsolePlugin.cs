@@ -111,9 +111,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     return;
                 }
 
-                // Send script to console for execution
+                // Send script to console for execution with the selected PowerShell version
                 var connectionInfo = ConsoleControl.ExtractConnectionInfo(service);
-                consoleControl.StartScriptSession(script, connectionInfo);
+                var powerShellVersion = scriptEditorControl.GetCurrentPowerShellVersion();
+                consoleControl.StartScriptSession(script, connectionInfo, powerShellVersion);
             }
             catch (Exception ex)
             {

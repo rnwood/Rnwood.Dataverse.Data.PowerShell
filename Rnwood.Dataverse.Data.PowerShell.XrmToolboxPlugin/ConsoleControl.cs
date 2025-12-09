@@ -379,12 +379,29 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
 
         public void StartScriptSession(string script, ConnectionInfo connectionInfo)
         {
-            StartSession($"Script Session {scriptSessionCounter++}", script, connectionInfo);
+            StartScriptSession(script, connectionInfo, PowerShellDetector.GetDefaultVersion());
         }
 
-        private void StartConEmuSession(string title, string scriptContent, ConnectionInfo connectionInfo)
+        public void StartScriptSession(string script, ConnectionInfo connectionInfo, PowerShellVersion version)
         {
+            StartSession($"Script Session {scriptSessionCounter++}", script, connectionInfo, version);
+        }
+
+        private void StartConEmuSession(string title, string scriptContent, ConnectionInfo connectionInfo, PowerShellVersion version)
+        {
+            // Validate that the requested version is available
+            if (!PowerShellDetector.IsAvailable(version))
+            {
+                string message = version == PowerShellVersion.Core
+                    ? PowerShellDetector.GetInstallInstructions()
+                    : "Windows PowerShell (powershell.exe) is not available in PATH.";
+
+                MessageBox.Show(message, "PowerShell Not Available", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             ConsoleTabControl consoleTabControl = new ConsoleTabControl();
+            consoleTabControl.PowerShellVersion = version;
 
             if (connectionInfo != null)
             {
@@ -417,16 +434,32 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
 
         private void StartSession(string title, string userScript, ConnectionInfo connectionInfo)
         {
+            StartSession(title, userScript, connectionInfo, PowerShellDetector.GetDefaultVersion());
+        }
+
+        private void StartSession(string title, string userScript, ConnectionInfo connectionInfo, PowerShellVersion version)
+        {
             string bundledModulePath = Path.Combine(Path.GetDirectoryName(GetType().Assembly.Location), "PSModule");
 
             string connectionScript = GenerateConnectionScript(bundledModulePath, connectionInfo, userScript);
 
-            StartConEmuSession(title, connectionScript, connectionInfo);
+            StartConEmuSession(title, connectionScript, connectionInfo, version);
         }
 
         private void NewInteractiveSessionButton_Click(object sender, EventArgs e)
         {
-            StartEmbeddedPowerShellConsole();
+            // Use default version (prefer Core if available)
+            StartSession("Interactive", "", ExtractConnectionInformation(service), PowerShellDetector.GetDefaultVersion());
+        }
+
+        private void NewPowerShell5SessionMenuItem_Click(object sender, EventArgs e)
+        {
+            StartSession("Interactive", "", ExtractConnectionInformation(service), PowerShellVersion.Desktop);
+        }
+
+        private void NewPowerShell7SessionMenuItem_Click(object sender, EventArgs e)
+        {
+            StartSession("Interactive", "", ExtractConnectionInformation(service), PowerShellVersion.Core);
         }
     }
 }
