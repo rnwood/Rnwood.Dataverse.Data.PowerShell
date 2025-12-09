@@ -10,6 +10,7 @@ This section covers the core concepts and operations for working with Dataverse 
 - **[Querying Records](querying.md)** - Filtering, paging, sorting, linking tables, SQL queries, and using SDK requests
 - **[Creating and Updating Records](creating-updating.md)** - Create, update, upsert operations with type conversion and batching
 - **[Deleting Records](deleting.md)** - Delete operations with confirmation, batching, and SQL alternatives
+- **[File Attachments](file-attachments.md)** - Upload, download, and delete file data from file columns
 - **[Managing Web Resources](web-resources.md)** - Upload, download, and manage web resources (JavaScript, CSS, HTML, images, etc.) with file system integration
 - **[Working with Metadata](metadata.md)** - Reading and managing schema (entities, attributes, relationships, option sets)
 - **[Form Management](form-management.md)** - Managing forms, tabs, sections, and controls with positioning and FormXml manipulation
