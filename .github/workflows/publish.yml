@@ -470,7 +470,7 @@ jobs:
           
           # Job 2: E2E tests (Module.Tests.ps1 for all matrix combinations)
           $e2eTestsJob = Start-Job -ScriptBlock {
-              param($modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret, $osType, $psVersion, $workDir, $branchName)
+              param($modulePath, $e2eUrl, $e2eClientId, $e2eClientSecret, $osType, $psVersion, $workDir)
               
               # Set working directory for this job
               Set-Location $workDir
@@ -497,20 +497,10 @@ jobs:
                   Write-Host "Running E2E Metadata tests (Windows Latest only)..."
                   
                   $metadataConfig = New-PesterConfiguration
-                  
-                  # Base metadata tests
-                  $metadataTests = @(
-                      # Run EntityMetadata tests for activity entity support feature
-                      'e2e-tests/EntityMetadata.Tests.ps1'
+                  $metadataConfig.Run.Path = @(
+                      # Run FileData tests for file column cmdlets
+                      'e2e-tests/FileData.Tests.ps1'
                   )
-                  
-                  # Add FileData tests only for the file attachments branch
-                  if ($branchName -eq 'copilot/implement-cmdlets-file-attachments') {
-                      Write-Host "File attachments branch detected - adding FileData.Tests.ps1"
-                      $metadataTests += 'e2e-tests/FileData.Tests.ps1'
-                  }
-                  
-                  $metadataConfig.Run.Path = $metadataTests
                   $metadataConfig.Run.PassThru = $true
                   $metadataConfig.Output.Verbosity = 'Minimal'
                   $metadataConfig.Filter.ExcludeTag = 'LongRunning'
@@ -528,7 +518,7 @@ jobs:
                   ModuleTests = $result
                   MetadataTests = $null
               }
-          } -ArgumentList $env:TESTMODULEPATH, $env:E2ETESTS_URL, $env:E2ETESTS_CLIENTID, $env:E2ETESTS_CLIENTSECRET, "${{ matrix.os }}", "${{ matrix.powershell_version }}", $workingDir, "${{ github.head_ref || github.ref_name }}"
+          } -ArgumentList $env:TESTMODULEPATH, $env:E2ETESTS_URL, $env:E2ETESTS_CLIENTID, $env:E2ETESTS_CLIENTSECRET, "${{ matrix.os }}", "${{ matrix.powershell_version }}", $workingDir
           
           # Wait for both jobs to complete
           Write-Host "Waiting for standard tests and E2E tests to complete..."
