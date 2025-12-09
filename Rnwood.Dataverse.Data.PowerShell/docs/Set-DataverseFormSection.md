@@ -180,21 +180,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
 http://server.com/MyOrg/).
@@ -362,6 +347,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+Controls how progress information is displayed during cmdlet execution.
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -SectionId
 ID of the existing section to update. If not specified, a new section will be created.
 
@@ -422,13 +422,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: wi
+Aliases: cf
 
 Required: False
 Position: Named
@@ -437,13 +437,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-Controls how progress information is displayed during cmdlet execution.
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases: wi
 
 Required: False
 Position: Named

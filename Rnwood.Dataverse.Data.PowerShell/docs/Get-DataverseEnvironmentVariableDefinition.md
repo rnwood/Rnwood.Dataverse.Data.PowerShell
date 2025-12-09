@@ -84,21 +84,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SchemaName
-Schema name of the environment variable to retrieve.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 0
-Default value: None
-Accept pipeline input: True (ByPropertyName, ByValue)
-Accept wildcard characters: False
-```
-
 ### -ProgressAction
 {{ Fill ProgressAction Description }}
 
@@ -111,6 +96,21 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SchemaName
+Schema name of the environment variable to retrieve.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 

@@ -93,21 +93,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SolutionFile
-Solution file bytes to parse.
-
-```yaml
-Type: Byte[]
-Parameter Sets: FromBytes
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
-```
-
 ### -ProgressAction
 {{ Fill ProgressAction Description }}
 
@@ -120,6 +105,21 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SolutionFile
+Solution file bytes to parse.
+
+```yaml
+Type: Byte[]
+Parameter Sets: FromBytes
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 

@@ -98,13 +98,13 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -TabName
-Name of a specific tab to retrieve. If not specified, all tabs are returned.
+### -ProgressAction
+Controls how progress information is displayed during cmdlet execution.
 
 ```yaml
-Type: String
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases:
+Aliases: proga
 
 Required: False
 Position: Named
@@ -113,13 +113,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-Controls how progress information is displayed during cmdlet execution.
+### -TabName
+Name of a specific tab to retrieve. If not specified, all tabs are returned.
 
 ```yaml
-Type: ActionPreference
+Type: String
 Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named
