@@ -68,6 +68,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             try
             {
+                WriteVerbose($"Initializing file download for column '{ColumnName}' on record {Id} in table '{TableName}'");
+                
                 // Initialize file blocks download to get file information
                 var initRequest = new InitializeFileBlocksDownloadRequest
                 {
@@ -77,6 +79,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 var initResponse = (InitializeFileBlocksDownloadResponse)Connection.Execute(initRequest);
 
+                WriteVerbose($"File initialized - Size: {initResponse.FileSizeInBytes} bytes, Name: {initResponse.FileName}");
+
                 if (initResponse.FileSizeInBytes == 0)
                 {
                     WriteWarning($"File column '{ColumnName}' on record {Id} in table '{TableName}' is empty or does not contain a file.");
@@ -84,7 +88,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 // Download the file data
+                WriteVerbose($"Starting file download with continuation token");
                 byte[] fileData = DownloadFileData(initResponse.FileContinuationToken);
+                WriteVerbose($"File download completed - Downloaded {fileData.Length} bytes");
 
                 // Handle output based on parameter set
                 switch (ParameterSetName)
@@ -104,7 +110,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             catch (Exception ex)
             {
-                WriteError(new ErrorRecord(ex, "FileDownloadError", ErrorCategory.ReadError, Id));
+                WriteError(new ErrorRecord(
+                    new Exception($"Failed to download file from column '{ColumnName}' on record {Id} in table '{TableName}': {ex.Message}", ex),
+                    "FileDownloadError",
+                    ErrorCategory.ReadError,
+                    Id));
+                throw;
             }
         }
 
@@ -113,9 +124,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             using (var memoryStream = new MemoryStream())
             {
                 long offset = 0;
+                int blockNumber = 0;
 
                 while (true)
                 {
+                    blockNumber++;
+                    WriteVerbose($"Downloading block {blockNumber} at offset {offset}");
+                    
                     var downloadRequest = new OrganizationRequest(DOWNLOAD_BLOCK_REQUEST);
                     downloadRequest.Parameters["FileContinuationToken"] = fileContinuationToken;
                     downloadRequest.Parameters["Offset"] = offset;
@@ -125,19 +140,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (!downloadResponse.Results.Contains("Data"))
                     {
+                        WriteVerbose($"No data in response, download complete");
                         break;
                     }
 
                     var data = downloadResponse.Results["Data"] as byte[];
                     if (data == null || data.Length == 0)
                     {
+                        WriteVerbose($"Empty data block, download complete");
                         break;
                     }
 
+                    WriteVerbose($"Downloaded {data.Length} bytes in block {blockNumber}");
                     memoryStream.Write(data, 0, data.Length);
                     offset += data.Length;
                 }
 
+                WriteVerbose($"Total download: {memoryStream.Length} bytes in {blockNumber} blocks");
                 return memoryStream.ToArray();
             }
         }
