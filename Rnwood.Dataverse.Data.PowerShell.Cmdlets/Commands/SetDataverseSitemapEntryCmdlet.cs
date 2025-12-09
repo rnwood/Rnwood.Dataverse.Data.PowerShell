@@ -1082,8 +1082,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             
             // Only add Titles element if it has children
+            // Per Dataverse XSD schema, Titles/Descriptions must come before Group/SubArea children
+            // Insert at the beginning to ensure proper element ordering
             if (titlesElement.HasElements)
-                entryElement.Add(titlesElement);
+                entryElement.AddFirst(titlesElement);
         }
 
         private void UpdateDescriptionsElement(XElement entryElement, Dictionary<int, string> descriptions)
@@ -1108,8 +1110,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             
             // Only add Descriptions element if it has children
+            // Per Dataverse XSD schema, Descriptions should come after Titles but before Group/SubArea children
             if (descriptionsElement.HasElements)
-                entryElement.Add(descriptionsElement);
+            {
+                var titlesElement = entryElement.Element("Titles");
+                if (titlesElement != null)
+                {
+                    // Insert after Titles
+                    titlesElement.AddAfterSelf(descriptionsElement);
+                }
+                else
+                {
+                    // No Titles element, insert at the beginning
+                    entryElement.AddFirst(descriptionsElement);
+                }
+            }
         }
 
         private Dictionary<int, string> MergeTitles(XElement entryElement, Dictionary<int, string> newTitles)
