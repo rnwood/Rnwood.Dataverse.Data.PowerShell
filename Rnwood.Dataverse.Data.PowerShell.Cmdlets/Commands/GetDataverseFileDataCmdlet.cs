@@ -18,7 +18,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private const string PARAMSET_FOLDER = "Folder";
         private const string PARAMSET_BYTES = "Bytes";
         private const string DOWNLOAD_BLOCK_REQUEST = "DownloadBlock";
-        private const int BLOCK_SIZE = 4 * 1024 * 1024; // 4MB blocks
+        private const int DEFAULT_BLOCK_SIZE = 4 * 1024 * 1024; // 4MB blocks
 
         /// <summary>
         /// Gets or sets the logical name of the table containing the file column.
@@ -60,6 +60,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter AsBytes { get; set; }
 
         /// <summary>
+        /// Gets or sets the block size for downloading files. Default is 4MB.
+        /// </summary>
+        [Parameter(Mandatory = false, HelpMessage = "Block size for downloading files in bytes. Default is 4MB (4194304 bytes)")]
+        public int BlockSize { get; set; } = DEFAULT_BLOCK_SIZE;
+
+        /// <summary>
         /// Processes each record in the pipeline to download file data.
         /// </summary>
         protected override void ProcessRecord()
@@ -79,7 +85,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 var initResponse = (InitializeFileBlocksDownloadResponse)Connection.Execute(initRequest);
 
-                WriteVerbose($"File initialized - Size: {initResponse.FileSizeInBytes} bytes, Name: {initResponse.FileName}");
+                WriteVerbose($"File initialized - Size: {initResponse.FileSizeInBytes} bytes, Name: {initResponse.FileName}, Chunking supported: {initResponse.IsChunkingSupported}");
 
                 if (initResponse.FileSizeInBytes == 0)
                 {
@@ -88,8 +94,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 // Download the file data
-                WriteVerbose($"Starting file download with continuation token");
-                byte[] fileData = DownloadFileData(initResponse.FileContinuationToken);
+                WriteVerbose($"Starting file download with continuation token using block size of {BlockSize} bytes");
+                byte[] fileData = DownloadFileData(initResponse.FileContinuationToken, initResponse.FileSizeInBytes, initResponse.IsChunkingSupported);
                 WriteVerbose($"File download completed - Downloaded {fileData.Length} bytes");
 
                 // Handle output based on parameter set
@@ -119,48 +125,58 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private byte[] DownloadFileData(string fileContinuationToken)
+        private byte[] DownloadFileData(string fileContinuationToken, long fileSizeInBytes, bool isChunkingSupported)
         {
-            using (var memoryStream = new MemoryStream())
+            // If chunking is not supported, block size will be full size of the file.
+            long blockSizeDownload = !isChunkingSupported ? fileSizeInBytes : BlockSize;
+
+            // File size may be smaller than defined block size
+            if (fileSizeInBytes < blockSizeDownload)
+            {
+                blockSizeDownload = fileSizeInBytes;
+            }
+
+            WriteVerbose($"Using block size: {blockSizeDownload} bytes for download");
+
+            using (var memoryStream = new MemoryStream((int)fileSizeInBytes))
             {
                 long offset = 0;
                 int blockNumber = 0;
 
-                while (true)
+                while (fileSizeInBytes > 0)
                 {
                     blockNumber++;
-                    WriteVerbose($"Downloading block {blockNumber} at offset {offset}");
+                    WriteVerbose($"Downloading block {blockNumber} at offset {offset}, remaining: {fileSizeInBytes} bytes");
                     
                     var downloadRequest = new OrganizationRequest(DOWNLOAD_BLOCK_REQUEST);
                     downloadRequest.Parameters["FileContinuationToken"] = fileContinuationToken;
                     downloadRequest.Parameters["Offset"] = offset;
-                    downloadRequest.Parameters["BlockLength"] = (long)BLOCK_SIZE;
+                    downloadRequest.Parameters["BlockLength"] = blockSizeDownload;
 
                     var downloadResponse = Connection.Execute(downloadRequest);
 
                     if (!downloadResponse.Results.Contains("Data"))
                     {
-                        WriteVerbose($"No data in response, download complete");
+                        WriteVerbose($"No data in response");
                         break;
                     }
 
                     var data = downloadResponse.Results["Data"] as byte[];
                     if (data == null || data.Length == 0)
                     {
-                        WriteVerbose($"Empty data block, download complete");
+                        WriteVerbose($"Empty data block received");
                         break;
                     }
 
                     WriteVerbose($"Downloaded {data.Length} bytes in block {blockNumber}");
                     memoryStream.Write(data, 0, data.Length);
-                    offset += data.Length;
 
-                    // If we received less data than requested, we've reached the end of the file
-                    if (data.Length < BLOCK_SIZE)
-                    {
-                        WriteVerbose($"Received {data.Length} bytes (less than block size {BLOCK_SIZE}), download complete");
-                        break;
-                    }
+                    // Subtract the amount downloaded,
+                    // which may make fileSizeInBytes < 0 and indicate
+                    // no further blocks to download
+                    fileSizeInBytes -= blockSizeDownload;
+                    // Increment the offset to start at the beginning of the next block.
+                    offset += blockSizeDownload;
                 }
 
                 WriteVerbose($"Total download: {memoryStream.Length} bytes in {blockNumber} blocks");

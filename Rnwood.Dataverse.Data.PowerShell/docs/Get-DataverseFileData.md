@@ -15,19 +15,19 @@ Downloads file data from a Dataverse file column.
 ### FilePath
 ```
 Get-DataverseFileData -TableName <String> -Id <Guid> -ColumnName <String> -FilePath <String>
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-BlockSize <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Folder
 ```
 Get-DataverseFileData -TableName <String> -Id <Guid> -ColumnName <String> -FolderPath <String>
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-BlockSize <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Bytes
 ```
 Get-DataverseFileData -TableName <String> -Id <Guid> -ColumnName <String> [-AsBytes]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-BlockSize <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -155,6 +155,21 @@ Required: True
 Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -BlockSize
+Block size for downloading files in bytes. Default is 4MB (4194304 bytes)
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 4194304
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
