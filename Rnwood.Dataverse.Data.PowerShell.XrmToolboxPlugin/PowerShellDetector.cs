@@ -64,11 +64,11 @@ Alternatively, use Windows PowerShell 5.1 (already installed on Windows).";
         {
             try
             {
-                // Use 'where' on Windows or 'which' on Unix-like systems
+                // Try using where command (cross-platform approach)
                 var processStartInfo = new ProcessStartInfo
                 {
-                    FileName = "cmd.exe",
-                    Arguments = $"/c where {executableName}",
+                    FileName = executableName,
+                    Arguments = "--version",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
