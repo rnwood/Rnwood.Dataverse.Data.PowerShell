@@ -15,14 +15,15 @@ schema: 2.0.0
 ### FilePath
 ```
 Set-DataverseFileData -TableName <String> -Id <Guid> -ColumnName <String> -FilePath <String>
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-MimeType <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### Bytes
 ```
 Set-DataverseFileData -TableName <String> -Id <Guid> -ColumnName <String> -FileContent <Byte[]>
- [-FileName <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+ [-FileName <String>] [-MimeType <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -143,6 +144,21 @@ Required: True
 Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -MimeType
+MIME type for the file (e.g., 'application/pdf', 'image/png'). If not specified, automatically determined from file extension.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 

@@ -1,6 +1,7 @@
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
+using HeyRed.Mime;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -58,6 +59,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(ParameterSetName = PARAMSET_BYTES, HelpMessage = "Filename to use when uploading from byte array")]
         public string FileName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the MIME type for the file. If not specified, it will be automatically determined from the file extension.
+        /// </summary>
+        [Parameter(HelpMessage = "MIME type for the file (e.g., 'application/pdf', 'image/png'). If not specified, automatically determined from file extension.")]
+        public string MimeType { get; set; }
 
         /// <summary>
         /// Processes each record in the pipeline to upload file data.
@@ -158,73 +165,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 FileContinuationToken = fileContinuationToken,
                 BlockList = blockList.ToArray(),
                 FileName = fileName,
-                MimeType = GetMimeType(fileName)
+                MimeType = DetermineMimeType(fileName)
             };
 
             Connection.Execute(commitRequest);
         }
 
         /// <summary>
-        /// Gets the MIME type for a file based on its extension.
+        /// Determines the MIME type for a file. Uses the manually specified MimeType parameter if provided,
+        /// otherwise automatically determines it from the file extension using MimeTypesMap.
         /// </summary>
-        private string GetMimeType(string fileName)
+        private string DetermineMimeType(string fileName)
         {
-            string extension = Path.GetExtension(fileName)?.ToLowerInvariant();
-            
-            // Common MIME types
-            switch (extension)
+            // If MimeType parameter was explicitly set, use it
+            if (!string.IsNullOrEmpty(MimeType))
             {
-                case ".txt":
-                    return "text/plain";
-                case ".pdf":
-                    return "application/pdf";
-                case ".doc":
-                    return "application/msword";
-                case ".docx":
-                    return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-                case ".xls":
-                    return "application/vnd.ms-excel";
-                case ".xlsx":
-                    return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-                case ".ppt":
-                    return "application/vnd.ms-powerpoint";
-                case ".pptx":
-                    return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-                case ".png":
-                    return "image/png";
-                case ".jpg":
-                case ".jpeg":
-                    return "image/jpeg";
-                case ".gif":
-                    return "image/gif";
-                case ".bmp":
-                    return "image/bmp";
-                case ".svg":
-                    return "image/svg+xml";
-                case ".json":
-                    return "application/json";
-                case ".xml":
-                    return "application/xml";
-                case ".zip":
-                    return "application/zip";
-                case ".csv":
-                    return "text/csv";
-                case ".html":
-                case ".htm":
-                    return "text/html";
-                case ".css":
-                    return "text/css";
-                case ".js":
-                    return "application/javascript";
-                case ".mp3":
-                    return "audio/mpeg";
-                case ".mp4":
-                    return "video/mp4";
-                case ".avi":
-                    return "video/x-msvideo";
-                default:
-                    return "application/octet-stream"; // Default fallback
+                WriteVerbose($"Using manually specified MIME type: {MimeType}");
+                return MimeType;
             }
+
+            // Otherwise, automatically determine from file extension
+            string mimeType = MimeTypesMap.GetMimeType(Path.GetExtension(fileName));
+            WriteVerbose($"Automatically determined MIME type for '{fileName}': {mimeType}");
+            return mimeType;
         }
     }
 }
