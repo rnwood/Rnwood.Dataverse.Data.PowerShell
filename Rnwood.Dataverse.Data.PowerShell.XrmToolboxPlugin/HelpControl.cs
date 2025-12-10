@@ -101,10 +101,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private void HelpControl_Load(object sender, EventArgs e)
         {
-            LoadAndShowHelp("gettingstarted");
+            var _ = LoadAndShowHelp("gettingstarted");
         }
 
-        public async void LoadAndShowHelp(string contentUrl = null)
+        public async Task LoadAndShowHelp(string contentUrl = null)
         {
             try
             {
@@ -363,7 +363,7 @@ hr {{
             if (searchCombo.SelectedItem is ComboItem item && helpWebView2.CoreWebView2 != null)
             {
                 pendingScrollId = item.ScrollId;
-                LoadAndShowHelp(item.Url);
+                var _ = LoadAndShowHelp(item.Url);
             }
         }
 

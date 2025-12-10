@@ -20,6 +20,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private Func<string> _accessTokenProvider;
         private string _url;
 
+        // Gallery control reference
+        private ScriptGalleryControl _galleryControl;
+
         // Tab data
         private Dictionary<TabPage, ScriptTabContentControl> tabData = new Dictionary<TabPage, ScriptTabContentControl>();
         private int untitledCounter = 1;
@@ -32,12 +35,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             InitializeComponent();
         }
 
+        public void SetGalleryControl(ScriptGalleryControl galleryControl)
+        {
+            _galleryControl = galleryControl;
+        }
+
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
 
             // Create initial tab
-            CreateNewScriptTab();
+            var _ = CreateNewScript();
         }
 
         private TabPage CreateScriptTab(string title, string path)
@@ -47,11 +55,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
             ScriptTabContentControl content = new ScriptTabContentControl();
             content.Path = path;
- 
+
             content.CompletionService = _completionService;
             content.RunRequested += (s, e) => RunScriptRequested?.Invoke(this, EventArgs.Empty);
             content.CompletionResolved += (s, e) => CompletionResolved?.Invoke(this, e);
-            content.CloseRequested += (s, e) => {
+            content.SaveToGalleryRequested += async (s, e) => await SaveToGalleryFromTabAsync(content);
+            content.CloseRequested += (s, e) =>
+            {
                 tabControl.TabPages.Remove(tabPage);
                 if (tabData.ContainsKey(tabPage))
                 {
@@ -68,7 +78,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             return tabPage;
         }
 
-        public async void InitializeMonacoEditor(Func<string> accessTokenProvider = null, string url = null)
+        public async Task InitializeMonacoEditor(Func<string> accessTokenProvider = null, string url = null)
         {
             this._accessTokenProvider = accessTokenProvider;
             this._url = url;
@@ -107,12 +117,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private void NewScriptButton_Click(object sender, EventArgs e)
         {
-            CreateNewScriptTab();
+            var _ = CreateNewScript();
         }
 
         private void OpenScriptButton_Click(object sender, EventArgs e)
         {
-            OpenScriptTab();
+            var _ = OpenScriptTab();
         }
 
         public async Task<string> GetScriptContentAsync()
@@ -124,13 +134,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             return await content.GetScriptContentAsync();
         }
 
-        public async void SetScriptContentAsync(string content)
+        public async Task SetScriptContentAsync(string content)
         {
             if (tabControl.SelectedTab == null || !tabData.ContainsKey(tabControl.SelectedTab))
                 return;
 
             var control = tabData[tabControl.SelectedTab];
-            control.SetScriptContentAsync(content);
+            await control.SetScriptContentAsync(content);
         }
 
         public PowerShellVersion GetCurrentPowerShellVersion()
@@ -153,11 +163,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             return tabControl.SelectedTab.Text;
         }
 
-        public async void CreateNewScriptTab()
+        public async Task CreateNewScriptTab(ScriptGalleryItem galleryItem = null)
         {
             try
             {
-                string title = $"Untitled-{untitledCounter++}";
+                string title = galleryItem?.Title ?? $"Untitled-{untitledCounter++}";
                 TabPage tabPage = CreateScriptTab(title, null);
                 tabControl.TabPages.Add(tabPage);
                 tabControl.SelectedTab = tabPage;
@@ -165,13 +175,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 // Initialize the webView
                 await tabData[tabPage].InitializeWebView();
 
-                // Default content is already set in the HTML
+                if (galleryItem != null)
+                {
+                    tabData[tabPage].GalleryItem = galleryItem;
+                    await tabData[tabPage].SetScriptContentAsync(galleryItem.GetScriptContent());
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to create new script: {ex.Message}",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        public async Task CreateNewScript(ScriptGalleryItem galleryItem = null)
+        {
+            await CreateNewScriptTab(galleryItem);
         }
 
         private async Task OpenScriptTab()
@@ -194,7 +213,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                         // Initialize the webView
                         await tabData[tabPage].InitializeWebView();
 
-                        tabData[tabPage].SetScriptContentAsync(content);
+                        await tabData[tabPage].SetScriptContentAsync(content);
                     }
                 }
             }
@@ -250,6 +269,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 MessageBox.Show($"Failed to save script: {ex.Message}",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        public async Task OpenScript()
+        {
+            await OpenScriptTab();
+        }
+
+        public async Task SaveScript()
+        {
+            await SaveCurrentScript();
+        }
+
+        private async Task SaveCurrentScript()
+        {
+            if (tabControl.SelectedTab == null || !tabData.ContainsKey(tabControl.SelectedTab))
+                return;
+
+            var content = tabData[tabControl.SelectedTab];
+            await SaveScriptForContent(content);
         }
 
         public void DisposeResources()
@@ -337,5 +375,44 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
             return $"{baseStatus} ({_activeCompletionRequests} active)";
         }
+
+        private async Task SaveToGalleryFromTabAsync(ScriptTabContentControl tabContent)
+        {
+            if (_galleryControl == null)
+            {
+                MessageBox.Show("Gallery control not available", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // Get script content from the specific tab
+            string scriptContent = await tabContent.GetScriptContentAsync();
+
+            if (string.IsNullOrWhiteSpace(scriptContent))
+            {
+                MessageBox.Show("Script is empty. Please write some PowerShell code first.",
+                    "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var (saved, item) = await _galleryControl.ShowSaveScriptDialog(scriptContent, tabContent.GalleryItem);
+            if (saved && item != null)
+            {
+                tabContent.GalleryItem = item;
+                // Update tab title
+                var tab = tabData.FirstOrDefault(kvp => kvp.Value == tabContent).Key;
+                if (tab != null)
+                {
+                    tab.Text = item.Title;
+                }
+            }
+        }
+
     }
 }
+
+
+
+
+
+
+

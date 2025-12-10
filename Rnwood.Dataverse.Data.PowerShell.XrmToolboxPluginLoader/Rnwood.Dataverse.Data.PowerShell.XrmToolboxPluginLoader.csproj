@@ -25,12 +25,13 @@
     <PackageIcon>icon_80.png</PackageIcon>
     <PackageIconUrl>https://raw.githu busercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/refs/heads/main/icon_80.png</PackageIconUrl>
     <Title>PowerShell Scripting Workspace</Title>
+	<GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
    </PropertyGroup>
 
   <ItemGroup>
     <None Include="..\icon_80.png" Pack="true" PackagePath="" />
     <PackageReference Include="MscrmTools.Xrm.Connection" Version="1.2025.9.64" />
-    <PackageReference Include="XrmToolBoxPackage" Version="$(XrmToolBoxVersion)"/>
+    <PackageReference Include="XrmToolBoxPackage" Version="$(XrmToolBoxVersion)" />
   </ItemGroup>
 
   <!-- o.zip is generated during build from the plugin files in the plugin output folder -->
@@ -106,7 +107,7 @@
         <BuildAction>Content</BuildAction>
       </_PackageFiles>
     </ItemGroup>
-    <Message Text="Included @(_PluginFiles->Count()) files" Importance="high" />
+    <Message Text="Included @(_PluginFiles-&gt;Count()) files" Importance="high" />
   </Target>
 
   <ItemGroup>
@@ -114,6 +115,21 @@
         <PrivateAssets>none</PrivateAssets>
         <Private>false</Private>
     </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 
   <!-- UsingTask for inline ZipFolder removed: we use a project script to do the zip instead for portability -->

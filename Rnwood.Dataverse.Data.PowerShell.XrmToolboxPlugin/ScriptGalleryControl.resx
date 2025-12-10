@@ -117,59 +117,13 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="mdi--home" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--home.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="share-variant-custom" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\share-variant-custom.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="login-custom" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\login-custom.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="mdi--terminal-line" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--terminal-line.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="thumb-up-outline-custom" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\thumb-up-outline-custom.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="mdi--invoice-new" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--invoice-new.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="mdi--help" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--help.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="tag-edit-outline-custom" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\tag-edit-outline-custom.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="file-edit-outline-custom" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\file-edit-outline-custom.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="mdi--content-save" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--content-save.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="mdi--close" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--close.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="mdi--arrow-forward" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--arrow-forward.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="mdi--people-group" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--people-group.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="mdi--play" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--play.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="refresh-custom" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\refresh-custom.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="mdi--folder-open" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--folder-open.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="mdi--arrow-back" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\mdi--arrow-back.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="thumb-down-outline-custom" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\thumb-down-outline-custom.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
+  <metadata name="toolbar.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+  <metadata name="detailToolbar.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>155, 17</value>
+  </metadata>
+  <metadata name="detailToolbar.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>155, 17</value>
+  </metadata>
 </root>

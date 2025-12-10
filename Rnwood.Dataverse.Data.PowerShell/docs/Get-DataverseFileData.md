@@ -244,10 +244,13 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.String
+
 ### System.Guid
+
 ## OUTPUTS
 
 ### System.Byte[]
+
 ### System.IO.FileInfo
 ### System.Byte
 ## NOTES
