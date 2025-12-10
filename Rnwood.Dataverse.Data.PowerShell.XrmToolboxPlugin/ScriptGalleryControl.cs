@@ -16,6 +16,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private bool _webViewInitialized;
         private string _currentSearchText;
         private List<string> _currentFilterTags;
+        private System.Windows.Forms.Timer _searchDebounceTimer;
+        private bool _suppressFilterEvents;
+        private volatile bool _isRefreshing;
+        private volatile bool _refreshQueued;
+        private readonly object _refreshLock = new object();
 
         public event EventHandler<ScriptGalleryItem> LoadScriptRequested;
 
@@ -32,6 +37,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             InitializeWebViewAsync();
 
             commentPanel.Visible = false;
+
+            // Debounce timer for search text
+            _searchDebounceTimer = new System.Windows.Forms.Timer();
+            _searchDebounceTimer.Interval = 500; // 500ms debounce
+            _searchDebounceTimer.Tick += SearchDebounceTimer_Tick;
+
+            // Hook text change so we can debounce search
+            this.searchTextBox.TextChanged += SearchTextBox_TextChanged;
+            this.tagFilterComboBox.SelectedIndexChanged += TagFilterComboBox_SelectedIndexChanged;
+            this.mySubmissionsCheckBox.CheckedChanged += MySubmissionsCheckBox_CheckedChanged;
+
+            UpdateClearButtonVisibility();
         }
         
         private void UpdateUIState()
@@ -48,7 +65,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 refreshButton.Enabled = true;
                 searchTextBox.Enabled = true;
                 tagFilterComboBox.Enabled = true;
-                applyFilterButton.Enabled = true;
+                // Apply button removed - filtering is automatic
                 clearFilterButton.Enabled = true;
                 mySubmissionsCheckBox.Enabled = true;
                 listView.Enabled = true;
@@ -74,7 +91,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 refreshButton.Enabled = false;
                 searchTextBox.Enabled = false;
                 tagFilterComboBox.Enabled = false;
-                applyFilterButton.Enabled = false;
+                // Apply button removed - filtering is automatic
                 clearFilterButton.Enabled = false;
                 mySubmissionsCheckBox.Enabled = false;
                 listView.Enabled = false;
@@ -134,6 +151,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             try
             {
+                // Indicate loading while we retrieve tags
+                try { loadingProgressBar.Visible = true; } catch { }
+
                 var tags = await _githubService.GetAvailableTagsAsync();
                 tagFilterComboBox.Items.Clear();
                 tagFilterComboBox.Items.Add("(All)");
@@ -143,12 +163,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 }
                 if (tagFilterComboBox.Items.Count > 0)
                 {
+                    // Prevent selecting the first item from firing filter changed events during programmatic setup
+                    _suppressFilterEvents = true;
                     tagFilterComboBox.SelectedIndex = 0;
+                    _suppressFilterEvents = false;
+                    UpdateClearButtonVisibility();
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to load tags: {ex.Message}");
+            }
+            finally
+            {
+                try { loadingProgressBar.Visible = false; } catch { }
             }
         }
 
@@ -328,33 +356,100 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             await RefreshDiscussionsAsync();
         }
         
-        private async void ApplyFilterButton_Click(object sender, EventArgs e)
+        // Apply button removed - filtering is automatic.
+
+        private void SearchTextBox_TextChanged(object sender, EventArgs e)
         {
-            _currentSearchText = searchTextBox.Text;
+            if (_suppressFilterEvents)
+                return;
+
+            // Debounce search - restart timer
+            try
+            {
+                _searchDebounceTimer.Stop();
+                _searchDebounceTimer.Start();
+            }
+            catch { }
+        }
+
+        private void TagFilterComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_suppressFilterEvents)
+                return;
+            UpdateAndRefreshFilters();
+        }
+
+        private void MySubmissionsCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_suppressFilterEvents)
+                return;
+            UpdateAndRefreshFilters();
+        }
+
+        private void SearchDebounceTimer_Tick(object sender, EventArgs e)
+        {
+            _searchDebounceTimer.Stop();
+            UpdateAndRefreshFilters();
+        }
+
+        // Handled earlier above where event handlers check _suppressFilterEvents.
+
+        private async void UpdateAndRefreshFilters()
+        {
+            _currentSearchText = string.IsNullOrWhiteSpace(searchTextBox.Text) ? null : searchTextBox.Text;
             _currentFilterTags.Clear();
-            
-            if (tagFilterComboBox.SelectedIndex > 0) // 0 is "(All)"
+            if (tagFilterComboBox.SelectedIndex > 0)
             {
                 _currentFilterTags.Add(tagFilterComboBox.SelectedItem.ToString());
             }
-            
+            UpdateClearButtonVisibility();
             await RefreshDiscussionsAsync();
+        }
+
+        private void UpdateClearButtonVisibility()
+        {
+            var hasFilters = !string.IsNullOrWhiteSpace(searchTextBox.Text) || tagFilterComboBox.SelectedIndex > 0 || mySubmissionsCheckBox.Checked;
+            clearFilterButton.Visible = hasFilters;
         }
         
         private async void ClearFilterButton_Click(object sender, EventArgs e)
         {
-            searchTextBox.Text = "";
-            tagFilterComboBox.SelectedIndex = 0;
-            mySubmissionsCheckBox.Checked = false;
-            _currentSearchText = null;
-            _currentFilterTags.Clear();
+            // Prevent events firing for the programmatic clear.
+            _suppressFilterEvents = true;
+            try
+            {
+                searchTextBox.Text = "";
+                tagFilterComboBox.SelectedIndex = 0;
+                mySubmissionsCheckBox.Checked = false;
+                _currentSearchText = null;
+                _currentFilterTags.Clear();
+                UpdateClearButtonVisibility();
+            }
+            finally
+            {
+                _suppressFilterEvents = false;
+            }
+
             await RefreshDiscussionsAsync();
         }
 
         private async Task RefreshDiscussionsAsync()
         {
+            lock (_refreshLock)
+            {
+                if (_isRefreshing)
+                {
+                    _refreshQueued = true;
+                    return;
+                }
+                _isRefreshing = true;
+                _refreshQueued = false;
+            }
+
             try
             {
+                // Indicate loading
+                try { loadingProgressBar.Visible = true; } catch { }
                 statusLabel.Text = "Loading discussions...";
                 listView.Items.Clear();
 
@@ -379,6 +474,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             {
                 MessageBox.Show($"Failed to load discussions: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 statusLabel.Text = "Error loading discussions";
+            }
+            finally
+            {
+                try { loadingProgressBar.Visible = false; } catch { }
+                lock (_refreshLock)
+                {
+                    _isRefreshing = false;
+                    if (_refreshQueued)
+                    {
+                        _refreshQueued = false;
+                        // Re-run the refresh on the UI thread.
+                        _ = RefreshDiscussionsAsync();
+                    }
+                }
             }
         }
 
@@ -516,7 +625,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         💬 {item.CommentCount}
     </div>
     <div>{bodyHtml}</div>
-    <button onclick='showCommentForm()' style='margin-top: 10px;'>Leave a comment</button>
+    <button onclick='showCommentForm()' style='margin-top: 10px; font-size: 0.8em; padding: 2px 8px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;'>Leave a comment</button>
     {commentsHtml}
     {script}
     <script>hljs.highlightAll();</script>

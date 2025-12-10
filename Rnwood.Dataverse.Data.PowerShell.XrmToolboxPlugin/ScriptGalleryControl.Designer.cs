@@ -39,13 +39,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.toolbar = new System.Windows.Forms.ToolStrip();
             this.toolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.statusLabel = new System.Windows.Forms.ToolStripLabel();
+            this.loadingProgressBar = new System.Windows.Forms.ToolStripProgressBar();
             this.filterPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.searchLabel = new System.Windows.Forms.Label();
             this.searchTextBox = new System.Windows.Forms.TextBox();
             this.tagFilterLabel = new System.Windows.Forms.Label();
             this.tagFilterComboBox = new System.Windows.Forms.ComboBox();
             this.mySubmissionsCheckBox = new System.Windows.Forms.CheckBox();
-            this.applyFilterButton = new System.Windows.Forms.Button();
             this.clearFilterButton = new System.Windows.Forms.Button();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.listView = new System.Windows.Forms.ListView();
@@ -84,11 +84,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // toolbar
             // 
             this.toolbar.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
+            this.loadingProgressBar.Name = "loadingProgressBar";
+            this.loadingProgressBar.Size = new System.Drawing.Size(100, 16);
+            this.loadingProgressBar.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
+            this.loadingProgressBar.Visible = false;
+
             this.toolbar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.loginButton,
             this.refreshButton,
             this.toolStripSeparator,
-            this.statusLabel});
+            this.statusLabel,
+            this.loadingProgressBar});
             this.toolbar.Location = new System.Drawing.Point(0, 0);
             this.toolbar.Name = "toolbar";
             this.toolbar.Size = new System.Drawing.Size(1043, 25);
@@ -114,7 +120,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.filterPanel.Controls.Add(this.tagFilterLabel);
             this.filterPanel.Controls.Add(this.tagFilterComboBox);
             this.filterPanel.Controls.Add(this.mySubmissionsCheckBox);
-            this.filterPanel.Controls.Add(this.applyFilterButton);
             this.filterPanel.Controls.Add(this.clearFilterButton);
             this.filterPanel.Dock = System.Windows.Forms.DockStyle.Top;
             this.filterPanel.Location = new System.Drawing.Point(0, 25);
@@ -177,17 +182,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.mySubmissionsCheckBox.Text = "My Submissions";
             this.mySubmissionsCheckBox.UseVisualStyleBackColor = true;
             // 
-            // applyFilterButton
-            // 
-            this.applyFilterButton.AutoSize = true;
-            this.applyFilterButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.applyFilterButton.Location = new System.Drawing.Point(507, 3);
-            this.applyFilterButton.Name = "applyFilterButton";
-            this.applyFilterButton.Size = new System.Drawing.Size(43, 23);
-            this.applyFilterButton.TabIndex = 4;
-            this.applyFilterButton.Text = "Apply";
-            this.applyFilterButton.UseVisualStyleBackColor = true;
-            this.applyFilterButton.Click += new System.EventHandler(this.ApplyFilterButton_Click);
+            // applyFilterButton removed - use automatic filtering
             // 
             // clearFilterButton
             // 
@@ -450,8 +445,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private Label tagFilterLabel;
         private ComboBox tagFilterComboBox;
         private CheckBox mySubmissionsCheckBox;
-        private Button applyFilterButton;
         private Button clearFilterButton;
+        private ToolStripProgressBar loadingProgressBar;
         private SplitContainer splitContainer;
         private ListView listView;
         private ColumnHeader titleColumn;
