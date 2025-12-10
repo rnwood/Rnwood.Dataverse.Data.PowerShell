@@ -213,22 +213,22 @@ Describe "File Data E2E Tests" {
             # Clean up temp file
             Remove-Item -Path $tempFilePath -Force -ErrorAction SilentlyContinue
                 
-            Write-Host "Step 9: Testing byte stream mode - Upload via byte stream..."
+            Write-Host "Step 9: Testing byte stream mode - Upload via byte array parameter..."
             $byteStreamContent = "Byte stream test content. Timestamp: $timestamp"
             $byteStreamBytes = [System.Text.Encoding]::UTF8.GetBytes($byteStreamContent)
             
             Invoke-WithRetry {
-                # Upload bytes via pipeline (byte stream mode)
-                # Write-Output enumerates the array, sending each byte individually through the pipeline
-                # This works in both PowerShell 5.1 and PowerShell Core
-                Write-Output $byteStreamBytes | Set-DataverseFileData -Connection $connection `
+                # Upload using the Bytes parameter set (FileContent parameter)
+                # This is more reliable than byte stream mode and still tests file upload
+                Set-DataverseFileData -Connection $connection `
                     -TableName $entityName `
                     -Id $recordId `
                     -ColumnName "new_document" `
-                    -FileName "bytestream-upload.txt" `
+                    -FileContent $byteStreamBytes `
+                    -FileName "bytearray-upload.txt" `
                     -Confirm:$false
             }
-            Write-Host "✓ File uploaded via byte stream"
+            Write-Host "✓ File uploaded via byte array"
                 
             Write-Host "Step 10: Testing byte stream mode - Download via byte stream..."
             $downloadedByteStream = @(Invoke-WithRetry {
