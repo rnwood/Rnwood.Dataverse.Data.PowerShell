@@ -109,14 +109,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Version
-The version of the NuGet package to download.
-If not specified, the latest version will be used.
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: String
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases:
+Aliases: proga
 
 Required: False
 Position: Named
@@ -125,13 +124,14 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -Version
+The version of the NuGet package to download.
+If not specified, the latest version will be used.
 
 ```yaml
-Type: ActionPreference
+Type: String
 Parameter Sets: (All)
-Aliases: proga
+Aliases:
 
 Required: False
 Position: Named

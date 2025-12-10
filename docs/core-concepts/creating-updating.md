@@ -85,6 +85,36 @@ Set-DataverseRecord -Connection $c -TableName contact -InputObject @{
 } -Upsert
 ```
 
+### Duplicate Detection
+
+By default, Dataverse suppresses duplicate detection when creating or updating records through the SDK. To enable duplicate detection rules to be enforced during create, update, or upsert operations, use the `-EnableDuplicateDetection` switch parameter with [`Set-DataverseRecord`](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseRecord.md).
+
+When duplicate detection is enabled:
+- Dataverse evaluates active duplicate detection rules configured for the table
+- If a duplicate is detected, the operation fails with an error
+- The error message indicates which duplicate detection rule was violated
+
+Example:
+```powershell
+# Create a contact with duplicate detection enabled
+Set-DataverseRecord -Connection $c -TableName contact -InputObject @{
+    firstname = 'John'
+    lastname = 'Doe'
+    emailaddress1 = 'john.doe@contoso.com'
+} -EnableDuplicateDetection -CreateOnly
+
+# Upsert with duplicate detection
+Set-DataverseRecord -Connection $c -TableName contact -InputObject @{
+    emailaddress1 = 'jane.smith@contoso.com'
+    firstname = 'Jane'
+} -Upsert -EnableDuplicateDetection
+```
+
+Notes:
+- Duplicate detection rules must be configured and active in your Dataverse environment
+- `-EnableDuplicateDetection` works with create, update, and upsert operations
+- When a duplicate is detected, the entire batch operation may fail depending on your error handling configuration
+
 ### Assigning records
 
 If your input object contains an `ownerid` property the cmdlet will perform an assignment after the main create/update. `ownerid` accepts the same forms as other lookup inputs: a GUID, a PSObject/hashtable with `Id` and `TableName`/`LogicalName` (or an `EntityReference`), or a name string which the cmdlet will try to resolve. Assignments are executed with `AssignRequest` and are batched when `-BatchSize` &gt; 1.

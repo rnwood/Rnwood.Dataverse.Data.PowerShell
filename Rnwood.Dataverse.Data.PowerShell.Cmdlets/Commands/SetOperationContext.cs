@@ -51,6 +51,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             MatchOn = parameters.MatchOn;
             Id = parameters.Id;
             AllowMultipleMatches = parameters.AllowMultipleMatches;
+            EnableDuplicateDetection = parameters.EnableDuplicateDetection;
             Retries = parameters.Retries;
             InitialRetryDelay = parameters.InitialRetryDelay;
             RetriesRemaining = parameters.Retries;
@@ -82,6 +83,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string[][] MatchOn { get; }
         public Guid Id { get; }
         public bool AllowMultipleMatches { get; }
+        public bool EnableDuplicateDetection { get; }
         public int Retries { get; }
         public int InitialRetryDelay { get; }
         public int RetriesRemaining { get; set; }
@@ -683,6 +685,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 string columnSummary = GetColumnSummary(targetUpdate, EntityConverter);
 
                 UpsertRequest request = new UpsertRequest() { Target = targetUpdate };
+                
+                if (EnableDuplicateDetection)
+                {
+                    request.Parameters["SuppressDuplicateDetection"] = false;
+                }
+                
                 Requests.Add(request);
 
                 _writeVerbose($"Added upsert of new record {TableName}:{GetKeySummary(targetUpdate)} to batch - columns:\n{columnSummary}");
@@ -737,6 +745,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 UpdateRequest request = new UpdateRequest() { Target = Target };
                 ApplyBypassBusinessLogicExecution(request);
+                
+                if (EnableDuplicateDetection)
+                {
+                    request.Parameters["SuppressDuplicateDetection"] = false;
+                }
+                
                 string updatedColumnSummary = GetColumnSummary(targetUpdate, EntityConverter);
 
                 Requests.Add(request);
@@ -813,6 +827,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 CreateRequest request = new CreateRequest() { Target = targetCreate };
                 ApplyBypassBusinessLogicExecution(request);
+                
+                if (EnableDuplicateDetection)
+                {
+                    request.Parameters["SuppressDuplicateDetection"] = false;
+                }
+                
                 Requests.Add(request);
 
                 _writeVerbose($"Added created of new record {TableName}:{targetCreate.Id} to batch - columns:\n{columnSummary}");
