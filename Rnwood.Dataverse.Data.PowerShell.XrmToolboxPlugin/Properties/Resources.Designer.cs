@@ -63,6 +63,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap file_edit_outline_custom {
+            get {
+                object obj = ResourceManager.GetObject("file-edit-outline-custom", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap login_custom {
+            get {
+                object obj = ResourceManager.GetObject("login-custom", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap mdi__arrow_back {
             get {
                 object obj = ResourceManager.GetObject("mdi--arrow-back", resourceCulture);
@@ -173,9 +193,49 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap refresh_custom {
+            get {
+                object obj = ResourceManager.GetObject("refresh-custom", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap share_variant_custom {
             get {
                 object obj = ResourceManager.GetObject("share-variant-custom", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap tag_edit_outline_custom {
+            get {
+                object obj = ResourceManager.GetObject("tag-edit-outline-custom", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap thumb_down_outline_custom {
+            get {
+                object obj = ResourceManager.GetObject("thumb-down-outline-custom", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap thumb_up_outline_custom {
+            get {
+                object obj = ResourceManager.GetObject("thumb-up-outline-custom", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

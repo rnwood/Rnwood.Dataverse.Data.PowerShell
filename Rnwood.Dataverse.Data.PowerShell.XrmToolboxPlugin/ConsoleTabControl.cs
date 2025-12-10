@@ -89,11 +89,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     configXml.Load(stream);
                 }
 
-                if (DeviceDpi <= 96)
+                if (Graphics.FromHwnd(Handle).DpiX <= 96)
                 { 
-                    // Dynamically set font size to 9
+                    // Dynamically set font size - DPI issue
                     var fontSizeNode = configXml.SelectSingleNode("//value[@name='FontSize']");
-                    fontSizeNode.Attributes["data"].Value = "8";
+                    fontSizeNode.Attributes["data"].Value = "12";
                 }
 
 

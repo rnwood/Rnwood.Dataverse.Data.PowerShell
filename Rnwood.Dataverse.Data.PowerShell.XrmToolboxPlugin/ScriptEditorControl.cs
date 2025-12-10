@@ -162,7 +162,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             return tabControl.SelectedTab.Text;
         }
 
-        public async void CreateNewScriptTab()
+        public async Task CreateNewScriptTab(ScriptGalleryItem galleryItem = null)
         {
             try
             {
@@ -185,6 +185,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 MessageBox.Show($"Failed to create new script: {ex.Message}",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        public async Task CreateNewScript(ScriptGalleryItem galleryItem = null)
+        {
+            await CreateNewScriptTab(galleryItem);
         }
 
         private async Task OpenScriptTab()
@@ -273,6 +278,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         public async Task SaveScript()
         {
             await SaveCurrentScript();
+        }
+
+        private async Task SaveCurrentScript()
+        {
+            if (tabControl.SelectedTab == null || !tabData.ContainsKey(tabControl.SelectedTab))
+                return;
+
+            var content = tabData[tabControl.SelectedTab];
+            await SaveScriptForContent(content);
         }
 
         public void DisposeResources()
@@ -382,22 +396,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             await _galleryControl.ShowSaveScriptDialog(scriptContent, tabContent.GalleryItem);
         }
 
-        private async void SaveToGalleryButton_Click(object sender, EventArgs e)
-        {
-            if (_galleryControl == null)
-            {
-                MessageBox.Show("Gallery control not available", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-            
-            if (tabControl.SelectedTab == null || !tabData.ContainsKey(tabControl.SelectedTab))
-                return;
-
-            var content = tabData[tabControl.SelectedTab];
-            await SaveToGalleryFromTabAsync(content);
-        }
     }
 }
+
+
+
+
 
 
 

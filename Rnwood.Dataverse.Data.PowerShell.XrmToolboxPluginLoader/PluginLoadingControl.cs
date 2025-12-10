@@ -35,9 +35,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PluginLoadingControl));
             this.mainPanel = new System.Windows.Forms.Panel();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.statusLabel = new System.Windows.Forms.Label();
             this.progressBar = new System.Windows.Forms.ProgressBar();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.mainPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
@@ -50,11 +50,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader
             this.mainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.mainPanel.Location = new System.Drawing.Point(0, 0);
             this.mainPanel.Name = "mainPanel";
-            this.mainPanel.Size = new System.Drawing.Size(796, 209);
+            this.mainPanel.Size = new System.Drawing.Size(428, 198);
             this.mainPanel.TabIndex = 0;
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
+            this.pictureBox1.Location = new System.Drawing.Point(12, 5);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(397, 103);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pictureBox1.TabIndex = 2;
+            this.pictureBox1.TabStop = false;
             // 
             // statusLabel
             // 
+            this.statusLabel.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.statusLabel.AutoSize = true;
             this.statusLabel.Location = new System.Drawing.Point(12, 122);
             this.statusLabel.Name = "statusLabel";
@@ -64,27 +76,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader
             // 
             // progressBar
             // 
+            this.progressBar.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.progressBar.Location = new System.Drawing.Point(12, 152);
             this.progressBar.Name = "progressBar";
             this.progressBar.Size = new System.Drawing.Size(400, 22);
             this.progressBar.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
             this.progressBar.TabIndex = 1;
             // 
-            // pictureBox1
-            // 
-            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(-6, 8);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(397, 103);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pictureBox1.TabIndex = 2;
-            this.pictureBox1.TabStop = false;
-            // 
             // PluginLoadingControl
             // 
             this.Controls.Add(this.mainPanel);
             this.Name = "PluginLoadingControl";
-            this.Size = new System.Drawing.Size(796, 209);
+            this.Size = new System.Drawing.Size(428, 198);
             this.mainPanel.ResumeLayout(false);
             this.mainPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
@@ -106,7 +109,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader
                     var zipPath = Path.Combine(pluginSubdir, "o.zip");
 
                     // In debug builds, allow running directly from build output without needing the zip
-                    
+
 #if !DEBUG
                     pluginSubdir = EnsureUnzipped(zipPath, "net48");       
 #endif
@@ -129,6 +132,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader
                     // Load the real control assembly and type
                     var assembly = Assembly.LoadFrom(Path.Combine(pluginSubdir, "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.dll"));
                     var type = assembly.GetType("Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.MainControl");
+
+                    //Ensure we were visible for at least 2 seconds
+                    System.Threading.Thread.Sleep(2000);
 
                     // Update UI on UI thread
                     this.Invoke(new Action(() =>

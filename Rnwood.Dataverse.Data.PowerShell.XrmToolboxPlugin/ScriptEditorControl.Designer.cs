@@ -42,7 +42,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.tabControl = new System.Windows.Forms.TabControl();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.completionStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
-            this.saveToGalleryButton = new System.Windows.Forms.ToolStripButton();
             this.editorToolbar.SuspendLayout();
             this.statusStrip.SuspendLayout();
             this.SuspendLayout();
@@ -52,8 +51,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.editorToolbar.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.editorToolbar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newScriptButton,
-            this.openScriptButton,
-            this.saveToGalleryButton});
+            this.openScriptButton});
             this.editorToolbar.Location = new System.Drawing.Point(0, 0);
             this.editorToolbar.Name = "editorToolbar";
             this.editorToolbar.Size = new System.Drawing.Size(800, 31);
@@ -74,13 +72,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.openScriptButton.Size = new System.Drawing.Size(64, 28);
             this.openScriptButton.Text = "Open";
             this.openScriptButton.Click += new System.EventHandler(this.OpenScriptButton_Click);
-            // 
-            // saveToGalleryButton
-            // 
-            this.saveToGalleryButton.Name = "saveToGalleryButton";
-            this.saveToGalleryButton.Size = new System.Drawing.Size(100, 28);
-            this.saveToGalleryButton.Text = "Save to Gallery";
-            this.saveToGalleryButton.Click += new System.EventHandler(this.SaveToGalleryButton_Click);
             // 
             // tabControl
             // 
@@ -129,7 +120,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private ToolStrip editorToolbar;
         private ToolStripButton newScriptButton;
         private ToolStripButton openScriptButton;
-        private ToolStripButton saveToGalleryButton;
         private TabControl tabControl;
     }
 }

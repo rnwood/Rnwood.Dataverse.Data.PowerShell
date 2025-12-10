@@ -655,8 +655,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 availableTags.Add(item.ToString());
             }
 
+
+
             using (var dialog = new ScriptSaveDialog(title, description, availableTags, selectedTags))
             {
+                dialog.Parent = Form.ActiveForm;
                 // No async initialization required for dialog
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
@@ -698,6 +701,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 }
             }
         }
+    
+        
 
         private async void ThumbsDownButton_Click(object sender, EventArgs e)
         {

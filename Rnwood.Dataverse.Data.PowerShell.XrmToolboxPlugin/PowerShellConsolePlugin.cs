@@ -150,19 +150,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        private void ScriptEditorControl_NewScriptRequested(object sender, EventArgs e)
-        {
-            _ = scriptEditorControl.CreateNewScript();
-        }
-        private void ScriptEditorControl_OpenScriptRequested(object sender, EventArgs e)
-        {
-            _ = scriptEditorControl.OpenScript();
-        }
-
-        private void ScriptEditorControl_SaveScriptRequested(object sender, EventArgs e)
-        {
-            _ = scriptEditorControl.SaveScript();
-        }
         
         private void ScriptGalleryControl_LoadScriptRequested(object sender, ScriptGalleryItem item)
         {

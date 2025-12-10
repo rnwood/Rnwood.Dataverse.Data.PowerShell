@@ -26,12 +26,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         // We'll retrieve this async
         public Task<string> GetDescriptionAsync() => Task.FromResult(txtDescription.Text);
 
-        private string _initialDescription;
 
         public ScriptSaveDialog(string title, string description, List<string> availableTags, List<string> selectedTags)
         {
             InitializeComponent();
-            // No WebView2; nothing to initialize
             
             txtTitle.Text = title;
             
@@ -46,7 +44,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 }
             }
             
-            _initialDescription = description;
             txtDescription.Text = description ?? string.Empty;
         }
 
