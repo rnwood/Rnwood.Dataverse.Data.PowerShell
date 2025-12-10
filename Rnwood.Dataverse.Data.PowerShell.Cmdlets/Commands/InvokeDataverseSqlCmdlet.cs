@@ -78,6 +78,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// </summary>
 		[Parameter(HelpMessage = "When working with date values, this property indicates the local time zone should be used. See Sql4Cds docs.")]
 		public SwitchParameter UseLocalTimezone { get; set; }
+		/// <summary>
+		/// Additional data sources to register with Sql4Cds, allowing queries across multiple connections. Hashtable where keys are data source names and values are ServiceClient connections.
+		/// </summary>
+		[Parameter(HelpMessage = "Additional data sources to register with Sql4Cds, allowing queries across multiple connections. Hashtable where keys are data source names and values are ServiceClient connections.")]
+		public Hashtable AdditionalConnections { get; set; }
 
 		/// <summary>
 		/// Initializes the cmdlet.
@@ -105,6 +110,42 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			{
 				[dataSource.Name] = dataSource
 			};
+
+			// Add any additional connections provided by the user
+			if (AdditionalConnections != null)
+			{
+				foreach (DictionaryEntry entry in AdditionalConnections)
+				{
+					string name = entry.Key.ToString();
+					if (entry.Value is ServiceClient additionalServiceClient)
+					{
+						var additionalDataSource = new DataSource(additionalServiceClient);
+						additionalDataSource.Name = name;
+						
+						// Set AccessTokenProvider for TDS endpoint support
+						additionalDataSource.AccessTokenProvider = () => GetAccessToken(additionalServiceClient);
+						
+						dataSources[name] = additionalDataSource;
+					}
+					else if (entry.Value is IOrganizationService additionalOrgService)
+					{
+						var additionalDataSource = new DataSource(additionalOrgService);
+						additionalDataSource.Name = name;
+						
+						// Set AccessTokenProvider if it's a ServiceClient
+						if (additionalOrgService is ServiceClient additionalSvcClient)
+						{
+							additionalDataSource.AccessTokenProvider = () => GetAccessToken(additionalSvcClient);
+						}
+						
+						dataSources[name] = additionalDataSource;
+					}
+					else
+					{
+						throw new ArgumentException($"AdditionalConnections value for key '{name}' must be a ServiceClient or IOrganizationService instance.");
+					}
+				}
+			}
 			
 			_sqlConnection = new Sql4CdsConnection(dataSources);
 			_sqlConnection.UseTDSEndpoint = false;

@@ -15,8 +15,8 @@ Invokes a Dataverse SQL query using Sql4Cds and writes any resulting rows to the
 ```
 Invoke-DataverseSql -Sql <String> [-UseTdsEndpoint] [-Timeout <Int32>] [-Parameters <PSObject>]
  [-BatchSize <Int32>] [-MaxDegreeOfParallelism <Int32>] [-BypassCustomPluginExecution] [-UseBulkDelete]
- [-ReturnEntityReferenceAsGuid] [-UseLocalTimezone] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-ReturnEntityReferenceAsGuid] [-UseLocalTimezone] [-AdditionalConnections <Hashtable>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -61,219 +61,34 @@ Cat2     28/11/2024 16:42:30
 
 Returns the rows from the SELECT query matching the @lastname parameters which are supplied via the pipeline. The query is executed once for each of the pipeline objects.
 
+### Example 3
+```powershell
+PS C:\> # Create connections to different environments
+PS C:\> $primaryConnection = Get-DataverseConnection -url "https://primary.crm.dynamics.com" -ClientId $clientId -ClientSecret $secret
+PS C:\> $secondaryConnection = Get-DataverseConnection -url "https://secondary.crm.dynamics.com" -ClientId $clientId -ClientSecret $secret
+
+PS C:\> # Create hashtable with additional connections
+PS C:\> $additionalConnections = @{
+	"secondary" = $secondaryConnection
+}
+
+PS C:\> # Execute cross-datasource query
+PS C:\> Invoke-DataverseSql -Connection $primaryConnection -AdditionalConnections $additionalConnections -Sql "
+	SELECT p.fullname AS primary_user, s.fullname AS secondary_user
+	FROM primary_org.systemuser p
+	CROSS JOIN secondary.systemuser s
+	WHERE p.domainname = s.domainname
+"
+
+primary_user           secondary_user
+------------           --------------
+John Smith             John Smith
+Jane Doe               Jane Doe
+```
+
+Executes a cross-datasource query that joins data from two different Dataverse environments. The AdditionalConnections parameter allows registering named data sources that can be referenced in the SQL query using the syntax `datasource_name.table_name`.
+
 ## PARAMETERS
-
-### -BatchSize
-Controls the batch size used by Sql4Cds.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -BypassCustomPluginExecution
-Bypasses custom plugins. See Sql4Cds docs.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet
-
-```yaml
-Type: ServiceClient
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -MaxDegreeOfParallelism
-Maximum number of threads to use. See Sql4Cds docs.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Parameters
-Specifies values for the `@parameters` used in the Sql. This can be a Hashtable or any PSObject with properties.
-
-This can be read from the pipeline to allow the query to be executed once per input object using different values.
-
-```yaml
-Type: PSObject
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ReturnEntityReferenceAsGuid
-Returns lookup column values as simple Guid as opposed to SqlEntityReference type. See Sql4Cds docs.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Sql
-SQL to execute. See Sql4Cds docs for supported queries. Can contain @parameters.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Timeout
-Timeout for query to execute. See Sql4Cds docs.
-
-```yaml
-Type: Int32
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -UseBulkDelete
-Uses bulk delete for supported DELETE operations. See Sql4Cds docs.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -UseLocalTimezone
-When working with date values, this property indicates the local time zone should be used. See Sql4Cds docs.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -UseTdsEndpoint
-Let Sql4Cds use the TDS endpoint or not for compatible queries. The default is to not use this.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run. Does not apply to read only queries.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
