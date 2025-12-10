@@ -19,7 +19,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private Func<string> _accessTokenProvider;
         private string _url;
-        
+
         // Gallery control reference
         private ScriptGalleryControl _galleryControl;
 
@@ -34,7 +34,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             InitializeComponent();
         }
-        
+
         public void SetGalleryControl(ScriptGalleryControl galleryControl)
         {
             _galleryControl = galleryControl;
@@ -55,12 +55,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
             ScriptTabContentControl content = new ScriptTabContentControl();
             content.Path = path;
- 
+
             content.CompletionService = _completionService;
             content.RunRequested += (s, e) => RunScriptRequested?.Invoke(this, EventArgs.Empty);
             content.CompletionResolved += (s, e) => CompletionResolved?.Invoke(this, e);
             content.SaveToGalleryRequested += async (s, e) => await SaveToGalleryFromTabAsync(content);
-            content.CloseRequested += (s, e) => {
+            content.CloseRequested += (s, e) =>
+            {
                 tabControl.TabPages.Remove(tabPage);
                 if (tabData.ContainsKey(tabPage))
                 {
@@ -374,7 +375,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
             return $"{baseStatus} ({_activeCompletionRequests} active)";
         }
-        
+
         private async Task SaveToGalleryFromTabAsync(ScriptTabContentControl tabContent)
         {
             if (_galleryControl == null)
@@ -382,13 +383,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 MessageBox.Show("Gallery control not available", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            
+
             // Get script content from the specific tab
             string scriptContent = await tabContent.GetScriptContentAsync();
-            
+
             if (string.IsNullOrWhiteSpace(scriptContent))
             {
-                MessageBox.Show("Script is empty. Please write some PowerShell code first.", 
+                MessageBox.Show("Script is empty. Please write some PowerShell code first.",
                     "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }

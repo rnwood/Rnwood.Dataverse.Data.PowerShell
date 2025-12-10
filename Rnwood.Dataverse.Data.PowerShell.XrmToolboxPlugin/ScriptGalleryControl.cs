@@ -659,8 +659,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
             using (var dialog = new ScriptSaveDialog(title, description, availableTags, selectedTags))
             {
-                dialog.Parent = Form.ActiveForm;
-                // No async initialization required for dialog
+
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
                     try
