@@ -217,22 +217,17 @@ Describe "File Data E2E Tests" {
             $byteStreamContent = "Byte stream test content. Timestamp: $timestamp"
             $byteStreamBytes = [System.Text.Encoding]::UTF8.GetBytes($byteStreamContent)
             
-            # Create a temp file to test byte stream upload (using Get-Content -AsByteStream)
-            $tempByteStreamFile = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "bytestream-test-$testRunId.txt")
-            [System.IO.File]::WriteAllBytes($tempByteStreamFile, $byteStreamBytes)
-            
             Invoke-WithRetry {
-                # Upload bytes via pipeline (byte stream mode) - Get-Content -AsByteStream enumerates bytes
-                Get-Content -Path $tempByteStreamFile -AsByteStream | Set-DataverseFileData -Connection $connection `
+                # Upload bytes via pipeline (byte stream mode)
+                # Note: We need to enumerate bytes one at a time for the ByteStream parameter set
+                # This works in both PowerShell 5.1 and PowerShell Core
+                $byteStreamBytes | ForEach-Object { $_ } | Set-DataverseFileData -Connection $connection `
                     -TableName $entityName `
                     -Id $recordId `
                     -ColumnName "new_document" `
                     -FileName "bytestream-upload.txt" `
                     -Confirm:$false
             }
-            
-            # Clean up temp file
-            Remove-Item -Path $tempByteStreamFile -Force -ErrorAction SilentlyContinue
             Write-Host "✓ File uploaded via byte stream"
                 
             Write-Host "Step 10: Testing byte stream mode - Download via byte stream..."
