@@ -219,9 +219,9 @@ Describe "File Data E2E Tests" {
             
             Invoke-WithRetry {
                 # Upload bytes via pipeline (byte stream mode)
-                # Note: We need to enumerate bytes one at a time for the ByteStream parameter set
+                # Write-Output enumerates the array, sending each byte individually through the pipeline
                 # This works in both PowerShell 5.1 and PowerShell Core
-                $byteStreamBytes | ForEach-Object { $_ } | Set-DataverseFileData -Connection $connection `
+                Write-Output $byteStreamBytes | Set-DataverseFileData -Connection $connection `
                     -TableName $entityName `
                     -Id $recordId `
                     -ColumnName "new_document" `
