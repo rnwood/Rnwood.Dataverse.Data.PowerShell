@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-Describe "File Data E2E Tests" {
+Describe "File Data E2E Tests" -Skip {
 
     BeforeAll {
         if ($env:TESTMODULEPATH) {

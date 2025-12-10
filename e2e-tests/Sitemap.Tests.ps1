@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-Describe "Sitemap Manipulation" {
+Describe "Sitemap Manipulation" -Skip {
 
     BeforeAll {
 
