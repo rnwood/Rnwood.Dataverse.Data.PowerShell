@@ -13,6 +13,7 @@ This module works in PowerShell Desktop and PowerShell Core, supporting Windows,
     - Automatic data type conversion using metadata - use friendly labels for choices and names for lookups
     - Automatic lookup conversion - use record names instead of GUIDs (when unique)
 - On behalf of (delegation) support for create/update operations
+- Duplicate detection support for create/update/upsert operations
 - Full support for automatic paging
 - Concise PowerShell-friendly hashtable-based filters with grouped logical expressions (and/or/not/xor) and arbitrary nesting
 - Batching and parallelisation support for efficient bulk operations

@@ -18,7 +18,7 @@ Set-DataverseRecord -InputObject <PSObject> -TableName <String> [-BatchSize <UIn
  [-AllowMultipleMatches] [-PassThru] [-NoUpdate] [-NoCreate] [-NoUpdateColumns <String[]>] [-CallerId <Guid>]
  [-UpdateAllColumns] [-CreateOnly] [-Upsert] [-LookupColumns <Hashtable>]
  [-BypassBusinessLogicExecution <BusinessLogicTypes[]>] [-BypassBusinessLogicExecutionStepIds <Guid[]>]
- [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-MaxDegreeOfParallelism <Int32>]
+ [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-MaxDegreeOfParallelism <Int32>] [-EnableDuplicateDetection]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -566,6 +566,21 @@ Accept wildcard characters: False
 If specified, no check for existing record is made and records will always be attempted to be created.
 Use this option when it's known that no existing matching records will exist to improve performance.
 See the -noupdate option for an alternative.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -EnableDuplicateDetection
+If specified, duplicate detection will be enabled by setting SuppressDuplicateDetection to false in create, update, and upsert requests.
 
 ```yaml
 Type: SwitchParameter

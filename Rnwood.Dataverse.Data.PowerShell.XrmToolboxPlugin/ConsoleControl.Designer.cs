@@ -38,7 +38,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             this.tabControl = new System.Windows.Forms.TabControl();
             this.toolStrip = new System.Windows.Forms.ToolStrip();
-            this.newInteractiveSessionButton = new System.Windows.Forms.ToolStripButton();
+            this.newInteractiveSessionButton = new System.Windows.Forms.ToolStripSplitButton();
+            this.newPowerShell5SessionMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.newPowerShell7SessionMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -64,12 +66,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // 
             // newInteractiveSessionButton
             // 
+            this.newInteractiveSessionButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.newPowerShell5SessionMenuItem,
+            this.newPowerShell7SessionMenuItem});
             this.newInteractiveSessionButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.mdi__terminal_line;
             this.newInteractiveSessionButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.newInteractiveSessionButton.Name = "newInteractiveSessionButton";
-            this.newInteractiveSessionButton.Size = new System.Drawing.Size(151, 22);
+            this.newInteractiveSessionButton.Size = new System.Drawing.Size(164, 22);
             this.newInteractiveSessionButton.Text = "New Interactive Session";
-            this.newInteractiveSessionButton.Click += new System.EventHandler(this.NewInteractiveSessionButton_Click);
+            this.newInteractiveSessionButton.ButtonClick += new System.EventHandler(this.NewInteractiveSessionButton_Click);
+            // 
+            // newPowerShell5SessionMenuItem
+            // 
+            this.newPowerShell5SessionMenuItem.Name = "newPowerShell5SessionMenuItem";
+            this.newPowerShell5SessionMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newPowerShell5SessionMenuItem.Text = "PowerShell 5.1";
+            this.newPowerShell5SessionMenuItem.Click += new System.EventHandler(this.NewPowerShell5SessionMenuItem_Click);
+            // 
+            // newPowerShell7SessionMenuItem
+            // 
+            this.newPowerShell7SessionMenuItem.Name = "newPowerShell7SessionMenuItem";
+            this.newPowerShell7SessionMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newPowerShell7SessionMenuItem.Text = "PowerShell 7+";
+            this.newPowerShell7SessionMenuItem.Click += new System.EventHandler(this.NewPowerShell7SessionMenuItem_Click);
             // 
             // ConsoleControl
             // 
@@ -88,6 +107,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         private TabControl tabControl;
         private ToolStrip toolStrip;
-        private ToolStripButton newInteractiveSessionButton;
+        private ToolStripSplitButton newInteractiveSessionButton;
+        private ToolStripMenuItem newPowerShell5SessionMenuItem;
+        private ToolStripMenuItem newPowerShell7SessionMenuItem;
     }
 }

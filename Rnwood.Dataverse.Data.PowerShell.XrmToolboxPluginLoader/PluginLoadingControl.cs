@@ -32,32 +32,48 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader
 
         private void InitializeComponent()
         {
-            this.mainPanel = new Panel();
-            this.progressBar = new ProgressBar();
-            this.statusLabel = new Label();
-
+            this.mainPanel = new System.Windows.Forms.Panel();
+            this.statusLabel = new System.Windows.Forms.Label();
+            this.progressBar = new System.Windows.Forms.ProgressBar();
+            this.mainPanel.SuspendLayout();
+            this.SuspendLayout();
             // 
             // mainPanel
             // 
-            this.mainPanel.Dock = DockStyle.Fill;
             this.mainPanel.Controls.Add(this.statusLabel);
             this.mainPanel.Controls.Add(this.progressBar);
-
-            // 
-            // progressBar
-            // 
-            this.progressBar.Style = ProgressBarStyle.Marquee;
-            this.progressBar.Location = new System.Drawing.Point(12, 50);
-            this.progressBar.Size = new System.Drawing.Size(400, 23);
-
+            this.mainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.mainPanel.Location = new System.Drawing.Point(0, 0);
+            this.mainPanel.Name = "mainPanel";
+            this.mainPanel.Size = new System.Drawing.Size(762, 469);
+            this.mainPanel.TabIndex = 0;
             // 
             // statusLabel
             // 
             this.statusLabel.AutoSize = true;
             this.statusLabel.Location = new System.Drawing.Point(12, 20);
+            this.statusLabel.Name = "statusLabel";
+            this.statusLabel.Size = new System.Drawing.Size(212, 13);
+            this.statusLabel.TabIndex = 0;
             this.statusLabel.Text = "Loading PowerShell Scripting Workspace...";
-
+            // 
+            // progressBar
+            // 
+            this.progressBar.Location = new System.Drawing.Point(12, 50);
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(400, 23);
+            this.progressBar.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
+            this.progressBar.TabIndex = 1;
+            // 
+            // PluginLoadingControl
+            // 
             this.Controls.Add(this.mainPanel);
+            this.Name = "PluginLoadingControl";
+            this.Size = new System.Drawing.Size(762, 469);
+            this.mainPanel.ResumeLayout(false);
+            this.mainPanel.PerformLayout();
+            this.ResumeLayout(false);
+
         }
 
         private void StartLoading()
@@ -96,7 +112,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader
 
                     // Load the real control assembly and type
                     var assembly = Assembly.LoadFrom(Path.Combine(pluginSubdir, "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.dll"));
-                    var type = assembly.GetType("Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.PowerShellConsolePlugin");
+                    var type = assembly.GetType("Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.MainControl");
 
                     // Update UI on UI thread
                     this.Invoke(new Action(() =>

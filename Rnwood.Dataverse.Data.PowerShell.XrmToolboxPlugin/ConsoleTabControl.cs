@@ -16,10 +16,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         // Raised when the console process exits
         public event EventHandler ProcessExited;
 
+        // The PowerShell version used by this console tab
+        private PowerShellVersion _powerShellVersion = PowerShellVersion.Desktop;
+
         // ConEmuControl kept as a private field via designer
         public ConsoleTabControl()
         {
             InitializeComponent();
+        }
+
+        /// <summary>
+        /// Gets or sets the PowerShell version to use for this console tab.
+        /// </summary>
+        public PowerShellVersion PowerShellVersion
+        {
+            get => _powerShellVersion;
+            set => _powerShellVersion = value;
         }
 
         /// <summary>
@@ -62,8 +74,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             try
             {
+                string executableName = PowerShellDetector.GetExecutableName(_powerShellVersion);
+                
                 ConEmuStartInfo startInfo = new ConEmuStartInfo();
-                startInfo.ConsoleProcessCommandLine = $"powershell.exe -NoLogo -NoExit -ExecutionPolicy Bypass -File \"{tempScriptPath}\"";
+                startInfo.ConsoleProcessCommandLine = $"{executableName} -NoLogo -NoExit -ExecutionPolicy Bypass -File \"{tempScriptPath}\"";
                 startInfo.StartupDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 startInfo.ConEmuConsoleExtenderExecutablePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty, "conemu", "conemuc.exe");
                 startInfo.SetEnv("POWERSHELL_UPDATECHECK", "Off");

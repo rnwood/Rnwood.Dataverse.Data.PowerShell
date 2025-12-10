@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
-    partial class PowerShellConsolePlugin
+    partial class MainControl
     {
         /// <summary>
         /// Required designer variable.
