@@ -86,8 +86,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 var assembly = Assembly.GetExecutingAssembly();
                 using (Stream stream = assembly.GetManifestResourceStream("Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.conemu.xml"))
                 {
-                        configXml.Load(stream);
+                    configXml.Load(stream);
                 }
+
+                if (Graphics.FromHwnd(Handle).DpiX <= 96)
+                { 
+                    // Dynamically set font size - DPI issue
+                    var fontSizeNode = configXml.SelectSingleNode("//value[@name='FontSize']");
+                    fontSizeNode.Attributes["data"].Value = "12";
+                }
+
 
                 startInfo.BaseConfiguration = configXml;
 
