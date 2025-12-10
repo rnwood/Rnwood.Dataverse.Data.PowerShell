@@ -30,8 +30,14 @@ Get-DataverseFileData -TableName <String> -Id <Guid> -ColumnName <String> [-AsBy
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### ByteStream
+```
+Get-DataverseFileData -TableName <String> -Id <Guid> -ColumnName <String> [-AsByteStream] [-BlockSize <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ## DESCRIPTION
-The Get-DataverseFileData cmdlet downloads file data from a Dataverse file column. You can download to a specific file path, to a folder (using the original filename), or retrieve the file content as a byte array for processing in memory.
+The Get-DataverseFileData cmdlet downloads file data from a Dataverse file column. You can download to a specific file path, to a folder (using the original filename), retrieve the file content as a byte array for processing in memory, or stream bytes one at a time to the pipeline for efficient processing of large files or piping to other cmdlets.
 
 ## EXAMPLES
 
@@ -56,7 +62,21 @@ PS C:\> $bytes = Get-DataverseFileData -Connection $connection -TableName "accou
 
 Retrieves the file content as a byte array for in-memory processing.
 
-### Example 4: Pipe from Get-DataverseRecord
+### Example 4: Stream bytes to pipeline
+```powershell
+PS C:\> Get-DataverseFileData -Connection $connection -TableName "account" -Id $accountId -ColumnName "documentfile" -AsByteStream | Set-Content -Path "output.pdf" -AsByteStream
+```
+
+Streams file bytes one at a time to the pipeline, which can be piped to other cmdlets for processing.
+
+### Example 5: Copy file between records using byte stream
+```powershell
+PS C:\> Get-DataverseFileData -Connection $connection -TableName "account" -Id $sourceId -ColumnName "documentfile" -AsByteStream | Set-DataverseFileData -Connection $connection -TableName "account" -Id $targetId -ColumnName "documentfile" -FileName "copied.pdf"
+```
+
+Downloads a file as a byte stream and immediately uploads it to another record, efficiently copying the file without loading the entire content into memory at once.
+
+### Example 6: Pipe from Get-DataverseRecord
 ```powershell
 PS C:\> Get-DataverseRecord -Connection $connection -TableName "account" -Id $accountId | Get-DataverseFileData -ColumnName "documentfile" -FolderPath "C:\Downloads"
 ```
@@ -71,6 +91,21 @@ Return the file content as a byte array
 ```yaml
 Type: SwitchParameter
 Parameter Sets: Bytes
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AsByteStream
+Output the file content as a byte stream to the pipeline (one byte at a time)
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: ByteStream
 Aliases:
 
 Required: True
@@ -209,15 +244,12 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.String
-
 ### System.Guid
-
 ## OUTPUTS
 
 ### System.Byte[]
-
 ### System.IO.FileInfo
-
+### System.Byte
 ## NOTES
 
 ## RELATED LINKS

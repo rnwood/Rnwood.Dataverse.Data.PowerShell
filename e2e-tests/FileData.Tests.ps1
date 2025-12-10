@@ -213,7 +213,78 @@ Describe "File Data E2E Tests" {
             # Clean up temp file
             Remove-Item -Path $tempFilePath -Force -ErrorAction SilentlyContinue
                 
-            Write-Host "Step 9: Deleting file data..."
+            Write-Host "Step 9: Testing byte stream mode - Upload via byte array parameter..."
+            $byteStreamContent = "Byte stream test content. Timestamp: $timestamp"
+            $byteStreamBytes = [System.Text.Encoding]::UTF8.GetBytes($byteStreamContent)
+            
+            Invoke-WithRetry {
+                # Upload using the Bytes parameter set (FileContent parameter)
+                # This is more reliable than byte stream mode and still tests file upload
+                Set-DataverseFileData -Connection $connection `
+                    -TableName $entityName `
+                    -Id $recordId `
+                    -ColumnName "new_document" `
+                    -FileContent $byteStreamBytes `
+                    -FileName "bytearray-upload.txt" `
+                    -Confirm:$false
+            }
+            Write-Host "✓ File uploaded via byte array"
+                
+            Write-Host "Step 10: Testing byte stream mode - Download via byte stream..."
+            $downloadedByteStream = @(Invoke-WithRetry {
+                Get-DataverseFileData -Connection $connection `
+                    -TableName $entityName `
+                    -Id $recordId `
+                    -ColumnName "new_document" `
+                    -AsByteStream
+            })
+            
+            if ($null -eq $downloadedByteStream -or $downloadedByteStream.Count -eq 0) {
+                throw "Downloaded byte stream is empty or null"
+            }
+            
+            # Verify byte stream returned individual bytes
+            $downloadedByteStream.Count | Should -Be $byteStreamBytes.Length
+            Write-Host "  Downloaded $($downloadedByteStream.Count) bytes via byte stream"
+            
+            # Convert byte stream back to string and verify
+            $downloadedStreamContent = [System.Text.Encoding]::UTF8.GetString([byte[]]$downloadedByteStream)
+            if ($downloadedStreamContent -ne $byteStreamContent) {
+                throw "Byte stream content does not match. Expected: '$byteStreamContent', Got: '$downloadedStreamContent'"
+            }
+            Write-Host "✓ File downloaded via byte stream and content verified"
+                
+            Write-Host "Step 11: Testing round-trip byte stream - Download and re-upload..."
+            Invoke-WithRetry {
+                # Download as byte stream and immediately pipe to upload
+                Get-DataverseFileData -Connection $connection `
+                    -TableName $entityName `
+                    -Id $recordId `
+                    -ColumnName "new_document" `
+                    -AsByteStream | Set-DataverseFileData -Connection $connection `
+                        -TableName $entityName `
+                        -Id $recordId `
+                        -ColumnName "new_document" `
+                        -FileName "roundtrip.txt" `
+                        -Confirm:$false
+            }
+            
+            # Verify round-trip preserved the content
+            $verifyBytes = Invoke-WithRetry {
+                Get-DataverseFileData -Connection $connection `
+                    -TableName $entityName `
+                    -Id $recordId `
+                    -ColumnName "new_document" `
+                    -AsBytes
+            }
+            
+            $verifyContent = [System.Text.Encoding]::UTF8.GetString($verifyBytes)
+            if ($verifyContent -ne $byteStreamContent) {
+                throw "Round-trip content does not match. Expected: '$byteStreamContent', Got: '$verifyContent'"
+            }
+            Write-Host "✓ Round-trip byte stream preserved content"
+                
+            Write-Host "Step 12: Deleting file data..."
             Invoke-WithRetry {
                 Remove-DataverseFileData -Connection $connection `
                     -TableName $entityName `
@@ -223,7 +294,7 @@ Describe "File Data E2E Tests" {
             }
             Write-Host "✓ File data deleted"
                 
-            Write-Host "Step 10: Verifying file deletion (with IfExists)..."
+            Write-Host "Step 13: Verifying file deletion (with IfExists)..."
             Invoke-WithRetry {
                 # This should not throw error with IfExists
                 Remove-DataverseFileData -Connection $connection `
@@ -235,7 +306,7 @@ Describe "File Data E2E Tests" {
             }
             Write-Host "✓ File deletion verified (IfExists worked correctly)"
                 
-            Write-Host "Step 11: Cleanup - Deleting test record..."
+            Write-Host "Step 14: Cleanup - Deleting test record..."
             Invoke-WithRetry {
                 Remove-DataverseRecord -Connection $connection `
                     -TableName $entityName `
@@ -244,14 +315,14 @@ Describe "File Data E2E Tests" {
             }
             Write-Host "✓ Test record deleted"
                 
-            Write-Host "Step 12: Cleanup - Deleting test entity..."
+            Write-Host "Step 15: Cleanup - Deleting test entity..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
                 Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
             }
             Write-Host "✓ Test entity deleted"
                 
-            Write-Host "Step 13: Cleanup any old test entities from previous failed runs..."
+            Write-Host "Step 16: Cleanup any old test entities from previous failed runs..."
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
                 

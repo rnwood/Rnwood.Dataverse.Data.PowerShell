@@ -26,8 +26,17 @@ Set-DataverseFileData -TableName <String> -Id <Guid> -ColumnName <String> -FileC
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
+### ByteStream
+```
+Set-DataverseFileData -TableName <String> -Id <Guid> -ColumnName <String> -InputByte <Byte>
+ [-FileName <String>] [-MimeType <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
 ## DESCRIPTION
-The Set-DataverseFileData cmdlet uploads file data to a Dataverse file column. You can upload from a file path or from a byte array in memory. The cmdlet uses block-based uploading (4MB blocks) for efficient transfer of large files. MIME types are automatically detected from file extensions using the MimeTypesMap package, but can be manually overridden if needed.
+The Set-DataverseFileData cmdlet uploads file data to a Dataverse file column. You can upload from a file path, from a byte array in memory, or from a byte stream piped from another cmdlet. The cmdlet uses block-based uploading (4MB blocks) for efficient transfer of large files. MIME types are automatically detected from file extensions using the MimeTypesMap package, but can be manually overridden if needed.
+
+When using byte stream mode (via pipeline), bytes are accumulated in a buffer and uploaded as 4MB blocks automatically as the buffer fills, minimizing memory usage. The final partial block is uploaded when all pipeline input has been received, allowing efficient transfer of large files from cmdlets like Get-Content -AsByteStream or Get-DataverseFileData -AsByteStream.
 
 ## EXAMPLES
 
@@ -53,14 +62,28 @@ PS C:\> Set-DataverseFileData -Connection $connection -TableName "account" -Id $
 
 Uploads a file with a manually specified MIME type, overriding auto-detection.
 
-### Example 4: Pipe from Get-DataverseRecord
+### Example 4: Upload from byte stream (Get-Content)
+```powershell
+PS C:\> Get-Content -Path "C:\Documents\contract.pdf" -AsByteStream | Set-DataverseFileData -Connection $connection -TableName "account" -Id $accountId -ColumnName "documentfile" -FileName "contract.pdf"
+```
+
+Reads a file as a byte stream and uploads it to Dataverse. This is memory-efficient for large files.
+
+### Example 5: Copy file between records using byte stream
+```powershell
+PS C:\> Get-DataverseFileData -Connection $connection -TableName "account" -Id $sourceId -ColumnName "documentfile" -AsByteStream | Set-DataverseFileData -Connection $connection -TableName "account" -Id $targetId -ColumnName "documentfile" -FileName "copied.pdf"
+```
+
+Downloads a file from one record as a byte stream and uploads it to another record, efficiently copying without loading entire file into memory.
+
+### Example 6: Pipe from Get-DataverseRecord
 ```powershell
 PS C:\> Get-DataverseRecord -Connection $connection -TableName "account" -Id $accountId | Set-DataverseFileData -ColumnName "documentfile" -FilePath "C:\Documents\contract.pdf"
 ```
 
 Pipes a record and uploads a file to it.
 
-### Example 5: Use WhatIf to preview changes
+### Example 7: Use WhatIf to preview changes
 ```powershell
 PS C:\> Set-DataverseFileData -Connection $connection -TableName "account" -Id $accountId -ColumnName "documentfile" -FilePath "C:\Documents\contract.pdf" -WhatIf
 ```
@@ -121,7 +144,7 @@ Filename to use when uploading from byte array
 
 ```yaml
 Type: String
-Parameter Sets: Bytes
+Parameter Sets: Bytes, ByteStream
 Aliases:
 
 Required: False
@@ -158,6 +181,21 @@ Required: True
 Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -InputByte
+Byte stream input from the pipeline
+
+```yaml
+Type: Byte
+Parameter Sets: ByteStream
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
@@ -243,15 +281,12 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.String
-
 ### System.Guid
-
 ### System.Byte[]
-
+### System.Byte
 ## OUTPUTS
 
 ### System.Void
-
 ## NOTES
 
 ## RELATED LINKS
