@@ -43,6 +43,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.closeButton = new System.Windows.Forms.Button();
             this.runButton = new System.Windows.Forms.ToolStripButton();
             this.saveButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.powerShellVersionButton = new System.Windows.Forms.ToolStripButton();
             this.panel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.webView)).BeginInit();
             this.tabToolbar.SuspendLayout();
@@ -76,7 +78,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.tabToolbar.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.tabToolbar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.runButton,
-            this.saveButton});
+            this.saveButton,
+            this.toolStripSeparator1,
+            this.powerShellVersionButton});
             this.tabToolbar.Location = new System.Drawing.Point(0, 0);
             this.tabToolbar.Name = "tabToolbar";
             this.tabToolbar.Size = new System.Drawing.Size(632, 35);
@@ -109,6 +113,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.saveButton.Text = "Save";
             this.saveButton.Click += new System.EventHandler(this.SaveButton_Click);
             // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 35);
+            // 
+            // powerShellVersionButton
+            // 
+            this.powerShellVersionButton.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.powerShellVersionButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.powerShellVersionButton.Name = "powerShellVersionButton";
+            this.powerShellVersionButton.Size = new System.Drawing.Size(95, 32);
+            this.powerShellVersionButton.Text = "PowerShell 5.1";
+            this.powerShellVersionButton.ToolTipText = "Click to switch PowerShell version for script execution (completion always uses PowerShell 5.1)";
+            this.powerShellVersionButton.Click += new System.EventHandler(this.PowerShellVersionButton_Click);
+            // 
             // ScriptTabContentControl
             // 
             this.Controls.Add(this.panel);
@@ -131,5 +150,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private ToolStripButton runButton;
         private ToolStripButton saveButton;
         private Button closeButton;
+        private ToolStripSeparator toolStripSeparator1;
+        private ToolStripButton powerShellVersionButton;
     }
 }

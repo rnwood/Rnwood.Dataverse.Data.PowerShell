@@ -16,11 +16,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private PowerShellCompletionService _completionService;
         private TaskCompletionSource<bool> _webViewReadyTask = new TaskCompletionSource<bool>();
         private string _path;
+        private PowerShellVersion _powerShellVersion = PowerShellDetector.GetDefaultVersion();
 
         public WebView2 WebView => webView;
         public string Path { get => _path; set => _path = value; }
 
         public PowerShellCompletionService CompletionService { get => _completionService; set => _completionService = value; }
+
+        /// <summary>
+        /// Gets or sets the PowerShell version used for this script tab.
+        /// </summary>
+        public PowerShellVersion PowerShellVersion
+        {
+            get => _powerShellVersion;
+            set
+            {
+                if (_powerShellVersion != value)
+                {
+                    _powerShellVersion = value;
+                    UpdatePowerShellVersionLabel();
+                }
+            }
+        }
 
         public event EventHandler RunRequested;
         public event EventHandler SaveRequested;
@@ -31,6 +48,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         {
             InitializeComponent();
             closeButton.BringToFront();
+            UpdatePowerShellVersionLabel();
+        }
+
+        private void UpdatePowerShellVersionLabel()
+        {
+            if (powerShellVersionButton != null)
+            {
+                powerShellVersionButton.Text = PowerShellDetector.GetDisplayName(_powerShellVersion);
+            }
         }
 
         // Named event handlers referenced by designer
@@ -480,6 +506,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     return "Keyword";
                 default:
                     return "";
+            }
+        }
+
+        private void PowerShellVersionButton_Click(object sender, EventArgs e)
+        {
+            // Toggle between versions
+            if (_powerShellVersion == PowerShellVersion.Desktop)
+            {
+                if (PowerShellDetector.IsCoreAvailable())
+                {
+                    PowerShellVersion = PowerShellVersion.Core;
+                }
+                else
+                {
+                    MessageBox.Show(PowerShellDetector.GetInstallInstructions(),
+                        "PowerShell 7+ Not Available", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            else
+            {
+                PowerShellVersion = PowerShellVersion.Desktop;
             }
         }
     }

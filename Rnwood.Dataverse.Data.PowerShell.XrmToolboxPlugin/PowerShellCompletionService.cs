@@ -11,6 +11,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
     /// <summary>
     /// Service that provides PowerShell code completion using PowerShell Editor Services.
+    /// Note: This service always uses Windows PowerShell (Desktop) for completions,
+    /// regardless of the script execution version selected by the user.
+    /// This is because the completion service runs in-process and uses PowerShell Editor Services
+    /// which is hosted in the same process as the XrmToolbox plugin (.NET Framework).
+    /// Script execution will still use the version selected by the user.
     /// </summary>
     public class PowerShellCompletionService : IDisposable
     {
