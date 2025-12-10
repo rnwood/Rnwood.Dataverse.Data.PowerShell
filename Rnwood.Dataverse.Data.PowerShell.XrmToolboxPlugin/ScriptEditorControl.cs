@@ -394,7 +394,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 return;
             }
 
-            await _galleryControl.ShowSaveScriptDialog(scriptContent, tabContent.GalleryItem);
+            var (saved, item) = await _galleryControl.ShowSaveScriptDialog(scriptContent, tabContent.GalleryItem);
+            if (saved && item != null)
+            {
+                tabContent.GalleryItem = item;
+                // Update tab title
+                var tab = tabData.FirstOrDefault(kvp => kvp.Value == tabContent).Key;
+                if (tab != null)
+                {
+                    tab.Text = item.Title;
+                }
+            }
         }
 
     }

@@ -17,6 +17,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private TextBox txtDescription;
         private CheckedListBox lstTags;
         private Button btnSave;
+        private Button btnSaveNew;
+        private Button btnUpdate;
         private Button btnCancel;
         // webview removed - no ready task needed.
 
@@ -27,7 +29,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         public Task<string> GetDescriptionAsync() => Task.FromResult(txtDescription.Text);
 
 
-        public ScriptSaveDialog(string title, string description, List<string> availableTags, List<string> selectedTags)
+        public bool SaveAsNew { get; private set; }
+
+        public ScriptSaveDialog(string title, string description, List<string> availableTags, List<string> selectedTags, bool isEditing = false)
         {
             InitializeComponent();
             
@@ -45,6 +49,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
             
             txtDescription.Text = description ?? string.Empty;
+
+            // Show appropriate save controls when editing
+            if (isEditing)
+            {
+                btnUpdate.Visible = true;
+                btnSaveNew.Visible = true;
+                btnSave.Visible = false;
+                this.AcceptButton = btnUpdate;
+            }
+            else
+            {
+                btnUpdate.Visible = false;
+                btnSaveNew.Visible = false;
+                btnSave.Visible = true;
+                this.AcceptButton = btnSave;
+            }
         }
 
         // No initialization required when using simple TextBox for description
@@ -71,6 +91,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             lstTags = new CheckedListBox { Location = new Point(10, 460), Size = new Size(760, 60), Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right, MultiColumn = true };
 
             btnSave = new Button { Text = "Save", Location = new Point(610, 530), Size = new Size(75, 23), DialogResult = DialogResult.OK, Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
+            btnUpdate = new Button { Text = "Update in Gallery", Location = new Point(520, 530), Size = new Size(110, 23), DialogResult = DialogResult.OK, Anchor = AnchorStyles.Bottom | AnchorStyles.Right, Visible = false };
+            btnSaveNew = new Button { Text = "Save to new gallery item", Location = new Point(635, 530), Size = new Size(140, 23), DialogResult = DialogResult.OK, Anchor = AnchorStyles.Bottom | AnchorStyles.Right, Visible = false };
             btnCancel = new Button { Text = "Cancel", Location = new Point(695, 530), Size = new Size(75, 23), DialogResult = DialogResult.Cancel, Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
 
             this.Controls.Add(lblTitle);
@@ -79,10 +101,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.Controls.Add(txtDescription);
             this.Controls.Add(lblTags);
             this.Controls.Add(lstTags);
+            this.Controls.Add(btnUpdate);
+            this.Controls.Add(btnSaveNew);
             this.Controls.Add(btnSave);
             this.Controls.Add(btnCancel);
 
             this.AcceptButton = btnSave;
+            btnUpdate.Click += (s, e) =>
+            {
+                SaveAsNew = false;
+                this.DialogResult = DialogResult.OK;
+                this.Close();
+            };
+            btnSaveNew.Click += (s, e) =>
+            {
+                SaveAsNew = true;
+                this.DialogResult = DialogResult.OK;
+                this.Close();
+            };
+
+            // Note: button visibility is controlled by the constructor (isEditing) after InitializeComponent finishes
             this.CancelButton = btnCancel;
         }
 

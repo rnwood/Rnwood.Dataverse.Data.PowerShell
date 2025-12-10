@@ -138,13 +138,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.powerShellVersionButton.Text = "PowerShell 5.1";
             this.powerShellVersionButton.ToolTipText = "Click to switch PowerShell version for script execution (completion always uses PowerShell 5.1)";
             this.powerShellVersionButton.Click += new System.EventHandler(this.PowerShellVersionButton_Click);
-            // saveToGalleryButton
-            // 
-            this.saveToGalleryButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.mdi__people_group;
-            this.saveToGalleryButton.Name = "saveToGalleryButton";
-            this.saveToGalleryButton.Size = new System.Drawing.Size(112, 32);
-            this.saveToGalleryButton.Text = "Save to Gallery";
-            this.saveToGalleryButton.Click += new System.EventHandler(this.SaveToGalleryButton_Click);
             // 
             // ScriptTabContentControl
             // 

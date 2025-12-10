@@ -22,7 +22,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
         public WebView2 WebView => webView;
         public string Path         { get => _path; set => _path = value; }
-        public ScriptGalleryItem GalleryItem         { get => _galleryItem; set => _galleryItem = value; }
+        public ScriptGalleryItem GalleryItem
+        {
+            get => _galleryItem;
+            set
+            {
+                _galleryItem = value;
+                // Update toolbar button text based on whether this tab has an associated gallery item
+                if (saveToGalleryButton != null)
+                {
+                    saveToGalleryButton.Text = _galleryItem != null ? "Update in Gallery" : "Save to Gallery";
+                }
+            }
+        }
 
         public PowerShellCompletionService CompletionService         { get => _completionService; set => _completionService = value; }
 

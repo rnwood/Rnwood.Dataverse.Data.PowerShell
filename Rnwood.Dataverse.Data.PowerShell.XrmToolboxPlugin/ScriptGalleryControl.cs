@@ -61,7 +61,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 // Load data if not already loaded
                 if (tagFilterComboBox.Items.Count <= 1) // Only "(All)" or empty
                 {
-                    LoadAvailableTagsAsync();
+                    _ = LoadAvailableTagsAsync();
                 }
             }
             else
@@ -625,12 +625,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        public async Task ShowSaveScriptDialog(string scriptContent, ScriptGalleryItem existingItem = null)
+        public async Task<(bool Saved, ScriptGalleryItem Item)> ShowSaveScriptDialog(string scriptContent, ScriptGalleryItem existingItem = null)
         {
             if (!_githubService.IsAuthenticated)
             {
                 MessageBox.Show("You must be logged in to save scripts to the gallery", "Authentication Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                return (false, null);
             }
 
             // Prepare initial values
@@ -657,7 +657,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
 
 
-            using (var dialog = new ScriptSaveDialog(title, description, availableTags, selectedTags))
+            using (var dialog = new ScriptSaveDialog(title, description, availableTags, selectedTags, existingItem != null))
             {
 
                 if (dialog.ShowDialog() == DialogResult.OK)
@@ -671,27 +671,43 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                         // Combine description and script
                         string newBody = $"{newDescription}\n\n```powershell\n{scriptContent}\n```";
 
-                        if (existingItem != null)
+                        ScriptGalleryItem resultItem = null;
+                        if (existingItem != null && !dialog.SaveAsNew)
                         {
-                            await _githubService.UpdateDiscussionAsync(existingItem.Id, newTitle, newBody);
+                            await _githubService.UpdateDiscussionAsync(existingItem.Id, newTitle, newBody, newTags);
                             MessageBox.Show("Script updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            // Get the updated discussion back
+                            resultItem = await _githubService.GetDiscussionAsync(existingItem.Number);
                         }
                         else
                         {
                             var newItem = await _githubService.CreateDiscussionAsync(newTitle, newBody, newTags);
                             MessageBox.Show($"Script saved to gallery successfully!\n\nDiscussion #{newItem.Number}: {newItem.Title}",
                                 "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            resultItem = newItem;
                         }
 
                         // Refresh
                         await LoadAvailableTagsAsync();
                         await RefreshDiscussionsAsync();
 
-                        if (existingItem != null && _selectedItem?.Id == existingItem.Id)
+                        // When updating the currently selected discussion, refresh it.
+                        if (existingItem != null && dialog.SaveAsNew == false && _selectedItem?.Id == existingItem.Id)
                         {
                             _selectedItem = await _githubService.GetDiscussionAsync(_selectedItem.Number);
                             await DisplayDiscussionAsync(_selectedItem);
                         }
+
+                        // If a new item was created, return it so callers can update context
+                        if (resultItem != null)
+                        {
+                            // After create, select the discussion in the list if possible
+                            await RefreshDiscussionsAsync();
+                            _selectedItem = await _githubService.GetDiscussionAsync(resultItem.Number);
+                            await DisplayDiscussionAsync(_selectedItem);
+                            return (true, _selectedItem);
+                        }
+                        return (true, resultItem);
                     }
                     catch (Exception ex)
                     {
@@ -699,6 +715,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     }
                 }
             }
+            return (false, null);
         }
     
         
@@ -746,7 +763,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
 
             var scriptContent = _selectedItem.GetScriptContent();
-            await ShowSaveScriptDialog(scriptContent, _selectedItem);
+            var (saved, item) = await ShowSaveScriptDialog(scriptContent, _selectedItem);
+            if (saved && item != null)
+            {
+                // If the user saved as new, update gallery selection and context
+                _selectedItem = item;
+                await DisplayDiscussionAsync(_selectedItem);
+
+                // Select in list view
+                foreach (ListViewItem lvItem in listView.Items)
+                {
+                    if ((lvItem.Tag as ScriptGalleryItem)?.Id == _selectedItem.Id)
+                    {
+                        lvItem.Selected = true;
+                        break;
+                    }
+                }
+            }
         }
         
         private async void CloseButton_Click(object sender, EventArgs e)
@@ -804,15 +837,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             {
                 if (_syncContext != null)
                 {
-                    _syncContext.Post(_ => _control.ShowCommentDialog(replyToId), null);
+                    _syncContext.Post(_ => { var _t = _control.ShowCommentDialog(replyToId); }, null);
                 }
                 else if (_control.InvokeRequired)
                 {
-                    _control.Invoke(new Action(() => { var _ = _control.ShowCommentDialog(replyToId); }));
+                    _control.Invoke(new Action(() => { var _t = _control.ShowCommentDialog(replyToId); }));
                 }
                 else
                 {
-                    var _ = _control.ShowCommentDialog(replyToId);
+                    var _t = _control.ShowCommentDialog(replyToId);
                 }
             }
         }
