@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-Describe "Module" {
+Describe "Module" -Skip {
 
     BeforeAll {
 

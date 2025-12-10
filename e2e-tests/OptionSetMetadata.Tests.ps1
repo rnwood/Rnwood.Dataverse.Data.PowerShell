@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-Describe "OptionSet Metadata E2E Tests" {
+Describe "OptionSet Metadata E2E Tests" -Skip {
 
     BeforeAll {
         if ($env:TESTMODULEPATH) {

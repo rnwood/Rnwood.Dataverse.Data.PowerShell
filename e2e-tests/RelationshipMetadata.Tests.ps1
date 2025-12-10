@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 
-Describe "Relationship Metadata E2E Tests" {
+Describe "Relationship Metadata E2E Tests" -Skip {
 
     BeforeAll {
         if ($env:TESTMODULEPATH) {

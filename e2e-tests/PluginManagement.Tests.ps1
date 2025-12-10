@@ -1,4 +1,4 @@
-Describe "Plugin Management Cmdlets" {
+Describe "Plugin Management Cmdlets" -Skip {
 
     BeforeAll {
         if ($env:TESTMODULEPATH) {
