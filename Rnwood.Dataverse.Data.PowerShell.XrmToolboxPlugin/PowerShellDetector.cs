@@ -68,7 +68,7 @@ Alternatively, use Windows PowerShell 5.1 (already installed on Windows).";
                 var processStartInfo = new ProcessStartInfo
                 {
                     FileName = executableName,
-                    Arguments = "--version",
+                    Arguments = "-command 'write-host hello'",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,

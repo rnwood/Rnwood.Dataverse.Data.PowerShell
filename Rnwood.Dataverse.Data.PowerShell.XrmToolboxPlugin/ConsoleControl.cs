@@ -15,7 +15,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
     public partial class ConsoleControl : UserControl
     {
         private Dictionary<TabPage, ConsoleTabControl> tabControls = new Dictionary<TabPage, ConsoleTabControl>();
-        private int scriptSessionCounter = 1;
         private CrmServiceClient service;
         private CancellationTokenSource namedPipeCancellation;
         private string pipeName;
@@ -371,20 +370,20 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
             pipeName = null;
         }
 
-        public void StartScriptSession(string script)
+        public void StartScriptSession(string filename, string script)
         {
             var connectionInfo = ExtractConnectionInformation(service);
-            StartScriptSession(script, connectionInfo);
+            StartScriptSession(filename, script, connectionInfo);
         }
 
-        public void StartScriptSession(string script, ConnectionInfo connectionInfo)
+        public void StartScriptSession(string filename, string script, ConnectionInfo connectionInfo)
         {
-            StartScriptSession(script, connectionInfo, PowerShellDetector.GetDefaultVersion());
+            StartScriptSession(filename, script, connectionInfo, PowerShellDetector.GetDefaultVersion());
         }
 
-        public void StartScriptSession(string script, ConnectionInfo connectionInfo, PowerShellVersion version)
+        public void StartScriptSession(string filename, string script, ConnectionInfo connectionInfo, PowerShellVersion version)
         {
-            StartSession($"Script Session {scriptSessionCounter++}", script, connectionInfo, version);
+            StartSession(filename, script, connectionInfo, version);
         }
 
         private void StartConEmuSession(string title, string scriptContent, ConnectionInfo connectionInfo, PowerShellVersion version)
@@ -443,7 +442,7 @@ Write-Host '  Get-DataverseConnection -Interactive -SetAsDefault' -ForegroundCol
 
             string connectionScript = GenerateConnectionScript(bundledModulePath, connectionInfo, userScript);
 
-            StartConEmuSession(title, connectionScript, connectionInfo, version);
+            StartConEmuSession($"{title} ({(version == PowerShellVersion.Desktop ? "PS5" : "PS7")})", connectionScript, connectionInfo, version);
         }
 
         private void NewInteractiveSessionButton_Click(object sender, EventArgs e)

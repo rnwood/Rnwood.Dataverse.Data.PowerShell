@@ -4,14 +4,16 @@ using System.Threading.Tasks;
 using XrmToolBox.Extensibility;
 using XrmToolBox.Extensibility.Interfaces;
 using Microsoft.Xrm.Tooling.Connector;
+using System.Windows.Resources;
+using System.IO;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
-    public partial class PowerShellConsolePlugin : PluginControlBase, IGitHubPlugin, IPayPalPlugin
+    public partial class MainControl : PluginControlBase, IGitHubPlugin, IPayPalPlugin
     {
         private CrmServiceClient service;
 
-        public PowerShellConsolePlugin()
+        public MainControl()
         {
             InitializeComponent();
             this.Load += PowerShellConsolePlugin_Load;
@@ -76,9 +78,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
                 // Wire up script editor events
                 scriptEditorControl.RunScriptRequested += ScriptEditorControl_RunScriptRequested;
-                scriptEditorControl.NewScriptRequested += ScriptEditorControl_NewScriptRequested;
-                scriptEditorControl.OpenScriptRequested += ScriptEditorControl_OpenScriptRequested;
-                scriptEditorControl.SaveScriptRequested += ScriptEditorControl_SaveScriptRequested;
                 scriptEditorControl.CompletionResolved += ScriptEditorControl_CompletionResolved;
             }
         }
@@ -111,31 +110,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     return;
                 }
 
+                string filename = scriptEditorControl.GetCurrentFileName();
+
                 // Send script to console for execution with the selected PowerShell version
                 var connectionInfo = ConsoleControl.ExtractConnectionInfo(service);
                 var powerShellVersion = scriptEditorControl.GetCurrentPowerShellVersion();
-                consoleControl.StartScriptSession(script, connectionInfo, powerShellVersion);
+                consoleControl.StartScriptSession(filename, script, connectionInfo, powerShellVersion);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to run script: {ex.Message}",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
-
-        private void ScriptEditorControl_NewScriptRequested(object sender, EventArgs e)
-        {
-            scriptEditorControl.CreateNewScript();
-        }
-
-        private void ScriptEditorControl_OpenScriptRequested(object sender, EventArgs e)
-        {
-            scriptEditorControl.OpenScript();
-        }
-
-        private void ScriptEditorControl_SaveScriptRequested(object sender, EventArgs e)
-        {
-            scriptEditorControl.SaveScript();
         }
 
         public override void ClosingPlugin(PluginCloseInfo info)

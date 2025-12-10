@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 {
@@ -16,16 +17,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private int _activeCompletionRequests = 0;
         private string _lastCompletionError;
 
-        // Tab data
-        private Dictionary<TabPage, ScriptTabContentControl> tabData = new Dictionary<TabPage, ScriptTabContentControl>();
-        private int untitledCounter = 1;
         private Func<string> _accessTokenProvider;
         private string _url;
 
+        // Tab data
+        private Dictionary<TabPage, ScriptTabContentControl> tabData = new Dictionary<TabPage, ScriptTabContentControl>();
+        private int untitledCounter = 1;
+
         public event EventHandler RunScriptRequested;
-        public event EventHandler NewScriptRequested;
-        public event EventHandler OpenScriptRequested;
-        public event EventHandler SaveScriptRequested;
         public event EventHandler<CompletionItem> CompletionResolved;
 
         public ScriptEditorControl()
@@ -51,7 +50,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
  
             content.CompletionService = _completionService;
             content.RunRequested += (s, e) => RunScriptRequested?.Invoke(this, EventArgs.Empty);
-            content.SaveRequested += (s, e) => SaveScriptRequested?.Invoke(this, EventArgs.Empty);
             content.CompletionResolved += (s, e) => CompletionResolved?.Invoke(this, e);
             content.CloseRequested += (s, e) => {
                 tabControl.TabPages.Remove(tabPage);
@@ -61,6 +59,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     tabData.Remove(tabPage);
                 }
             };
+            content.SaveRequested += async (s, e) => await SaveScriptForContent(s as ScriptTabContentControl);
             tabPage.Controls.Add(content);
             content.Dock = DockStyle.Fill;
 
@@ -143,6 +142,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             return content.PowerShellVersion;
         }
 
+        public string GetCurrentFileName()
+        {
+            if (tabControl.SelectedTab == null || !tabData.ContainsKey(tabControl.SelectedTab))
+                return "Script";
+
+            var content = tabData[tabControl.SelectedTab];
+            if (!string.IsNullOrEmpty(content.Path))
+                return Path.GetFileName(content.Path);
+            return tabControl.SelectedTab.Text;
+        }
+
         public async void CreateNewScriptTab()
         {
             try
@@ -195,16 +205,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        private async Task SaveCurrentScript()
+        private async Task SaveScriptForContent(ScriptTabContentControl content)
         {
             try
             {
-                if (tabControl.SelectedTab == null || !tabData.ContainsKey(tabControl.SelectedTab))
-                    return;
-
-                var content = tabData[tabControl.SelectedTab];
                 string scriptPath = content.Path;
-
                 if (string.IsNullOrEmpty(scriptPath))
                 {
                     using (SaveFileDialog dialog = new SaveFileDialog())
@@ -229,7 +234,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
 
                 File.WriteAllText(scriptPath, script);
                 content.Path = scriptPath;
-                tabControl.SelectedTab.Text = Path.GetFileName(scriptPath);
+
+                // Update tab text
+                var tab = tabData.FirstOrDefault(kvp => kvp.Value == content).Key;
+                if (tab != null)
+                {
+                    tab.Text = Path.GetFileName(scriptPath);
+                }
 
                 MessageBox.Show($"Script saved to: {scriptPath}",
                     "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -239,21 +250,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 MessageBox.Show($"Failed to save script: {ex.Message}",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
-
-        public void CreateNewScript()
-        {
-            CreateNewScriptTab();
-        }
-
-        public async void OpenScript()
-        {
-            await OpenScriptTab();
-        }
-
-        public async void SaveScript()
-        {
-            await SaveCurrentScript();
         }
 
         public void DisposeResources()
