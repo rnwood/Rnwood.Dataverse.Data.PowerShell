@@ -314,21 +314,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
 http://server.com/MyOrg/).
@@ -471,6 +456,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Labels
+The labels for the control as a hashtable keyed by LCID. Example: @{1033 = 'English Label'; 1031 = 'German Label'}
+
+```yaml
+Type: Hashtable
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -LockLevel
 Lock level for the cell
 
@@ -516,6 +516,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+Controls how progress information is displayed during cmdlet execution.
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Row
 Zero-based row index where the control should be placed. New rows are added if needed.
 
@@ -531,8 +546,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -RowSpan
-Number of rows the control spans in the section layout. Useful for controls that need more vertical space.
+### -Rows
+Number of rows for multiline text controls. Controls the height of text areas and memo fields.
 
 ```yaml
 Type: Int32
@@ -546,8 +561,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Rows
-Number of rows for multiline text controls. Controls the height of text areas and memo fields.
+### -RowSpan
+Number of rows the control spans in the section layout. Useful for controls that need more vertical space.
 
 ```yaml
 Type: Int32
@@ -621,6 +636,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -WhatIf
 Shows what would happen if the cmdlet runs.
 The cmdlet is not run.
@@ -629,36 +659,6 @@ The cmdlet is not run.
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-Controls how progress information is displayed during cmdlet execution.
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Labels
-The labels for the control as a hashtable keyed by LCID. Example: @{1033 = 'English Label'; 1031 = 'German Label'}
-
-```yaml
-Type: Hashtable
-Parameter Sets: (All)
-Aliases:
 
 Required: False
 Position: Named

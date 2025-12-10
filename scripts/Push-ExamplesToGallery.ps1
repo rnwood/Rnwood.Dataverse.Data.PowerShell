@@ -104,9 +104,9 @@ mutation(`$repoId: ID!, `$name: String!) {
 # 2. Get existing discussions to check for duplicates
 Write-Host "Fetching existing discussions..."
 $discussionsQuery = @"
-query(`$owner: String!, `$repo: String!, `$categoryId: ID!) {
+query(`$owner: String!, `$repo: String!, `$categoryId: ID!, `$first: Int!, `$after: String) {
     repository(owner: `$owner, name: `$repo) {
-        discussions(first: 100, categoryId: `$categoryId) {
+        discussions(first: `$first, after: `$after, categoryId: `$categoryId) {
             nodes {
                 title
                 number
@@ -123,9 +123,9 @@ query(`$owner: String!, `$repo: String!, `$categoryId: ID!) {
 # Simple pagination (fetch all)
 $existingTitles = @{}
 $cursor = $null
+$pageSize = 100
 do {
-    $vars = @{ owner = $Owner; repo = $Repo; categoryId = $categoryId }
-    # Pagination logic omitted for simplicity, fetching first 100
+    $vars = @{ owner = $Owner; repo = $Repo; categoryId = $categoryId; first = $pageSize; after = $cursor }
     
     $discData = Invoke-GraphQL -Query $discussionsQuery -Variables $vars
     if (-not $discData) { break }
@@ -134,9 +134,11 @@ do {
         $existingTitles[$node.title] = $node.number
     }
     
-    if ($discData.repository.discussions.pageInfo.hasNextPage) {
-        Write-Warning "More than 100 discussions exist. Pagination not fully implemented in this script."
-        break
+    $pageInfo = $discData.repository.discussions.pageInfo
+    if ($pageInfo -and $pageInfo.hasNextPage) {
+        $cursor = $pageInfo.endCursor
+        Write-Host "Fetched $($discData.repository.discussions.nodes.Count) discussions; continuing (cursor=$cursor)..."
+        # Continue loop to fetch next page
     } else {
         break
     }
