@@ -23,10 +23,17 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <XrmToolBoxVersion>1.2025.10.74</XrmToolBoxVersion>
     <PackageIcon>icon_80.png</PackageIcon>
-    <PackageIconUrl>https://raw.githu busercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/refs/heads/main/icon_80.png</PackageIconUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/refs/heads/main/icon_80.png</PackageIconUrl>
     <Title>PowerShell Scripting Workspace</Title>
-	<GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
    </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="logo.png" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Include="..\icon_80.png" Pack="true" PackagePath="" />
