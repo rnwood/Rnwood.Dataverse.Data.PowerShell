@@ -5,6 +5,7 @@ using System.Linq;
 using System.IO.Compression;
 using System.Windows.Forms;
 using System.Threading.Tasks;
+using System.Drawing;
 using XrmToolBox.Extensibility;
 using XrmToolBox.Extensibility.Interfaces;
 
@@ -33,7 +34,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader
 
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PluginLoadingControl));
             this.mainPanel = new System.Windows.Forms.Panel();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.statusLabel = new System.Windows.Forms.Label();
@@ -56,7 +56,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader
             // pictureBox1
             // 
             this.pictureBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
+            this.pictureBox1.Image = Image.FromStream(Assembly.GetExecutingAssembly().GetManifestResourceStream("Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.logo.png"));
             this.pictureBox1.Location = new System.Drawing.Point(12, 5);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(397, 103);
