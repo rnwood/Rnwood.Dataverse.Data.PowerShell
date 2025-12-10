@@ -15,7 +15,7 @@ Invokes a Dataverse SQL query using Sql4Cds and writes any resulting rows to the
 ```
 Invoke-DataverseSql -Sql <String> [-UseTdsEndpoint] [-Timeout <Int32>] [-Parameters <PSObject>]
  [-BatchSize <Int32>] [-MaxDegreeOfParallelism <Int32>] [-BypassCustomPluginExecution] [-UseBulkDelete]
- [-ReturnEntityReferenceAsGuid] [-UseLocalTimezone] [-AdditionalConnections <Hashtable>]
+ [-ReturnEntityReferenceAsGuid] [-UseLocalTimezone] [-AdditionalConnections <Hashtable>] [-DataSourceName <String>]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -88,6 +88,32 @@ Jane Doe               Jane Doe
 
 Executes a cross-datasource query that joins data from two different Dataverse environments. The AdditionalConnections parameter allows registering named data sources that can be referenced in the SQL query using the syntax `datasource_name.table_name`.
 
+### Example 4
+```powershell
+PS C:\> # Create connections with explicit data source names for repeatability
+PS C:\> $devConnection = Get-DataverseConnection -url "https://dev-org.crm.dynamics.com" -ClientId $clientId -ClientSecret $secret
+PS C:\> $prodConnection = Get-DataverseConnection -url "https://prod-org.crm.dynamics.com" -ClientId $clientId -ClientSecret $secret
+
+PS C:\> # Use DataSourceName to ensure consistent naming across environments
+PS C:\> $additionalConnections = @{
+	"production" = $prodConnection
+}
+
+PS C:\> # Query uses explicit "primary" name instead of dev org's unique name
+PS C:\> Invoke-DataverseSql -Connection $devConnection -DataSourceName "primary" -AdditionalConnections $additionalConnections -Sql "
+	SELECT p.fullname, prod.email
+	FROM primary.systemuser p
+	LEFT JOIN production.systemuser prod ON p.domainname = prod.domainname
+"
+
+fullname           email
+--------           -----
+John Smith         jsmith@company.com
+Jane Doe           jdoe@company.com
+```
+
+Uses the DataSourceName parameter to assign a stable name ("primary") to the main connection. This ensures the SQL query works consistently across dev, test, and prod environments without modification, as the organization unique names differ between environments.
+
 ## PARAMETERS
 
 ### -AdditionalConnections
@@ -148,6 +174,23 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DataSourceName
+Specifies the name for the primary data source. If not specified, defaults to the organization unique name from the connection. Use this parameter to ensure consistent data source names across different environments for repeatable queries when using AdditionalConnections.
+
+This is particularly useful when writing queries that need to work across different environments (dev, test, prod) where the organization unique names differ. By explicitly setting the data source name, your SQL queries remain portable.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None (uses organization unique name)
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

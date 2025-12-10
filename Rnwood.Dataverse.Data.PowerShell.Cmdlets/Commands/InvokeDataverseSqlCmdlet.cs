@@ -83,6 +83,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// </summary>
 		[Parameter(HelpMessage = "Additional data sources to register with Sql4Cds, allowing queries across multiple connections. Hashtable where keys are data source names and values are ServiceClient connections.")]
 		public Hashtable AdditionalConnections { get; set; }
+		/// <summary>
+		/// Specifies the name for the primary data source. If not specified, defaults to the organization unique name. Use this parameter to ensure consistent data source names across different environments for repeatable queries.
+		/// </summary>
+		[Parameter(HelpMessage = "Specifies the name for the primary data source. If not specified, defaults to the organization unique name. Use this parameter to ensure consistent data source names across different environments for repeatable queries.")]
+		public string DataSourceName { get; set; }
 
 		/// <summary>
 		/// Initializes the cmdlet.
@@ -103,6 +108,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			if (Connection is ServiceClient serviceClient)
 			{
 				dataSource.AccessTokenProvider = () => GetAccessToken(serviceClient);
+			}
+
+			// Override the data source name if specified by the user
+			// This ensures consistent naming across different environments for repeatable queries
+			if (!string.IsNullOrEmpty(DataSourceName))
+			{
+				dataSource.Name = DataSourceName;
 			}
 
 			// Create connection using the DataSource with AccessTokenProvider configured
