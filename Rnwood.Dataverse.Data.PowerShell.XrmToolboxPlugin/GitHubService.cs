@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.IO;
 using System.Security.Cryptography;
+using System.Net.Http;
 using Octokit;
 using Newtonsoft.Json.Linq;
 
@@ -26,6 +27,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private OauthDeviceFlowResponse _currentDeviceFlowResponse;
         private int _deviceCodeExpiresIn;
         private int _deviceCodeInterval;
+        private TokenData _currentTokenData;
+
+        private class TokenData
+        {
+            public string AccessToken { get; set; }
+            public string RefreshToken { get; set; }
+            public DateTimeOffset? ExpiresAt { get; set; }
+        }
 
         public bool IsAuthenticated => _client != null && !string.IsNullOrEmpty(_currentUsername);
         public string CurrentUsername => _currentUsername;
@@ -40,6 +49,69 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             LoadPersistedToken();
         }
 
+        private async Task EnsureTokenValidAsync()
+        {
+            if (_currentTokenData == null || string.IsNullOrEmpty(_currentTokenData.RefreshToken))
+            {
+                return;
+            }
+
+            if (_currentTokenData.ExpiresAt.HasValue && _currentTokenData.ExpiresAt.Value < DateTimeOffset.UtcNow.AddMinutes(5))
+            {
+                try
+                {
+                    using (var httpClient = new HttpClient())
+                    {
+                        httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                        var content = new FormUrlEncodedContent(new[]
+                        {
+                            new KeyValuePair<string, string>("client_id", ClientId),
+                            new KeyValuePair<string, string>("grant_type", "refresh_token"),
+                            new KeyValuePair<string, string>("refresh_token", _currentTokenData.RefreshToken)
+                        });
+
+                        var response = await httpClient.PostAsync("https://github.com/login/oauth/access_token", content);
+                        response.EnsureSuccessStatusCode();
+
+                        var responseString = await response.Content.ReadAsStringAsync();
+                        var tokenResponse = JObject.Parse(responseString);
+
+                        if (tokenResponse["error"] != null)
+                        {
+                            // Handle error
+                            System.Diagnostics.Debug.WriteLine($"Error refreshing token: {tokenResponse["error_description"]}");
+                            return;
+                        }
+
+                        string accessToken = tokenResponse["access_token"]?.ToString();
+                        string refreshToken = tokenResponse["refresh_token"]?.ToString();
+                        int expiresIn = tokenResponse["expires_in"]?.ToObject<int>() ?? 0;
+
+                        if (!string.IsNullOrEmpty(accessToken))
+                        {
+                            _client = new GitHubClient(new ProductHeaderValue("XrmToolbox-PowerShell-Plugin"))
+                            {
+                                Credentials = new Credentials(accessToken)
+                            };
+
+                            SaveToken(accessToken, refreshToken, expiresIn);
+
+                            if (string.IsNullOrEmpty(_currentUsername))
+                            {
+                                var user = await _client.User.Current();
+                                _currentUsername = user.Login;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to refresh token: {ex.Message}");
+                }
+            }
+        }
+
         /// <summary>
         /// Posts a GraphQL payload and returns a parsed JObject using Newtonsoft.Json.
         /// Octokit's internal serializer can fail when targeting JObject; request a raw
@@ -47,6 +119,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         /// </summary>
         private async Task<JObject> PostGraphQLAsync(object payload)
         {
+            await EnsureTokenValidAsync();
+
             string payloadJson = Newtonsoft.Json.JsonConvert.SerializeObject(payload);
 
             var response = await _client.Connection.Post<string>(
@@ -158,7 +232,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 _currentUsername = user.Login;
 
                 _currentDeviceFlowResponse = null;
-                SaveToken(token.AccessToken);
+                SaveToken(token.AccessToken, token.RefreshToken, token.ExpiresIn);
 
                 return (true, $"Successfully authenticated as {_currentUsername}", false);
             }
@@ -1062,13 +1136,41 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 {
                     byte[] encrypted = File.ReadAllBytes(_tokenFilePath);
                     byte[] decrypted = ProtectedData.Unprotect(encrypted, null, DataProtectionScope.CurrentUser);
-                    string token = System.Text.Encoding.UTF8.GetString(decrypted);
-                    _client = new GitHubClient(new ProductHeaderValue("XrmToolbox-PowerShell-Plugin"))
+                    string json = System.Text.Encoding.UTF8.GetString(decrypted);
+
+                    try
                     {
-                        Credentials = new Credentials(token)
-                    };
-                    var user = _client.User.Current().GetAwaiter().GetResult();
-                    _currentUsername = user.Login;
+                        if (json.Trim().StartsWith("{"))
+                        {
+                            _currentTokenData = Newtonsoft.Json.JsonConvert.DeserializeObject<TokenData>(json);
+                        }
+                        else
+                        {
+                            _currentTokenData = new TokenData { AccessToken = json };
+                        }
+                    }
+                    catch
+                    {
+                        _currentTokenData = new TokenData { AccessToken = json };
+                    }
+
+                    if (_currentTokenData != null && !string.IsNullOrEmpty(_currentTokenData.AccessToken))
+                    {
+                        _client = new GitHubClient(new ProductHeaderValue("XrmToolbox-PowerShell-Plugin"))
+                        {
+                            Credentials = new Credentials(_currentTokenData.AccessToken)
+                        };
+
+                        try
+                        {
+                            var user = _client.User.Current().GetAwaiter().GetResult();
+                            _currentUsername = user.Login;
+                        }
+                        catch
+                        {
+                            // Token might be invalid
+                        }
+                    }
                 }
             }
             catch
@@ -1077,12 +1179,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
         }
 
-        private void SaveToken(string token)
+        private void SaveToken(string accessToken, string refreshToken = null, int? expiresIn = null)
         {
             try
             {
+                _currentTokenData = new TokenData
+                {
+                    AccessToken = accessToken,
+                    RefreshToken = refreshToken,
+                    ExpiresAt = expiresIn.HasValue ? DateTimeOffset.UtcNow.AddSeconds(expiresIn.Value) : (DateTimeOffset?)null
+                };
+
+                string json = Newtonsoft.Json.JsonConvert.SerializeObject(_currentTokenData);
+
                 Directory.CreateDirectory(Path.GetDirectoryName(_tokenFilePath));
-                byte[] data = System.Text.Encoding.UTF8.GetBytes(token);
+                byte[] data = System.Text.Encoding.UTF8.GetBytes(json);
                 byte[] encrypted = ProtectedData.Protect(data, null, DataProtectionScope.CurrentUser);
                 File.WriteAllBytes(_tokenFilePath, encrypted);
             }
