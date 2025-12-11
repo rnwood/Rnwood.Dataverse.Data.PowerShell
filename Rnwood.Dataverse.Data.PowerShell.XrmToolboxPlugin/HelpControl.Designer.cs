@@ -38,16 +38,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private void InitializeComponent()
         {
             this.toolStrip = new System.Windows.Forms.ToolStrip();
+            this.homeButton = new System.Windows.Forms.ToolStripButton();
+            this.backButton = new System.Windows.Forms.ToolStripButton();
             this.forwardButton = new System.Windows.Forms.ToolStripButton();
+            this.autoHelpButton = new System.Windows.Forms.ToolStripButton();
+            this.progressBar = new System.Windows.Forms.ToolStripProgressBar();
             this.searchCombo = new System.Windows.Forms.ToolStripComboBox();
             this.anchorsCombo = new System.Windows.Forms.ToolStripComboBox();
             this.comboToolStrip = new System.Windows.Forms.ToolStrip();
             this.helpWebView2 = new Microsoft.Web.WebView2.WinForms.WebView2();
-            this.homeButton = new System.Windows.Forms.ToolStripButton();
-            this.backButton = new System.Windows.Forms.ToolStripButton();
-            this.autoHelpButton = new System.Windows.Forms.ToolStripButton();
-            this.progressBar = new System.Windows.Forms.ToolStripProgressBar();
             this.toolStrip.SuspendLayout();
+            this.comboToolStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.helpWebView2)).BeginInit();
             this.SuspendLayout();
             // 
@@ -65,75 +66,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.toolStrip.Size = new System.Drawing.Size(400, 25);
             this.toolStrip.TabIndex = 0;
             this.toolStrip.Text = "toolStrip";
-            // 
-            // comboToolStrip
-            // 
-            this.comboToolStrip.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
-            this.comboToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.searchCombo,
-            this.anchorsCombo});
-            this.comboToolStrip.Location = new System.Drawing.Point(0, 25);
-            this.comboToolStrip.Name = "comboToolStrip";
-            this.comboToolStrip.Size = new System.Drawing.Size(400, 25);
-            this.comboToolStrip.TabIndex = 1;
-            this.comboToolStrip.Text = "comboToolStrip";
-            // 
-            // forwardButton
-            // 
-            this.forwardButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.forwardButton.Enabled = false;
-            this.forwardButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.mdi__arrow_forward;
-            this.forwardButton.Name = "forwardButton";
-            this.forwardButton.Size = new System.Drawing.Size(23, 22);
-            this.forwardButton.Text = "Forward";
-            this.forwardButton.ToolTipText = "Forward";
-            this.forwardButton.Click += new System.EventHandler(this.ForwardButton_Click);
-            // 
-            // autoHelpButton
-            // 
-            this.autoHelpButton.CheckOnClick = true;
-            this.autoHelpButton.Checked = true;
-            this.autoHelpButton.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.autoHelpButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.ImageAndText;
-            this.autoHelpButton.Name = "autoHelpButton";
-            this.autoHelpButton.Size = new System.Drawing.Size(23, 22);
-            this.autoHelpButton.Text = "Auto follow editor";
-            // 
-            // progressBar
-            // 
-            this.progressBar.Name = "progressBar";
-            this.progressBar.Size = new System.Drawing.Size(100, 22);
-            this.progressBar.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
-            this.progressBar.Visible = false;
-            // 
-            // searchCombo
-            // 
-            this.searchCombo.DropDownWidth = 600;
-            this.searchCombo.Name = "searchCombo";
-            this.searchCombo.Size = new System.Drawing.Size(200, 25);
-            this.searchCombo.ToolTipText = "Search";
-            this.searchCombo.SelectedIndexChanged += new System.EventHandler(this.SearchCombo_SelectedIndexChanged);
-            // 
-            // anchorsCombo
-            // 
-            this.anchorsCombo.DropDownWidth = 600;
-            this.anchorsCombo.Name = "anchorsCombo";
-            this.anchorsCombo.Size = new System.Drawing.Size(200, 25);
-            this.anchorsCombo.ToolTipText = "Anchors";
-            this.anchorsCombo.SelectedIndexChanged += new System.EventHandler(this.AnchorsCombo_SelectedIndexChanged);
-            // 
-            // helpWebView2
-            // 
-            this.helpWebView2.AllowExternalDrop = true;
-            this.helpWebView2.CreationProperties = null;
-            this.helpWebView2.DefaultBackgroundColor = System.Drawing.Color.White;
-            this.helpWebView2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.helpWebView2.Location = new System.Drawing.Point(0, 25);
-            this.helpWebView2.Name = "helpWebView2";
-            this.helpWebView2.Size = new System.Drawing.Size(400, 575);
-            this.helpWebView2.TabIndex = 1;
-            this.helpWebView2.ZoomFactor = 1D;
-            this.helpWebView2.NavigationCompleted += new System.EventHandler<Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs>(this.HelpWebView2_NavigationCompleted);
             // 
             // homeButton
             // 
@@ -155,6 +87,74 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.backButton.Text = "Back";
             this.backButton.ToolTipText = "Back";
             this.backButton.Click += new System.EventHandler(this.BackButton_Click);
+            // 
+            // forwardButton
+            // 
+            this.forwardButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.forwardButton.Enabled = false;
+            this.forwardButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.mdi__arrow_forward;
+            this.forwardButton.Name = "forwardButton";
+            this.forwardButton.Size = new System.Drawing.Size(23, 22);
+            this.forwardButton.Text = "Forward";
+            this.forwardButton.ToolTipText = "Forward";
+            this.forwardButton.Click += new System.EventHandler(this.ForwardButton_Click);
+            // 
+            // autoHelpButton
+            // 
+            this.autoHelpButton.Checked = true;
+            this.autoHelpButton.CheckOnClick = true;
+            this.autoHelpButton.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.autoHelpButton.Name = "autoHelpButton";
+            this.autoHelpButton.Size = new System.Drawing.Size(107, 22);
+            this.autoHelpButton.Text = "Auto follow editor";
+            // 
+            // progressBar
+            // 
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(100, 22);
+            this.progressBar.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
+            this.progressBar.Visible = false;
+            // 
+            // searchCombo
+            // 
+            this.searchCombo.DropDownWidth = 600;
+            this.searchCombo.Name = "searchCombo";
+            this.searchCombo.Size = new System.Drawing.Size(200, 27);
+            this.searchCombo.ToolTipText = "Search";
+            this.searchCombo.SelectedIndexChanged += new System.EventHandler(this.SearchCombo_SelectedIndexChanged);
+            // 
+            // anchorsCombo
+            // 
+            this.anchorsCombo.DropDownWidth = 600;
+            this.anchorsCombo.Name = "anchorsCombo";
+            this.anchorsCombo.Size = new System.Drawing.Size(200, 23);
+            this.anchorsCombo.ToolTipText = "Anchors";
+            this.anchorsCombo.SelectedIndexChanged += new System.EventHandler(this.AnchorsCombo_SelectedIndexChanged);
+            // 
+            // comboToolStrip
+            // 
+            this.comboToolStrip.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
+            this.comboToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.searchCombo,
+            this.anchorsCombo});
+            this.comboToolStrip.Location = new System.Drawing.Point(0, 25);
+            this.comboToolStrip.Name = "comboToolStrip";
+            this.comboToolStrip.Size = new System.Drawing.Size(400, 27);
+            this.comboToolStrip.TabIndex = 1;
+            this.comboToolStrip.Text = "comboToolStrip";
+            // 
+            // helpWebView2
+            // 
+            this.helpWebView2.AllowExternalDrop = true;
+            this.helpWebView2.CreationProperties = null;
+            this.helpWebView2.DefaultBackgroundColor = System.Drawing.Color.White;
+            this.helpWebView2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.helpWebView2.Location = new System.Drawing.Point(0, 52);
+            this.helpWebView2.Name = "helpWebView2";
+            this.helpWebView2.Size = new System.Drawing.Size(400, 548);
+            this.helpWebView2.TabIndex = 1;
+            this.helpWebView2.ZoomFactor = 1D;
+            this.helpWebView2.NavigationCompleted += new System.EventHandler<Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs>(this.HelpWebView2_NavigationCompleted);
             // 
             // HelpControl
             // 

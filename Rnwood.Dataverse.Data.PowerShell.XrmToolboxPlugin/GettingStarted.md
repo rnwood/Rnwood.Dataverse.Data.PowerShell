@@ -1,10 +1,16 @@
-# Getting Started with PowerShell Scripting Plugin
-
 Welcome to **PowerShell Scripting Workspace** for XrmToolbox! This plugin provides a powerful PowerShell scripting environment directly within XrmToolbox, pre-loaded with the `Rnwood.Dataverse.Data.PowerShell` module and automatically connected to your current Dataverse environment.
 
 ## Basic Concepts and Detailed Help
 
-Use the combo box above to browse the README including conceptual info and examples.
+Info about the Dataverse Powershell module:
+- [Core Concepts](https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/main/README.md#core-concepts)
+- [Main Commands](https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/main/README.md#main-cmdlets)
+Use the combo box above to browse the other sections of the docs.
+
+Getting started with PowerShell scripting:
+- [PowerShell 101](https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/00-introduction?view=powershell-7.5)
+- [PowerShell syntax cheat sheet](https://practicalpowershell.com/wp-content/uploads/2020/04/PowerShellQuickReference-PowerShell7.0-v1.03.pdf)
+
 
 ## Editor Keyboard Shortcuts
 

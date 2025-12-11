@@ -37,6 +37,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private void InitializeComponent()
         {
             this.toolbar = new System.Windows.Forms.ToolStrip();
+            this.loginButton = new System.Windows.Forms.ToolStripButton();
+            this.refreshButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.statusLabel = new System.Windows.Forms.ToolStripLabel();
             this.loadingProgressBar = new System.Windows.Forms.ToolStripProgressBar();
@@ -50,11 +52,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.listView = new System.Windows.Forms.ListView();
             this.titleColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.authorColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.tagsColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.votesColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.commentsColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.dateColumn = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.detailPanel = new System.Windows.Forms.Panel();
             this.detailWebView = new Microsoft.Web.WebView2.WinForms.WebView2();
             this.commentPanel = new System.Windows.Forms.FlowLayoutPanel();
@@ -62,13 +62,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.commentTextBox = new System.Windows.Forms.TextBox();
             this.addCommentButton = new System.Windows.Forms.Button();
             this.detailToolbar = new System.Windows.Forms.ToolStrip();
-            this.thumbsDownButton = new System.Windows.Forms.ToolStripButton();
             this.loadToEditorButton = new System.Windows.Forms.ToolStripButton();
             this.editButton = new System.Windows.Forms.ToolStripButton();
             this.closeButton = new System.Windows.Forms.ToolStripButton();
             this.upvoteButton = new System.Windows.Forms.ToolStripButton();
-            this.loginButton = new System.Windows.Forms.ToolStripButton();
-            this.refreshButton = new System.Windows.Forms.ToolStripButton();
+            this.thumbsDownButton = new System.Windows.Forms.ToolStripButton();
             this.toolbar.SuspendLayout();
             this.filterPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
@@ -84,11 +82,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // toolbar
             // 
             this.toolbar.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
-            this.loadingProgressBar.Name = "loadingProgressBar";
-            this.loadingProgressBar.Size = new System.Drawing.Size(100, 16);
-            this.loadingProgressBar.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
-            this.loadingProgressBar.Visible = false;
-
             this.toolbar.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.loginButton,
             this.refreshButton,
@@ -100,6 +93,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.toolbar.Size = new System.Drawing.Size(1043, 25);
             this.toolbar.TabIndex = 0;
             // 
+            // loginButton
+            // 
+            this.loginButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.login_custom;
+            this.loginButton.Name = "loginButton";
+            this.loginButton.Size = new System.Drawing.Size(112, 22);
+            this.loginButton.Text = "Login to GitHub";
+            this.loginButton.Click += new System.EventHandler(this.LoginButton_Click);
+            // 
+            // refreshButton
+            // 
+            this.refreshButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.refresh_custom;
+            this.refreshButton.Name = "refreshButton";
+            this.refreshButton.Size = new System.Drawing.Size(66, 22);
+            this.refreshButton.Text = "Refresh";
+            this.refreshButton.Click += new System.EventHandler(this.RefreshButton_Click);
+            // 
             // toolStripSeparator
             // 
             this.toolStripSeparator.Name = "toolStripSeparator";
@@ -110,6 +119,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.statusLabel.Name = "statusLabel";
             this.statusLabel.Size = new System.Drawing.Size(80, 22);
             this.statusLabel.Text = "Not logged in";
+            // 
+            // loadingProgressBar
+            // 
+            this.loadingProgressBar.Name = "loadingProgressBar";
+            this.loadingProgressBar.Size = new System.Drawing.Size(100, 22);
+            this.loadingProgressBar.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
+            this.loadingProgressBar.Visible = false;
             // 
             // filterPanel
             // 
@@ -124,7 +140,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.filterPanel.Dock = System.Windows.Forms.DockStyle.Top;
             this.filterPanel.Location = new System.Drawing.Point(0, 25);
             this.filterPanel.Name = "filterPanel";
-            this.filterPanel.Size = new System.Drawing.Size(1043, 33);
+            this.filterPanel.Size = new System.Drawing.Size(1043, 44);
             this.filterPanel.TabIndex = 1;
             // 
             // searchLabel
@@ -135,16 +151,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.searchLabel.AutoSize = true;
             this.searchLabel.Location = new System.Drawing.Point(3, 0);
             this.searchLabel.Name = "searchLabel";
-            this.searchLabel.Size = new System.Drawing.Size(44, 29);
+            this.searchLabel.Size = new System.Drawing.Size(75, 40);
             this.searchLabel.TabIndex = 0;
             this.searchLabel.Text = "Search:";
             this.searchLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // searchTextBox
             // 
-            this.searchTextBox.Location = new System.Drawing.Point(53, 3);
+            this.searchTextBox.Location = new System.Drawing.Point(84, 3);
             this.searchTextBox.Name = "searchTextBox";
-            this.searchTextBox.Size = new System.Drawing.Size(150, 20);
+            this.searchTextBox.Size = new System.Drawing.Size(150, 29);
             this.searchTextBox.TabIndex = 1;
             // 
             // tagFilterLabel
@@ -153,9 +169,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tagFilterLabel.AutoSize = true;
-            this.tagFilterLabel.Location = new System.Drawing.Point(209, 0);
+            this.tagFilterLabel.Location = new System.Drawing.Point(240, 0);
             this.tagFilterLabel.Name = "tagFilterLabel";
-            this.tagFilterLabel.Size = new System.Drawing.Size(29, 29);
+            this.tagFilterLabel.Size = new System.Drawing.Size(48, 40);
             this.tagFilterLabel.TabIndex = 2;
             this.tagFilterLabel.Text = "Tag:";
             this.tagFilterLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -164,7 +180,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // 
             this.tagFilterComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.tagFilterComboBox.FormattingEnabled = true;
-            this.tagFilterComboBox.Location = new System.Drawing.Point(244, 3);
+            this.tagFilterComboBox.Location = new System.Drawing.Point(294, 3);
             this.tagFilterComboBox.Name = "tagFilterComboBox";
             this.tagFilterComboBox.Size = new System.Drawing.Size(150, 21);
             this.tagFilterComboBox.TabIndex = 3;
@@ -175,22 +191,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.mySubmissionsCheckBox.AutoSize = true;
-            this.mySubmissionsCheckBox.Location = new System.Drawing.Point(400, 3);
+            this.mySubmissionsCheckBox.Location = new System.Drawing.Point(450, 3);
             this.mySubmissionsCheckBox.Name = "mySubmissionsCheckBox";
-            this.mySubmissionsCheckBox.Size = new System.Drawing.Size(101, 23);
+            this.mySubmissionsCheckBox.Size = new System.Drawing.Size(166, 34);
             this.mySubmissionsCheckBox.TabIndex = 4;
             this.mySubmissionsCheckBox.Text = "My Submissions";
             this.mySubmissionsCheckBox.UseVisualStyleBackColor = true;
-            // 
-            // applyFilterButton removed - use automatic filtering
             // 
             // clearFilterButton
             // 
             this.clearFilterButton.AutoSize = true;
             this.clearFilterButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.clearFilterButton.Location = new System.Drawing.Point(556, 3);
+            this.clearFilterButton.Location = new System.Drawing.Point(622, 3);
             this.clearFilterButton.Name = "clearFilterButton";
-            this.clearFilterButton.Size = new System.Drawing.Size(41, 23);
+            this.clearFilterButton.Size = new System.Drawing.Size(64, 34);
             this.clearFilterButton.TabIndex = 5;
             this.clearFilterButton.Text = "Clear";
             this.clearFilterButton.UseVisualStyleBackColor = true;
@@ -199,7 +213,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // splitContainer
             // 
             this.splitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer.Location = new System.Drawing.Point(0, 58);
+            this.splitContainer.Location = new System.Drawing.Point(0, 69);
             this.splitContainer.Name = "splitContainer";
             this.splitContainer.Orientation = System.Windows.Forms.Orientation.Horizontal;
             // 
@@ -210,25 +224,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // splitContainer.Panel2
             // 
             this.splitContainer.Panel2.Controls.Add(this.detailPanel);
-            this.splitContainer.Size = new System.Drawing.Size(1043, 1133);
-            this.splitContainer.SplitterDistance = 446;
+            this.splitContainer.Size = new System.Drawing.Size(1043, 1122);
+            this.splitContainer.SplitterDistance = 440;
             this.splitContainer.TabIndex = 1;
             // 
             // listView
             // 
             this.listView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.titleColumn,
-            this.authorColumn,
             this.tagsColumn,
             this.votesColumn,
-            this.commentsColumn,
-            this.dateColumn});
+            this.commentsColumn});
             this.listView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.listView.FullRowSelect = true;
             this.listView.HideSelection = false;
             this.listView.Location = new System.Drawing.Point(0, 0);
             this.listView.Name = "listView";
-            this.listView.Size = new System.Drawing.Size(1043, 446);
+            this.listView.Size = new System.Drawing.Size(1043, 440);
             this.listView.TabIndex = 0;
             this.listView.UseCompatibleStateImageBehavior = false;
             this.listView.View = System.Windows.Forms.View.Details;
@@ -239,29 +251,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.titleColumn.Text = "Title";
             this.titleColumn.Width = 200;
             // 
-            // authorColumn
-            // 
-            this.authorColumn.Text = "Author";
-            this.authorColumn.Width = 100;
-            // 
             // tagsColumn
             // 
             this.tagsColumn.Text = "Tags";
-            this.tagsColumn.Width = 120;
+            this.tagsColumn.Width = 80;
             // 
             // votesColumn
             // 
             this.votesColumn.Text = "Votes";
+            this.votesColumn.Width = 45;
             // 
             // commentsColumn
             // 
-            this.commentsColumn.Text = "Comments";
-            this.commentsColumn.Width = 80;
-            // 
-            // dateColumn
-            // 
-            this.dateColumn.Text = "Date";
-            this.dateColumn.Width = 100;
+            this.commentsColumn.Text = "Cmnts";
+            this.commentsColumn.Width = 45;
             // 
             // detailPanel
             // 
@@ -271,7 +274,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.detailPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.detailPanel.Location = new System.Drawing.Point(0, 0);
             this.detailPanel.Name = "detailPanel";
-            this.detailPanel.Size = new System.Drawing.Size(1043, 683);
+            this.detailPanel.Size = new System.Drawing.Size(1043, 678);
             this.detailPanel.TabIndex = 0;
             // 
             // detailWebView
@@ -280,9 +283,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.detailWebView.CreationProperties = null;
             this.detailWebView.DefaultBackgroundColor = System.Drawing.Color.White;
             this.detailWebView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.detailWebView.Location = new System.Drawing.Point(0, 31);
+            this.detailWebView.Location = new System.Drawing.Point(0, 25);
             this.detailWebView.Name = "detailWebView";
-            this.detailWebView.Size = new System.Drawing.Size(1043, 517);
+            this.detailWebView.Size = new System.Drawing.Size(1043, 496);
             this.detailWebView.TabIndex = 1;
             this.detailWebView.ZoomFactor = 1D;
             // 
@@ -295,9 +298,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.commentPanel.Controls.Add(this.addCommentButton);
             this.commentPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.commentPanel.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-            this.commentPanel.Location = new System.Drawing.Point(0, 548);
+            this.commentPanel.Location = new System.Drawing.Point(0, 521);
             this.commentPanel.Name = "commentPanel";
-            this.commentPanel.Size = new System.Drawing.Size(1043, 135);
+            this.commentPanel.Size = new System.Drawing.Size(1043, 157);
             this.commentPanel.TabIndex = 2;
             this.commentPanel.WrapContents = false;
             // 
@@ -306,14 +309,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.commentLabel.AutoSize = true;
             this.commentLabel.Location = new System.Drawing.Point(3, 0);
             this.commentLabel.Name = "commentLabel";
-            this.commentLabel.Size = new System.Drawing.Size(76, 13);
+            this.commentLabel.Size = new System.Drawing.Size(137, 24);
             this.commentLabel.TabIndex = 0;
             this.commentLabel.Text = "Add Comment:";
             // 
             // commentTextBox
             // 
             this.commentTextBox.Dock = System.Windows.Forms.DockStyle.Left;
-            this.commentTextBox.Location = new System.Drawing.Point(3, 16);
+            this.commentTextBox.Location = new System.Drawing.Point(3, 27);
             this.commentTextBox.Multiline = true;
             this.commentTextBox.Name = "commentTextBox";
             this.commentTextBox.Size = new System.Drawing.Size(1037, 87);
@@ -323,9 +326,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             // 
             this.addCommentButton.AutoSize = true;
             this.addCommentButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.addCommentButton.Location = new System.Drawing.Point(3, 109);
+            this.addCommentButton.Location = new System.Drawing.Point(3, 120);
             this.addCommentButton.Name = "addCommentButton";
-            this.addCommentButton.Size = new System.Drawing.Size(61, 23);
+            this.addCommentButton.Size = new System.Drawing.Size(102, 34);
             this.addCommentButton.TabIndex = 2;
             this.addCommentButton.Text = "Comment";
             this.addCommentButton.UseVisualStyleBackColor = true;
@@ -342,17 +345,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.thumbsDownButton});
             this.detailToolbar.Location = new System.Drawing.Point(0, 0);
             this.detailToolbar.Name = "detailToolbar";
-            this.detailToolbar.Size = new System.Drawing.Size(1043, 31);
+            this.detailToolbar.Size = new System.Drawing.Size(1043, 25);
             this.detailToolbar.TabIndex = 0;
-            // 
-            // thumbsDownButton
-            // 
-            this.thumbsDownButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.thumb_down_outline_custom;
-            this.thumbsDownButton.Name = "thumbsDownButton";
-            this.thumbsDownButton.Size = new System.Drawing.Size(105, 22);
-            this.thumbsDownButton.Text = "Thumbs Down";
-            this.thumbsDownButton.ToolTipText = "Thumbs Down";
-            this.thumbsDownButton.Click += new System.EventHandler(this.ThumbsDownButton_Click);
             // 
             // loadToEditorButton
             // 
@@ -389,21 +383,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             this.upvoteButton.ToolTipText = "Thumbs Up";
             this.upvoteButton.Click += new System.EventHandler(this.UpvoteButton_Click);
             // 
-            // loginButton
+            // thumbsDownButton
             // 
-            this.loginButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.login_custom;
-            this.loginButton.Name = "loginButton";
-            this.loginButton.Size = new System.Drawing.Size(112, 22);
-            this.loginButton.Text = "Login to GitHub";
-            this.loginButton.Click += new System.EventHandler(this.LoginButton_Click);
-            // 
-            // refreshButton
-            // 
-            this.refreshButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.refresh_custom;
-            this.refreshButton.Name = "refreshButton";
-            this.refreshButton.Size = new System.Drawing.Size(66, 22);
-            this.refreshButton.Text = "Refresh";
-            this.refreshButton.Click += new System.EventHandler(this.RefreshButton_Click);
+            this.thumbsDownButton.Image = global::Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.Properties.Resources.thumb_down_outline_custom;
+            this.thumbsDownButton.Name = "thumbsDownButton";
+            this.thumbsDownButton.Size = new System.Drawing.Size(105, 22);
+            this.thumbsDownButton.Text = "Thumbs Down";
+            this.thumbsDownButton.ToolTipText = "Thumbs Down";
+            this.thumbsDownButton.Click += new System.EventHandler(this.ThumbsDownButton_Click);
             // 
             // ScriptGalleryControl
             // 
@@ -450,11 +437,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private SplitContainer splitContainer;
         private ListView listView;
         private ColumnHeader titleColumn;
-        private ColumnHeader authorColumn;
         private ColumnHeader tagsColumn;
         private ColumnHeader votesColumn;
         private ColumnHeader commentsColumn;
-        private ColumnHeader dateColumn;
         private Panel detailPanel;
         private ToolStrip detailToolbar;
         private ToolStripButton loadToEditorButton;

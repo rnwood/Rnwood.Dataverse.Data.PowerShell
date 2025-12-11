@@ -19,6 +19,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private string pendingScrollId = null;
         private string pendingScrollParamName = null;
         private bool suppressAnchorsScroll = false;
+        private bool webViewEventsHooked = false;
 
         private class ComboItem
         {
@@ -73,6 +74,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             progressBar.Visible = false;
             backButton.Enabled = helpWebView2.CoreWebView2?.CanGoBack == true;
             forwardButton.Enabled = helpWebView2.CoreWebView2?.CanGoForward == true;
+
+            if (!e.IsSuccess)
+            {
+                return;
+            }
             
             if (pendingScrollParamName != null)
             {
@@ -82,7 +88,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
             }
             else if (pendingScrollId != null)
             {
-                helpWebView2.CoreWebView2.ExecuteScriptAsync($"document.getElementById('{pendingScrollId}').scrollIntoView();");
+                helpWebView2.CoreWebView2.ExecuteScriptAsync($"var el = document.getElementById('{pendingScrollId.Replace("'", "\\'")}'); if(el) el.scrollIntoView();");
                 
                 foreach (ComboItem item in anchorsCombo.Items)
                 {
@@ -96,6 +102,31 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 }
 
                 pendingScrollId = null;
+            }
+        }
+
+        private void CoreWebView2_NavigationStarting(object sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationStartingEventArgs e)
+        {
+            if (Uri.TryCreate(e.Uri, UriKind.Absolute, out Uri uri))
+            {
+                if (uri.Host.Equals("raw.githubusercontent.com", StringComparison.OrdinalIgnoreCase) &&
+                    uri.AbsolutePath.StartsWith("/rnwood/Rnwood.Dataverse.Data.PowerShell/", StringComparison.OrdinalIgnoreCase) &&
+                    uri.AbsolutePath.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+                {
+                    e.Cancel = true;
+
+                    if (!string.IsNullOrEmpty(uri.Fragment))
+                    {
+                        pendingScrollId = uri.Fragment.TrimStart('#');
+                    }
+                    else
+                    {
+                        pendingScrollId = null;
+                    }
+
+                    string fetchUrl = uri.GetLeftPart(UriPartial.Path);
+                    this.BeginInvoke(new Action(() => { var _ = LoadAndShowHelp(fetchUrl); }));
+                }
             }
         }
 
@@ -149,6 +180,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 // Wrap in basic HTML structure
                 string html = $@"<html>
 <head>
+<base href=""https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/main/"" />
 <style>
 body {{
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -267,6 +299,12 @@ hr {{
                 if (helpWebView2.CoreWebView2 == null)
                 {
                     await helpWebView2.EnsureCoreWebView2Async();
+                }
+
+                if (!webViewEventsHooked)
+                {
+                    helpWebView2.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
+                    webViewEventsHooked = true;
                 }
 
                 helpWebView2.NavigateToString(html);

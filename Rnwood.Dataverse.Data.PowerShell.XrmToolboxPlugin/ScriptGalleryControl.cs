@@ -459,11 +459,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 foreach (var discussion in _discussions)
                 {
                     var item = new ListViewItem(discussion.Title);
-                    item.SubItems.Add(discussion.Author);
+                  
                     item.SubItems.Add(string.Join(", ", discussion.Tags));
                     item.SubItems.Add(discussion.UpvoteCount.ToString());
                     item.SubItems.Add(discussion.CommentCount.ToString());
-                    item.SubItems.Add(discussion.CreatedAt.ToShortDateString());
                     item.Tag = discussion;
                     listView.Items.Add(item);
                 }

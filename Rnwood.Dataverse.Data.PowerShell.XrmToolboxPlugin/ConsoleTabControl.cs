@@ -3,6 +3,7 @@ using System;
 using System.Drawing;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -20,6 +21,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
         private PowerShellVersion _powerShellVersion = PowerShellVersion.Desktop;
 
         // ConEmuControl kept as a private field via designer
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+        [DllImport("shcore.dll")]
+        private static extern int GetDpiForMonitor(IntPtr hmonitor, int dpiType, out uint dpiX, out uint dpiY);
+
+        private enum MONITOR_DPI_TYPE
+        {
+            MDT_EFFECTIVE_DPI = 0,
+            MDT_ANGULAR_DPI = 1,
+            MDT_RAW_DPI = 2
+        }
+
+        private const uint MONITOR_DEFAULTTONEAREST = 2;
+
         public ConsoleTabControl()
         {
             InitializeComponent();
@@ -89,11 +105,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                     configXml.Load(stream);
                 }
 
-                if (Graphics.FromHwnd(Handle).DpiX <= 96)
+                //Deals with DPI scaling issue with the conemu control when it's running in 
+                // XRM Toolbox which is not DPI aware.
+                IntPtr monitor = MonitorFromWindow(Handle, MONITOR_DEFAULTTONEAREST);
+                uint dpiX, dpiY;
+                GetDpiForMonitor(monitor, (int)MONITOR_DPI_TYPE.MDT_RAW_DPI, out dpiX, out dpiY);
+                if (dpiX != 96)
                 { 
                     // Dynamically set font size - DPI issue
                     var fontSizeNode = configXml.SelectSingleNode("//value[@name='FontSize']");
-                    fontSizeNode.Attributes["data"].Value = "12";
+                    fontSizeNode.Attributes["data"].Value = Math.Floor(12.0 * (96.0/(float)dpiX)).ToString();
                 }
 
 

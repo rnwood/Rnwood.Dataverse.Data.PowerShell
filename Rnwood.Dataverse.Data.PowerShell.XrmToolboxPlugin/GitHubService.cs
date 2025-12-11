@@ -158,7 +158,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin
                 _currentUsername = user.Login;
 
                 _currentDeviceFlowResponse = null;
-
                 SaveToken(token.AccessToken);
 
                 return (true, $"Successfully authenticated as {_currentUsername}", false);
