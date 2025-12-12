@@ -395,3 +395,93 @@ Describe "Get-DataverseConnection Certificate Authentication" {
         }
     }
 }
+
+Describe "Get-DataverseConnection ConnectionString Authentication" {
+    Context "Parameter validation" {
+        It "ConnectionString parameter exists" {
+            $null = getMockConnection
+            $cmd = Get-Command Get-DataverseConnection
+            $cmd.Parameters.ContainsKey('ConnectionString') | Should -Be $true
+        }
+
+        It "ConnectionString parameter is in correct parameter set" {
+            $null = getMockConnection
+            $cmd = Get-Command Get-DataverseConnection
+            $connStringParam = $cmd.Parameters['ConnectionString']
+            $connStringParam.ParameterSets.Keys | Should -Contain 'Authenticate with Dataverse SDK connection string.'
+        }
+
+        It "ConnectionString parameter is mandatory" {
+            $null = getMockConnection
+            $cmd = Get-Command Get-DataverseConnection
+            $connStringParam = $cmd.Parameters['ConnectionString']
+            $connStringParam.ParameterSets['Authenticate with Dataverse SDK connection string.'].IsMandatory | Should -Be $true
+        }
+
+        It "Url parameter is NOT mandatory for ConnectionString parameter set" {
+            $null = getMockConnection
+            $cmd = Get-Command Get-DataverseConnection
+            $urlParam = $cmd.Parameters['Url']
+            
+            # Check if Url parameter is in the ConnectionString parameter set
+            $hasConnectionStringSet = $urlParam.ParameterSets.Keys -contains 'Authenticate with Dataverse SDK connection string.'
+            
+            if ($hasConnectionStringSet) {
+                # If Url is in the parameter set, it should NOT be mandatory
+                $urlParam.ParameterSets['Authenticate with Dataverse SDK connection string.'].IsMandatory | Should -Be $false
+            } else {
+                # If Url is not in the parameter set at all, that's also acceptable
+                # This is actually what we expect - Url should not be in the ConnectionString parameter set
+                $hasConnectionStringSet | Should -Be $false
+            }
+        }
+
+        It "ConnectionString parameter accepts string" {
+            $null = getMockConnection
+            $cmd = Get-Command Get-DataverseConnection
+            $connStringParam = $cmd.Parameters['ConnectionString']
+            $connStringParam.ParameterType | Should -Be ([string])
+        }
+    }
+
+    Context "Usage scenarios" {
+        It "Can use ConnectionString without Url parameter" {
+            # This test verifies that the cmdlet accepts just -ConnectionString parameter
+            # We can't test actual connection without real credentials, but we can verify
+            # the parameter set is accepted
+            
+            # Create a mock connection string (won't work but will test parameter acceptance)
+            $testConnectionString = "AuthType=OAuth;Url=https://test.crm.dynamics.com;ClientId=12345678-1234-1234-1234-123456789abc;ClientSecret=secret"
+            
+            # Verify the parameter set is valid by checking if the cmdlet accepts these parameters
+            $cmd = Get-Command Get-DataverseConnection
+            $parameterSet = $cmd.ParameterSets | Where-Object { $_.Name -eq 'Authenticate with Dataverse SDK connection string.' }
+            $parameterSet | Should -Not -BeNullOrEmpty
+            
+            # Verify that only ConnectionString is required, not Url
+            $requiredParams = $parameterSet.Parameters | Where-Object { $_.IsMandatory }
+            $requiredParamNames = $requiredParams | Select-Object -ExpandProperty Name
+            
+            $requiredParamNames | Should -Contain 'ConnectionString'
+            $requiredParamNames | Should -Not -Contain 'Url'
+        }
+
+        It "ConnectionString parameter set name is correct" {
+            $null = getMockConnection
+            $cmd = Get-Command Get-DataverseConnection
+            $parameterSets = $cmd.ParameterSets | Select-Object -ExpandProperty Name
+            $parameterSets | Should -Contain 'Authenticate with Dataverse SDK connection string.'
+        }
+
+        It "SetAsDefault works with ConnectionString parameter set" {
+            # Test that the SetAsDefault parameter is available on ConnectionString parameter set
+            $null = getMockConnection
+            $cmd = Get-Command Get-DataverseConnection
+            $parameterSet = $cmd.ParameterSets | Where-Object { $_.Name -eq 'Authenticate with Dataverse SDK connection string.' }
+            $parameterSet | Should -Not -BeNullOrEmpty
+            
+            $setAsDefaultParam = $parameterSet.Parameters | Where-Object { $_.Name -eq 'SetAsDefault' }
+            $setAsDefaultParam | Should -Not -BeNullOrEmpty
+        }
+    }
+}
