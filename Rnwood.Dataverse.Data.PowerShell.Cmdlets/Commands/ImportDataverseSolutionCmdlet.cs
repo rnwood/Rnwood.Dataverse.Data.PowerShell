@@ -250,12 +250,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     if (SkipIfSameVersion.IsPresent && versionComparison == 0)
                     {
                         WriteWarning($"Skipping import: Solution '{solutionUniqueName}' version {sourceSolutionVersion} is already installed (same version).");
+                        
+                        // Check and update connection references and environment variables if provided
+                        CheckAndUpdateSolutionComponents(solutionUniqueName);
+                        
                         return;
                     }
                     
                     if (SkipIfLowerVersion.IsPresent && versionComparison < 0)
                     {
                         WriteWarning($"Skipping import: Solution '{solutionUniqueName}' version {sourceSolutionVersion} is lower than installed version {installedVersion}.");
+                        
+                        // Check and update connection references and environment variables if provided
+                        CheckAndUpdateSolutionComponents(solutionUniqueName);
+                        
                         return;
                     }
                     
@@ -1188,6 +1196,378 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             return null;
+        }
+
+        private void CheckAndUpdateSolutionComponents(string solutionUniqueName)
+        {
+            WriteVerbose("Checking and updating connection references and environment variables from solution...");
+
+            // First try to find the _Upgrade solution, then fall back to the base solution
+            string upgradeSolutionName = $"{solutionUniqueName}_Upgrade";
+            Guid solutionId = Guid.Empty;
+            string actualSolutionName = null;
+
+            // Try to find the upgrade solution first
+            var upgradeSolutionQuery = new QueryExpression("solution")
+            {
+                ColumnSet = new ColumnSet("solutionid", "uniquename"),
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression("uniquename", ConditionOperator.Equal, upgradeSolutionName)
+                    }
+                },
+                TopCount = 1
+            };
+
+            var upgradeSolutions = Connection.RetrieveMultiple(upgradeSolutionQuery);
+            if (upgradeSolutions.Entities.Count > 0)
+            {
+                solutionId = upgradeSolutions.Entities[0].Id;
+                actualSolutionName = upgradeSolutionName;
+                WriteVerbose($"Found upgrade solution '{upgradeSolutionName}' with ID: {solutionId}");
+            }
+            else
+            {
+                // Upgrade solution not found, try the base solution
+                WriteVerbose($"Upgrade solution '{upgradeSolutionName}' not found, checking for base solution '{solutionUniqueName}'");
+                
+                var solutionQuery = new QueryExpression("solution")
+                {
+                    ColumnSet = new ColumnSet("solutionid", "uniquename"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("uniquename", ConditionOperator.Equal, solutionUniqueName)
+                        }
+                    },
+                    TopCount = 1
+                };
+
+                var solutions = Connection.RetrieveMultiple(solutionQuery);
+                if (solutions.Entities.Count == 0)
+                {
+                    WriteVerbose($"Solution '{solutionUniqueName}' not found in target environment. Cannot determine which components belong to the solution.");
+                    return;
+                }
+
+                solutionId = solutions.Entities[0].Id;
+                actualSolutionName = solutionUniqueName;
+                WriteVerbose($"Found solution '{solutionUniqueName}' with ID: {solutionId}");
+            }
+
+            // Query solution components to find connection references and environment variables in this solution
+            var componentQuery = new QueryExpression("solutioncomponent")
+            {
+                ColumnSet = new ColumnSet("objectid", "componenttype"),
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression("solutionid", ConditionOperator.Equal, solutionId),
+                        new ConditionExpression("componenttype", ConditionOperator.In, new object[] { 380, 635 }) // 380 = Environment Variable Definition, 635 = Connection Reference
+                    }
+                }
+            };
+
+            var allSolutionComponents = new List<Entity>();
+            EntityCollection result;
+            do
+            {
+                result = Connection.RetrieveMultiple(componentQuery);
+                allSolutionComponents.AddRange(result.Entities);
+                if (result.MoreRecords)
+                {
+                    componentQuery.PageInfo.PageNumber++;
+                    componentQuery.PageInfo.PagingCookie = result.PagingCookie;
+                }
+            } while (result.MoreRecords);
+
+            WriteVerbose($"Found {allSolutionComponents.Count} connection reference(s) and environment variable(s) in solution");
+
+            // Separate components by type
+            var connectionReferenceIds = allSolutionComponents
+                .Where(c => c.GetAttributeValue<OptionSetValue>("componenttype")?.Value == 635)
+                .Select(c => c.GetAttributeValue<Guid>("objectid"))
+                .ToList();
+
+            var environmentVariableDefinitionIds = allSolutionComponents
+                .Where(c => c.GetAttributeValue<OptionSetValue>("componenttype")?.Value == 380)
+                .Select(c => c.GetAttributeValue<Guid>("objectid"))
+                .ToList();
+
+            // Build dictionaries of components to check - only those in the solution and provided by user
+            Dictionary<string, string> connectionReferencesToCheck = new Dictionary<string, string>();
+            Dictionary<string, string> environmentVariablesToCheck = new Dictionary<string, string>();
+
+            // Query connection reference logical names for the IDs in the solution
+            List<string> solutionConnRefNames = new List<string>();
+            if (connectionReferenceIds.Count > 0)
+            {
+                var connRefQuery = new QueryExpression("connectionreference")
+                {
+                    ColumnSet = new ColumnSet("connectionreferenceid", "connectionreferencelogicalname"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("connectionreferenceid", ConditionOperator.In, connectionReferenceIds.ToArray())
+                        }
+                    }
+                };
+
+                var connRefs = Connection.RetrieveMultiple(connRefQuery);
+                solutionConnRefNames = connRefs.Entities
+                    .Select(e => e.GetAttributeValue<string>("connectionreferencelogicalname"))
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .ToList();
+            }
+
+            // Query environment variable schema names for the IDs in the solution
+            List<string> solutionEnvVarNames = new List<string>();
+            if (environmentVariableDefinitionIds.Count > 0)
+            {
+                var envVarDefQuery = new QueryExpression("environmentvariabledefinition")
+                {
+                    ColumnSet = new ColumnSet("environmentvariabledefinitionid", "schemaname"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("environmentvariabledefinitionid", ConditionOperator.In, environmentVariableDefinitionIds.ToArray())
+                        }
+                    }
+                };
+
+                var envVarDefs = Connection.RetrieveMultiple(envVarDefQuery);
+                solutionEnvVarNames = envVarDefs.Entities
+                    .Select(e => e.GetAttributeValue<string>("schemaname"))
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .ToList();
+            }
+
+            // Validate that all required connection references and environment variables have been provided
+            // This uses the same validation logic as the normal import path
+            if (!SkipConnectionReferenceValidation.IsPresent)
+            {
+                ValidateConnectionReferences(solutionConnRefNames);
+            }
+
+            if (!SkipEnvironmentVariableValidation.IsPresent)
+            {
+                ValidateEnvironmentVariables(solutionEnvVarNames);
+            }
+
+            // Process connection references - build list of those to update
+            if (ConnectionReferences != null && ConnectionReferences.Count > 0 && solutionConnRefNames.Count > 0)
+            {
+                var solutionConnRefNamesSet = new HashSet<string>(solutionConnRefNames, StringComparer.OrdinalIgnoreCase);
+
+                foreach (DictionaryEntry entry in ConnectionReferences)
+                {
+                    var connRefName = entry.Key.ToString();
+                    var connectionId = entry.Value.ToString();
+
+                    // Only check if it's in the solution
+                    if (solutionConnRefNamesSet.Contains(connRefName))
+                    {
+                        connectionReferencesToCheck[connRefName] = connectionId;
+                    }
+                    else
+                    {
+                        WriteVerbose($"Connection reference '{connRefName}' is not in the solution, skipping.");
+                    }
+                }
+            }
+
+            // Process environment variables - build list of those to update
+            if (EnvironmentVariables != null && EnvironmentVariables.Count > 0 && solutionEnvVarNames.Count > 0)
+            {
+                var solutionEnvVarNamesSet = new HashSet<string>(solutionEnvVarNames, StringComparer.OrdinalIgnoreCase);
+
+                foreach (DictionaryEntry entry in EnvironmentVariables)
+                {
+                    var envVarName = entry.Key.ToString();
+                    var envVarValue = entry.Value.ToString();
+
+                    // Only check if it's in the solution
+                    if (solutionEnvVarNamesSet.Contains(envVarName))
+                    {
+                        environmentVariablesToCheck[envVarName] = envVarValue;
+                    }
+                    else
+                    {
+                        WriteVerbose($"Environment variable '{envVarName}' is not in the solution, skipping.");
+                    }
+                }
+            }
+
+            // Update connection references if needed
+            if (connectionReferencesToCheck.Count > 0)
+            {
+                WriteVerbose($"Checking {connectionReferencesToCheck.Count} connection reference(s) from solution...");
+                UpdateConnectionReferencesIfDifferent(connectionReferencesToCheck);
+            }
+
+            // Update environment variables if needed
+            if (environmentVariablesToCheck.Count > 0)
+            {
+                WriteVerbose($"Checking {environmentVariablesToCheck.Count} environment variable(s) from solution...");
+                UpdateEnvironmentVariablesIfDifferent(environmentVariablesToCheck);
+            }
+        }
+
+        private void UpdateConnectionReferencesIfDifferent(Dictionary<string, string> connectionReferencesToSet)
+        {
+            foreach (var kvp in connectionReferencesToSet)
+            {
+                var logicalName = kvp.Key;
+                var desiredConnectionId = kvp.Value;
+
+                WriteVerbose($"Checking connection reference '{logicalName}'...");
+
+                // Query for the connection reference by logical name
+                var query = new QueryExpression("connectionreference")
+                {
+                    ColumnSet = new ColumnSet("connectionreferenceid", "connectionreferencelogicalname", "connectionid"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("connectionreferencelogicalname", ConditionOperator.Equal, logicalName)
+                        }
+                    },
+                    TopCount = 1
+                };
+
+                var results = Connection.RetrieveMultiple(query);
+
+                if (results.Entities.Count == 0)
+                {
+                    WriteVerbose($"  Connection reference '{logicalName}' not found in target environment. Skipping update (will be created during solution import).");
+                    continue;
+                }
+
+                var connRef = results.Entities[0];
+                var connRefId = connRef.Id;
+                var currentConnectionId = connRef.GetAttributeValue<string>("connectionid");
+
+                WriteVerbose($"  Current connection ID: {currentConnectionId ?? "(none)"}");
+                WriteVerbose($"  Desired connection ID: {desiredConnectionId}");
+
+                // Update only if different
+                if (desiredConnectionId != currentConnectionId)
+                {
+                    WriteVerbose($"  Connection reference '{logicalName}' has different value. Updating...");
+
+                    var updateEntity = new Entity("connectionreference", connRefId);
+                    updateEntity["connectionid"] = desiredConnectionId;
+
+                    Connection.Update(updateEntity);
+                    WriteVerbose($"  Successfully updated connection reference '{logicalName}'");
+                }
+                else
+                {
+                    WriteVerbose($"  Connection reference '{logicalName}' already has the desired value. No update needed.");
+                }
+            }
+        }
+
+        private void UpdateEnvironmentVariablesIfDifferent(Dictionary<string, string> environmentVariablesToSet)
+        {
+            // Query for existing environment variable values by schema name
+            var existingEnvVarValuesBySchemaName = GetExistingEnvironmentVariableValueIds(environmentVariablesToSet.Keys.ToList());
+
+            foreach (var kvp in environmentVariablesToSet)
+            {
+                var schemaName = kvp.Key;
+                var desiredValue = kvp.Value;
+
+                WriteVerbose($"Checking environment variable '{schemaName}'...");
+
+                // Query for the environment variable definition by schema name
+                var defQuery = new QueryExpression("environmentvariabledefinition")
+                {
+                    ColumnSet = new ColumnSet("environmentvariabledefinitionid", "schemaname"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("schemaname", ConditionOperator.Equal, schemaName)
+                        }
+                    },
+                    TopCount = 1
+                };
+
+                var defResults = Connection.RetrieveMultiple(defQuery);
+
+                if (defResults.Entities.Count == 0)
+                {
+                    WriteVerbose($"  Environment variable definition '{schemaName}' not found in target environment. Skipping update (will be created during solution import).");
+                    continue;
+                }
+
+                var envVarDef = defResults.Entities[0];
+                var envVarDefId = envVarDef.Id;
+
+                // Check if there's an existing value record
+                if (existingEnvVarValuesBySchemaName.TryGetValue(schemaName, out var existingValueId))
+                {
+                    // Query the current value
+                    var valueQuery = new QueryExpression("environmentvariablevalue")
+                    {
+                        ColumnSet = new ColumnSet("value"),
+                        Criteria = new FilterExpression
+                        {
+                            Conditions =
+                            {
+                                new ConditionExpression("environmentvariablevalueid", ConditionOperator.Equal, existingValueId)
+                            }
+                        },
+                        TopCount = 1
+                    };
+
+                    var valueResults = Connection.RetrieveMultiple(valueQuery);
+                    if (valueResults.Entities.Count > 0)
+                    {
+                        var currentValue = valueResults.Entities[0].GetAttributeValue<string>("value");
+                        
+                        WriteVerbose($"  Current value: {currentValue ?? "(none)"}");
+                        WriteVerbose($"  Desired value: {desiredValue}");
+
+                        // Update only if different
+                        if (desiredValue != currentValue)
+                        {
+                            WriteVerbose($"  Environment variable '{schemaName}' has different value. Updating...");
+
+                            var updateEntity = new Entity("environmentvariablevalue", existingValueId);
+                            updateEntity["value"] = desiredValue;
+
+                            Connection.Update(updateEntity);
+                            WriteVerbose($"  Successfully updated environment variable value for '{schemaName}'");
+                        }
+                        else
+                        {
+                            WriteVerbose($"  Environment variable '{schemaName}' already has the desired value. No update needed.");
+                        }
+                    }
+                }
+                else
+                {
+                    // No existing value record - create one
+                    WriteVerbose($"  Environment variable '{schemaName}' has no value record. Creating...");
+
+                    var createEntity = new Entity("environmentvariablevalue");
+                    createEntity["schemaname"] = schemaName;
+                    createEntity["value"] = desiredValue;
+                    createEntity["environmentvariabledefinitionid"] = new EntityReference("environmentvariabledefinition", envVarDefId);
+
+                    var newValueId = Connection.Create(createEntity);
+                    WriteVerbose($"  Successfully created environment variable value for '{schemaName}' (ID: {newValueId})");
+                }
+            }
         }
     }
 }
