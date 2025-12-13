@@ -133,6 +133,9 @@ Processes input objects in parallel using chunked batches with cloned Dataverse 
 ### [Invoke-DataverseRequest](Invoke-DataverseRequest.md)
 Invokes an arbitrary Dataverse request and returns the response.
 
+### [Invoke-DataverseSolutionUpgrade](Invoke-DataverseSolutionUpgrade.md)
+Applies a staged solution upgrade by deleting the original solution and promoting the holding solution.
+
 ### [Invoke-DataverseSql](Invoke-DataverseSql.md)
 Invokes a Dataverse SQL query using Sql4Cds and writes any resulting rows to the pipeline.
 

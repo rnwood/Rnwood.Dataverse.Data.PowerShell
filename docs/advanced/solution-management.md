@@ -113,6 +113,24 @@ Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -M
 Import-DataverseSolution -Connection $c -SolutionBytes $bytes
 ```
 
+#### Applying staged solution upgrades
+
+- `Invoke-DataverseSolutionUpgrade` completes a solution upgrade that was previously staged using Import-DataverseSolution with -Mode HoldingSolution or -Mode StageAndUpgrade
+- It deletes the original solution and promotes the holding solution (named SolutionName_Upgrade) to become the active solution
+- Uses the Microsoft.Crm.Sdk.Messages.DeleteAndPromoteRequest to perform the upgrade atomically
+- The operation is atomic - both the delete and promote happen together
+- Use `-IfExists` to check if the holding solution exists before attempting the upgrade
+- See the full parameter reference: [Invoke-DataverseSolutionUpgrade](../../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSolutionUpgrade.md).
+
+**Typical upgrade workflow:**
+1. Import a new version of one or more solutions using `Import-DataverseSolution -Mode HoldingSolution` or `-Mode StageAndUpgrade` (creates SolutionName_Upgrade)
+2. Apply any data migration steps that are needed before old tables and columns disappear.
+3. Run `Invoke-DataverseSolutionUpgrade -SolutionName "SolutionName"` to complete the upgrade on the solutions.
+
+For step 1, solutions must be in dependency order.
+
+for step 3, solutions must be reversed.
+
 #### Analyzing Solution Components
 
 > [!NOTE]
