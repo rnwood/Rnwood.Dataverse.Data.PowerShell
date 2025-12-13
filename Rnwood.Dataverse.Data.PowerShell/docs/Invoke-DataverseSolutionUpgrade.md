@@ -13,15 +13,16 @@ Applies a staged solution upgrade by deleting the original solution and promotin
 ## SYNTAX
 
 ```
-Invoke-DataverseSolutionUpgrade [-SolutionName] <String> [-IfExists] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Invoke-DataverseSolutionUpgrade [-SolutionName] <String> [-IfExists] [-PollingIntervalSeconds <Int32>]
+ [-TimeoutSeconds <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 
-This cmdlet completes a solution upgrade that was previously staged using Import-DataverseSolution with -Mode HoldingSolution or -Mode StageAndUpgrade. It deletes the original solution and promotes the holding solution (named SolutionName_Upgrade) to become the active solution.
+This cmdlet completes a solution upgrade that was previously staged using Import-DataverseSolution with -Mode HoldingSolution or -Mode StageAndUpgrade. It deletes the original solution and promotes the holding solution (named SolutionName_Upgrade) to become the active solution using an asynchronous job with progress reporting.
 
-The cmdlet uses the Microsoft.Crm.Sdk.Messages.DeleteAndPromoteRequest to perform the upgrade atomically.
+The cmdlet uses the Microsoft.Crm.Sdk.Messages.DeleteAndPromoteRequest wrapped in Microsoft.Xrm.Sdk.Messages.ExecuteAsyncRequest to perform the upgrade asynchronously. The cmdlet monitors the async operation and reports progress using PowerShell's progress bar.
 
 **Typical upgrade workflow:**
 1. Import a new version of the solution using `Import-DataverseSolution -Mode HoldingSolution` or `-Mode StageAndUpgrade`. This creates a holding solution named `SolutionName_Upgrade`.
@@ -59,9 +60,10 @@ Are you sure you want to perform this action?
 Performing the operation "Apply upgrade" on target "Solution 'MySolution'".
 [Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is "Y"): Y
 
-SolutionName      : MySolution
+SolutionName        : MySolution
 HoldingSolutionName : MySolution_Upgrade
-Status           : Success
+AsyncOperationId    : {87654321-4321-4321-4321-210987654321}
+Status              : Succeeded
 ```
 
 Applies the upgrade with explicit confirmation.
@@ -81,9 +83,10 @@ PS C:\> # ... perform testing ...
 PS C:\> # Step 3: Apply the upgrade to promote the holding solution
 PS C:\> Invoke-DataverseSolutionUpgrade -SolutionName "MySolution"
 
-SolutionName      : MySolution
+SolutionName        : MySolution
 HoldingSolutionName : MySolution_Upgrade
-Status           : Success
+AsyncOperationId    : {11111111-2222-3333-4444-555555555555}
+Status              : Succeeded
 ```
 
 Complete workflow showing how to stage a solution upgrade and then apply it.
@@ -92,9 +95,10 @@ Complete workflow showing how to stage a solution upgrade and then apply it.
 ```powershell
 PS C:\> Invoke-DataverseSolutionUpgrade -SolutionName "MySolution" -Confirm:$false
 
-SolutionName      : MySolution
+SolutionName        : MySolution
 HoldingSolutionName : MySolution_Upgrade
-Status           : Success
+AsyncOperationId    : {abcdef12-3456-7890-abcd-ef1234567890}
+Status              : Succeeded
 ```
 
 Applies the upgrade without prompting for confirmation.
@@ -109,6 +113,18 @@ PS C:\> Invoke-DataverseSolutionUpgrade -SolutionName "MySolution" -IfExists
 ```
 
 Useful in deployment scripts where you want to conditionally apply an upgrade only if a holding solution exists.
+
+### Example 7: Apply upgrade with custom timeout
+```powershell
+PS C:\> Invoke-DataverseSolutionUpgrade -SolutionName "LargeSolution" -TimeoutSeconds 7200 -PollingIntervalSeconds 10
+
+SolutionName        : LargeSolution
+HoldingSolutionName : LargeSolution_Upgrade
+AsyncOperationId    : {99999999-8888-7777-6666-555555555555}
+Status              : Succeeded
+```
+
+Applies the upgrade for a large solution with a 2-hour timeout and checks status every 10 seconds.
 
 ## PARAMETERS
 
@@ -144,6 +160,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -PollingIntervalSeconds
+Polling interval in seconds for checking upgrade status. Default is 5 seconds.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 5
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ProgressAction
 {{ Fill ProgressAction Description }}
 
@@ -170,6 +201,21 @@ Aliases:
 Required: True
 Position: 0
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TimeoutSeconds
+Timeout in seconds for the upgrade operation. Default is 3600 seconds (1 hour).
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 3600
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -215,13 +261,16 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Object
 ## NOTES
 
-This cmdlet uses the DeleteAndPromoteRequest API to atomically delete the original solution and promote the holding solution.
+This cmdlet uses the DeleteAndPromoteRequest API wrapped in ExecuteAsyncRequest to asynchronously and atomically delete the original solution and promote the holding solution. The cmdlet monitors the async operation and reports progress using PowerShell's progress bar.
 
 **Important considerations:**
 - The holding solution (SolutionName_Upgrade) must exist before running this cmdlet
 - The operation is atomic - both the delete and promote happen together
 - This operation cannot be undone - ensure you've tested the holding solution before applying the upgrade
 - If the -IfExists switch is not used and the holding solution doesn't exist, an error will occur
+- The operation runs asynchronously and the cmdlet monitors progress with configurable timeout and polling intervals
+- Progress is reported using PowerShell's progress API showing current status
+- The async operation can be canceled by pressing Ctrl+C
 
 **Upgrade workflow:**
 1. Stage the upgrade using `Import-DataverseSolution -Mode HoldingSolution` or `-Mode StageAndUpgrade`
@@ -230,6 +279,7 @@ This cmdlet uses the DeleteAndPromoteRequest API to atomically delete the origin
 
 See also:
 - https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.deleteandpromoterequest
+- https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.executeasyncrequest
 
 ## RELATED LINKS
 

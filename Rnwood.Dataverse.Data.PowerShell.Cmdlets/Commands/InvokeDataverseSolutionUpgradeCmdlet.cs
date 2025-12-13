@@ -1,7 +1,10 @@
 using System;
 using System.Management.Automation;
+using System.Threading;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Query;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -24,6 +27,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(HelpMessage = "Check if the holding solution (SolutionName_Upgrade) exists before attempting to apply the upgrade. If it doesn't exist, skip the operation.")]
         public SwitchParameter IfExists { get; set; }
+
+        /// <summary>
+        /// Gets or sets the polling interval in seconds for checking upgrade status. Default is 5 seconds.
+        /// </summary>
+        [Parameter(HelpMessage = "Polling interval in seconds for checking upgrade status. Default is 5.")]
+        public int PollingIntervalSeconds { get; set; } = 5;
+
+        /// <summary>
+        /// Gets or sets the timeout in seconds for the upgrade operation. Default is 3600 seconds (1 hour).
+        /// </summary>
+        [Parameter(HelpMessage = "Timeout in seconds for the upgrade operation. Default is 3600 (1 hour).")]
+        public int TimeoutSeconds { get; set; } = 3600;
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -53,24 +68,108 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
-            WriteVerbose($"Applying upgrade for solution '{SolutionName}' using holding solution '{holdingSolutionName}'...");
+            WriteVerbose($"Starting asynchronous upgrade for solution '{SolutionName}' using holding solution '{holdingSolutionName}'...");
 
-            // Create and execute DeleteAndPromoteRequest
-            var request = new DeleteAndPromoteRequest
+            // Create progress record
+            var progressRecord = new ProgressRecord(1, "Applying Solution Upgrade", $"Applying upgrade for solution '{SolutionName}'")
+            {
+                PercentComplete = 0
+            };
+            WriteProgress(progressRecord);
+
+            // Create DeleteAndPromoteRequest wrapped in ExecuteAsyncRequest
+            var deleteAndPromoteRequest = new DeleteAndPromoteRequest
             {
                 UniqueName = SolutionName
             };
 
-            Connection.Execute(request);
+            var asyncRequest = new ExecuteAsyncRequest
+            {
+                Request = deleteAndPromoteRequest
+            };
 
-            WriteVerbose($"Successfully applied upgrade for solution '{SolutionName}'.");
+            var asyncResponse = (ExecuteAsyncResponse)Connection.Execute(asyncRequest);
+            var asyncOperationId = asyncResponse.AsyncJobId;
 
-            // Output result
-            var result = new PSObject();
-            result.Properties.Add(new PSNoteProperty("SolutionName", SolutionName));
-            result.Properties.Add(new PSNoteProperty("HoldingSolutionName", holdingSolutionName));
-            result.Properties.Add(new PSNoteProperty("Status", "Success"));
-            WriteObject(result);
+            WriteVerbose($"Upgrade request submitted. AsyncOperationId: {asyncOperationId}. Monitoring upgrade progress...");
+
+            // Monitor the asynchronous operation
+            var startTime = DateTime.UtcNow;
+            var timeout = TimeSpan.FromSeconds(TimeoutSeconds);
+            var pollingInterval = TimeSpan.FromSeconds(PollingIntervalSeconds);
+
+            while (true)
+            {
+                // Check for timeout
+                if (DateTime.UtcNow - startTime > timeout)
+                {
+                    progressRecord.RecordType = ProgressRecordType.Completed;
+                    WriteProgress(progressRecord);
+                    ThrowTerminatingError(new ErrorRecord(
+                        new TimeoutException($"Solution upgrade timed out after {TimeoutSeconds} seconds."),
+                        "UpgradeTimeout",
+                        ErrorCategory.OperationTimeout,
+                        SolutionName));
+                    return;
+                }
+
+                // Check if stopping has been requested
+                if (Stopping)
+                {
+                    progressRecord.RecordType = ProgressRecordType.Completed;
+                    WriteProgress(progressRecord);
+                    WriteWarning("Solution upgrade was stopped by user.");
+                    return;
+                }
+
+                // Retrieve the async operation status
+                var asyncOp = Connection.Retrieve("asyncoperation", asyncOperationId, new ColumnSet("statecode", "statuscode", "message"));
+                var stateCode = asyncOp.GetAttributeValue<OptionSetValue>("statecode")?.Value ?? -1;
+
+                if (stateCode == 3) // Completed
+                {
+                    var statusCode = asyncOp.GetAttributeValue<OptionSetValue>("statuscode")?.Value ?? -1;
+                    if (statusCode == 30) // Succeeded
+                    {
+                        progressRecord.PercentComplete = 100;
+                        progressRecord.RecordType = ProgressRecordType.Completed;
+                        WriteProgress(progressRecord);
+                        WriteVerbose($"Successfully applied upgrade for solution '{SolutionName}'.");
+
+                        // Output result
+                        var result = new PSObject();
+                        result.Properties.Add(new PSNoteProperty("SolutionName", SolutionName));
+                        result.Properties.Add(new PSNoteProperty("HoldingSolutionName", holdingSolutionName));
+                        result.Properties.Add(new PSNoteProperty("AsyncOperationId", asyncOperationId));
+                        result.Properties.Add(new PSNoteProperty("Status", "Succeeded"));
+                        WriteObject(result);
+                        return;
+                    }
+                    else
+                    {
+                        // Failed or other status
+                        var message = asyncOp.GetAttributeValue<string>("message") ?? "Unknown error during upgrade.";
+                        progressRecord.RecordType = ProgressRecordType.Completed;
+                        WriteProgress(progressRecord);
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Solution upgrade failed: {message}"),
+                            "UpgradeFailed",
+                            ErrorCategory.OperationStopped,
+                            SolutionName));
+                        return;
+                    }
+                }
+
+                // Operation still in progress
+                progressRecord.StatusDescription = "Applying upgrade...";
+                progressRecord.PercentComplete = 50;
+                WriteProgress(progressRecord);
+
+                WriteVerbose("Upgrade operation in progress. Waiting before checking again...");
+
+                // Wait before polling again
+                Thread.Sleep(pollingInterval);
+            }
         }
 
         private bool DoesHoldingSolutionExist(string holdingSolutionName)
