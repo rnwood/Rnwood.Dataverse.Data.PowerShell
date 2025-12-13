@@ -113,6 +113,40 @@ Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" -M
 Import-DataverseSolution -Connection $c -SolutionBytes $bytes
 ```
 
+#### Applying staged solution upgrades
+
+- `Invoke-DataverseSolutionUpgrade` completes a solution upgrade that was previously staged using Import-DataverseSolution with -Mode HoldingSolution or -Mode StageAndUpgrade
+- It deletes the original solution and promotes the holding solution (named SolutionName_Upgrade) to become the active solution
+- Uses the Microsoft.Crm.Sdk.Messages.DeleteAndPromoteRequest to perform the upgrade atomically
+- The operation is atomic - both the delete and promote happen together
+- Use `-IfExists` to check if the holding solution exists before attempting the upgrade
+- See the full parameter reference: [Invoke-DataverseSolutionUpgrade](../../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSolutionUpgrade.md).
+
+**Typical upgrade workflow:**
+1. Import a new version using `Import-DataverseSolution -Mode HoldingSolution` or `-Mode StageAndUpgrade` (creates SolutionName_Upgrade)
+2. Test the holding solution to verify it works correctly
+3. Run `Invoke-DataverseSolutionUpgrade -SolutionName "SolutionName"` to complete the upgrade
+
+Examples:
+
+```powershell
+# Complete upgrade workflow
+# Step 1: Import solution as holding solution for upgrade
+Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution_v2.zip" -Mode HoldingSolution
+
+# Step 2: Test the holding solution (MySolution_Upgrade)
+# ... perform testing ...
+
+# Step 3: Apply the upgrade to promote the holding solution
+Invoke-DataverseSolutionUpgrade -Connection $c -SolutionName "MySolution"
+
+# Apply upgrade with existence check (useful for deployment scripts)
+Invoke-DataverseSolutionUpgrade -Connection $c -SolutionName "MySolution" -IfExists
+
+# Apply upgrade with confirmation
+Invoke-DataverseSolutionUpgrade -Connection $c -SolutionName "MySolution" -Confirm
+```
+
 #### Analyzing Solution Components
 
 > [!NOTE]
