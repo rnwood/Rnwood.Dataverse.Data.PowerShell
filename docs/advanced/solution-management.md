@@ -123,29 +123,13 @@ Import-DataverseSolution -Connection $c -SolutionBytes $bytes
 - See the full parameter reference: [Invoke-DataverseSolutionUpgrade](../../Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSolutionUpgrade.md).
 
 **Typical upgrade workflow:**
-1. Import a new version using `Import-DataverseSolution -Mode HoldingSolution` or `-Mode StageAndUpgrade` (creates SolutionName_Upgrade)
-2. Test the holding solution to verify it works correctly
-3. Run `Invoke-DataverseSolutionUpgrade -SolutionName "SolutionName"` to complete the upgrade
+1. Import a new version of one or more solutions using `Import-DataverseSolution -Mode HoldingSolution` or `-Mode StageAndUpgrade` (creates SolutionName_Upgrade)
+2. Apply any data migration steps that are needed before old tables and columns disappear.
+3. Run `Invoke-DataverseSolutionUpgrade -SolutionName "SolutionName"` to complete the upgrade on the solutions.
 
-Examples:
+For step 1, solutions must be in dependency order.
 
-```powershell
-# Complete upgrade workflow
-# Step 1: Import solution as holding solution for upgrade
-Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution_v2.zip" -Mode HoldingSolution
-
-# Step 2: Test the holding solution (MySolution_Upgrade)
-# ... perform testing ...
-
-# Step 3: Apply the upgrade to promote the holding solution
-Invoke-DataverseSolutionUpgrade -Connection $c -SolutionName "MySolution"
-
-# Apply upgrade with existence check (useful for deployment scripts)
-Invoke-DataverseSolutionUpgrade -Connection $c -SolutionName "MySolution" -IfExists
-
-# Apply upgrade with confirmation
-Invoke-DataverseSolutionUpgrade -Connection $c -SolutionName "MySolution" -Confirm
-```
+for step 3, solutions must be reversed.
 
 #### Analyzing Solution Components
 
