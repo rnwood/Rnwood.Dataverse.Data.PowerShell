@@ -32,12 +32,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the polling interval in seconds for checking upgrade status. Default is 5 seconds.
         /// </summary>
         [Parameter(HelpMessage = "Polling interval in seconds for checking upgrade status. Default is 5.")]
+        [ValidateRange(1, int.MaxValue)]
         public int PollingIntervalSeconds { get; set; } = 5;
 
         /// <summary>
         /// Gets or sets the timeout in seconds for the upgrade operation. Default is 3600 seconds (1 hour).
         /// </summary>
         [Parameter(HelpMessage = "Timeout in seconds for the upgrade operation. Default is 3600 (1 hour).")]
+        [ValidateRange(1, int.MaxValue)]
         public int TimeoutSeconds { get; set; } = 3600;
 
         /// <summary>
