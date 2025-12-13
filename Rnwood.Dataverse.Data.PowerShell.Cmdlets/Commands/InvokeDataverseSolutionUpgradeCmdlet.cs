@@ -138,13 +138,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         WriteProgress(progressRecord);
                         WriteVerbose($"Successfully applied upgrade for solution '{SolutionName}'.");
 
-                        // Output result
-                        var result = new PSObject();
-                        result.Properties.Add(new PSNoteProperty("SolutionName", SolutionName));
-                        result.Properties.Add(new PSNoteProperty("HoldingSolutionName", holdingSolutionName));
-                        result.Properties.Add(new PSNoteProperty("AsyncOperationId", asyncOperationId));
-                        result.Properties.Add(new PSNoteProperty("Status", "Succeeded"));
-                        WriteObject(result);
                         return;
                     }
                     else
