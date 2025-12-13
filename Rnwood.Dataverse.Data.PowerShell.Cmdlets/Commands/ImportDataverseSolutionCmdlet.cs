@@ -1302,10 +1302,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             Dictionary<string, string> connectionReferencesToCheck = new Dictionary<string, string>();
             Dictionary<string, string> environmentVariablesToCheck = new Dictionary<string, string>();
 
-            // Process connection references
-            if (ConnectionReferences != null && ConnectionReferences.Count > 0 && connectionReferenceIds.Count > 0)
+            // Query connection reference logical names for the IDs in the solution
+            List<string> solutionConnRefNames = new List<string>();
+            if (connectionReferenceIds.Count > 0)
             {
-                // Query connection reference logical names for the IDs in the solution
                 var connRefQuery = new QueryExpression("connectionreference")
                 {
                     ColumnSet = new ColumnSet("connectionreferenceid", "connectionreferencelogicalname"),
@@ -1319,32 +1319,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
 
                 var connRefs = Connection.RetrieveMultiple(connRefQuery);
-                var solutionConnRefNames = new HashSet<string>(
-                    connRefs.Entities.Select(e => e.GetAttributeValue<string>("connectionreferencelogicalname")),
-                    StringComparer.OrdinalIgnoreCase
-                );
-
-                foreach (DictionaryEntry entry in ConnectionReferences)
-                {
-                    var connRefName = entry.Key.ToString();
-                    var connectionId = entry.Value.ToString();
-
-                    // Only check if it's in the solution
-                    if (solutionConnRefNames.Contains(connRefName))
-                    {
-                        connectionReferencesToCheck[connRefName] = connectionId;
-                    }
-                    else
-                    {
-                        WriteVerbose($"Connection reference '{connRefName}' is not in the solution, skipping.");
-                    }
-                }
+                solutionConnRefNames = connRefs.Entities
+                    .Select(e => e.GetAttributeValue<string>("connectionreferencelogicalname"))
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .ToList();
             }
 
-            // Process environment variables
-            if (EnvironmentVariables != null && EnvironmentVariables.Count > 0 && environmentVariableDefinitionIds.Count > 0)
+            // Query environment variable schema names for the IDs in the solution
+            List<string> solutionEnvVarNames = new List<string>();
+            if (environmentVariableDefinitionIds.Count > 0)
             {
-                // Query environment variable schema names for the IDs in the solution
                 var envVarDefQuery = new QueryExpression("environmentvariabledefinition")
                 {
                     ColumnSet = new ColumnSet("environmentvariabledefinitionid", "schemaname"),
@@ -1358,10 +1342,50 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
 
                 var envVarDefs = Connection.RetrieveMultiple(envVarDefQuery);
-                var solutionEnvVarNames = new HashSet<string>(
-                    envVarDefs.Entities.Select(e => e.GetAttributeValue<string>("schemaname")),
-                    StringComparer.OrdinalIgnoreCase
-                );
+                solutionEnvVarNames = envVarDefs.Entities
+                    .Select(e => e.GetAttributeValue<string>("schemaname"))
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .ToList();
+            }
+
+            // Validate that all required connection references and environment variables have been provided
+            // This uses the same validation logic as the normal import path
+            if (!SkipConnectionReferenceValidation.IsPresent)
+            {
+                ValidateConnectionReferences(solutionConnRefNames);
+            }
+
+            if (!SkipEnvironmentVariableValidation.IsPresent)
+            {
+                ValidateEnvironmentVariables(solutionEnvVarNames);
+            }
+
+            // Process connection references - build list of those to update
+            if (ConnectionReferences != null && ConnectionReferences.Count > 0 && solutionConnRefNames.Count > 0)
+            {
+                var solutionConnRefNamesSet = new HashSet<string>(solutionConnRefNames, StringComparer.OrdinalIgnoreCase);
+
+                foreach (DictionaryEntry entry in ConnectionReferences)
+                {
+                    var connRefName = entry.Key.ToString();
+                    var connectionId = entry.Value.ToString();
+
+                    // Only check if it's in the solution
+                    if (solutionConnRefNamesSet.Contains(connRefName))
+                    {
+                        connectionReferencesToCheck[connRefName] = connectionId;
+                    }
+                    else
+                    {
+                        WriteVerbose($"Connection reference '{connRefName}' is not in the solution, skipping.");
+                    }
+                }
+            }
+
+            // Process environment variables - build list of those to update
+            if (EnvironmentVariables != null && EnvironmentVariables.Count > 0 && solutionEnvVarNames.Count > 0)
+            {
+                var solutionEnvVarNamesSet = new HashSet<string>(solutionEnvVarNames, StringComparer.OrdinalIgnoreCase);
 
                 foreach (DictionaryEntry entry in EnvironmentVariables)
                 {
@@ -1369,7 +1393,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var envVarValue = entry.Value.ToString();
 
                     // Only check if it's in the solution
-                    if (solutionEnvVarNames.Contains(envVarName))
+                    if (solutionEnvVarNamesSet.Contains(envVarName))
                     {
                         environmentVariablesToCheck[envVarName] = envVarValue;
                     }
