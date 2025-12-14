@@ -1107,18 +1107,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Querying for existing environment variable values for {schemaNames.Count} schema name(s)...");
 
-            // Query for environment variable values by schema name
+            // Query for environment variable values by joining with definition
+            // The schemaname field in environmentvariablevalue may not be reliably populated
+            // (older records may contain a GUID instead of the actual schema name),
+            // so we must use the schemaname from the environmentvariabledefinition instead.
             var query = new QueryExpression("environmentvariablevalue")
             {
-                ColumnSet = new ColumnSet("environmentvariablevalueid", "schemaname"),
-                Criteria = new FilterExpression
-                {
-                    Conditions =
-                        {
-                            new ConditionExpression("schemaname", ConditionOperator.In, schemaNames.ToArray())
-                        }
-                }
+                ColumnSet = new ColumnSet("environmentvariablevalueid")
             };
+
+            // Add link to environmentvariabledefinition to get the reliable schema name
+            var defLink = query.AddLink("environmentvariabledefinition", "environmentvariabledefinitionid", "environmentvariabledefinitionid");
+            defLink.Columns = new ColumnSet("schemaname");
+            defLink.EntityAlias = "def";
+            
+            // Filter by the definition's schemaname, not the value's schemaname
+            defLink.LinkCriteria.AddCondition("schemaname", ConditionOperator.In, schemaNames.ToArray());
 
             var allResults = new List<Entity>();
             EntityCollection ec;
@@ -1135,9 +1139,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             foreach (var entity in allResults)
             {
-                if (entity.Contains("schemaname"))
+                // Get the schema name from the linked definition entity (via alias)
+                var schemaNameAlias = entity.GetAttributeValue<AliasedValue>("def.schemaname");
+                var schemaName = schemaNameAlias?.Value as string;
+                
+                if (!string.IsNullOrEmpty(schemaName))
                 {
-                    var schemaName = entity.GetAttributeValue<string>("schemaname");
                     result[schemaName] = entity.Id;
                     WriteVerbose($"  Found existing value for '{schemaName}': {entity.Id}");
                 }
