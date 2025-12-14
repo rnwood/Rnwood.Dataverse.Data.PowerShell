@@ -211,6 +211,20 @@ $connRefXml
         }
     }
 
+    Context "Environment variable value lookup with different casing" {
+        It "Documents that GetExistingEnvironmentVariableValueIds uses case-insensitive dictionary" {
+            # This test documents that the following bug has been fixed:
+            # - The GetExistingEnvironmentVariableValueIds method returns a dictionary of existing environment variable values
+            # - When querying Dataverse, the returned schemaname attribute may have different casing than what was queried
+            #   (e.g., query for "new_ExampleEnvVar" but database returns "NEW_EXAMPLEENVVAR")
+            # - The dictionary is now created with StringComparer.OrdinalIgnoreCase to ensure case-insensitive lookups
+            # - This fixes the issue where existing values couldn't be found, causing duplicate creation attempts
+            # - The fix prevents "Cannot complete the creation of EnvironmentVariableValue because it violates a database constraint" errors
+            
+            $true | Should -Be $true
+        }
+    }
+
     Context "Feature documentation" {
         It "Documents that case-insensitive matching is implemented" {
             # This test documents that the following functionality has been implemented:

@@ -1098,7 +1098,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private Dictionary<string, Guid> GetExistingEnvironmentVariableValueIds(List<string> schemaNames)
         {
-            var result = new Dictionary<string, Guid>();
+            var result = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
 
             if (schemaNames == null || schemaNames.Count == 0)
             {
