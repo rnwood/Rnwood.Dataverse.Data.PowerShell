@@ -163,8 +163,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "Skip import if the solution version in the file is lower than the installed version in the target environment.")]
         public SwitchParameter SkipIfLowerVersion { get; set; }
 
-        // Private fields to store extracted solution component names with correct casing
+        /// <summary>
+        /// Stores connection reference logical names extracted from the solution file with correct casing.
+        /// Populated by ValidateSolutionComponents and used for case-insensitive matching against user-provided hashtable keys.
+        /// </summary>
         private List<string> _solutionConnectionReferenceNames;
+
+        /// <summary>
+        /// Stores environment variable schema names extracted from the solution file with correct casing.
+        /// Populated by ValidateSolutionComponents and used for case-insensitive matching against user-provided hashtable keys.
+        /// </summary>
         private List<string> _solutionEnvironmentVariableNames;
 
         /// <summary>
