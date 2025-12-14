@@ -15,13 +15,25 @@ Compares a solution file with the state of that solution in the target environme
 ### FileToEnvironment
 ```
 Compare-DataverseSolutionComponents [-Connection <ServiceClient>] [-SolutionFile] <String> [-FileToEnvironment]
- [-ReverseComparison] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-ReverseComparison] [-TestIfAdditive] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### BytesToEnvironment
 ```
 Compare-DataverseSolutionComponents [-Connection <ServiceClient>] -SolutionBytes <Byte[]> [-BytesToEnvironment]
- [-ReverseComparison] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-ReverseComparison] [-TestIfAdditive] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### FileToFile
+```
+Compare-DataverseSolutionComponents [-SolutionFile] <String> [-FileToFile] [-TargetSolutionFile] <String>
+ [-TestIfAdditive] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### BytesToFile
+```
+Compare-DataverseSolutionComponents -SolutionBytes <Byte[]> [-BytesToFile] [-TargetSolutionFile] <String>
+ [-TestIfAdditive] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -129,6 +141,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -BytesToFile
+Compare solution bytes with a target solution file.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: BytesToFile
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
 http://server.com/MyOrg/).
@@ -136,7 +163,7 @@ If not provided, uses the default connection set via Get-DataverseConnection -Se
 
 ```yaml
 Type: ServiceClient
-Parameter Sets: (All)
+Parameter Sets: FileToEnvironment, BytesToEnvironment
 Aliases:
 
 Required: False
@@ -152,6 +179,21 @@ Compare a solution file with the environment.
 ```yaml
 Type: SwitchParameter
 Parameter Sets: FileToEnvironment
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FileToFile
+Compare two solution files.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: FileToFile
 Aliases:
 
 Required: True
@@ -181,7 +223,7 @@ Compare environment to file instead of file to environment.
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: (All)
+Parameter Sets: FileToEnvironment, BytesToEnvironment
 Aliases:
 
 Required: False
@@ -196,7 +238,7 @@ Solution file bytes to compare.
 
 ```yaml
 Type: Byte[]
-Parameter Sets: BytesToEnvironment
+Parameter Sets: BytesToEnvironment, BytesToFile
 Aliases:
 
 Required: True
@@ -211,11 +253,41 @@ Path to the solution file (.zip) to compare.
 
 ```yaml
 Type: String
-Parameter Sets: FileToEnvironment
+Parameter Sets: FileToEnvironment, FileToFile
 Aliases:
 
 Required: True
 Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TargetSolutionFile
+Path to the target solution file (.zip) to compare.
+
+```yaml
+Type: String
+Parameter Sets: FileToFile, BytesToFile
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TestIfAdditive
+Test if changes are additive (no removed components or less inclusive behavior changes). Returns true/false, outputs full results to verbose.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -230,6 +302,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
+### System.Boolean
 ## NOTES
 - **Status values**:
   - **Added**: Component exists in source but not in target

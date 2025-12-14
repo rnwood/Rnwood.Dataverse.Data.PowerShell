@@ -17,6 +17,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// </summary>
     [Cmdlet(VerbsData.Compare, "DataverseSolutionComponents")]
     [OutputType(typeof(PSObject))]
+    [OutputType(typeof(bool))]
     public class CompareDataverseSolutionComponentsCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
@@ -30,6 +31,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the path to the solution file to compare.
         /// </summary>
         [Parameter(Mandatory = true, Position = 0, ParameterSetName = "FileToEnvironment", HelpMessage = "Path to the solution file (.zip) to compare with environment.")]
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "FileToFile", HelpMessage = "Path to the source solution file (.zip) to compare with target solution file.")]
         [ValidateNotNullOrEmpty]
         public string SolutionFile { get; set; }
 
@@ -37,6 +39,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the solution file bytes to compare.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipeline = true, ParameterSetName = "BytesToEnvironment", HelpMessage = "Solution file bytes to compare with environment.")]
+        [Parameter(Mandatory = true, ValueFromPipeline = true, ParameterSetName = "BytesToFile", HelpMessage = "Source solution file bytes to compare with target solution file.")]
         public byte[] SolutionBytes { get; set; }
 
         /// <summary>
@@ -52,14 +55,46 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter BytesToEnvironment { get; set; }
 
         /// <summary>
+        /// Switch to compare two solution files.
+        /// </summary>
+        [Parameter(Mandatory = true, ParameterSetName = "FileToFile", HelpMessage = "Compare two solution files.")]
+        public SwitchParameter FileToFile { get; set; }
+
+        /// <summary>
+        /// Switch to compare solution bytes with a target solution file.
+        /// </summary>
+        [Parameter(Mandatory = true, ParameterSetName = "BytesToFile", HelpMessage = "Compare solution bytes with a target solution file.")]
+        public SwitchParameter BytesToFile { get; set; }
+
+        /// <summary>
+        /// Gets or sets the path to the target solution file to compare.
+        /// </summary>
+        [Parameter(Mandatory = true, Position = 1, ParameterSetName = "FileToFile", HelpMessage = "Path to the target solution file (.zip) to compare.")]
+        [Parameter(Mandatory = true, Position = 1, ParameterSetName = "BytesToFile", HelpMessage = "Path to the target solution file (.zip) to compare.")]
+        [ValidateNotNullOrEmpty]
+        public string TargetSolutionFile { get; set; }
+
+        /// <summary>
         /// Gets or sets whether to reverse the comparison direction (compare environment to solution instead of solution to environment).
         /// </summary>
         [Parameter(Mandatory = false, ParameterSetName = "FileToEnvironment", HelpMessage = "Reverse the comparison direction.")]
         [Parameter(Mandatory = false, ParameterSetName = "BytesToEnvironment", HelpMessage = "Reverse the comparison direction.")]
         public SwitchParameter ReverseComparison { get; set; }
 
+        /// <summary>
+        /// Gets or sets whether to test if the changes are additive only.
+        /// When specified, returns true/false based on whether there are zero removed components or less inclusive behavior changes.
+        /// Full comparison results are output to verbose.
+        /// </summary>
+        [Parameter(Mandatory = false, ParameterSetName = "FileToEnvironment", HelpMessage = "Test if changes are additive (no removed components or less inclusive behavior changes). Returns true/false, outputs full results to verbose.")]
+        [Parameter(Mandatory = false, ParameterSetName = "BytesToEnvironment", HelpMessage = "Test if changes are additive (no removed components or less inclusive behavior changes). Returns true/false, outputs full results to verbose.")]
+        [Parameter(Mandatory = false, ParameterSetName = "FileToFile", HelpMessage = "Test if changes are additive (no removed components or less inclusive behavior changes). Returns true/false, outputs full results to verbose.")]
+        [Parameter(Mandatory = false, ParameterSetName = "BytesToFile", HelpMessage = "Test if changes are additive (no removed components or less inclusive behavior changes). Returns true/false, outputs full results to verbose.")]
+        public SwitchParameter TestIfAdditive { get; set; }
+
         // Private fields to store solution file bytes for subcomponent extraction
         private byte[] _sourceSolutionBytes;
+        private byte[] _targetSolutionBytes;
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -68,9 +103,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            // Load solution file (source)
+            // Load source solution file (source)
             byte[] sourceSolutionBytes;
-            if (ParameterSetName == "BytesToEnvironment")
+            if (ParameterSetName == "BytesToEnvironment" || ParameterSetName == "BytesToFile")
             {
                 sourceSolutionBytes = SolutionBytes;
             }
@@ -96,32 +131,64 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Store the source bytes for subcomponent extraction
             _sourceSolutionBytes = sourceSolutionBytes;
 
-            // Extract solution info and components from source file
-            string sourceSolutionName = ExtractSolutionName(sourceSolutionBytes);
-            var sourceExtractor = new FileComponentExtractor(Connection, this, sourceSolutionBytes);
-
-            // Query target environment for the solution
-            var solutionQuery = new QueryExpression("solution")
+            // Handle FileToFile and BytesToFile parameter sets
+            if (ParameterSetName == "FileToFile" || ParameterSetName == "BytesToFile")
             {
-                ColumnSet = new ColumnSet("solutionid", "uniquename", "friendlyname"),
-                Criteria = new FilterExpression
+                // Load target solution file
+                var targetFilePath = GetUnresolvedProviderPathFromPSPath(TargetSolutionFile);
+                if (!File.Exists(targetFilePath))
                 {
-                    Conditions =
- {
-new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionName)
-   }
-                },
-                TopCount = 1
-            };
+                    ThrowTerminatingError(new ErrorRecord(
+                        new FileNotFoundException($"Target solution file not found: {targetFilePath}"),
+                        "TargetFileNotFound",
+                        ErrorCategory.ObjectNotFound,
+                        targetFilePath));
+                    return;
+                }
 
-            var solutions = Connection.RetrieveMultiple(solutionQuery);
+                WriteVerbose($"Loading target solution file from: {targetFilePath}");
+                _targetSolutionBytes = File.ReadAllBytes(targetFilePath);
+                WriteVerbose($"Target solution file size: {_targetSolutionBytes.Length} bytes");
 
-            var solutionId = solutions.Entities[0].Id;
-            WriteVerbose($"Found solution in target environment: {solutionId}");
+                // Extract solution info from both files
+                string sourceSolutionName = ExtractSolutionName(sourceSolutionBytes);
+                string targetSolutionName = ExtractSolutionName(_targetSolutionBytes);
+
+                WriteVerbose($"Comparing solution '{sourceSolutionName}' to '{targetSolutionName}'");
+
+                // Compare components
+                CompareComponentsFileToFile(sourceSolutionName);
+            }
+            else
+            {
+                // Handle FileToEnvironment and BytesToEnvironment parameter sets
+                // Extract solution info and components from source file
+                string sourceSolutionName = ExtractSolutionName(sourceSolutionBytes);
+                var sourceExtractor = new FileComponentExtractor(Connection, this, sourceSolutionBytes);
+
+                // Query target environment for the solution
+                var solutionQuery = new QueryExpression("solution")
+                {
+                    ColumnSet = new ColumnSet("solutionid", "uniquename", "friendlyname"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+     {
+    new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionName)
+       }
+                    },
+                    TopCount = 1
+                };
+
+                var solutions = Connection.RetrieveMultiple(solutionQuery);
+
+                var solutionId = solutions.Entities[0].Id;
+                WriteVerbose($"Found solution in target environment: {solutionId}");
 
 
-            // Compare components
-            CompareComponents(sourceSolutionName, solutionId);
+                // Compare components
+                CompareComponents(sourceSolutionName, solutionId);
+            }
         }
 
         private void OutputComparisonResult(SolutionComponent sourceComponent, SolutionComponent targetComponent,
@@ -202,11 +269,80 @@ new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionNam
             var comparer = new SolutionComponentComparer(sourceExtractor, targetExtractor, this);
             var comparisonResults = comparer.CompareComponents();
 
-            // Output results
+            // Handle TestIfAdditive mode
+            if (TestIfAdditive.IsPresent)
+            {
+                ProcessAdditiveTest(comparisonResults, solutionName);
+            }
+            else
+            {
+                // Output results normally
+                foreach (var result in comparisonResults)
+                {
+                    OutputComparisonResult(result.SourceComponent, result.TargetComponent, result.Status, solutionName, isReversed: false);
+                }
+            }
+        }
+
+        private void CompareComponentsFileToFile(string solutionName)
+        {
+            // Create extractors - Connection can be null for file-to-file comparison
+            IComponentExtractor sourceExtractor = new FileComponentExtractor(Connection, this, _sourceSolutionBytes);
+            IComponentExtractor targetExtractor = new FileComponentExtractor(Connection, this, _targetSolutionBytes);
+
+            // Compare components
+            var comparer = new SolutionComponentComparer(sourceExtractor, targetExtractor, this);
+            var comparisonResults = comparer.CompareComponents();
+
+            // Handle TestIfAdditive mode
+            if (TestIfAdditive.IsPresent)
+            {
+                ProcessAdditiveTest(comparisonResults, solutionName);
+            }
+            else
+            {
+                // Output results normally
+                foreach (var result in comparisonResults)
+                {
+                    OutputComparisonResult(result.SourceComponent, result.TargetComponent, result.Status, solutionName, isReversed: false);
+                }
+            }
+        }
+
+        private void ProcessAdditiveTest(List<SolutionComponentComparisonResult> comparisonResults, string solutionName)
+        {
+            // Count problematic statuses (same logic as Import-DataverseSolution UseUpdateIfAdditive)
+            int targetOnlyCount = comparisonResults.Count(r => r.Status == SolutionComponentStatus.InTargetOnly);
+            int lessInclusiveCount = comparisonResults.Count(r => r.Status == SolutionComponentStatus.InSourceAndTarget_BehaviourLessInclusiveInSource);
+
+            WriteVerbose($"Comparison results: {targetOnlyCount} InTargetOnly, {lessInclusiveCount} InSourceAndTarget_BehaviourLessInclusiveInSource");
+
+            // Output full comparison results to verbose
+            WriteVerbose($"Full comparison results ({comparisonResults.Count} total components):");
             foreach (var result in comparisonResults)
             {
-                OutputComparisonResult(result.SourceComponent, result.TargetComponent, result.Status, solutionName, isReversed: false);
+                string componentName = result.SourceComponent?.UniqueName ?? result.TargetComponent?.UniqueName ?? "Unknown";
+                int componentType = result.SourceComponent?.ComponentType ?? result.TargetComponent?.ComponentType ?? 0;
+                var sourceBehavior = RootComponentBehaviorExtensions.FromInt(result.SourceComponent?.RootComponentBehavior);
+                var targetBehavior = RootComponentBehaviorExtensions.FromInt(result.TargetComponent?.RootComponentBehavior);
+                
+                WriteVerbose($"  Component: Type {componentType} '{componentName}' - Status: {result.Status}, SourceBehavior: {sourceBehavior}, TargetBehavior: {targetBehavior}");
             }
+
+            // Return true if additive (no removed components, no less inclusive behavior changes)
+            bool isAdditive = (targetOnlyCount == 0 && lessInclusiveCount == 0);
+
+            if (isAdditive)
+            {
+                WriteVerbose("Result: Changes are additive (no removed components or less inclusive behavior changes)");
+            }
+            else
+            {
+                WriteVerbose($"Result: Changes are NOT additive ({targetOnlyCount} removed, {lessInclusiveCount} less inclusive)");
+            }
+
+            // Output boolean result
+            WriteObject(isAdditive);
         }
 
         /// <summary>
