@@ -49,11 +49,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     public class ImportDataverseSolutionCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
-        /// Gets or sets the path to the solution file to import.
+        /// Gets or sets the path(s) to the solution file(s) to import. When multiple files are provided, they are imported in order.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "FromFile", HelpMessage = "Path to the solution file (.zip) to import.")]
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "FromFile", HelpMessage = "Path(s) to the solution file(s) (.zip) to import. When multiple files are provided, they are imported in order.")]
         [ValidateNotNullOrEmpty]
-        public string InFile { get; set; }
+        public string[] InFile { get; set; }
 
         /// <summary>
         /// Gets or sets the solution file bytes to import.
@@ -182,40 +182,63 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            // Load solution file
-            byte[] solutionBytes;
             if (ParameterSetName == "FromFile")
             {
-                if (!ShouldProcess($"Solution file '{InFile}'", "Import"))
+                // Process each file in order
+                for (int i = 0; i < InFile.Length; i++)
                 {
-                    return;
-                }
+                    var currentFile = InFile[i];
+                    
+                    if (InFile.Length > 1)
+                    {
+                        WriteVerbose($"Processing solution {i + 1} of {InFile.Length}: {currentFile}");
+                    }
+                    
+                    if (!ShouldProcess($"Solution file '{currentFile}'", "Import"))
+                    {
+                        continue;
+                    }
 
-                var filePath = GetUnresolvedProviderPathFromPSPath(InFile);
-                if (!File.Exists(filePath))
-                {
-                    ThrowTerminatingError(new ErrorRecord(
-                        new FileNotFoundException($"Solution file not found: {filePath}"),
-                        "FileNotFound",
-                        ErrorCategory.ObjectNotFound,
-                        filePath));
-                    return;
-                }
+                    var filePath = GetUnresolvedProviderPathFromPSPath(currentFile);
+                    if (!File.Exists(filePath))
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new FileNotFoundException($"Solution file not found: {filePath}"),
+                            "FileNotFound",
+                            ErrorCategory.ObjectNotFound,
+                            filePath));
+                        return;
+                    }
 
-                WriteVerbose($"{filePath}");
-                solutionBytes = File.ReadAllBytes(filePath);
+                    WriteVerbose($"{filePath}");
+                    var solutionBytes = File.ReadAllBytes(filePath);
+                    WriteVerbose($"Solution file size: {solutionBytes.Length} bytes");
+                    
+                    // Import this solution
+                    ImportSingleSolution(solutionBytes);
+                }
             }
             else
             {
+                // FromBytes parameter set - single solution
                 if (!ShouldProcess("Solution bytes", "Import"))
                 {
                     return;
                 }
 
-                solutionBytes = SolutionFile;
+                WriteVerbose($"Solution file size: {SolutionFile.Length} bytes");
+                
+                // Import single solution
+                ImportSingleSolution(SolutionFile);
             }
+        }
 
-            WriteVerbose($"Solution file size: {solutionBytes.Length} bytes");
+        /// <summary>
+        /// Imports a single solution from byte array.
+        /// </summary>
+        /// <param name="solutionBytes">The solution file bytes</param>
+        private void ImportSingleSolution(byte[] solutionBytes)
+        {
 
             // Validate solution components (connection references and environment variables)
             ValidateSolutionComponents(solutionBytes);

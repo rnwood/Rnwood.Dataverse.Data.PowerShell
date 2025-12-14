@@ -113,7 +113,7 @@ Retrieves the components of a solution from a Dataverse environment.
 Parses a Dataverse solution file and returns metadata information.
 
 ### [Get-DataverseSolutionFileComponent](Get-DataverseSolutionFileComponent.md)
-{{ Fill in the Synopsis }}
+Retrieves the components from a Dataverse solution file (.zip).
 
 ### [Get-DataverseView](Get-DataverseView.md)
 Retrieves view information (savedquery or userquery) from a Dataverse environment.

@@ -16,11 +16,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     public class InvokeDataverseSolutionUpgradeCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
-        /// Gets or sets the unique name of the solution to upgrade.
+        /// Gets or sets the unique name(s) of the solution(s) to upgrade. When multiple names are provided, they are upgraded in order.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, HelpMessage = "The unique name of the solution to upgrade (e.g., 'MySolution'). The holding solution 'MySolution_Upgrade' must exist.")]
+        [Parameter(Mandatory = true, Position = 0, HelpMessage = "The unique name(s) of the solution(s) to upgrade (e.g., 'MySolution'). The holding solution(s) 'MySolution_Upgrade' must exist. When multiple names are provided, they are upgraded in order.")]
         [ValidateNotNullOrEmpty]
-        public string SolutionName { get; set; }
+        public string[] SolutionName { get; set; }
 
         /// <summary>
         /// Gets or sets whether to check if the holding solution exists before attempting to apply the upgrade.
@@ -49,31 +49,53 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            string holdingSolutionName = $"{SolutionName}_Upgrade";
-
-            // Check if holding solution exists when IfExists is specified
-            if (IfExists.IsPresent)
+            // Process each solution in order
+            for (int i = 0; i < SolutionName.Length; i++)
             {
-                WriteVerbose($"Checking if holding solution '{holdingSolutionName}' exists...");
+                var currentSolutionName = SolutionName[i];
                 
-                if (!DoesHoldingSolutionExist(holdingSolutionName))
+                if (SolutionName.Length > 1)
                 {
-                    WriteWarning($"Holding solution '{holdingSolutionName}' does not exist. Skipping upgrade operation.");
-                    return;
+                    WriteVerbose($"Processing solution {i + 1} of {SolutionName.Length}: {currentSolutionName}");
+                }
+                
+                string holdingSolutionName = $"{currentSolutionName}_Upgrade";
+
+                // Check if holding solution exists when IfExists is specified
+                if (IfExists.IsPresent)
+                {
+                    WriteVerbose($"Checking if holding solution '{holdingSolutionName}' exists...");
+                    
+                    if (!DoesHoldingSolutionExist(holdingSolutionName))
+                    {
+                        WriteWarning($"Holding solution '{holdingSolutionName}' does not exist. Skipping upgrade operation.");
+                        continue;
+                    }
+
+                    WriteVerbose($"Holding solution '{holdingSolutionName}' exists.");
                 }
 
-                WriteVerbose($"Holding solution '{holdingSolutionName}' exists.");
-            }
+                if (!ShouldProcess($"Solution '{currentSolutionName}'", "Apply upgrade"))
+                {
+                    continue;
+                }
 
-            if (!ShouldProcess($"Solution '{SolutionName}'", "Apply upgrade"))
-            {
-                return;
+                // Upgrade this solution
+                UpgradeSingleSolution(currentSolutionName);
             }
+        }
 
-            WriteVerbose($"Starting asynchronous upgrade for solution '{SolutionName}' using holding solution '{holdingSolutionName}'...");
+        /// <summary>
+        /// Upgrades a single solution.
+        /// </summary>
+        /// <param name="solutionName">The unique name of the solution to upgrade</param>
+        private void UpgradeSingleSolution(string solutionName)
+        {
+            string holdingSolutionName = $"{solutionName}_Upgrade";
+            WriteVerbose($"Starting asynchronous upgrade for solution '{solutionName}' using holding solution '{holdingSolutionName}'...");
 
             // Create progress record
-            var progressRecord = new ProgressRecord(1, "Applying Solution Upgrade", $"Applying upgrade for solution '{SolutionName}'")
+            var progressRecord = new ProgressRecord(1, "Applying Solution Upgrade", $"Applying upgrade for solution '{solutionName}'")
             {
                 PercentComplete = 0
             };
@@ -82,7 +104,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Create DeleteAndPromoteRequest wrapped in ExecuteAsyncRequest
             var deleteAndPromoteRequest = new DeleteAndPromoteRequest
             {
-                UniqueName = SolutionName
+                UniqueName = solutionName
             };
 
             var asyncRequest = new ExecuteAsyncRequest
@@ -111,7 +133,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         new TimeoutException($"Solution upgrade timed out after {TimeoutSeconds} seconds."),
                         "UpgradeTimeout",
                         ErrorCategory.OperationTimeout,
-                        SolutionName));
+                        solutionName));
                     return;
                 }
 
@@ -136,7 +158,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         progressRecord.PercentComplete = 100;
                         progressRecord.RecordType = ProgressRecordType.Completed;
                         WriteProgress(progressRecord);
-                        WriteVerbose($"Successfully applied upgrade for solution '{SolutionName}'.");
+                        WriteVerbose($"Successfully applied upgrade for solution '{solutionName}'.");
 
                         return;
                     }
@@ -150,7 +172,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             new InvalidOperationException($"Solution upgrade failed: {message}"),
                             "UpgradeFailed",
                             ErrorCategory.OperationStopped,
-                            SolutionName));
+                            solutionName));
                         return;
                     }
                 }

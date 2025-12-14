@@ -14,7 +14,7 @@ Imports a solution to Dataverse using an asynchronous job with progress reportin
 
 ### FromFile
 ```
-Import-DataverseSolution [-InFile] <String> [-OverwriteUnmanagedCustomizations] [-PublishWorkflows]
+Import-DataverseSolution [-InFile] <String[]> [-OverwriteUnmanagedCustomizations] [-PublishWorkflows]
  [-SkipProductUpdateDependencies] [-Mode <ImportMode>] [-ConnectionReferences <Hashtable>]
  [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
  [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfAdditive]
@@ -250,7 +250,7 @@ Accept wildcard characters: False
 Path to the solution file (.zip) to import.
 
 ```yaml
-Type: String
+Type: String[]
 Parameter Sets: FromFile
 Aliases:
 

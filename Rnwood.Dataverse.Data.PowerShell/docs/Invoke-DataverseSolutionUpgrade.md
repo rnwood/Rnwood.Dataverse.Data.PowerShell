@@ -13,7 +13,7 @@ Applies a staged solution upgrade by deleting the original solution and promotin
 ## SYNTAX
 
 ```
-Invoke-DataverseSolutionUpgrade [-SolutionName] <String> [-IfExists] [-PollingIntervalSeconds <Int32>]
+Invoke-DataverseSolutionUpgrade [-SolutionName] <String[]> [-IfExists] [-PollingIntervalSeconds <Int32>]
  [-TimeoutSeconds <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
@@ -194,7 +194,7 @@ Accept wildcard characters: False
 The unique name of the solution to upgrade (e.g., 'MySolution'). The holding solution must exist with the name 'MySolution_Upgrade'.
 
 ```yaml
-Type: String
+Type: String[]
 Parameter Sets: (All)
 Aliases:
 
