@@ -22,9 +22,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
         /// <summary>
         /// Initializes a new instance of the FileComponentExtractor class.
         /// </summary>
+        /// <param name="connection">Optional connection (can be null for file-to-file comparisons)</param>
+        /// <param name="cmdlet">The cmdlet instance</param>
+        /// <param name="solutionBytes">The solution file bytes</param>
         public FileComponentExtractor(ServiceClient connection, PSCmdlet cmdlet, byte[] solutionBytes)
         {
-            _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+            _connection = connection; // Can be null for file-to-file comparisons
             _cmdlet = cmdlet ?? throw new ArgumentNullException(nameof(cmdlet));
             _solutionBytes = solutionBytes ?? throw new ArgumentNullException(nameof(solutionBytes));
         }
