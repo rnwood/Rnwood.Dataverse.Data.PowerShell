@@ -124,7 +124,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets whether to use update if additive mode (experimental and incomplete).
         /// </summary>
-        [Parameter(HelpMessage = "Use update if additive mode (experimental and incomplete). Only valid with Auto (default) or HoldingSolution mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items removed ('TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status), uses simple install mode (no stage and upgrade) for best performance.")]
+        [Parameter(HelpMessage = "Use update if additive mode (experimental and incomplete). Only valid with Auto (default) or HoldingSolution mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items removed ('TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status), uses simple install mode (no stage and upgrade or holding solution) for best performance.")]
         public SwitchParameter UseUpdateIfAdditive { get; set; }
 
         /// <summary>
