@@ -150,6 +150,7 @@ $rootComponentsXml
         $result | Should -Not -BeNullOrEmpty
         $envVarComponent = $result | Where-Object { $_.ComponentType -eq 380 }
         $envVarComponent | Should -Not -BeNullOrEmpty
+        # ObjectId property in the output contains the UniqueName (schemaname) for display purposes
         $envVarComponent.ObjectId | Should -Be "test_EnvVar1"
         $envVarComponent.ComponentType | Should -Be 380
     }
@@ -164,6 +165,7 @@ $rootComponentsXml
         $result | Should -Not -BeNullOrEmpty
         $connRefComponent = $result | Where-Object { $_.ComponentType -eq 635 }
         $connRefComponent | Should -Not -BeNullOrEmpty
+        # ObjectId property in the output contains the UniqueName (logical name) for display purposes
         $connRefComponent.ObjectId | Should -Be "test_connref1"
         $connRefComponent.ComponentType | Should -Be 635
     }
