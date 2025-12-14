@@ -124,7 +124,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets whether to use update if additive mode (experimental and incomplete).
         /// </summary>
-        [Parameter(HelpMessage = "Use update if additive mode (experimental and incomplete). Only valid with Auto (default) mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items removed ('TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status), uses simple install mode (no stage and upgrade) for best performance.")]
+        [Parameter(HelpMessage = "Use update if additive mode (experimental and incomplete). Only valid with Auto (default) or HoldingSolution mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items removed ('TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status), uses simple install mode (no stage and upgrade) for best performance.")]
         public SwitchParameter UseUpdateIfAdditive { get; set; }
 
         /// <summary>
@@ -221,10 +221,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             ValidateSolutionComponents(solutionBytes);
 
             // Validate parameter combinations
-            if (UseUpdateIfAdditive.IsPresent && Mode != ImportMode.Auto)
+            if (UseUpdateIfAdditive.IsPresent && Mode != ImportMode.Auto && Mode != ImportMode.HoldingSolution)
             {
                 ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException("-UseUpdateIfAdditive is only valid with Auto (default) mode."),
+                    new InvalidOperationException("-UseUpdateIfAdditive is only valid with Auto (default) or HoldingSolution mode."),
                     "InvalidParameterCombination",
                     ErrorCategory.InvalidArgument,
                     null));
@@ -387,7 +387,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Handle UseUpdateIfAdditive logic
-            if (UseUpdateIfAdditive.IsPresent && solutionExists)
+            if (UseUpdateIfAdditive.IsPresent && solutionExists && (shouldUseStageAndUpgrade || shouldUseHoldingSolution))
             {
                 WriteWarning("UseUpdateIfAdditive is experimental and incomplete. Behavior may be incorrect and may change in future versions.");
 
@@ -433,7 +433,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (targetOnlyCount == 0 && lessInclusiveCount == 0)
                     {
-                        WriteVerbose("No removed components found - using simple install mode (no stage and upgrade)");
+                        WriteVerbose("No removed components found - using simple install mode (no stage and upgrade or holding solution)");
                         shouldUseStageAndUpgrade = false;
                         shouldUseHoldingSolution = false;
                     }
@@ -447,7 +447,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             int componentType = result.SourceComponent?.ComponentType ?? result.TargetComponent?.ComponentType ?? 0;
                             WriteVerbose($"  Removed component: Type {componentType} '{componentName}' - {result.Status}");
                         }
-                        // Keep the existing logic for shouldUseStageAndUpgrade
+                        // Keep the existing logic for shouldUseStageAndUpgrade or shouldUseHoldingSolution
                     }
                 }
             }
