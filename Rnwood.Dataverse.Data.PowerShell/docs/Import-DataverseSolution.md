@@ -477,7 +477,7 @@ Accept wildcard characters: False
 ```
 
 ### -UseUpdateIfAdditive
-Use update if additive mode (experimental and incomplete). Only valid with Auto (default) mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items in 'TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status, uses simple install mode (no stage and upgrade). Use Compare-DataverseSolutionComponents to see what the comparison would show before using this switch.
+Use update if additive mode (experimental and incomplete). Only valid with Auto (default) or HoldingSolution mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items in 'TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status, uses simple install mode (no stage and upgrade or holding solution). Use Compare-DataverseSolutionComponents to see what the comparison would show before using this switch.
 
 ```yaml
 Type: SwitchParameter
@@ -564,7 +564,7 @@ Use `-SkipEnvironmentVariableValidation` to bypass validation of environment var
 When using -HoldingSolution to import a solution as an upgrade, the cmdlet extracts the solution's unique name from the solution.xml file within the ZIP and queries the target environment to check if it already exists. If it doesn't exist, the cmdlet automatically falls back to a regular import. This prevents errors when deploying to new environments.
 
 **UseUpdateIfAdditive Mode:**
-The -UseUpdateIfAdditive switch (experimental) performs a component comparison between the solution file and the target environment when the solution already exists. If the comparison shows only additive changes (no components removed or behavior changes that would remove data), it uses the simpler ImportSolutionAsyncRequest instead of StageAndUpgradeAsyncRequest for better performance. This switch is only valid when using the default Auto mode. Use Compare-DataverseSolutionComponents to preview what the comparison would show before using this switch.
+The -UseUpdateIfAdditive switch (experimental) performs a component comparison between the solution file and the target environment when the solution already exists. If the comparison shows only additive changes (no components removed or behavior changes that would remove data), it uses the simpler ImportSolutionAsyncRequest instead of StageAndUpgradeAsyncRequest or holding solution import for better performance. This switch is valid with Auto (default) or HoldingSolution mode. Use Compare-DataverseSolutionComponents to preview what the comparison would show before using this switch.
 
 **Version Checking:**
 The `-SkipIfSameVersion` and `-SkipIfLowerVersion` switches allow you to control whether an import should proceed based on version comparison:
