@@ -165,6 +165,28 @@ PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_1.0.0.0.zip" `
 
 Skips the solution import if the version is already installed, but still checks and updates any connection references and environment variables that are part of the solution and have different values than what's currently in the target environment. This ensures environment configuration stays up-to-date even when the solution itself doesn't need to be reimported.
 
+### Example 14: Import multiple solutions in order
+```powershell
+PS C:\> Import-DataverseSolution -InFile "C:\Solutions\CoreSolution.zip", "C:\Solutions\ExtensionSolution.zip", "C:\Solutions\ConfigSolution.zip"
+```
+
+Imports three solutions in the specified order. Each solution is imported sequentially, ensuring that dependencies between solutions are respected. This is useful when you have multiple related solutions that must be deployed in a specific order.
+
+### Example 15: Import multiple solutions with shared configuration
+```powershell
+PS C:\> Import-DataverseSolution -InFile @(
+    "C:\Solutions\Solution1.zip"
+    "C:\Solutions\Solution2.zip"
+    "C:\Solutions\Solution3.zip"
+) -ConnectionReferences @{
+    'new_sharedconnection' = '12345678-1234-1234-1234-123456789012'
+} -EnvironmentVariables @{
+    'new_baseurl' = 'https://api.production.example.com'
+}
+```
+
+Imports three solutions sequentially, applying the same connection references and environment variables to each solution that contains these components. This is useful for deploying multiple related solutions that share common configuration.
+
 ## PARAMETERS
 
 ### -AsyncRibbonProcessing
@@ -247,7 +269,7 @@ Accept wildcard characters: False
 ```
 
 ### -InFile
-Path to the solution file (.zip) to import.
+Path(s) to the solution file(s) (.zip) to import. Can be a single path or an array of paths. When multiple paths are provided, solutions are imported sequentially in the order specified.
 
 ```yaml
 Type: String[]
@@ -533,6 +555,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 This cmdlet uses the ImportSolutionAsyncRequest or StageAndUpgradeAsyncRequest APIs which import the solution in the background. The cmdlet monitors the async operation and outputs the job details when complete.
+
+**Multiple Solutions:**
+The `-InFile` parameter accepts an array of solution file paths, allowing you to import multiple solutions in a single command. When multiple files are provided, they are imported sequentially in the order specified. This is useful when you have dependent solutions that must be deployed in a specific order. Each solution is fully imported and completed before the next one begins. All other parameters (connection references, environment variables, import mode, etc.) apply to each solution as appropriate based on the components it contains.
 
 **Import Modes:**
 - **Auto (default)**: Intelligently chooses the import method based on solution existence and type. Uses StageAndUpgradeAsyncRequest if the solution exists and the source is managed, otherwise uses regular import.

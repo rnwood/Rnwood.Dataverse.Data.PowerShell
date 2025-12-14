@@ -126,6 +126,46 @@ Status              : Succeeded
 
 Applies the upgrade for a large solution with a 2-hour timeout and checks status every 10 seconds.
 
+### Example 8: Upgrade multiple solutions in order
+```powershell
+PS C:\> Invoke-DataverseSolutionUpgrade -SolutionName "CoreSolution", "ExtensionSolution", "ConfigSolution"
+
+SolutionName        : CoreSolution
+HoldingSolutionName : CoreSolution_Upgrade
+Status              : Succeeded
+
+SolutionName        : ExtensionSolution
+HoldingSolutionName : ExtensionSolution_Upgrade
+Status              : Succeeded
+
+SolutionName        : ConfigSolution
+HoldingSolutionName : ConfigSolution_Upgrade
+Status              : Succeeded
+```
+
+Upgrades three solutions sequentially in the specified order. Each solution upgrade is fully completed before the next one begins. This is useful when you have multiple related solutions that were staged for upgrade and must be promoted in a specific order.
+
+### Example 9: Upgrade multiple solutions with existence check
+```powershell
+PS C:\> Invoke-DataverseSolutionUpgrade -SolutionName @(
+    "Solution1"
+    "Solution2"
+    "Solution3"
+) -IfExists
+
+SolutionName        : Solution1
+HoldingSolutionName : Solution1_Upgrade
+Status              : Succeeded
+
+WARNING: Holding solution 'Solution2_Upgrade' does not exist. Skipping upgrade operation.
+
+SolutionName        : Solution3
+HoldingSolutionName : Solution3_Upgrade
+Status              : Succeeded
+```
+
+Attempts to upgrade three solutions, but only upgrades those that have holding solutions staged. Solutions without holding solutions are skipped with a warning. This is useful in deployment scripts where you want to upgrade any staged solutions without failing if some aren't staged.
+
 ## PARAMETERS
 
 ### -Connection
@@ -191,7 +231,7 @@ Accept wildcard characters: False
 ```
 
 ### -SolutionName
-The unique name of the solution to upgrade (e.g., 'MySolution'). The holding solution must exist with the name 'MySolution_Upgrade'.
+The unique name(s) of the solution(s) to upgrade (e.g., 'MySolution'). Can be a single name or an array of names. For each solution, the holding solution must exist with the name 'MySolution_Upgrade'. When multiple names are provided, solutions are upgraded sequentially in the order specified.
 
 ```yaml
 Type: String[]
@@ -262,6 +302,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 This cmdlet uses the DeleteAndPromoteRequest API wrapped in ExecuteAsyncRequest to asynchronously and atomically delete the original solution and promote the holding solution. The cmdlet monitors the async operation and reports progress using PowerShell's progress bar.
+
+**Multiple Solutions:**
+The `-SolutionName` parameter accepts an array of solution names, allowing you to upgrade multiple solutions in a single command. When multiple names are provided, they are upgraded sequentially in the order specified. Each solution upgrade is fully completed before the next one begins. This is useful when you have multiple related solutions that were staged for upgrade and must be promoted in a specific order. When using `-IfExists`, solutions without holding solutions are skipped with a warning rather than causing the entire operation to fail.
 
 **Important considerations:**
 - The holding solution (SolutionName_Upgrade) must exist before running this cmdlet
