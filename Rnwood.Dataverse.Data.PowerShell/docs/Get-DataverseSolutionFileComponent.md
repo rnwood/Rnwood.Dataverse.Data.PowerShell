@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseSolutionFileComponent
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves the components from a Dataverse solution file (.zip).
 
 ## SYNTAX
 
@@ -25,16 +25,43 @@ Get-DataverseSolutionFileComponent -SolutionBytes <Byte[]> [-IncludeSubcomponent
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Extracts and lists all components from a Dataverse solution file, including root components from the solution manifest, as well as environment variables (componenttype=380) and connection references (componenttype=635) that are stored as separate files within the solution package.
+
+This cmdlet is useful for analyzing solution contents without importing the solution into an environment. It discovers components that may not be listed in the RootComponents section of solution.xml, such as environment variables which are stored in the environmentvariabledefinitions/ folder.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: List all components from a solution file
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $conn = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
+PS C:\> Get-DataverseSolutionFileComponent -Connection $conn -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip"
 ```
 
-{{ Add example description here }}
+Lists all root components from the specified solution file, including environment variables and connection references.
+
+### Example 2: List components including subcomponents
+```powershell
+PS C:\> $conn = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
+PS C:\> Get-DataverseSolutionFileComponent -Connection $conn -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip" -IncludeSubcomponents
+```
+
+Lists all components including subcomponents (attributes, relationships, forms, views, etc.) from the specified solution file.
+
+### Example 3: Filter for environment variables
+```powershell
+PS C:\> $conn = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
+PS C:\> Get-DataverseSolutionFileComponent -Connection $conn -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip" | Where-Object { $_.ComponentType -eq 380 }
+```
+
+Lists only environment variable components (componenttype=380) from the solution file.
+
+### Example 4: Filter for connection references
+```powershell
+PS C:\> $conn = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
+PS C:\> Get-DataverseSolutionFileComponent -Connection $conn -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip" | Where-Object { $_.ComponentType -eq 635 }
+```
+
+Lists only connection reference components (componenttype=635) from the solution file.
 
 ## PARAMETERS
 
@@ -126,4 +153,14 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Management.Automation.PSObject
 ## NOTES
 
+This cmdlet discovers components beyond those listed in the solution's RootComponents section:
+- Environment Variable Definitions (componenttype=380) are discovered by reading XML files from the environmentvariabledefinitions/ folder within the solution package
+- Connection References (componenttype=635) are discovered by parsing the customizations.xml file
+
+This ensures all components are visible even if they are not explicitly listed as root components in the solution manifest.
+
 ## RELATED LINKS
+
+[Get-DataverseSolution](Get-DataverseSolution.md)
+[Compare-DataverseSolutionComponents](Compare-DataverseSolutionComponents.md)
+[Import-DataverseSolution](Import-DataverseSolution.md)
