@@ -1601,44 +1601,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
-        /// Tries to find a key in a hashtable using case-insensitive comparison.
-        /// Returns the correctly-cased key from the correctlyCasedKeys list if found.
-        /// </summary>
-        /// <param name="hashtable">The hashtable to search</param>
-        /// <param name="correctlyCasedKeys">List of keys with correct casing (typically from solution file)</param>
-        /// <param name="targetKey">The key to search for (case-insensitive)</param>
-        /// <param name="correctlyCasedKey">The correctly-cased key if found</param>
-        /// <returns>True if a matching key was found in the hashtable</returns>
-        private bool TryGetHashtableKeyWithCorrectCasing(Hashtable hashtable, List<string> correctlyCasedKeys, string targetKey, out string correctlyCasedKey)
-        {
-            correctlyCasedKey = null;
-
-            if (hashtable == null || correctlyCasedKeys == null)
-            {
-                return false;
-            }
-
-            // First find the correctly-cased version from the solution file
-            correctlyCasedKey = correctlyCasedKeys.FirstOrDefault(k => string.Equals(k, targetKey, StringComparison.OrdinalIgnoreCase));
-
-            if (correctlyCasedKey == null)
-            {
-                return false;
-            }
-
-            // Now check if this key exists in the hashtable (case-insensitive)
-            foreach (DictionaryEntry entry in hashtable)
-            {
-                if (string.Equals(entry.Key.ToString(), correctlyCasedKey, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
         /// Gets the value from a hashtable using case-insensitive key lookup.
         /// </summary>
         /// <param name="hashtable">The hashtable to search</param>
