@@ -164,6 +164,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter SkipIfLowerVersion { get; set; }
 
         /// <summary>
+        /// Stores connection reference logical names extracted from the solution file with correct casing.
+        /// Populated by ValidateSolutionComponents and used for case-insensitive matching against user-provided hashtable keys.
+        /// </summary>
+        private List<string> _solutionConnectionReferenceNames;
+
+        /// <summary>
+        /// Stores environment variable schema names extracted from the solution file with correct casing.
+        /// Populated by ValidateSolutionComponents and used for case-insensitive matching against user-provided hashtable keys.
+        /// </summary>
+        private List<string> _solutionEnvironmentVariableNames;
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -413,10 +425,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         var connectionRefName = entry.Key.ToString();
                         var connectionId = entry.Value.ToString();
 
-                        WriteVerbose($"  Setting connection reference '{connectionRefName}' to connection '{connectionId}'");
+                        // Use the correctly-cased name from the solution file if available
+                        var correctlyCasedName = _solutionConnectionReferenceNames?.FirstOrDefault(n => 
+                            string.Equals(n, connectionRefName, StringComparison.OrdinalIgnoreCase)) ?? connectionRefName;
+
+                        WriteVerbose($"  Setting connection reference '{correctlyCasedName}' to connection '{connectionId}'");
 
                         var componentParam = new Entity("connectionreference");
-                        componentParam["connectionreferencelogicalname"] = connectionRefName;
+                        componentParam["connectionreferencelogicalname"] = correctlyCasedName;
                         componentParam["connectionid"] = connectionId;
 
                         componentParameters.Entities.Add(componentParam);
@@ -428,22 +444,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     WriteVerbose($"Processing {EnvironmentVariables.Count} environment variable(s)...");
 
-                    // Query for existing environment variable values by schema name
-                    var existingEnvVarValuesBySchemaName = GetExistingEnvironmentVariableValueIds(EnvironmentVariables.Keys.Cast<object>().Select(k => k.ToString()).ToList());
+                    // Build list of correctly-cased names for querying existing values
+                    var correctlyCasedEnvVarNames = new List<string>();
+                    foreach (DictionaryEntry entry in EnvironmentVariables)
+                    {
+                        var envVarName = entry.Key.ToString();
+                        var correctlyCasedName = _solutionEnvironmentVariableNames?.FirstOrDefault(n => 
+                            string.Equals(n, envVarName, StringComparison.OrdinalIgnoreCase)) ?? envVarName;
+                        correctlyCasedEnvVarNames.Add(correctlyCasedName);
+                    }
+
+                    // Query for existing environment variable values by schema name (using correct casing)
+                    var existingEnvVarValuesBySchemaName = GetExistingEnvironmentVariableValueIds(correctlyCasedEnvVarNames);
 
                     foreach (DictionaryEntry entry in EnvironmentVariables)
                     {
                         var envVarSchemaName = entry.Key.ToString();
                         var envVarValue = entry.Value.ToString();
 
-                        WriteVerbose($"  Setting environment variable '{envVarSchemaName}' to value '{envVarValue}'");
+                        // Use the correctly-cased name from the solution file if available
+                        var correctlyCasedName = _solutionEnvironmentVariableNames?.FirstOrDefault(n => 
+                            string.Equals(n, envVarSchemaName, StringComparison.OrdinalIgnoreCase)) ?? envVarSchemaName;
+
+                        WriteVerbose($"  Setting environment variable '{correctlyCasedName}' to value '{envVarValue}'");
 
                         var componentParam = new Entity("environmentvariablevalue");
-                        componentParam["schemaname"] = envVarSchemaName;
+                        componentParam["schemaname"] = correctlyCasedName;
                         componentParam["value"] = envVarValue;
 
                         // If there's an existing value record, include its ID for update
-                        if (existingEnvVarValuesBySchemaName.TryGetValue(envVarSchemaName, out var existingValueId))
+                        if (existingEnvVarValuesBySchemaName.TryGetValue(correctlyCasedName, out var existingValueId))
                         {
                             componentParam["environmentvariablevalueid"] = existingValueId;
                             WriteVerbose($"    Found existing value record with ID: {existingValueId}");
@@ -776,6 +806,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Extract connection references and environment variables from the solution
             var solutionComponents = ExtractSolutionComponents(solutionBytes);
 
+            // Store the extracted names with correct casing for later use
+            _solutionConnectionReferenceNames = solutionComponents.ConnectionReferences;
+            _solutionEnvironmentVariableNames = solutionComponents.EnvironmentVariables;
+
             // Validate connection references if not skipped
             if (!SkipConnectionReferenceValidation.IsPresent)
             {
@@ -883,8 +917,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             foreach (var connRefName in requiredConnectionRefs)
             {
-                // Check if this connection reference is provided in the parameters
-                bool isProvided = ConnectionReferences != null && ConnectionReferences.ContainsKey(connRefName);
+                // Check if this connection reference is provided in the parameters (case-insensitive)
+                bool isProvided = GetHashtableValueCaseInsensitive(ConnectionReferences, connRefName) != null;
 
                 if (!isProvided)
                 {
@@ -940,8 +974,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             foreach (var envVarName in requiredEnvVars)
             {
-                // Check if this environment variable is provided in the parameters
-                bool isProvided = EnvironmentVariables != null && EnvironmentVariables.ContainsKey(envVarName);
+                // Check if this environment variable is provided in the parameters (case-insensitive)
+                bool isProvided = GetHashtableValueCaseInsensitive(EnvironmentVariables, envVarName) != null;
 
                 if (!isProvided)
                 {
@@ -1363,17 +1397,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Process connection references - build list of those to update
             if (ConnectionReferences != null && ConnectionReferences.Count > 0 && solutionConnRefNames.Count > 0)
             {
-                var solutionConnRefNamesSet = new HashSet<string>(solutionConnRefNames, StringComparer.OrdinalIgnoreCase);
-
                 foreach (DictionaryEntry entry in ConnectionReferences)
                 {
                     var connRefName = entry.Key.ToString();
                     var connectionId = entry.Value.ToString();
 
-                    // Only check if it's in the solution
-                    if (solutionConnRefNamesSet.Contains(connRefName))
+                    // Find the correctly-cased name from the solution (case-insensitive match)
+                    var correctlyCasedName = solutionConnRefNames.FirstOrDefault(n => 
+                        string.Equals(n, connRefName, StringComparison.OrdinalIgnoreCase));
+
+                    if (correctlyCasedName != null)
                     {
-                        connectionReferencesToCheck[connRefName] = connectionId;
+                        // Use the correctly-cased name from the solution
+                        connectionReferencesToCheck[correctlyCasedName] = connectionId;
                     }
                     else
                     {
@@ -1385,17 +1421,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Process environment variables - build list of those to update
             if (EnvironmentVariables != null && EnvironmentVariables.Count > 0 && solutionEnvVarNames.Count > 0)
             {
-                var solutionEnvVarNamesSet = new HashSet<string>(solutionEnvVarNames, StringComparer.OrdinalIgnoreCase);
-
                 foreach (DictionaryEntry entry in EnvironmentVariables)
                 {
                     var envVarName = entry.Key.ToString();
                     var envVarValue = entry.Value.ToString();
 
-                    // Only check if it's in the solution
-                    if (solutionEnvVarNamesSet.Contains(envVarName))
+                    // Find the correctly-cased name from the solution (case-insensitive match)
+                    var correctlyCasedName = solutionEnvVarNames.FirstOrDefault(n => 
+                        string.Equals(n, envVarName, StringComparison.OrdinalIgnoreCase));
+
+                    if (correctlyCasedName != null)
                     {
-                        environmentVariablesToCheck[envVarName] = envVarValue;
+                        // Use the correctly-cased name from the solution
+                        environmentVariablesToCheck[correctlyCasedName] = envVarValue;
                     }
                     else
                     {
@@ -1568,6 +1606,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     WriteVerbose($"  Successfully created environment variable value for '{schemaName}' (ID: {newValueId})");
                 }
             }
+        }
+
+        /// <summary>
+        /// Gets the value from a hashtable using case-insensitive key lookup.
+        /// </summary>
+        /// <param name="hashtable">The hashtable to search</param>
+        /// <param name="key">The key to look up (case-insensitive)</param>
+        /// <returns>The value if found, null otherwise</returns>
+        private object GetHashtableValueCaseInsensitive(Hashtable hashtable, string key)
+        {
+            if (hashtable == null || key == null)
+            {
+                return null;
+            }
+
+            foreach (DictionaryEntry entry in hashtable)
+            {
+                if (string.Equals(entry.Key.ToString(), key, StringComparison.OrdinalIgnoreCase))
+                {
+                    return entry.Value;
+                }
+            }
+
+            return null;
         }
     }
 }
