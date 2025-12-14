@@ -103,7 +103,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            // Load source solution file (source)
+            // Load source solution file
             byte[] sourceSolutionBytes;
             if (ParameterSetName == "BytesToEnvironment" || ParameterSetName == "BytesToFile")
             {
@@ -181,6 +181,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
 
                 var solutions = Connection.RetrieveMultiple(solutionQuery);
+
+                if (solutions.Entities.Count == 0)
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException($"Solution '{sourceSolutionName}' not found in target environment."),
+                        "SolutionNotFound",
+                        ErrorCategory.ObjectNotFound,
+                        sourceSolutionName));
+                    return;
+                }
 
                 var solutionId = solutions.Entities[0].Id;
                 WriteVerbose($"Found solution in target environment: {solutionId}");
