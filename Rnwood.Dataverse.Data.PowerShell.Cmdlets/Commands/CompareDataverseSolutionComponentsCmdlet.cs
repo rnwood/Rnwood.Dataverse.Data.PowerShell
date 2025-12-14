@@ -173,9 +173,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     Criteria = new FilterExpression
                     {
                         Conditions =
-     {
-    new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionName)
-       }
+                        {
+                            new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionName)
+                        }
                     },
                     TopCount = 1
                 };
