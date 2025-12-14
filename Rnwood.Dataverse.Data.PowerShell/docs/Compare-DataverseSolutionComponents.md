@@ -124,6 +124,23 @@ PS C:\> $results | Export-Csv -Path "C:\Reports\solution-comparison.csv" -NoType
 
 This example exports the comparison results to a CSV file for further analysis.
 
+### Example 8: Test if changes are additive (file to environment)
+```powershell
+PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
+PS C:\> $isAdditive = Compare-DataverseSolutionComponents -Connection $conn -SolutionFile "C:\Solutions\MySolution.zip" -TestIfAdditive -Verbose
+```
+
+This example tests whether the solution file has only additive changes compared to the environment (no removed components or less inclusive behavior changes).
+Returns $true if additive, $false otherwise. Full comparison results are output to verbose stream.
+
+### Example 9: Test if changes are additive (file to file)
+```powershell
+PS C:\> $isAdditive = Compare-DataverseSolutionComponents -SolutionFile "C:\Solutions\MySolution_v1.zip" -TargetSolutionFile "C:\Solutions\MySolution_v2.zip" -FileToFile -TestIfAdditive -Verbose
+PS C:\> if ($isAdditive) { Write-Host "Update can use simple import mode" } else { Write-Host "Update requires stage and upgrade" }
+```
+
+This example tests whether changes between two solution files are additive. This is useful for determining whether a solution update can use simple import mode (faster) or requires stage and upgrade mode (slower but handles removals correctly).
+
 ## PARAMETERS
 
 ### -BytesToEnvironment
@@ -325,6 +342,13 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - **Integration with Import-DataverseSolution**:
   - This cmdlet is used internally by `Import-DataverseSolution -UseUpdateIfAdditive` to determine if a solution update can use the simpler import mode
   - The -UseUpdateIfAdditive switch compares components and uses simple import if no components are removed or have less inclusive behavior changes
+
+- **TestIfAdditive switch**:
+  - When specified, returns $true or $false based on whether changes are additive only
+  - Returns $true if there are zero components with "InTargetOnly" status (removed) or "InSourceAndTarget_BehaviourLessInclusiveInSource" status (behavior became less inclusive)
+  - Full comparison results are output to the verbose stream for troubleshooting
+  - Uses the same logic as `Import-DataverseSolution -UseUpdateIfAdditive` to determine if simple import mode can be used
+  - Works with all parameter sets: FileToEnvironment, BytesToEnvironment, FileToFile, and BytesToFile
 
 ## RELATED LINKS
 
