@@ -296,12 +296,58 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (useHoldingSolution)
             {
-                // Extract solution unique name from the solution file (this is a simplified approach)
-                // In a real scenario, you might want to parse the solution XML
                 WriteVerbose("HoldingSolution mode specified - checking if solution already exists...");
 
-                // Try to detect if solution exists by attempting to query for it
-                // We'll catch the exception if it doesn't exist and fallback
+                // Check for existing holding solution (solutionname_Upgrade)
+                string holdingSolutionName = $"{solutionUniqueName}_Upgrade";
+                Version holdingSolutionVersion = GetInstalledSolutionVersion(holdingSolutionName);
+                
+                if (holdingSolutionVersion != null)
+                {
+                    WriteVerbose($"Found existing holding solution '{holdingSolutionName}' with version {holdingSolutionVersion}");
+                    
+                    // Compare with source solution version
+                    if (sourceSolutionVersion != null)
+                    {
+                        WriteVerbose($"Comparing source version {sourceSolutionVersion} with existing holding solution version {holdingSolutionVersion}");
+                        
+                        if (sourceSolutionVersion.CompareTo(holdingSolutionVersion) == 0)
+                        {
+                            // Same version - skip import
+                            WriteWarning($"Skipping import: Holding solution '{holdingSolutionName}' version {holdingSolutionVersion} already exists with the same version as the source solution.");
+                            
+                            // Check and update connection references and environment variables if provided
+                            CheckAndUpdateSolutionComponents(solutionUniqueName);
+                            
+                            return;
+                        }
+                        else
+                        {
+                            // Different version - fail with clear error
+                            var errorMessage = new StringBuilder();
+                            errorMessage.AppendLine($"Cannot import holding solution: A holding solution '{holdingSolutionName}' already exists with version {holdingSolutionVersion}, but the source solution has version {sourceSolutionVersion}.");
+                            errorMessage.AppendLine();
+                            errorMessage.AppendLine("To resolve this issue, you must either:");
+                            errorMessage.AppendLine($"  1. Apply the existing upgrade by running: Invoke-DataverseSolutionUpgrade -SolutionName '{solutionUniqueName}'");
+                            errorMessage.AppendLine($"  2. Remove the existing holding solution by running: Remove-DataverseSolution -UniqueName '{holdingSolutionName}'");
+                            errorMessage.AppendLine();
+                            errorMessage.AppendLine("Note: Applying the upgrade will delete the original solution and promote the holding solution. Removing the holding solution may result in data loss if it contains changes.");
+                            
+                            ThrowTerminatingError(new ErrorRecord(
+                                new InvalidOperationException(errorMessage.ToString()),
+                                "HoldingSolutionVersionMismatch",
+                                ErrorCategory.InvalidOperation,
+                                holdingSolutionName));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        WriteWarning($"Unable to extract source solution version. Cannot verify if holding solution version matches.");
+                    }
+                }
+
+                // No existing holding solution found, check if base solution exists
                 if (solutionExists)
                 {
                     shouldUseHoldingSolution = true;
