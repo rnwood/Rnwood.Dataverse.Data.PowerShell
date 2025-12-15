@@ -104,11 +104,39 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public bool Active { get; set; } = true;
 
         /// <summary>
+        /// Gets or sets whether to allow custom event names without validation.
+        /// By default, event names are validated against known event types.
+        /// </summary>
+        [Parameter(HelpMessage = "Allow custom event names without validation")]
+        public SwitchParameter AllowCustomEventNames { get; set; }
+
+        /// <summary>
+        /// Known valid event names (all lowercase).
+        /// </summary>
+        private static readonly string[] ValidEventNames = new[]
+        {
+            "onload",
+            "onsave",
+            "onchange",
+            "tabstatechange",
+            "onprestagechange",
+            "onpreprocessstatuschange",
+            "onprocessstatuschange",
+            "onstagechange",
+            "onstageselected",
+            "onreadystatechange",
+            "onresourcemodelload"
+        };
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
+
+            // Validate event name (always converted to lowercase)
+            ValidateEventName();
 
             // Validate web resource exists (including unpublished) and is JavaScript
             ValidateWebResourceExists(LibraryName);
@@ -559,6 +587,39 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             WriteVerbose($"Library '{libraryName}' found on form");
+        }
+
+        /// <summary>
+        /// Validates the event name and converts it to lowercase.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Thrown when the event name is not valid and AllowCustomEventNames is not specified.</exception>
+        private void ValidateEventName()
+        {
+            if (string.IsNullOrWhiteSpace(EventName))
+            {
+                throw new InvalidOperationException("Event name cannot be null or empty.");
+            }
+
+            // Convert to lowercase as event names are always lowercase in FormXML
+            string lowerEventName = EventName.ToLowerInvariant();
+            
+            // If the event name is already lowercase, update it; otherwise, warn and update
+            if (EventName != lowerEventName)
+            {
+                WriteVerbose($"Converting event name from '{EventName}' to lowercase '{lowerEventName}'");
+                EventName = lowerEventName;
+            }
+
+            // Validate against known event names unless AllowCustomEventNames is specified
+            if (!AllowCustomEventNames.IsPresent)
+            {
+                if (!ValidEventNames.Contains(EventName))
+                {
+                    throw new InvalidOperationException($"Event name '{EventName}' is not a recognized event type. Valid event names are: {string.Join(", ", ValidEventNames)}. Use -AllowCustomEventNames to bypass this validation for custom events.");
+                }
+            }
+            
+            WriteVerbose($"Event name '{EventName}' validated");
         }
     }
 }

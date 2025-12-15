@@ -317,10 +317,23 @@ Describe "Form Library and Event Handler E2E Tests" {
             Write-Host "✓ Library removal verified"
             
             # ============================================================
-            # STEP 12: Add and verify attribute-level event handler
+            # STEP 12: Re-add library 1 for attribute and tab event handler tests
             # ============================================================
             Write-Host ""
-            Write-Host "Step 12: Adding attribute-level event handler..."
+            Write-Host "Step 12: Re-adding library 1 for attribute/tab event tests..."
+            
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                $script:library1 = Set-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName1 -Confirm:$false
+                Write-Host "  Re-added library 1: $($library1.Name)"
+            }
+            Write-Host "✓ Library 1 re-added"
+            
+            # ============================================================
+            # STEP 13: Add and verify attribute-level event handler
+            # ============================================================
+            Write-Host ""
+            Write-Host "Step 13: Adding attribute-level event handler..."
             
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
@@ -336,10 +349,10 @@ Describe "Form Library and Event Handler E2E Tests" {
             Write-Host "✓ Attribute handler added"
             
             # ============================================================
-            # STEP 13: Verify attribute handler was added
+            # STEP 14: Verify attribute handler was added
             # ============================================================
             Write-Host ""
-            Write-Host "Step 13: Verifying attribute handler was added..."
+            Write-Host "Step 14: Verifying attribute handler was added..."
             
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
@@ -357,10 +370,10 @@ Describe "Form Library and Event Handler E2E Tests" {
             Write-Host "✓ Attribute handler verified"
             
             # ============================================================
-            # STEP 14: Remove attribute handler
+            # STEP 15: Remove attribute handler
             # ============================================================
             Write-Host ""
-            Write-Host "Step 14: Removing attribute handler..."
+            Write-Host "Step 15: Removing attribute handler..."
             
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
@@ -376,10 +389,10 @@ Describe "Form Library and Event Handler E2E Tests" {
             Write-Host "✓ Attribute handler removed"
             
             # ============================================================
-            # STEP 15: Verify attribute handler was removed
+            # STEP 16: Verify attribute handler was removed
             # ============================================================
             Write-Host ""
-            Write-Host "Step 15: Verifying attribute handler was removed..."
+            Write-Host "Step 16: Verifying attribute handler was removed..."
             
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
@@ -393,10 +406,10 @@ Describe "Form Library and Event Handler E2E Tests" {
             Write-Host "✓ Attribute handler removal verified"
             
             # ============================================================
-            # STEP 16: Add and verify tab-level event handler
+            # STEP 17: Add and verify tab-level event handler
             # ============================================================
             Write-Host ""
-            Write-Host "Step 16: Adding tab-level event handler..."
+            Write-Host "Step 17: Adding tab-level event handler..."
             
             # Get the first tab to use for testing
             $tabs = Get-DataverseFormTab -Connection $connection -FormId $formId
@@ -420,10 +433,10 @@ Describe "Form Library and Event Handler E2E Tests" {
                 Write-Host "✓ Tab handler added"
                 
                 # ============================================================
-                # STEP 17: Verify tab handler was added
+                # STEP 18: Verify tab handler was added
                 # ============================================================
                 Write-Host ""
-                Write-Host "Step 17: Verifying tab handler was added..."
+                Write-Host "Step 18: Verifying tab handler was added..."
                 
                 Invoke-WithRetry {
                     Wait-DataversePublish -Connection $connection -Verbose
@@ -441,10 +454,10 @@ Describe "Form Library and Event Handler E2E Tests" {
                 Write-Host "✓ Tab handler verified"
                 
                 # ============================================================
-                # STEP 18: Remove tab handler
+                # STEP 19: Remove tab handler
                 # ============================================================
                 Write-Host ""
-                Write-Host "Step 18: Removing tab handler..."
+                Write-Host "Step 19: Removing tab handler..."
                 
                 Invoke-WithRetry {
                     Wait-DataversePublish -Connection $connection -Verbose
@@ -460,10 +473,10 @@ Describe "Form Library and Event Handler E2E Tests" {
                 Write-Host "✓ Tab handler removed"
                 
                 # ============================================================
-                # STEP 19: Verify tab handler was removed
+                # STEP 20: Verify tab handler was removed
                 # ============================================================
                 Write-Host ""
-                Write-Host "Step 19: Verifying tab handler was removed..."
+                Write-Host "Step 20: Verifying tab handler was removed..."
                 
                 Invoke-WithRetry {
                     Wait-DataversePublish -Connection $connection -Verbose

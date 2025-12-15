@@ -441,12 +441,32 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
             $result.Attribute | Should -Be "department"
         }
 
-        It "Does not return attribute-level events when querying form-level events" {
-            # Form-level events should exclude those with attribute property
-            $formEvents = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id
+        It "Returns all event handlers when called with only FormId (no filters)" {
+            # When called with only FormId, should return ALL event handlers from all locations
+            $allEvents = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id
             
-            foreach ($event in $formEvents) {
+            # Should include form-level, attribute-level, tab-level, and control-level events
+            $allEvents | Should -Not -BeNullOrEmpty
+            
+            # Should include attribute-level events (those with Attribute property)
+            $attributeEvents = $allEvents | Where-Object { $_.Attribute -ne $null -and $_.Attribute -ne '' }
+            $attributeEvents | Should -Not -BeNullOrEmpty
+            
+            # Should include tab-level events (those with TabName but no ControlId)
+            $tabEvents = $allEvents | Where-Object { $_.TabName -ne $null -and $_.TabName -ne '' -and ($_.ControlId -eq $null -or $_.ControlId -eq '') }
+            $tabEvents | Should -Not -BeNullOrEmpty
+        }
+        
+        It "Filters to only form-level events when EventName is specified" {
+            # When EventName is specified without location parameters, should return only form-level events
+            # (excluding attribute-level which have the attribute property)
+            $formOnlyEvents = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -EventName "onsave"
+            
+            # All should be form-level (no Attribute property)
+            foreach ($event in $formOnlyEvents) {
                 $event.Attribute | Should -BeNullOrEmpty
+                $event.TabName | Should -BeNullOrEmpty
+                $event.ControlId | Should -BeNullOrEmpty
             }
         }
     }

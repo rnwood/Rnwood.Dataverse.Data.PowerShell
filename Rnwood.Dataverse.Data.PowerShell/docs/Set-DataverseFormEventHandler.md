@@ -16,7 +16,7 @@ Adds or updates an event handler in a Dataverse form (form-level, attribute-leve
 ```
 Set-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String> -LibraryName <String>
  [-HandlerUniqueId <Guid>] [-Enabled <Boolean>] [-Parameters <String>] [-PassExecutionContext <Boolean>]
- [-Application <Boolean>] [-Active <Boolean>] [-Connection <ServiceClient>]
+ [-Application <Boolean>] [-Active <Boolean>] [-AllowCustomEventNames] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -24,16 +24,16 @@ Set-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <
 ```
 Set-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String> -LibraryName <String>
  -AttributeName <String> [-HandlerUniqueId <Guid>] [-Enabled <Boolean>] [-Parameters <String>]
- [-PassExecutionContext <Boolean>] [-Application <Boolean>] [-Active <Boolean>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-PassExecutionContext <Boolean>] [-Application <Boolean>] [-Active <Boolean>] [-AllowCustomEventNames]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### TabEvent
 ```
 Set-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String> -LibraryName <String>
  -TabName <String> [-HandlerUniqueId <Guid>] [-Enabled <Boolean>] [-Parameters <String>]
- [-PassExecutionContext <Boolean>] [-Application <Boolean>] [-Active <Boolean>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-PassExecutionContext <Boolean>] [-Application <Boolean>] [-Active <Boolean>] [-AllowCustomEventNames]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### ControlEvent
@@ -41,7 +41,8 @@ Set-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <
 Set-DataverseFormEventHandler -FormId <Guid> -EventName <String> -FunctionName <String> -LibraryName <String>
  -TabName <String> -ControlId <String> -SectionName <String> [-HandlerUniqueId <Guid>] [-Enabled <Boolean>]
  [-Parameters <String>] [-PassExecutionContext <Boolean>] [-Application <Boolean>] [-Active <Boolean>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-AllowCustomEventNames] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -129,6 +130,21 @@ Aliases:
 Required: False
 Position: Named
 Default value: True
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AllowCustomEventNames
+Allow custom event names without validation
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

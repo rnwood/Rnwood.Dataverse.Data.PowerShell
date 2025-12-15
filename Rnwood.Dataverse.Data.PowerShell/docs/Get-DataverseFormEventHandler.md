@@ -38,6 +38,12 @@ Get-DataverseFormEventHandler -FormId <Guid> [-EventName <String>] -TabName <Str
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### AllEvents
+```
+Get-DataverseFormEventHandler -FormId <Guid> [-EventName <String>] [-All] [-HandlerUniqueId <Guid>]
+ [-Published] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ## DESCRIPTION
 The Get-DataverseFormEventHandler cmdlet retrieves JavaScript event handlers from a Dataverse form. It supports four event location types:
 - **Form-level events**: Events at the form root (e.g., onload, onsave)
@@ -130,6 +136,21 @@ PS C:\> Get-DataverseFormEventHandler -Connection $c -FormId $formId -EventName 
 Retrieves event handlers from the published version of the form only. By default, the cmdlet retrieves from the unpublished (draft) version which includes all recent changes.
 
 ## PARAMETERS
+
+### -All
+List all event handlers from all locations
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: AllEvents
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
 
 ### -AttributeName
 The attribute name for retrieving attribute-level events. Used for events that have an attribute property in the FormXml.

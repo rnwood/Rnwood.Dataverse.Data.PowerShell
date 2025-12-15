@@ -52,6 +52,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(ParameterSetName = "ControlEvent", Mandatory = true, HelpMessage = "Section name containing the control")]
         public string SectionName { get; set; }
+        
+        /// <summary>
+        /// Gets or sets whether to list all event handlers from all locations (form, attribute, tab, and control levels).
+        /// When this switch is used, all other location parameters are ignored.
+        /// </summary>
+        [Parameter(ParameterSetName = "AllEvents", HelpMessage = "List all event handlers from all locations")]
+        public SwitchParameter All { get; set; }
 
         /// <summary>
         /// Gets or sets the handler unique ID to retrieve a specific handler.
@@ -80,8 +87,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             bool foundAny = false;
 
+            // If no specific location parameters provided or All switch used, list all event handlers
+            if (ParameterSetName == "FormEvent" && string.IsNullOrEmpty(EventName) && !HandlerUniqueId.HasValue)
+            {
+                // List all handlers from all locations
+                WriteVerbose("Listing all event handlers from all locations");
+                foundAny = GetAllEvents(formElement);
+            }
             // Determine which event location to query based on parameter set
-            if (ParameterSetName == "ControlEvent")
+            else if (ParameterSetName == "ControlEvent")
             {
                 foundAny = GetControlEvents(formElement);
             }
@@ -93,7 +107,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 foundAny = GetAttributeEvents(formElement);
             }
-            else // FormEvent
+            else // FormEvent with EventName or HandlerUniqueId
             {
                 foundAny = GetFormEvents(formElement);
             }
@@ -317,6 +331,110 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
+            return foundAny;
+        }
+
+        /// <summary>
+        /// Gets all event handlers from all locations (form-level, attribute-level, tab-level, and control-level).
+        /// </summary>
+        /// <param name="formElement">The form XML element.</param>
+        /// <returns>True if any events were found, false otherwise.</returns>
+        private bool GetAllEvents(XElement formElement)
+        {
+            bool foundAny = false;
+            
+            // Get form-level events (including attribute-level)
+            XElement eventsElement = formElement.Element("events");
+            if (eventsElement != null)
+            {
+                foreach (var eventElement in eventsElement.Elements("event"))
+                {
+                    string eventName = eventElement.Attribute("name")?.Value;
+                    string attributeName = eventElement.Attribute("attribute")?.Value;
+                    
+                    var handlersElements = eventElement.Elements("Handlers").Concat(eventElement.Elements("InternalHandlers"));
+                    foreach (var handlersElement in handlersElements)
+                    {
+                        foreach (var handler in handlersElement.Elements("Handler"))
+                        {
+                            PSObject handlerObj = ParseHandler(handler, eventName, null, null, null, attributeName);
+                            if (handlerObj != null)
+                            {
+                                foundAny = true;
+                                WriteObject(handlerObj);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Get tab-level events
+            var tabs = formElement.Descendants("tab");
+            foreach (var tab in tabs)
+            {
+                string tabName = tab.Attribute("name")?.Value;
+                XElement tabEventsElement = tab.Element("events");
+                
+                if (tabEventsElement != null)
+                {
+                    foreach (var eventElement in tabEventsElement.Elements("event"))
+                    {
+                        string eventName = eventElement.Attribute("name")?.Value;
+                        
+                        var handlersElements = eventElement.Elements("Handlers").Concat(eventElement.Elements("InternalHandlers"));
+                        foreach (var handlersElement in handlersElements)
+                        {
+                            foreach (var handler in handlersElement.Elements("Handler"))
+                            {
+                                PSObject handlerObj = ParseHandler(handler, eventName, null, tabName, null, null);
+                                if (handlerObj != null)
+                                {
+                                    foundAny = true;
+                                    WriteObject(handlerObj);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Get control-level events
+            var controls = formElement.Descendants("control");
+            foreach (var control in controls)
+            {
+                string controlId = control.Attribute("id")?.Value;
+                
+                // Find tab and section for this control
+                var section = control.Ancestors("section").FirstOrDefault();
+                var tab = section?.Ancestors("tab").FirstOrDefault();
+                string tabName = tab?.Attribute("name")?.Value;
+                string sectionName = section?.Attribute("name")?.Value;
+                
+                XElement controlEventsElement = control.Element("events");
+                
+                if (controlEventsElement != null)
+                {
+                    foreach (var eventElement in controlEventsElement.Elements("event"))
+                    {
+                        string eventName = eventElement.Attribute("name")?.Value;
+                        
+                        var handlersElements = eventElement.Elements("Handlers").Concat(eventElement.Elements("InternalHandlers"));
+                        foreach (var handlersElement in handlersElements)
+                        {
+                            foreach (var handler in handlersElement.Elements("Handler"))
+                            {
+                                PSObject handlerObj = ParseHandler(handler, eventName, controlId, tabName, sectionName, null);
+                                if (handlerObj != null)
+                                {
+                                    foundAny = true;
+                                    WriteObject(handlerObj);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
             return foundAny;
         }
 
