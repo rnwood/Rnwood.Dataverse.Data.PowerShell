@@ -52,7 +52,13 @@ The Set-DataverseFormEventHandler cmdlet adds or updates JavaScript event handle
 - **Tab-level events**: Events within a tab element (e.g., tabstatechange)
 - **Control-level events**: Events within a control element (e.g., onchange)
 
-The cmdlet validates that the referenced web resource exists before adding the handler.
+**Validations performed:**
+- Event names are validated against known types (onload, onsave, onchange, tabstatechange, etc.)
+- Event names are automatically converted to lowercase (FormXML requirement)
+- Web resource must exist (including unpublished versions) and be a JavaScript file (webresourcetype=3)
+- Library must already be added to the form using Set-DataverseFormLibrary
+
+Use the `-AllowCustomEventNames` switch to bypass event name validation for custom event types.
 
 ## EXAMPLES
 
@@ -116,6 +122,13 @@ PS C:\> }
 ```
 
 Adds onchange handlers for multiple attributes using the same validation function.
+
+### Example 9: Add a custom event handler
+```powershell
+PS C:\> Set-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "mycustomevent" -FunctionName "CustomHandler" -LibraryName "new_/scripts/custom.js" -AllowCustomEventNames
+```
+
+Adds a handler for a custom event type using the `-AllowCustomEventNames` switch to bypass validation. Event names are automatically converted to lowercase.
 
 ## PARAMETERS
 
@@ -241,6 +254,10 @@ Accept wildcard characters: False
 
 ### -EventName
 The name of the event (e.g., onload, onsave, onchange, tabstatechange).
+
+Event names are validated against known types and automatically converted to lowercase. Valid event names include: onload, onsave, onchange, tabstatechange, onprestagechange, onpreprocessstatuschange, onprocessstatuschange, onstagechange, onstageselected, onreadystatechange, onresourcemodelload.
+
+Use `-AllowCustomEventNames` to bypass validation for custom event types.
 
 ```yaml
 Type: String

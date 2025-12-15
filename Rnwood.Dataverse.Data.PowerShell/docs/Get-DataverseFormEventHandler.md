@@ -55,19 +55,19 @@ The cmdlet returns event handlers with their location, function name, library na
 
 ## EXAMPLES
 
-### Example 1: Get all form-level event handlers
+### Example 1: List ALL event handlers from all locations
 ```powershell
 PS C:\> Get-DataverseFormEventHandler -Connection $c -FormId $formId
 ```
 
-Retrieves all form-level event handlers (onload, onsave, etc.). Note that this excludes attribute-level events even though they are at the form root.
+Returns all event handlers from the form, including form-level, attribute-level, tab-level, and control-level events. This is the default behavior when called with only the FormId parameter.
 
-### Example 2: Get handlers for a specific form event
+### Example 2: Get all form-level event handlers
 ```powershell
 PS C:\> Get-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload"
 ```
 
-Retrieves all form-level handlers for the onload event.
+Retrieves all form-level handlers for the onload event. Note that this excludes attribute-level events even though they are at the form root.
 
 ### Example 3: Get attribute-level event handlers
 ```powershell
