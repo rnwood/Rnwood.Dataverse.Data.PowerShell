@@ -13,42 +13,58 @@ Updates organization settings in the single organization record in a Dataverse e
 ## SYNTAX
 
 ```
-Set-DataverseOrganizationSettings -InputObject <PSObject> [-PassThru] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataverseOrganizationSettings -InputObject <PSObject> [-OrgDbOrgSettings] [-PassThru]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-The Set-DataverseOrganizationSettings cmdlet updates organization settings in the single organization record that exists in every Dataverse environment. The record is automatically discovered and the specified columns from the InputObject are updated.
+The Set-DataverseOrganizationSettings cmdlet updates settings in the single organization record in a Dataverse environment. The record is automatically discovered.
 
-To update settings within the OrgDbOrgSettings XML column, provide an OrgDbOrgSettingsUpdate property on the InputObject containing a hashtable or PSObject with the setting names and values to update.
+When -OrgDbOrgSettings is NOT specified: Updates organization table columns. Property names in InputObject must match column names.
+When -OrgDbOrgSettings IS specified: Updates OrgDbOrgSettings XML. Property names are setting names. Use $null to remove a setting.
 
-This cmdlet supports -WhatIf and -Confirm parameters for safe operation.
+The cmdlet compares existing values with new values and only updates changed values. Verbose output shows what changed.
 
 ## EXAMPLES
 
-### Example 1: Update organization name
+### Example 1: Update organization table columns
 ```powershell
 PS C:\> $connection = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
 PS C:\> $updates = [PSCustomObject]@{ name = "Contoso Corporation" }
-PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -Confirm:$false
+PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -Confirm:$false -Verbose
+VERBOSE: Column 'name': Changing from '"Contoso"' to '"Contoso Corporation"'
+VERBOSE: Updated 1 attribute(s) in organization record ...
 ```
 
-Updates the organization name.
+Updates the organization name. Only changed values are updated.
 
-### Example 2: Update OrgDbOrgSettings XML
+### Example 2: Update OrgDbOrgSettings
+```powershell
+PS C:\> $settings = [PSCustomObject]@{
+    MaxUploadFileSize = 10485760
+    EnableBingMapsIntegration = $true
+}
+PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $settings -OrgDbOrgSettings -Confirm:$false -Verbose
+VERBOSE: Setting 'MaxUploadFileSize': Changing from '5242880' to '10485760'
+VERBOSE: Setting 'EnableBingMapsIntegration': No change (value is 'true')
+VERBOSE: Updated 1 attribute(s) in organization record ...
+```
+
+Updates OrgDbOrgSettings. Only changed settings are updated.
+
+### Example 3: Remove an OrgDbOrgSettings setting
 ```powershell
 PS C:\> $updates = [PSCustomObject]@{
-    OrgDbOrgSettingsUpdate = [PSCustomObject]@{
-        MaxUploadFileSize = 10485760
-        EnableBingMapsIntegration = $true
-    }
+    ObsoleteGetting = $null
 }
-PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -Confirm:$false
+PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -OrgDbOrgSettings -Confirm:$false -Verbose
+VERBOSE: Setting 'ObsoleteGetting': Removing (was 'oldvalue')
+VERBOSE: Updated 1 attribute(s) in organization record ...
 ```
 
-Updates specific settings within the OrgDbOrgSettings XML column.
+Removes a setting from OrgDbOrgSettings by passing $null.
 
-### Example 3: Update with PassThru
+### Example 4: Update with PassThru
 ```powershell
 PS C:\> $updates = [PSCustomObject]@{ name = "New Name" }
 PS C:\> $result = Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -PassThru -Confirm:$false
@@ -56,13 +72,13 @@ PS C:\> $result.name
 New Name
 ```
 
-Updates the organization name and returns the updated record.
+Updates and returns the updated record.
 
-### Example 4: Use WhatIf to preview changes
+### Example 5: Use WhatIf to preview changes
 ```powershell
-PS C:\> $updates = [PSCustomObject]@{ name = "New Name" }
-PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -WhatIf
-What if: Performing the operation "Update organization settings" on target "Organization record ..."
+PS C:\> $updates = [PSCustomObject]@{ MaxUploadFileSize = 10485760 }
+PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -OrgDbOrgSettings -WhatIf
+What if: Performing the operation "Update organization settings" on target "OrgDbOrgSettings in organization record ..."
 ```
 
 Previews what would be updated without making actual changes.
@@ -88,8 +104,9 @@ Accept wildcard characters: False
 
 ### -InputObject
 Object containing values to update.
-Property names must match organization table column names.
-To update OrgDbOrgSettings, use OrgDbOrgSettingsUpdate property with a hashtable of setting names and values.
+
+When -OrgDbOrgSettings is NOT specified: Property names must match organization table column names.
+When -OrgDbOrgSettings IS specified: Property names are OrgDbOrgSettings setting names. Use $null values to remove settings.
 
 ```yaml
 Type: PSObject
@@ -100,6 +117,23 @@ Required: True
 Position: Named
 Default value: None
 Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -OrgDbOrgSettings
+If specified, updates settings within the OrgDbOrgSettings XML column instead of organization table columns.
+Property names in InputObject are treated as setting names. Use $null values to remove settings.
+Existing values are compared and only changed settings are updated.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 

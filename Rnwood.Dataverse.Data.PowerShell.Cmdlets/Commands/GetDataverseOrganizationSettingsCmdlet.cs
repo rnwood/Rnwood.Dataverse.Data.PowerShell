@@ -7,16 +7,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
     /// Gets organization settings from the single organization record in a Dataverse environment.
-    /// Returns all organization table columns as PSObject properties, with the OrgDbOrgSettings XML column parsed into structured data.
+    /// When -OrgDbOrgSettings is specified, returns only the parsed OrgDbOrgSettings as properties.
+    /// Otherwise, returns all organization table columns as PSObject properties.
     /// </summary>
     [Cmdlet(VerbsCommon.Get, "DataverseOrganizationSettings")]
     [OutputType(typeof(PSObject))]
     public class GetDataverseOrganizationSettingsCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
-        /// Gets or sets a value indicating whether to include the raw OrgDbOrgSettings XML in the output.
+        /// If specified, returns only the OrgDbOrgSettings as a PSObject with settings as properties.
         /// </summary>
-        [Parameter(HelpMessage = "If specified, includes the raw OrgDbOrgSettings XML string in the output")]
+        [Parameter(HelpMessage = "If specified, returns only OrgDbOrgSettings instead of the full organization record")]
+        public SwitchParameter OrgDbOrgSettings { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to include the raw OrgDbOrgSettings XML in the output.
+        /// Only applies when -OrgDbOrgSettings is NOT specified.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, includes the raw OrgDbOrgSettings XML string in the output (only when -OrgDbOrgSettings is not used)")]
         public SwitchParameter IncludeRawXml { get; set; }
 
         /// <summary>
@@ -29,7 +37,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Query for the single organization record
             QueryExpression query = new QueryExpression("organization")
             {
-                ColumnSet = new ColumnSet(true), // Get all columns
+                ColumnSet = OrgDbOrgSettings.IsPresent 
+                    ? new ColumnSet("organizationid", "orgdborgsettings")  // Only need OrgDbOrgSettings
+                    : new ColumnSet(true),  // Get all columns
                 TopCount = 1
             };
 
@@ -42,26 +52,44 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             Entity orgEntity = results.Entities[0];
-            
-            // Convert to PSObject
-            EntityMetadataFactory entityMetadataFactory = new EntityMetadataFactory(Connection);
-            DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
-            PSObject result = converter.ConvertToPSObject(orgEntity, new ColumnSet(true), _ => ValueType.Display);
 
-            // Parse OrgDbOrgSettings XML if present
+            if (OrgDbOrgSettings.IsPresent)
+            {
+                // Return only the parsed OrgDbOrgSettings
+                PSObject parsedSettings = ParseOrgDbOrgSettings(orgEntity);
+                WriteObject(parsedSettings);
+            }
+            else
+            {
+                // Return the full organization record
+                EntityMetadataFactory entityMetadataFactory = new EntityMetadataFactory(Connection);
+                DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
+                PSObject result = converter.ConvertToPSObject(orgEntity, new ColumnSet(true), _ => ValueType.Display);
+
+                // Optionally include raw XML when not using -OrgDbOrgSettings
+                if (!IncludeRawXml && orgEntity.Contains("orgdborgsettings"))
+                {
+                    result.Properties.Remove("orgdborgsettings");
+                }
+
+                WriteObject(result);
+            }
+        }
+
+        private PSObject ParseOrgDbOrgSettings(Entity orgEntity)
+        {
+            PSObject parsedSettings = new PSObject();
+
             if (orgEntity.Contains("orgdborgsettings") && orgEntity["orgdborgsettings"] != null)
             {
                 string xmlContent = orgEntity["orgdborgsettings"].ToString();
-                
+
                 if (!string.IsNullOrWhiteSpace(xmlContent))
                 {
                     try
                     {
                         XDocument doc = XDocument.Parse(xmlContent);
-                        
-                        // Create a nested PSObject for the parsed settings
-                        PSObject parsedSettings = new PSObject();
-                        
+
                         // Iterate through all elements in the XML and add as properties
                         if (doc.Root != null)
                         {
@@ -69,7 +97,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             {
                                 string elementName = element.Name.LocalName;
                                 string elementValue = element.Value;
-                                
+
                                 // Try to parse as common types
                                 if (bool.TryParse(elementValue, out bool boolValue))
                                 {
@@ -85,26 +113,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 }
                             }
                         }
-                        
-                        // Add the parsed settings as a property
-                        result.Properties.Add(new PSNoteProperty("OrgDbOrgSettingsParsed", parsedSettings));
-                        
-                        // Optionally include raw XML
-                        if (!IncludeRawXml)
-                        {
-                            // Remove the raw XML property to keep output clean
-                            result.Properties.Remove("orgdborgsettings");
-                        }
                     }
                     catch
                     {
-                        // If parsing fails, leave the raw XML in the output
-                        WriteWarning("Failed to parse OrgDbOrgSettings XML. Returning raw XML value.");
+                        // If parsing fails, return empty object with warning
+                        WriteWarning("Failed to parse OrgDbOrgSettings XML.");
                     }
                 }
             }
 
-            WriteObject(result);
+            return parsedSettings;
         }
     }
 }

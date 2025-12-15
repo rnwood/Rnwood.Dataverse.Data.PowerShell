@@ -13,47 +13,50 @@ Gets organization settings from the single organization record in a Dataverse en
 ## SYNTAX
 
 ```
-Get-DataverseOrganizationSettings [-IncludeRawXml] [-Connection <ServiceClient>]
+Get-DataverseOrganizationSettings [-OrgDbOrgSettings] [-IncludeRawXml] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-The Get-DataverseOrganizationSettings cmdlet retrieves organization settings from the single organization record that exists in every Dataverse environment. The record is automatically discovered and all organization table columns are returned as PSObject properties.
+The Get-DataverseOrganizationSettings cmdlet retrieves settings from the single organization record in a Dataverse environment.
 
-The OrgDbOrgSettings XML column is parsed into a structured OrgDbOrgSettingsParsed property for easy access to individual settings. By default, the raw XML is removed from the output to keep it clean, but can be included with the -IncludeRawXml parameter.
+When -OrgDbOrgSettings is NOT specified: Returns all organization table columns as PSObject properties.
+When -OrgDbOrgSettings IS specified: Returns only the parsed OrgDbOrgSettings as a PSObject with settings as properties.
 
 ## EXAMPLES
 
-### Example 1: Get organization settings
+### Example 1: Get organization record
 ```powershell
 PS C:\> $connection = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
-PS C:\> $orgSettings = Get-DataverseOrganizationSettings -Connection $connection
-PS C:\> $orgSettings.name
+PS C:\> $org = Get-DataverseOrganizationSettings -Connection $connection
+PS C:\> $org.name
 Contoso Corporation
 ```
 
-Gets the organization settings and displays the organization name.
+Gets the full organization record and displays the organization name.
 
-### Example 2: Access parsed OrgDbOrgSettings
+### Example 2: Get only OrgDbOrgSettings
 ```powershell
-PS C:\> $orgSettings = Get-DataverseOrganizationSettings -Connection $connection
-PS C:\> $orgSettings.OrgDbOrgSettingsParsed.MaxUploadFileSize
+PS C:\> $settings = Get-DataverseOrganizationSettings -Connection $connection -OrgDbOrgSettings
+PS C:\> $settings.MaxUploadFileSize
 5242880
+PS C:\> $settings.EnableBingMapsIntegration
+True
 ```
 
-Gets the organization settings and accesses a specific setting from the parsed OrgDbOrgSettings XML.
+Gets only the OrgDbOrgSettings as a PSObject with parsed settings as properties.
 
-### Example 3: Include raw XML
+### Example 3: Include raw XML in organization record
 ```powershell
-PS C:\> $orgSettings = Get-DataverseOrganizationSettings -Connection $connection -IncludeRawXml
-PS C:\> $orgSettings.orgdborgsettings
+PS C:\> $org = Get-DataverseOrganizationSettings -Connection $connection -IncludeRawXml
+PS C:\> $org.orgdborgsettings
 <OrgSettings>
   <MaxUploadFileSize>5242880</MaxUploadFileSize>
   ...
 </OrgSettings>
 ```
 
-Gets the organization settings and includes the raw OrgDbOrgSettings XML in the output.
+Gets the organization record and includes the raw OrgDbOrgSettings XML. Note: -IncludeRawXml is ignored when -OrgDbOrgSettings is used.
 
 ## PARAMETERS
 
@@ -74,8 +77,38 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -OrgDbOrgSettings
+If specified, returns only the parsed OrgDbOrgSettings as a PSObject instead of the full organization record. Settings are returned as properties with parsed types (bool, int, or string).
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -IncludeRawXml
-If specified, includes the raw OrgDbOrgSettings XML string in the output
+If specified, includes the raw OrgDbOrgSettings XML string in the output when getting the full organization record. This parameter is ignored when -OrgDbOrgSettings is used.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+If specified, returns only OrgDbOrgSettings instead of the full organization record
 
 ```yaml
 Type: SwitchParameter
