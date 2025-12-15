@@ -55,6 +55,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = false, HelpMessage = "The name of the plugin to load if the assembly contains multiple plugins.")]
         public string Name { get; set; }
 
+        private const int RuntimeDirectoryCleanupHours = 1;
+        
         private string _defaultCacheDirectory;
         private SourceCacheContext _cache;
         private SourceRepository _repository;
@@ -674,6 +676,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void CopyDirectory(string sourceDir, string targetDir)
         {
+            if (string.IsNullOrEmpty(sourceDir))
+            {
+                throw new ArgumentNullException(nameof(sourceDir));
+            }
+            
+            if (string.IsNullOrEmpty(targetDir))
+            {
+                throw new ArgumentNullException(nameof(targetDir));
+            }
+            
+            if (!Directory.Exists(sourceDir))
+            {
+                throw new DirectoryNotFoundException($"Source directory not found: {sourceDir}");
+            }
+            
             // Copy all files
             foreach (string file in Directory.GetFiles(sourceDir))
             {
@@ -701,7 +718,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     return;
                 }
                 
-                var cutoffTime = DateTime.UtcNow.AddHours(-1);
+                var cutoffTime = DateTime.UtcNow.AddHours(-RuntimeDirectoryCleanupHours);
                 
                 foreach (string dir in Directory.GetDirectories(runtimeBasePath))
                 {
