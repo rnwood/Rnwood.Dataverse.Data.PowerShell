@@ -491,10 +491,24 @@ Describe "Form Library and Event Handler E2E Tests" {
             }
             
             # ============================================================
-            # STEP 20: Cleanup - Delete test web resources
+            # STEP 21: Cleanup - Remove library before deleting web resources
             # ============================================================
             Write-Host ""
-            Write-Host "Step 20: Cleanup - Deleting test web resources..."
+            Write-Host "Step 21: Cleanup - Removing library from form before deleting web resources..."
+            
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                # Remove library 1 which was re-added in Step 12
+                Remove-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName1 -Confirm:$false
+                Write-Host "  Removed library 1 from form"
+            }
+            Write-Host "✓ Library removed from form"
+            
+            # ============================================================
+            # STEP 22: Cleanup - Delete test web resources
+            # ============================================================
+            Write-Host ""
+            Write-Host "Step 22: Cleanup - Deleting test web resources..."
             
             Invoke-WithRetry {
                 Wait-DataversePublish -Connection $connection -Verbose
