@@ -236,10 +236,6 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
             $result.EventName | Should -Be "onchange"
         }
 
-        It "Throws error when TabName and SectionName missing for control events" {
-            { Get-DataverseFormEventHandler -Connection $connection -FormId $testFormId -ControlId "firstname" -ErrorAction Stop } | Should -Throw "*required*"
-        }
-
         It "Throws error when control not found" {
             { Get-DataverseFormEventHandler -Connection $connection -FormId $testFormId -ControlId "nonexistent" -TabName "general" -SectionName "name" -ErrorAction Stop } | Should -Throw "*not found*"
         }
@@ -247,6 +243,9 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
 
     Context 'Set-DataverseFormEventHandler - Form Events' {
         It "Adds a new form-level event handler" {
+            # First add the library
+            Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/newlibrary.js" -Confirm:$false
+            
             $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "NewOnLoadFunction" -LibraryName "new_/scripts/newlibrary.js" -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
@@ -272,11 +271,17 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         }
 
         It "Creates events element if it doesn't exist" {
-            # Create a form without events
+            # Create a form without events but with library
             $newForm = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
             $newForm["formid"] = $newForm.Id = [System.Guid]::NewGuid()
             $newForm["objecttypecode"] = "contact"
-            $newForm["formxml"] = "<form></form>"
+            $newForm["formxml"] = @"
+<form>
+    <formLibraries>
+        <Library name="new_/scripts/main.js" libraryUniqueId="{A1B2C3D4-E5F6-4789-ABCD-EF0123456789}" />
+    </formLibraries>
+</form>
+"@
             $connection.Create($newForm)
             
             $result = Set-DataverseFormEventHandler -Connection $connection -FormId $newForm.Id -EventName "onload" -FunctionName "OnLoad" -LibraryName "new_/scripts/main.js" -Confirm:$false
@@ -299,6 +304,9 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
         It "Web resource validation in mock tests" {
             # In mock tests, web resource validation is bypassed
             # This test just verifies the cmdlet works with any library name
+            # First add the library to the form
+            Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "any/resource.js" -Confirm:$false
+            
             $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onload" -FunctionName "Test" -LibraryName "any/resource.js" -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
@@ -308,6 +316,9 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
 
     Context 'Set-DataverseFormEventHandler - Control Events' {
         It "Adds a new control-level event handler" {
+            # First add the library
+            Set-DataverseFormLibrary -Connection $connection -FormId $testFormId -LibraryName "new_/scripts/newlibrary.js" -Confirm:$false
+            
             $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onchange" -FunctionName "NewOnChangeFunction" -LibraryName "new_/scripts/newlibrary.js" -ControlId "lastname" -TabName "general" -SectionName "name" -Confirm:$false
             
             $result | Should -Not -BeNullOrEmpty
@@ -386,6 +397,256 @@ Describe 'Dataverse Form Library and Event Handler Cmdlets' {
 
         It "Throws error when control not found" {
             { Remove-DataverseFormEventHandler -Connection $connection -FormId $testFormId -EventName "onchange" -FunctionName "Test" -LibraryName "test.js" -ControlId "nonexistent" -TabName "general" -SectionName "name" -Confirm:$false -ErrorAction Stop } | Should -Throw "*not found*"
+        }
+    }
+
+    Context 'Get-DataverseFormEventHandler - Attribute Events (testform2.formxml)' {
+        BeforeAll {
+            # Create form with testform2.formxml which has attribute-level and tab-level events
+            $testForm2Xml = Get-Content "$PSScriptRoot\testform2.formxml" -Raw
+            $script:testForm2Id = [System.Guid]::NewGuid()
+            $script:testForm2 = New-Object Microsoft.Xrm.Sdk.Entity "systemform"
+            $script:testForm2["formid"] = $script:testForm2.Id = $script:testForm2Id
+            $script:testForm2["name"] = "Test Form 2"
+            $script:testForm2["objecttypecode"] = "contact"
+            $script:testForm2["type"] = [Microsoft.Xrm.Sdk.OptionSetValue]::new(2)
+            $script:testForm2["formxml"] = [string]$testForm2Xml
+            $connection.Create($script:testForm2)
+        }
+
+        It "Retrieves attribute-level event handlers" {
+            $result = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "department"
+            
+            $result | Should -Not -BeNullOrEmpty
+            $result.EventName | Should -Be "onchange"
+            $result.Attribute | Should -Be "department"
+            $result.FunctionName | Should -Be "ddd"
+            $result.LibraryName | Should -Be "msdyn_/helplink.js"
+            $result.ControlId | Should -BeNullOrEmpty
+            $result.TabName | Should -BeNullOrEmpty
+        }
+
+        It "Filters attribute events by event name" {
+            $result = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "department" -EventName "onchange"
+            
+            $result | Should -Not -BeNullOrEmpty
+            $result.EventName | Should -Be "onchange"
+            $result.Attribute | Should -Be "department"
+        }
+
+        It "Returns Attribute property in output" {
+            $result = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "department"
+            
+            $result.Attribute | Should -Not -BeNullOrEmpty
+            $result.Attribute | Should -Be "department"
+        }
+
+        It "Returns all event handlers when called with only FormId (no filters)" {
+            # When called with only FormId, should return ALL event handlers from all locations
+            $allEvents = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id
+            
+            # Should include form-level, attribute-level, tab-level, and control-level events
+            $allEvents | Should -Not -BeNullOrEmpty
+            
+            # Should include attribute-level events (those with Attribute property)
+            $attributeEvents = $allEvents | Where-Object { $_.Attribute -ne $null -and $_.Attribute -ne '' }
+            $attributeEvents | Should -Not -BeNullOrEmpty
+            
+            # Should include tab-level events (those with TabName but no ControlId)
+            $tabEvents = $allEvents | Where-Object { $_.TabName -ne $null -and $_.TabName -ne '' -and ($_.ControlId -eq $null -or $_.ControlId -eq '') }
+            $tabEvents | Should -Not -BeNullOrEmpty
+        }
+        
+        It "Filters to only form-level events when EventName is specified" {
+            # When EventName is specified without location parameters, should return only form-level events
+            # (excluding attribute-level which have the attribute property)
+            $formOnlyEvents = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -EventName "onsave"
+            
+            # All should be form-level (no Attribute property)
+            foreach ($event in $formOnlyEvents) {
+                $event.Attribute | Should -BeNullOrEmpty
+                $event.TabName | Should -BeNullOrEmpty
+                $event.ControlId | Should -BeNullOrEmpty
+            }
+        }
+    }
+
+    Context 'Get-DataverseFormEventHandler - Tab Events (testform2.formxml)' {
+        It "Retrieves tab-level event handlers" {
+            $result = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "General"
+            
+            $result | Should -Not -BeNullOrEmpty
+            $result.EventName | Should -Be "tabstatechange"
+            $result.TabName | Should -Be "General"
+            $result.FunctionName | Should -Be "ontab"
+            $result.LibraryName | Should -Be "msdyn_/helplink.js"
+            $result.ControlId | Should -BeNullOrEmpty
+            $result.SectionName | Should -BeNullOrEmpty
+            $result.Attribute | Should -BeNullOrEmpty
+        }
+
+        It "Filters tab events by event name" {
+            $result = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "General" -EventName "tabstatechange"
+            
+            $result | Should -Not -BeNullOrEmpty
+            $result.EventName | Should -Be "tabstatechange"
+            $result.TabName | Should -Be "General"
+        }
+
+        It "Throws error when tab not found" {
+            { Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "NonExistent" -ErrorAction Stop } | Should -Throw "*not found*"
+        }
+    }
+
+    Context 'Set-DataverseFormEventHandler - Attribute Events' {
+        BeforeEach {
+            # Reset form to initial state
+            $resetXml = Get-Content "$PSScriptRoot\testform2.formxml" -Raw
+            $testForm2["formxml"] = [string]$resetXml
+            $connection.Update($testForm2)
+        }
+
+        It "Adds a new attribute-level event handler" {
+            # First add the library
+            Set-DataverseFormLibrary -Connection $connection -FormId $testForm2Id -LibraryName "new_/scripts/main.js" -Confirm:$false
+            
+            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "firstname" -EventName "onchange" -FunctionName "OnFirstNameChange" -LibraryName "new_/scripts/main.js" -Confirm:$false
+            
+            $result | Should -Not -BeNullOrEmpty
+            $result.EventName | Should -Be "onchange"
+            $result.Attribute | Should -Be "firstname"
+            $result.FunctionName | Should -Be "OnFirstNameChange"
+            $result.HandlerUniqueId | Should -Not -BeNullOrEmpty
+            $result.ControlId | Should -BeNullOrEmpty
+            $result.TabName | Should -BeNullOrEmpty
+            
+            # Verify it was added
+            $handler = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "firstname"
+            $handler.FunctionName | Should -Be "OnFirstNameChange"
+        }
+
+        It "Updates an existing attribute-level event handler" {
+            # First add a handler
+            Set-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "department" -EventName "onchange" -FunctionName "ddd" -LibraryName "msdyn_/helplink.js" -Enabled $false -Confirm:$false
+            
+            # Verify it was updated
+            $handler = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "department"
+            $handler.Enabled | Should -Be $false
+        }
+
+        It "Sets attribute property in event element" {
+            # Library already on form (msdyn_/helplink.js from testform2.formxml), add new one for test
+            Set-DataverseFormLibrary -Connection $connection -FormId $testForm2Id -LibraryName "new_/scripts/main.js" -Confirm:$false
+            
+            Set-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "lastname" -EventName "onchange" -FunctionName "OnLastNameChange" -LibraryName "new_/scripts/main.js" -Confirm:$false
+            
+            # Retrieve the form and check the XML contains attribute property
+            $form = $connection.Retrieve("systemform", $testForm2Id, (New-Object Microsoft.Xrm.Sdk.Query.ColumnSet @("formxml")))
+            $formXml = $form["formxml"]
+            $formXml | Should -Match 'attribute="lastname"'
+        }
+    }
+
+    Context 'Set-DataverseFormEventHandler - Tab Events' {
+        BeforeEach {
+            # Reset form to initial state
+            $resetXml = Get-Content "$PSScriptRoot\testform2.formxml" -Raw
+            $testForm2["formxml"] = [string]$resetXml
+            $connection.Update($testForm2)
+        }
+
+        It "Adds a new tab-level event handler" {
+            # First add the library
+            Set-DataverseFormLibrary -Connection $connection -FormId $testForm2Id -LibraryName "new_/scripts/main.js" -Confirm:$false
+            
+            $result = Set-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "General" -EventName "tabstatechange" -FunctionName "OnTabChange" -LibraryName "new_/scripts/main.js" -Confirm:$false
+            
+            $result | Should -Not -BeNullOrEmpty
+            $result.EventName | Should -Be "tabstatechange"
+            $result.TabName | Should -Be "General"
+            $result.FunctionName | Should -Be "OnTabChange"
+            $result.HandlerUniqueId | Should -Not -BeNullOrEmpty
+            $result.ControlId | Should -BeNullOrEmpty
+            $result.SectionName | Should -BeNullOrEmpty
+            $result.Attribute | Should -BeNullOrEmpty
+            
+            # Verify there are now 2 handlers for tabstatechange on General tab
+            $handlers = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "General" -EventName "tabstatechange"
+            @($handlers).Count | Should -BeGreaterOrEqual 2
+        }
+
+        It "Updates an existing tab-level event handler" {
+            # Update the existing handler
+            Set-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "General" -EventName "tabstatechange" -FunctionName "ontab" -LibraryName "msdyn_/helplink.js" -Enabled $false -Confirm:$false
+            
+            # Verify it was updated
+            $handler = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "General" -EventName "tabstatechange" | Where-Object { $_.FunctionName -eq "ontab" }
+            $handler.Enabled | Should -Be $false
+        }
+
+        It "Throws error when tab not found" {
+            # First add the library so we get to the tab validation
+            Set-DataverseFormLibrary -Connection $connection -FormId $testForm2Id -LibraryName "test.js" -Confirm:$false
+            
+            { Set-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "NonExistent" -EventName "tabstatechange" -FunctionName "Test" -LibraryName "test.js" -Confirm:$false -ErrorAction Stop } | Should -Throw "*not found*"
+        }
+    }
+
+    Context 'Remove-DataverseFormEventHandler - Attribute Events' {
+        BeforeEach {
+            # Reset form to initial state
+            $resetXml = Get-Content "$PSScriptRoot\testform2.formxml" -Raw
+            $testForm2["formxml"] = [string]$resetXml
+            $connection.Update($testForm2)
+        }
+
+        It "Removes an attribute-level handler by unique ID" {
+            $handler = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "department"
+            
+            Remove-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "department" -EventName "onchange" -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
+            
+            $remaining = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "department" -ErrorAction SilentlyContinue
+            $remaining | Should -BeNullOrEmpty
+        }
+
+        It "Removes an attribute-level handler by function name and library" {
+            Remove-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "department" -EventName "onchange" -FunctionName "ddd" -LibraryName "msdyn_/helplink.js" -Confirm:$false
+            
+            $remaining = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "department" -ErrorAction SilentlyContinue
+            $remaining | Should -BeNullOrEmpty
+        }
+
+        It "Throws error when attribute event not found" {
+            { Remove-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -AttributeName "nonexistent" -EventName "onchange" -FunctionName "test" -LibraryName "test.js" -Confirm:$false -ErrorAction Stop } | Should -Throw "*not found*"
+        }
+    }
+
+    Context 'Remove-DataverseFormEventHandler - Tab Events' {
+        BeforeEach {
+            # Reset form to initial state
+            $resetXml = Get-Content "$PSScriptRoot\testform2.formxml" -Raw
+            $testForm2["formxml"] = [string]$resetXml
+            $connection.Update($testForm2)
+        }
+
+        It "Removes a tab-level handler by unique ID" {
+            $handler = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "General" -EventName "tabstatechange"
+            
+            Remove-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "General" -EventName "tabstatechange" -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
+            
+            $remaining = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "General" -EventName "tabstatechange" -ErrorAction SilentlyContinue
+            $remaining | Should -BeNullOrEmpty
+        }
+
+        It "Removes a tab-level handler by function name and library" {
+            Remove-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "General" -EventName "tabstatechange" -FunctionName "ontab" -LibraryName "msdyn_/helplink.js" -Confirm:$false
+            
+            $remaining = Get-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "General" -EventName "tabstatechange" -ErrorAction SilentlyContinue
+            $remaining | Should -BeNullOrEmpty
+        }
+
+        It "Throws error when tab event not found" {
+            { Remove-DataverseFormEventHandler -Connection $connection -FormId $testForm2Id -TabName "General" -EventName "nonexistent" -FunctionName "test" -LibraryName "test.js" -Confirm:$false -ErrorAction Stop } | Should -Throw "*not found*"
         }
     }
 }
