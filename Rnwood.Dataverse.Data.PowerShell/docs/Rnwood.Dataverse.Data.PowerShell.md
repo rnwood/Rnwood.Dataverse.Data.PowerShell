@@ -69,6 +69,9 @@ Retrieves tab information from a Dataverse form.
 ### [Get-DataverseOptionSetMetadata](Get-DataverseOptionSetMetadata.md)
 Retrieves option set (choice) metadata from Dataverse.
 
+### [Get-DataverseOrganizationSettings](Get-DataverseOrganizationSettings.md)
+Gets organization settings from the single organization record in a Dataverse environment.
+
 ### [Get-DataversePluginAssembly](Get-DataversePluginAssembly.md)
 Retrieves plugin assembly records from a Dataverse environment.
 
@@ -113,7 +116,7 @@ Retrieves the components of a solution from a Dataverse environment.
 Parses a Dataverse solution file and returns metadata information.
 
 ### [Get-DataverseSolutionFileComponent](Get-DataverseSolutionFileComponent.md)
-{{ Fill in the Synopsis }}
+Retrieves the components from a Dataverse solution file (.zip).
 
 ### [Get-DataverseView](Get-DataverseView.md)
 Retrieves view information (savedquery or userquery) from a Dataverse environment.
@@ -270,6 +273,9 @@ Creates or updates a tab on a Dataverse form with support for column layouts.
 
 ### [Set-DataverseOptionSetMetadata](Set-DataverseOptionSetMetadata.md)
 Creates or updates a global option set in Dataverse.
+
+### [Set-DataverseOrganizationSettings](Set-DataverseOrganizationSettings.md)
+Updates organization settings in the single organization record in a Dataverse environment.
 
 ### [Set-DataversePluginAssembly](Set-DataversePluginAssembly.md)
 Creates or updates a plugin assembly in a Dataverse environment.
