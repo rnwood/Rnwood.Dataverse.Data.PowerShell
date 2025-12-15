@@ -284,7 +284,10 @@ Describe "Form Library and Event Handler E2E Tests" {
                 Wait-DataversePublish -Connection $connection -Verbose
                 Remove-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName1 -Confirm:$false
                 Write-Host "  Removed library 1"
-                
+            }
+            
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
                 Remove-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName2 -Confirm:$false
                 Write-Host "  Removed library 2"
             }
