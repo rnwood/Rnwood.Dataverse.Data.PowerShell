@@ -85,6 +85,7 @@ For more advanced scenarios including metadata and customisations, see the [docu
 - [Deleting Records](docs/core-concepts/deleting.md) - Delete operations and SQL alternatives
 - [Record Access Management](docs/core-concepts/record-access-management.md) - Test, grant, list, and revoke record-level access rights
 - [Working with Metadata](docs/core-concepts/metadata.md) - Reading and managing schema (entities, attributes, relationships, option sets)
+- [Organization Settings](docs/core-concepts/organization-settings.md) - Getting and updating organization table columns and OrgDbOrgSettings XML
 - [Managing Web Resources](docs/core-concepts/web-resources.md) - Upload, download, and manage web resources with file system integration
 - [Managing Forms](docs/core-concepts/form-management.md) - Creat, update, and managed forms
 - [View Management](docs/core-concepts/view-management.md) - Create, update, and manage system and personal views

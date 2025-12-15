@@ -13,6 +13,7 @@ This section covers the core concepts and operations for working with Dataverse 
 - **[File Attachments](file-attachments.md)** - Upload, download, and delete file data from file columns
 - **[Managing Web Resources](web-resources.md)** - Upload, download, and manage web resources (JavaScript, CSS, HTML, images, etc.) with file system integration
 - **[Working with Metadata](metadata.md)** - Reading and managing schema (entities, attributes, relationships, option sets)
+- **[Organization Settings](organization-settings.md)** - Getting and updating organization table columns and OrgDbOrgSettings XML
 - **[Form Management](form-management.md)** - Managing forms, tabs, sections, and controls with positioning and FormXml manipulation
 - **[Solution Component Management](solution-component-management.md)** - Managing individual solution components (entities, attributes, forms, views) within solutions
 - **[Error Handling and Batch Operations](error-handling.md)** - Error handling, batch processing, and retry logic
