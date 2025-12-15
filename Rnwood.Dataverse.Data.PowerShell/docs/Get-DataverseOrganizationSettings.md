@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseOrganizationSettings
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Gets organization settings from the single organization record in a Dataverse environment.
 
 ## SYNTAX
 
@@ -18,16 +18,42 @@ Get-DataverseOrganizationSettings [-IncludeRawXml] [-Connection <ServiceClient>]
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Get-DataverseOrganizationSettings cmdlet retrieves organization settings from the single organization record that exists in every Dataverse environment. The record is automatically discovered and all organization table columns are returned as PSObject properties.
+
+The OrgDbOrgSettings XML column is parsed into a structured OrgDbOrgSettingsParsed property for easy access to individual settings. By default, the raw XML is removed from the output to keep it clean, but can be included with the -IncludeRawXml parameter.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Get organization settings
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $connection = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
+PS C:\> $orgSettings = Get-DataverseOrganizationSettings -Connection $connection
+PS C:\> $orgSettings.name
+Contoso Corporation
 ```
 
-{{ Add example description here }}
+Gets the organization settings and displays the organization name.
+
+### Example 2: Access parsed OrgDbOrgSettings
+```powershell
+PS C:\> $orgSettings = Get-DataverseOrganizationSettings -Connection $connection
+PS C:\> $orgSettings.OrgDbOrgSettingsParsed.MaxUploadFileSize
+5242880
+```
+
+Gets the organization settings and accesses a specific setting from the parsed OrgDbOrgSettings XML.
+
+### Example 3: Include raw XML
+```powershell
+PS C:\> $orgSettings = Get-DataverseOrganizationSettings -Connection $connection -IncludeRawXml
+PS C:\> $orgSettings.orgdborgsettings
+<OrgSettings>
+  <MaxUploadFileSize>5242880</MaxUploadFileSize>
+  ...
+</OrgSettings>
+```
+
+Gets the organization settings and includes the raw OrgDbOrgSettings XML in the output.
 
 ## PARAMETERS
 
@@ -90,3 +116,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 
 ## RELATED LINKS
+
+[Set-DataverseOrganizationSettings](Set-DataverseOrganizationSettings.md)
+[Get-DataverseConnection](Get-DataverseConnection.md)

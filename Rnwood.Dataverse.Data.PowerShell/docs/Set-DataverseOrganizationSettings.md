@@ -8,7 +8,7 @@ schema: 2.0.0
 # Set-DataverseOrganizationSettings
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Updates organization settings in the single organization record in a Dataverse environment.
 
 ## SYNTAX
 
@@ -18,16 +18,54 @@ Set-DataverseOrganizationSettings -InputObject <PSObject> [-PassThru] [-Connecti
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Set-DataverseOrganizationSettings cmdlet updates organization settings in the single organization record that exists in every Dataverse environment. The record is automatically discovered and the specified columns from the InputObject are updated.
+
+To update settings within the OrgDbOrgSettings XML column, provide an OrgDbOrgSettingsUpdate property on the InputObject containing a hashtable or PSObject with the setting names and values to update.
+
+This cmdlet supports -WhatIf and -Confirm parameters for safe operation.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Update organization name
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $connection = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
+PS C:\> $updates = [PSCustomObject]@{ name = "Contoso Corporation" }
+PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -Confirm:$false
 ```
 
-{{ Add example description here }}
+Updates the organization name.
+
+### Example 2: Update OrgDbOrgSettings XML
+```powershell
+PS C:\> $updates = [PSCustomObject]@{
+    OrgDbOrgSettingsUpdate = [PSCustomObject]@{
+        MaxUploadFileSize = 10485760
+        EnableBingMapsIntegration = $true
+    }
+}
+PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -Confirm:$false
+```
+
+Updates specific settings within the OrgDbOrgSettings XML column.
+
+### Example 3: Update with PassThru
+```powershell
+PS C:\> $updates = [PSCustomObject]@{ name = "New Name" }
+PS C:\> $result = Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -PassThru -Confirm:$false
+PS C:\> $result.name
+New Name
+```
+
+Updates the organization name and returns the updated record.
+
+### Example 4: Use WhatIf to preview changes
+```powershell
+PS C:\> $updates = [PSCustomObject]@{ name = "New Name" }
+PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -WhatIf
+What if: Performing the operation "Update organization settings" on target "Organization record ..."
+```
+
+Previews what would be updated without making actual changes.
 
 ## PARAMETERS
 
@@ -136,5 +174,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### System.Management.Automation.PSObject
 ## NOTES
+This cmdlet has a high confirm impact and will prompt for confirmation by default. Use -Confirm:$false to suppress the prompt.
 
 ## RELATED LINKS
+
+[Get-DataverseOrganizationSettings](Get-DataverseOrganizationSettings.md)
+[Get-DataverseConnection](Get-DataverseConnection.md)
