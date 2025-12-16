@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Manual test script for Set-DataversePluginAssemblyFromSource and Get-DataversePluginAssemblySource
+# Manual test script for Set-DataverseDynamicPluginAssembly and Get-DataverseDynamicPluginAssembly
 
 $ErrorActionPreference = "Stop"
 
@@ -12,8 +12,8 @@ Write-Host ""
 # Test 1: Check cmdlets are available
 Write-Host "Test 1: Verify cmdlets are loaded..." -ForegroundColor Yellow
 $cmdlets = @(
-    'Set-DataversePluginAssemblyFromSource',
-    'Get-DataversePluginAssemblySource'
+    'Set-DataverseDynamicPluginAssembly',
+    'Get-DataverseDynamicPluginAssembly'
 )
 
 foreach ($cmdlet in $cmdlets) {
@@ -54,18 +54,18 @@ Write-Host $sourceCode -ForegroundColor DarkGray
 
 Write-Host ""
 Write-Host "  Note: Full Dataverse upload requires a connection." -ForegroundColor Yellow
-Write-Host "  This test would call: Set-DataversePluginAssemblyFromSource -Connection <conn> -SourceCode <code> -Name 'TestPlugin'" -ForegroundColor Gray
+Write-Host "  This test would call: Set-DataverseDynamicPluginAssembly -Connection <conn> -SourceCode <code> -Name 'TestPlugin'" -ForegroundColor Gray
 Write-Host ""
 
-# Test 3: Show Get-DataversePluginAssemblySource cmdlet help
+# Test 3: Show Get-DataverseDynamicPluginAssembly cmdlet help
 Write-Host "Test 3: Display cmdlet help..." -ForegroundColor Yellow
 Write-Host ""
-Get-Help Get-DataversePluginAssemblySource -Detailed
+Get-Help Get-DataverseDynamicPluginAssembly -Detailed
 
 Write-Host ""
 Write-Host "=== Manual Test Complete ===" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "To test with a real Dataverse connection:" -ForegroundColor Yellow
 Write-Host '  $conn = Get-DataverseConnection -Url "https://your-org.crm.dynamics.com" -Interactive' -ForegroundColor Gray
-Write-Host '  Set-DataversePluginAssemblyFromSource -Connection $conn -SourceCode $sourceCode -Name "TestPlugin" -PassThru' -ForegroundColor Gray
+Write-Host '  Set-DataverseDynamicPluginAssembly -Connection $conn -SourceCode $sourceCode -Name "TestPlugin" -PassThru' -ForegroundColor Gray
 Write-Host ""

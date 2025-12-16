@@ -1,4 +1,4 @@
-# Plugin Assembly Compilation Cmdlets
+# Dynamic Plugin Assembly Cmdlets
 
 ## Overview
 
@@ -6,7 +6,7 @@ New cmdlets have been added to compile C# source code into Dataverse plugin asse
 
 ## Cmdlets
 
-### Set-DataversePluginAssemblyFromSource
+### Set-DataverseDynamicPluginAssembly
 
 Compiles C# source code into a plugin assembly, uploads to Dataverse, and automatically manages plugin types.
 
@@ -47,10 +47,10 @@ namespace MyPlugins {
 }
 "@
 
-Set-DataversePluginAssemblyFromSource -SourceCode $source -Name "MyPlugins" -Connection $conn
+Set-DataverseDynamicPluginAssembly -SourceCode $source -Name "MyPlugins" -Connection $conn
 ```
 
-### Get-DataversePluginAssemblySource
+### Get-DataverseDynamicPluginAssembly
 
 Extracts source code and build metadata from a compiled plugin assembly.
 
@@ -71,7 +71,7 @@ $assembly = Get-DataversePluginAssembly -Name "MyPlugins" -Connection $conn
 $bytes = [Convert]::FromBase64String($assembly.content)
 
 # Extract source code
-$metadata = Get-DataversePluginAssemblySource -AssemblyBytes $bytes
+$metadata = Get-DataverseDynamicPluginAssembly -AssemblyBytes $bytes
 Write-Host $metadata.SourceCode
 ```
 
@@ -88,11 +88,11 @@ Write-Host $metadata.SourceCode
 ### Files Added/Modified
 
 **New Files:**
-- `Rnwood.Dataverse.Data.PowerShell.Cmdlets/Commands/SetDataversePluginAssemblyFromSourceCmdlet.cs`
+- `Rnwood.Dataverse.Data.PowerShell.Cmdlets/Commands/SetDataverseDynamicPluginAssemblyCmdlet.cs`
 - `Rnwood.Dataverse.Data.PowerShell.Cmdlets/Commands/GetDataversePluginAssemblySourceCmdlet.cs`
 - `Rnwood.Dataverse.Data.PowerShell.Cmdlets/Model/PluginAssemblyMetadata.cs`
-- `Rnwood.Dataverse.Data.PowerShell/docs/Set-DataversePluginAssemblyFromSource.md`
-- `Rnwood.Dataverse.Data.PowerShell/docs/Get-DataversePluginAssemblySource.md`
+- `Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseDynamicPluginAssembly.md`
+- `Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseDynamicPluginAssembly.md`
 
 **Modified Files:**
 - `Rnwood.Dataverse.Data.PowerShell.Cmdlets/Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj` - Added Microsoft.CodeAnalysis.CSharp package
@@ -101,7 +101,7 @@ Write-Host $metadata.SourceCode
 ### Testing
 
 Test files created:
-- `tests/PluginAssemblyFromSource.Tests.ps1` - Tests for the new cmdlets with mock Dataverse connection
+- `tests/DynamicPluginAssembly.Tests.ps1` - Tests for the new cmdlets with mock Dataverse connection
 - `manual-test-plugin-cmdlets.ps1` - Manual test script demonstrating cmdlet usage
 
 ## Workflow Example
@@ -144,7 +144,7 @@ namespace MyCompany.Plugins
 "@
 
 # Compile and upload
-Set-DataversePluginAssemblyFromSource `
+Set-DataverseDynamicPluginAssembly `
     -Connection $conn `
     -SourceCode $pluginSource `
     -Name "MyCompany.Plugins" `
@@ -181,7 +181,7 @@ namespace MyCompany.Plugins
 "@
 
 # Update (automatically increments version, adds new plugin type, keeps existing settings)
-Set-DataversePluginAssemblyFromSource `
+Set-DataverseDynamicPluginAssembly `
     -Connection $conn `
     -SourceCode $updatedSource `
     -Name "MyCompany.Plugins" `
@@ -197,7 +197,7 @@ $assembly = Get-DataversePluginAssembly -Name "MyCompany.Plugins" -Connection $c
 
 # Extract source code
 $bytes = [Convert]::FromBase64String($assembly.content)
-$metadata = Get-DataversePluginAssemblySource -AssemblyBytes $bytes
+$metadata = Get-DataverseDynamicPluginAssembly -AssemblyBytes $bytes
 
 # View source
 Write-Host $metadata.SourceCode
@@ -209,7 +209,7 @@ Write-Host "Version: $($metadata.Version)"
 Write-Host "Public Key Token: $($metadata.PublicKeyToken)"
 
 # Save to file
-Get-DataversePluginAssemblySource -AssemblyBytes $bytes -OutputSourceFile "C:\Temp\plugin-source.cs"
+Get-DataverseDynamicPluginAssembly -AssemblyBytes $bytes -OutputSourceFile "C:\Temp\plugin-source.cs"
 ```
 
 ## Benefits

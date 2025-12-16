@@ -20,9 +20,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Compiles C# source code into a plugin assembly, uploads to Dataverse, and manages plugin types automatically.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "DataversePluginAssemblyFromSource", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
+    [Cmdlet(VerbsCommon.Set, "DataverseDynamicPluginAssembly", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     [OutputType(typeof(PSObject))]
-    public class SetDataversePluginAssemblyFromSourceCmdlet : OrganizationServiceCmdlet
+    public class SetDataverseDynamicPluginAssemblyCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
         /// Gets or sets the C# source code to compile.

@@ -5,7 +5,7 @@ online version:
 schema: 2.0.0
 ---
 
-# Get-DataversePluginAssemblySource
+# Get-DataverseDynamicPluginAssembly
 
 ## SYNOPSIS
 {{ Fill in the Synopsis }}
@@ -14,13 +14,13 @@ schema: 2.0.0
 
 ### Bytes
 ```
-Get-DataversePluginAssemblySource -AssemblyBytes <Byte[]> [-OutputSourceFile <String>]
+Get-DataverseDynamicPluginAssembly -AssemblyBytes <Byte[]> [-OutputSourceFile <String>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### FilePath
 ```
-Get-DataversePluginAssemblySource -FilePath <String> [-OutputSourceFile <String>]
+Get-DataverseDynamicPluginAssembly -FilePath <String> [-OutputSourceFile <String>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 

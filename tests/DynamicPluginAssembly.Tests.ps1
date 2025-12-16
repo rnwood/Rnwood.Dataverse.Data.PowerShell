@@ -1,6 +1,6 @@
 . $PSScriptRoot/Common.ps1
 
-Describe 'Set-DataversePluginAssemblyFromSource and Get-DataversePluginAssemblySource' {
+Describe 'Set-DataverseDynamicPluginAssembly and Get-DataverseDynamicPluginAssembly' {
     
     It "Compiles C# plugin source code and uploads to Dataverse" {
         $connection = getMockConnection
@@ -21,7 +21,7 @@ namespace TestPlugin
 }
 "@
 
-        $result = Set-DataversePluginAssemblyFromSource -Connection $connection -SourceCode $sourceCode -Name "TestPlugin" -PassThru
+        $result = Set-DataverseDynamicPluginAssembly -Connection $connection -SourceCode $sourceCode -Name "TestPlugin" -PassThru
         
         $result | Should -Not -BeNullOrEmpty
         $result.name | Should -Be "TestPlugin"
@@ -49,7 +49,7 @@ namespace TestPlugin
 "@
 
         # This should succeed because plugin types are found
-        { Set-DataversePluginAssemblyFromSource -Connection $connection -SourceCode $sourceCode -Name "MultiPlugin" -WhatIf } | Should -Not -Throw
+        { Set-DataverseDynamicPluginAssembly -Connection $connection -SourceCode $sourceCode -Name "MultiPlugin" -WhatIf } | Should -Not -Throw
     }
 
     It "Throws error when no plugin types found in source" {
@@ -68,7 +68,7 @@ namespace TestPlugin
 "@
 
         # This should fail because no IPlugin classes found
-        { Set-DataversePluginAssemblyFromSource -Connection $connection -SourceCode $sourceCode -Name "NoPlugin" } | Should -Throw "*No plugin types found*"
+        { Set-DataverseDynamicPluginAssembly -Connection $connection -SourceCode $sourceCode -Name "NoPlugin" } | Should -Throw "*No plugin types found*"
     }
 
     It "Extracts source code from compiled assembly" {
@@ -88,7 +88,7 @@ namespace TestPlugin
         $connection = getMockConnection
         
         # First, create the assembly
-        $result = Set-DataversePluginAssemblyFromSource -Connection $connection -SourceCode $sourceCode -Name "ExtractTest" -PassThru
+        $result = Set-DataverseDynamicPluginAssembly -Connection $connection -SourceCode $sourceCode -Name "ExtractTest" -PassThru
         
         # Then retrieve it
         $assembly = Get-DataversePluginAssembly -Connection $connection -Name "ExtractTest"
@@ -96,7 +96,7 @@ namespace TestPlugin
         # Extract metadata
         $base64Content = $assembly.content
         $bytes = [Convert]::FromBase64String($base64Content)
-        $metadata = Get-DataversePluginAssemblySource -AssemblyBytes $bytes
+        $metadata = Get-DataverseDynamicPluginAssembly -AssemblyBytes $bytes
         
         $metadata | Should -Not -BeNullOrEmpty
         $metadata.AssemblyName | Should -Be "ExtractTest"
@@ -114,7 +114,7 @@ namespace Test { public class Plugin1 : IPlugin { public void Execute(IServicePr
 "@
 
         # Create with version 1.0.0.0
-        Set-DataversePluginAssemblyFromSource -Connection $connection -SourceCode $sourceCode1 -Name "VersionTest" -Version "1.0.0.0"
+        Set-DataverseDynamicPluginAssembly -Connection $connection -SourceCode $sourceCode1 -Name "VersionTest" -Version "1.0.0.0"
         
         $sourceCode2 = @"
 using System;
@@ -124,7 +124,7 @@ namespace Test { public class Plugin2 : IPlugin { public void Execute(IServicePr
 "@
 
         # Update without specifying version - should keep existing
-        $result = Set-DataversePluginAssemblyFromSource -Connection $connection -SourceCode $sourceCode2 -Name "VersionTest" -PassThru
+        $result = Set-DataverseDynamicPluginAssembly -Connection $connection -SourceCode $sourceCode2 -Name "VersionTest" -PassThru
         
         # Note: In mock, version may not be preserved exactly, but cmdlet should attempt to reuse it
         $result | Should -Not -BeNullOrEmpty
@@ -149,7 +149,7 @@ namespace TestPlugin
 }
 "@
 
-        { Set-DataversePluginAssemblyFromSource -Connection $connection -SourceCode $invalidCode -Name "InvalidPlugin" } | Should -Throw "*Compilation failed*"
+        { Set-DataverseDynamicPluginAssembly -Connection $connection -SourceCode $invalidCode -Name "InvalidPlugin" } | Should -Throw "*Compilation failed*"
     }
 
     It "Can read source from file" {
@@ -170,7 +170,7 @@ namespace TestPlugin
         Set-Content -Path $tempFile -Value $sourceCode
 
         try {
-            $result = Set-DataversePluginAssemblyFromSource -Connection $connection -SourceFile $tempFile -Name "FilePlugin" -PassThru
+            $result = Set-DataverseDynamicPluginAssembly -Connection $connection -SourceFile $tempFile -Name "FilePlugin" -PassThru
             
             $result | Should -Not -BeNullOrEmpty
             $result.name | Should -Be "FilePlugin"

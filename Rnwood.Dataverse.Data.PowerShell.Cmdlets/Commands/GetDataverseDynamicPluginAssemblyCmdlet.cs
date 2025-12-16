@@ -10,9 +10,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Extracts source code and build metadata from a plugin assembly created by New-DataversePluginAssembly.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "DataversePluginAssemblySource")]
+    [Cmdlet(VerbsCommon.Get, "DataverseDynamicPluginAssembly")]
     [OutputType(typeof(PSObject))]
-    public class GetDataversePluginAssemblySourceCmdlet : PSCmdlet
+    public class GetDataverseDynamicPluginAssemblyCmdlet : PSCmdlet
     {
         /// <summary>
         /// Gets or sets the assembly bytes to extract from.
