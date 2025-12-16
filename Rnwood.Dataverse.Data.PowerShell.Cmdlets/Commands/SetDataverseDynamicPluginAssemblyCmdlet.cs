@@ -348,7 +348,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private List<MetadataReference> GetMetadataReferences(string[] frameworkRefs, string[] packageRefs)
+private List<MetadataReference> GetMetadataReferences(string[] frameworkRefs, string[] packageRefs)
         {
             List<MetadataReference> references = new List<MetadataReference>();
 
@@ -370,6 +370,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
+            // Add Microsoft.Xrm.Sdk as a required reference for plugin assemblies
+            try
+            {
+                Assembly xrmSdkAssembly = typeof(Microsoft.Xrm.Sdk.IPlugin).Assembly;
+                if (!string.IsNullOrEmpty(xrmSdkAssembly.Location) && File.Exists(xrmSdkAssembly.Location))
+                {
+                    references.Add(MetadataReference.CreateFromFile(xrmSdkAssembly.Location));
+                    WriteVerbose($"Added required reference: Microsoft.Xrm.Sdk from {xrmSdkAssembly.Location}");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteWarning($"Could not load Microsoft.Xrm.Sdk: {ex.Message}");
+            }
+
+            // Add System.ComponentModel for IServiceProvider (needed by plugin interface)
+            try
+            {
+                Assembly componentModelAssembly = Assembly.Load("System.ComponentModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+                if (!string.IsNullOrEmpty(componentModelAssembly.Location) && File.Exists(componentModelAssembly.Location))
+                {
+                    references.Add(MetadataReference.CreateFromFile(componentModelAssembly.Location));
+                    WriteVerbose($"Added required reference: System.ComponentModel from {componentModelAssembly.Location}");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteWarning($"Could not load System.ComponentModel: {ex.Message}");
+            }
+
             // Framework references
             if (frameworkRefs != null)
             {
@@ -381,6 +411,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         if (!string.IsNullOrEmpty(assembly.Location) && File.Exists(assembly.Location))
                         {
                             references.Add(MetadataReference.CreateFromFile(assembly.Location));
+                            WriteVerbose($"Added framework reference: {frameworkRef}");
                         }
                     }
                     catch
@@ -402,6 +433,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         if (!string.IsNullOrEmpty(assembly.Location) && File.Exists(assembly.Location))
                         {
                             references.Add(MetadataReference.CreateFromFile(assembly.Location));
+                            WriteVerbose($"Added package reference: {packageRef}");
                         }
                     }
                     catch
@@ -413,7 +445,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             return references;
         }
-
         private byte[] EmbedMetadataInAssembly(byte[] assemblyBytes, PluginAssemblyMetadata metadata)
         {
             string metadataJson = JsonSerializer.Serialize(metadata);
