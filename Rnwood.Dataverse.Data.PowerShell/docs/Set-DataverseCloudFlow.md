@@ -8,7 +8,7 @@ schema: 2.0.0
 # Set-DataverseCloudFlow
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Updates properties of a cloud flow in Dataverse or changes its state.
 
 ## SYNTAX
 
@@ -25,16 +25,44 @@ Set-DataverseCloudFlow [-Name] <String> [-NewName <String>] [-Description <Strin
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Updates a cloud flow's properties (name, description) or changes its state (activate/deactivate). Supports WhatIf and Confirm for safe execution.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1 - Rename a flow
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Set-DataverseCloudFlow -Name "My Flow" -NewName "My Renamed Flow"
 ```
 
-{{ Add example description here }}
+Renames the cloud flow from "My Flow" to "My Renamed Flow".
+
+### Example 2 - Activate a flow
+```powershell
+PS C:\> Set-DataverseCloudFlow -Id "00000000-0000-0000-0000-000000000000" -Activate
+```
+
+Activates (turns on) the cloud flow with the specified ID.
+
+### Example 3 - Deactivate a flow
+```powershell
+PS C:\> Set-DataverseCloudFlow -Name "My Flow" -Deactivate
+```
+
+Deactivates (turns off) the cloud flow named "My Flow".
+
+### Example 4 - Update description
+```powershell
+PS C:\> Set-DataverseCloudFlow -Name "My Flow" -Description "Updated description"
+```
+
+Updates the description of the cloud flow.
+
+### Example 5 - Use WhatIf to preview changes
+```powershell
+PS C:\> Set-DataverseCloudFlow -Name "My Flow" -Activate -WhatIf
+```
+
+Shows what would happen if the flow were activated without actually activating it.
 
 ## PARAMETERS
 

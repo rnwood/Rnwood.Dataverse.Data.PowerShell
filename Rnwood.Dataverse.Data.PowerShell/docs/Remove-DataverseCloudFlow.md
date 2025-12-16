@@ -8,7 +8,7 @@ schema: 2.0.0
 # Remove-DataverseCloudFlow
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Removes (deletes) a cloud flow from Dataverse.
 
 ## SYNTAX
 
@@ -25,16 +25,37 @@ Remove-DataverseCloudFlow [-Name] <String> [-Connection <ServiceClient>] [-Progr
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Permanently deletes a cloud flow from Dataverse. Use with caution as this operation cannot be undone. Supports WhatIf and Confirm for safe execution.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1 - Remove a flow by ID
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Remove-DataverseCloudFlow -Id "00000000-0000-0000-0000-000000000000"
 ```
 
-{{ Add example description here }}
+Deletes the cloud flow with the specified ID. Will prompt for confirmation.
+
+### Example 2 - Remove a flow by name
+```powershell
+PS C:\> Remove-DataverseCloudFlow -Name "My Flow"
+```
+
+Deletes the cloud flow named "My Flow". Will prompt for confirmation.
+
+### Example 3 - Remove without confirmation
+```powershell
+PS C:\> Remove-DataverseCloudFlow -Name "My Flow" -Confirm:$false
+```
+
+Deletes the flow without prompting for confirmation.
+
+### Example 4 - Preview deletion with WhatIf
+```powershell
+PS C:\> Remove-DataverseCloudFlow -Name "My Flow" -WhatIf
+```
+
+Shows what would be deleted without actually deleting it.
 
 ## PARAMETERS
 

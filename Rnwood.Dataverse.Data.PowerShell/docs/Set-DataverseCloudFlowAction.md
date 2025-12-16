@@ -8,7 +8,7 @@ schema: 2.0.0
 # Set-DataverseCloudFlowAction
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Updates an action within a cloud flow in Dataverse.
 
 ## SYNTAX
 
@@ -25,16 +25,39 @@ Set-DataverseCloudFlowAction -FlowName <String> [-ActionId] <String> [-Inputs <O
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Updates properties of an action within a cloud flow by modifying the flow's clientdata JSON. Can update action inputs and description.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1 - Update action inputs with hashtable
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $inputs = @{ to = "user@example.com"; subject = "New Subject" }
+PS C:\> Set-DataverseCloudFlowAction -FlowName "My Flow" -ActionId "Send_email" -Inputs $inputs
 ```
 
-{{ Add example description here }}
+Updates the inputs for the "Send_email" action using a hashtable.
+
+### Example 2 - Update action inputs with JSON string
+```powershell
+PS C:\> $json = '{"to":"user@example.com","subject":"New Subject"}'
+PS C:\> Set-DataverseCloudFlowAction -FlowId "00000000-0000-0000-0000-000000000000" -ActionId "Send_email" -Inputs $json
+```
+
+Updates the inputs for the "Send_email" action using a JSON string.
+
+### Example 3 - Update action description
+```powershell
+PS C:\> Set-DataverseCloudFlowAction -FlowName "My Flow" -ActionId "Send_email" -Description "Send notification email"
+```
+
+Updates the description metadata for the action.
+
+### Example 4 - Use WhatIf to preview changes
+```powershell
+PS C:\> Set-DataverseCloudFlowAction -FlowName "My Flow" -ActionId "Send_email" -Inputs $inputs -WhatIf
+```
+
+Shows what would be changed without actually updating the flow.
 
 ## PARAMETERS
 

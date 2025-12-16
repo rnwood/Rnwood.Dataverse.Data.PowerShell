@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseCloudFlow
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves cloud flow information from a Dataverse environment.
 
 ## SYNTAX
 
@@ -18,16 +18,45 @@ Get-DataverseCloudFlow [[-Name] <String>] [-Id <Guid>] [-Activated] [-Draft] [-I
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Gets information about cloud flows (modern flows) stored in Dataverse. Cloud flows are stored in the workflow entity with category=5.
+You can filter flows by name, ID, or state (activated/draft).
 
 ## EXAMPLES
 
-### Example 1
+### Example 1 - Get all cloud flows
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Get-DataverseCloudFlow
 ```
 
-{{ Add example description here }}
+Returns all cloud flows in the Dataverse environment.
+
+### Example 2 - Get a specific flow by name
+```powershell
+PS C:\> Get-DataverseCloudFlow -Name "My Flow"
+```
+
+Returns the cloud flow with the exact name "My Flow".
+
+### Example 3 - Get flows with wildcard name filter
+```powershell
+PS C:\> Get-DataverseCloudFlow -Name "Sales*"
+```
+
+Returns all cloud flows whose names start with "Sales".
+
+### Example 4 - Get only activated flows
+```powershell
+PS C:\> Get-DataverseCloudFlow -Activated
+```
+
+Returns only cloud flows that are currently activated (running).
+
+### Example 5 - Get flow definition with actions
+```powershell
+PS C:\> Get-DataverseCloudFlow -Name "My Flow" -IncludeClientData
+```
+
+Returns the cloud flow including its clientdata JSON which contains the flow definition and actions.
 
 ## PARAMETERS
 
