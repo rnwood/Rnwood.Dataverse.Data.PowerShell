@@ -214,10 +214,8 @@ For more advanced scenarios including metadata and customisations, see the [docu
 
 ### Dependency Management
 
-- [`Get-DataverseDependency`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseDependency.md) — retrieve dependencies that prevent component deletion
-- [`Get-DataverseDependentComponent`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseDependentComponent.md) — retrieve components that depend on a specified component
-- [`Get-DataverseMissingDependency`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseMissingDependency.md) — retrieve missing dependencies for a solution
-- [`Get-DataverseUninstallDependency`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseUninstallDependency.md) — retrieve dependencies that prevent solution uninstall
+- [`Get-DataverseComponentDependency`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseComponentDependency.md) — retrieve component dependencies (use `-RequiredBy` for deletion blockers, `-Dependent` for impact analysis)
+- [`Get-DataverseSolutionDependency`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSolutionDependency.md) — retrieve solution dependencies (use `-Missing` for import validation, `-Uninstall` for removal blockers)
 
 ### Additional Operations
 For operations not covered by the cmdlets above, use [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) with SDK request objects to execute any Dataverse SDK operation directly. The cmdlet supports two main approaches:

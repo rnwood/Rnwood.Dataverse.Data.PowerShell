@@ -29,19 +29,24 @@ Dependencies in Dataverse represent relationships between components where one c
 
 ## Cmdlets
 
-### Get-DataverseDependency
+### Get-DataverseComponentDependency
 
-Retrieves dependencies that would prevent a component from being deleted.
+Retrieves component-level dependencies. Use the `-RequiredBy` switch to find dependencies that would prevent deletion, or `-Dependent` to find components that use the specified component.
 
-**Use when:**
+**Use -RequiredBy when:**
 - Planning to delete an entity, attribute, form, or other component
 - Understanding what other components rely on a specific component
 - Troubleshooting why a component cannot be deleted
 
+**Use -Dependent when:**
+- Understanding the impact of changing a component
+- Finding all forms that use a specific attribute
+- Identifying components affected by schema changes
+
 ```powershell
-# Check what depends on an entity before deleting it
+# Check what depends on an entity before deleting it (prevents deletion)
 $entityMetadata = Get-DataverseEntityMetadata -EntityName "new_customtable"
-$dependencies = Get-DataverseDependency -ObjectId $entityMetadata.MetadataId -ComponentType 1
+$dependencies = Get-DataverseComponentDependency -ObjectId $entityMetadata.MetadataId -ComponentType 1 -RequiredBy
 
 if ($dependencies) {
     Write-Host "Cannot delete - found $($dependencies.Count) dependencies:"
@@ -50,21 +55,10 @@ if ($dependencies) {
     # Safe to delete
     Remove-DataverseEntityMetadata -EntityName "new_customtable"
 }
-```
 
-### Get-DataverseDependentComponent
-
-Retrieves all components that depend on a specified component.
-
-**Use when:**
-- Understanding the impact of changing a component
-- Finding all forms that use a specific attribute
-- Identifying components affected by schema changes
-
-```powershell
-# Find all forms and views that use a specific attribute
+# Find all forms and views that use a specific attribute (impact analysis)
 $attrMetadata = Get-DataverseAttributeMetadata -EntityName "contact" -AttributeName "new_customfield"
-$dependents = Get-DataverseDependentComponent -ObjectId $attrMetadata.MetadataId -ComponentType 2
+$dependents = Get-DataverseComponentDependency -ObjectId $attrMetadata.MetadataId -ComponentType 2 -Dependent
 
 # Group by component type to see the breakdown
 $dependents | Group-Object dependentcomponenttype | ForEach-Object {
@@ -79,18 +73,23 @@ $dependents | Group-Object dependentcomponenttype | ForEach-Object {
 }
 ```
 
-### Get-DataverseMissingDependency
+### Get-DataverseSolutionDependency
 
-Retrieves missing dependencies for a solution.
+Retrieves solution-level dependencies. Use the `-Missing` switch to validate dependencies before import, or `-Uninstall` to check what prevents solution removal.
 
-**Use when:**
+**Use -Missing when:**
 - Validating a solution before import
 - Troubleshooting solution import failures
 - Planning environment preparation for solution deployment
 
+**Use -Uninstall when:**
+- Planning to uninstall a solution
+- Understanding what external components reference solution components
+- Preparing for solution removal
+
 ```powershell
 # Check for missing dependencies before importing
-$missingDeps = Get-DataverseMissingDependency -SolutionUniqueName "MyCustomSolution"
+$missingDeps = Get-DataverseSolutionDependency -SolutionUniqueName "MyCustomSolution" -Missing
 
 if ($missingDeps) {
     Write-Host "Missing $($missingDeps.Count) dependencies - import will fail"
@@ -107,23 +106,11 @@ if ($missingDeps) {
     Write-Host "Import these dependencies first or add them to the solution"
 } else {
     Write-Host "All dependencies satisfied - ready to import"
-    # Proceed with import
     Import-DataverseSolution -SolutionFile "MyCustomSolution.zip"
 }
-```
 
-### Get-DataverseUninstallDependency
-
-Retrieves dependencies that would prevent a solution from being uninstalled.
-
-**Use when:**
-- Planning to uninstall a solution
-- Understanding what external components reference solution components
-- Preparing for solution removal
-
-```powershell
 # Check if a solution can be safely uninstalled
-$dependencies = Get-DataverseUninstallDependency -SolutionUniqueName "MyOldSolution"
+$dependencies = Get-DataverseSolutionDependency -SolutionUniqueName "MyOldSolution" -Uninstall
 
 if ($dependencies) {
     Write-Host "Cannot uninstall - found $($dependencies.Count) external dependencies"
@@ -152,8 +139,8 @@ if ($dependencies) {
 # Step 1: Get the entity metadata
 $entity = Get-DataverseEntityMetadata -EntityName "new_customentity"
 
-# Step 2: Check for dependencies
-$dependencies = Get-DataverseDependency -ObjectId $entity.MetadataId -ComponentType 1
+# Step 2: Check for dependencies that prevent deletion
+$dependencies = Get-DataverseComponentDependency -ObjectId $entity.MetadataId -ComponentType 1 -RequiredBy
 
 # Step 3: Analyze dependencies
 if ($dependencies.Count -eq 0) {
@@ -178,7 +165,7 @@ if ($dependencies.Count -eq 0) {
 
 ```powershell
 # Check source solution for any missing dependencies in target environment
-$missingDeps = Get-DataverseMissingDependency -SolutionUniqueName "MyApp"
+$missingDeps = Get-DataverseSolutionDependency -SolutionUniqueName "MyApp" -Missing
 
 if ($missingDeps) {
     Write-Host "Pre-requisites needed:"
@@ -211,7 +198,7 @@ if ($missingDeps) {
 ```powershell
 # Analyze what would be affected by removing an attribute
 $attribute = Get-DataverseAttributeMetadata -EntityName "account" -AttributeName "new_score"
-$dependents = Get-DataverseDependentComponent -ObjectId $attribute.MetadataId -ComponentType 2
+$dependents = Get-DataverseComponentDependency -ObjectId $attribute.MetadataId -ComponentType 2 -Dependent
 
 Write-Host "Impact Analysis for removing 'new_score' attribute:"
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -249,7 +236,7 @@ if ($summary) {
 $solutions = Get-DataverseSolution | Where-Object { -not $_.ismanaged }
 
 $readiness = $solutions | ForEach-Object {
-    $deps = Get-DataverseUninstallDependency -SolutionUniqueName $_.uniquename
+    $deps = Get-DataverseSolutionDependency -SolutionUniqueName $_.uniquename -Uninstall
     
     [PSCustomObject]@{
         Solution = $_.friendlyname
@@ -300,19 +287,19 @@ For a complete list, see [Microsoft's Component Type documentation](https://lear
 ## Best Practices
 
 1. **Always check dependencies before deletion**
-   - Use `Get-DataverseDependency` before removing any component
+   - Use `Get-DataverseComponentDependency -RequiredBy` before removing any component
    - Document dependencies for impact analysis
 
 2. **Validate solutions before import**
-   - Use `Get-DataverseMissingDependency` in pre-deployment scripts
+   - Use `Get-DataverseSolutionDependency -Missing` in pre-deployment scripts
    - Automate dependency checking in CI/CD pipelines
 
 3. **Plan for solution uninstall**
-   - Check `Get-DataverseUninstallDependency` before removing solutions
+   - Check `Get-DataverseSolutionDependency -Uninstall` before removing solutions
    - Resolve external dependencies first
 
 4. **Understand impact of changes**
-   - Use `Get-DataverseDependentComponent` to see what uses a component
+   - Use `Get-DataverseComponentDependency -Dependent` to see what uses a component
    - Review dependencies when planning refactoring
 
 5. **Include dependencies in solutions**
@@ -331,7 +318,5 @@ For a complete list, see [Microsoft's Component Type documentation](https://lear
 
 ## Related Cmdlets
 
-- [`Get-DataverseDependency`](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseDependency.md)
-- [`Get-DataverseDependentComponent`](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseDependentComponent.md)
-- [`Get-DataverseMissingDependency`](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseMissingDependency.md)
-- [`Get-DataverseUninstallDependency`](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseUninstallDependency.md)
+- [`Get-DataverseComponentDependency`](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseComponentDependency.md)
+- [`Get-DataverseSolutionDependency`](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSolutionDependency.md)
