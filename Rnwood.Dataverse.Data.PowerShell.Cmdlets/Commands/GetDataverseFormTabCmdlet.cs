@@ -27,6 +27,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the tab name to retrieve a specific tab.
         /// </summary>
         [Parameter(HelpMessage = "Name of a specific tab to retrieve")]
+        [ArgumentCompleter(typeof(FormTabNameArgumentCompleter))]
         public string TabName { get; set; }
 
         /// <summary>

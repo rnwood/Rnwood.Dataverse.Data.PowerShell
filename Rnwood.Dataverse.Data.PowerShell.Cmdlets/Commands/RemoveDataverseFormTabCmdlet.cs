@@ -28,6 +28,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the name of the tab to remove.
         /// </summary>
         [Parameter(Mandatory = false, HelpMessage = "Name of the tab to remove")]
+        [ArgumentCompleter(typeof(FormTabNameArgumentCompleter))]
         public string TabName { get; set; }
 
         /// <summary>

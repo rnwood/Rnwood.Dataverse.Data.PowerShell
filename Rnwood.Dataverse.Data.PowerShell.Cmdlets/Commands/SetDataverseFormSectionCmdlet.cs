@@ -29,6 +29,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the tab name where the section is located.
         /// </summary>
         [Parameter(Mandatory = true, HelpMessage = "Name of the tab containing the section")]
+        [ArgumentCompleter(typeof(FormTabNameArgumentCompleter))]
         public string TabName { get; set; }
 
         /// <summary>
