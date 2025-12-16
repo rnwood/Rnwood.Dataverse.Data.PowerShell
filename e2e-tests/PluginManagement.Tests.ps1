@@ -187,12 +187,12 @@ Describe "Plugin Management Cmdlets" {
     It "Can query plugin packages from a real environment" {
         pwsh -noninteractive -noprofile -command {
             $env:PSModulePath = $env:ChildProcessPSModulePath
-           
+
             Import-Module Rnwood.Dataverse.Data.PowerShell
 
             try {
                 $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
-                
+
                 # Get all plugin packages
                 $packages = Get-DataversePluginPackage -Connection $connection
                 
@@ -230,12 +230,12 @@ Describe "Plugin Management Cmdlets" {
     It "Can query a specific plugin package by unique name" {
         pwsh -noninteractive -noprofile -command {
             $env:PSModulePath = $env:ChildProcessPSModulePath
-           
+
             Import-Module Rnwood.Dataverse.Data.PowerShell
 
             try {
                 $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
-                
+
                 # First, get all packages to see if any exist
                 $allPackages = Get-DataversePluginPackage -Connection $connection
                 
@@ -274,12 +274,12 @@ Describe "Plugin Management Cmdlets" {
     It "Can query a specific plugin package by ID" {
         pwsh -noninteractive -noprofile -command {
             $env:PSModulePath = $env:ChildProcessPSModulePath
-           
+
             Import-Module Rnwood.Dataverse.Data.PowerShell
 
             try {
                 $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
-                
+
                 # First, get all packages to see if any exist
                 $allPackages = Get-DataversePluginPackage -Connection $connection
                 
