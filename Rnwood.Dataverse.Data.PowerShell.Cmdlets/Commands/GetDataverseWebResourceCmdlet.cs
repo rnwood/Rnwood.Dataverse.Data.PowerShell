@@ -31,6 +31,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the name or name pattern of the web resource to retrieve. Supports wildcards (* and ?).
         /// </summary>
         [Parameter(ParameterSetName = PARAMSET_QUERY, HelpMessage = "Name or name pattern of the web resource. Supports wildcards (* and ?)")]
+        [ArgumentCompleter(typeof(WebResourceNameArgumentCompleter))]
         public string Name { get; set; }
 
         /// <summary>
