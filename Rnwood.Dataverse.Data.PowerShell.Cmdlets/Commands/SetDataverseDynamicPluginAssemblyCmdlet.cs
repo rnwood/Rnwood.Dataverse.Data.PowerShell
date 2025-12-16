@@ -370,6 +370,21 @@ private List<MetadataReference> GetMetadataReferences(string[] frameworkRefs, st
                 }
             }
 
+            // Add System.Runtime explicitly (needed for Type and other runtime types)
+            try
+            {
+                Assembly runtimeAssembly = Assembly.Load("System.Runtime");
+                if (!string.IsNullOrEmpty(runtimeAssembly.Location) && File.Exists(runtimeAssembly.Location))
+                {
+                    references.Add(MetadataReference.CreateFromFile(runtimeAssembly.Location));
+                    WriteVerbose($"Added required reference: System.Runtime from {runtimeAssembly.Location}");
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteWarning($"Could not load System.Runtime: {ex.Message}");
+            }
+
             // Add Microsoft.Xrm.Sdk as a required reference for plugin assemblies
             try
             {
