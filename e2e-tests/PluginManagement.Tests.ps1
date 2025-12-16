@@ -224,12 +224,13 @@ Describe "Plugin Management Cmdlets" {
 "@
                 $nuspecContent | Out-File -FilePath "$packageDir/$uniqueName.nuspec" -Encoding UTF8
 
-                # Create a minimal dummy DLL
+                # Create a minimal dummy DLL (note: Dataverse accepts any content in .nupkg files,
+                # validation only occurs at plugin execution time, not at upload)
                 "// Dummy plugin assembly for testing" | Out-File -FilePath "$packageDir/lib/net462/TestPlugin.dll" -Encoding ASCII
 
-                # Create the .nupkg file (ZIP)
+                # Create the .nupkg file (ZIP) in parent directory for better isolation
                 Add-Type -Assembly System.IO.Compression.FileSystem
-                $packagePath = Join-Path ([System.IO.Path]::GetTempPath()) "$uniqueName.1.0.0.nupkg"
+                $packagePath = Join-Path (Split-Path $packageDir -Parent) "$uniqueName.1.0.0.nupkg"
                 if (Test-Path $packagePath) { Remove-Item $packagePath -Force }
                 [System.IO.Compression.ZipFile]::CreateFromDirectory($packageDir, $packagePath)
                 Write-Host "Created test package at: $packagePath"
@@ -317,7 +318,7 @@ Describe "Plugin Management Cmdlets" {
                     $nuspecContentV2 = $nuspecContent -replace "1.0.0", "2.0.0"
                     $nuspecContentV2 | Out-File -FilePath "$packageDir/$uniqueName.nuspec" -Encoding UTF8 -Force
 
-                    $packagePathV2 = Join-Path ([System.IO.Path]::GetTempPath()) "$uniqueName.2.0.0.nupkg"
+                    $packagePathV2 = Join-Path (Split-Path $packageDir -Parent) "$uniqueName.2.0.0.nupkg"
                     if (Test-Path $packagePathV2) { Remove-Item $packagePathV2 -Force }
                     [System.IO.Compression.ZipFile]::CreateFromDirectory($packageDir, $packagePathV2)
 
