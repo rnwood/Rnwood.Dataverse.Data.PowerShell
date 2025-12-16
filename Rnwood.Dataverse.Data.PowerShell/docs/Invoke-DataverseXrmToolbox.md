@@ -146,11 +146,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
-
 ## OUTPUTS
 
 ### System.Void
-
 ## NOTES
 
 ## RELATED LINKS
