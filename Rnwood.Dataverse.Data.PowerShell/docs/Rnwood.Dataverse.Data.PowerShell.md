@@ -29,6 +29,9 @@ Retrieves app module component information from a Dataverse environment.
 ### [Get-DataverseAttributeMetadata](Get-DataverseAttributeMetadata.md)
 Retrieves attribute (column) metadata from Dataverse.
 
+### [Get-DataverseComponentDependency](Get-DataverseComponentDependency.md)
+Retrieves component dependencies in Dataverse.
+
 ### [Get-DataverseConnection](Get-DataverseConnection.md)
 Gets a connection to a Dataverse environment either interactively or silently and returns it.
 
@@ -111,6 +114,9 @@ Retrieves solution information from a Dataverse environment.
 
 ### [Get-DataverseSolutionComponent](Get-DataverseSolutionComponent.md)
 Retrieves the components of a solution from a Dataverse environment.
+
+### [Get-DataverseSolutionDependency](Get-DataverseSolutionDependency.md)
+Retrieves solution dependencies in Dataverse.
 
 ### [Get-DataverseSolutionFile](Get-DataverseSolutionFile.md)
 Parses a Dataverse solution file and returns metadata information.

@@ -26,6 +26,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the component type. Common types: 1=Entity, 2=Attribute, 9=OptionSet, 10=Relationship, 24=Form, 26=View, 29=WebResource, 60=Chart, 80=Process.
         /// </summary>
         [Parameter(Mandatory = true, Position = 1, ValueFromPipelineByPropertyName = true, HelpMessage = "Component type (1=Entity, 2=Attribute, 9=OptionSet, 10=Relationship, 24=Form, 26=View, 29=WebResource, 60=Chart, 80=Process)")]
+        [ArgumentCompleter(typeof(ComponentTypeArgumentCompleter))]
         public int ComponentType { get; set; }
 
         /// <summary>

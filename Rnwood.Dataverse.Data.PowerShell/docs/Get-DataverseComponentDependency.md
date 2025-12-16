@@ -14,13 +14,13 @@ Retrieves component dependencies in Dataverse.
 
 ### RequiredBy
 ```
-Get-DataverseComponentDependency [-ObjectId] <Guid> [-ComponentType] <Int32> -RequiredBy
+Get-DataverseComponentDependency [-ObjectId] <Guid> [-ComponentType] <Int32> [-RequiredBy]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Dependent
 ```
-Get-DataverseComponentDependency [-ObjectId] <Guid> [-ComponentType] <Int32> -Dependent
+Get-DataverseComponentDependency [-ObjectId] <Guid> [-ComponentType] <Int32> [-Dependent]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -211,13 +211,10 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Guid
-You can pipe objects with ObjectId, ComponentId, or MetadataId properties to this cmdlet.
-
+### System.Int32
 ## OUTPUTS
 
 ### Microsoft.Xrm.Sdk.Entity
-Returns dependency entities with information about each dependency relationship.
-
 ## NOTES
 - This cmdlet uses the RetrieveDependenciesForDeleteRequest SDK message (with -RequiredBy) or RetrieveDependentComponentsRequest SDK message (with -Dependent).
 - The returned entities contain properties like dependentcomponentobjectid, dependentcomponenttype, requiredcomponentobjectid, and requiredcomponenttype.

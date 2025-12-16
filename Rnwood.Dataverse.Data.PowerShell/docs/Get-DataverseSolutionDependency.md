@@ -14,13 +14,13 @@ Retrieves solution dependencies in Dataverse.
 
 ### Missing
 ```
-Get-DataverseSolutionDependency [-SolutionUniqueName] <String> -Missing [-Connection <ServiceClient>]
+Get-DataverseSolutionDependency [-SolutionUniqueName] <String> [-Missing] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Uninstall
 ```
-Get-DataverseSolutionDependency [-SolutionUniqueName] <String> -Uninstall [-Connection <ServiceClient>]
+Get-DataverseSolutionDependency [-SolutionUniqueName] <String> [-Uninstall] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -206,13 +206,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.String
-You can pipe objects with SolutionUniqueName or UniqueName properties to this cmdlet.
-
 ## OUTPUTS
 
 ### Microsoft.Xrm.Sdk.Entity
-Returns dependency or missing dependency entities with information about each dependency relationship.
-
 ## NOTES
 - This cmdlet uses the RetrieveMissingDependenciesRequest SDK message (with -Missing) or RetrieveDependenciesForUninstallRequest SDK message (with -Uninstall).
 - For -Missing mode: Returns entities with properties like missingcomponentid, missingcomponenttype, requiredcomponentid, and requiredcomponenttype.
