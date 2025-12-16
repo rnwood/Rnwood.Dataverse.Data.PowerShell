@@ -1,4 +1,4 @@
-Describe "Plugin Management Cmdlets" -Skip {
+Describe "Plugin Management Cmdlets" {
 
     BeforeAll {
         if ($env:TESTMODULEPATH) {
@@ -174,6 +174,226 @@ Describe "Plugin Management Cmdlets" -Skip {
                 }
                 
                 Write-Host "All enum types and values are correct"
+            } catch {
+                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+            }
+        }
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed"
+        }
+    }
+
+    It "Can perform complete plugin package CRUD operations" {
+        pwsh -noninteractive -noprofile -command {
+            $env:PSModulePath = $env:ChildProcessPSModulePath
+
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+
+            try {
+                $ErrorActionPreference = "Stop"
+                $ConfirmPreference = 'None'
+
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+
+                # Generate unique test identifier
+                $testPrefix = "e2etest_" + [Guid]::NewGuid().ToString("N").Substring(0, 8)
+                $uniqueName = "${testPrefix}_TestPkg"
+                Write-Host "Test package unique name: $uniqueName"
+
+                # Create a minimal valid NuGet package
+                $packageDir = Join-Path ([System.IO.Path]::GetTempPath()) "TestPluginPackage_$testPrefix"
+                New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
+                New-Item -ItemType Directory -Path "$packageDir/lib/net462" -Force | Out-Null
+
+                # Create .nuspec file
+                $nuspecContent = @"
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>$uniqueName</id>
+    <version>1.0.0</version>
+    <authors>E2E Test</authors>
+    <description>Test plugin package for E2E testing</description>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+  </metadata>
+  <files>
+    <file src="lib/**" target="lib" />
+  </files>
+</package>
+"@
+                $nuspecContent | Out-File -FilePath "$packageDir/$uniqueName.nuspec" -Encoding UTF8
+
+                # Create a minimal dummy DLL (note: Dataverse accepts any content in .nupkg files,
+                # validation only occurs at plugin execution time, not at upload)
+                "// Dummy plugin assembly for testing" | Out-File -FilePath "$packageDir/lib/net462/TestPlugin.dll" -Encoding ASCII
+
+                # Create the .nupkg file (ZIP) in parent directory for better isolation
+                Add-Type -Assembly System.IO.Compression.FileSystem
+                $packagePath = Join-Path (Split-Path $packageDir -Parent) "$uniqueName.1.0.0.nupkg"
+                if (Test-Path $packagePath) { Remove-Item $packagePath -Force }
+                [System.IO.Compression.ZipFile]::CreateFromDirectory($packageDir, $packagePath)
+                Write-Host "Created test package at: $packagePath"
+
+                $packageId = $null
+
+                try {
+                    # ==========================================
+                    # Step 1: Create plugin package
+                    # ==========================================
+                    Write-Host "Step 1: Creating plugin package..."
+
+                    $package = Set-DataversePluginPackage `
+                        -Connection $connection `
+                        -UniqueName $uniqueName `
+                        -FilePath $packagePath `
+                        -Version "1.0.0" `
+                        -Description "E2E Test Package" `
+                        -PassThru
+
+                    $packageId = $package.Id
+                    Write-Host "✓ Created package with ID: $packageId"
+
+                    if ([string]::IsNullOrEmpty($package.uniquename)) {
+                        throw "Created package missing 'uniquename' property"
+                    }
+
+                    if ($package.uniquename -ne $uniqueName) {
+                        throw "Expected unique name '$uniqueName', got '$($package.uniquename)'"
+                    }
+
+                    # ==========================================
+                    # Step 2: Query all packages
+                    # ==========================================
+                    Write-Host "Step 2: Querying all plugin packages..."
+
+                    $allPackages = Get-DataversePluginPackage -Connection $connection
+                    Write-Host "✓ Found $($allPackages.Count) total packages"
+
+                    $foundPackage = $allPackages | Where-Object { $_.Id -eq $packageId }
+                    if ($null -eq $foundPackage) {
+                        throw "Created package not found in list of all packages"
+                    }
+
+                    # ==========================================
+                    # Step 3: Query by unique name
+                    # ==========================================
+                    Write-Host "Step 3: Querying package by unique name..."
+
+                    $packageByName = Get-DataversePluginPackage -Connection $connection -UniqueName $uniqueName
+
+                    if ($null -eq $packageByName) {
+                        throw "Expected to get package by unique name '$uniqueName', but got null"
+                    }
+
+                    if ($packageByName.Id -ne $packageId) {
+                        throw "Expected package ID '$packageId', got '$($packageByName.Id)'"
+                    }
+
+                    Write-Host "✓ Successfully retrieved package by unique name"
+
+                    # ==========================================
+                    # Step 4: Query by ID
+                    # ==========================================
+                    Write-Host "Step 4: Querying package by ID..."
+
+                    $packageById = Get-DataversePluginPackage -Connection $connection -Id $packageId
+
+                    if ($null -eq $packageById) {
+                        throw "Expected to get package by ID '$packageId', but got null"
+                    }
+
+                    if ($packageById.uniquename -ne $uniqueName) {
+                        throw "Expected unique name '$uniqueName', got '$($packageById.uniquename)'"
+                    }
+
+                    Write-Host "✓ Successfully retrieved package by ID"
+
+                    # ==========================================
+                    # Step 5: Update package (new version)
+                    # ==========================================
+                    Write-Host "Step 5: Updating plugin package..."
+
+                    # Create updated package with new version
+                    $nuspecContentV2 = $nuspecContent -replace "1.0.0", "2.0.0"
+                    $nuspecContentV2 | Out-File -FilePath "$packageDir/$uniqueName.nuspec" -Encoding UTF8 -Force
+
+                    $packagePathV2 = Join-Path (Split-Path $packageDir -Parent) "$uniqueName.2.0.0.nupkg"
+                    if (Test-Path $packagePathV2) { Remove-Item $packagePathV2 -Force }
+                    [System.IO.Compression.ZipFile]::CreateFromDirectory($packageDir, $packagePathV2)
+
+                    $updatedPackage = Set-DataversePluginPackage `
+                        -Connection $connection `
+                        -Id $packageId `
+                        -UniqueName $uniqueName `
+                        -FilePath $packagePathV2 `
+                        -Version "2.0.0" `
+                        -Description "E2E Test Package Updated" `
+                        -PassThru
+
+                    if ($updatedPackage.version -ne "2.0.0") {
+                        throw "Expected version '2.0.0', got '$($updatedPackage.version)'"
+                    }
+
+                    Write-Host "✓ Successfully updated package to version 2.0.0"
+
+                    # ==========================================
+                    # Step 6: Delete package
+                    # ==========================================
+                    Write-Host "Step 6: Deleting plugin package..."
+
+                    Remove-DataversePluginPackage -Connection $connection -Id $packageId -Confirm:$false
+
+                    Write-Host "✓ Successfully deleted package"
+
+                    # ==========================================
+                    # Step 7: Verify deletion
+                    # ==========================================
+                    Write-Host "Step 7: Verifying deletion..."
+
+                    $deletedPackage = $null
+                    try {
+                        $deletedPackage = Get-DataversePluginPackage -Connection $connection -Id $packageId -ErrorAction SilentlyContinue
+                    } catch {
+                        # Expected - package should not exist
+                    }
+
+                    if ($null -ne $deletedPackage) {
+                        throw "Package still exists after deletion"
+                    }
+
+                    Write-Host "✓ Verified package was deleted"
+
+                    # ==========================================
+                    # Step 8: Test IfExists flag
+                    # ==========================================
+                    Write-Host "Step 8: Testing IfExists flag..."
+
+                    # Should not throw error
+                    Remove-DataversePluginPackage -Connection $connection -Id $packageId -IfExists -Confirm:$false
+
+                    Write-Host "✓ IfExists flag works correctly"
+
+                    Write-Host ""
+                    Write-Host "All plugin package CRUD operations completed successfully!"
+
+                } finally {
+                    # Cleanup: ensure package is deleted even if test fails
+                    if ($null -ne $packageId) {
+                        try {
+                            Remove-DataversePluginPackage -Connection $connection -Id $packageId -IfExists -Confirm:$false -ErrorAction SilentlyContinue
+                            Write-Host "Cleanup: Removed test package"
+                        } catch {
+                            Write-Host "Cleanup: Package already removed or error during cleanup"
+                        }
+                    }
+
+                    # Cleanup temp files
+                    if (Test-Path $packageDir) { Remove-Item -Recurse -Force $packageDir -ErrorAction SilentlyContinue }
+                    if (Test-Path $packagePath) { Remove-Item $packagePath -ErrorAction SilentlyContinue }
+                    if (Test-Path $packagePathV2) { Remove-Item $packagePathV2 -ErrorAction SilentlyContinue }
+                }
+
             } catch {
                 throw "Failed: " + ($_ | Format-Table -force * | Out-String)
             }

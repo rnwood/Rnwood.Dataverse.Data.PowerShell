@@ -15,6 +15,7 @@ This section covers the core concepts and operations for working with Dataverse 
 - **[Working with Metadata](metadata.md)** - Reading and managing schema (entities, attributes, relationships, option sets)
 - **[Organization Settings](organization-settings.md)** - Getting and updating organization table columns and OrgDbOrgSettings XML
 - **[Form Management](form-management.md)** - Managing forms, tabs, sections, and controls with positioning and FormXml manipulation
+- **[Plugin Management](plugin-management.md)** - Registering and managing plugins, plugin assemblies, plugin packages, plugin steps and step images
 - **[Solution Component Management](solution-component-management.md)** - Managing individual solution components (entities, attributes, forms, views) within solutions
 - **[Error Handling and Batch Operations](error-handling.md)** - Error handling, batch processing, and retry logic
 - **[Environment Variables and Connection References](environment-variables-connection-references.md)** - Managing configuration values and connection references across environments

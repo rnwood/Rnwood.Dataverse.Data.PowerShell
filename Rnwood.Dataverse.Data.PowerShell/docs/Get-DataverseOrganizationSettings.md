@@ -77,21 +77,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -OrgDbOrgSettings
-If specified, returns only the parsed OrgDbOrgSettings as a PSObject instead of the full organization record. Settings are returned as properties with parsed types (bool, int, or string).
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -IncludeRawXml
 If specified, includes the raw OrgDbOrgSettings XML string in the output when getting the full organization record. This parameter is ignored when -OrgDbOrgSettings is used.
 
@@ -107,8 +92,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-If specified, returns only OrgDbOrgSettings instead of the full organization record
+### -OrgDbOrgSettings
+If specified, returns only the parsed OrgDbOrgSettings as a PSObject instead of the full organization record. Settings are returned as properties with parsed types (bool, int, or string).
 
 ```yaml
 Type: SwitchParameter
@@ -123,7 +108,7 @@ Accept wildcard characters: False
 ```
 
 ### -ProgressAction
-{{ Fill ProgressAction Description }}
+If specified, returns only OrgDbOrgSettings instead of the full organization record
 
 ```yaml
 Type: ActionPreference

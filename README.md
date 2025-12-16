@@ -90,6 +90,7 @@ For more advanced scenarios including metadata and customisations, see the [docu
 - [Managing Forms](docs/core-concepts/form-management.md) - Creat, update, and managed forms
 - [View Management](docs/core-concepts/view-management.md) - Create, update, and manage system and personal views
 - [App Module Management](docs/core-concepts/app-module-management.md) - Create, update, and manage model-driven apps
+- [Plugin Management](docs/core-concepts/plugin-management.md) - Register and manage plugins, assemblies, packages, steps and step images
 - [Environment Variables and Connection References](docs/core-concepts/environment-variables-connection-references.md) - Managing configuration and connections
 - [Solution Management](docs/advanced/solution-management.md) - Import, export, and manage solutions
 - [Solution Component Management](docs/core-concepts/solution-component-management.md) - Managing individual components within solutions
@@ -210,6 +211,34 @@ For more advanced scenarios including metadata and customisations, see the [docu
 - [`Get-DataverseFormControl`] — retrieve controls from form sections
 - [`Set-DataverseFormControl`] — create or update form controls (supports all standard control types and raw XML)
 - [`Remove-DataverseFormControl`] — delete controls from forms
+
+### Plugin Management
+**Plugin Assemblies (Classic Plugins):**
+- [`Get-DataversePluginAssembly`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataversePluginAssembly.md) — retrieve plugin assemblies
+- [`Set-DataversePluginAssembly`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataversePluginAssembly.md) — upload or update plugin assemblies (DLL files)
+- [`Remove-DataversePluginAssembly`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataversePluginAssembly.md) — delete plugin assemblies
+
+**Plugin Packages (Modern Plugins):**
+- [`Get-DataversePluginPackage`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataversePluginPackage.md) — retrieve plugin packages
+- [`Set-DataversePluginPackage`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataversePluginPackage.md) — upload or update plugin packages (NuGet .nupkg files)
+- [`Remove-DataversePluginPackage`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataversePluginPackage.md) — delete plugin packages
+
+**Plugin Types:**
+- [`Get-DataversePluginType`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataversePluginType.md) — retrieve plugin types (classes)
+- [`Set-DataversePluginType`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataversePluginType.md) — register plugin types
+- [`Remove-DataversePluginType`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataversePluginType.md) — unregister plugin types
+
+**Plugin Steps:**
+- [`Get-DataversePluginStep`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataversePluginStep.md) — retrieve plugin steps (event registrations)
+- [`Set-DataversePluginStep`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataversePluginStep.md) — register or update plugin steps
+- [`Remove-DataversePluginStep`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataversePluginStep.md) — unregister plugin steps
+
+**Plugin Step Images:**
+- [`Get-DataversePluginStepImage`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataversePluginStepImage.md) — retrieve plugin step images (pre/post entity images)
+- [`Set-DataversePluginStepImage`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataversePluginStepImage.md) — register or update step images
+- [`Remove-DataversePluginStepImage`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataversePluginStepImage.md) — unregister step images
+
+See the [Plugin Management Guide](docs/core-concepts/plugin-management.md) for complete examples and best practices.
 
 ### Additional Operations
 For operations not covered by the cmdlets above, use [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) with SDK request objects to execute any Dataverse SDK operation directly. The cmdlet supports two main approaches:
