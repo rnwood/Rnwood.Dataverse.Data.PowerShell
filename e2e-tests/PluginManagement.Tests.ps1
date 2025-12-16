@@ -1,4 +1,4 @@
-Describe "Plugin Management Cmdlets" -Skip {
+Describe "Plugin Management Cmdlets" {
 
     BeforeAll {
         if ($env:TESTMODULEPATH) {
@@ -174,6 +174,137 @@ Describe "Plugin Management Cmdlets" -Skip {
                 }
                 
                 Write-Host "All enum types and values are correct"
+            } catch {
+                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+            }
+        }
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed"
+        }
+    }
+
+    It "Can query plugin packages from a real environment" {
+        pwsh -noninteractive -noprofile -command {
+            $env:PSModulePath = $env:ChildProcessPSModulePath
+           
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+
+            try {
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+                
+                # Get all plugin packages
+                $packages = Get-DataversePluginPackage -Connection $connection
+                
+                Write-Host "Found $($packages.Count) plugin packages"
+                
+                # Verify we got results (could be null or empty if no packages exist)
+                if ($null -eq $packages) {
+                    Write-Host "No plugin packages found - this is acceptable"
+                }
+                else {
+                    # If there are any packages, verify they have expected properties
+                    if ($packages.Count -gt 0) {
+                        $firstPackage = $packages[0]
+                        if (-not $firstPackage.uniquename) {
+                            throw "Package missing 'uniquename' property"
+                        }
+                        if (-not $firstPackage.Id) {
+                            throw "Package missing 'Id' property"
+                        }
+                        Write-Host "Successfully retrieved plugin package with unique name: $($firstPackage.uniquename)"
+                    }
+                }
+                
+                Write-Host "Plugin package query test passed"
+            } catch {
+                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+            }
+        }
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed"
+        }
+    }
+
+    It "Can query a specific plugin package by unique name" {
+        pwsh -noninteractive -noprofile -command {
+            $env:PSModulePath = $env:ChildProcessPSModulePath
+           
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+
+            try {
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+                
+                # First, get all packages to see if any exist
+                $allPackages = Get-DataversePluginPackage -Connection $connection
+                
+                if ($null -ne $allPackages -and $allPackages.Count -gt 0) {
+                    $testPackageName = $allPackages[0].uniquename
+                    Write-Host "Testing query by unique name: $testPackageName"
+                    
+                    # Query by unique name
+                    $package = Get-DataversePluginPackage -Connection $connection -UniqueName $testPackageName
+                    
+                    if ($null -eq $package) {
+                        throw "Expected to get package by unique name '$testPackageName', but got null"
+                    }
+                    
+                    if ($package.uniquename -ne $testPackageName) {
+                        throw "Expected package unique name to be '$testPackageName', but got '$($package.uniquename)'"
+                    }
+                    
+                    Write-Host "Successfully retrieved package by unique name: $($package.uniquename)"
+                }
+                else {
+                    Write-Host "No plugin packages found to test query by unique name - skipping this validation"
+                }
+                
+                Write-Host "Plugin package by name query test passed"
+            } catch {
+                throw "Failed: " + ($_ | Format-Table -force * | Out-String)
+            }
+        }
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed"
+        }
+    }
+
+    It "Can query a specific plugin package by ID" {
+        pwsh -noninteractive -noprofile -command {
+            $env:PSModulePath = $env:ChildProcessPSModulePath
+           
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+
+            try {
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+                
+                # First, get all packages to see if any exist
+                $allPackages = Get-DataversePluginPackage -Connection $connection
+                
+                if ($null -ne $allPackages -and $allPackages.Count -gt 0) {
+                    $testPackageId = $allPackages[0].Id
+                    Write-Host "Testing query by ID: $testPackageId"
+                    
+                    # Query by ID
+                    $package = Get-DataversePluginPackage -Connection $connection -Id $testPackageId
+                    
+                    if ($null -eq $package) {
+                        throw "Expected to get package by ID '$testPackageId', but got null"
+                    }
+                    
+                    if ($package.Id -ne $testPackageId) {
+                        throw "Expected package ID to be '$testPackageId', but got '$($package.Id)'"
+                    }
+                    
+                    Write-Host "Successfully retrieved package by ID: $($package.Id)"
+                }
+                else {
+                    Write-Host "No plugin packages found to test query by ID - skipping this validation"
+                }
+                
+                Write-Host "Plugin package by ID query test passed"
             } catch {
                 throw "Failed: " + ($_ | Format-Table -force * | Out-String)
             }

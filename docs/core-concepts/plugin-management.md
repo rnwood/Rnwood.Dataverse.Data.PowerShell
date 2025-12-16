@@ -216,10 +216,14 @@ Write-Host "Plugin completely unregistered"
 
 ## Plugin Package Examples (for modern plugins)
 
+Plugin packages are the modern approach to deploying plugins to Dataverse. They use NuGet packages (.nupkg files) instead of DLL assemblies. This approach provides better versioning, dependency management, and deployment options.
+
+For more information on plugin packages, see [Microsoft's Plugin Package documentation](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/pluginpackage).
+
 ### Upload Plugin Package
 
 ```powershell
-# Upload a NuGet package
+# Upload a NuGet package from file
 $package = Set-DataversePluginPackage `
     -Connection $connection `
     -UniqueName "MyCompanyPlugins" `
@@ -231,12 +235,100 @@ $package = Set-DataversePluginPackage `
 Write-Host "Package uploaded with ID: $($package.Id)"
 ```
 
+### Upload from Byte Array
+
+```powershell
+# Read package file into byte array
+$packageBytes = [System.IO.File]::ReadAllBytes("C:\Plugins\MyPlugin.nupkg")
+
+# Upload using byte array
+$package = Set-DataversePluginPackage `
+    -Connection $connection `
+    -UniqueName "MyPluginPackage" `
+    -Content $packageBytes `
+    -Version "2.0.0" `
+    -Description "Updated plugin package" `
+    -PassThru
+
+Write-Host "Package uploaded: $($package.uniquename) v$($package.version)"
+```
+
 ### List All Plugin Packages
 
 ```powershell
-Get-DataversePluginPackage -Connection $connection -All |
-    Select-Object uniquename, version, @{N='Id';E={$_.Id}} |
+# Get all plugin packages
+Get-DataversePluginPackage -Connection $connection |
+    Select-Object uniquename, version, description, @{N='Id';E={$_.Id}} |
     Format-Table
+
+# Or with explicit -All parameter
+Get-DataversePluginPackage -Connection $connection -All |
+    Format-Table uniquename, version, description
+```
+
+### Get Package by Unique Name
+
+```powershell
+# Query a specific package by unique name
+$package = Get-DataversePluginPackage -Connection $connection -UniqueName "MyCompanyPlugins"
+
+if ($package) {
+    Write-Host "Found package: $($package.uniquename) v$($package.version)"
+    Write-Host "Package ID: $($package.Id)"
+}
+```
+
+### Get Package by ID
+
+```powershell
+# Query a specific package by ID
+$packageId = [Guid]"12345678-1234-1234-1234-123456789012"
+$package = Get-DataversePluginPackage -Connection $connection -Id $packageId
+
+Write-Host "Package: $($package.uniquename)"
+Write-Host "Version: $($package.version)"
+Write-Host "Description: $($package.description)"
+```
+
+### Update Existing Plugin Package
+
+```powershell
+# Get existing package
+$package = Get-DataversePluginPackage -Connection $connection -UniqueName "MyCompanyPlugins"
+
+# Update with new version
+Set-DataversePluginPackage `
+    -Connection $connection `
+    -Id $package.Id `
+    -UniqueName "MyCompanyPlugins" `
+    -FilePath "C:\Development\MyPlugins\bin\Release\MyCompany.Plugins.2.0.0.nupkg" `
+    -Version "2.0.0" `
+    -Description "Updated version with bug fixes"
+
+Write-Host "Package updated successfully"
+```
+
+### Remove Plugin Package
+
+```powershell
+# Find and remove by unique name
+$package = Get-DataversePluginPackage -Connection $connection -UniqueName "MyOldPackage"
+Remove-DataversePluginPackage -Connection $connection -Id $package.Id -Confirm:$false
+
+# Safe removal with IfExists flag
+Remove-DataversePluginPackage -Connection $connection -Id $someId -IfExists -Confirm:$false
+```
+
+### Compare Package Versions
+
+```powershell
+# Get all versions of a package (if multiple exist)
+$packages = Get-DataversePluginPackage -Connection $connection |
+    Where-Object { $_.uniquename -like "*MyCompany*" } |
+    Sort-Object version -Descending
+
+Write-Host "Found $($packages.Count) matching packages:"
+$packages | Format-Table uniquename, version, @{N='Modified';E={$_.modifiedon}}
 ```
 
 ## Advanced Scenarios
