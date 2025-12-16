@@ -73,12 +73,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string Culture { get; set; }
 
         /// <summary>
-        /// Gets or sets the isolation mode.
-        /// </summary>
-        [Parameter(HelpMessage = "Isolation mode for the plugin assembly. Default is Sandbox.")]
-        public PluginAssemblyIsolationMode IsolationMode { get; set; } = PluginAssemblyIsolationMode.Sandbox;
-
-        /// <summary>
         /// Gets or sets the description of the assembly.
         /// </summary>
         [Parameter(HelpMessage = "Description of the assembly")]
@@ -517,7 +511,7 @@ private List<MetadataReference> GetMetadataReferences(string[] frameworkRefs, st
 
             assembly["name"] = name;
             assembly["content"] = Convert.ToBase64String(assemblyBytes);
-            assembly["isolationmode"] = new OptionSetValue((int)IsolationMode);
+            assembly["isolationmode"] = new OptionSetValue((int)PluginAssemblyIsolationMode.Sandbox);
             assembly["sourcetype"] = new OptionSetValue((int)PluginAssemblySourceType.Database);
             assembly["version"] = version;
             assembly["culture"] = culture ?? "neutral";

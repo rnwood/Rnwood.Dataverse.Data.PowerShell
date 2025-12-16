@@ -16,20 +16,22 @@ Compiles C# source code into a plugin assembly, uploads to Dataverse, and automa
 ```
 Set-DataverseDynamicPluginAssembly -SourceCode <String> -Name <String> [-FrameworkReferences <String[]>]
  [-PackageReferences <String[]>] [-StrongNameKeyFile <String>] [-Version <String>] [-Culture <String>]
- [-IsolationMode <PluginAssemblyIsolationMode>] [-Description <String>] [-PassThru]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Description <String>] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### SourceFile
 ```
 Set-DataverseDynamicPluginAssembly -SourceFile <String> -Name <String> [-FrameworkReferences <String[]>]
  [-PackageReferences <String[]>] [-StrongNameKeyFile <String>] [-Version <String>] [-Culture <String>]
- [-IsolationMode <PluginAssemblyIsolationMode>] [-Description <String>] [-PassThru]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-Description <String>] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 This cmdlet compiles C# source code into a plugin assembly using the Roslyn compiler, embeds build metadata (source code, references, strong name) in the assembly, uploads it to Dataverse, and automatically discovers and manages plugin types. Plugin types are classes that implement the `Microsoft.Xrm.Sdk.IPlugin` interface.
+
+**Important**: All dynamic plugin assemblies are automatically registered in **Sandbox isolation mode** for security. Full-trust mode is not supported.
 
 Key features:
 - **Create or Update**: If an assembly with the same name exists, it is updated; otherwise, a new one is created
@@ -38,6 +40,7 @@ Key features:
 - **Generate strong name key**: If no key is specified and no existing assembly has one, a new key is automatically generated
 - **Embed metadata**: Source code and build settings are embedded in the assembly for later extraction
 - **Error on no plugins**: Throws an error if no plugin types are found in the source code
+- **Sandbox isolation**: All assemblies are registered in Sandbox isolation mode for security
 
 ## EXAMPLES
 
@@ -143,22 +146,6 @@ Aliases:
 Required: False
 Position: Named
 Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -IsolationMode
-Isolation mode for the plugin assembly.
-
-```yaml
-Type: PluginAssemblyIsolationMode
-Parameter Sets: (All)
-Aliases:
-Accepted values: None, Sandbox, External
-
-Required: False
-Position: Named
-Default value: Sandbox
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
