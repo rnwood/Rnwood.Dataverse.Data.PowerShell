@@ -104,14 +104,14 @@ namespace TestDynamicPlugins
             Write-Host "Step 4: Registering plugin step..."
             
             # Get the SDK message ID for "Create"
-            $createMessage = Get-DataverseRecord -Connection $connection -TableName sdkmessage -Filter "name eq 'Create'" -Columns sdkmessageid | Select-Object -First 1
+            $createMessage = Get-DataverseRecord -Connection $connection -TableName sdkmessage -FilterValues @{ name = 'Create' } -Columns sdkmessageid | Select-Object -First 1
             if (-not $createMessage) {
                 throw "Could not find 'Create' SDK message"
             }
             
             # Get the SDK message filter ID for Create on contact
             $messageFilter = Get-DataverseRecord -Connection $connection -TableName sdkmessagefilter `
-                -Filter "sdkmessageid eq $($createMessage.sdkmessageid) and primaryobjecttypecode eq 'contact'" `
+                -FilterValues @{ sdkmessageid = $createMessage.sdkmessageid; primaryobjecttypecode = 'contact' } `
                 -Columns sdkmessagefilterid | Select-Object -First 1
             if (-not $messageFilter) {
                 throw "Could not find message filter for Create on contact"

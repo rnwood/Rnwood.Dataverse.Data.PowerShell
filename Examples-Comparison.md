@@ -171,7 +171,7 @@ $contacts = Get-CrmRecordsByFetch -conn $conn -Fetch $fetch
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
 # Simple filter
-$contacts = Get-DataverseRecord -Connection $conn -TableName contact -Columns fullname -Filter @{
+$contacts = Get-DataverseRecord -Connection $conn -TableName contact -Columns fullname -FilterValues @{
   lastname = "Smith"
 }
 
@@ -657,7 +657,7 @@ if ($solutions.Count -eq 1) {
 $solutionUniqueName = 'mysolution'
 
 # Query for the solution
-$solution = Get-DataverseRecord -Connection $conn -TableName solution -Filter @{uniquename = $solutionUniqueName}
+$solution = Get-DataverseRecord -Connection $conn -TableName solution -FilterValues @{uniquename = $solutionUniqueName}
 
 if ($solution) {
     Remove-DataverseRecord -Connection $conn -TableName solution -Id $solution.Id

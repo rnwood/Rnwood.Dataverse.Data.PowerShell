@@ -181,7 +181,7 @@ Retrieves 50 accounts and updates their industry (using label) and rating (using
 
 ### Example 5: Batch operations with state/status changes
 ```powershell
-PS C:\> $cases = Get-DataverseRecord -Connection $c -TableName incident -Filter @{ statecode = 0 }
+PS C:\> $cases = Get-DataverseRecord -Connection $c -TableName incident -FilterValues @{ statecode = 0 }
 
 PS C:\> $cases | ForEach-Object {
     $_.statuscode = "Resolved"  # Can use status label
