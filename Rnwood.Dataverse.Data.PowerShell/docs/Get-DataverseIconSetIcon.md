@@ -38,7 +38,7 @@ Icon set to retrieve icons from
 Type: String
 Parameter Sets: (All)
 Aliases:
-Accepted values: FluentUI, Iconoir
+Accepted values: FluentUI, Iconoir, Tabler
 
 Required: False
 Position: 0

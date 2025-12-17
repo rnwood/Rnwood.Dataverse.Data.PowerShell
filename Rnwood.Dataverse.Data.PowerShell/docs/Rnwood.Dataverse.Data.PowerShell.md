@@ -331,9 +331,6 @@ Creates or updates a solution in Dataverse. Allows setting friendly name, descri
 ### [Set-DataverseSolutionComponent](Set-DataverseSolutionComponent.md)
 Adds or updates a solution component in an unmanaged solution, with automatic handling of behavior changes.
 
-### [Set-DataverseTableIcon](Set-DataverseTableIcon.md)
-{{ Fill in the Synopsis }}
-
 ### [Set-DataverseView](Set-DataverseView.md)
 Creates or updates Dataverse views (savedquery and userquery entities) with flexible column and filter configuration.
 

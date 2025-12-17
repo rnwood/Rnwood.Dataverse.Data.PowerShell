@@ -21,7 +21,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the icon set to retrieve icons from.
         /// </summary>
         [Parameter(Position = 0, HelpMessage = "Icon set to retrieve icons from")]
-        [ValidateSet("FluentUI", "Iconoir")]
+        [ValidateSet("FluentUI", "Iconoir", "Tabler")]
         public string IconSet { get; set; } = "FluentUI";
 
         /// <summary>
@@ -82,6 +82,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             else if (IconSet == "FluentUI")
             {
                 return await GetFluentUIIconsAsync();
+            }
+            else if (IconSet == "Tabler")
+            {
+                return await GetTablerIconsAsync();
             }
 
             throw new NotSupportedException($"Icon set '{IconSet}' is not supported");
@@ -156,6 +160,42 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 icon.Properties.Add(new PSNoteProperty("FileName", $"{iconName}_24_regular.svg"));
                 icon.Properties.Add(new PSNoteProperty("DownloadUrl", $"{rawBaseUrl}/{iconName}/SVG/{iconName}_24_regular.svg"));
                 icon.Properties.Add(new PSNoteProperty("Size", 0L)); // Size unknown without fetching each file
+                icons.Add(icon);
+            }
+
+            return icons;
+        }
+
+        private async Task<List<PSObject>> GetTablerIconsAsync()
+        {
+            // Tabler Icons repository: https://github.com/tabler/tabler-icons
+            // Icons are in: icons/outline/*.svg
+            // We'll use the GitHub API to list the directory contents
+            const string apiUrl = "https://api.github.com/repos/tabler/tabler-icons/contents/icons/outline";
+            const string rawBaseUrl = "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline";
+
+            WriteVerbose($"Fetching icon list from GitHub API: {apiUrl}");
+
+            var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
+            request.Headers.Add("User-Agent", "Rnwood.Dataverse.Data.PowerShell");
+            request.Headers.Add("Accept", "application/vnd.github.v3+json");
+
+            var response = await httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var jsonContent = await response.Content.ReadAsStringAsync();
+            var items = JsonSerializer.Deserialize<List<GitHubFileItem>>(jsonContent);
+
+            var icons = new List<PSObject>();
+            foreach (var item in items.Where(i => i.name.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)))
+            {
+                var iconName = System.IO.Path.GetFileNameWithoutExtension(item.name);
+                var icon = new PSObject();
+                icon.Properties.Add(new PSNoteProperty("IconSet", "Tabler"));
+                icon.Properties.Add(new PSNoteProperty("Name", iconName));
+                icon.Properties.Add(new PSNoteProperty("FileName", item.name));
+                icon.Properties.Add(new PSNoteProperty("DownloadUrl", item.download_url ?? $"{rawBaseUrl}/{item.name}"));
+                icon.Properties.Add(new PSNoteProperty("Size", item.size));
                 icons.Add(icon);
             }
 

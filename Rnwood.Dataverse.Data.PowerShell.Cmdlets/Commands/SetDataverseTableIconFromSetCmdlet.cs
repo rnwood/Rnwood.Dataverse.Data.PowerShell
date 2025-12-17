@@ -15,9 +15,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Sets a table's vector icon by downloading an icon from an online icon set and creating/updating a web resource.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "DataverseTableIcon", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
+    [Cmdlet(VerbsCommon.Set, "DataverseTableIconFromSet", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     [OutputType(typeof(PSObject))]
-    public class SetDataverseTableIconCmdlet : OrganizationServiceCmdlet
+    public class SetDataverseTableIconFromSetCmdlet : OrganizationServiceCmdlet
     {
         private static readonly HttpClient httpClient = new HttpClient();
 
@@ -33,7 +33,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the icon set to retrieve the icon from.
         /// </summary>
         [Parameter(Position = 1, HelpMessage = "Icon set to retrieve the icon from")]
-        [ValidateSet("FluentUI", "Iconoir")]
+        [ValidateSet("FluentUI", "Iconoir", "Tabler")]
         public string IconSet { get; set; } = "FluentUI";
 
         /// <summary>
@@ -141,6 +141,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // FluentUI System Icons are at: https://raw.githubusercontent.com/microsoft/fluentui-system-icons/main/assets/{name}/SVG/{name}_24_regular.svg
                 // Using 24_regular as the standard size/variant for table icons
                 downloadUrl = $"https://raw.githubusercontent.com/microsoft/fluentui-system-icons/main/assets/{IconName}/SVG/{IconName}_24_regular.svg";
+            }
+            else if (IconSet == "Tabler")
+            {
+                // Tabler Icons are at: https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/{name}.svg
+                downloadUrl = $"https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/{IconName}.svg";
             }
             else
             {

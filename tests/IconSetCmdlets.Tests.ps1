@@ -24,6 +24,7 @@ Describe 'Icon Set Cmdlets - Get-DataverseIconSetIcon' {
         $validateSet | Should -Not -BeNullOrEmpty
         $validateSet.ValidValues | Should -Contain "FluentUI"
         $validateSet.ValidValues | Should -Contain "Iconoir"
+        $validateSet.ValidValues | Should -Contain "Tabler"
     }
 
     It "Get-DataverseIconSetIcon defaults to FluentUI" {
@@ -67,53 +68,62 @@ Describe 'Icon Set Cmdlets - Get-DataverseIconSetIcon' {
         $icons | Should -Not -BeNullOrEmpty
         $icons[0].IconSet | Should -Be "FluentUI"
     }
+
+    It "Get-DataverseIconSetIcon retrieves icons from Tabler (requires internet)" -Skip:($env:CI -eq 'true') {
+        $icons = Get-DataverseIconSetIcon -IconSet Tabler
+        $icons | Should -Not -BeNullOrEmpty
+        $icons.Count | Should -BeGreaterThan 0
+        $icons[0].IconSet | Should -Be "Tabler"
+        $icons[0].Name | Should -Not -BeNullOrEmpty
+        $icons[0].DownloadUrl | Should -Not -BeNullOrEmpty
+    }
 }
 
-Describe 'Icon Set Cmdlets - Set-DataverseTableIcon' {
+Describe 'Icon Set Cmdlets - Set-DataverseTableIconFromSet' {
     
-    It "Set-DataverseTableIcon cmdlet exists" {
-        { Get-Command Set-DataverseTableIcon -ErrorAction Stop } | Should -Not -Throw
+    It "Set-DataverseTableIconFromSet cmdlet exists" {
+        { Get-Command Set-DataverseTableIconFromSet -ErrorAction Stop } | Should -Not -Throw
     }
 
-    It "Set-DataverseTableIcon accepts EntityName parameter" {
-        { Get-Command Set-DataverseTableIcon -ParameterName EntityName } | Should -Not -Throw
-        { Get-Command Set-DataverseTableIcon -ParameterName TableName } | Should -Not -Throw # Alias
+    It "Set-DataverseTableIconFromSet accepts EntityName parameter" {
+        { Get-Command Set-DataverseTableIconFromSet -ParameterName EntityName } | Should -Not -Throw
+        { Get-Command Set-DataverseTableIconFromSet -ParameterName TableName } | Should -Not -Throw # Alias
     }
 
-    It "Set-DataverseTableIcon accepts IconSet parameter" {
-        { Get-Command Set-DataverseTableIcon -ParameterName IconSet } | Should -Not -Throw
+    It "Set-DataverseTableIconFromSet accepts IconSet parameter" {
+        { Get-Command Set-DataverseTableIconFromSet -ParameterName IconSet } | Should -Not -Throw
     }
 
-    It "Set-DataverseTableIcon accepts IconName parameter" {
-        { Get-Command Set-DataverseTableIcon -ParameterName IconName } | Should -Not -Throw
+    It "Set-DataverseTableIconFromSet accepts IconName parameter" {
+        { Get-Command Set-DataverseTableIconFromSet -ParameterName IconName } | Should -Not -Throw
     }
 
-    It "Set-DataverseTableIcon accepts PublisherPrefix parameter" {
-        { Get-Command Set-DataverseTableIcon -ParameterName PublisherPrefix } | Should -Not -Throw
+    It "Set-DataverseTableIconFromSet accepts PublisherPrefix parameter" {
+        { Get-Command Set-DataverseTableIconFromSet -ParameterName PublisherPrefix } | Should -Not -Throw
     }
 
-    It "Set-DataverseTableIcon accepts Publish switch" {
-        { Get-Command Set-DataverseTableIcon -ParameterName Publish } | Should -Not -Throw
+    It "Set-DataverseTableIconFromSet accepts Publish switch" {
+        { Get-Command Set-DataverseTableIconFromSet -ParameterName Publish } | Should -Not -Throw
     }
 
-    It "Set-DataverseTableIcon accepts PassThru switch" {
-        { Get-Command Set-DataverseTableIcon -ParameterName PassThru } | Should -Not -Throw
+    It "Set-DataverseTableIconFromSet accepts PassThru switch" {
+        { Get-Command Set-DataverseTableIconFromSet -ParameterName PassThru } | Should -Not -Throw
     }
 
-    It "Set-DataverseTableIcon supports ShouldProcess" {
-        $cmd = Get-Command Set-DataverseTableIcon
+    It "Set-DataverseTableIconFromSet supports ShouldProcess" {
+        $cmd = Get-Command Set-DataverseTableIconFromSet
         $cmd.Parameters.ContainsKey('WhatIf') | Should -Be $true
         $cmd.Parameters.ContainsKey('Confirm') | Should -Be $true
     }
 
-    It "Set-DataverseTableIcon EntityName parameter is mandatory" {
-        $param = (Get-Command Set-DataverseTableIcon).Parameters['EntityName']
+    It "Set-DataverseTableIconFromSet EntityName parameter is mandatory" {
+        $param = (Get-Command Set-DataverseTableIconFromSet).Parameters['EntityName']
         $mandatory = $param.Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] } | Select-Object -First 1
         $mandatory.Mandatory | Should -Be $true
     }
 
-    It "Set-DataverseTableIcon IconName parameter is mandatory" {
-        $param = (Get-Command Set-DataverseTableIcon).Parameters['IconName']
+    It "Set-DataverseTableIconFromSet IconName parameter is mandatory" {
+        $param = (Get-Command Set-DataverseTableIconFromSet).Parameters['IconName']
         $mandatory = $param.Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] } | Select-Object -First 1
         $mandatory.Mandatory | Should -Be $true
     }
@@ -121,7 +131,7 @@ Describe 'Icon Set Cmdlets - Set-DataverseTableIcon' {
     # Functional tests with mock connection
     Context "With Mock Connection" {
         
-        It "Set-DataverseTableIcon fails when icon not found (mocked)" {
+        It "Set-DataverseTableIconFromSet fails when icon not found (mocked)" {
             $connection = getMockConnection -RequestInterceptor {
                 param($request)
                 
@@ -135,7 +145,7 @@ Describe 'Icon Set Cmdlets - Set-DataverseTableIcon' {
             # Skipping for now as it requires external dependencies
         } -Skip
         
-        It "Set-DataverseTableIcon creates web resource with correct properties (mocked)" {
+        It "Set-DataverseTableIconFromSet creates web resource with correct properties (mocked)" {
             $webResourceCreated = $false
             $webResourceName = $null
             $webResourceType = $null
@@ -166,7 +176,7 @@ Describe 'Icon Set Cmdlets - Set-DataverseTableIcon' {
             # Skipping for now as it requires external dependencies and proper setup
         } -Skip
 
-        It "Set-DataverseTableIcon updates entity metadata with icon reference (mocked)" {
+        It "Set-DataverseTableIconFromSet updates entity metadata with icon reference (mocked)" {
             $entityUpdated = $false
             $iconVectorName = $null
             
@@ -193,7 +203,7 @@ Describe 'Icon Set Cmdlets - Set-DataverseTableIcon' {
 
 Describe 'Icon Set Cmdlets - Integration' {
     
-    It "Get-DataverseIconSetIcon and Set-DataverseTableIcon work together (requires internet and connection)" -Skip {
+    It "Get-DataverseIconSetIcon and Set-DataverseTableIconFromSet work together (requires internet and connection)" -Skip {
         # This is an integration test that requires:
         # 1. Internet access to retrieve icons
         # 2. A real Dataverse connection
@@ -204,6 +214,6 @@ Describe 'Icon Set Cmdlets - Integration' {
         $icon | Should -Not -BeNullOrEmpty
         
         # Set it on a table (would need real connection)
-        # Set-DataverseTableIcon -EntityName "contact" -IconName $icon.Name -Publish
+        # Set-DataverseTableIconFromSet -EntityName "contact" -IconName $icon.Name -Publish
     }
 }
