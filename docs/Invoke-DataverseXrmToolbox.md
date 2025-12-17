@@ -160,6 +160,12 @@ This example uses a custom directory for caching downloaded plugins.
 
 **Caching**: Downloaded plugins are cached locally to improve performance. Use the `-Force` parameter to force a re-download.
 
+**Runtime Isolation**: Each invocation creates a unique runtime directory with the XrmToolBox folder structure (`Plugins/`, `Settings/`, `Logs/`, `Connections/`). This ensures:
+- Plugins that use `XrmToolBox.Extensibility.Paths` work correctly
+- Multiple concurrent plugin invocations don't interfere with each other
+- Each session has isolated settings and logs
+- Runtime directories are automatically cleaned up after 1 hour
+
 **Plugin Compatibility**: This cmdlet is compatible with any XrmToolbox plugin distributed as a NuGet package. If a plugin has specific requirements or dependencies, you may need to manually install them.
 
 ## Related Links
