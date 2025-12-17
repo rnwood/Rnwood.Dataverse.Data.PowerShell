@@ -389,32 +389,11 @@ private List<MetadataReference> GetMetadataReferences(string[] frameworkRefs, st
                 }
             }
 
-            // Add facades for type forwarding (required for types like IServiceProvider, Object, etc.)
-            // These facades provide compatibility between .NET Framework and modern SDK types
-            string[] facadeReferences = new[]
-            {
-                "System.Runtime.dll",
-                "System.ComponentModel.dll",
-                "System.ComponentModel.Primitives.dll",
-                "System.ComponentModel.TypeConverter.dll"
-            };
-
-            if (Directory.Exists(facadesPath))
-            {
-                foreach (string facadeName in facadeReferences)
-                {
-                    string facadePath = Path.Combine(facadesPath, facadeName);
-                    if (File.Exists(facadePath))
-                    {
-                        references.Add(MetadataReference.CreateFromFile(facadePath));
-                        WriteVerbose($"Added .NET Framework 4.6.2 facade: {facadeName}");
-                    }
-                }
-            }
-            else
-            {
-                WriteWarning($"Facades directory not found at: {facadesPath}");
-            }
+            // DO NOT add facade assemblies from the ReferenceAssemblies package!
+            // These facades themselves reference System.Private.CoreLib, which would get embedded
+            // in the compiled plugin assembly, causing runtime errors in Dataverse.
+            // The core .NET Framework 4.6.2 assemblies (mscorlib.dll, System.dll, System.Core.dll)
+            // are sufficient for compilation without modern .NET type references.
 
             // Add Microsoft.Xrm.Sdk as a required reference for plugin assemblies
             // IMPORTANT: We must use the .NET Framework 4.6.2 version from NuGet packages
