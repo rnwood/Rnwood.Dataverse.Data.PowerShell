@@ -86,8 +86,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private PSObject ConvertEntityToPSObject(Entity entity, DataverseEntityConverter entityConverter)
         {
-            // Try to use the entity converter with metadata
-            return entityConverter.ConvertToPSObject(entity, new ColumnSet(true), (attr) => ValueType.Raw);
+            // For system entities like 'dependency', metadata may not be available
+            // Convert directly from entity attributes without requiring metadata
+            PSObject result = new PSObject();
+            
+            result.Properties.Add(new PSNoteProperty("Id", entity.Id));
+            result.Properties.Add(new PSNoteProperty("LogicalName", entity.LogicalName));
+            
+            foreach (var attribute in entity.Attributes)
+            {
+                // Skip if property already exists (e.g., if entity has 'Id' or 'LogicalName' attribute)
+                if (result.Properties[attribute.Key] == null)
+                {
+                    result.Properties.Add(new PSNoteProperty(attribute.Key, attribute.Value));
+                }
+            }
+            
+            return result;
         }
     }
 }
