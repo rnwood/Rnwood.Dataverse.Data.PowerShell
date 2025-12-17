@@ -38,10 +38,42 @@ Describe "Dynamic Plugin Assembly E2E Tests" {
             $assemblyName = "TestDynPlugin_${timestamp}_${testRunId}"
             $markerValue1 = "V1_${testRunId}"
             $markerValue2 = "V2_${testRunId}"
+            $testEntityName = "new_e2edynplugin_${timestamp}_${testRunId}"
             
             Write-Host "Test assembly: $assemblyName"
             Write-Host "Marker V1: $markerValue1"
             Write-Host "Marker V2: $markerValue2"
+            Write-Host "Test entity: $testEntityName"
+            
+            # Step 2: Create test entity
+            Write-Host "Step 2: Creating test entity..."
+            Set-DataverseEntityMetadata -Connection $connection `
+                -EntityName $testEntityName `
+                -SchemaName ("new_E2EDynPlugin_${timestamp}_${testRunId}") `
+                -DisplayName "E2E Dynamic Plugin Test" `
+                -DisplayCollectionName "E2E Dynamic Plugin Tests" `
+                -PrimaryAttributeSchemaName "new_name" `
+                -OwnershipType UserOwned `
+                -Confirm:$false
+            
+            Write-Host "✓ Test entity created: $testEntityName"
+            
+            # Add a description field to the test entity
+            Write-Host "Step 3: Adding description field to test entity..."
+            Set-DataverseAttributeMetadata -Connection $connection `
+                -EntityName $testEntityName `
+                -AttributeName "new_description" `
+                -SchemaName "new_Description" `
+                -AttributeType Memo `
+                -DisplayName "Description" `
+                -MaxLength 2000 `
+                -Confirm:$false
+            
+            Write-Host "✓ Description field added"
+            
+            # Wait for entity metadata to be published
+            Write-Host "Waiting for entity metadata to publish..."
+            Start-Sleep -Seconds 10
             
             # Create initial plugin source code that sets a marker field
             $pluginSourceV1 = @"
@@ -50,31 +82,31 @@ using Microsoft.Xrm.Sdk;
 
 namespace TestDynamicPlugins
 {
-    public class ContactPreCreatePlugin : IPlugin
+    public class TestEntityPreCreatePlugin : IPlugin
     {
         public void Execute(IServiceProvider serviceProvider)
         {
             var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
             var trace = (ITracingService)serviceProvider.GetService(typeof(ITracingService));
             
-            trace.Trace("ContactPreCreatePlugin V1 executing");
+            trace.Trace("TestEntityPreCreatePlugin V1 executing");
             
             if (context.InputParameters.Contains("Target") && context.InputParameters["Target"] is Entity)
             {
                 var target = (Entity)context.InputParameters["Target"];
                 
                 // Set a marker in description to prove plugin ran (V1)
-                target["description"] = "$markerValue1";
+                target["new_description"] = "$markerValue1";
                 
-                trace.Trace("Set description to: $markerValue1");
+                trace.Trace("Set new_description to: $markerValue1");
             }
         }
     }
 }
 "@
 
-            # Step 2: Create dynamic plugin assembly from source
-            Write-Host "Step 2: Creating dynamic plugin assembly from source..."
+            # Step 4: Create dynamic plugin assembly from source
+            Write-Host "Step 4: Creating dynamic plugin assembly from source..."
             $assembly = Set-DataverseDynamicPluginAssembly `
                 -Connection $connection `
                 -SourceCode $pluginSourceV1 `
@@ -89,8 +121,8 @@ namespace TestDynamicPlugins
             $assemblyId = $assembly.Id
             Write-Host "✓ Created plugin assembly: $assemblyId"
             
-            # Step 3: Verify plugin type was auto-created
-            Write-Host "Step 3: Verifying plugin type was auto-created..."
+            # Step 5: Verify plugin type was auto-created
+            Write-Host "Step 5: Verifying plugin type was auto-created..."
             $pluginTypes = @(Get-DataversePluginType -Connection $connection -PluginAssemblyId $assemblyId)
             
             if ($pluginTypes.Count -ne 1) {
@@ -100,8 +132,8 @@ namespace TestDynamicPlugins
             $pluginType = $pluginTypes[0]
             Write-Host "✓ Found plugin type: $($pluginType.typename)"
             
-            # Step 4: Register plugin step for PreCreate on contact
-            Write-Host "Step 4: Registering plugin step..."
+            # Step 6: Register plugin step for PreCreate on test entity
+            Write-Host "Step 6: Registering plugin step..."
             
             # Get the SDK message ID for "Create"
             $createMessage = Get-DataverseRecord -Connection $connection -TableName sdkmessage -FilterValues @{ name = 'Create' } -Columns sdkmessageid | Select-Object -First 1
@@ -109,12 +141,12 @@ namespace TestDynamicPlugins
                 throw "Could not find 'Create' SDK message"
             }
             
-            # Get the SDK message filter ID for Create on contact
+            # Get the SDK message filter ID for Create on test entity
             $messageFilter = Get-DataverseRecord -Connection $connection -TableName sdkmessagefilter `
-                -FilterValues @{ sdkmessageid = $createMessage.sdkmessageid; primaryobjecttypecode = 'contact' } `
+                -FilterValues @{ sdkmessageid = $createMessage.sdkmessageid; primaryobjecttypecode = $testEntityName } `
                 -Columns sdkmessagefilterid | Select-Object -First 1
             if (-not $messageFilter) {
-                throw "Could not find message filter for Create on contact"
+                throw "Could not find message filter for Create on $testEntityName"
             }
             
             $stepId = Set-DataversePluginStep `
@@ -133,51 +165,50 @@ namespace TestDynamicPlugins
             Write-Host "Waiting 5 seconds for plugin registration to propagate..."
             Start-Sleep -Seconds 5
             
-            # Step 5: Create a contact to trigger the plugin
-            Write-Host "Step 5: Creating contact to trigger plugin V1..."
-            $testContact = @{
-                "firstname" = "DynTest"
-                "lastname" = "V1_$testRunId"
+            # Step 7: Create a record to trigger the plugin
+            Write-Host "Step 7: Creating test record to trigger plugin V1..."
+            $testRecord = @{
+                "new_name" = "Test V1_$testRunId"
             }
             
-            $contactId = Set-DataverseRecord -Connection $connection -TableName contact -InputObject $testContact -PassThru | Select-Object -ExpandProperty Id
-            Write-Host "✓ Created contact: $contactId"
+            $recordId = Set-DataverseRecord -Connection $connection -TableName $testEntityName -InputObject $testRecord -PassThru | Select-Object -ExpandProperty Id
+            Write-Host "✓ Created test record: $recordId"
             
-            # Step 6: Verify plugin executed (check description field)
-            Write-Host "Step 6: Verifying plugin V1 executed..."
-            $contact = Get-DataverseRecord -Connection $connection -TableName contact -Id $contactId
+            # Step 8: Verify plugin executed (check description field)
+            Write-Host "Step 8: Verifying plugin V1 executed..."
+            $record = Get-DataverseRecord -Connection $connection -TableName $testEntityName -Id $recordId
             
-            if ($contact.description -ne $markerValue1) {
-                throw "Plugin V1 did not execute correctly. Expected description='$markerValue1', got '$($contact.description)'"
+            if ($record.new_description -ne $markerValue1) {
+                throw "Plugin V1 did not execute correctly. Expected new_description='$markerValue1', got '$($record.new_description)'"
             }
             
-            Write-Host "✓ Plugin V1 executed successfully! Description = $($contact.description)"
+            Write-Host "✓ Plugin V1 executed successfully! new_description = $($record.new_description)"
             
-            # Step 7: Update plugin assembly with modified code
-            Write-Host "Step 7: Updating plugin assembly with modified source (V2)..."
+            # Step 9: Update plugin assembly with modified code
+            Write-Host "Step 9: Updating plugin assembly with modified source (V2)..."
             $pluginSourceV2 = @"
 using System;
 using Microsoft.Xrm.Sdk;
 
 namespace TestDynamicPlugins
 {
-    public class ContactPreCreatePlugin : IPlugin
+    public class TestEntityPreCreatePlugin : IPlugin
     {
         public void Execute(IServiceProvider serviceProvider)
         {
             var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
             var trace = (ITracingService)serviceProvider.GetService(typeof(ITracingService));
             
-            trace.Trace("ContactPreCreatePlugin V2 executing");
+            trace.Trace("TestEntityPreCreatePlugin V2 executing");
             
             if (context.InputParameters.Contains("Target") && context.InputParameters["Target"] is Entity)
             {
                 var target = (Entity)context.InputParameters["Target"];
                 
                 // Set a different marker in description to prove updated plugin ran (V2)
-                target["description"] = "$markerValue2";
+                target["new_description"] = "$markerValue2";
                 
-                trace.Trace("Set description to: $markerValue2");
+                trace.Trace("Set new_description to: $markerValue2");
             }
         }
     }
@@ -197,28 +228,27 @@ namespace TestDynamicPlugins
             Write-Host "Waiting 5 seconds for plugin update to propagate..."
             Start-Sleep -Seconds 5
             
-            # Step 8: Create another contact to trigger the UPDATED plugin
-            Write-Host "Step 8: Creating contact to trigger plugin V2..."
-            $testContact2 = @{
-                "firstname" = "DynTest"
-                "lastname" = "V2_$testRunId"
+            # Step 10: Create another record to trigger the UPDATED plugin
+            Write-Host "Step 10: Creating test record to trigger plugin V2..."
+            $testRecord2 = @{
+                "new_name" = "Test V2_$testRunId"
             }
             
-            $contactId2 = Set-DataverseRecord -Connection $connection -TableName contact -InputObject $testContact2 -PassThru | Select-Object -ExpandProperty Id
-            Write-Host "✓ Created contact: $contactId2"
+            $recordId2 = Set-DataverseRecord -Connection $connection -TableName $testEntityName -InputObject $testRecord2 -PassThru | Select-Object -ExpandProperty Id
+            Write-Host "✓ Created test record: $recordId2"
             
-            # Step 9: Verify UPDATED plugin executed with new behavior
-            Write-Host "Step 9: Verifying plugin V2 executed with new behavior..."
-            $contact2 = Get-DataverseRecord -Connection $connection -TableName contact -Id $contactId2
+            # Step 11: Verify UPDATED plugin executed with new behavior
+            Write-Host "Step 11: Verifying plugin V2 executed with new behavior..."
+            $record2 = Get-DataverseRecord -Connection $connection -TableName $testEntityName -Id $recordId2
             
-            if ($contact2.description -ne $markerValue2) {
-                throw "Plugin V2 did not execute correctly. Expected description='$markerValue2', got '$($contact2.description)'"
+            if ($record2.new_description -ne $markerValue2) {
+                throw "Plugin V2 did not execute correctly. Expected new_description='$markerValue2', got '$($record2.new_description)'"
             }
             
-            Write-Host "✓ Plugin V2 executed successfully! Description = $($contact2.description)"
+            Write-Host "✓ Plugin V2 executed successfully! new_description = $($record2.new_description)"
             
-            # Step 10: Extract source from assembly to verify metadata
-            Write-Host "Step 10: Extracting source from updated assembly..."
+            # Step 12: Extract source from assembly to verify metadata
+            Write-Host "Step 12: Extracting source from updated assembly..."
             $retrievedAssembly = Get-DataversePluginAssembly -Connection $connection -Name $assemblyName
             $assemblyBytes = [Convert]::FromBase64String($retrievedAssembly.content)
             $metadata = Get-DataverseDynamicPluginAssembly -AssemblyBytes $assemblyBytes
@@ -233,7 +263,7 @@ namespace TestDynamicPlugins
             Write-Host "  Public Key Token: $($metadata.PublicKeyToken)"
             
             # Cleanup
-            Write-Host "Step 11: Cleaning up..."
+            Write-Host "Step 13: Cleaning up..."
             try {
                 Remove-DataversePluginStep -Connection $connection -Id $stepId -Confirm:$false
                 Write-Host "✓ Removed plugin step"
@@ -242,11 +272,11 @@ namespace TestDynamicPlugins
             }
             
             try {
-                Remove-DataverseRecord -Connection $connection -TableName contact -Id $contactId -Confirm:$false
-                Remove-DataverseRecord -Connection $connection -TableName contact -Id $contactId2 -Confirm:$false
-                Write-Host "✓ Removed test contacts"
+                Remove-DataverseRecord -Connection $connection -TableName $testEntityName -Id $recordId -Confirm:$false
+                Remove-DataverseRecord -Connection $connection -TableName $testEntityName -Id $recordId2 -Confirm:$false
+                Write-Host "✓ Removed test records"
             } catch {
-                Write-Warning "Failed to remove contacts: $_"
+                Write-Warning "Failed to remove test records: $_"
             }
             
             try {
@@ -254,6 +284,13 @@ namespace TestDynamicPlugins
                 Write-Host "✓ Removed plugin assembly"
             } catch {
                 Write-Warning "Failed to remove assembly: $_"
+            }
+            
+            try {
+                Remove-DataverseEntityMetadata -Connection $connection -EntityName $testEntityName -Confirm:$false
+                Write-Host "✓ Removed test entity"
+            } catch {
+                Write-Warning "Failed to remove test entity: $_"
             }
             
             Write-Host ""

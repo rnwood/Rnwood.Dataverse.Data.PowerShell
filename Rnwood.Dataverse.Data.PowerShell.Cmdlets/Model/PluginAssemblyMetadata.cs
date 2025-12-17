@@ -41,5 +41,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
         /// Gets or sets the assembly name.
         /// </summary>
         public string AssemblyName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the strong name key pair (base64 encoded).
+        /// This allows the same key to be reused when updating the assembly.
+        /// </summary>
+        public string StrongNameKey { get; set; }
     }
 }

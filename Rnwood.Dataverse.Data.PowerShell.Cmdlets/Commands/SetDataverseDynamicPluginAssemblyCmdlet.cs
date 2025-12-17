@@ -133,18 +133,31 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 // Handle strong name key
                 string effectiveKeyPath = StrongNameKeyFile;
+                byte[] keyPairBytes = null;
+                
                 if (string.IsNullOrEmpty(effectiveKeyPath))
                 {
-                    if (existingMetadata != null && !string.IsNullOrEmpty(existingMetadata.PublicKeyToken))
+                    if (existingMetadata != null && !string.IsNullOrEmpty(existingMetadata.StrongNameKey))
                     {
                         WriteVerbose("Reusing existing strong name key");
-                        // Would need to extract key from existing assembly - for now, generate new
-                        effectiveKeyPath = GenerateStrongNameKey();
+                        // Extract key from metadata and save to temp file
+                        keyPairBytes = Convert.FromBase64String(existingMetadata.StrongNameKey);
+                        effectiveKeyPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.snk");
+                        File.WriteAllBytes(effectiveKeyPath, keyPairBytes);
+                        _tempKeyFilePath = effectiveKeyPath;
                     }
                     else
                     {
                         WriteVerbose("Generating new strong name key");
-                        effectiveKeyPath = GenerateStrongNameKey();
+                        effectiveKeyPath = GenerateStrongNameKey(out keyPairBytes);
+                    }
+                }
+                else
+                {
+                    // User provided a key file, read it
+                    if (File.Exists(effectiveKeyPath))
+                    {
+                        keyPairBytes = File.ReadAllBytes(effectiveKeyPath);
                     }
                 }
 
@@ -176,6 +189,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     Version = effectiveVersion,
                     Culture = effectiveCulture
                 };
+
+                // Store the strong name key in metadata for reuse when updating
+                if (keyPairBytes != null && keyPairBytes.Length > 0)
+                {
+                    metadata.StrongNameKey = Convert.ToBase64String(keyPairBytes);
+                }
 
                 // Extract public key token
                 Assembly loadedAssembly = Assembly.Load(assemblyBytes);
@@ -236,14 +255,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return results.Entities.FirstOrDefault();
         }
 
-        private string GenerateStrongNameKey()
+        private string GenerateStrongNameKey(out byte[] keyPairBytes)
         {
             _tempKeyFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.snk");
             
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048))
             {
-                byte[] keyPair = rsa.ExportCspBlob(true);
-                File.WriteAllBytes(_tempKeyFilePath, keyPair);
+                keyPairBytes = rsa.ExportCspBlob(true);
+                File.WriteAllBytes(_tempKeyFilePath, keyPairBytes);
             }
 
             WriteVerbose($"Generated strong name key: {_tempKeyFilePath}");
