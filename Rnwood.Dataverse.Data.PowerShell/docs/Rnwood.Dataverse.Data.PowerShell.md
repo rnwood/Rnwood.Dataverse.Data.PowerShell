@@ -72,6 +72,9 @@ Retrieves section information from a Dataverse form.
 ### [Get-DataverseFormTab](Get-DataverseFormTab.md)
 Retrieves tab information from a Dataverse form.
 
+### [Get-DataverseIconSetIcon](Get-DataverseIconSetIcon.md)
+{{ Fill in the Synopsis }}
+
 ### [Get-DataverseOptionSetMetadata](Get-DataverseOptionSetMetadata.md)
 Retrieves option set (choice) metadata from Dataverse.
 
@@ -327,6 +330,9 @@ Creates or updates a solution in Dataverse. Allows setting friendly name, descri
 
 ### [Set-DataverseSolutionComponent](Set-DataverseSolutionComponent.md)
 Adds or updates a solution component in an unmanaged solution, with automatic handling of behavior changes.
+
+### [Set-DataverseTableIcon](Set-DataverseTableIcon.md)
+{{ Fill in the Synopsis }}
 
 ### [Set-DataverseView](Set-DataverseView.md)
 Creates or updates Dataverse views (savedquery and userquery entities) with flexible column and filter configuration.

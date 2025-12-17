@@ -86,7 +86,7 @@ Icon set to retrieve the icon from
 Type: String
 Parameter Sets: (All)
 Aliases:
-Accepted values: Iconoir
+Accepted values: FluentUI, Iconoir
 
 Required: False
 Position: 1

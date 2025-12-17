@@ -16,9 +16,10 @@ The `Get-DataverseIconSetIcon` cmdlet retrieves a list of available icons from s
 
 ### -IconSet
 Icon set to retrieve icons from. Currently supported icon sets:
+- **FluentUI**: Microsoft's Fluent UI System Icons - comprehensive icon library with 2000+ icons from https://github.com/microsoft/fluentui-system-icons
 - **Iconoir**: Modern, open-source SVG icon library from https://iconoir.com
 
-Default value: `Iconoir`
+Default value: `FluentUI`
 
 ```yaml
 Type: String
@@ -27,7 +28,7 @@ Aliases:
 
 Required: False
 Position: 0
-Default value: Iconoir
+Default value: FluentUI
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -72,7 +73,14 @@ This cmdlet requires internet access to retrieve the icon list from the online r
 Get-DataverseIconSetIcon
 ```
 
-Lists all available icons from the default Iconoir icon set.
+Lists all available icons from the default FluentUI icon set.
+
+### Example 1b: List icons from a specific icon set
+```powershell
+Get-DataverseIconSetIcon -IconSet Iconoir
+```
+
+Lists all available icons from the Iconoir icon set.
 
 ### Example 2: Search for user-related icons
 ```powershell
@@ -113,4 +121,5 @@ Displays a filterable grid of user-related icons and allows selection of one.
 
 - [Set-DataverseTableIcon](Set-DataverseTableIcon.md)
 - [Set-DataverseEntityMetadata](Set-DataverseEntityMetadata.md)
+- [FluentUI System Icons](https://github.com/microsoft/fluentui-system-icons)
 - [Iconoir Icons](https://iconoir.com)

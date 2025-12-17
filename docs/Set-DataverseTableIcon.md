@@ -39,9 +39,10 @@ Accept wildcard characters: False
 
 ### -IconSet
 Icon set to retrieve the icon from. Currently supported icon sets:
+- **FluentUI**: Microsoft's Fluent UI System Icons - comprehensive icon library with 2000+ icons from https://github.com/microsoft/fluentui-system-icons
 - **Iconoir**: Modern, open-source SVG icon library from https://iconoir.com
 
-Default value: `Iconoir`
+Default value: `FluentUI`
 
 ```yaml
 Type: String
@@ -50,7 +51,7 @@ Aliases:
 
 Required: False
 Position: 1
-Default value: Iconoir
+Default value: FluentUI
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -185,7 +186,14 @@ When `-PassThru` is specified, returns a PSObject with the following properties:
 
 ### Example 1: Set a table icon
 ```powershell
-Set-DataverseTableIcon -EntityName "contact" -IconName "user" -Publish
+Set-DataverseTableIcon -EntityName "contact" -IconName "person" -Publish
+```
+
+Downloads the "person" icon from FluentUI (default), creates a web resource, sets it as the contact table's icon, and publishes the changes.
+
+### Example 1b: Set a table icon from a specific icon set
+```powershell
+Set-DataverseTableIcon -EntityName "contact" -IconName "user" -IconSet Iconoir -Publish
 ```
 
 Downloads the "user" icon from Iconoir, creates a web resource, sets it as the contact table's icon, and publishes the changes.
@@ -216,14 +224,25 @@ Sets the same icon for multiple tables.
 
 ### Example 5: Browse and set icon interactively
 ```powershell
-# First, browse available icons
-$icon = Get-DataverseIconSetIcon -Name "*user*" | Out-GridView -OutputMode Single
+# First, browse available icons from FluentUI (default)
+$icon = Get-DataverseIconSetIcon -Name "*person*" | Out-GridView -OutputMode Single
 
 # Then set the selected icon
 Set-DataverseTableIcon -EntityName "contact" -IconName $icon.Name -Publish
 ```
 
 Browse available icons in a grid view, select one, and set it as the table icon.
+
+### Example 5b: Browse and set icon from Iconoir
+```powershell
+# Browse available icons from Iconoir
+$icon = Get-DataverseIconSetIcon -IconSet Iconoir -Name "*user*" | Out-GridView -OutputMode Single
+
+# Then set the selected icon from Iconoir
+Set-DataverseTableIcon -EntityName "contact" -IconName $icon.Name -IconSet Iconoir -Publish
+```
+
+Browse available icons from Iconoir icon set, select one, and set it as the table icon.
 
 ### Example 6: Preview changes without applying
 ```powershell
@@ -237,4 +256,5 @@ Shows what changes would be made without actually applying them.
 - [Get-DataverseIconSetIcon](Get-DataverseIconSetIcon.md)
 - [Set-DataverseEntityMetadata](Set-DataverseEntityMetadata.md)
 - [Get-DataverseEntityMetadata](Get-DataverseEntityMetadata.md)
+- [FluentUI System Icons](https://github.com/microsoft/fluentui-system-icons)
 - [Iconoir Icons](https://iconoir.com)

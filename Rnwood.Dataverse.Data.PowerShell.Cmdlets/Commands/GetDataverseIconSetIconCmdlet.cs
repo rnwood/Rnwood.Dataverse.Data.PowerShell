@@ -21,8 +21,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the icon set to retrieve icons from.
         /// </summary>
         [Parameter(Position = 0, HelpMessage = "Icon set to retrieve icons from")]
-        [ValidateSet("Iconoir")]
-        public string IconSet { get; set; } = "Iconoir";
+        [ValidateSet("FluentUI", "Iconoir")]
+        public string IconSet { get; set; } = "FluentUI";
 
         /// <summary>
         /// Gets or sets the filter pattern to match icon names (supports wildcards).
@@ -79,6 +79,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 return await GetIconoirIconsAsync();
             }
+            else if (IconSet == "FluentUI")
+            {
+                return await GetFluentUIIconsAsync();
+            }
 
             throw new NotSupportedException($"Icon set '{IconSet}' is not supported");
         }
@@ -113,6 +117,45 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 icon.Properties.Add(new PSNoteProperty("FileName", item.name));
                 icon.Properties.Add(new PSNoteProperty("DownloadUrl", item.download_url ?? $"{rawBaseUrl}/{item.name}"));
                 icon.Properties.Add(new PSNoteProperty("Size", item.size));
+                icons.Add(icon);
+            }
+
+            return icons;
+        }
+
+        private async Task<List<PSObject>> GetFluentUIIconsAsync()
+        {
+            // FluentUI System Icons repository: https://github.com/microsoft/fluentui-system-icons
+            // Icons are in: assets/{iconname}/SVG/{iconname}_{size}_{variant}.svg
+            // We'll query the assets folder and look for regular/filled variants
+            const string apiUrl = "https://api.github.com/repos/microsoft/fluentui-system-icons/contents/assets";
+            const string rawBaseUrl = "https://raw.githubusercontent.com/microsoft/fluentui-system-icons/main/assets";
+
+            WriteVerbose($"Fetching icon list from GitHub API: {apiUrl}");
+
+            var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
+            request.Headers.Add("User-Agent", "Rnwood.Dataverse.Data.PowerShell");
+            request.Headers.Add("Accept", "application/vnd.github.v3+json");
+
+            var response = await httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var jsonContent = await response.Content.ReadAsStringAsync();
+            var items = JsonSerializer.Deserialize<List<GitHubFileItem>>(jsonContent);
+
+            var icons = new List<PSObject>();
+            // FluentUI has folders for each icon, we'll list the folder names as icon names
+            // Each icon typically has multiple sizes (16, 20, 24, 28, 32, 48) and variants (regular, filled)
+            // We'll use 24_regular as the default for downloads
+            foreach (var item in items.Where(i => i.type == "dir"))
+            {
+                var iconName = item.name;
+                var icon = new PSObject();
+                icon.Properties.Add(new PSNoteProperty("IconSet", "FluentUI"));
+                icon.Properties.Add(new PSNoteProperty("Name", iconName));
+                icon.Properties.Add(new PSNoteProperty("FileName", $"{iconName}_24_regular.svg"));
+                icon.Properties.Add(new PSNoteProperty("DownloadUrl", $"{rawBaseUrl}/{iconName}/SVG/{iconName}_24_regular.svg"));
+                icon.Properties.Add(new PSNoteProperty("Size", 0L)); // Size unknown without fetching each file
                 icons.Add(icon);
             }
 

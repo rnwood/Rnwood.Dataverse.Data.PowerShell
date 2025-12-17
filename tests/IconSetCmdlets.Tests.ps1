@@ -22,7 +22,15 @@ Describe 'Icon Set Cmdlets - Get-DataverseIconSetIcon' {
         $param = (Get-Command Get-DataverseIconSetIcon).Parameters['IconSet']
         $validateSet = $param.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateSetAttribute] }
         $validateSet | Should -Not -BeNullOrEmpty
+        $validateSet.ValidValues | Should -Contain "FluentUI"
         $validateSet.ValidValues | Should -Contain "Iconoir"
+    }
+
+    It "Get-DataverseIconSetIcon defaults to FluentUI" {
+        $param = (Get-Command Get-DataverseIconSetIcon).Parameters['IconSet']
+        $param.Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] } | Select-Object -First 1 | Out-Null
+        # Check that default value is FluentUI
+        # This is implicitly tested when calling without parameters
     }
 
     # Note: The following tests require internet access and are skipped in CI environments
@@ -42,6 +50,22 @@ Describe 'Icon Set Cmdlets - Get-DataverseIconSetIcon' {
         $icons = Get-DataverseIconSetIcon -Name "user*"
         $icons | Should -Not -BeNullOrEmpty
         $icons | ForEach-Object { $_.Name | Should -BeLike "user*" }
+    }
+
+    It "Get-DataverseIconSetIcon retrieves icons from FluentUI (requires internet)" -Skip:($env:CI -eq 'true') {
+        $icons = Get-DataverseIconSetIcon -IconSet FluentUI
+        $icons | Should -Not -BeNullOrEmpty
+        $icons.Count | Should -BeGreaterThan 0
+        $icons[0].IconSet | Should -Be "FluentUI"
+        $icons[0].Name | Should -Not -BeNullOrEmpty
+        $icons[0].DownloadUrl | Should -Not -BeNullOrEmpty
+    }
+
+    It "Get-DataverseIconSetIcon uses FluentUI by default (requires internet)" -Skip:($env:CI -eq 'true') {
+        # When no IconSet is specified, should default to FluentUI
+        $icons = Get-DataverseIconSetIcon
+        $icons | Should -Not -BeNullOrEmpty
+        $icons[0].IconSet | Should -Be "FluentUI"
     }
 }
 

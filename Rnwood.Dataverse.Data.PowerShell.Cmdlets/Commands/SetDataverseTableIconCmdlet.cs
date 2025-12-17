@@ -33,8 +33,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the icon set to retrieve the icon from.
         /// </summary>
         [Parameter(Position = 1, HelpMessage = "Icon set to retrieve the icon from")]
-        [ValidateSet("Iconoir")]
-        public string IconSet { get; set; } = "Iconoir";
+        [ValidateSet("FluentUI", "Iconoir")]
+        public string IconSet { get; set; } = "FluentUI";
 
         /// <summary>
         /// Gets or sets the name of the icon to set.
@@ -135,6 +135,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 // Iconoir icons are at: https://raw.githubusercontent.com/iconoir-icons/iconoir/main/icons/regular/{name}.svg
                 downloadUrl = $"https://raw.githubusercontent.com/iconoir-icons/iconoir/main/icons/regular/{IconName}.svg";
+            }
+            else if (IconSet == "FluentUI")
+            {
+                // FluentUI System Icons are at: https://raw.githubusercontent.com/microsoft/fluentui-system-icons/main/assets/{name}/SVG/{name}_24_regular.svg
+                // Using 24_regular as the standard size/variant for table icons
+                downloadUrl = $"https://raw.githubusercontent.com/microsoft/fluentui-system-icons/main/assets/{IconName}/SVG/{IconName}_24_regular.svg";
             }
             else
             {
