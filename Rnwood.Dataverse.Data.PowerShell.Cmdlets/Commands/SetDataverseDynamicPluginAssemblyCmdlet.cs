@@ -413,13 +413,65 @@ private List<MetadataReference> GetMetadataReferences(string[] frameworkRefs, st
             }
 
             // Add Microsoft.Xrm.Sdk as a required reference for plugin assemblies
+            // IMPORTANT: We must use the .NET Framework 4.6.2 version, not the current runtime version
+            // The current runtime might be .NET 8/9, but plugins run in .NET Framework 4.6.2
             try
             {
-                Assembly xrmSdkAssembly = typeof(Microsoft.Xrm.Sdk.IPlugin).Assembly;
-                if (!string.IsNullOrEmpty(xrmSdkAssembly.Location) && File.Exists(xrmSdkAssembly.Location))
+                // Try to find the net462 version of Microsoft.Xrm.Sdk from the module directory
+                string currentAssemblyPath = typeof(SetDataverseDynamicPluginAssemblyCmdlet).Assembly.Location;
+                string moduleDir = Path.GetDirectoryName(currentAssemblyPath);
+                
+                // Look for net462 version in the module structure
+                // The module has structure: cmdlets/net8.0/ and cmdlets/net462/
+                string net462CmdletsDir = Path.Combine(Path.GetDirectoryName(moduleDir), "net462");
+                string xrmSdkPath = Path.Combine(net462CmdletsDir, "Microsoft.Xrm.Sdk.dll");
+                
+                if (File.Exists(xrmSdkPath))
                 {
-                    references.Add(MetadataReference.CreateFromFile(xrmSdkAssembly.Location));
-                    WriteVerbose($"Added required reference: Microsoft.Xrm.Sdk from {xrmSdkAssembly.Location}");
+                    references.Add(MetadataReference.CreateFromFile(xrmSdkPath));
+                    WriteVerbose($"Added required reference: Microsoft.Xrm.Sdk from {xrmSdkPath} (.NET Framework 4.6.2)");
+                }
+                else
+                {
+                    // Fallback: try to find it from NuGet packages
+                    string xrmSdkPackagePath = Path.Combine(
+                        nugetPackagesPath,
+                        "microsoft.powerplatform.dataverse.client");
+                    
+                    if (Directory.Exists(xrmSdkPackagePath))
+                    {
+                        // Find the latest version
+                        var versions = Directory.GetDirectories(xrmSdkPackagePath)
+                            .Select(d => new { Dir = d, Name = Path.GetFileName(d) })
+                            .OrderByDescending(v => v.Name)
+                            .FirstOrDefault();
+                        
+                        if (versions != null)
+                        {
+                            // Look for net462 or net461 version
+                            string net462SdkPath = Path.Combine(versions.Dir, "lib", "net462", "Microsoft.Xrm.Sdk.dll");
+                            string net461SdkPath = Path.Combine(versions.Dir, "lib", "net461", "Microsoft.Xrm.Sdk.dll");
+                            
+                            if (File.Exists(net462SdkPath))
+                            {
+                                references.Add(MetadataReference.CreateFromFile(net462SdkPath));
+                                WriteVerbose($"Added required reference: Microsoft.Xrm.Sdk from {net462SdkPath} (.NET Framework 4.6.2)");
+                            }
+                            else if (File.Exists(net461SdkPath))
+                            {
+                                references.Add(MetadataReference.CreateFromFile(net461SdkPath));
+                                WriteVerbose($"Added required reference: Microsoft.Xrm.Sdk from {net461SdkPath} (.NET Framework 4.6.1)");
+                            }
+                            else
+                            {
+                                WriteWarning($"Could not find .NET Framework version of Microsoft.Xrm.Sdk in NuGet package at {versions.Dir}");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        WriteWarning($"Microsoft.Xrm.Sdk not found at {xrmSdkPath} or in NuGet packages");
+                    }
                 }
             }
             catch (Exception ex)
