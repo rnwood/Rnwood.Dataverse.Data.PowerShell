@@ -140,7 +140,7 @@ namespace TestDynamicPlugins
                 "lastname" = "V1_$testRunId"
             }
             
-            $contactId = Set-DataverseRecord -Connection $connection -TableName contact -Data $testContact -PassThru | Select-Object -ExpandProperty Id
+            $contactId = Set-DataverseRecord -Connection $connection -TableName contact -InputObject $testContact -PassThru | Select-Object -ExpandProperty Id
             Write-Host "✓ Created contact: $contactId"
             
             # Step 6: Verify plugin executed (check description field)
@@ -204,7 +204,7 @@ namespace TestDynamicPlugins
                 "lastname" = "V2_$testRunId"
             }
             
-            $contactId2 = Set-DataverseRecord -Connection $connection -TableName contact -Data $testContact2 -PassThru | Select-Object -ExpandProperty Id
+            $contactId2 = Set-DataverseRecord -Connection $connection -TableName contact -InputObject $testContact2 -PassThru | Select-Object -ExpandProperty Id
             Write-Host "✓ Created contact: $contactId2"
             
             # Step 9: Verify UPDATED plugin executed with new behavior
