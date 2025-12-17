@@ -623,7 +623,9 @@ Accept wildcard characters: False
 ### -IconVectorName
 Vector icon name (SVG icon identifier) for the entity. Modern Dataverse UI uses vector icons for scalable, resolution-independent display.
 
-The value typically starts with "svg_" followed by the icon identifier (e.g., "svg_account", "svg_contact").
+The value should reference an SVG web resource (e.g., "new_/icons/user.svg"). 
+
+**Tip**: Use the `Set-DataverseTableIconFromSet` cmdlet to easily download and set icons from online icon sets (FluentUI, Tabler, Iconoir) instead of manually creating web resources. See `Get-DataverseIconSetIcon` to browse available icons.
 
 Vector icons provide the best visual quality across different display resolutions and zoom levels.
 
