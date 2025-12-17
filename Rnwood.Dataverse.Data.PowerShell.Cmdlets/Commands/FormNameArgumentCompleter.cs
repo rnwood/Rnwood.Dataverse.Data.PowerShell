@@ -11,22 +11,16 @@ using Microsoft.Xrm.Sdk.Query;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Provides tab-completion for parameters that accept form IDs (Guid).
+    /// Provides tab-completion for form names.
     /// Optionally filters forms by entity/table name if found in bound parameters.
     /// </summary>
-    public class FormIdArgumentCompleter : IArgumentCompleter
+    public class FormNameArgumentCompleter : IArgumentCompleter
     {
         /// <summary>
-        /// Returns completion candidates for form IDs with optional entity filtering.
+        /// Returns completion candidates for form names with optional entity filtering.
         /// If a Connection parameter is bound it will be used to retrieve forms.
         /// If an Entity/TableName parameter is bound, only forms for that entity are returned.
         /// </summary>
-        /// <param name="commandName">The name of the command.</param>
-        /// <param name="parameterName">The name of the parameter being completed.</param>
-        /// <param name="wordToComplete">The partial word being completed.</param>
-        /// <param name="commandAst">The AST of the command.</param>
-        /// <param name="fakeBoundParameters">Dictionary of bound parameters.</param>
-        /// <returns>Sequence of CompletionResult objects for matching form IDs.</returns>
         public IEnumerable<CompletionResult> CompleteArgument(string commandName, string parameterName, string wordToComplete, CommandAst commandAst, IDictionary fakeBoundParameters)
         {
             try
@@ -39,7 +33,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ServiceClient connectionObj = null;
                 string entityFilter = null;
 
-                // Look for Connection and Entity parameters in bound parameters
+                // Look for Connection and Entity parameters
                 foreach (DictionaryEntry entry in fakeBoundParameters)
                 {
                     var key = entry.Key as string;
@@ -68,7 +62,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
 
-                // If no explicit connection was provided, try to use the default connection
+                // If no explicit connection, try default
                 if (connectionObj == null)
                 {
                     connectionObj = DefaultConnectionManager.DefaultConnection;
@@ -82,7 +76,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Query forms from Dataverse
                 var query = new QueryExpression("systemform")
                 {
-                    ColumnSet = new ColumnSet("formid", "name", "uniquename", "objecttypecode", "type"),
+                    ColumnSet = new ColumnSet("name", "uniquename", "objecttypecode", "type"),
                     TopCount = 500 // Limit for performance
                 };
 
@@ -92,19 +86,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     query.Criteria.AddCondition("objecttypecode", ConditionOperator.Equal, entityFilter);
                 }
 
-                // Apply name filter if word to complete is provided and not a GUID search
-                Guid partialGuid;
-                bool isGuidSearch = !string.IsNullOrEmpty(wordToComplete) && Guid.TryParse(wordToComplete, out partialGuid);
-                
-                if (!string.IsNullOrEmpty(wordToComplete) && !isGuidSearch)
+                // Apply name filter if word to complete is provided
+                if (!string.IsNullOrEmpty(wordToComplete))
                 {
-                    // Add filter for name or unique name
-                    var nameFilter = new FilterExpression(LogicalOperator.Or);
-                    nameFilter.AddCondition("name", ConditionOperator.Like, $"%{wordToComplete}%");
-                    nameFilter.AddCondition("uniquename", ConditionOperator.Like, $"%{wordToComplete}%");
-                    query.Criteria.AddFilter(nameFilter);
+                    query.Criteria.AddCondition("name", ConditionOperator.Like, $"%{wordToComplete}%");
                 }
-                
+
                 // Execute query (use RetrieveUnpublishedMultiple to include unpublished forms)
                 EntityCollection results;
                 try
@@ -127,39 +114,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Extract form information
                 var forms = results.Entities.Select(e => new
                 {
-                    FormId = e.GetAttributeValue<Guid>("formid"),
                     Name = e.GetAttributeValue<string>("name"),
                     UniqueName = e.GetAttributeValue<string>("uniquename"),
                     Entity = e.GetAttributeValue<string>("objecttypecode"),
                     Type = e.GetAttributeValue<OptionSetValue>("type")?.Value ?? 0
-                }).Where(f => f.FormId != Guid.Empty).ToList();
-
-                // If this was a GUID search, filter results by GUID match (done in-memory for GUIDs since we can't query by partial GUID)
-                IEnumerable<dynamic> filteredForms = forms;
-                if (isGuidSearch)
-                {
-                    filteredForms = forms.Where(f => 
-                        f.FormId.ToString().StartsWith(wordToComplete, StringComparison.OrdinalIgnoreCase) ||
-                        f.FormId.ToString().IndexOf(wordToComplete, StringComparison.OrdinalIgnoreCase) >= 0);
-                }
+                }).Where(f => !string.IsNullOrEmpty(f.Name)).ToList();
 
                 // Order by entity, then by type, then by name
-                var orderedForms = filteredForms.OrderBy(f => f.Entity).ThenBy(f => f.Type).ThenBy(f => f.Name);
+                var orderedForms = forms.OrderBy(f => f.Entity).ThenBy(f => f.Type).ThenBy(f => f.Name);
 
                 return orderedForms.Select(f =>
                 {
                     string formType = GetFormTypeDescription(f.Type);
-                    string displayText = string.IsNullOrEmpty(f.Name)
-                        ? $"{f.FormId} ({f.Entity} — {formType})"
-                        : $"{f.Name} ({f.Entity} — {formType})";
-                    string completionText = f.FormId.ToString();
-                    string toolTip = $"{formType}: {f.Name ?? "Unnamed"}\nEntity: {f.Entity}\nUnique Name: {f.UniqueName ?? "N/A"}\nForm ID: {f.FormId}";
-                    return new CompletionResult(completionText, displayText, CompletionResultType.ParameterValue, toolTip);
+                    string displayText = string.IsNullOrEmpty(entityFilter)
+                        ? $"{f.Name} ({f.Entity} — {formType})"
+                        : $"{f.Name} ({formType})";
+                    string toolTip = $"{formType}: {f.Name}\nEntity: {f.Entity}\nUnique Name: {f.UniqueName ?? "N/A"}";
+                    return new CompletionResult(f.Name, displayText, CompletionResultType.ParameterValue, toolTip);
                 });
             }
             catch
             {
-                // If completion fails for any reason, return no results rather than throwing
                 return Enumerable.Empty<CompletionResult>();
             }
         }

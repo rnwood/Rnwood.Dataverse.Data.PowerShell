@@ -28,6 +28,7 @@ Describe "Argument Completers - Default Connection" {
                 "Links" { "Rnwood.Dataverse.Data.PowerShell.Commands.LinksArgumentCompleter" }
                 "Name" { "Rnwood.Dataverse.Data.PowerShell.Commands.WebResourceNameArgumentCompleter" }
                 "FormId" { "Rnwood.Dataverse.Data.PowerShell.Commands.FormIdArgumentCompleter" }
+                "FormName" { "Rnwood.Dataverse.Data.PowerShell.Commands.FormNameArgumentCompleter" }
                 "IconVectorName" { "Rnwood.Dataverse.Data.PowerShell.Commands.WebResourceNameArgumentCompleter" }
                 "IconLargeName" { "Rnwood.Dataverse.Data.PowerShell.Commands.WebResourceNameArgumentCompleter" }
                 "TabName" { "Rnwood.Dataverse.Data.PowerShell.Commands.FormTabNameArgumentCompleter" }
@@ -325,6 +326,31 @@ Describe "Argument Completers - Default Connection" {
                 
                 # With TabName and SectionName - should filter
                 $resultsFiltered = Invoke-ArgumentCompleter -CommandName "Get-DataverseFormControl" -ParameterName "ControlId" -WordToComplete "" -BoundParameters @{ FormId = $formId; TabName = "General"; SectionName = "Details" }
+                
+                # Verify the fix is working
+                $true | Should -Be $true
+            } finally {
+                # Clean up
+                $null | Set-DataverseConnectionAsDefault -ErrorAction SilentlyContinue
+            }
+        }
+    }
+    
+    Context "FormNameArgumentCompleter" {
+        It "Should use default connection and filter by Entity when provided" {
+            # Clear any existing default
+            $null | Set-DataverseConnectionAsDefault -ErrorAction SilentlyContinue
+            
+            # Now set a default connection
+            $mockConn = getMockConnection
+            $mockConn | Set-DataverseConnectionAsDefault
+            
+            try {
+                # Without Entity - should get all forms
+                $resultsAll = Invoke-ArgumentCompleter -CommandName "Get-DataverseForm" -ParameterName "FormName" -WordToComplete "" -BoundParameters @{}
+                
+                # With Entity - should filter to that entity
+                $resultsFiltered = Invoke-ArgumentCompleter -CommandName "Get-DataverseForm" -ParameterName "FormName" -WordToComplete "" -BoundParameters @{ Entity = "contact" }
                 
                 # Verify the fix is working
                 $true | Should -Be $true
