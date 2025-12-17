@@ -42,6 +42,9 @@ See the examples for this pattern below.
 ### [Get-DataverseConnectionReference](Get-DataverseConnectionReference.md)
 Gets connection references from Dataverse.
 
+### [Get-DataverseDynamicPluginAssembly](Get-DataverseDynamicPluginAssembly.md)
+{{ Fill in the Synopsis }}
+
 ### [Get-DataverseEntityKeyMetadata](Get-DataverseEntityKeyMetadata.md)
 {{ Fill in the Synopsis }}
 
@@ -249,6 +252,9 @@ Sets the specified Dataverse connection as the default connection for cmdlets th
 
 ### [Set-DataverseConnectionReference](Set-DataverseConnectionReference.md)
 Creates or updates connection reference values in Dataverse.
+
+### [Set-DataverseDynamicPluginAssembly](Set-DataverseDynamicPluginAssembly.md)
+Compiles C# source code into a plugin assembly, uploads to Dataverse, and automatically manages plugin types.
 
 ### [Set-DataverseEntityKeyMetadata](Set-DataverseEntityKeyMetadata.md)
 {{ Fill in the Synopsis }}

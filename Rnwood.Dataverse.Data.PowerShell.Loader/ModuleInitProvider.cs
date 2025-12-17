@@ -28,7 +28,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 			AssemblyLoadContext.Default.Resolving += (s, args) =>
 			{
 				AssemblyName assemblyName = new AssemblyName(args.Name);
-				if (assemblyName.Name == "Rnwood.Dataverse.Data.PowerShell.Cmdlets" || assemblyName.Name == "Microsoft.ApplicationInsights")
+				if (assemblyName.Name == "Rnwood.Dataverse.Data.PowerShell.Cmdlets" || assemblyName.Name == "Microsoft.ApplicationInsights" || assemblyName.Name.StartsWith("Microsoft.CodeAnalysis"))
 				{
 					return alc.LoadFromAssemblyName(assemblyName);
 				}

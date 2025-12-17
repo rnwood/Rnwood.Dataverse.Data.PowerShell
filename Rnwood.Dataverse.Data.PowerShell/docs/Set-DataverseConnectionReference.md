@@ -68,8 +68,8 @@ Sets multiple connection references at once using a hashtable.
 ### Example 5: Set connection references with stored connection IDs
 ```powershell
 PS C:\> $connectionIds = @{
-    'new_dataverse' = (Get-DataverseRecord -TableName connection -Filter "name eq 'Production Dataverse'").connectionid
-    'new_sharepoint' = (Get-DataverseRecord -TableName connection -Filter "name eq 'Production SharePoint'").connectionid
+    'new_dataverse' = (Get-DataverseRecord -TableName connection -FilterValues @{ name = 'Production Dataverse' }).connectionid
+    'new_sharepoint' = (Get-DataverseRecord -TableName connection -FilterValues @{ name = 'Production SharePoint' }).connectionid
 }
 PS C:\> Set-DataverseConnectionReference -ConnectionReferences $connectionIds
 ```

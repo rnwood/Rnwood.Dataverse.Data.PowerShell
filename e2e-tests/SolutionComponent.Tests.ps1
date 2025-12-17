@@ -94,7 +94,7 @@ Describe "Solution Component E2E Tests" -Skip {
                 }
                 
                 # Get or create publisher
-                $publisher = Get-DataverseRecord -Connection $connection -TableName publisher -Filter @{ "customizationprefix" = $publisherPrefix } | Select-Object -First 1
+                $publisher = Get-DataverseRecord -Connection $connection -TableName publisher -FilterValues @{ "customizationprefix" = $publisherPrefix } | Select-Object -First 1
                 if (-not $publisher) {
                     Write-Host "  Creating test publisher..."
                     $publisher = @{

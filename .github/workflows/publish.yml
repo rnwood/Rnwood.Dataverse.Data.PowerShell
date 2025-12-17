@@ -499,7 +499,7 @@ jobs:
                   $metadataConfig = New-PesterConfiguration
                   $metadataConfig.Run.Path = @(
                       # Run FileData tests for file column cmdlets
-                      'e2e-tests/FileData.Tests.ps1'
+                      'e2e-tests/DynamicPluginAssembly.Tests.ps1'
                   )
                   $metadataConfig.Run.PassThru = $true
                   $metadataConfig.Output.Verbosity = 'Minimal'
