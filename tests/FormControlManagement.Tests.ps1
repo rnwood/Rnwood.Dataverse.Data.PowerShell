@@ -156,7 +156,7 @@ Describe 'Form Control Management' {
 
     Context 'Error Handling' {
         It "Throws error when trying to update non-existent control by ControlId" -Skip {
-            # This test is skipped because Set-DataverseFormControl is designed to upsert
+            # This test is skipped because Set-DataverseFormControl is designed to upsert -Confirm:$false
             # (create or update). When ControlId is provided for a non-existent control,
             # it creates a new control with that ID, which is the intended behavior.
             { Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `

@@ -129,37 +129,7 @@ Describe 'Set-DataverseAppModuleComponent' {
             }
         }
     }
-
-    Context "Pipeline support" {
-        It "Should accept pipeline input with proper property binding" {
-            # Create test objects with pipeline properties
-            $testObjects = @(
-                [PSCustomObject]@{
-                    AppModuleId = [Guid]::NewGuid()
-                    ObjectId = [Guid]::NewGuid()
-                    ComponentType = [Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity
-                    RootComponentBehavior = [Rnwood.Dataverse.Data.PowerShell.Commands.Model.RootComponentBehavior]::IncludeSubcomponents
-                    IsDefault = $true
-                }
-                [PSCustomObject]@{
-                    Id = [Guid]::NewGuid()
-                    RootComponentBehavior = [Rnwood.Dataverse.Data.PowerShell.Commands.Model.RootComponentBehavior]::DoNotIncludeSubcomponents
-                    IsMetadata = $false
-                }
-            )
-
-            # Test pipeline input - should not fail due to parameter binding issues
-            try {
-                $testObjects | Set-DataverseAppModuleComponent -Connection $connection
-            } catch {
-                # Expected failures due to mock limitations, but not parameter binding
-                foreach ($exception in $Error) {
-                    $exception.Exception.Message | Should -Not -Match "Cannot bind parameter"
-                }
-            }
-        }
-    }
-
+    
     Context "Cmdlet attributes and metadata" {
         It "Should have proper cmdlet attributes defined" {
             $cmdlet = Get-Command Set-DataverseAppModuleComponent

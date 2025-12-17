@@ -129,7 +129,7 @@ Describe 'Form Control Management - New Features' {
             
             # Then update cell attributes
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -DataField "middlename" -ColSpan 3 -RowSpan 2
+                -DataField "middlename" -ColSpan 3 -RowSpan 2 -Confirm:$false
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "middlename"
             $control.ColSpan | Should -Be 3
@@ -154,7 +154,7 @@ Describe 'Form Control Management - New Features' {
 
         It "Updates control to required" {
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -DataField "telephone1" -IsRequired
+                -DataField "telephone1" -IsRequired -Confirm:$false
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "telephone1"
             $control.IsRequired | Should -Be $true
@@ -162,7 +162,7 @@ Describe 'Form Control Management - New Features' {
 
         It "Updates control visibility" {
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -DataField "telephone1" -Hidden
+                -DataField "telephone1" -Hidden -Confirm:$false
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "telephone1"
             $control.Hidden | Should -Be $true
@@ -170,7 +170,7 @@ Describe 'Form Control Management - New Features' {
 
         It "Updates control disabled state" {
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -DataField "telephone1" -Disabled
+                -DataField "telephone1" -Disabled -Confirm:$false
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "telephone1"
             $control.Disabled | Should -Be $true
@@ -178,7 +178,7 @@ Describe 'Form Control Management - New Features' {
 
         It "Updates control type" {
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -DataField "emailaddress1" -ControlType "Email"
+                -DataField "emailaddress1" -ControlType "Email" -Confirm:$false
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "emailaddress1"
             $control.ClassId.ToUpper() | Should -Be "{ADA2203E-B4CD-49BE-9DDF-234642B43B52}"
