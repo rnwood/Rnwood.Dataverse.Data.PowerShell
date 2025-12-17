@@ -412,7 +412,7 @@ private List<MetadataReference> GetMetadataReferences(string[] frameworkRefs, st
                 WriteWarning($"Facades directory not found at: {facadesPath}");
             }
 
-            // Add Microsoft.Xrm.Sdk as a required reference for plugin assemblies
+            // Add Microsoft.Xrm.Sdk and its dependencies as required references for plugin assemblies
             // IMPORTANT: We must use the .NET Framework 4.6.2 version, not the current runtime version
             // The current runtime might be .NET 8/9, but plugins run in .NET Framework 4.6.2
             try
@@ -430,6 +430,35 @@ private List<MetadataReference> GetMetadataReferences(string[] frameworkRefs, st
                 {
                     references.Add(MetadataReference.CreateFromFile(xrmSdkPath));
                     WriteVerbose($"Added required reference: Microsoft.Xrm.Sdk from {xrmSdkPath} (.NET Framework 4.6.2)");
+                    
+                    // Microsoft.Xrm.Sdk depends on System.Text.Json, which we also need to include
+                    // to prevent it from trying to load a .NET 8/9 version at runtime
+                    string textJsonPath = Path.Combine(net462CmdletsDir, "System.Text.Json.dll");
+                    if (File.Exists(textJsonPath))
+                    {
+                        references.Add(MetadataReference.CreateFromFile(textJsonPath));
+                        WriteVerbose($"Added required reference: System.Text.Json from {textJsonPath}");
+                    }
+                    
+                    // Add other dependencies that Microsoft.Xrm.Sdk might need
+                    string[] additionalDeps = new[] {
+                        "System.Memory.dll",
+                        "System.Buffers.dll",
+                        "System.Numerics.Vectors.dll",
+                        "System.Runtime.CompilerServices.Unsafe.dll",
+                        "System.Threading.Tasks.Extensions.dll",
+                        "System.ValueTuple.dll"
+                    };
+                    
+                    foreach (string depName in additionalDeps)
+                    {
+                        string depPath = Path.Combine(net462CmdletsDir, depName);
+                        if (File.Exists(depPath))
+                        {
+                            references.Add(MetadataReference.CreateFromFile(depPath));
+                            WriteVerbose($"Added dependency reference: {depName}");
+                        }
+                    }
                 }
                 else
                 {
