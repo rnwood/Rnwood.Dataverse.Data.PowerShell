@@ -12,15 +12,27 @@ Retrieves solution dependencies in Dataverse.
 
 ## SYNTAX
 
-### Missing
+### Missing-ByName
 ```
 Get-DataverseSolutionDependency [-SolutionUniqueName] <String> [-Missing] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
-### Uninstall
+### Uninstall-ByName
 ```
 Get-DataverseSolutionDependency [-SolutionUniqueName] <String> [-Uninstall] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### Missing-ById
+```
+Get-DataverseSolutionDependency [-SolutionId] <Guid> [-Missing] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### Uninstall-ById
+```
+Get-DataverseSolutionDependency [-SolutionId] <Guid> [-Uninstall] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -145,7 +157,7 @@ Retrieves missing dependencies for the solution. This validates what required co
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: Missing
+Parameter Sets: Missing-ByName, Missing-ById
 Aliases:
 
 Required: True
@@ -170,12 +182,27 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -SolutionId
+ID of the solution
+
+```yaml
+Type: Guid
+Parameter Sets: Missing-ById, Uninstall-ById
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
 ### -SolutionUniqueName
 Unique name of the solution to check for dependencies.
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: Missing-ByName, Uninstall-ByName
 Aliases: UniqueName
 
 Required: True
@@ -190,7 +217,7 @@ Retrieves dependencies that would prevent solution uninstall. This shows externa
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: Uninstall
+Parameter Sets: Uninstall-ByName, Uninstall-ById
 Aliases:
 
 Required: True
@@ -206,9 +233,10 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.String
+### System.Guid
 ## OUTPUTS
 
-### Microsoft.Xrm.Sdk.Entity
+### System.Management.Automation.PSObject
 ## NOTES
 - This cmdlet uses the RetrieveMissingDependenciesRequest SDK message (with -Missing) or RetrieveDependenciesForUninstallRequest SDK message (with -Uninstall).
 - For -Missing mode: Returns entities with properties like missingcomponentid, missingcomponenttype, requiredcomponentid, and requiredcomponenttype.

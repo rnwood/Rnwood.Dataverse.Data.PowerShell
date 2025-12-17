@@ -2,6 +2,7 @@ using System;
 using System.Management.Automation;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -9,7 +10,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// Retrieves component dependencies in Dataverse.
     /// </summary>
     [Cmdlet(VerbsCommon.Get, "DataverseComponentDependency")]
-    [OutputType(typeof(Entity))]
+    [OutputType(typeof(PSObject))]
     public class GetDataverseComponentDependencyCmdlet : OrganizationServiceCmdlet
     {
         private const string PARAMSET_REQUIREDBY = "RequiredBy";
@@ -48,6 +49,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
+            var entityMetadataFactory = new EntityMetadataFactory(Connection);
+            var entityConverter = new DataverseEntityConverter(Connection, entityMetadataFactory);
+
             if (ParameterSetName == PARAMSET_REQUIREDBY)
             {
                 var request = new RetrieveDependenciesForDeleteRequest
@@ -60,7 +64,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 foreach (var entity in response.EntityCollection.Entities)
                 {
-                    WriteObject(entity);
+                    WriteObject(ConvertEntityToPSObject(entity, entityConverter));
                 }
             }
             else if (ParameterSetName == PARAMSET_DEPENDENT)
@@ -75,8 +79,32 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 foreach (var entity in response.EntityCollection.Entities)
                 {
-                    WriteObject(entity);
+                    WriteObject(ConvertEntityToPSObject(entity, entityConverter));
                 }
+            }
+        }
+
+        private PSObject ConvertEntityToPSObject(Entity entity, DataverseEntityConverter entityConverter)
+        {
+            try
+            {
+                // Try to use the entity converter with metadata
+                return entityConverter.ConvertToPSObject(entity, new ColumnSet(true), (attr) => ValueType.Raw);
+            }
+            catch
+            {
+                // Fallback to simple conversion without metadata for special entities like 'dependency'
+                var psObject = new PSObject();
+                psObject.Properties.Add(new PSNoteProperty("Id", entity.Id));
+                psObject.Properties.Add(new PSNoteProperty("LogicalName", entity.LogicalName));
+                psObject.Properties.Add(new PSNoteProperty("TableName", entity.LogicalName));
+                
+                foreach (var attr in entity.Attributes)
+                {
+                    psObject.Properties.Add(new PSNoteProperty(attr.Key, attr.Value));
+                }
+                
+                return psObject;
             }
         }
     }

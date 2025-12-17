@@ -214,7 +214,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Int32
 ## OUTPUTS
 
-### Microsoft.Xrm.Sdk.Entity
+### System.Management.Automation.PSObject
 ## NOTES
 - This cmdlet uses the RetrieveDependenciesForDeleteRequest SDK message (with -RequiredBy) or RetrieveDependentComponentsRequest SDK message (with -Dependent).
 - The returned entities contain properties like dependentcomponentobjectid, dependentcomponenttype, requiredcomponentobjectid, and requiredcomponenttype.
