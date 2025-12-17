@@ -304,7 +304,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             CSharpCompilationOptions compilationOptions = new CSharpCompilationOptions(
                 OutputKind.DynamicallyLinkedLibrary,
                 optimizationLevel: OptimizationLevel.Release,
-                assemblyIdentityComparer: DesktopAssemblyIdentityComparer.Default);
+                assemblyIdentityComparer: DesktopAssemblyIdentityComparer.Default,
+                // Disable automatic resolution of missing references to prevent Roslyn
+                // from pulling in references from the current runtime environment
+                metadataImportOptions: MetadataImportOptions.All,
+                reportSuppressedDiagnostics: false);
 
             if (!string.IsNullOrEmpty(keyFilePath) && File.Exists(keyFilePath))
             {
@@ -430,74 +434,70 @@ private List<MetadataReference> GetMetadataReferences(string[] frameworkRefs, st
                 {
                     references.Add(MetadataReference.CreateFromFile(xrmSdkPath));
                     WriteVerbose($"Added required reference: Microsoft.Xrm.Sdk from {xrmSdkPath} (.NET Framework 4.6.2)");
-                    
-                    // Microsoft.Xrm.Sdk depends on System.Text.Json, which we also need to include
-                    // to prevent it from trying to load a .NET 8/9 version at runtime
-                    string textJsonPath = Path.Combine(net462CmdletsDir, "System.Text.Json.dll");
-                    if (File.Exists(textJsonPath))
-                    {
-                        references.Add(MetadataReference.CreateFromFile(textJsonPath));
-                        WriteVerbose($"Added required reference: System.Text.Json from {textJsonPath}");
-                    }
-                    
-                    // Add other dependencies that Microsoft.Xrm.Sdk might need
-                    string[] additionalDeps = new[] {
-                        "System.Memory.dll",
-                        "System.Buffers.dll",
-                        "System.Numerics.Vectors.dll",
-                        "System.Runtime.CompilerServices.Unsafe.dll",
-                        "System.Threading.Tasks.Extensions.dll",
-                        "System.ValueTuple.dll"
-                    };
-                    
-                    foreach (string depName in additionalDeps)
-                    {
-                        string depPath = Path.Combine(net462CmdletsDir, depName);
-                        if (File.Exists(depPath))
-                        {
-                            references.Add(MetadataReference.CreateFromFile(depPath));
-                            WriteVerbose($"Added dependency reference: {depName}");
-                        }
-                    }
                 }
                 else
                 {
-                    // Fallback: try to find it from NuGet packages
-                    string xrmSdkPackagePath = Path.Combine(
+                    // Fallback 1: try Microsoft.CrmSdk.CoreAssemblies (older SDK without modern dependencies)
+                    string coreAssembliesPath = Path.Combine(
                         nugetPackagesPath,
-                        "microsoft.powerplatform.dataverse.client");
+                        "microsoft.crmsdk.coreassemblies");
                     
-                    if (Directory.Exists(xrmSdkPackagePath))
+                    bool foundSdk = false;
+                    if (Directory.Exists(coreAssembliesPath))
                     {
-                        // Find the latest version
-                        var versions = Directory.GetDirectories(xrmSdkPackagePath)
+                        var versions = Directory.GetDirectories(coreAssembliesPath)
                             .Select(d => new { Dir = d, Name = Path.GetFileName(d) })
                             .OrderByDescending(v => v.Name)
                             .FirstOrDefault();
                         
                         if (versions != null)
                         {
-                            // Look for net462 or net461 version
-                            string net462SdkPath = Path.Combine(versions.Dir, "lib", "net462", "Microsoft.Xrm.Sdk.dll");
-                            string net461SdkPath = Path.Combine(versions.Dir, "lib", "net461", "Microsoft.Xrm.Sdk.dll");
-                            
-                            if (File.Exists(net462SdkPath))
+                            string coreSdkPath = Path.Combine(versions.Dir, "lib", "net462", "Microsoft.Xrm.Sdk.dll");
+                            if (File.Exists(coreSdkPath))
                             {
-                                references.Add(MetadataReference.CreateFromFile(net462SdkPath));
-                                WriteVerbose($"Added required reference: Microsoft.Xrm.Sdk from {net462SdkPath} (.NET Framework 4.6.2)");
-                            }
-                            else if (File.Exists(net461SdkPath))
-                            {
-                                references.Add(MetadataReference.CreateFromFile(net461SdkPath));
-                                WriteVerbose($"Added required reference: Microsoft.Xrm.Sdk from {net461SdkPath} (.NET Framework 4.6.1)");
-                            }
-                            else
-                            {
-                                WriteWarning($"Could not find .NET Framework version of Microsoft.Xrm.Sdk in NuGet package at {versions.Dir}");
+                                references.Add(MetadataReference.CreateFromFile(coreSdkPath));
+                                WriteVerbose($"Added required reference: Microsoft.Xrm.Sdk from {coreSdkPath} (CoreAssemblies {versions.Name})");
+                                foundSdk = true;
                             }
                         }
                     }
-                    else
+                    
+                    // Fallback 2: try Microsoft.PowerPlatform.Dataverse.Client
+                    if (!foundSdk)
+                    {
+                        string xrmSdkPackagePath = Path.Combine(
+                            nugetPackagesPath,
+                            "microsoft.powerplatform.dataverse.client");
+                        
+                        if (Directory.Exists(xrmSdkPackagePath))
+                        {
+                            var versions = Directory.GetDirectories(xrmSdkPackagePath)
+                                .Select(d => new { Dir = d, Name = Path.GetFileName(d) })
+                                .OrderByDescending(v => v.Name)
+                                .FirstOrDefault();
+                            
+                            if (versions != null)
+                            {
+                                string net462SdkPath = Path.Combine(versions.Dir, "lib", "net462", "Microsoft.Xrm.Sdk.dll");
+                                string net461SdkPath = Path.Combine(versions.Dir, "lib", "net461", "Microsoft.Xrm.Sdk.dll");
+                                
+                                if (File.Exists(net462SdkPath))
+                                {
+                                    references.Add(MetadataReference.CreateFromFile(net462SdkPath));
+                                    WriteVerbose($"Added required reference: Microsoft.Xrm.Sdk from {net462SdkPath} (.NET Framework 4.6.2)");
+                                    foundSdk = true;
+                                }
+                                else if (File.Exists(net461SdkPath))
+                                {
+                                    references.Add(MetadataReference.CreateFromFile(net461SdkPath));
+                                    WriteVerbose($"Added required reference: Microsoft.Xrm.Sdk from {net461SdkPath} (.NET Framework 4.6.1)");
+                                    foundSdk = true;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (!foundSdk)
                     {
                         WriteWarning($"Microsoft.Xrm.Sdk not found at {xrmSdkPath} or in NuGet packages");
                     }
