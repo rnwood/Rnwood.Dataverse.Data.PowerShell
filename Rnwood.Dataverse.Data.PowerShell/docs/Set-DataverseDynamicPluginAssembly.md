@@ -38,6 +38,7 @@ Key features:
 - **Auto-detect plugin types**: Automatically finds all classes implementing `IPlugin` and creates/updates plugin type records
 - **Reuse existing settings**: If not specified, version, culture, strong name key, and references are reused from the existing assembly
 - **Generate strong name key**: If no key is specified and no existing assembly has one, a new key is automatically generated
+- **Strong name key persistence**: The strong name key is stored in the assembly metadata and automatically reused for subsequent updates, ensuring the public key token remains consistent across updates and preventing "Plugin Assembly fully qualified name has changed" errors
 - **Embed metadata**: Source code and build settings are embedded in the assembly for later extraction
 - **Error on no plugins**: Throws an error if no plugin types are found in the source code
 - **Sandbox isolation**: All assemblies are registered in Sandbox isolation mode for security
