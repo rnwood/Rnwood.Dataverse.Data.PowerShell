@@ -89,6 +89,79 @@ Set-DataverseDynamicPluginAssembly -SourceCode $sourceCode -Name "JsonPlugin" `
 
 Compiles the source code with the specified NuGet package references.
 
+### Example 4: Complete plugin development workflow
+```powershell
+# 1. Create initial plugin
+$pluginCode = @"
+using System;
+using Microsoft.Xrm.Sdk;
+
+namespace MyCompany.Plugins
+{
+    public class ContactValidationPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
+            var serviceFactory = (IOrganizationServiceFactory)serviceProvider.GetService(typeof(IOrganizationServiceFactory));
+            var service = serviceFactory.CreateOrganizationService(context.UserId);
+            
+            if (context.InputParameters.Contains("Target") && context.InputParameters["Target"] is Entity)
+            {
+                Entity entity = (Entity)context.InputParameters["Target"];
+                
+                // Validate email
+                if (entity.Contains("emailaddress1"))
+                {
+                    string email = entity.GetAttributeValue<string>("emailaddress1");
+                    if (!email.Contains("@"))
+                    {
+                        throw new InvalidPluginExecutionException("Invalid email address format.");
+                    }
+                }
+            }
+        }
+    }
+}
+"@
+
+# Upload to Dataverse
+Set-DataverseDynamicPluginAssembly -SourceCode $pluginCode -Name "ContactValidation" -Version "1.0.0.0" -Description "Contact validation plugin"
+
+# 2. Update the plugin later with bug fix (automatically reuses strong name key)
+$updatedCode = $pluginCode -replace 'if \(!email\.Contains\("@"\)\)', 'if (string.IsNullOrEmpty(email) || !email.Contains("@"))'
+
+Set-DataverseDynamicPluginAssembly -SourceCode $updatedCode -Name "ContactValidation" -Version "1.1.0.0"
+
+Write-Host "Plugin updated successfully - strong name key automatically reused"
+```
+
+Demonstrates the complete workflow of creating and updating a plugin with automatic strong name key persistence.
+
+### Example 5: Extract and modify existing plugin
+```powershell
+# 1. Download existing assembly from Dataverse
+$assembly = Get-DataverseRecord -TableName pluginassembly -FilterValues @{ name = "ContactValidation" } -Columns content
+
+# 2. Extract metadata and source code
+$bytes = [Convert]::FromBase64String($assembly.content)
+$metadata = Get-DataverseDynamicPluginAssembly -AssemblyBytes $bytes -OutputSourceFile "C:\Temp\Plugin.cs"
+
+Write-Host "Current version: $($metadata.Version)"
+Write-Host "Source code saved to C:\Temp\Plugin.cs"
+
+# 3. Modify source code (edit the file manually)
+# ... edit C:\Temp\Plugin.cs ...
+
+# 4. Recompile and upload with incremented version
+$modifiedSource = Get-Content "C:\Temp\Plugin.cs" -Raw
+Set-DataverseDynamicPluginAssembly -SourceCode $modifiedSource -Name "ContactValidation" -Version "1.2.0.0"
+
+Write-Host "Updated plugin deployed with new version"
+```
+
+Shows how to extract, modify, and redeploy an existing dynamic plugin assembly.
+
 ## PARAMETERS
 
 ### -Connection
