@@ -64,6 +64,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             formId = guid2;
                         }
+                        else if (entry.Value is string s && Guid.TryParse(s, out Guid parsedGuid))
+                        {
+                            formId = parsedGuid;
+                        }
                     }
                     else if (string.Equals(key, "TabName", StringComparison.OrdinalIgnoreCase))
                     {
