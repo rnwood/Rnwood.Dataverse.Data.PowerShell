@@ -37,12 +37,12 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.17.1" />
-    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.34.2" />
     <PackageReference Include="MarkMpn.Sql4Cds.Engine" Version="1.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.56">
       <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <ExcludeAssets>compile;runtime</ExcludeAssets>
+      <IncludeAssets>none</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.32" />
     <PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.78.0" />
