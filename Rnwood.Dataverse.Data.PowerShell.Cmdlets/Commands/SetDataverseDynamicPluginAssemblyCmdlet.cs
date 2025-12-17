@@ -586,7 +586,10 @@ private List<MetadataReference> GetMetadataReferences(string[] frameworkRefs, st
             Entity pluginType = new Entity("plugintype");
             pluginType["pluginassemblyid"] = new EntityReference("pluginassembly", assemblyId);
             pluginType["typename"] = typeName;
-            pluginType["friendlyname"] = typeName.Split('.').Last();
+            // Use a globally unique friendly name by including a GUID suffix
+            // This prevents duplicate key errors when the same class name is used in different assemblies
+            string friendlyName = $"{typeName.Split('.').Last()}_{Guid.NewGuid():N}";
+            pluginType["friendlyname"] = friendlyName.Substring(0, Math.Min(friendlyName.Length, 255)); // Ensure it fits DB limit
             pluginType["name"] = typeName;
 
             Connection.Create(pluginType);
