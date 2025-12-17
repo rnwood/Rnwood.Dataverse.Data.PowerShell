@@ -360,6 +360,8 @@ private List<MetadataReference> GetMetadataReferences(string[] frameworkRefs, st
                 ".NETFramework",
                 "v4.6.2");
 
+            string facadesPath = Path.Combine(net462RefsPath, "Facades");
+
             // Core .NET Framework 4.6.2 references required for plugin assemblies
             string[] coreNet462References = new[]
             {
@@ -381,6 +383,33 @@ private List<MetadataReference> GetMetadataReferences(string[] frameworkRefs, st
                 {
                     WriteWarning($".NET Framework 4.6.2 reference not found: {refPath}");
                 }
+            }
+
+            // Add facades for type forwarding (required for types like IServiceProvider, Object, etc.)
+            // These facades provide compatibility between .NET Framework and modern SDK types
+            string[] facadeReferences = new[]
+            {
+                "System.Runtime.dll",
+                "System.ComponentModel.dll",
+                "System.ComponentModel.Primitives.dll",
+                "System.ComponentModel.TypeConverter.dll"
+            };
+
+            if (Directory.Exists(facadesPath))
+            {
+                foreach (string facadeName in facadeReferences)
+                {
+                    string facadePath = Path.Combine(facadesPath, facadeName);
+                    if (File.Exists(facadePath))
+                    {
+                        references.Add(MetadataReference.CreateFromFile(facadePath));
+                        WriteVerbose($"Added .NET Framework 4.6.2 facade: {facadeName}");
+                    }
+                }
+            }
+            else
+            {
+                WriteWarning($"Facades directory not found at: {facadesPath}");
             }
 
             // Add Microsoft.Xrm.Sdk as a required reference for plugin assemblies
