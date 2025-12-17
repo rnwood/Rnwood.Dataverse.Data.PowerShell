@@ -17,7 +17,8 @@ The `Get-DataverseIconSetIcon` cmdlet retrieves a list of available icons from s
 ### -IconSet
 Icon set to retrieve icons from. Currently supported icon sets:
 - **FluentUI**: Microsoft's Fluent UI System Icons - comprehensive icon library with 2000+ icons from https://github.com/microsoft/fluentui-system-icons
-- **Iconoir**: Modern, open-source SVG icon library from https://iconoir.com
+- **Iconoir**: Modern, open-source SVG icon library with 1000+ icons from https://iconoir.com
+- **Tabler**: Tabler Icons - open-source icon library with 5000+ icons from https://github.com/tabler/tabler-icons
 
 Default value: `FluentUI`
 
@@ -117,9 +118,17 @@ $icon = Get-DataverseIconSetIcon -Name "user*" | Out-GridView -OutputMode Single
 
 Displays a filterable grid of user-related icons and allows selection of one.
 
+### Example 7: Get icons from Tabler icon set
+```powershell
+Get-DataverseIconSetIcon -IconSet Tabler -Name "mail*"
+```
+
+Lists all mail-related icons from the Tabler icon set (5000+ icons).
+
 ## RELATED LINKS
 
-- [Set-DataverseTableIcon](Set-DataverseTableIcon.md)
+- [Set-DataverseTableIconFromSet](Set-DataverseTableIconFromSet.md)
 - [Set-DataverseEntityMetadata](Set-DataverseEntityMetadata.md)
 - [FluentUI System Icons](https://github.com/microsoft/fluentui-system-icons)
 - [Iconoir Icons](https://iconoir.com)
+- [Tabler Icons](https://github.com/tabler/tabler-icons)

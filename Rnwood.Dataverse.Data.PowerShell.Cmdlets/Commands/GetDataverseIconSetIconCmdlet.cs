@@ -96,8 +96,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Iconoir repository: https://github.com/iconoir-icons/iconoir
             // Icons are in: icons/regular/*.svg
             // We'll use the GitHub API to list the directory contents
-            const string apiUrl = "https://api.github.com/repos/iconoir-icons/iconoir/contents/icons/regular";
-            const string rawBaseUrl = "https://raw.githubusercontent.com/iconoir-icons/iconoir/main/icons/regular";
+            var apiUrl = IconSetUrlHelper.GetIconListApiUrl("Iconoir");
 
             WriteVerbose($"Fetching icon list from GitHub API: {apiUrl}");
 
@@ -115,11 +114,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             foreach (var item in items.Where(i => i.name.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)))
             {
                 var iconName = System.IO.Path.GetFileNameWithoutExtension(item.name);
+                var downloadUrl = IconSetUrlHelper.GetIconDownloadUrl("Iconoir", iconName);
+                
                 var icon = new PSObject();
                 icon.Properties.Add(new PSNoteProperty("IconSet", "Iconoir"));
                 icon.Properties.Add(new PSNoteProperty("Name", iconName));
                 icon.Properties.Add(new PSNoteProperty("FileName", item.name));
-                icon.Properties.Add(new PSNoteProperty("DownloadUrl", item.download_url ?? $"{rawBaseUrl}/{item.name}"));
+                icon.Properties.Add(new PSNoteProperty("DownloadUrl", item.download_url ?? downloadUrl));
                 icon.Properties.Add(new PSNoteProperty("Size", item.size));
                 icons.Add(icon);
             }
@@ -130,10 +131,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private async Task<List<PSObject>> GetFluentUIIconsAsync()
         {
             // FluentUI System Icons repository: https://github.com/microsoft/fluentui-system-icons
-            // Icons are in: assets/{iconname}/SVG/{iconname}_{size}_{variant}.svg
+            // Icons are in: assets/{Capitalized}/SVG/ic_fluent_{lowercase}_24_regular.svg
             // We'll query the assets folder and look for regular/filled variants
-            const string apiUrl = "https://api.github.com/repos/microsoft/fluentui-system-icons/contents/assets";
-            const string rawBaseUrl = "https://raw.githubusercontent.com/microsoft/fluentui-system-icons/main/assets";
+            var apiUrl = IconSetUrlHelper.GetIconListApiUrl("FluentUI");
 
             WriteVerbose($"Fetching icon list from GitHub API: {apiUrl}");
 
@@ -148,17 +148,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var items = JsonSerializer.Deserialize<List<GitHubFileItem>>(jsonContent);
 
             var icons = new List<PSObject>();
-            // FluentUI has folders for each icon, we'll list the folder names as icon names
+            // FluentUI has folders for each icon with Capitalized names
+            // But icon names are lowercase in the actual filenames
             // Each icon typically has multiple sizes (16, 20, 24, 28, 32, 48) and variants (regular, filled)
             // We'll use 24_regular as the default for downloads
             foreach (var item in items.Where(i => i.type == "dir"))
             {
-                var iconName = item.name;
+                // The folder name is Capitalized, but we want to return lowercase for consistency
+                var iconName = item.name.ToLower();
+                var downloadUrl = IconSetUrlHelper.GetIconDownloadUrl("FluentUI", iconName);
+                
                 var icon = new PSObject();
                 icon.Properties.Add(new PSNoteProperty("IconSet", "FluentUI"));
                 icon.Properties.Add(new PSNoteProperty("Name", iconName));
-                icon.Properties.Add(new PSNoteProperty("FileName", $"{iconName}_24_regular.svg"));
-                icon.Properties.Add(new PSNoteProperty("DownloadUrl", $"{rawBaseUrl}/{iconName}/SVG/{iconName}_24_regular.svg"));
+                icon.Properties.Add(new PSNoteProperty("FileName", $"ic_fluent_{iconName}_24_regular.svg"));
+                icon.Properties.Add(new PSNoteProperty("DownloadUrl", downloadUrl));
                 icon.Properties.Add(new PSNoteProperty("Size", 0L)); // Size unknown without fetching each file
                 icons.Add(icon);
             }
@@ -171,8 +175,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Tabler Icons repository: https://github.com/tabler/tabler-icons
             // Icons are in: icons/outline/*.svg
             // We'll use the GitHub API to list the directory contents
-            const string apiUrl = "https://api.github.com/repos/tabler/tabler-icons/contents/icons/outline";
-            const string rawBaseUrl = "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline";
+            var apiUrl = IconSetUrlHelper.GetIconListApiUrl("Tabler");
 
             WriteVerbose($"Fetching icon list from GitHub API: {apiUrl}");
 
@@ -190,11 +193,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             foreach (var item in items.Where(i => i.name.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)))
             {
                 var iconName = System.IO.Path.GetFileNameWithoutExtension(item.name);
+                var downloadUrl = IconSetUrlHelper.GetIconDownloadUrl("Tabler", iconName);
+                
                 var icon = new PSObject();
                 icon.Properties.Add(new PSNoteProperty("IconSet", "Tabler"));
                 icon.Properties.Add(new PSNoteProperty("Name", iconName));
                 icon.Properties.Add(new PSNoteProperty("FileName", item.name));
-                icon.Properties.Add(new PSNoteProperty("DownloadUrl", item.download_url ?? $"{rawBaseUrl}/{item.name}"));
+                icon.Properties.Add(new PSNoteProperty("DownloadUrl", item.download_url ?? downloadUrl));
                 icon.Properties.Add(new PSNoteProperty("Size", item.size));
                 icons.Add(icon);
             }

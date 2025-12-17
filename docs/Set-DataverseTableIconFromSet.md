@@ -1,4 +1,4 @@
-# Set-DataverseTableIcon
+# Set-DataverseTableIconFromSet
 
 ## SYNOPSIS
 Sets a table's vector icon by downloading an icon from an online icon set and creating/updating a web resource.
@@ -6,13 +6,13 @@ Sets a table's vector icon by downloading an icon from an online icon set and cr
 ## SYNTAX
 
 ```powershell
-Set-DataverseTableIcon [-EntityName] <String> [[-IconSet] <String>] [-IconName] <String> 
+Set-DataverseTableIconFromSet [-EntityName] <String> [[-IconSet] <String>] [-IconName] <String> 
     [-PublisherPrefix <String>] [-Publish] [-PassThru] [-Connection <ServiceClient>] 
     [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-The `Set-DataverseTableIcon` cmdlet simplifies the process of setting a table's vector icon by:
+The `Set-DataverseTableIconFromSet` cmdlet simplifies the process of setting a table's vector icon by:
 1. Downloading an SVG icon from an online icon set (e.g., Iconoir)
 2. Creating or updating a web resource with the icon content
 3. Updating the table's IconVectorName metadata property to reference the web resource
@@ -40,7 +40,8 @@ Accept wildcard characters: False
 ### -IconSet
 Icon set to retrieve the icon from. Currently supported icon sets:
 - **FluentUI**: Microsoft's Fluent UI System Icons - comprehensive icon library with 2000+ icons from https://github.com/microsoft/fluentui-system-icons
-- **Iconoir**: Modern, open-source SVG icon library from https://iconoir.com
+- **Iconoir**: Modern, open-source SVG icon library with 1000+ icons from https://iconoir.com
+- **Tabler**: Tabler Icons - open-source icon library with 5000+ icons from https://github.com/tabler/tabler-icons
 
 Default value: `FluentUI`
 
@@ -186,28 +187,35 @@ When `-PassThru` is specified, returns a PSObject with the following properties:
 
 ### Example 1: Set a table icon
 ```powershell
-Set-DataverseTableIcon -EntityName "contact" -IconName "person" -Publish
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName "person" -Publish
 ```
 
 Downloads the "person" icon from FluentUI (default), creates a web resource, sets it as the contact table's icon, and publishes the changes.
 
 ### Example 1b: Set a table icon from a specific icon set
 ```powershell
-Set-DataverseTableIcon -EntityName "contact" -IconName "user" -IconSet Iconoir -Publish
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName "user" -IconSet Iconoir -Publish
 ```
 
 Downloads the "user" icon from Iconoir, creates a web resource, sets it as the contact table's icon, and publishes the changes.
 
+### Example 1c: Set a table icon from Tabler
+```powershell
+Set-DataverseTableIconFromSet -EntityName "account" -IconName "building" -IconSet Tabler -Publish
+```
+
+Downloads the "building" icon from Tabler (5000+ icons), creates a web resource, sets it as the account table's icon, and publishes the changes.
+
 ### Example 2: Set icon with custom publisher prefix
 ```powershell
-Set-DataverseTableIcon -EntityName "new_customtable" -IconName "settings" -PublisherPrefix "contoso"
+Set-DataverseTableIconFromSet -EntityName "new_customtable" -IconName "settings" -PublisherPrefix "contoso"
 ```
 
 Sets the icon using a custom publisher prefix. The web resource will be named "contoso_/icons/settings.svg".
 
 ### Example 3: Set icon and return metadata
 ```powershell
-$result = Set-DataverseTableIcon -EntityName "account" -IconName "building" -PassThru
+$result = Set-DataverseTableIconFromSet -EntityName "account" -IconName "building" -PassThru
 $result.IconVectorName
 ```
 
@@ -216,7 +224,7 @@ Sets the icon and returns the updated entity metadata showing the icon web resou
 ### Example 4: Set icons for multiple tables
 ```powershell
 @("contact", "account", "lead") | ForEach-Object {
-    Set-DataverseTableIcon -EntityName $_ -IconName "user" -Publish
+    Set-DataverseTableIconFromSet -EntityName $_ -IconName "user" -Publish
 }
 ```
 
@@ -228,25 +236,25 @@ Sets the same icon for multiple tables.
 $icon = Get-DataverseIconSetIcon -Name "*person*" | Out-GridView -OutputMode Single
 
 # Then set the selected icon
-Set-DataverseTableIcon -EntityName "contact" -IconName $icon.Name -Publish
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName $icon.Name -Publish
 ```
 
 Browse available icons in a grid view, select one, and set it as the table icon.
 
-### Example 5b: Browse and set icon from Iconoir
+### Example 5b: Browse and set icon from Tabler
 ```powershell
-# Browse available icons from Iconoir
-$icon = Get-DataverseIconSetIcon -IconSet Iconoir -Name "*user*" | Out-GridView -OutputMode Single
+# Browse available icons from Tabler (5000+ icons)
+$icon = Get-DataverseIconSetIcon -IconSet Tabler -Name "*user*" | Out-GridView -OutputMode Single
 
-# Then set the selected icon from Iconoir
-Set-DataverseTableIcon -EntityName "contact" -IconName $icon.Name -IconSet Iconoir -Publish
+# Then set the selected icon from Tabler
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName $icon.Name -IconSet Tabler -Publish
 ```
 
-Browse available icons from Iconoir icon set, select one, and set it as the table icon.
+Browse available icons from Tabler icon set (5000+ icons), select one, and set it as the table icon.
 
 ### Example 6: Preview changes without applying
 ```powershell
-Set-DataverseTableIcon -EntityName "contact" -IconName "user" -WhatIf
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName "user" -WhatIf
 ```
 
 Shows what changes would be made without actually applying them.
@@ -258,3 +266,4 @@ Shows what changes would be made without actually applying them.
 - [Get-DataverseEntityMetadata](Get-DataverseEntityMetadata.md)
 - [FluentUI System Icons](https://github.com/microsoft/fluentui-system-icons)
 - [Iconoir Icons](https://iconoir.com)
+- [Tabler Icons](https://github.com/tabler/tabler-icons)

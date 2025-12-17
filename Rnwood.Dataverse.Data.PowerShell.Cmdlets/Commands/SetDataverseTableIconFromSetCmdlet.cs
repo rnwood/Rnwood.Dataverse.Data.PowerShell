@@ -129,28 +129,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private async Task<string> DownloadIconAsync()
         {
-            string downloadUrl;
-
-            if (IconSet == "Iconoir")
-            {
-                // Iconoir icons are at: https://raw.githubusercontent.com/iconoir-icons/iconoir/main/icons/regular/{name}.svg
-                downloadUrl = $"https://raw.githubusercontent.com/iconoir-icons/iconoir/main/icons/regular/{IconName}.svg";
-            }
-            else if (IconSet == "FluentUI")
-            {
-                // FluentUI System Icons are at: https://raw.githubusercontent.com/microsoft/fluentui-system-icons/main/assets/{name}/SVG/{name}_24_regular.svg
-                // Using 24_regular as the standard size/variant for table icons
-                downloadUrl = $"https://raw.githubusercontent.com/microsoft/fluentui-system-icons/main/assets/{IconName}/SVG/{IconName}_24_regular.svg";
-            }
-            else if (IconSet == "Tabler")
-            {
-                // Tabler Icons are at: https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/{name}.svg
-                downloadUrl = $"https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/{IconName}.svg";
-            }
-            else
-            {
-                throw new NotSupportedException($"Icon set '{IconSet}' is not supported");
-            }
+            // Use shared helper to get consistent download URL across both cmdlets
+            var downloadUrl = IconSetUrlHelper.GetIconDownloadUrl(IconSet, IconName);
 
             WriteVerbose($"Downloading from: {downloadUrl}");
 
