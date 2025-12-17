@@ -21,18 +21,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the form ID.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the form")]
+        [ArgumentCompleter(typeof(FormIdArgumentCompleter))]
         public Guid FormId { get; set; }
 
         /// <summary>
         /// Gets or sets the control ID to remove.
         /// </summary>
         [Parameter(Mandatory = true, ParameterSetName = "ById", HelpMessage = "ID of the control to remove")]
+        [ArgumentCompleter(typeof(FormControlIdArgumentCompleter))]
         public string ControlId { get; set; }
 
         /// <summary>
         /// Gets or sets the data field name of the control to remove.
         /// </summary>
         [Parameter(Mandatory = true, ParameterSetName = "ByDataField", HelpMessage = "Data field name of the control to remove")]
+        [ArgumentCompleter(typeof(ColumnNameArgumentCompleter))]
         public string DataField { get; set; }
 
         /// <summary>
@@ -40,6 +43,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(ParameterSetName = "ByDataField", HelpMessage = "Section name to limit the search. Not used for header controls.")]
         [Parameter(ParameterSetName = "ById", HelpMessage = "Section name to limit the search. Not used for header controls.")]
+        [ArgumentCompleter(typeof(FormSectionNameArgumentCompleter))]
         public string SectionName { get; set; }
 
         /// <summary>
@@ -47,6 +51,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(ParameterSetName = "ByDataField", HelpMessage = "Name of the tab containing the section. Use '[Header]' for header controls.")]
         [Parameter(ParameterSetName = "ById", HelpMessage = "Name of the tab containing the section. Use '[Header]' for header controls.")]
+        [ArgumentCompleter(typeof(FormTabNameArgumentCompleter))]
         public string TabName { get; set; }
 
         /// <summary>

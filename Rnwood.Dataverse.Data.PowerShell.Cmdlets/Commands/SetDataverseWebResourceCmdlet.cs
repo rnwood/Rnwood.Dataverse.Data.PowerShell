@@ -41,6 +41,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(ParameterSetName = PARAMSET_OBJECT, HelpMessage = "Name of the web resource. Used to match existing resources if Id is not provided.")]
         [Parameter(ParameterSetName = PARAMSET_FILE, Mandatory = true, HelpMessage = "Name of the web resource. Used to match existing resources if Id is not provided.")]
+        [ArgumentCompleter(typeof(WebResourceNameArgumentCompleter))]
         public string Name { get; set; }
 
         /// <summary>

@@ -97,24 +97,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the vector icon name for the entity (SVG icon identifier).
         /// </summary>
         [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Vector icon name (SVG icon identifier) for the entity")]
+        [ArgumentCompleter(typeof(WebResourceNameArgumentCompleter))]
         public string IconVectorName { get; set; }
         
         /// <summary>
         /// Gets or sets the large icon name for the entity.
         /// </summary>
         [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Large icon name for the entity")]
+        [ArgumentCompleter(typeof(WebResourceNameArgumentCompleter))]
         public string IconLargeName { get; set; }
         
         /// <summary>
         /// Gets or sets the medium icon name for the entity.
         /// </summary>
         [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Medium icon name for the entity")]
+        [ArgumentCompleter(typeof(WebResourceNameArgumentCompleter))]
         public string IconMediumName { get; set; }
         
         /// <summary>
         /// Gets or sets the small icon name for the entity.
         /// </summary>
         [Parameter(ParameterSetName = "ByProperties", HelpMessage = "Small icon name for the entity")]
+        [ArgumentCompleter(typeof(WebResourceNameArgumentCompleter))]
         public string IconSmallName { get; set; }
 
         /// <summary>

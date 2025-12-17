@@ -24,6 +24,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the form ID.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the form")]
+        [ArgumentCompleter(typeof(FormIdArgumentCompleter))]
         public Guid FormId { get; set; }
 
         /// <summary>
@@ -31,18 +32,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Not required for header controls (when TabName is '[Header]').
         /// </summary>
         [Parameter(Mandatory = false, HelpMessage = "Name of the section containing the control. Not required for header controls.")]
+        [ArgumentCompleter(typeof(FormSectionNameArgumentCompleter))]
         public string SectionName { get; set; }
 
         /// <summary>
         /// Gets or sets the tab name where the section is located.
         /// </summary>
         [Parameter(Mandatory = true, HelpMessage = "Name of the tab containing the section")]
+        [ArgumentCompleter(typeof(FormTabNameArgumentCompleter))]
         public string TabName { get; set; }
 
         /// <summary>
         /// Gets or sets the control ID for updating an existing control.
         /// </summary>
         [Parameter(Mandatory = false, HelpMessage = "ID of the control to create or update")]
+        [ArgumentCompleter(typeof(FormControlIdArgumentCompleter))]
         public string ControlId { get; set; }
 
         /// <summary>
@@ -50,6 +54,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Not required for special controls like Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch.
         /// </summary>
         [Parameter(Mandatory = false, ParameterSetName = "Standard", HelpMessage = "Data field name (attribute) for the control. Not required for special controls like Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch.")]
+        [ArgumentCompleter(typeof(ColumnNameArgumentCompleter))]
         public string DataField { get; set; }
 
         /// <summary>

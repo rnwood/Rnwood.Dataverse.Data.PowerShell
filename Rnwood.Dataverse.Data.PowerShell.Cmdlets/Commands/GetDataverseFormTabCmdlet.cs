@@ -20,12 +20,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the form ID from which to retrieve tabs.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the form")]
+        [ArgumentCompleter(typeof(FormIdArgumentCompleter))]
         public Guid FormId { get; set; }
 
         /// <summary>
         /// Gets or sets the tab name to retrieve a specific tab.
         /// </summary>
         [Parameter(HelpMessage = "Name of a specific tab to retrieve")]
+        [ArgumentCompleter(typeof(FormTabNameArgumentCompleter))]
         public string TabName { get; set; }
 
         /// <summary>
