@@ -346,37 +346,41 @@ private List<MetadataReference> GetMetadataReferences(string[] frameworkRefs, st
         {
             List<MetadataReference> references = new List<MetadataReference>();
 
-            // Core references
-            string[] coreReferences = new[]
+            // Get .NET Framework 4.6.2 reference assemblies path
+            // The Microsoft.NETFramework.ReferenceAssemblies package provides these
+            string nugetPackagesPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".nuget", "packages");
+            
+            string net462RefsPath = Path.Combine(
+                nugetPackagesPath,
+                "microsoft.netframework.referenceassemblies.net462",
+                "1.0.3",
+                "build",
+                ".NETFramework",
+                "v4.6.2");
+
+            // Core .NET Framework 4.6.2 references required for plugin assemblies
+            string[] coreNet462References = new[]
             {
-                typeof(object).Assembly.Location,
-                typeof(Console).Assembly.Location,
-                typeof(System.Runtime.AssemblyTargetedPatchBandAttribute).Assembly.Location,
-                typeof(System.Linq.Enumerable).Assembly.Location,
-                typeof(System.Collections.Generic.List<>).Assembly.Location,
+                "mscorlib.dll",
+                "System.dll",
+                "System.Core.dll",
+                "System.Runtime.Serialization.dll"
             };
 
-            foreach (string reference in coreReferences)
+            foreach (string refName in coreNet462References)
             {
-                if (!string.IsNullOrEmpty(reference) && File.Exists(reference))
+                string refPath = Path.Combine(net462RefsPath, refName);
+                if (File.Exists(refPath))
                 {
-                    references.Add(MetadataReference.CreateFromFile(reference));
+                    references.Add(MetadataReference.CreateFromFile(refPath));
+                    WriteVerbose($"Added .NET Framework 4.6.2 reference: {refName}");
                 }
-            }
-
-            // Add System.Runtime explicitly (needed for Type and other runtime types)
-            try
-            {
-                Assembly runtimeAssembly = Assembly.Load("System.Runtime");
-                if (!string.IsNullOrEmpty(runtimeAssembly.Location) && File.Exists(runtimeAssembly.Location))
+                else
                 {
-                    references.Add(MetadataReference.CreateFromFile(runtimeAssembly.Location));
-                    WriteVerbose($"Added required reference: System.Runtime from {runtimeAssembly.Location}");
+                    WriteWarning($".NET Framework 4.6.2 reference not found: {refPath}");
                 }
-            }
-            catch (Exception ex)
-            {
-                WriteWarning($"Could not load System.Runtime: {ex.Message}");
             }
 
             // Add Microsoft.Xrm.Sdk as a required reference for plugin assemblies
@@ -394,43 +398,25 @@ private List<MetadataReference> GetMetadataReferences(string[] frameworkRefs, st
                 WriteWarning($"Could not load Microsoft.Xrm.Sdk: {ex.Message}");
             }
 
-            // Add System.ComponentModel for IServiceProvider (needed by plugin interface)
-            try
-            {
-                Assembly componentModelAssembly = Assembly.Load("System.ComponentModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-                if (!string.IsNullOrEmpty(componentModelAssembly.Location) && File.Exists(componentModelAssembly.Location))
-                {
-                    references.Add(MetadataReference.CreateFromFile(componentModelAssembly.Location));
-                    WriteVerbose($"Added required reference: System.ComponentModel from {componentModelAssembly.Location}");
-                }
-            }
-            catch (Exception ex)
-            {
-                WriteWarning($"Could not load System.ComponentModel: {ex.Message}");
-            }
-
-            // Framework references
+            // Framework references (for additional .NET Framework assemblies)
             if (frameworkRefs != null)
             {
                 foreach (string frameworkRef in frameworkRefs)
                 {
-                    try
+                    string refPath = Path.Combine(net462RefsPath, frameworkRef);
+                    if (File.Exists(refPath))
                     {
-                        Assembly assembly = Assembly.Load(frameworkRef);
-                        if (!string.IsNullOrEmpty(assembly.Location) && File.Exists(assembly.Location))
-                        {
-                            references.Add(MetadataReference.CreateFromFile(assembly.Location));
-                            WriteVerbose($"Added framework reference: {frameworkRef}");
-                        }
+                        references.Add(MetadataReference.CreateFromFile(refPath));
+                        WriteVerbose($"Added framework reference: {frameworkRef}");
                     }
-                    catch
+                    else
                     {
-                        WriteWarning($"Could not load framework reference '{frameworkRef}'");
+                        WriteWarning($"Framework reference not found: {refPath}");
                     }
                 }
             }
 
-            // Package references
+            // Package references (for NuGet packages)
             if (packageRefs != null)
             {
                 foreach (string packageRef in packageRefs)
