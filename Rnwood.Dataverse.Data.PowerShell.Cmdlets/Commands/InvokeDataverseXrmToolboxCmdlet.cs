@@ -55,6 +55,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = false, HelpMessage = "The name of the plugin to load if the assembly contains multiple plugins.")]
         public string Name { get; set; }
 
+        private const int RuntimeDirectoryCleanupHours = 1;
+        
         private string _defaultCacheDirectory;
         private SourceCacheContext _cache;
         private SourceRepository _repository;
@@ -396,12 +398,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             // Find the XrmToolbox plugin DLL in the extracted files
             // XrmToolbox plugins are typically in lib/net*/Plugins/ directory
-            string pluginsPath = null;
+            string sourcePluginsPath = null;
 
             var topLevelPluginsPath = Path.Combine(pluginDirectory, "Plugins");
             if (Directory.Exists(topLevelPluginsPath))
             {
-                pluginsPath = topLevelPluginsPath;
+                sourcePluginsPath = topLevelPluginsPath;
             }
             else
             {
@@ -418,33 +420,39 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         string potentialPluginsPath = Path.Combine(netDir, "Plugins");
                         if (Directory.Exists(potentialPluginsPath))
                         {
-                            pluginsPath = potentialPluginsPath;
+                            sourcePluginsPath = potentialPluginsPath;
                             break;
                         } else
                         {
-                            pluginsPath = netDir;
+                            sourcePluginsPath = netDir;
                             break;
                         }
                     }
                 }
             }
 
-            if (string.IsNullOrEmpty(pluginsPath))
+            if (string.IsNullOrEmpty(sourcePluginsPath))
             {
                 throw new InvalidOperationException($"Could not find Plugins directory in package. Searched for lib/net*/Plugins in {pluginDirectory}");
             }
 
-            WriteVerbose($"Found plugins directory: {pluginsPath}");
+            WriteVerbose($"Found plugins directory: {sourcePluginsPath}");
 
             // Find the plugin loader DLL (the one that implements IXrmToolBoxPlugin)
-            var pluginFiles = Directory.GetFiles(pluginsPath, "*.dll", SearchOption.AllDirectories);
+            var pluginFiles = Directory.GetFiles(sourcePluginsPath, "*.dll", SearchOption.AllDirectories);
 
             if (pluginFiles.Length == 0)
             {
-                throw new InvalidOperationException($"No plugin DLLs found in {pluginsPath}");
+                throw new InvalidOperationException($"No plugin DLLs found in {sourcePluginsPath}");
             }
 
             WriteVerbose($"Found {pluginFiles.Length} plugin files");
+
+            // Create a unique runtime directory for this invocation
+            // This ensures each invocation has its own isolated XrmToolBox folder structure
+            string runtimeRootPath = CreateRuntimeDirectory(sourcePluginsPath);
+
+            WriteVerbose($"Created runtime directory: {runtimeRootPath}");
 
             // Find the host executable
             string hostExePath = FindPluginHost();
@@ -467,17 +475,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteProgress(new ProgressRecord(4, "Launching Plugin", "Starting XrmToolbox plugin host"));
             WriteVerbose($"Launching plugin host...");
-            WriteVerbose($"  Plugin directory: {pluginsPath}");
+            WriteVerbose($"  Runtime root directory: {runtimeRootPath}");
             WriteVerbose($"  Pipe name: {pipeName}");
 
             // Start token provider server in background (does not call Write* methods)
             Task.Run(() => StartTokenServer(pipeName));
 
-            // Launch the host process
+            // Launch the host process with runtime root directory
             var processStartInfo = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = hostExePath,
-                Arguments = $"\"{pluginsPath}\" \"{pipeName}\" \"{url}\" \"{Name ?? ""}\"",
+                Arguments = $"\"{runtimeRootPath}\" \"{pipeName}\" \"{url}\" \"{Name ?? ""}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -626,6 +634,112 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             catch (Exception ex)
             {
                 QueueMessage(LogLevel.Warning, $"Token server failed: {ex.Message}");
+            }
+        }
+
+        private string CreateRuntimeDirectory(string sourcePluginsPath)
+        {
+            // Create a unique runtime directory for this invocation
+            // This ensures each invocation gets its own isolated XrmToolBox folder structure
+            // Plugins expect: root/Plugins, root/Settings, root/Logs, root/Connections
+            
+            string runtimeBasePath = Path.Combine(CacheDirectory, "runtime");
+            Directory.CreateDirectory(runtimeBasePath);
+            
+            // Use a GUID for uniqueness to avoid conflicts between concurrent invocations
+            string runtimeId = Guid.NewGuid().ToString("N");
+            string runtimeRootPath = Path.Combine(runtimeBasePath, runtimeId);
+            
+            WriteVerbose($"Creating runtime directory: {runtimeRootPath}");
+            
+            // Create the XrmToolBox expected folder structure
+            string pluginsFolder = Path.Combine(runtimeRootPath, "Plugins");
+            string settingsFolder = Path.Combine(runtimeRootPath, "Settings");
+            string logsFolder = Path.Combine(runtimeRootPath, "Logs");
+            string connectionsFolder = Path.Combine(runtimeRootPath, "Connections");
+            
+            Directory.CreateDirectory(pluginsFolder);
+            Directory.CreateDirectory(settingsFolder);
+            Directory.CreateDirectory(logsFolder);
+            Directory.CreateDirectory(connectionsFolder);
+            
+            WriteVerbose($"Copying plugin files from {sourcePluginsPath} to {pluginsFolder}");
+            
+            // Copy all files and subdirectories from the source plugins path to the runtime Plugins folder
+            CopyDirectory(sourcePluginsPath, pluginsFolder);
+            
+            // Clean up old runtime directories (older than 1 hour)
+            CleanupOldRuntimeDirectories(runtimeBasePath);
+            
+            return runtimeRootPath;
+        }
+
+        private void CopyDirectory(string sourceDir, string targetDir)
+        {
+            if (string.IsNullOrEmpty(sourceDir))
+            {
+                throw new ArgumentNullException(nameof(sourceDir));
+            }
+            
+            if (string.IsNullOrEmpty(targetDir))
+            {
+                throw new ArgumentNullException(nameof(targetDir));
+            }
+            
+            if (!Directory.Exists(sourceDir))
+            {
+                throw new DirectoryNotFoundException($"Source directory not found: {sourceDir}");
+            }
+            
+            // Copy all files
+            foreach (string file in Directory.GetFiles(sourceDir))
+            {
+                string fileName = Path.GetFileName(file);
+                string targetFile = Path.Combine(targetDir, fileName);
+                File.Copy(file, targetFile, true);
+            }
+            
+            // Copy all subdirectories recursively
+            foreach (string subDir in Directory.GetDirectories(sourceDir))
+            {
+                string dirName = Path.GetFileName(subDir);
+                string targetSubDir = Path.Combine(targetDir, dirName);
+                Directory.CreateDirectory(targetSubDir);
+                CopyDirectory(subDir, targetSubDir);
+            }
+        }
+
+        private void CleanupOldRuntimeDirectories(string runtimeBasePath)
+        {
+            try
+            {
+                if (!Directory.Exists(runtimeBasePath))
+                {
+                    return;
+                }
+                
+                var cutoffTime = DateTime.UtcNow.AddHours(-RuntimeDirectoryCleanupHours);
+                
+                foreach (string dir in Directory.GetDirectories(runtimeBasePath))
+                {
+                    try
+                    {
+                        var dirInfo = new DirectoryInfo(dir);
+                        if (dirInfo.CreationTimeUtc < cutoffTime)
+                        {
+                            WriteVerbose($"Cleaning up old runtime directory: {dir}");
+                            Directory.Delete(dir, true);
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore errors when cleaning up - directory might be in use
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore errors in cleanup - not critical
             }
         }
 
