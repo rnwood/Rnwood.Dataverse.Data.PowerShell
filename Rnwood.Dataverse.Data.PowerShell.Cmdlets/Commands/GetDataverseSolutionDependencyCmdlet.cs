@@ -121,7 +121,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             
             foreach (var attribute in entity.Attributes)
             {
-                result.Properties.Add(new PSNoteProperty(attribute.Key, attribute.Value));
+                // Skip if property already exists (e.g., if entity has 'Id' or 'LogicalName' attribute)
+                if (result.Properties[attribute.Key] == null)
+                {
+                    result.Properties.Add(new PSNoteProperty(attribute.Key, attribute.Value));
+                }
             }
             
             return result;
