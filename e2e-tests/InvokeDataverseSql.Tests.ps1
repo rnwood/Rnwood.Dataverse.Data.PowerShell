@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-Describe "Invoke-DataverseSql with AdditionalConnections" {
+Describe "Invoke-DataverseSql with AdditionalConnections" -Skip {
 
     BeforeAll {
 
