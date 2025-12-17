@@ -21,18 +21,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the form ID.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the form")]
+        [ArgumentCompleter(typeof(FormIdArgumentCompleter))]
         public Guid FormId { get; set; }
 
         /// <summary>
         /// Gets or sets the tab name where the section is located (used when removing by section name).
         /// </summary>
         [Parameter(Mandatory = false, HelpMessage = "Name of the tab containing the section (required when using SectionName)")]
+        [ArgumentCompleter(typeof(FormTabNameArgumentCompleter))]
         public string TabName { get; set; }
 
         /// <summary>
         /// Gets or sets the section name to remove.
         /// </summary>
         [Parameter(Mandatory = false, HelpMessage = "Name of the section to remove")]
+        [ArgumentCompleter(typeof(FormSectionNameArgumentCompleter))]
         public string SectionName { get; set; }
 
         /// <summary>

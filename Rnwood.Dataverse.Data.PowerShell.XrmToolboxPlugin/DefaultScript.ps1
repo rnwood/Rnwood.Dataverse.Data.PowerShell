@@ -1,0 +1,2 @@
+$ErrorActionPreference="Stop"
+

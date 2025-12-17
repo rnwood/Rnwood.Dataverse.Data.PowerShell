@@ -34,6 +34,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the value that represents the solution component type.
         /// </summary>
         [Parameter(Mandatory = true, Position = 2, ValueFromPipelineByPropertyName = true, HelpMessage = "The value that represents the solution component type.")]
+        [ArgumentCompleter(typeof(ComponentTypeArgumentCompleter))]
         public int ComponentType { get; set; }
 
         /// <summary>

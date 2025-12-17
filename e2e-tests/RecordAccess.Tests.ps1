@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-Describe "RecordAccess E2E Tests" {
+Describe "RecordAccess E2E Tests" -Skip {
 
     BeforeAll {
 

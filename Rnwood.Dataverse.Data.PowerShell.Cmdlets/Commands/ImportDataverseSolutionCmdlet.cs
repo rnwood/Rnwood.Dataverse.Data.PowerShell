@@ -124,7 +124,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets whether to use update if additive mode (experimental and incomplete).
         /// </summary>
-        [Parameter(HelpMessage = "Use update if additive mode (experimental and incomplete). Only valid with Auto (default) mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items removed ('TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status), uses simple install mode (no stage and upgrade) for best performance.")]
+        [Parameter(HelpMessage = "Use update if additive mode (experimental and incomplete). Only valid with Auto (default) or HoldingSolution mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items removed ('TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status), uses simple install mode (no stage and upgrade or holding solution) for best performance.")]
         public SwitchParameter UseUpdateIfAdditive { get; set; }
 
         /// <summary>
@@ -162,6 +162,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(HelpMessage = "Skip import if the solution version in the file is lower than the installed version in the target environment.")]
         public SwitchParameter SkipIfLowerVersion { get; set; }
+
+        /// <summary>
+        /// Stores connection reference logical names extracted from the solution file with correct casing.
+        /// Populated by ValidateSolutionComponents and used for case-insensitive matching against user-provided hashtable keys.
+        /// </summary>
+        private List<string> _solutionConnectionReferenceNames;
+
+        /// <summary>
+        /// Stores environment variable schema names extracted from the solution file with correct casing.
+        /// Populated by ValidateSolutionComponents and used for case-insensitive matching against user-provided hashtable keys.
+        /// </summary>
+        private List<string> _solutionEnvironmentVariableNames;
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -209,10 +221,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             ValidateSolutionComponents(solutionBytes);
 
             // Validate parameter combinations
-            if (UseUpdateIfAdditive.IsPresent && Mode != ImportMode.Auto)
+            if (UseUpdateIfAdditive.IsPresent && Mode != ImportMode.Auto && Mode != ImportMode.HoldingSolution)
             {
                 ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException("-UseUpdateIfAdditive is only valid with Auto (default) mode."),
+                    new InvalidOperationException("-UseUpdateIfAdditive is only valid with Auto (default) or HoldingSolution mode."),
                     "InvalidParameterCombination",
                     ErrorCategory.InvalidArgument,
                     null));
@@ -250,12 +262,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     if (SkipIfSameVersion.IsPresent && versionComparison == 0)
                     {
                         WriteWarning($"Skipping import: Solution '{solutionUniqueName}' version {sourceSolutionVersion} is already installed (same version).");
+                        
+                        // Check and update connection references and environment variables if provided
+                        CheckAndUpdateSolutionComponents(solutionUniqueName);
+                        
                         return;
                     }
                     
                     if (SkipIfLowerVersion.IsPresent && versionComparison < 0)
                     {
                         WriteWarning($"Skipping import: Solution '{solutionUniqueName}' version {sourceSolutionVersion} is lower than installed version {installedVersion}.");
+                        
+                        // Check and update connection references and environment variables if provided
+                        CheckAndUpdateSolutionComponents(solutionUniqueName);
+                        
                         return;
                     }
                     
@@ -276,12 +296,58 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (useHoldingSolution)
             {
-                // Extract solution unique name from the solution file (this is a simplified approach)
-                // In a real scenario, you might want to parse the solution XML
                 WriteVerbose("HoldingSolution mode specified - checking if solution already exists...");
 
-                // Try to detect if solution exists by attempting to query for it
-                // We'll catch the exception if it doesn't exist and fallback
+                // Check for existing holding solution (solutionname_Upgrade)
+                string holdingSolutionName = $"{solutionUniqueName}_Upgrade";
+                Version holdingSolutionVersion = GetInstalledSolutionVersion(holdingSolutionName);
+                
+                if (holdingSolutionVersion != null)
+                {
+                    WriteVerbose($"Found existing holding solution '{holdingSolutionName}' with version {holdingSolutionVersion}");
+                    
+                    // Compare with source solution version
+                    if (sourceSolutionVersion != null)
+                    {
+                        WriteVerbose($"Comparing source version {sourceSolutionVersion} with existing holding solution version {holdingSolutionVersion}");
+                        
+                        if (sourceSolutionVersion.CompareTo(holdingSolutionVersion) == 0)
+                        {
+                            // Same version - skip import
+                            WriteWarning($"Skipping import: Holding solution '{holdingSolutionName}' version {holdingSolutionVersion} already exists with the same version as the source solution.");
+                            
+                            // Check and update connection references and environment variables if provided
+                            CheckAndUpdateSolutionComponents(solutionUniqueName);
+                            
+                            return;
+                        }
+                        else
+                        {
+                            // Different version - fail with clear error
+                            var errorMessage = new StringBuilder();
+                            errorMessage.AppendLine($"Cannot import holding solution: A holding solution '{holdingSolutionName}' already exists with version {holdingSolutionVersion}, but the source solution has version {sourceSolutionVersion}.");
+                            errorMessage.AppendLine();
+                            errorMessage.AppendLine("To resolve this issue, you must either:");
+                            errorMessage.AppendLine($"  1. Apply the existing upgrade by running: Invoke-DataverseSolutionUpgrade -SolutionName '{solutionUniqueName}'");
+                            errorMessage.AppendLine($"  2. Remove the existing holding solution by running: Remove-DataverseSolution -UniqueName '{holdingSolutionName}'");
+                            errorMessage.AppendLine();
+                            errorMessage.AppendLine("Note: Applying the upgrade will delete the original solution and promote the holding solution. Removing the holding solution may result in data loss if it contains changes.");
+                            
+                            ThrowTerminatingError(new ErrorRecord(
+                                new InvalidOperationException(errorMessage.ToString()),
+                                "HoldingSolutionVersionMismatch",
+                                ErrorCategory.InvalidOperation,
+                                holdingSolutionName));
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        WriteWarning($"Unable to extract source solution version. Cannot verify if holding solution version matches.");
+                    }
+                }
+
+                // No existing holding solution found, check if base solution exists
                 if (solutionExists)
                 {
                     shouldUseHoldingSolution = true;
@@ -321,7 +387,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Handle UseUpdateIfAdditive logic
-            if (UseUpdateIfAdditive.IsPresent && solutionExists)
+            if (UseUpdateIfAdditive.IsPresent && solutionExists && (shouldUseStageAndUpgrade || shouldUseHoldingSolution))
             {
                 WriteWarning("UseUpdateIfAdditive is experimental and incomplete. Behavior may be incorrect and may change in future versions.");
 
@@ -367,7 +433,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (targetOnlyCount == 0 && lessInclusiveCount == 0)
                     {
-                        WriteVerbose("No removed components found - using simple install mode (no stage and upgrade)");
+                        WriteVerbose("No removed components found - using simple install mode (no stage and upgrade or holding solution)");
                         shouldUseStageAndUpgrade = false;
                         shouldUseHoldingSolution = false;
                     }
@@ -381,7 +447,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             int componentType = result.SourceComponent?.ComponentType ?? result.TargetComponent?.ComponentType ?? 0;
                             WriteVerbose($"  Removed component: Type {componentType} '{componentName}' - {result.Status}");
                         }
-                        // Keep the existing logic for shouldUseStageAndUpgrade
+                        // Keep the existing logic for shouldUseStageAndUpgrade or shouldUseHoldingSolution
                     }
                 }
             }
@@ -405,10 +471,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         var connectionRefName = entry.Key.ToString();
                         var connectionId = entry.Value.ToString();
 
-                        WriteVerbose($"  Setting connection reference '{connectionRefName}' to connection '{connectionId}'");
+                        // Use the correctly-cased name from the solution file if available
+                        var correctlyCasedName = _solutionConnectionReferenceNames?.FirstOrDefault(n => 
+                            string.Equals(n, connectionRefName, StringComparison.OrdinalIgnoreCase)) ?? connectionRefName;
+
+                        WriteVerbose($"  Setting connection reference '{correctlyCasedName}' to connection '{connectionId}'");
 
                         var componentParam = new Entity("connectionreference");
-                        componentParam["connectionreferencelogicalname"] = connectionRefName;
+                        componentParam["connectionreferencelogicalname"] = correctlyCasedName;
                         componentParam["connectionid"] = connectionId;
 
                         componentParameters.Entities.Add(componentParam);
@@ -420,22 +490,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     WriteVerbose($"Processing {EnvironmentVariables.Count} environment variable(s)...");
 
-                    // Query for existing environment variable values by schema name
-                    var existingEnvVarValuesBySchemaName = GetExistingEnvironmentVariableValueIds(EnvironmentVariables.Keys.Cast<object>().Select(k => k.ToString()).ToList());
+                    // Build list of correctly-cased names for querying existing values
+                    var correctlyCasedEnvVarNames = new List<string>();
+                    foreach (DictionaryEntry entry in EnvironmentVariables)
+                    {
+                        var envVarName = entry.Key.ToString();
+                        var correctlyCasedName = _solutionEnvironmentVariableNames?.FirstOrDefault(n => 
+                            string.Equals(n, envVarName, StringComparison.OrdinalIgnoreCase)) ?? envVarName;
+                        correctlyCasedEnvVarNames.Add(correctlyCasedName);
+                    }
+
+                    // Query for existing environment variable values by schema name (using correct casing)
+                    var existingEnvVarValuesBySchemaName = GetExistingEnvironmentVariableValueIds(correctlyCasedEnvVarNames);
 
                     foreach (DictionaryEntry entry in EnvironmentVariables)
                     {
                         var envVarSchemaName = entry.Key.ToString();
                         var envVarValue = entry.Value.ToString();
 
-                        WriteVerbose($"  Setting environment variable '{envVarSchemaName}' to value '{envVarValue}'");
+                        // Use the correctly-cased name from the solution file if available
+                        var correctlyCasedName = _solutionEnvironmentVariableNames?.FirstOrDefault(n => 
+                            string.Equals(n, envVarSchemaName, StringComparison.OrdinalIgnoreCase)) ?? envVarSchemaName;
+
+                        WriteVerbose($"  Setting environment variable '{correctlyCasedName}' to value '{envVarValue}'");
 
                         var componentParam = new Entity("environmentvariablevalue");
-                        componentParam["schemaname"] = envVarSchemaName;
+                        componentParam["schemaname"] = correctlyCasedName;
                         componentParam["value"] = envVarValue;
 
                         // If there's an existing value record, include its ID for update
-                        if (existingEnvVarValuesBySchemaName.TryGetValue(envVarSchemaName, out var existingValueId))
+                        if (existingEnvVarValuesBySchemaName.TryGetValue(correctlyCasedName, out var existingValueId))
                         {
                             componentParam["environmentvariablevalueid"] = existingValueId;
                             WriteVerbose($"    Found existing value record with ID: {existingValueId}");
@@ -768,6 +852,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Extract connection references and environment variables from the solution
             var solutionComponents = ExtractSolutionComponents(solutionBytes);
 
+            // Store the extracted names with correct casing for later use
+            _solutionConnectionReferenceNames = solutionComponents.ConnectionReferences;
+            _solutionEnvironmentVariableNames = solutionComponents.EnvironmentVariables;
+
             // Validate connection references if not skipped
             if (!SkipConnectionReferenceValidation.IsPresent)
             {
@@ -875,8 +963,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             foreach (var connRefName in requiredConnectionRefs)
             {
-                // Check if this connection reference is provided in the parameters
-                bool isProvided = ConnectionReferences != null && ConnectionReferences.ContainsKey(connRefName);
+                // Check if this connection reference is provided in the parameters (case-insensitive)
+                bool isProvided = GetHashtableValueCaseInsensitive(ConnectionReferences, connRefName) != null;
 
                 if (!isProvided)
                 {
@@ -932,8 +1020,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             foreach (var envVarName in requiredEnvVars)
             {
-                // Check if this environment variable is provided in the parameters
-                bool isProvided = EnvironmentVariables != null && EnvironmentVariables.ContainsKey(envVarName);
+                // Check if this environment variable is provided in the parameters (case-insensitive)
+                bool isProvided = GetHashtableValueCaseInsensitive(EnvironmentVariables, envVarName) != null;
 
                 if (!isProvided)
                 {
@@ -1056,7 +1144,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private Dictionary<string, Guid> GetExistingEnvironmentVariableValueIds(List<string> schemaNames)
         {
-            var result = new Dictionary<string, Guid>();
+            var result = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
 
             if (schemaNames == null || schemaNames.Count == 0)
             {
@@ -1065,18 +1153,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Querying for existing environment variable values for {schemaNames.Count} schema name(s)...");
 
-            // Query for environment variable values by schema name
+            // Query for environment variable values by joining with definition
+            // The schemaname field in environmentvariablevalue may not be reliably populated
+            // (older records may contain a GUID instead of the actual schema name),
+            // so we must use the schemaname from the environmentvariabledefinition instead.
             var query = new QueryExpression("environmentvariablevalue")
             {
-                ColumnSet = new ColumnSet("environmentvariablevalueid", "schemaname"),
-                Criteria = new FilterExpression
-                {
-                    Conditions =
-                        {
-                            new ConditionExpression("schemaname", ConditionOperator.In, schemaNames.ToArray())
-                        }
-                }
+                ColumnSet = new ColumnSet("environmentvariablevalueid")
             };
+
+            // Add link to environmentvariabledefinition to get the reliable schema name
+            var defLink = query.AddLink("environmentvariabledefinition", "environmentvariabledefinitionid", "environmentvariabledefinitionid");
+            defLink.Columns = new ColumnSet("schemaname");
+            defLink.EntityAlias = "def";
+            
+            // Filter by the definition's schemaname, not the value's schemaname
+            defLink.LinkCriteria.AddCondition("schemaname", ConditionOperator.In, schemaNames.ToArray());
 
             var allResults = new List<Entity>();
             EntityCollection ec;
@@ -1093,9 +1185,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             foreach (var entity in allResults)
             {
-                if (entity.Contains("schemaname"))
+                // Get the schema name from the linked definition entity (via alias)
+                var schemaNameAlias = entity.GetAttributeValue<AliasedValue>("def.schemaname");
+                var schemaName = schemaNameAlias?.Value as string;
+                
+                if (!string.IsNullOrEmpty(schemaName))
                 {
-                    var schemaName = entity.GetAttributeValue<string>("schemaname");
                     result[schemaName] = entity.Id;
                     WriteVerbose($"  Found existing value for '{schemaName}': {entity.Id}");
                 }
@@ -1185,6 +1280,406 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             catch (Exception ex)
             {
                 WriteVerbose($"Error retrieving installed solution version: {ex.Message}");
+            }
+
+            return null;
+        }
+
+        private void CheckAndUpdateSolutionComponents(string solutionUniqueName)
+        {
+            WriteVerbose("Checking and updating connection references and environment variables from solution...");
+
+            // First try to find the _Upgrade solution, then fall back to the base solution
+            string upgradeSolutionName = $"{solutionUniqueName}_Upgrade";
+            Guid solutionId = Guid.Empty;
+            string actualSolutionName = null;
+
+            // Try to find the upgrade solution first
+            var upgradeSolutionQuery = new QueryExpression("solution")
+            {
+                ColumnSet = new ColumnSet("solutionid", "uniquename"),
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression("uniquename", ConditionOperator.Equal, upgradeSolutionName)
+                    }
+                },
+                TopCount = 1
+            };
+
+            var upgradeSolutions = Connection.RetrieveMultiple(upgradeSolutionQuery);
+            if (upgradeSolutions.Entities.Count > 0)
+            {
+                solutionId = upgradeSolutions.Entities[0].Id;
+                actualSolutionName = upgradeSolutionName;
+                WriteVerbose($"Found upgrade solution '{upgradeSolutionName}' with ID: {solutionId}");
+            }
+            else
+            {
+                // Upgrade solution not found, try the base solution
+                WriteVerbose($"Upgrade solution '{upgradeSolutionName}' not found, checking for base solution '{solutionUniqueName}'");
+                
+                var solutionQuery = new QueryExpression("solution")
+                {
+                    ColumnSet = new ColumnSet("solutionid", "uniquename"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("uniquename", ConditionOperator.Equal, solutionUniqueName)
+                        }
+                    },
+                    TopCount = 1
+                };
+
+                var solutions = Connection.RetrieveMultiple(solutionQuery);
+                if (solutions.Entities.Count == 0)
+                {
+                    WriteVerbose($"Solution '{solutionUniqueName}' not found in target environment. Cannot determine which components belong to the solution.");
+                    return;
+                }
+
+                solutionId = solutions.Entities[0].Id;
+                actualSolutionName = solutionUniqueName;
+                WriteVerbose($"Found solution '{solutionUniqueName}' with ID: {solutionId}");
+            }
+
+            // Query solution components to find connection references and environment variables in this solution
+            var componentQuery = new QueryExpression("solutioncomponent")
+            {
+                ColumnSet = new ColumnSet("objectid", "componenttype"),
+                Criteria = new FilterExpression
+                {
+                    Conditions =
+                    {
+                        new ConditionExpression("solutionid", ConditionOperator.Equal, solutionId),
+                        new ConditionExpression("componenttype", ConditionOperator.In, new object[] { 380, 635 }) // 380 = Environment Variable Definition, 635 = Connection Reference
+                    }
+                }
+            };
+
+            var allSolutionComponents = new List<Entity>();
+            EntityCollection result;
+            do
+            {
+                result = Connection.RetrieveMultiple(componentQuery);
+                allSolutionComponents.AddRange(result.Entities);
+                if (result.MoreRecords)
+                {
+                    componentQuery.PageInfo.PageNumber++;
+                    componentQuery.PageInfo.PagingCookie = result.PagingCookie;
+                }
+            } while (result.MoreRecords);
+
+            WriteVerbose($"Found {allSolutionComponents.Count} connection reference(s) and environment variable(s) in solution");
+
+            // Separate components by type
+            var connectionReferenceIds = allSolutionComponents
+                .Where(c => c.GetAttributeValue<OptionSetValue>("componenttype")?.Value == 635)
+                .Select(c => c.GetAttributeValue<Guid>("objectid"))
+                .ToList();
+
+            var environmentVariableDefinitionIds = allSolutionComponents
+                .Where(c => c.GetAttributeValue<OptionSetValue>("componenttype")?.Value == 380)
+                .Select(c => c.GetAttributeValue<Guid>("objectid"))
+                .ToList();
+
+            // Build dictionaries of components to check - only those in the solution and provided by user
+            Dictionary<string, string> connectionReferencesToCheck = new Dictionary<string, string>();
+            Dictionary<string, string> environmentVariablesToCheck = new Dictionary<string, string>();
+
+            // Query connection reference logical names for the IDs in the solution
+            List<string> solutionConnRefNames = new List<string>();
+            if (connectionReferenceIds.Count > 0)
+            {
+                var connRefQuery = new QueryExpression("connectionreference")
+                {
+                    ColumnSet = new ColumnSet("connectionreferenceid", "connectionreferencelogicalname"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("connectionreferenceid", ConditionOperator.In, connectionReferenceIds.ToArray())
+                        }
+                    }
+                };
+
+                var connRefs = Connection.RetrieveMultiple(connRefQuery);
+                solutionConnRefNames = connRefs.Entities
+                    .Select(e => e.GetAttributeValue<string>("connectionreferencelogicalname"))
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .ToList();
+            }
+
+            // Query environment variable schema names for the IDs in the solution
+            List<string> solutionEnvVarNames = new List<string>();
+            if (environmentVariableDefinitionIds.Count > 0)
+            {
+                var envVarDefQuery = new QueryExpression("environmentvariabledefinition")
+                {
+                    ColumnSet = new ColumnSet("environmentvariabledefinitionid", "schemaname"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("environmentvariabledefinitionid", ConditionOperator.In, environmentVariableDefinitionIds.ToArray())
+                        }
+                    }
+                };
+
+                var envVarDefs = Connection.RetrieveMultiple(envVarDefQuery);
+                solutionEnvVarNames = envVarDefs.Entities
+                    .Select(e => e.GetAttributeValue<string>("schemaname"))
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .ToList();
+            }
+
+            // Validate that all required connection references and environment variables have been provided
+            // This uses the same validation logic as the normal import path
+            if (!SkipConnectionReferenceValidation.IsPresent)
+            {
+                ValidateConnectionReferences(solutionConnRefNames);
+            }
+
+            if (!SkipEnvironmentVariableValidation.IsPresent)
+            {
+                ValidateEnvironmentVariables(solutionEnvVarNames);
+            }
+
+            // Process connection references - build list of those to update
+            if (ConnectionReferences != null && ConnectionReferences.Count > 0 && solutionConnRefNames.Count > 0)
+            {
+                foreach (DictionaryEntry entry in ConnectionReferences)
+                {
+                    var connRefName = entry.Key.ToString();
+                    var connectionId = entry.Value.ToString();
+
+                    // Find the correctly-cased name from the solution (case-insensitive match)
+                    var correctlyCasedName = solutionConnRefNames.FirstOrDefault(n => 
+                        string.Equals(n, connRefName, StringComparison.OrdinalIgnoreCase));
+
+                    if (correctlyCasedName != null)
+                    {
+                        // Use the correctly-cased name from the solution
+                        connectionReferencesToCheck[correctlyCasedName] = connectionId;
+                    }
+                    else
+                    {
+                        WriteVerbose($"Connection reference '{connRefName}' is not in the solution, skipping.");
+                    }
+                }
+            }
+
+            // Process environment variables - build list of those to update
+            if (EnvironmentVariables != null && EnvironmentVariables.Count > 0 && solutionEnvVarNames.Count > 0)
+            {
+                foreach (DictionaryEntry entry in EnvironmentVariables)
+                {
+                    var envVarName = entry.Key.ToString();
+                    var envVarValue = entry.Value.ToString();
+
+                    // Find the correctly-cased name from the solution (case-insensitive match)
+                    var correctlyCasedName = solutionEnvVarNames.FirstOrDefault(n => 
+                        string.Equals(n, envVarName, StringComparison.OrdinalIgnoreCase));
+
+                    if (correctlyCasedName != null)
+                    {
+                        // Use the correctly-cased name from the solution
+                        environmentVariablesToCheck[correctlyCasedName] = envVarValue;
+                    }
+                    else
+                    {
+                        WriteVerbose($"Environment variable '{envVarName}' is not in the solution, skipping.");
+                    }
+                }
+            }
+
+            // Update connection references if needed
+            if (connectionReferencesToCheck.Count > 0)
+            {
+                WriteVerbose($"Checking {connectionReferencesToCheck.Count} connection reference(s) from solution...");
+                UpdateConnectionReferencesIfDifferent(connectionReferencesToCheck);
+            }
+
+            // Update environment variables if needed
+            if (environmentVariablesToCheck.Count > 0)
+            {
+                WriteVerbose($"Checking {environmentVariablesToCheck.Count} environment variable(s) from solution...");
+                UpdateEnvironmentVariablesIfDifferent(environmentVariablesToCheck);
+            }
+        }
+
+        private void UpdateConnectionReferencesIfDifferent(Dictionary<string, string> connectionReferencesToSet)
+        {
+            foreach (var kvp in connectionReferencesToSet)
+            {
+                var logicalName = kvp.Key;
+                var desiredConnectionId = kvp.Value;
+
+                WriteVerbose($"Checking connection reference '{logicalName}'...");
+
+                // Query for the connection reference by logical name
+                var query = new QueryExpression("connectionreference")
+                {
+                    ColumnSet = new ColumnSet("connectionreferenceid", "connectionreferencelogicalname", "connectionid"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("connectionreferencelogicalname", ConditionOperator.Equal, logicalName)
+                        }
+                    },
+                    TopCount = 1
+                };
+
+                var results = Connection.RetrieveMultiple(query);
+
+                if (results.Entities.Count == 0)
+                {
+                    WriteVerbose($"  Connection reference '{logicalName}' not found in target environment. Skipping update (will be created during solution import).");
+                    continue;
+                }
+
+                var connRef = results.Entities[0];
+                var connRefId = connRef.Id;
+                var currentConnectionId = connRef.GetAttributeValue<string>("connectionid");
+
+                WriteVerbose($"  Current connection ID: {currentConnectionId ?? "(none)"}");
+                WriteVerbose($"  Desired connection ID: {desiredConnectionId}");
+
+                // Update only if different
+                if (desiredConnectionId != currentConnectionId)
+                {
+                    WriteVerbose($"  Connection reference '{logicalName}' has different value. Updating...");
+
+                    var updateEntity = new Entity("connectionreference", connRefId);
+                    updateEntity["connectionid"] = desiredConnectionId;
+
+                    Connection.Update(updateEntity);
+                    WriteVerbose($"  Successfully updated connection reference '{logicalName}'");
+                }
+                else
+                {
+                    WriteVerbose($"  Connection reference '{logicalName}' already has the desired value. No update needed.");
+                }
+            }
+        }
+
+        private void UpdateEnvironmentVariablesIfDifferent(Dictionary<string, string> environmentVariablesToSet)
+        {
+            // Query for existing environment variable values by schema name
+            var existingEnvVarValuesBySchemaName = GetExistingEnvironmentVariableValueIds(environmentVariablesToSet.Keys.ToList());
+
+            foreach (var kvp in environmentVariablesToSet)
+            {
+                var schemaName = kvp.Key;
+                var desiredValue = kvp.Value;
+
+                WriteVerbose($"Checking environment variable '{schemaName}'...");
+
+                // Query for the environment variable definition by schema name
+                var defQuery = new QueryExpression("environmentvariabledefinition")
+                {
+                    ColumnSet = new ColumnSet("environmentvariabledefinitionid", "schemaname"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("schemaname", ConditionOperator.Equal, schemaName)
+                        }
+                    },
+                    TopCount = 1
+                };
+
+                var defResults = Connection.RetrieveMultiple(defQuery);
+
+                if (defResults.Entities.Count == 0)
+                {
+                    WriteVerbose($"  Environment variable definition '{schemaName}' not found in target environment. Skipping update (will be created during solution import).");
+                    continue;
+                }
+
+                var envVarDef = defResults.Entities[0];
+                var envVarDefId = envVarDef.Id;
+
+                // Check if there's an existing value record
+                if (existingEnvVarValuesBySchemaName.TryGetValue(schemaName, out var existingValueId))
+                {
+                    // Query the current value
+                    var valueQuery = new QueryExpression("environmentvariablevalue")
+                    {
+                        ColumnSet = new ColumnSet("value"),
+                        Criteria = new FilterExpression
+                        {
+                            Conditions =
+                            {
+                                new ConditionExpression("environmentvariablevalueid", ConditionOperator.Equal, existingValueId)
+                            }
+                        },
+                        TopCount = 1
+                    };
+
+                    var valueResults = Connection.RetrieveMultiple(valueQuery);
+                    if (valueResults.Entities.Count > 0)
+                    {
+                        var currentValue = valueResults.Entities[0].GetAttributeValue<string>("value");
+                        
+                        WriteVerbose($"  Current value: {currentValue ?? "(none)"}");
+                        WriteVerbose($"  Desired value: {desiredValue}");
+
+                        // Update only if different
+                        if (desiredValue != currentValue)
+                        {
+                            WriteVerbose($"  Environment variable '{schemaName}' has different value. Updating...");
+
+                            var updateEntity = new Entity("environmentvariablevalue", existingValueId);
+                            updateEntity["value"] = desiredValue;
+
+                            Connection.Update(updateEntity);
+                            WriteVerbose($"  Successfully updated environment variable value for '{schemaName}'");
+                        }
+                        else
+                        {
+                            WriteVerbose($"  Environment variable '{schemaName}' already has the desired value. No update needed.");
+                        }
+                    }
+                }
+                else
+                {
+                    // No existing value record - create one
+                    WriteVerbose($"  Environment variable '{schemaName}' has no value record. Creating...");
+
+                    var createEntity = new Entity("environmentvariablevalue");
+                    createEntity["schemaname"] = schemaName;
+                    createEntity["value"] = desiredValue;
+                    createEntity["environmentvariabledefinitionid"] = new EntityReference("environmentvariabledefinition", envVarDefId);
+
+                    var newValueId = Connection.Create(createEntity);
+                    WriteVerbose($"  Successfully created environment variable value for '{schemaName}' (ID: {newValueId})");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the value from a hashtable using case-insensitive key lookup.
+        /// </summary>
+        /// <param name="hashtable">The hashtable to search</param>
+        /// <param name="key">The key to look up (case-insensitive)</param>
+        /// <returns>The value if found, null otherwise</returns>
+        private object GetHashtableValueCaseInsensitive(Hashtable hashtable, string key)
+        {
+            if (hashtable == null || key == null)
+            {
+                return null;
+            }
+
+            foreach (DictionaryEntry entry in hashtable)
+            {
+                if (string.Equals(entry.Key.ToString(), key, StringComparison.OrdinalIgnoreCase))
+                {
+                    return entry.Value;
+                }
             }
 
             return null;

@@ -5,6 +5,7 @@ Describe 'Form Control Management' {
         $connection = getMockConnection -Entities @("systemform", "contact")
         
         # Create a test form with a simple structure
+        # Note: Labels are in the cell, before the control (per schema)
         $formXml = @'
 <form>
     <tabs>
@@ -16,11 +17,10 @@ Describe 'Form Control Management' {
                             <rows>
                                 <row>
                                     <cell id="{cell1-id}">
-                                        <control id="{control1-id}" datafieldname="firstname" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}">
-                                            <labels>
-                                                <label description="First Name" languagecode="1033" />
-                                            </labels>
-                                        </control>
+                                        <labels>
+                                            <label description="First Name" languagecode="1033" />
+                                        </labels>
+                                        <control id="{control1-id}" datafieldname="firstname" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}" />
                                     </cell>
                                 </row>
                             </rows>
@@ -44,7 +44,7 @@ Describe 'Form Control Management' {
     Context 'Set-DataverseFormControl - Update existing control' {
         It "Updates an existing control by ControlId" {
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -ControlId "{control1-id}" -DataField "firstname" -Label "Updated First Name" -Confirm:$false
+                -ControlId "{control1-id}" -DataField "firstname" -Labels @{1033 = "Updated First Name"}
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -ControlId "{control1-id}"
             $control.Labels[0].Description | Should -Be "Updated First Name"
@@ -52,7 +52,7 @@ Describe 'Form Control Management' {
 
         It "Updates an existing control by DataField" {
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -DataField "firstname" -Label "Updated by DataField" -Confirm:$false
+                -DataField "firstname" -Labels @{1033 = "Updated by DataField"}
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "firstname"
             $control.Labels[0].Description | Should -Be "Updated by DataField"
@@ -62,7 +62,7 @@ Describe 'Form Control Management' {
     Context 'Set-DataverseFormControl - Create new control' {
         It "Creates a new control with generated ID when ControlId not provided" {
             $result = Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -DataField "lastname" -Label "Last Name" -Confirm:$false -PassThru
+                -DataField "lastname" -Labels @{1033 = "Last Name"} -PassThru
             
             $result | Should -Not -BeNullOrEmpty
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "lastname"
@@ -73,25 +73,34 @@ Describe 'Form Control Management' {
 
         It "Creates a new control with specified ControlId" {
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -ControlId "{control2-id}" -DataField "emailaddress1" -Label "Email" -Confirm:$false
+                -ControlId "{control2-id}" -DataField "emailaddress1" -Labels @{1033 = "Email"}
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -ControlId "{control2-id}"
             $control | Should -Not -BeNull
             $control.DataField | Should -Be "emailaddress1"
         }
+
+        It "Creates a new control with multiple language labels" {
+            Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
+                -ControlId "{control-multilang}" -DataField "fax" -Labels @{1033 = "Fax Number"; 1031 = "Faxnummer"}
+            
+            $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -ControlId "{control-multilang}"
+            $control | Should -Not -BeNull
+            $control.Labels.Count | Should -BeGreaterOrEqual 2
+            ($control.Labels | Where-Object { $_.LanguageCode -eq "1033" }).Description | Should -Be "Fax Number"
+            ($control.Labels | Where-Object { $_.LanguageCode -eq "1031" }).Description | Should -Be "Faxnummer"
+        }
     }
 
     Context 'Set-DataverseFormControl - RawXml parameter set' {
         It "Creates a new control using RawXml with generated ID" {
+            # Note: RawXml may contain labels inside the control (legacy support)
+            # but Get-DataverseFormControl reads labels from the cell
             $rawXml = @'
-<control datafieldname="mobilephone" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}">
-    <labels>
-        <label description="Mobile Phone" languagecode="1033" />
-    </labels>
-</control>
+<control datafieldname="mobilephone" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}" />
 '@
             $result = Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -ControlXml $rawXml -Confirm:$false -PassThru
+                -ControlXml $rawXml -Labels @{1033 = "Mobile Phone"} -PassThru
             
             $result | Should -Not -BeNullOrEmpty
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "mobilephone"
@@ -101,14 +110,10 @@ Describe 'Form Control Management' {
 
         It "Updates existing control using RawXml by DataField" {
             $rawXml = @'
-<control datafieldname="firstname" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}">
-    <labels>
-        <label description="Updated via RawXml" languagecode="1033" />
-    </labels>
-</control>
+<control datafieldname="firstname" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}" />
 '@
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -ControlXml $rawXml -Confirm:$false
+                -ControlXml $rawXml -Labels @{1033 = "Updated via RawXml"}
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "firstname"
             $control.Labels[0].Description | Should -Be "Updated via RawXml"
@@ -119,7 +124,7 @@ Describe 'Form Control Management' {
         It "Removes control by ControlId" {
             # First create a control to remove
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -ControlId "{control-to-remove}" -DataField "jobtitle" -Label "Job Title" -Confirm:$false
+                -ControlId "{control-to-remove}" -DataField "jobtitle" -Labels @{1033 = "Job Title"}
             
             # Verify it exists
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -ControlId "{control-to-remove}"
@@ -135,7 +140,7 @@ Describe 'Form Control Management' {
         It "Removes control by DataField" {
             # First create a control to remove
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -DataField "department" -Label "Department" -Confirm:$false
+                -DataField "department" -Labels @{1033 = "Department"}
             
             # Verify it exists
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" -DataField "department"
@@ -155,7 +160,7 @@ Describe 'Form Control Management' {
             # (create or update). When ControlId is provided for a non-existent control,
             # it creates a new control with that ID, which is the intended behavior.
             { Set-DataverseFormControl -Connection $connection -FormId $script:FormId -TabName "general" -SectionName "section1" `
-                -ControlId "{non-existent-id}" -DataField "nonexistent" -Label "Test" } | Should -Throw -Confirm:$false
+                -ControlId "{non-existent-id}" -DataField "nonexistent" -Labels @{1033 = "Test"} } | Should -Throw
         }
 
         It "Throws error when trying to remove non-existent control" {

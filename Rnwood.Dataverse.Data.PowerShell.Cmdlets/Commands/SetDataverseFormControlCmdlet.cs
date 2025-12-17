@@ -24,6 +24,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the form ID.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the form")]
+        [ArgumentCompleter(typeof(FormIdArgumentCompleter))]
         public Guid FormId { get; set; }
 
         /// <summary>
@@ -31,18 +32,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Not required for header controls (when TabName is '[Header]').
         /// </summary>
         [Parameter(Mandatory = false, HelpMessage = "Name of the section containing the control. Not required for header controls.")]
+        [ArgumentCompleter(typeof(FormSectionNameArgumentCompleter))]
         public string SectionName { get; set; }
 
         /// <summary>
         /// Gets or sets the tab name where the section is located.
         /// </summary>
         [Parameter(Mandatory = true, HelpMessage = "Name of the tab containing the section")]
+        [ArgumentCompleter(typeof(FormTabNameArgumentCompleter))]
         public string TabName { get; set; }
 
         /// <summary>
         /// Gets or sets the control ID for updating an existing control.
         /// </summary>
         [Parameter(Mandatory = false, HelpMessage = "ID of the control to create or update")]
+        [ArgumentCompleter(typeof(FormControlIdArgumentCompleter))]
         public string ControlId { get; set; }
 
         /// <summary>
@@ -50,6 +54,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Not required for special controls like Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch.
         /// </summary>
         [Parameter(Mandatory = false, ParameterSetName = "Standard", HelpMessage = "Data field name (attribute) for the control. Not required for special controls like Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch.")]
+        [ArgumentCompleter(typeof(ColumnNameArgumentCompleter))]
         public string DataField { get; set; }
 
         /// <summary>
@@ -67,16 +72,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string ControlType { get; set; }
 
         /// <summary>
-        /// Gets or sets the label for the control.
+        /// Gets or sets the labels for the control keyed by LCID.
+        /// Null values for a specific LCID will remove that LCID's label.
+        /// Keys can be int or string representation of LCID (e.g., 1033 or "1033").
+        /// Example: @{1033 = "English Label"; 1031 = "German Label"}
         /// </summary>
-        [Parameter(HelpMessage = "Label text for the control")]
-        public string Label { get; set; }
-
-        /// <summary>
-        /// Gets or sets the language code for the label (default: 1033 for English).
-        /// </summary>
-        [Parameter(HelpMessage = "Language code for the label (default: 1033)")]
-        public int LanguageCode { get; set; } = 1033;
+        [Parameter(HelpMessage = "The labels for the control as a hashtable keyed by LCID. Example: @{1033 = 'English Label'; 1031 = 'German Label'}")]
+        public System.Collections.Hashtable Labels { get; set; }
 
         /// <summary>
         /// Gets or sets whether the control is disabled.
@@ -465,6 +467,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (LockLevel.HasValue)
             {
                 cell.SetAttributeValue("locklevel", LockLevel.Value.ToString());
+            }
+
+            // Apply Labels to cell (for RawXml parameter set or any other case where Labels is provided)
+            // Labels go in the cell, before the control element (per form XML schema)
+            if (Labels != null && Labels.Count > 0)
+            {
+                var labelsDict = ConvertHashtableToDictionary(Labels);
+                UpdateCellLabels(cell, labelsDict);
             }
 
             // Confirm action
@@ -907,25 +917,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 cell.SetAttributeValue("rowspan", RowSpan.Value);
             }
 
-            // Update or add labels
-            if (!string.IsNullOrEmpty(Label))
-            {
-                XElement labelsElement = control.Element("labels");
-                if (labelsElement == null)
-                {
-                    labelsElement = new XElement("labels");
-                    control.Add(labelsElement);
-                }
-                else
-                {
-                    labelsElement.RemoveAll();
-                }
-                
-                labelsElement.Add(new XElement("label",
-                    new XAttribute("description", Label),
-                    new XAttribute("languagecode", LanguageCode)
-                ));
-            }
+            // Note: Labels are now applied in ProcessRecord after positioning,
+            // not in UpdateControlAttributes, to ensure they work for both
+            // Standard and RawXml parameter sets
 
             // Add parameters for special controls
             // For Subgrid controls, ensure default parameters are set if not provided
@@ -1260,6 +1254,105 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 WriteVerbose($"Failed to get default view for entity '{entityLogicalName}': {ex.Message}");
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Converts a Hashtable to Dictionary&lt;int, string&gt;, normalizing keys to integers.
+        /// Supports both int and string keys (e.g., 1033 or "1033").
+        /// </summary>
+        /// <param name="hashtable">The hashtable to convert.</param>
+        /// <returns>A dictionary with integer keys and string values.</returns>
+        private System.Collections.Generic.Dictionary<int, string> ConvertHashtableToDictionary(System.Collections.Hashtable hashtable)
+        {
+            if (hashtable == null)
+                return null;
+
+            var result = new System.Collections.Generic.Dictionary<int, string>();
+            foreach (System.Collections.DictionaryEntry entry in hashtable)
+            {
+                int lcid;
+                if (entry.Key is int intKey)
+                {
+                    lcid = intKey;
+                }
+                else if (entry.Key is string strKey && int.TryParse(strKey, out int parsedKey))
+                {
+                    lcid = parsedKey;
+                }
+                else
+                {
+                    throw new ArgumentException($"Invalid LCID key '{entry.Key}'. Keys must be integers or string representations of integers.");
+                }
+
+                result[lcid] = entry.Value as string;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Updates the labels element in a cell. Labels go in the cell, before the control element.
+        /// </summary>
+        /// <param name="cell">The cell element to update.</param>
+        /// <param name="labels">Dictionary of labels keyed by LCID. Null values remove that LCID's label.</param>
+        private void UpdateCellLabels(XElement cell, System.Collections.Generic.Dictionary<int, string> labels)
+        {
+            if (cell == null || labels == null)
+                return;
+
+            // Get existing labels from the cell
+            var existingLabelsElement = cell.Element("labels");
+            var mergedLabels = new System.Collections.Generic.Dictionary<int, string>();
+
+            // Load existing labels first
+            if (existingLabelsElement != null)
+            {
+                foreach (var labelElement in existingLabelsElement.Elements("label"))
+                {
+                    if (int.TryParse(labelElement.Attribute("languagecode")?.Value, out int lcid))
+                    {
+                        var description = labelElement.Attribute("description")?.Value;
+                        if (!string.IsNullOrEmpty(description))
+                            mergedLabels[lcid] = description;
+                    }
+                }
+            }
+
+            // Apply new labels (merge/update)
+            foreach (var kvp in labels)
+            {
+                if (kvp.Value == null)
+                    mergedLabels.Remove(kvp.Key); // null removes the label for that LCID
+                else
+                    mergedLabels[kvp.Key] = kvp.Value;
+            }
+
+            // Remove existing labels element
+            existingLabelsElement?.Remove();
+
+            // Only add labels element if there are labels
+            if (mergedLabels.Count > 0)
+            {
+                var newLabelsElement = new XElement("labels");
+                foreach (var kvp in mergedLabels.OrderBy(x => x.Key))
+                {
+                    newLabelsElement.Add(new XElement("label",
+                        new XAttribute("description", kvp.Value),
+                        new XAttribute("languagecode", kvp.Key)
+                    ));
+                }
+
+                // Labels should go before the control element
+                var controlElement = cell.Element("control");
+                if (controlElement != null)
+                {
+                    controlElement.AddBeforeSelf(newLabelsElement);
+                }
+                else
+                {
+                    cell.Add(newLabelsElement);
+                }
             }
         }
     }

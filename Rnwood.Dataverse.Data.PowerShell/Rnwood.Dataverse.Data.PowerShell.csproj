@@ -85,6 +85,17 @@
 
   </Target>
 
+  <Target Name="BuildXrmToolboxPluginHost" AfterTargets="BuildCmdlets" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <MSBuild Projects="../Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration)" BuildInParallel="true">
+    </MSBuild>
+    <ItemGroup>
+      <XrmToolboxPluginHostOutputs Include="../Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost/bin/$(Configuration)/net48/**" />
+    </ItemGroup>
+    <!-- Copy to cmdlets/net8.0/XrmToolboxPluginHost and cmdlets/net462/XrmToolboxPluginHost so both TFMs can find it -->
+    <Copy SourceFiles="@(XrmToolboxPluginHostOutputs)" DestinationFolder="$(OutDir)\cmdlets\net8.0\XrmToolboxPluginHost\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(XrmToolboxPluginHostOutputs)" DestinationFolder="$(OutDir)\cmdlets\net462\XrmToolboxPluginHost\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
   <!-- Use a stable intermediate-output stamp so MSBuild can compare inputs/outputs reliably across builds -->
   <Target Name="BuildHelp" DependsOnTargets="BuildCmdlets;BuildLoader" AfterTargets="Build" Inputs="@(HelpInput)" Outputs="$(IntermediateOutputPath)help.stamp">
     <Message Text="Building help to $(TargetDir)" Importance="high" />

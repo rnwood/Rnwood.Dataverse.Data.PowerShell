@@ -10,10 +10,14 @@ This section covers the core concepts and operations for working with Dataverse 
 - **[Querying Records](querying.md)** - Filtering, paging, sorting, linking tables, SQL queries, and using SDK requests
 - **[Creating and Updating Records](creating-updating.md)** - Create, update, upsert operations with type conversion and batching
 - **[Deleting Records](deleting.md)** - Delete operations with confirmation, batching, and SQL alternatives
+- **[File Attachments](file-attachments.md)** - Upload, download, and delete file data from file columns
 - **[Managing Web Resources](web-resources.md)** - Upload, download, and manage web resources (JavaScript, CSS, HTML, images, etc.) with file system integration
 - **[Working with Metadata](metadata.md)** - Reading and managing schema (entities, attributes, relationships, option sets)
+- **[Table Icons](table-icons.md)** - Setting table vector icons from online icon sets (FluentUI, Tabler, Iconoir)
+- **[Organization Settings](organization-settings.md)** - Getting and updating organization table columns and OrgDbOrgSettings XML
 - **[Form Management](form-management.md)** - Managing forms, tabs, sections, and controls with positioning and FormXml manipulation
 - **[Solution Component Management](solution-component-management.md)** - Managing individual solution components (entities, attributes, forms, views) within solutions
+- **[Dependency Management](dependency-management.md)** - Understanding and managing component dependencies, checking dependencies before deletion, and validating solutions
 - **[Error Handling and Batch Operations](error-handling.md)** - Error handling, batch processing, and retry logic
 - **[Environment Variables and Connection References](environment-variables-connection-references.md)** - Managing configuration values and connection references across environments
 
@@ -29,6 +33,7 @@ This section covers the core concepts and operations for working with Dataverse 
 - Working with metadata (schema management)
 - Managing forms, tabs, sections, and controls
 - Managing solution components within solutions
+- Understanding and managing component dependencies
 
 ### Connection Features
 - Default connections for simplified scripting

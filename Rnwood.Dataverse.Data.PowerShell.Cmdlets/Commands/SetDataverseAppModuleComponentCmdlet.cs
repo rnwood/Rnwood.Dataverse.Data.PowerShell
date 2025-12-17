@@ -358,7 +358,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 TopCount = 1
                             };
 
-                            var results = Connection.RetrieveMultiple(query);
+                            // Try unpublished data first (newly created components are unpublished)
+                            var request = new RetrieveUnpublishedMultipleRequest { Query = query };
+                            var response = (RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+                            var results = response.EntityCollection;
+
+                            // If not found in unpublished, try published data
+                            if (results.Entities.Count == 0)
+                            {
+                                var pubRequest = new RetrieveMultipleRequest { Query = query };
+                                var pubResponse = (RetrieveMultipleResponse)Connection.Execute(pubRequest);
+                                results = pubResponse.EntityCollection;
+                            }
+
                             if (results.Entities.Count > 0)
                             {
                                 componentId = results.Entities[0].Id;

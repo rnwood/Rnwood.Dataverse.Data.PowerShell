@@ -20,18 +20,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the form ID.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the form")]
+        [ArgumentCompleter(typeof(FormIdArgumentCompleter))]
         public Guid FormId { get; set; }
 
         /// <summary>
         /// Gets or sets the tab name to filter sections.
         /// </summary>
         [Parameter(HelpMessage = "Name of the tab containing the sections")]
+        [ArgumentCompleter(typeof(FormTabNameArgumentCompleter))]
         public string TabName { get; set; }
 
         /// <summary>
         /// Gets or sets the section name to retrieve a specific section.
         /// </summary>
         [Parameter(HelpMessage = "Name of a specific section to retrieve")]
+        [ArgumentCompleter(typeof(FormSectionNameArgumentCompleter))]
         public string SectionName { get; set; }
 
         /// <summary>

@@ -52,7 +52,7 @@ Describe 'Set-DataverseFormControl - Subgrid Default Parameters' {
             $result = Set-DataverseFormControl -Connection $connection -FormId $script:FormId `
                 -TabName "general" -SectionName "section1" `
                 -ControlType "Subgrid" -ControlId "test_subgrid" `
-                -Label "Related Records" -PassThru
+                -Labels @{1033 = 'Related Records'} -PassThru
             
             $result | Should -Not -BeNullOrEmpty
             $result | Should -Be "test_subgrid"
@@ -80,7 +80,7 @@ Describe 'Set-DataverseFormControl - Subgrid Default Parameters' {
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId `
                 -TabName "general" -SectionName "section1" `
                 -ControlType "Subgrid" -ControlId "test_subgrid_2" `
-                -Label "Related Data"
+                -Labels @{1033 = 'Related Data'}
             
             # Get the raw XML
             $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId
@@ -105,7 +105,7 @@ Describe 'Set-DataverseFormControl - Subgrid Default Parameters' {
             $result = Set-DataverseFormControl -Connection $connection -FormId $script:FormId `
                 -TabName "general" -SectionName "section1" `
                 -ControlType "Subgrid" -ControlId "custom_subgrid" `
-                -Label "Accounts" -Parameters $customParams -PassThru
+                -Labels @{1033 = 'Accounts'} -Parameters $customParams -PassThru
             
             $result | Should -Not -BeNullOrEmpty
             
@@ -136,7 +136,7 @@ Describe 'Set-DataverseFormControl - Subgrid Default Parameters' {
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId `
                 -TabName "general" -SectionName "section1" `
                 -ControlType "Subgrid" -ControlId "subgrid_with_view" `
-                -Label "Opportunities" -Parameters $customParams
+                -Labels @{1033 = 'Opportunities'} -Parameters $customParams
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId `
                 -TabName "general" -SectionName "section1" -ControlId "subgrid_with_view"
@@ -157,7 +157,7 @@ Describe 'Set-DataverseFormControl - Subgrid Default Parameters' {
                 -TabName "general" -SectionName "section1" `
                 -ControlType "Subgrid" -ControlId "relationship_subgrid" `
                 -DataField "contact_customer_accounts" `
-                -Label "Related Accounts"
+                -Labels @{1033 = 'Related Accounts'}
             
             $control = Get-DataverseFormControl -Connection $connection -FormId $script:FormId `
                 -TabName "general" -SectionName "section1" -ControlId "relationship_subgrid"
@@ -175,7 +175,7 @@ Describe 'Set-DataverseFormControl - Subgrid Default Parameters' {
             Set-DataverseFormControl -Connection $connection -FormId $script:FormId `
                 -TabName "general" -SectionName "section1" `
                 -ControlType "Subgrid" -ControlId "validation_test" `
-                -Label "Test Grid"
+                -Labels @{1033 = 'Test Grid'}
             
             $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId
             

@@ -76,5 +76,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets a value indicating whether to allow processing multiple matching records.
         /// </summary>
         bool AllowMultipleMatches { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether to enable duplicate detection (by setting SuppressDuplicateDetection to false in requests).
+        /// </summary>
+        bool EnableDuplicateDetection { get; }
     }
 }

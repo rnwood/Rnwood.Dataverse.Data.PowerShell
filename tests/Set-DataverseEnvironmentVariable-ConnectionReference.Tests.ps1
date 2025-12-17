@@ -58,6 +58,40 @@ Describe 'Set-DataverseEnvironmentVariableValue' {
             # Should throw because entity metadata is not in mock, but this validates the cmdlet works
             { Set-DataverseEnvironmentVariableValue -Connection $connection -SchemaName "new_nonexistent" -Value "value" -ErrorAction Stop } | Should -Throw
         }
+
+        It "Updates value when environmentvariablevalue.schemaname differs from definition.schemaname (bug fix #291)" -Skip {
+            # This test verifies the fix for the bug where older environmentvariablevalue records
+            # have a GUID stored in their schemaname field instead of the actual schema name
+            # from the parent environmentvariabledefinition
+            $connection = getMockConnection -Entities @("environmentvariabledefinition", "environmentvariablevalue", "connectionreference")
+            
+            # Create an environment variable definition
+            $envVarDefId = [Guid]::NewGuid()
+            $envVarDef = @{
+                environmentvariabledefinitionid = $envVarDefId
+                schemaname = "new_mismatchvar"
+                displayname = "Mismatched Schema Variable"
+            } | Set-DataverseRecord -Connection $connection -TableName environmentvariabledefinition -CreateOnly -PassThru
+            
+            # Create an existing value with MISMATCHED schemaname (simulating old buggy data)
+            # In older records, the schemaname field contained a GUID instead of the actual schema name
+            $envVarValueId = [Guid]::NewGuid()
+            $fakeGuidSchemaName = [Guid]::NewGuid().ToString()
+            $envVarValue = @{
+                environmentvariablevalueid = $envVarValueId
+                schemaname = $fakeGuidSchemaName  # This simulates the old buggy data
+                value = "oldvalue"
+                environmentvariabledefinitionid = $envVarDefId
+            } | Set-DataverseRecord -Connection $connection -TableName environmentvariablevalue -CreateOnly -PassThru
+            
+            # Update using the correct definition schema name
+            # Before the fix, this would fail because the query looked for values by schemaname
+            # Now it should join with environmentvariabledefinition and find the value correctly
+            $result = Set-DataverseEnvironmentVariableValue -Connection $connection -SchemaName "new_mismatchvar" -Value "newvalue"
+            
+            # Verify no output is returned (success)
+            $result | Should -BeNullOrEmpty
+        }
     }
 
     Context 'Setting multiple environment variable values' {
@@ -114,6 +148,79 @@ Describe 'Set-DataverseEnvironmentVariableValue' {
             
             # Verify no output is returned
             $result | Should -BeNullOrEmpty
+        }
+    }
+}
+
+Describe 'Get-DataverseEnvironmentVariableValue' {
+    Context 'Getting environment variable values with mismatched schemaname (bug fix #291)' {
+        It "Retrieves value when environmentvariablevalue.schemaname differs from definition.schemaname" -Skip {
+            # This test verifies that Get-DataverseEnvironmentVariableValue correctly joins
+            # with environmentvariabledefinition to find values even when the schemaname
+            # field in environmentvariablevalue contains a GUID (old buggy data)
+            $connection = getMockConnection -Entities @("environmentvariabledefinition", "environmentvariablevalue", "connectionreference")
+            
+            # Create an environment variable definition
+            $envVarDefId = [Guid]::NewGuid()
+            $envVarDef = @{
+                environmentvariabledefinitionid = $envVarDefId
+                schemaname = "new_getmismatchvar"
+                displayname = "Get Mismatched Schema Variable"
+            } | Set-DataverseRecord -Connection $connection -TableName environmentvariabledefinition -CreateOnly -PassThru
+            
+            # Create a value with MISMATCHED schemaname (GUID instead of actual schema name)
+            $envVarValueId = [Guid]::NewGuid()
+            $fakeGuidSchemaName = [Guid]::NewGuid().ToString()
+            $envVarValue = @{
+                environmentvariablevalueid = $envVarValueId
+                schemaname = $fakeGuidSchemaName  # Old buggy data with GUID
+                value = "testvalue"
+                environmentvariabledefinitionid = $envVarDefId
+            } | Set-DataverseRecord -Connection $connection -TableName environmentvariablevalue -CreateOnly -PassThru
+            
+            # Get the value using the correct definition schema name
+            # Before the fix, this would fail to find the value
+            $result = Get-DataverseEnvironmentVariableValue -Connection $connection -SchemaName "new_getmismatchvar"
+            
+            # Verify the value is found and has correct SchemaName from definition
+            $result | Should -Not -BeNullOrEmpty
+            $result.Value | Should -Be "testvalue"
+            $result.SchemaName | Should -Be "new_getmismatchvar"
+        }
+    }
+}
+
+Describe 'Remove-DataverseEnvironmentVariableValue' {
+    Context 'Removing environment variable values with mismatched schemaname (bug fix #291)' {
+        It "Removes value when environmentvariablevalue.schemaname differs from definition.schemaname" -Skip {
+            # This test verifies that Remove-DataverseEnvironmentVariableValue correctly joins
+            # with environmentvariabledefinition to find and remove values even when the schemaname
+            # field in environmentvariablevalue contains a GUID (old buggy data)
+            $connection = getMockConnection -Entities @("environmentvariabledefinition", "environmentvariablevalue", "connectionreference")
+            
+            # Create an environment variable definition
+            $envVarDefId = [Guid]::NewGuid()
+            $envVarDef = @{
+                environmentvariabledefinitionid = $envVarDefId
+                schemaname = "new_removemismatchvar"
+                displayname = "Remove Mismatched Schema Variable"
+            } | Set-DataverseRecord -Connection $connection -TableName environmentvariabledefinition -CreateOnly -PassThru
+            
+            # Create a value with MISMATCHED schemaname (GUID instead of actual schema name)
+            $envVarValueId = [Guid]::NewGuid()
+            $fakeGuidSchemaName = [Guid]::NewGuid().ToString()
+            $envVarValue = @{
+                environmentvariablevalueid = $envVarValueId
+                schemaname = $fakeGuidSchemaName  # Old buggy data with GUID
+                value = "valuetoremove"
+                environmentvariabledefinitionid = $envVarDefId
+            } | Set-DataverseRecord -Connection $connection -TableName environmentvariablevalue -CreateOnly -PassThru
+            
+            # Remove the value using the correct definition schema name
+            # Before the fix, this would fail to find the value
+            Remove-DataverseEnvironmentVariableValue -Connection $connection -SchemaName "new_removemismatchvar" -Confirm:$false
+            
+            # Verify the value was removed (test should complete without error)
         }
     }
 }

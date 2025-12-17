@@ -311,6 +311,92 @@ jobs:
             remove-item -force -recurse out/Rnwood.Dataverse.Data.PowerShell
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
+
+      # Build and pack XrmToolbox Plugin (Windows only - requires .NET Framework 4.8)
+      - if: ${{ matrix.os == 'windows-latest' }}
+        name: Build and Pack XrmToolbox Plugin
+        shell: pwsh
+        run: |
+          $version = ""
+          if ($env:GITHUB_REF -like "refs/tags/*") {
+             $version = $env:GITHUB_REF -replace "refs/tags/", ""
+          } elseif (Test-Path ci-version.txt) {
+             $version = Get-Content -Path ci-version.txt -Raw
+             $version = $version.Trim()
+          } else {
+             Write-Error "ci-version.txt not found and not a tag build. Cannot determine version."
+             exit 1
+          }
+          
+          if ([string]::IsNullOrWhiteSpace($version)) {
+             Write-Error "Version is empty. Cannot proceed with pack."
+             exit 1
+          }
+          
+          Write-Host "Using version: $version"
+          
+          $releaseNotes = ""
+          if (Test-Path release-notes.txt) {
+             $releaseNotes = Get-Content -Path release-notes.txt -Raw
+             # Remove list item hyphens at the start of lines that could be interpreted as switches
+             # Match start of line (or after newline) followed by optional whitespace, hyphen, and space
+             $releaseNotes = $releaseNotes -replace '(?m)^\s*-\s+', ''
+             # Replace newlines with space for single line
+             $releaseNotes = $releaseNotes -replace "`r`n", " " -replace "`n", " "
+             # Collapse multiple spaces
+             $releaseNotes = $releaseNotes -replace '\s+', ' '
+             $releaseNotes = $releaseNotes.Trim()
+          }
+          
+          Write-Host "Using release notes: $releaseNotes"
+          
+          # Build argument array to avoid shell parsing issues
+          # Use explicit quoting for release notes to handle special characters
+          
+          # Extract base version for assembly (without prerelease suffix)
+          # AssemblyVersion uses x.y.z.w format (prerelease suffixes like -ci20251127001 are not supported)
+          $assemblyVersion = $version -replace '-.*', ''
+          
+          # Ensure version has 4 parts (x.y.z.w) for XrmToolbox plugin store validation
+          # XrmToolbox does exact comparison between NuGet package version and assembly version
+          $versionParts = $assemblyVersion.Split('.')
+          while ($versionParts.Count -lt 4) {
+              $versionParts += '0'
+          }
+          $assemblyVersion = $versionParts -join '.'
+          Write-Host "Assembly version (4-part): $assemblyVersion"
+          
+          # Use the 4-part version for both package and assembly to ensure they match exactly
+          $packArgs = @(
+              'pack'
+              './Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.csproj'
+              '-c'
+              'Release'
+              "-p:PackageVersion=$assemblyVersion"
+              "-p:Version=$assemblyVersion"
+              '-o'
+              'out/nuget'
+          )
+          
+          # Only add release notes if they exist to avoid empty parameter issues
+          if (-not [string]::IsNullOrWhiteSpace($releaseNotes)) {
+              $packArgs += "-p:PackageReleaseNotes=`"$releaseNotes`""
+          }
+          
+          & dotnet @packArgs
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "dotnet pack failed with exit code $LASTEXITCODE"
+              exit $LASTEXITCODE
+          }
+          
+          # Verify the nupkg was created
+          $nupkgFiles = Get-ChildItem -Path 'out/nuget/*.nupkg' -ErrorAction SilentlyContinue
+          if ($nupkgFiles) {
+              Write-Host "Successfully created package(s): $($nupkgFiles.Name -join ', ')"
+          } else {
+              Write-Error "No .nupkg file was created in out/nuget/"
+              exit 1
+          }
       - if: ${{ matrix.powershell_version != '5' }}
         name: Test - pwsh (Standard + E2E in parallel)
         id: test-pwsh
@@ -440,6 +526,7 @@ jobs:
           name: module-${{ matrix.os }}-${{ matrix.powershell_version }}
           path: |
             out/Rnwood.Dataverse.Data.PowerShell/
+            out/nuget/
             release-notes.md
             release-notes.txt
             ci-version.txt
@@ -510,9 +597,10 @@ jobs:
           name: module-windows-latest-5
           path: .
       
-      - name: Publish Release to PowerShell Gallery
+      - name: Publish to PS Gallery and Nuget (XrmToolbox Plugin)
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
+          NUGET_KEY_XRMTOOLBOX: ${{ secrets.NUGET_KEY_XRMTOOLBOX }}
         shell: pwsh
         run: |
           # Add release notes to module manifest
@@ -537,6 +625,18 @@ jobs:
           
           # Publish stable release to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
+
+          # Publish XrmToolbox Plugin to NuGet (if package exists)
+          $nupkgFiles = Get-ChildItem -Path 'out/nuget/*.nupkg' -ErrorAction SilentlyContinue
+          if ($nupkgFiles) {
+              Write-Host "Publishing XrmToolbox Plugin to NuGet..."
+              foreach ($nupkg in $nupkgFiles) {
+                  Write-Host "  Pushing $($nupkg.FullName)..."
+                  dotnet nuget push $nupkg.FullName -k $env:NUGET_KEY_XRMTOOLBOX -s https://api.nuget.org/v3/index.json --skip-duplicate
+              }
+          } else {
+              Write-Warning "No XrmToolbox Plugin nupkg found in out/nuget/ - skipping NuGet publish"
+          }
       
       - name: Update GitHub Release Description
         uses: actions/github-script@v8
@@ -612,6 +712,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const path = require('path');
             const version = fs.readFileSync('ci-version.txt', 'utf8').trim();
             const shortSha = context.sha.substring(0, 7);
             const tagName = `v${version}`;
@@ -695,10 +796,27 @@ jobs:
               name: 'Rnwood.Dataverse.Data.PowerShell-CI.zip',
               data: assetData
             });
+
+            // Upload the XrmToolbox Plugin NuGet package
+            const nugetDir = 'out/nuget';
+            if (fs.existsSync(nugetDir)) {
+              const nugetFiles = fs.readdirSync(nugetDir).filter(f => f.endsWith('.nupkg'));
+              for (const file of nugetFiles) {
+                const nugetData = fs.readFileSync(path.join(nugetDir, file));
+                await github.rest.repos.uploadReleaseAsset({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: release.data.id,
+                  name: file,
+                  data: nugetData
+                });
+              }
+            }
       
       - name: Publish CI Build to PowerShell Gallery
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
+          NUGET_KEY_XRMTOOLBOX: ${{ secrets.NUGET_KEY_XRMTOOLBOX }}
         shell: pwsh
         run: |
           # Add release notes to module manifest
@@ -723,3 +841,7 @@ jobs:
           
           # Publish prerelease to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
+
+          # NOTE: XrmToolbox Plugin is NOT published to NuGet from CI builds
+          # Only release builds (publish job) should push to NuGet to avoid 
+          # XrmToolbox plugin store validation issues with prerelease versions

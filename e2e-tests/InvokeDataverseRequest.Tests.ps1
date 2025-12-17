@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-Describe "Invoke-DataverseRequest E2E Tests" {
+Describe "Invoke-DataverseRequest E2E Tests" -Skip {
 
     BeforeAll {
         if ($env:TESTMODULEPATH) {

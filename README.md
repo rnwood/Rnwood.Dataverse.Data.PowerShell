@@ -13,16 +13,25 @@ This module works in PowerShell Desktop and PowerShell Core, supporting Windows,
     - Automatic data type conversion using metadata - use friendly labels for choices and names for lookups
     - Automatic lookup conversion - use record names instead of GUIDs (when unique)
 - On behalf of (delegation) support for create/update operations
+- Duplicate detection support for create/update/upsert operations
 - Full support for automatic paging
 - Concise PowerShell-friendly hashtable-based filters with grouped logical expressions (and/or/not/xor) and arbitrary nesting
 - Batching and parallelisation support for efficient bulk operations
 - Auto-retries support in many cmdlets
+- **Dynamic plugin assemblies** - compile C# plugin source code on-the-fly and deploy to Dataverse without Visual Studio or build tools, with automatic strong name key persistence
+- **Table vector icons from online icon sets** - easily set table icons by downloading SVG icons from FluentUI, Tabler, or Iconoir icon sets
 - Comprehensive metadata operations
     - Create, read, update, and delete entities, attributes, option sets, and relationships
     - manipulate model-driven apps, forms, views
     - manipulate solutions and solution components
+- Full plugin lifecycle management
+    - Upload and manage plugin assemblies and packages
+    - Register plugin types, steps, and images with tab completion support
 
 **Note**: On-premise Dataverse environments are not supported.
+
+- An XrmToolbox plugin is also available to make getting started really easy: 
+  See the [Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin README](Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/README.md) for information.
 
 ## Quick Start
 
@@ -41,42 +50,31 @@ For detailed installation instructions, including versioning, see [Installation 
 ### Basic Usage
 
 ```powershell
-# Connect to Dataverse
-$c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive
+# Connect to Dataverse and set as default
+# omit the -Url for a menu
+Get-DataverseConnection -url https://myorg.crm11.dynamics.com -interactive -setasdefault
 
 # Query records
-Get-DataverseRecord -Connection $c -TableName contact -FilterValues @{ lastname = 'Smith' }
+Get-DataverseRecord -TableName contact -FilterValues @{ lastname = 'Smith' }
 
 # Create a record
-Set-DataverseRecord -Connection $c -TableName contact -InputObject @{ 
+Set-DataverseRecord -TableName contact -InputObject @{ 
     firstname = 'John'
     lastname = 'Doe'
     emailaddress1 = 'john.doe@example.com'
 } -CreateOnly
 
 # Update a record
-Set-DataverseRecord -Connection $c -TableName contact -Id $contactId -InputObject @{ 
+Set-DataverseRecord -TableName contact -Id $contactId -InputObject @{ 
     description = 'Updated via PowerShell'
 }
 
 # Delete a record
-Remove-DataverseRecord -Connection $c -TableName contact -Id $contactId
+Remove-DataverseRecord -TableName contact -Id $contactId
 
-# Manage web resources
-# Upload a JavaScript file
-Set-DataverseWebResource -Connection $c -Name "new_myscript" -Path "./script.js" -DisplayName "My Script"
-
-# Download a web resource
-Get-DataverseWebResource -Connection $c -Name "new_myscript" -Path "./downloaded-script.js"
-
-# Upload all files from a folder (only if newer)
-Set-DataverseWebResource -Connection $c -Folder "./webresources" -PublisherPrefix "new" -IfNewer
-
-# Download all JavaScript web resources
-Get-DataverseWebResource -Connection $c -WebResourceType 3 -Folder "./downloaded"
 ```
 
-For more advanced scenarios including view management and app module management, see the [documentation](#documentation) section below.
+For more advanced scenarios including metadata and customisations, see the [documentation](#documentation) section below.
 
 ## Documentation
 
@@ -92,13 +90,16 @@ For more advanced scenarios including view management and app module management,
 - [Deleting Records](docs/core-concepts/deleting.md) - Delete operations and SQL alternatives
 - [Record Access Management](docs/core-concepts/record-access-management.md) - Test, grant, list, and revoke record-level access rights
 - [Working with Metadata](docs/core-concepts/metadata.md) - Reading and managing schema (entities, attributes, relationships, option sets)
+- [Organization Settings](docs/core-concepts/organization-settings.md) - Getting and updating organization table columns and OrgDbOrgSettings XML
 - [Managing Web Resources](docs/core-concepts/web-resources.md) - Upload, download, and manage web resources with file system integration
 - [Managing Forms](docs/core-concepts/form-management.md) - Creat, update, and managed forms
 - [View Management](docs/core-concepts/view-management.md) - Create, update, and manage system and personal views
 - [App Module Management](docs/core-concepts/app-module-management.md) - Create, update, and manage model-driven apps
 - [Environment Variables and Connection References](docs/core-concepts/environment-variables-connection-references.md) - Managing configuration and connections
+- [Plugin Management](docs/core-concepts/plugin-management.md) - Manage plugins including dynamic plugin assemblies (compile C# on-the-fly), traditional plugin assemblies, plugin steps, and images
 - [Solution Management](docs/advanced/solution-management.md) - Import, export, and manage solutions
 - [Solution Component Management](docs/core-concepts/solution-component-management.md) - Managing individual components within solutions
+- [Dependency Management](docs/core-concepts/dependency-management.md) - Understanding and managing component dependencies
 
 ### Advanced Topics
 - [Error Handling and Batch Operations](docs/core-concepts/error-handling.md) - Error handling and retry logic
@@ -216,6 +217,42 @@ For more advanced scenarios including view management and app module management,
 - [`Get-DataverseFormControl`] — retrieve controls from form sections
 - [`Set-DataverseFormControl`] — create or update form controls (supports all standard control types and raw XML)
 - [`Remove-DataverseFormControl`] — delete controls from forms
+
+### Dependency Management
+
+- [`Get-DataverseComponentDependency`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseComponentDependency.md) — retrieve component dependencies (use `-RequiredBy` for deletion blockers, `-Dependent` for impact analysis)
+- [`Get-DataverseSolutionDependency`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseSolutionDependency.md) — retrieve solution dependencies (use `-Missing` for import validation, `-Uninstall` for removal blockers)
+
+### Plugin Management
+
+**Dynamic Plugin Assemblies** (compile C# source code on-the-fly):
+- [`Set-DataverseDynamicPluginAssembly`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseDynamicPluginAssembly.md) — compile C# source code into a plugin assembly and upload to Dataverse with automatic plugin type management
+- [`Get-DataverseDynamicPluginAssembly`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseDynamicPluginAssembly.md) — extract source code and build metadata from dynamic plugin assemblies
+
+**Traditional Plugin Assemblies**:
+- [`Get-DataversePluginAssembly`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataversePluginAssembly.md) — retrieve plugin assemblies
+- [`Set-DataversePluginAssembly`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataversePluginAssembly.md) — upload or update plugin assemblies from DLL files
+- [`Remove-DataversePluginAssembly`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataversePluginAssembly.md) — delete plugin assemblies
+
+**Plugin Types**:
+- [`Get-DataversePluginType`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataversePluginType.md) — retrieve plugin types
+- [`Set-DataversePluginType`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataversePluginType.md) — register plugin types
+- [`Remove-DataversePluginType`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataversePluginType.md) — delete plugin types
+
+**Plugin Steps**:
+- [`Get-DataversePluginStep`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataversePluginStep.md) — retrieve plugin step registrations
+- [`Set-DataversePluginStep`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataversePluginStep.md) — register or update plugin steps
+- [`Remove-DataversePluginStep`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataversePluginStep.md) — delete plugin steps
+
+**Plugin Step Images**:
+- [`Get-DataversePluginStepImage`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataversePluginStepImage.md) — retrieve plugin step images
+- [`Set-DataversePluginStepImage`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataversePluginStepImage.md) — register or update plugin step images
+- [`Remove-DataversePluginStepImage`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataversePluginStepImage.md) — delete plugin step images
+
+**Plugin Packages** (modern plugin deployment):
+- [`Get-DataversePluginPackage`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataversePluginPackage.md) — retrieve plugin packages
+- [`Set-DataversePluginPackage`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataversePluginPackage.md) — upload or update plugin packages
+- [`Remove-DataversePluginPackage`](Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataversePluginPackage.md) — delete plugin packages
 
 ### Additional Operations
 For operations not covered by the cmdlets above, use [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) with SDK request objects to execute any Dataverse SDK operation directly. The cmdlet supports two main approaches:

@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Profile 1": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Users\\rob\\AppData\\Local\\Microsoft\\WinGet\\Packages\\MscrmTools.XrmToolBox_Microsoft.Winget.Source_8wekyb3d8bbwe\\xrmtoolbox.exe",
+      "commandLineArgs": "/plugin:\"PowerShell Scripting Workspace\" /connection:RWPROD /overridepath:C:\\src\\ps\\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader\\bin\\Debug\\net48",
+      "workingDirectory": "C:\\Users\\rob\\AppData\\Local\\Microsoft\\WinGet\\Packages\\MscrmTools.XrmToolBox_Microsoft.Winget.Source_8wekyb3d8bbwe"
+    }
+  }
+}

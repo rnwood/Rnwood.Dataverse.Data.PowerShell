@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.6.33815.320
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11206.111
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rnwood.Dataverse.Data.PowerShell.Cmdlets", "Rnwood.Dataverse.Data.PowerShell.Cmdlets\Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj", "{9400808A-07CC-4F90-8D5C-555C8051400C}"
 EndProject
@@ -10,6 +10,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rnwood.Dataverse.Data.PowerShell.Loader", "Rnwood.Dataverse.Data.PowerShell.Loader\Rnwood.Dataverse.Data.PowerShell.Loader.csproj", "{F3475B7F-41E7-4718-85D8-37D0E43CC6EB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin", "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.csproj", "{518B064A-68EB-4C75-9CD0-84B17327EB1D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader", "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.csproj", "{4550A4F5-EC36-D116-8E36-48C9A0FAAD82}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost", "Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost.csproj", "{4F386F2D-2162-467E-8068-D03C80F8BE1A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +73,30 @@ Global
 		{518B064A-68EB-4C75-9CD0-84B17327EB1D}.Release|x64.Build.0 = Release|Any CPU
 		{518B064A-68EB-4C75-9CD0-84B17327EB1D}.Release|x86.ActiveCfg = Release|Any CPU
 		{518B064A-68EB-4C75-9CD0-84B17327EB1D}.Release|x86.Build.0 = Release|Any CPU
+		{4550A4F5-EC36-D116-8E36-48C9A0FAAD82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4550A4F5-EC36-D116-8E36-48C9A0FAAD82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4550A4F5-EC36-D116-8E36-48C9A0FAAD82}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4550A4F5-EC36-D116-8E36-48C9A0FAAD82}.Debug|x64.Build.0 = Debug|Any CPU
+		{4550A4F5-EC36-D116-8E36-48C9A0FAAD82}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4550A4F5-EC36-D116-8E36-48C9A0FAAD82}.Debug|x86.Build.0 = Debug|Any CPU
+		{4550A4F5-EC36-D116-8E36-48C9A0FAAD82}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4550A4F5-EC36-D116-8E36-48C9A0FAAD82}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4550A4F5-EC36-D116-8E36-48C9A0FAAD82}.Release|x64.ActiveCfg = Release|Any CPU
+		{4550A4F5-EC36-D116-8E36-48C9A0FAAD82}.Release|x64.Build.0 = Release|Any CPU
+		{4550A4F5-EC36-D116-8E36-48C9A0FAAD82}.Release|x86.ActiveCfg = Release|Any CPU
+		{4550A4F5-EC36-D116-8E36-48C9A0FAAD82}.Release|x86.Build.0 = Release|Any CPU
+		{4F386F2D-2162-467E-8068-D03C80F8BE1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F386F2D-2162-467E-8068-D03C80F8BE1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F386F2D-2162-467E-8068-D03C80F8BE1A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4F386F2D-2162-467E-8068-D03C80F8BE1A}.Debug|x64.Build.0 = Debug|Any CPU
+		{4F386F2D-2162-467E-8068-D03C80F8BE1A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4F386F2D-2162-467E-8068-D03C80F8BE1A}.Debug|x86.Build.0 = Debug|Any CPU
+		{4F386F2D-2162-467E-8068-D03C80F8BE1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F386F2D-2162-467E-8068-D03C80F8BE1A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F386F2D-2162-467E-8068-D03C80F8BE1A}.Release|x64.ActiveCfg = Release|Any CPU
+		{4F386F2D-2162-467E-8068-D03C80F8BE1A}.Release|x64.Build.0 = Release|Any CPU
+		{4F386F2D-2162-467E-8068-D03C80F8BE1A}.Release|x86.ActiveCfg = Release|Any CPU
+		{4F386F2D-2162-467E-8068-D03C80F8BE1A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

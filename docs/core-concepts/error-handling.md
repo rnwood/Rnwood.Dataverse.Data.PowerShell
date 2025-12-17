@@ -63,7 +63,7 @@ Example with `Remove-DataverseRecord`:
 
 ```powershell
 # Delete records in parallel using 4 workers
-$records = Get-DataverseRecord -Connection $c -TableName contact -Filter @{ status = 'inactive' }
+$records = Get-DataverseRecord -Connection $c -TableName contact -FilterValues @{ status = 'inactive' }
 $records | Remove-DataverseRecord -Connection $c -MaxDegreeOfParallelism 4 -Verbose
 ```
 

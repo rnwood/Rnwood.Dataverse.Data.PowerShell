@@ -22,9 +22,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
         /// <summary>
         /// Initializes a new instance of the FileComponentExtractor class.
         /// </summary>
+        /// <param name="connection">Optional connection (can be null for file-to-file comparisons)</param>
+        /// <param name="cmdlet">The cmdlet instance</param>
+        /// <param name="solutionBytes">The solution file bytes</param>
         public FileComponentExtractor(ServiceClient connection, PSCmdlet cmdlet, byte[] solutionBytes)
         {
-            _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+            _connection = connection; // Can be null for file-to-file comparisons
             _cmdlet = cmdlet ?? throw new ArgumentNullException(nameof(cmdlet));
             _solutionBytes = solutionBytes ?? throw new ArgumentNullException(nameof(solutionBytes));
         }
@@ -138,6 +141,88 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+
+                // Discover environment variables from separate files in the archive
+                // Environment variables (componenttype=380) are not listed in RootComponents
+                // but exist as separate files in the environmentvariabledefinitions/ folder
+                var envVarEntries = archive.Entries.Where(e =>
+                    e.FullName.Contains("environmentvariabledefinitions/") &&
+                    e.FullName.EndsWith("environmentvariabledefinition.xml", StringComparison.OrdinalIgnoreCase));
+
+                foreach (var entry in envVarEntries)
+                {
+                    try
+                    {
+                        using (var stream = entry.Open())
+                        using (var reader = new StreamReader(stream))
+                        {
+                            var xmlContent = reader.ReadToEnd();
+                            var xdoc = XDocument.Parse(xmlContent);
+
+                            // Get the schemaname from the root element attribute
+                            var root = xdoc.Root;
+                            var schemaName = root?.Attribute("schemaname")?.Value;
+                            var envVarDefIdStr = root?.Attribute("environmentvariabledefinitionid")?.Value;
+
+                            if (!string.IsNullOrEmpty(schemaName))
+                            {
+                                Guid? envVarDefId = null;
+                                if (!string.IsNullOrEmpty(envVarDefIdStr) && Guid.TryParse(envVarDefIdStr, out var parsedId))
+                                {
+                                    envVarDefId = parsedId;
+                                }
+
+                                components.Add(new SolutionComponent
+                                {
+                                    UniqueName = schemaName,
+                                    ObjectId = envVarDefId,
+                                    ComponentType = 380, // Environment Variable Definition
+                                    RootComponentBehavior = 0 // Default behavior
+                                });
+
+                                _cmdlet.WriteVerbose($"Found environment variable in solution: {schemaName}");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _cmdlet.WriteVerbose($"Error parsing environment variable file {entry.FullName}: {ex.Message}");
+                    }
+                }
+
+                // Discover connection references from customizations.xml
+                // Connection references (componenttype=635) may not be in RootComponents
+                // but are stored in customizations.xml
+                if (customizationsXdoc != null)
+                {
+                    var connRefElements = customizationsXdoc.Descendants()
+                        .Where(e => e.Name.LocalName == "connectionreference");
+
+                    foreach (var connRef in connRefElements)
+                    {
+                        var logicalName = connRef.Attribute("connectionreferencelogicalname")?.Value;
+                        var connRefIdStr = connRef.Attribute("connectionreferenceid")?.Value;
+
+                        if (!string.IsNullOrEmpty(logicalName))
+                        {
+                            Guid? connRefId = null;
+                            if (!string.IsNullOrEmpty(connRefIdStr) && Guid.TryParse(connRefIdStr, out var parsedId))
+                            {
+                                connRefId = parsedId;
+                            }
+
+                            components.Add(new SolutionComponent
+                            {
+                                UniqueName = logicalName,
+                                ObjectId = connRefId,
+                                ComponentType = 635, // Connection Reference
+                                RootComponentBehavior = 0 // Default behavior
+                            });
+
+                            _cmdlet.WriteVerbose($"Found connection reference in solution: {logicalName}");
                         }
                     }
                 }

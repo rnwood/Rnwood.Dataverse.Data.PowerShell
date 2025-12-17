@@ -1,7 +1,14 @@
 
-# Plugin Management Cmdlets - Usage Examples
+# Plugin Management
 
-This document provides practical examples for managing Dataverse plugins using the new cmdlets.
+This document provides comprehensive guidance for managing Dataverse plugins, including both traditional plugin assemblies and dynamic plugin assemblies.
+
+## Overview
+
+The module provides two approaches to plugin development:
+
+1. **Dynamic Plugin Assemblies** (Recommended for rapid development) - Compile C# source code on-the-fly and deploy directly to Dataverse
+2. **Traditional Plugin Assemblies** - Upload pre-compiled DLL files to Dataverse
 
 ## Prerequisites
 
@@ -9,6 +16,215 @@ This document provides practical examples for managing Dataverse plugins using t
 # Connect to your Dataverse environment
 $connection = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
 ```
+
+## Dynamic Plugin Assemblies
+
+Dynamic plugin assemblies allow you to write C# plugin code and deploy it to Dataverse without using Visual Studio or a separate build process. The cmdlets compile your source code using Roslyn, automatically manage strong name signing, embed metadata for later retrieval, and handle plugin type registration.
+
+### Benefits of Dynamic Plugin Assemblies
+
+- **Rapid Development**: Write and deploy plugins directly from PowerShell without a separate build process
+- **No Build Tools Required**: No need for Visual Studio or MSBuild
+- **Automatic Signing**: Strong name keys are automatically generated and persisted
+- **Source Code Preservation**: Original source code is embedded in the assembly and can be extracted later
+- **Consistent Updates**: Strong name key is automatically reused when updating, preventing "fully qualified name changed" errors
+- **Automatic Plugin Type Management**: Plugin types (classes implementing IPlugin) are automatically detected and registered
+- **Cross-Platform**: Works on Windows, Linux, and macOS
+
+### Creating a Dynamic Plugin Assembly
+
+```powershell
+# Define your plugin code
+$sourceCode = @"
+using System;
+using Microsoft.Xrm.Sdk;
+
+namespace MyCompany.Plugins
+{
+    public class AccountPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
+            
+            if (context.InputParameters.Contains("Target") && context.InputParameters["Target"] is Entity)
+            {
+                Entity entity = (Entity)context.InputParameters["Target"];
+                
+                // Your plugin logic here
+                if (entity.Contains("name"))
+                {
+                    string name = entity.GetAttributeValue<string>("name");
+                    entity["description"] = $"Created via plugin: {name}";
+                }
+            }
+        }
+    }
+}
+"@
+
+# Compile and upload to Dataverse
+Set-DataverseDynamicPluginAssembly -SourceCode $sourceCode -Name "MyCompany.Plugins" -Version "1.0.0.0" -Description "Account plugin"
+```
+
+This single command:
+1. Compiles the C# source code using Roslyn
+2. Generates a strong name key (or reuses existing one)
+3. Embeds metadata (source code, references, key) in the assembly
+4. Uploads the assembly to Dataverse
+5. Automatically creates plugin type records for all classes implementing IPlugin
+
+### Updating a Dynamic Plugin Assembly
+
+```powershell
+# Update with new source code - settings are automatically reused
+$updatedCode = @"
+using System;
+using Microsoft.Xrm.Sdk;
+
+namespace MyCompany.Plugins
+{
+    public class AccountPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
+            
+            if (context.InputParameters.Contains("Target") && context.InputParameters["Target"] is Entity)
+            {
+                Entity entity = (Entity)context.InputParameters["Target"];
+                
+                // Updated logic
+                if (entity.Contains("name"))
+                {
+                    string name = entity.GetAttributeValue<string>("name");
+                    entity["description"] = $"Updated via plugin v2: {name}";
+                }
+            }
+        }
+    }
+}
+"@
+
+# Simply provide the new source code and name - everything else is reused
+Set-DataverseDynamicPluginAssembly -SourceCode $updatedCode -Name "MyCompany.Plugins" -Version "2.0.0.0"
+```
+
+The strong name key, culture, and references are automatically reused from the existing assembly metadata, ensuring the public key token remains consistent.
+
+### Extracting Source Code from Dynamic Plugin Assembly
+
+```powershell
+# Download the assembly from Dataverse
+$assembly = Get-DataverseRecord -TableName pluginassembly -FilterValues @{ name = "MyCompany.Plugins" } -Columns content
+
+# Extract metadata and source code
+$bytes = [Convert]::FromBase64String($assembly.content)
+$metadata = Get-DataverseDynamicPluginAssembly -AssemblyBytes $bytes -OutputSourceFile "C:\Temp\Plugin.cs"
+
+# View the metadata
+Write-Host "Assembly: $($metadata.AssemblyName)"
+Write-Host "Version: $($metadata.Version)"
+Write-Host "Public Key Token: $($metadata.PublicKeyToken)"
+Write-Host "Framework References: $($metadata.FrameworkReferences -join ', ')"
+Write-Host "Source code saved to: C:\Temp\Plugin.cs"
+```
+
+### Working with Multiple Plugin Types
+
+```powershell
+# You can define multiple plugin classes in a single source file
+$sourceCode = @"
+using System;
+using Microsoft.Xrm.Sdk;
+
+namespace MyCompany.Plugins
+{
+    public class PreValidationPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            // Pre-validation logic
+        }
+    }
+    
+    public class PostOperationPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            // Post-operation logic
+        }
+    }
+}
+"@
+
+Set-DataverseDynamicPluginAssembly -SourceCode $sourceCode -Name "MyCompany.Plugins"
+```
+
+Both plugin types are automatically detected and registered in Dataverse.
+
+### Using External NuGet Packages
+
+```powershell
+$sourceCode = @"
+using System;
+using Microsoft.Xrm.Sdk;
+using Newtonsoft.Json;
+
+namespace MyCompany.Plugins
+{
+    public class JsonPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            var data = new { Name = "Test", Value = 123 };
+            string json = JsonConvert.SerializeObject(data);
+            // Use json...
+        }
+    }
+}
+"@
+
+# Specify package references
+Set-DataverseDynamicPluginAssembly -SourceCode $sourceCode -Name "JsonPlugin" `
+    -PackageReferences "Newtonsoft.Json@13.0.1"
+```
+
+### Strong Name Key Persistence
+
+One of the key features of dynamic plugin assemblies is **automatic strong name key persistence**:
+
+1. **First Upload**: If no strong name key is specified, a new key is automatically generated
+2. **Key Storage**: The key is embedded in the assembly metadata
+3. **Automatic Reuse**: When updating the assembly, the key is automatically extracted and reused
+4. **Consistent Identity**: This ensures the public key token remains the same across updates
+5. **No "Fully Qualified Name Changed" Errors**: Prevents the common error when updating plugins with different keys
+
+```powershell
+# First upload - key is generated
+Set-DataverseDynamicPluginAssembly -SourceCode $code -Name "MyPlugin"
+
+# Update - key is automatically reused from metadata
+Set-DataverseDynamicPluginAssembly -SourceCode $updatedCode -Name "MyPlugin" -Version "2.0.0.0"
+
+# The public key token remains consistent!
+```
+
+### Using Source Files
+
+```powershell
+# Instead of inline source code, you can use a source file
+Set-DataverseDynamicPluginAssembly -SourceFile "C:\Dev\MyPlugin.cs" -Name "MyPlugin"
+```
+
+### Providing Your Own Strong Name Key
+
+```powershell
+# Use a specific strong name key file
+Set-DataverseDynamicPluginAssembly -SourceCode $code -Name "MyPlugin" -StrongNameKeyFile "C:\Keys\mykey.snk"
+```
+
+## Traditional Plugin Assemblies
 
 ## Complete Plugin Registration Example
 

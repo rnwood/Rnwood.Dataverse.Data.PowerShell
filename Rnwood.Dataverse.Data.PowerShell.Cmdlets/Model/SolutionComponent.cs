@@ -48,15 +48,44 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
    /// </summary>
         public string ParentTableName { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether this is a default component.
+        /// </summary>
         public bool? IsDefault { get; set; }
 
-   public bool? IsCustom { get; set; }
+        /// <summary>
+        /// Gets or sets a value indicating whether this is a custom component.
+        /// </summary>
+        public bool? IsCustom { get; set; }
 
-    public bool? IsCustomized { get; set; }
+        /// <summary>
+        /// Gets or sets a value indicating whether this component is customized.
+        /// </summary>
+        public bool? IsCustomized { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the parent component is custom.
+        /// </summary>
         public bool? ParentIsCustom { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the parent component is customized.
+        /// </summary>
         public bool? ParentIsCustomized { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the parent component is default.
+        /// </summary>
         public bool? ParentIsDefault { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this is a managed component.
+        /// </summary>
         public bool? IsManaged { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the parent component is managed.
+        /// </summary>
         public bool? ParentIsManaged { get; set; }
     }
 }

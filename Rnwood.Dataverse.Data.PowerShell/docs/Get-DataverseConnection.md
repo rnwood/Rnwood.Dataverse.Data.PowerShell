@@ -98,15 +98,15 @@ Get-DataverseConnection [-SetAsDefault] -Mock <EntityMetadata[]> [-RequestInterc
  [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
-### Authenticate with Dataverse SDK connection string.
-```
-Get-DataverseConnection [-SetAsDefault] -Url <Uri> -ConnectionString <String> [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
 ### Authenticate with access token script block
 ```
 Get-DataverseConnection [-SetAsDefault] -Url <Uri> -AccessToken <ScriptBlock> [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### Authenticate with Dataverse SDK connection string.
+```
+Get-DataverseConnection [-SetAsDefault] -ConnectionString <String> [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -281,14 +281,21 @@ PS C:\> Get-DataverseConnection -ClearAllConnections
 
 Clears all saved named connections and cached authentication tokens. This removes all connection metadata and MSAL token cache files.
 
-### Example 21: Use PAC CLI profile
+### Example 21: Use connection string
+```powershell
+PS C:\> $c = Get-DataverseConnection -ConnectionString "AuthType=OAuth;Url=https://myorg.crm11.dynamics.com;ClientId=12345678-1234-1234-1234-123456789abc;ClientSecret=mysecret"
+```
+
+Gets a connection to MYORG using a Dataverse SDK connection string. The connection string contains all necessary authentication information including the URL, so no separate -Url parameter is needed. This is useful for scenarios where connection details are stored in configuration files or environment variables as a single string. See https://learn.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect for more information on connection string syntax.
+
+### Example 22: Use PAC CLI profile
 ```powershell
 PS C:\> $c = Get-DataverseConnection -FromPac
 ```
 
 Connects to Dataverse using the current Power Platform CLI (PAC) authentication profile. This leverages the authentication you've already established with `pac auth create` and will use the currently selected environment (set via `pac org select`).
 
-### Example 22: Use specific PAC CLI profile by name or index
+### Example 23: Use specific PAC CLI profile by name or index
 ```powershell
 PS C:\> $c = Get-DataverseConnection -FromPac -Profile "MyDevProfile"
 ```
@@ -668,6 +675,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -RequestInterceptor
 ScriptBlock to intercept and modify requests. The ScriptBlock receives the OrganizationRequest and can throw exceptions or return modified responses.
 
@@ -745,7 +767,7 @@ Accept wildcard characters: False
 
 ```yaml
 Type: Uri
-Parameter Sets: Authenticate with client secret, Authenticate with client certificate, Return a mock connection, Authenticate with Dataverse SDK connection string., Authenticate with access token script block
+Parameter Sets: Authenticate with client secret, Authenticate with client certificate, Return a mock connection, Authenticate with access token script block
 Aliases:
 
 Required: True
@@ -774,21 +796,6 @@ Accept wildcard characters: False
 Type: String
 Parameter Sets: Authenticate interactively, Authenticate using the device code flow
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
 
 Required: False
 Position: Named

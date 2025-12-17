@@ -74,7 +74,7 @@ Deletes the single contact with the specified ID.
 
 ### Example 3: Handle errors in batch delete operations
 ```powershell
-PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -Filter @{ lastname = "TestUser" }
+PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -FilterValues @{ lastname = "TestUser" }
 
 PS C:\> $errors = @()
 PS C:\> $recordsToDelete | Remove-DataverseRecord -Connection $c -ErrorVariable +errors -ErrorAction SilentlyContinue
@@ -145,7 +145,7 @@ Removes a many-to-many association by deleting the corresponding record from the
 
 ### Example 7: Using retry logic for transient delete failures
 ```powershell
-PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -Filter @{ lastname = "TestUser" }
+PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -FilterValues @{ lastname = "TestUser" }
 
 PS C:\> # Retry each failed delete up to 3 times with exponential backoff
 PS C:\> $recordsToDelete | Remove-DataverseRecord -Connection $c -Retries 3 -InitialRetryDelay 500 -Verbose
@@ -196,7 +196,7 @@ Attempts to match first on emailaddress1, then falls back to matching on firstna
 
 ### Example 13: Delete large dataset with parallel processing
 ```powershell
-PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -Filter @{ lastname = "TestUser" }
+PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -FilterValues @{ lastname = "TestUser" }
 
 PS C:\> # Delete using 4 parallel workers for improved performance
 PS C:\> $recordsToDelete | Remove-DataverseRecord -Connection $c -MaxDegreeOfParallelism 4 -Verbose
@@ -207,7 +207,7 @@ Deletes multiple contact records using parallel processing with 4 concurrent wor
 ### Example 14: Combine parallel processing with batching for maximum throughput
 ```powershell
 PS C:\> # Get large dataset of records to delete
-PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName account -Filter @{ statuscode = 2 }
+PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName account -FilterValues @{ statuscode = 2 }
 
 PS C:\> # Delete using 8 parallel workers, each using batch size of 200
 PS C:\> $recordsToDelete | Remove-DataverseRecord -Connection $c -MaxDegreeOfParallelism 8 -BatchSize 200 -Verbose
@@ -274,21 +274,6 @@ Specifies the IDs of plugin steps to bypass
 Type: Guid[]
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
 
 Required: False
 Position: Named
@@ -419,6 +404,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Retries
 Number of times to retry each batch item on failure. Default is 0 (no retries). Each retry uses exponential backoff based on the `-InitialRetryDelay` parameter.
 
@@ -464,14 +464,13 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: wi
+Aliases: cf
 
 Required: False
 Position: Named
@@ -480,13 +479,14 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases: wi
 
 Required: False
 Position: Named

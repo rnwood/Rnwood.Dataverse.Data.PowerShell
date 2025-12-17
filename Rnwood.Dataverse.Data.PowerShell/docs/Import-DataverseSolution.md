@@ -149,6 +149,22 @@ PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -SkipIfSa
 
 Skips the import if the solution version in the file is the same as or lower than the version installed. Only imports if the file contains a newer version.
 
+### Example 13: Update connection references and environment variables even when import is skipped
+```powershell
+PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_1.0.0.0.zip" `
+    -SkipIfSameVersion `
+    -ConnectionReferences @{
+        'new_sharepoint' = '12345678-1234-1234-1234-123456789012'
+        'new_sql' = '87654321-4321-4321-4321-210987654321'
+    } `
+    -EnvironmentVariables @{
+        'new_apiurl' = 'https://api.production.example.com'
+        'new_apikey' = 'prod-key-12345'
+    }
+```
+
+Skips the solution import if the version is already installed, but still checks and updates any connection references and environment variables that are part of the solution and have different values than what's currently in the target environment. This ensures environment configuration stays up-to-date even when the solution itself doesn't need to be reimported.
+
 ## PARAMETERS
 
 ### -AsyncRibbonProcessing
@@ -162,21 +178,6 @@ Aliases:
 Required: False
 Position: Named
 Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -321,6 +322,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -PublishWorkflows
 Activate any processes (workflows) included in the solution after import.
 
@@ -461,12 +477,27 @@ Accept wildcard characters: False
 ```
 
 ### -UseUpdateIfAdditive
-Use update if additive mode (experimental and incomplete). Only valid with Auto (default) mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items in 'TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status, uses simple install mode (no stage and upgrade). Use Compare-DataverseSolutionComponents to see what the comparison would show before using this switch.
+Use update if additive mode (experimental and incomplete). Only valid with Auto (default) or HoldingSolution mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items in 'TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status, uses simple install mode (no stage and upgrade or holding solution). Use Compare-DataverseSolutionComponents to see what the comparison would show before using this switch.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
 
 Required: False
 Position: Named
@@ -482,21 +513,6 @@ Shows what would happen if the cmdlet runs. The cmdlet is not run.
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
 
 Required: False
 Position: Named
@@ -548,7 +564,7 @@ Use `-SkipEnvironmentVariableValidation` to bypass validation of environment var
 When using -HoldingSolution to import a solution as an upgrade, the cmdlet extracts the solution's unique name from the solution.xml file within the ZIP and queries the target environment to check if it already exists. If it doesn't exist, the cmdlet automatically falls back to a regular import. This prevents errors when deploying to new environments.
 
 **UseUpdateIfAdditive Mode:**
-The -UseUpdateIfAdditive switch (experimental) performs a component comparison between the solution file and the target environment when the solution already exists. If the comparison shows only additive changes (no components removed or behavior changes that would remove data), it uses the simpler ImportSolutionAsyncRequest instead of StageAndUpgradeAsyncRequest for better performance. This switch is only valid when using the default Auto mode. Use Compare-DataverseSolutionComponents to preview what the comparison would show before using this switch.
+The -UseUpdateIfAdditive switch (experimental) performs a component comparison between the solution file and the target environment when the solution already exists. If the comparison shows only additive changes (no components removed or behavior changes that would remove data), it uses the simpler ImportSolutionAsyncRequest instead of StageAndUpgradeAsyncRequest or holding solution import for better performance. This switch is valid with Auto (default) or HoldingSolution mode. Use Compare-DataverseSolutionComponents to preview what the comparison would show before using this switch.
 
 **Version Checking:**
 The `-SkipIfSameVersion` and `-SkipIfLowerVersion` switches allow you to control whether an import should proceed based on version comparison:
@@ -556,6 +572,14 @@ The `-SkipIfSameVersion` and `-SkipIfLowerVersion` switches allow you to control
 - `-SkipIfLowerVersion`: Skips the import if the solution file version is lower than the installed version. Prevents accidental downgrades.
 
 Both switches can be combined to ensure only newer versions are imported. The version is extracted from the solution.xml file in the ZIP and compared to the version in the target environment's solution table. If the solution doesn't exist in the target environment, these switches have no effect and the import proceeds normally.
+
+**Component Updates When Import is Skipped:**
+When the import is skipped due to `-SkipIfSameVersion` or `-SkipIfLowerVersion`, the cmdlet still checks and updates connection references and environment variables if they are:
+1. Provided via `-ConnectionReferences` or `-EnvironmentVariables` parameters, AND
+2. Part of the solution being imported (extracted from the solution file), AND
+3. Have different values than what's currently in the target environment
+
+This ensures that even when a solution import is skipped, the environment configuration is kept up-to-date with the values you provide. Only the components that are actually different are updated, minimizing unnecessary changes to the environment.
 
 Progress is reported using PowerShell's progress API and shows:
 - Current status (Waiting, In progress, etc.)
