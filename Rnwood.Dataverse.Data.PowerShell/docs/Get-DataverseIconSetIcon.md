@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseIconSetIcon
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves available icons from supported online icon sets.
 
 ## SYNTAX
 
@@ -18,16 +18,16 @@ Get-DataverseIconSetIcon [[-IconSet] <String>] [[-Name] <String>] [-ProgressActi
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Get-DataverseIconSetIcon cmdlet retrieves a list of available icons from supported online icon sets (FluentUI, Tabler, Iconoir). It can list all icons or filter them by name using wildcards. This cmdlet is useful for browsing available icons before setting them on tables using Set-DataverseTableIconFromSet.
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Get-DataverseIconSetIcon
 ```
 
-{{ Add example description here }}
+Lists all available icons from the default FluentUI icon set.
 
 ## PARAMETERS
 

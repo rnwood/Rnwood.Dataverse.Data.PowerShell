@@ -8,7 +8,7 @@ schema: 2.0.0
 # Set-DataverseTableIconFromSet
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Sets a table's vector icon by downloading an icon from an online icon set and creating/updating a web resource.
 
 ## SYNTAX
 
@@ -19,13 +19,13 @@ Set-DataverseTableIconFromSet [-EntityName] <String> [[-IconSet] <String>] [-Ico
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Set-DataverseTableIconFromSet cmdlet simplifies the process of setting a table's vector icon by downloading an SVG icon from an online icon set (FluentUI, Tabler, or Iconoir), creating or updating a web resource with the icon content, and updating the table's IconVectorName metadata property. This eliminates the manual steps of downloading icons, creating web resources, and updating table metadata.
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Set-DataverseTableIconFromSet -EntityName "contact" -IconName "person" -Publish
 ```
 
 {{ Add example description here }}
