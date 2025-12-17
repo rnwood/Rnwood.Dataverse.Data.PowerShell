@@ -95,7 +95,7 @@ namespace TestDynamicPlugins
                 
                 # Step 3: Verify plugin type was auto-created
                 Write-Host "Step 3: Verifying plugin type was auto-created..."
-                $pluginTypes = Get-DataversePluginType -Connection $connection | Where-Object { $_.pluginassemblyid.Id -eq $assemblyId }
+                $pluginTypes = @(Get-DataversePluginType -Connection $connection -PluginAssemblyId $assemblyId)
                 
                 if ($pluginTypes.Count -ne 1) {
                     throw "Expected 1 plugin type, found $($pluginTypes.Count)"
