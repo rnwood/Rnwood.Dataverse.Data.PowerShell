@@ -26,8 +26,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     // FluentUI System Icons are at: https://raw.githubusercontent.com/microsoft/fluentui-system-icons/master/assets/{Name}/SVG/ic_fluent_{name}_24_regular.svg
                     // Using master branch, capitalized folder names, and ic_fluent_ prefix
                     // Using 24_regular as the standard size/variant for table icons
-                    var capitalizedName = CapitalizeFirst(iconName);
-                    return $"https://raw.githubusercontent.com/microsoft/fluentui-system-icons/master/assets/{capitalizedName}/SVG/ic_fluent_{iconName}_24_regular.svg";
+                    return $"https://raw.githubusercontent.com/microsoft/fluentui-system-icons/master/assets/{iconName}/SVG/ic_fluent_{iconName.ToLower().Replace(" ", "_")}_24_regular.svg";
 
                 case "Tabler":
                     // Tabler Icons are at: https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/{name}.svg

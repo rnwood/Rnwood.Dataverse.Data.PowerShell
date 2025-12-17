@@ -154,8 +154,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // We'll use 24_regular as the default for downloads
             foreach (var item in items.Where(i => i.type == "dir"))
             {
-                // The folder name is Capitalized, but we want to return lowercase for consistency
-                var iconName = item.name.ToLower();
+                var iconName = item.name;
                 var downloadUrl = IconSetUrlHelper.GetIconDownloadUrl("FluentUI", iconName);
                 
                 var icon = new PSObject();

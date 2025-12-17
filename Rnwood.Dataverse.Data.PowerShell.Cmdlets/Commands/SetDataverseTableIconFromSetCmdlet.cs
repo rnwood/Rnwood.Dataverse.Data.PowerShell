@@ -81,7 +81,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var iconContent = DownloadIconAsync().GetAwaiter().GetResult();
 
                 // Create web resource name
-                var webResourceName = $"{PublisherPrefix}_/icons/{IconName}.svg";
+                var webResourceName = $"{PublisherPrefix}_/icons/{IconSet.Replace(" ", "_")}/{IconName.ToLower().Replace(" ", "_")}.svg";
                 WriteVerbose($"Web resource name: {webResourceName}");
 
                 // Create or update the web resource
