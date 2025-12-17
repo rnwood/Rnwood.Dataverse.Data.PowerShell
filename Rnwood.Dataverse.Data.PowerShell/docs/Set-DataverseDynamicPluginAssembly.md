@@ -388,6 +388,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - Plugin types are automatically created/removed based on classes implementing `IPlugin`
 - Build metadata (source code, references, strong name info) is embedded in the assembly and can be extracted using `Get-DataverseDynamicPluginAssembly`
 - Strong name key files are automatically generated if not specified and not already present in an existing assembly
+- **Strong Name Key Persistence**: The strong name key is stored in the assembly metadata and automatically reused when updating the assembly. This ensures the public key token remains consistent across updates and prevents "Plugin Assembly fully qualified name has changed" errors.
+- When updating an assembly, if parameters like Version, Culture, FrameworkReferences, PackageReferences, or StrongNameKeyFile are not specified, they are automatically retrieved from the existing assembly's embedded metadata
 
 ## RELATED LINKS
 
