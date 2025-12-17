@@ -43,7 +43,7 @@ See the examples for this pattern below.
 Gets connection references from Dataverse.
 
 ### [Get-DataverseDynamicPluginAssembly](Get-DataverseDynamicPluginAssembly.md)
-{{ Fill in the Synopsis }}
+Extracts source code and build metadata from a dynamic plugin assembly.
 
 ### [Get-DataverseEntityKeyMetadata](Get-DataverseEntityKeyMetadata.md)
 {{ Fill in the Synopsis }}
