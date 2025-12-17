@@ -16,6 +16,7 @@ This section covers the core concepts and operations for working with Dataverse 
 - **[Organization Settings](organization-settings.md)** - Getting and updating organization table columns and OrgDbOrgSettings XML
 - **[Form Management](form-management.md)** - Managing forms, tabs, sections, and controls with positioning and FormXml manipulation
 - **[Solution Component Management](solution-component-management.md)** - Managing individual solution components (entities, attributes, forms, views) within solutions
+- **[Dependency Management](dependency-management.md)** - Understanding and managing component dependencies, checking dependencies before deletion, and validating solutions
 - **[Error Handling and Batch Operations](error-handling.md)** - Error handling, batch processing, and retry logic
 - **[Environment Variables and Connection References](environment-variables-connection-references.md)** - Managing configuration values and connection references across environments
 
@@ -31,6 +32,7 @@ This section covers the core concepts and operations for working with Dataverse 
 - Working with metadata (schema management)
 - Managing forms, tabs, sections, and controls
 - Managing solution components within solutions
+- Understanding and managing component dependencies
 
 ### Connection Features
 - Default connections for simplified scripting
