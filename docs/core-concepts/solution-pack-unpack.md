@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `Expand-DataverseSolution` and `Compress-DataverseSolution` cmdlets provide a PowerShell interface to the Power Apps CLI's solution pack and unpack functionality. These cmdlets are essential for managing Dataverse solutions in source control and enable collaborative development workflows.
+The `Expand-DataverseSolutionFile` and `Compress-DataverseSolutionFile` cmdlets provide a PowerShell interface to the Power Apps CLI's solution pack and unpack functionality. These cmdlets are essential for managing Dataverse solutions in source control and enable collaborative development workflows.
 
 ## Why Pack and Unpack Solutions?
 
@@ -23,15 +23,16 @@ This workflow allows you to:
 ## Power Apps CLI Integration
 
 These cmdlets wrap the Power Apps CLI (`pac`) commands:
-- `Expand-DataverseSolution` uses `pac solution unpack`
-- `Compress-DataverseSolution` uses `pac solution pack`
+- `Expand-DataverseSolutionFile` uses `pac solution unpack`
+- `Compress-DataverseSolutionFile` uses `pac solution pack`
 
 The cmdlets handle PAC CLI installation automatically:
-1. Ignores any `pac` in your PATH for consistency
+1. By default, downloads and caches PAC CLI from NuGet (ignores PATH)
 2. Checks if the requested version is already cached locally
 3. If not found, automatically downloads it from NuGet without requiring .NET SDK
 4. Caches it locally in a version-specific folder for future use
 5. Use `-PacVersion` parameter to specify a particular version (e.g., "1.31.6")
+6. Use `-PacVersion "system"` to use PAC CLI from your PATH instead
 
 ## Working with Canvas Apps (.msapp files)
 
@@ -47,7 +48,7 @@ $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interac
 
 Export-DataverseSolution -Connection $conn -SolutionName "MySolution" -OutFile "MySolution.zip"
 
-Expand-DataverseSolution -Path "MySolution.zip" -OutputPath "MySolution_Src" -UnpackMsapp
+Expand-DataverseSolutionFile -Path "MySolution.zip" -OutputPath "MySolution_Src" -UnpackMsapp
 ```
 
 This will:
@@ -61,7 +62,7 @@ Canvas App folders with `.msapp` extension are automatically packed:
 
 ```powershell
 # Pack a solution with Canvas Apps (automatic detection)
-Compress-DataverseSolution -Path "MySolution_Src" -OutputPath "MySolution.zip"
+Compress-DataverseSolutionFile -Path "MySolution_Src" -OutputPath "MySolution.zip"
 ```
 
 This will:
@@ -85,13 +86,13 @@ $sourceConn = Get-DataverseConnection -Url "https://dev.crm.dynamics.com" -Inter
 Export-DataverseSolution -Connection $sourceConn -SolutionName "MySolution" -OutFile "MySolution.zip"
 
 # 3. Unpack for editing (always overwrites/allows delete)
-Expand-DataverseSolution -Path "MySolution.zip" -OutputPath "MySolution_Src" -UnpackMsapp
+Expand-DataverseSolutionFile -Path "MySolution.zip" -OutputPath "MySolution_Src" -UnpackMsapp
 
 # 4. Edit files in MySolution_Src/ (e.g., update customizations, forms, etc.)
 # ... manual edits or automated scripts ...
 
 # 5. Pack the solution back (Canvas App folders with .msapp extension are automatically packed)
-Compress-DataverseSolution -Path "MySolution_Src" -OutputPath "MySolution_Modified.zip"
+Compress-DataverseSolutionFile -Path "MySolution_Src" -OutputPath "MySolution_Modified.zip"
 
 # 6. Connect to target environment
 $targetConn = Get-DataverseConnection -Url "https://test.crm.dynamics.com" -Interactive
@@ -109,7 +110,7 @@ Import-DataverseSolution -Connection $targetConn -InFile "MySolution_Modified.zi
 - The cmdlets always overwrite and allow delete for consistency
 
 ### CI/CD Pipelines
-- Use `Compress-DataverseSolution` in your build pipeline to create deployable artifacts
+- Use `Compress-DataverseSolutionFile` in your build pipeline to create deployable artifacts
 - Use `Import-DataverseSolution` in your release pipeline to deploy to environments
 - Store unpacked solution folders in your repository, not ZIP files
 - No .NET SDK required - PAC CLI is downloaded automatically from NuGet

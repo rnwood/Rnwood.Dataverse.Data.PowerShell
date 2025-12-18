@@ -1,42 +1,40 @@
-# Expand-DataverseSolution
+# Compress-DataverseSolutionFile
 
 ## SYNOPSIS
-Unpacks a Dataverse solution file using the Power Apps CLI.
+Packs a Dataverse solution folder using the Power Apps CLI.
 
 ## SYNTAX
 
 ```
-Expand-DataverseSolution [-Path] <String> [-OutputPath] <String> [-UnpackMsapp] [-PacVersion <String>] 
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Compress-DataverseSolutionFile [-Path] <String> [-OutputPath] <String> [-PacVersion <String>] [-WhatIf] [-Confirm] 
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-The `Expand-DataverseSolution` cmdlet unpacks a Dataverse solution ZIP file into a folder structure using the Power Apps CLI (`pac solution unpack` command). This is useful for version control and manual editing of solution components.
+The `Compress-DataverseSolutionFile` cmdlet packs an unpacked Dataverse solution folder into a solution ZIP file using the Power Apps CLI (`pac solution pack` command). This is the reverse operation of `Expand-DataverseSolutionFile` and is typically used after editing solution components.
 
 The cmdlet automatically detects and downloads the Power Apps CLI if it's not already available in your PATH or as a .NET global tool.
 
 ## EXAMPLES
 
-### Example 1: Unpack a solution
+### Example 1: Pack a solution
 ```powershell
-Expand-DataverseSolution -Path "C:\Solutions\MySolution.zip" -OutputPath "C:\Solutions\MySolution_Src"
+Compress-DataverseSolutionFile -Path "C:\Solutions\MySolution_Src" -OutputPath "C:\Solutions\MySolution.zip"
 ```
 
-Unpacks the solution file to the specified output folder.
+Packs the solution folder into a ZIP file.
 
-### Example 2: Unpack a solution and extract .msapp files
+### Example 2: Pack a solution with specific PAC CLI version
 ```powershell
-Expand-DataverseSolution -Path "C:\Solutions\MySolution.zip" -OutputPath "C:\Solutions\MySolution_Src" -UnpackMsapp
+Compress-DataverseSolutionFile -Path "C:\Solutions\MySolution_Src" -OutputPath "C:\Solutions\MySolution.zip" -PacVersion "1.31.6"
 ```
 
-Unpacks the solution and additionally extracts any Canvas Apps (.msapp files) found in the solution into folders with the same name.
-
-
+Packs the solution using a specific version of the PAC CLI. Any folders with `.msapp` extension are automatically zipped into .msapp files before packing.
 
 ## PARAMETERS
 
 ### -Path
-Path to the solution file (.zip) to unpack.
+Path to the solution folder to pack.
 
 ```yaml
 Type: String
@@ -51,7 +49,7 @@ Accept wildcard characters: False
 ```
 
 ### -OutputPath
-Output path where the solution will be unpacked.
+Output path for the packed solution file (.zip).
 
 ```yaml
 Type: String
@@ -65,23 +63,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -UnpackMsapp
-Unpack .msapp files found in the solution into folders (same name without extension). Canvas App (.msapp) files are ZIP archives that can be unpacked for version control.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -PacVersion
-PAC CLI version to use (e.g., '1.31.6'). If not specified, uses the latest version.
+PAC CLI version to use (e.g., '1.31.6'). Use 'system' to use PAC from PATH. If not specified, uses the latest version.
 
 ```yaml
 Type: String
@@ -94,8 +77,6 @@ Default value: None (latest version)
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
-
 
 ### -WhatIf
 Shows what would happen if the cmdlet runs. The cmdlet is not run.
@@ -141,13 +122,14 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## NOTES
 - Requires the Power Apps CLI (pac). The cmdlet automatically downloads it from NuGet without requiring .NET SDK.
 - The Power Apps CLI package is available at: https://www.nuget.org/packages/Microsoft.PowerApps.CLI.Tool
-- The `-UnpackMsapp` switch is useful for version control of Canvas Apps, allowing you to see individual file changes.
-- The cmdlet always uses clobber and allowDelete modes for consistent behavior.
+- Canvas App folders (with `.msapp` extension) are automatically detected and packed into .msapp files.
+- A temporary copy of the solution folder is created when .msapp folders are found, so the original folder is not modified.
 - Use `-PacVersion` to specify a particular PAC CLI version. If omitted, the latest version is used.
-- PAC CLI from PATH is ignored - always uses the downloaded version for consistency.
+- Use `-PacVersion "system"` to use PAC CLI from your PATH instead of downloading.
+- By default, PAC CLI from PATH is ignored for consistency - use "system" version to override.
 
 ## RELATED LINKS
-- [Compress-DataverseSolution](Compress-DataverseSolution.md)
+- [Expand-DataverseSolutionFile](Expand-DataverseSolutionFile.md)
 - [Export-DataverseSolution](Export-DataverseSolution.md)
 - [Import-DataverseSolution](Import-DataverseSolution.md)
 - [Power Apps CLI documentation](https://learn.microsoft.com/power-platform/developer/cli/introduction)

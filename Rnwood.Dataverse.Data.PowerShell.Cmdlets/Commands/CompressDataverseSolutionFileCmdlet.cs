@@ -9,9 +9,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Packs a Dataverse solution folder using the Power Apps CLI.
     /// </summary>
-    [Cmdlet(VerbsData.Compress, "DataverseSolution", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
-    [Alias("Pack-DataverseSolution")]
-    public class CompressDataverseSolutionCmdlet : PSCmdlet
+    [Cmdlet(VerbsData.Compress, "DataverseSolutionFile", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
+    [Alias("Pack-DataverseSolutionFile", "Compress-DataverseSolution", "Pack-DataverseSolution")]
+    public class CompressDataverseSolutionFileCmdlet : PSCmdlet
     {
         /// <summary>
         /// Gets or sets the path to the solution folder to pack.
@@ -28,9 +28,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string OutputPath { get; set; }
 
         /// <summary>
-        /// Gets or sets the PAC CLI version to use. If not specified, uses the latest version.
+        /// Gets or sets the PAC CLI version to use. If not specified, uses the latest version. Use "system" to use PAC from PATH.
         /// </summary>
-        [Parameter(HelpMessage = "PAC CLI version to use (e.g., '1.31.6'). If not specified, uses the latest version.")]
+        [Parameter(HelpMessage = "PAC CLI version to use (e.g., '1.31.6'). Use 'system' to use PAC from PATH. If not specified, uses the latest version.")]
         public string PacVersion { get; set; }
 
         /// <summary>

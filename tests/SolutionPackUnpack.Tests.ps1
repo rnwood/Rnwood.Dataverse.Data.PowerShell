@@ -13,43 +13,43 @@ AfterAll {
     }
 }
 
-Describe "Expand-DataverseSolution and Compress-DataverseSolution" {
+Describe "Expand-DataverseSolutionFile and Compress-DataverseSolutionFile" {
     
     Context "Basic functionality" {
         
-        It "Should have Expand-DataverseSolution cmdlet available" {
-            Get-Command Expand-DataverseSolution | Should -Not -BeNullOrEmpty
+        It "Should have Expand-DataverseSolutionFile cmdlet available" {
+            Get-Command Expand-DataverseSolutionFile | Should -Not -BeNullOrEmpty
         }
         
-        It "Should have Compress-DataverseSolution cmdlet available" {
-            Get-Command Compress-DataverseSolution | Should -Not -BeNullOrEmpty
+        It "Should have Compress-DataverseSolutionFile cmdlet available" {
+            Get-Command Compress-DataverseSolutionFile | Should -Not -BeNullOrEmpty
         }
         
-        It "Should have Unpack-DataverseSolution alias for Expand-DataverseSolution" {
-            $alias = Get-Alias Unpack-DataverseSolution -ErrorAction SilentlyContinue
+        It "Should have backward compatible Expand-DataverseSolution alias" {
+            $alias = Get-Alias Expand-DataverseSolution -ErrorAction SilentlyContinue
             $alias | Should -Not -BeNullOrEmpty
-            $alias.Definition | Should -Be "Expand-DataverseSolution"
+            $alias.Definition | Should -Be "Expand-DataverseSolutionFile"
         }
         
-        It "Should have Pack-DataverseSolution alias for Compress-DataverseSolution" {
-            $alias = Get-Alias Pack-DataverseSolution -ErrorAction SilentlyContinue
+        It "Should have backward compatible Compress-DataverseSolution alias" {
+            $alias = Get-Alias Compress-DataverseSolution -ErrorAction SilentlyContinue
             $alias | Should -Not -BeNullOrEmpty
-            $alias.Definition | Should -Be "Compress-DataverseSolution"
+            $alias.Definition | Should -Be "Compress-DataverseSolutionFile"
         }
     }
     
     Context "Parameter validation" {
         
-        It "Expand-DataverseSolution parameters should be mandatory" {
-            $cmd = Get-Command Expand-DataverseSolution
+        It "Expand-DataverseSolutionFile parameters should be mandatory" {
+            $cmd = Get-Command Expand-DataverseSolutionFile
             $pathParam = $cmd.Parameters['Path']
             $outputParam = $cmd.Parameters['OutputPath']
             $pathParam.Attributes.Mandatory | Should -Contain $true
             $outputParam.Attributes.Mandatory | Should -Contain $true
         }
         
-        It "Compress-DataverseSolution parameters should be mandatory" {
-            $cmd = Get-Command Compress-DataverseSolution
+        It "Compress-DataverseSolutionFile parameters should be mandatory" {
+            $cmd = Get-Command Compress-DataverseSolutionFile
             $pathParam = $cmd.Parameters['Path']
             $outputParam = $cmd.Parameters['OutputPath']
             $pathParam.Attributes.Mandatory | Should -Contain $true
@@ -58,13 +58,13 @@ Describe "Expand-DataverseSolution and Compress-DataverseSolution" {
         
         It "Expand-DataverseSolution should error on non-existent file" {
             $nonExistentFile = Join-Path $script:testDir "nonexistent.zip"
-            { Expand-DataverseSolution -Path $nonExistentFile -OutputPath (Join-Path $script:testDir "output") -ErrorAction Stop } | 
+            { Expand-DataverseSolutionFile -Path $nonExistentFile -OutputPath (Join-Path $script:testDir "output") -ErrorAction Stop } | 
                 Should -Throw
         }
         
         It "Compress-DataverseSolution should error on non-existent folder" {
             $nonExistentFolder = Join-Path $script:testDir "nonexistent"
-            { Compress-DataverseSolution -Path $nonExistentFolder -OutputPath (Join-Path $script:testDir "output.zip") -ErrorAction Stop } | 
+            { Compress-DataverseSolutionFile -Path $nonExistentFolder -OutputPath (Join-Path $script:testDir "output.zip") -ErrorAction Stop } | 
                 Should -Throw
         }
     }
@@ -86,20 +86,20 @@ Describe "Expand-DataverseSolution and Compress-DataverseSolution" {
         
         It "Expand-DataverseSolution should support -WhatIf" {
             $outputPath = Join-Path $script:testDir "whatif_expand"
-            { Expand-DataverseSolution -Path $script:dummyZip -OutputPath $outputPath -WhatIf } | Should -Not -Throw
+            { Expand-DataverseSolutionFile -Path $script:dummyZip -OutputPath $outputPath -WhatIf } | Should -Not -Throw
             # Output path should not be created
             Test-Path $outputPath | Should -Be $false
         }
         
         It "Compress-DataverseSolution should support -WhatIf" {
             $outputZip = Join-Path $script:testDir "whatif_compress.zip"
-            { Compress-DataverseSolution -Path $script:dummyFolder -OutputPath $outputZip -WhatIf } | Should -Not -Throw
+            { Compress-DataverseSolutionFile -Path $script:dummyFolder -OutputPath $outputZip -WhatIf } | Should -Not -Throw
             # Output file should not be created
             Test-Path $outputZip | Should -Be $false
         }
         
         It "Expand-DataverseSolution should not have Clobber or AllowDelete parameters" {
-            $cmd = Get-Command Expand-DataverseSolution
+            $cmd = Get-Command Expand-DataverseSolutionFile
             $cmd.Parameters.Keys | Should -Not -Contain 'Clobber'
             $cmd.Parameters.Keys | Should -Not -Contain 'AllowDelete'
         }
@@ -147,8 +147,8 @@ Describe "PacCliHelper" {
             # This test just verifies that the cmdlet can attempt to find/install PAC
             # We don't actually want to install PAC in the test environment unless it's already there
             # So we'll just verify the cmdlets exist and can be invoked with WhatIf
-            { Get-Command Expand-DataverseSolution } | Should -Not -Throw
-            { Get-Command Compress-DataverseSolution } | Should -Not -Throw
+            { Get-Command Expand-DataverseSolutionFile } | Should -Not -Throw
+            { Get-Command Compress-DataverseSolutionFile } | Should -Not -Throw
         }
     }
 }

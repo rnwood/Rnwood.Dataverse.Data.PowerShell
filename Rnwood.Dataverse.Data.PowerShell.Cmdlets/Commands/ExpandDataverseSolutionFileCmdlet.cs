@@ -9,9 +9,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Unpacks a Dataverse solution file using the Power Apps CLI.
     /// </summary>
-    [Cmdlet(VerbsData.Expand, "DataverseSolution", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
-    [Alias("Unpack-DataverseSolution")]
-    public class ExpandDataverseSolutionCmdlet : PSCmdlet
+    [Cmdlet(VerbsData.Expand, "DataverseSolutionFile", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
+    [Alias("Unpack-DataverseSolutionFile", "Expand-DataverseSolution", "Unpack-DataverseSolution")]
+    public class ExpandDataverseSolutionFileCmdlet : PSCmdlet
     {
         /// <summary>
         /// Gets or sets the path to the solution file (.zip) to unpack.
@@ -34,9 +34,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter UnpackMsapp { get; set; }
 
         /// <summary>
-        /// Gets or sets the PAC CLI version to use. If not specified, uses the latest version.
+        /// Gets or sets the PAC CLI version to use. If not specified, uses the latest version. Use "system" to use PAC from PATH.
         /// </summary>
-        [Parameter(HelpMessage = "PAC CLI version to use (e.g., '1.31.6'). If not specified, uses the latest version.")]
+        [Parameter(HelpMessage = "PAC CLI version to use (e.g., '1.31.6'). Use 'system' to use PAC from PATH. If not specified, uses the latest version.")]
         public string PacVersion { get; set; }
 
         /// <summary>

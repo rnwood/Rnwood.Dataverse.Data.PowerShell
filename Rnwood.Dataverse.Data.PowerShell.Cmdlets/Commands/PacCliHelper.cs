@@ -27,13 +27,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets the path to the PAC CLI executable, downloading it if necessary.
         /// </summary>
         /// <param name="cmdlet">The cmdlet requesting the PAC CLI (for verbose/warning output).</param>
-        /// <param name="version">The version of PAC CLI to use. If null, uses the latest version.</param>
+        /// <param name="version">The version of PAC CLI to use. If null, uses the latest version. Use "system" to use PAC from PATH.</param>
         /// <returns>The full path to the PAC CLI executable.</returns>
         public static string GetPacCliPath(PSCmdlet cmdlet, string version = null)
         {
             lock (_lockObject)
             {
-                // Always use our downloaded version, ignore PATH
+                // Check for "system" version - use PAC from PATH
+                if (version != null && version.Equals("system", StringComparison.OrdinalIgnoreCase))
+                {
+                    cmdlet.WriteVerbose("Using PAC CLI from system PATH...");
+                    string pacInPath = FindPacInPath();
+                    if (pacInPath != null)
+                    {
+                        cmdlet.WriteVerbose($"Found PAC CLI in PATH: {pacInPath}");
+                        return pacInPath;
+                    }
+                    throw new InvalidOperationException("PAC CLI not found in PATH. Install it or use a different version.");
+                }
+
+                // Use our downloaded version
                 cmdlet.WriteVerbose("Searching for locally cached PAC CLI...");
 
                 // Check if we have a local cached installation for the requested version
@@ -61,13 +74,43 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
+        private static string FindPacInPath()
+        {
+            string pathEnv = Environment.GetEnvironmentVariable("PATH");
+            if (string.IsNullOrEmpty(pathEnv))
+            {
+                return null;
+            }
+
+            string[] pathDirs = pathEnv.Split(Path.PathSeparator);
+            string pacExecutable = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "pac.exe" : "pac";
+
+            foreach (string dir in pathDirs)
+            {
+                try
+                {
+                    string pacPath = Path.Combine(dir, pacExecutable);
+                    if (File.Exists(pacPath))
+                    {
+                        return pacPath;
+                    }
+                }
+                catch
+                {
+                    // Ignore invalid paths
+                }
+            }
+
+            return null;
+        }
+
         /// <summary>
         /// Executes a PAC CLI command and returns the exit code.
         /// </summary>
         /// <param name="cmdlet">The cmdlet executing the command (for output).</param>
         /// <param name="arguments">The arguments to pass to PAC CLI.</param>
         /// <param name="workingDirectory">The working directory for the process.</param>
-        /// <param name="version">The version of PAC CLI to use. If null, uses the latest version.</param>
+        /// <param name="version">The version of PAC CLI to use. If null, uses the latest version. Use "system" to use PAC from PATH.</param>
         /// <returns>The exit code from the PAC CLI process.</returns>
         public static int ExecutePacCli(PSCmdlet cmdlet, string arguments, string workingDirectory = null, string version = null)
         {
