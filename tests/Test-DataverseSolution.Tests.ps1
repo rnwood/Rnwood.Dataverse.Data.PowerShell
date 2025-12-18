@@ -147,27 +147,27 @@ Describe 'Test-DataverseSolution' {
     Context "Documentation exists" {
         
         It "Cmdlet documentation file exists" {
-            $docPath = "$PSScriptRoot/../docs/Test-DataverseSolution.md"
+            $docPath = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/docs/Test-DataverseSolution.md"
             Test-Path $docPath | Should -Be $true
         }
         
         It "SV001 rule documentation exists" {
-            $docPath = "$PSScriptRoot/../docs/solution-validation-rules/SV001.md"
+            $docPath = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/docs/solution-validation-rules/SV001.md"
             Test-Path $docPath | Should -Be $true
         }
         
         It "SV002 rule documentation exists" {
-            $docPath = "$PSScriptRoot/../docs/solution-validation-rules/SV002.md"
+            $docPath = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/docs/solution-validation-rules/SV002.md"
             Test-Path $docPath | Should -Be $true
         }
         
         It "SV003 rule documentation exists" {
-            $docPath = "$PSScriptRoot/../docs/solution-validation-rules/SV003.md"
+            $docPath = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/docs/solution-validation-rules/SV003.md"
             Test-Path $docPath | Should -Be $true
         }
         
         It "Validation rules README exists" {
-            $docPath = "$PSScriptRoot/../docs/solution-validation-rules/README.md"
+            $docPath = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/docs/solution-validation-rules/README.md"
             Test-Path $docPath | Should -Be $true
         }
     }
