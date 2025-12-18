@@ -1,0 +1,168 @@
+# Expand-DataverseSolution
+
+## SYNOPSIS
+Unpacks a Dataverse solution file using the Power Apps CLI.
+
+## SYNTAX
+
+```
+Expand-DataverseSolution [-Path] <String> [-OutputPath] <String> [-UnpackMsapp] [-Clobber] [-AllowDelete] 
+ [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+## DESCRIPTION
+The `Expand-DataverseSolution` cmdlet unpacks a Dataverse solution ZIP file into a folder structure using the Power Apps CLI (`pac solution unpack` command). This is useful for version control and manual editing of solution components.
+
+The cmdlet automatically detects and downloads the Power Apps CLI if it's not already available in your PATH or as a .NET global tool.
+
+## EXAMPLES
+
+### Example 1: Unpack a solution
+```powershell
+Expand-DataverseSolution -Path "C:\Solutions\MySolution.zip" -OutputPath "C:\Solutions\MySolution_Src"
+```
+
+Unpacks the solution file to the specified output folder.
+
+### Example 2: Unpack a solution and extract .msapp files
+```powershell
+Expand-DataverseSolution -Path "C:\Solutions\MySolution.zip" -OutputPath "C:\Solutions\MySolution_Src" -UnpackMsapp
+```
+
+Unpacks the solution and additionally extracts any Canvas Apps (.msapp files) found in the solution into folders with the same name.
+
+### Example 3: Unpack with overwrite and delete
+```powershell
+Expand-DataverseSolution -Path "C:\Solutions\MySolution.zip" -OutputPath "C:\Solutions\MySolution_Src" -Clobber -AllowDelete
+```
+
+Unpacks the solution, overwriting any existing files and allowing component deletion during unpack.
+
+## PARAMETERS
+
+### -Path
+Path to the solution file (.zip) to unpack.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OutputPath
+Output path where the solution will be unpacked.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UnpackMsapp
+Unpack .msapp files found in the solution into folders (same name without extension). Canvas App (.msapp) files are ZIP archives that can be unpacked for version control.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Clobber
+Overwrite existing files in the output path.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AllowDelete
+Allow deletion of components during unpack.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+
+## INPUTS
+
+### None
+
+## OUTPUTS
+
+### None
+
+## NOTES
+- Requires the Power Apps CLI (pac). If not found, the cmdlet will automatically install it as a .NET global tool.
+- The Power Apps CLI package is available at: https://www.nuget.org/packages/Microsoft.PowerApps.CLI.Tool
+- The `-UnpackMsapp` switch is useful for version control of Canvas Apps, allowing you to see individual file changes.
+
+## RELATED LINKS
+- [Compress-DataverseSolution](Compress-DataverseSolution.md)
+- [Export-DataverseSolution](Export-DataverseSolution.md)
+- [Import-DataverseSolution](Import-DataverseSolution.md)
+- [Power Apps CLI documentation](https://learn.microsoft.com/power-platform/developer/cli/introduction)
