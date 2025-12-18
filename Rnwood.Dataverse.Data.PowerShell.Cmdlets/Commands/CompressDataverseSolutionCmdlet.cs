@@ -28,10 +28,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string OutputPath { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to pack .msapp folders into .msapp files.
+        /// Gets or sets the PAC CLI version to use. If not specified, uses the latest version.
         /// </summary>
-        [Parameter(HelpMessage = "Pack .msapp folders found in the solution into .msapp zip files (same name with .msapp extension).")]
-        public SwitchParameter PackMsapp { get; set; }
+        [Parameter(HelpMessage = "PAC CLI version to use (e.g., '1.31.6'). If not specified, uses the latest version.")]
+        public string PacVersion { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -66,10 +66,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             try
             {
-                // If PackMsapp is specified, create a temp copy and pack .msapp folders
-                if (PackMsapp.IsPresent)
+                // Always check for and pack .msapp folders automatically
+                var msappFolders = Directory.GetDirectories(resolvedPath, "*.msapp", SearchOption.AllDirectories);
+                if (msappFolders.Length > 0)
                 {
-                    WriteVerbose("PackMsapp flag is set. Creating temporary copy to pack .msapp folders...");
+                    WriteVerbose($"Found {msappFolders.Length} .msapp folder(s). Creating temporary copy to pack them...");
                     tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"dataverse_solution_{Guid.NewGuid():N}");
                     Directory.CreateDirectory(tempPath);
 
@@ -85,8 +86,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Build PAC CLI arguments
                 var args = $"solution pack --zipfile \"{resolvedOutputPath}\" --folder \"{workingPath}\"";
 
-                // Execute PAC CLI
-                int exitCode = PacCliHelper.ExecutePacCli(this, args);
+                // Execute PAC CLI with specified version
+                int exitCode = PacCliHelper.ExecutePacCli(this, args, version: PacVersion);
 
                 if (exitCode != 0)
                 {

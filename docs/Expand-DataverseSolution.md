@@ -6,8 +6,8 @@ Unpacks a Dataverse solution file using the Power Apps CLI.
 ## SYNTAX
 
 ```
-Expand-DataverseSolution [-Path] <String> [-OutputPath] <String> [-UnpackMsapp] [-WhatIf] [-Confirm] 
- [<CommonParameters>]
+Expand-DataverseSolution [-Path] <String> [-OutputPath] <String> [-UnpackMsapp] [-PacVersion <String>] 
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -80,6 +80,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -PacVersion
+PAC CLI version to use (e.g., '1.31.6'). If not specified, uses the latest version.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None (latest version)
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 
 
 ### -WhatIf
@@ -124,10 +139,12 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### None
 
 ## NOTES
-- Requires the Power Apps CLI (pac). If not found, the cmdlet will automatically download it from NuGet without requiring .NET SDK.
+- Requires the Power Apps CLI (pac). The cmdlet automatically downloads it from NuGet without requiring .NET SDK.
 - The Power Apps CLI package is available at: https://www.nuget.org/packages/Microsoft.PowerApps.CLI.Tool
 - The `-UnpackMsapp` switch is useful for version control of Canvas Apps, allowing you to see individual file changes.
 - The cmdlet always uses clobber and allowDelete modes for consistent behavior.
+- Use `-PacVersion` to specify a particular PAC CLI version. If omitted, the latest version is used.
+- PAC CLI from PATH is ignored - always uses the downloaded version for consistency.
 
 ## RELATED LINKS
 - [Compress-DataverseSolution](Compress-DataverseSolution.md)

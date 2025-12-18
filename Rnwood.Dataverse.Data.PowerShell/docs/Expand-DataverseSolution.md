@@ -13,7 +13,7 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Expand-DataverseSolution [-Path] <String> [-OutputPath] <String> [-UnpackMsapp] [-Clobber] [-AllowDelete]
+Expand-DataverseSolution [-Path] <String> [-OutputPath] <String> [-UnpackMsapp] [-PacVersion <String>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -31,36 +31,6 @@ PS C:\> {{ Add example code here }}
 
 ## PARAMETERS
 
-### -AllowDelete
-Allow deletion of components during unpack.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Clobber
-Overwrite existing files in the output path.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -OutputPath
 Output path where the solution will be unpacked.
 
@@ -71,6 +41,21 @@ Aliases:
 
 Required: True
 Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PacVersion
+PAC CLI version to use (e.g., '1.31.6'). If not specified, uses the latest version.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False

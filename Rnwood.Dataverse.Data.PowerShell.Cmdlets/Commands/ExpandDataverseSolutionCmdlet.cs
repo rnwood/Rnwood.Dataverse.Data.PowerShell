@@ -34,6 +34,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter UnpackMsapp { get; set; }
 
         /// <summary>
+        /// Gets or sets the PAC CLI version to use. If not specified, uses the latest version.
+        /// </summary>
+        [Parameter(HelpMessage = "PAC CLI version to use (e.g., '1.31.6'). If not specified, uses the latest version.")]
+        public string PacVersion { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -64,8 +70,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Build PAC CLI arguments (always use clobber and allowDelete)
             var args = $"solution unpack --zipfile \"{resolvedPath}\" --folder \"{resolvedOutputPath}\" --clobber --allowDelete";
 
-            // Execute PAC CLI
-            int exitCode = PacCliHelper.ExecutePacCli(this, args);
+            // Execute PAC CLI with specified version
+            int exitCode = PacCliHelper.ExecutePacCli(this, args, version: PacVersion);
 
             if (exitCode != 0)
             {

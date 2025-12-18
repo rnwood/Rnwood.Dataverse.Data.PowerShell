@@ -27,52 +27,37 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets the path to the PAC CLI executable, downloading it if necessary.
         /// </summary>
         /// <param name="cmdlet">The cmdlet requesting the PAC CLI (for verbose/warning output).</param>
+        /// <param name="version">The version of PAC CLI to use. If null, uses the latest version.</param>
         /// <returns>The full path to the PAC CLI executable.</returns>
-        public static string GetPacCliPath(PSCmdlet cmdlet)
+        public static string GetPacCliPath(PSCmdlet cmdlet, string version = null)
         {
             lock (_lockObject)
             {
-                if (_cachedPacPath != null)
-                {
-                    return _cachedPacPath;
-                }
+                // Always use our downloaded version, ignore PATH
+                cmdlet.WriteVerbose("Searching for locally cached PAC CLI...");
 
-                cmdlet.WriteVerbose("Searching for PAC CLI...");
-
-                // First, check if pac is in PATH
-                string pacInPath = FindPacInPath();
-                if (pacInPath != null)
-                {
-                    cmdlet.WriteVerbose($"Found PAC CLI in PATH: {pacInPath}");
-                    _cachedPacPath = pacInPath;
-                    return _cachedPacPath;
-                }
-
-                cmdlet.WriteVerbose("PAC CLI not found in PATH.");
-
-                // Check if we have a local cached installation
-                string localPacPath = GetLocalPacPath();
+                // Check if we have a local cached installation for the requested version
+                string localPacPath = GetLocalPacPath(version);
                 if (localPacPath != null && File.Exists(localPacPath))
                 {
                     cmdlet.WriteVerbose($"Found locally cached PAC CLI: {localPacPath}");
-                    _cachedPacPath = localPacPath;
-                    return _cachedPacPath;
+                    return localPacPath;
                 }
 
                 // Download and install PAC CLI from NuGet
-                cmdlet.WriteWarning("PAC CLI not found. Downloading from NuGet...");
-                DownloadAndExtractPacCli(cmdlet);
+                string versionInfo = version != null ? $" version {version}" : " (latest version)";
+                cmdlet.WriteWarning($"PAC CLI{versionInfo} not found. Downloading from NuGet...");
+                DownloadAndExtractPacCli(cmdlet, version);
 
                 // Try finding it again
-                localPacPath = GetLocalPacPath();
+                localPacPath = GetLocalPacPath(version);
                 if (localPacPath != null && File.Exists(localPacPath))
                 {
                     cmdlet.WriteVerbose($"PAC CLI downloaded successfully: {localPacPath}");
-                    _cachedPacPath = localPacPath;
-                    return _cachedPacPath;
+                    return localPacPath;
                 }
 
-                throw new InvalidOperationException("Failed to find or download PAC CLI.");
+                throw new InvalidOperationException("Failed to download PAC CLI.");
             }
         }
 
@@ -82,10 +67,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <param name="cmdlet">The cmdlet executing the command (for output).</param>
         /// <param name="arguments">The arguments to pass to PAC CLI.</param>
         /// <param name="workingDirectory">The working directory for the process.</param>
+        /// <param name="version">The version of PAC CLI to use. If null, uses the latest version.</param>
         /// <returns>The exit code from the PAC CLI process.</returns>
-        public static int ExecutePacCli(PSCmdlet cmdlet, string arguments, string workingDirectory = null)
+        public static int ExecutePacCli(PSCmdlet cmdlet, string arguments, string workingDirectory = null, string version = null)
         {
-            string pacPath = GetPacCliPath(cmdlet);
+            string pacPath = GetPacCliPath(cmdlet, version);
 
             cmdlet.WriteVerbose($"Executing: {pacPath} {arguments}");
 
@@ -127,41 +113,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private static string FindPacInPath()
-        {
-            string pathEnv = Environment.GetEnvironmentVariable("PATH");
-            if (string.IsNullOrEmpty(pathEnv))
-            {
-                return null;
-            }
-
-            string[] pathDirs = pathEnv.Split(Path.PathSeparator);
-            string pacExecutable = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "pac.exe" : "pac";
-
-            foreach (string dir in pathDirs)
-            {
-                try
-                {
-                    string pacPath = Path.Combine(dir, pacExecutable);
-                    if (File.Exists(pacPath))
-                    {
-                        return pacPath;
-                    }
-                }
-                catch
-                {
-                    // Ignore invalid paths
-                }
-            }
-
-            return null;
-        }
-
-        private static string GetLocalPacPath()
+        private static string GetLocalPacPath(string version = null)
         {
             // Get the local cache directory for PAC CLI
             string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            string pacCacheDir = Path.Combine(localAppData, "Rnwood.Dataverse.Data.PowerShell", "pac-cli");
+            string versionSuffix = version != null ? $"-{version}" : "";
+            string pacCacheDir = Path.Combine(localAppData, "Rnwood.Dataverse.Data.PowerShell", $"pac-cli{versionSuffix}");
             
             if (!Directory.Exists(pacCacheDir))
             {
@@ -187,13 +144,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return null;
         }
 
-        private static void DownloadAndExtractPacCli(PSCmdlet cmdlet)
+        private static void DownloadAndExtractPacCli(PSCmdlet cmdlet, string version = null)
         {
             try
             {
                 // Create cache directory
                 string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                string pacCacheDir = Path.Combine(localAppData, "Rnwood.Dataverse.Data.PowerShell", "pac-cli");
+                string versionSuffix = version != null ? $"-{version}" : "";
+                string pacCacheDir = Path.Combine(localAppData, "Rnwood.Dataverse.Data.PowerShell", $"pac-cli{versionSuffix}");
                 
                 if (Directory.Exists(pacCacheDir))
                 {
@@ -205,7 +163,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 cmdlet.WriteVerbose($"Created cache directory: {pacCacheDir}");
 
                 // Download the NuGet package
-                var task = Task.Run(async () => await DownloadPacPackageAsync(cmdlet, pacCacheDir));
+                var task = Task.Run(async () => await DownloadPacPackageAsync(cmdlet, pacCacheDir, version));
                 task.Wait();
                 string nupkgPath = task.Result;
 
@@ -256,7 +214,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private static async Task<string> DownloadPacPackageAsync(PSCmdlet cmdlet, string cacheDir)
+        private static async Task<string> DownloadPacPackageAsync(PSCmdlet cmdlet, string cacheDir, string version = null)
         {
             var logger = NullLogger.Instance;
             var cancellationToken = System.Threading.CancellationToken.None;
@@ -265,30 +223,43 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
             var resource = await repository.GetResourceAsync<FindPackageByIdResource>();
 
-            // Get all versions
-            var versions = await resource.GetAllVersionsAsync(
-                PAC_PACKAGE_ID,
-                cache,
-                logger,
-                cancellationToken);
+            NuGetVersion selectedVersion;
 
-            if (versions == null || !versions.Any())
+            if (version != null)
             {
-                throw new InvalidOperationException($"No versions found for package {PAC_PACKAGE_ID}");
+                // Use the specified version
+                if (!NuGetVersion.TryParse(version, out selectedVersion))
+                {
+                    throw new InvalidOperationException($"Invalid version format: {version}");
+                }
+                cmdlet.WriteVerbose($"Using specified PAC CLI version: {selectedVersion}");
+            }
+            else
+            {
+                // Get all versions and select the latest
+                var versions = await resource.GetAllVersionsAsync(
+                    PAC_PACKAGE_ID,
+                    cache,
+                    logger,
+                    cancellationToken);
+
+                if (versions == null || !versions.Any())
+                {
+                    throw new InvalidOperationException($"No versions found for package {PAC_PACKAGE_ID}");
+                }
+
+                selectedVersion = versions.OrderByDescending(v => v).First();
+                cmdlet.WriteVerbose($"Using latest PAC CLI version: {selectedVersion}");
             }
 
-            // Get the latest version
-            var latestVersion = versions.OrderByDescending(v => v).First();
-            cmdlet.WriteVerbose($"Latest PAC CLI version: {latestVersion}");
-
             // Download the package
-            string nupkgPath = Path.Combine(cacheDir, $"{PAC_PACKAGE_ID}.{latestVersion}.nupkg");
+            string nupkgPath = Path.Combine(cacheDir, $"{PAC_PACKAGE_ID}.{selectedVersion}.nupkg");
             
             using (var packageStream = File.Create(nupkgPath))
             {
                 bool success = await resource.CopyNupkgToStreamAsync(
                     PAC_PACKAGE_ID,
-                    latestVersion,
+                    selectedVersion,
                     packageStream,
                     cache,
                     logger,
@@ -296,7 +267,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (!success)
                 {
-                    throw new InvalidOperationException($"Failed to download package {PAC_PACKAGE_ID}");
+                    throw new InvalidOperationException($"Failed to download package {PAC_PACKAGE_ID} version {selectedVersion}");
                 }
             }
 

@@ -13,7 +13,7 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Compress-DataverseSolution [-Path] <String> [-OutputPath] <String> [-PackMsapp]
+Compress-DataverseSolution [-Path] <String> [-OutputPath] <String> [-PacVersion <String>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -46,11 +46,11 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -PackMsapp
-Pack .msapp folders found in the solution into .msapp zip files (same name with .msapp extension).
+### -PacVersion
+PAC CLI version to use (e.g., '1.31.6'). If not specified, uses the latest version.
 
 ```yaml
-Type: SwitchParameter
+Type: String
 Parameter Sets: (All)
 Aliases:
 

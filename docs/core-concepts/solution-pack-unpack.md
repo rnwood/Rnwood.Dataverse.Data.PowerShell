@@ -27,10 +27,11 @@ These cmdlets wrap the Power Apps CLI (`pac`) commands:
 - `Compress-DataverseSolution` uses `pac solution pack`
 
 The cmdlets handle PAC CLI installation automatically:
-1. First checks if `pac` is in your PATH
-2. Then checks if it's already cached locally
+1. Ignores any `pac` in your PATH for consistency
+2. Checks if the requested version is already cached locally
 3. If not found, automatically downloads it from NuGet without requiring .NET SDK
-4. Caches it locally for future use
+4. Caches it locally in a version-specific folder for future use
+5. Use `-PacVersion` parameter to specify a particular version (e.g., "1.31.6")
 
 ## Working with Canvas Apps (.msapp files)
 
@@ -56,21 +57,21 @@ This will:
 
 ### Packing Canvas Apps
 
-Use the `-PackMsapp` switch to automatically pack Canvas App folders before packing the solution:
+Canvas App folders with `.msapp` extension are automatically packed:
 
 ```powershell
-# Pack a solution with Canvas Apps
-Compress-DataverseSolution -Path "MySolution_Src" -OutputPath "MySolution.zip" -PackMsapp
+# Pack a solution with Canvas Apps (automatic detection)
+Compress-DataverseSolution -Path "MySolution_Src" -OutputPath "MySolution.zip"
 ```
 
 This will:
-1. Create a temporary copy of the solution folder
-2. Identify Canvas App folders (by their structure: Src/, DataSources/, etc.)
-3. Zip each folder into an `.msapp` file
+1. Detect any folders with `.msapp` extension (e.g., `MyApp.msapp/`)
+2. Create a temporary copy of the solution folder
+3. Zip each `.msapp` folder into an `.msapp` file
 4. Pack the solution using the modified structure
 5. Clean up temporary files
 
-The `-PackMsapp` operation doesn't modify your source folder, ensuring your unpacked Canvas Apps remain in place for version control.
+The operation doesn't modify your source folder, ensuring your unpacked Canvas Apps remain in place for version control.
 
 ## Complete Workflow Example
 
@@ -89,8 +90,8 @@ Expand-DataverseSolution -Path "MySolution.zip" -OutputPath "MySolution_Src" -Un
 # 4. Edit files in MySolution_Src/ (e.g., update customizations, forms, etc.)
 # ... manual edits or automated scripts ...
 
-# 5. Pack the solution back
-Compress-DataverseSolution -Path "MySolution_Src" -OutputPath "MySolution_Modified.zip" -PackMsapp
+# 5. Pack the solution back (Canvas App folders with .msapp extension are automatically packed)
+Compress-DataverseSolution -Path "MySolution_Src" -OutputPath "MySolution_Modified.zip"
 
 # 6. Connect to target environment
 $targetConn = Get-DataverseConnection -Url "https://test.crm.dynamics.com" -Interactive
@@ -119,9 +120,10 @@ Import-DataverseSolution -Connection $targetConn -InFile "MySolution_Modified.zi
 - Review solution diffs in pull requests before merging
 
 ### Canvas Apps
-- When using `-PackMsapp`, be aware that it creates temporary copies (ensure sufficient disk space)
-- Canvas App folders are identified by having an `.msapp` extension (e.g., `MyApp.msapp/`)
-- Name your Canvas App folders with the `.msapp` extension when unpacking
+- Canvas App folders with `.msapp` extension are automatically packed (no switch needed)
+- Packing creates temporary copies to avoid modifying source (ensure sufficient disk space)
+- Name your Canvas App folders with the `.msapp` extension (e.g., `MyApp.msapp/`)
+- Both pack and unpack operations handle .msapp folders automatically
 
 ## Troubleshooting
 
@@ -140,10 +142,17 @@ If unpack or pack operations fail:
 - Try running `pac solution unpack` manually to see raw error messages
 
 ### Canvas App folder naming
-For Canvas Apps to be packed correctly with `-PackMsapp`:
+For Canvas Apps to be automatically packed:
 - Name your Canvas App folders with the `.msapp` extension (e.g., `MyApp.msapp/`)
 - The folder name will be used as the .msapp file name
 - Use `-Verbose` to see which folders are being packed
+
+### PAC CLI versioning
+To use a specific PAC CLI version:
+- Add `-PacVersion "1.31.6"` to specify version 1.31.6
+- Omit the parameter to use the latest version
+- Each version is cached separately for quick access
+- Useful for CI/CD pipelines to ensure consistent behavior
 
 ## Related Cmdlets
 
