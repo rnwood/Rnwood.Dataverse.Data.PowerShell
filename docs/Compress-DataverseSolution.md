@@ -120,10 +120,10 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### None
 
 ## NOTES
-- Requires the Power Apps CLI (pac). If not found, the cmdlet will automatically install it as a .NET global tool.
+- Requires the Power Apps CLI (pac). If not found, the cmdlet will automatically download it from NuGet without requiring .NET SDK.
 - The Power Apps CLI package is available at: https://www.nuget.org/packages/Microsoft.PowerApps.CLI.Tool
 - The `-PackMsapp` switch creates a temporary copy of the solution folder to perform the Canvas App packing, so the original folder is not modified.
-- Canvas App folders are detected by the presence of typical .msapp structure indicators (Src/, DataSources/, Connections/, AppCheckerResult.sarif).
+- Canvas App folders are identified by having an `.msapp` extension (e.g., `MyApp.msapp/`).
 
 ## RELATED LINKS
 - [Expand-DataverseSolution](Expand-DataverseSolution.md)

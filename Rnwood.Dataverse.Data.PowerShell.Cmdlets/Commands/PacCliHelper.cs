@@ -1,11 +1,16 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Management.Automation;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using NuGet.Protocol;
+using NuGet.Protocol.Core.Types;
+using NuGet.Common;
+using NuGet.Versioning;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -16,6 +21,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     {
         private static string _cachedPacPath = null;
         private static readonly object _lockObject = new object();
+        private const string PAC_PACKAGE_ID = "Microsoft.PowerApps.CLI.Tool";
 
         /// <summary>
         /// Gets the path to the PAC CLI executable, downloading it if necessary.
@@ -44,29 +50,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 cmdlet.WriteVerbose("PAC CLI not found in PATH.");
 
-                // Check if dotnet tool is installed
-                string pacFromDotnetTool = FindPacFromDotnetTool(cmdlet);
-                if (pacFromDotnetTool != null)
+                // Check if we have a local cached installation
+                string localPacPath = GetLocalPacPath();
+                if (localPacPath != null && File.Exists(localPacPath))
                 {
-                    cmdlet.WriteVerbose($"Found PAC CLI as .NET tool: {pacFromDotnetTool}");
-                    _cachedPacPath = pacFromDotnetTool;
+                    cmdlet.WriteVerbose($"Found locally cached PAC CLI: {localPacPath}");
+                    _cachedPacPath = localPacPath;
                     return _cachedPacPath;
                 }
 
-                // If not found, install it as a .NET local tool
-                cmdlet.WriteWarning("PAC CLI not found. Installing Microsoft.PowerApps.CLI.Tool as a .NET tool...");
-                InstallPacCli(cmdlet);
+                // Download and install PAC CLI from NuGet
+                cmdlet.WriteWarning("PAC CLI not found. Downloading from NuGet...");
+                DownloadAndExtractPacCli(cmdlet);
 
                 // Try finding it again
-                pacFromDotnetTool = FindPacFromDotnetTool(cmdlet);
-                if (pacFromDotnetTool != null)
+                localPacPath = GetLocalPacPath();
+                if (localPacPath != null && File.Exists(localPacPath))
                 {
-                    cmdlet.WriteVerbose($"PAC CLI installed successfully: {pacFromDotnetTool}");
-                    _cachedPacPath = pacFromDotnetTool;
+                    cmdlet.WriteVerbose($"PAC CLI downloaded successfully: {localPacPath}");
+                    _cachedPacPath = localPacPath;
                     return _cachedPacPath;
                 }
 
-                throw new InvalidOperationException("Failed to find or install PAC CLI.");
+                throw new InvalidOperationException("Failed to find or download PAC CLI.");
             }
         }
 
@@ -151,93 +157,150 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return null;
         }
 
-        private static string FindPacFromDotnetTool(PSCmdlet cmdlet)
+        private static string GetLocalPacPath()
         {
-            try
+            // Get the local cache directory for PAC CLI
+            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string pacCacheDir = Path.Combine(localAppData, "Rnwood.Dataverse.Data.PowerShell", "pac-cli");
+            
+            if (!Directory.Exists(pacCacheDir))
             {
-                // Check if pac is available as a dotnet tool
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "dotnet",
-                    Arguments = "tool list",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                };
-
-                using (var process = Process.Start(startInfo))
-                {
-                    string output = process.StandardOutput.ReadToEnd();
-                    process.WaitForExit();
-
-                    if (output.Contains("microsoft.powerapps.cli.tool"))
-                    {
-                        // Tool is installed, try to find its location
-                        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                        string dotnetToolsPath = Path.Combine(userProfile, ".dotnet", "tools");
-                        string pacExecutable = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "pac.exe" : "pac";
-                        string pacPath = Path.Combine(dotnetToolsPath, pacExecutable);
-
-                        if (File.Exists(pacPath))
-                        {
-                            return pacPath;
-                        }
-                    }
-                }
+                return null;
             }
-            catch (Exception ex)
+
+            // Find the executable in tools folder
+            string toolsDir = Path.Combine(pacCacheDir, "tools");
+            if (!Directory.Exists(toolsDir))
             {
-                cmdlet.WriteVerbose($"Error checking for dotnet tool: {ex.Message}");
+                return null;
+            }
+
+            string pacExecutable = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "pac.exe" : "pac";
+            
+            // Search for pac executable in tools directory
+            string[] pacFiles = Directory.GetFiles(toolsDir, pacExecutable, SearchOption.AllDirectories);
+            if (pacFiles.Length > 0)
+            {
+                return pacFiles[0];
             }
 
             return null;
         }
 
-        private static void InstallPacCli(PSCmdlet cmdlet)
+        private static void DownloadAndExtractPacCli(PSCmdlet cmdlet)
         {
-            cmdlet.WriteVerbose("Installing Microsoft.PowerApps.CLI.Tool...");
-
-            var startInfo = new ProcessStartInfo
+            try
             {
-                FileName = "dotnet",
-                Arguments = "tool install --global Microsoft.PowerApps.CLI.Tool",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true
-            };
+                // Create cache directory
+                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                string pacCacheDir = Path.Combine(localAppData, "Rnwood.Dataverse.Data.PowerShell", "pac-cli");
+                
+                if (Directory.Exists(pacCacheDir))
+                {
+                    cmdlet.WriteVerbose($"Cleaning existing cache directory: {pacCacheDir}");
+                    Directory.Delete(pacCacheDir, recursive: true);
+                }
+                
+                Directory.CreateDirectory(pacCacheDir);
+                cmdlet.WriteVerbose($"Created cache directory: {pacCacheDir}");
 
-            using (var process = new Process { StartInfo = startInfo })
+                // Download the NuGet package
+                var task = Task.Run(async () => await DownloadPacPackageAsync(cmdlet, pacCacheDir));
+                task.Wait();
+                string nupkgPath = task.Result;
+
+                cmdlet.WriteVerbose($"Downloaded package to: {nupkgPath}");
+
+                // Extract the NuGet package (it's a ZIP file)
+                string extractDir = Path.Combine(pacCacheDir, "extracted");
+                Directory.CreateDirectory(extractDir);
+                ZipFile.ExtractToDirectory(nupkgPath, extractDir);
+                cmdlet.WriteVerbose($"Extracted package to: {extractDir}");
+
+                // Move the tools folder to the cache root
+                string toolsSource = Path.Combine(extractDir, "tools");
+                string toolsDest = Path.Combine(pacCacheDir, "tools");
+                
+                if (Directory.Exists(toolsSource))
+                {
+                    Directory.Move(toolsSource, toolsDest);
+                    cmdlet.WriteVerbose($"Moved tools to: {toolsDest}");
+                }
+
+                // Clean up
+                File.Delete(nupkgPath);
+                Directory.Delete(extractDir, recursive: true);
+                
+                // Make executable on Unix systems
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    string pacPath = GetLocalPacPath();
+                    if (pacPath != null)
+                    {
+                        var chmodInfo = new ProcessStartInfo
+                        {
+                            FileName = "chmod",
+                            Arguments = $"+x \"{pacPath}\"",
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        };
+                        Process.Start(chmodInfo)?.WaitForExit();
+                    }
+                }
+
+                cmdlet.WriteVerbose("PAC CLI extracted successfully.");
+            }
+            catch (Exception ex)
             {
-                process.OutputDataReceived += (sender, e) =>
-                {
-                    if (!string.IsNullOrEmpty(e.Data))
-                    {
-                        cmdlet.WriteVerbose($"dotnet tool: {e.Data}");
-                    }
-                };
+                throw new InvalidOperationException($"Failed to download and extract PAC CLI: {ex.Message}", ex);
+            }
+        }
 
-                process.ErrorDataReceived += (sender, e) =>
-                {
-                    if (!string.IsNullOrEmpty(e.Data))
-                    {
-                        cmdlet.WriteWarning($"dotnet tool: {e.Data}");
-                    }
-                };
+        private static async Task<string> DownloadPacPackageAsync(PSCmdlet cmdlet, string cacheDir)
+        {
+            var logger = NullLogger.Instance;
+            var cancellationToken = System.Threading.CancellationToken.None;
 
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-                process.WaitForExit();
+            var cache = new SourceCacheContext();
+            var repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+            var resource = await repository.GetResourceAsync<FindPackageByIdResource>();
 
-                if (process.ExitCode != 0)
+            // Get all versions
+            var versions = await resource.GetAllVersionsAsync(
+                PAC_PACKAGE_ID,
+                cache,
+                logger,
+                cancellationToken);
+
+            if (versions == null || !versions.Any())
+            {
+                throw new InvalidOperationException($"No versions found for package {PAC_PACKAGE_ID}");
+            }
+
+            // Get the latest version
+            var latestVersion = versions.OrderByDescending(v => v).First();
+            cmdlet.WriteVerbose($"Latest PAC CLI version: {latestVersion}");
+
+            // Download the package
+            string nupkgPath = Path.Combine(cacheDir, $"{PAC_PACKAGE_ID}.{latestVersion}.nupkg");
+            
+            using (var packageStream = File.Create(nupkgPath))
+            {
+                bool success = await resource.CopyNupkgToStreamAsync(
+                    PAC_PACKAGE_ID,
+                    latestVersion,
+                    packageStream,
+                    cache,
+                    logger,
+                    cancellationToken);
+
+                if (!success)
                 {
-                    throw new InvalidOperationException($"Failed to install PAC CLI. Exit code: {process.ExitCode}");
+                    throw new InvalidOperationException($"Failed to download package {PAC_PACKAGE_ID}");
                 }
             }
 
-            cmdlet.WriteVerbose("PAC CLI installed successfully.");
+            return nupkgPath;
         }
     }
 }

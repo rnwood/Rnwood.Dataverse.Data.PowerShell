@@ -34,18 +34,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter UnpackMsapp { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to overwrite existing files.
-        /// </summary>
-        [Parameter(HelpMessage = "Overwrite existing files in the output path.")]
-        public SwitchParameter Clobber { get; set; }
-
-        /// <summary>
-        /// Gets or sets whether to allow component deletion.
-        /// </summary>
-        [Parameter(HelpMessage = "Allow deletion of components during unpack.")]
-        public SwitchParameter AllowDelete { get; set; }
-
-        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -73,18 +61,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Unpacking solution from '{resolvedPath}' to '{resolvedOutputPath}'");
 
-            // Build PAC CLI arguments
-            var args = $"solution unpack --zipfile \"{resolvedPath}\" --folder \"{resolvedOutputPath}\"";
-
-            if (Clobber.IsPresent)
-            {
-                args += " --clobber";
-            }
-
-            if (AllowDelete.IsPresent)
-            {
-                args += " --allowDelete";
-            }
+            // Build PAC CLI arguments (always use clobber and allowDelete)
+            var args = $"solution unpack --zipfile \"{resolvedPath}\" --folder \"{resolvedOutputPath}\" --clobber --allowDelete";
 
             // Execute PAC CLI
             int exitCode = PacCliHelper.ExecutePacCli(this, args);
@@ -132,29 +110,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 try
                 {
-                    // Create output folder if it doesn't exist
-                    if (!Directory.Exists(outputFolder))
-                    {
-                        Directory.CreateDirectory(outputFolder);
-                    }
-                    else if (!Clobber.IsPresent)
-                    {
-                        WriteWarning($"Folder '{outputFolder}' already exists. Use -Clobber to overwrite. Skipping.");
-                        continue;
-                    }
-
-                    // Unzip the .msapp file
-#if NET8_0
-                    ZipFile.ExtractToDirectory(msappFile, outputFolder, overwriteFiles: Clobber.IsPresent);
-#else
-                    // For .NET Framework, we need to manually handle overwrite
-                    if (Clobber.IsPresent && Directory.Exists(outputFolder))
+                    // Always overwrite - delete existing folder if present
+                    if (Directory.Exists(outputFolder))
                     {
                         Directory.Delete(outputFolder, recursive: true);
-                        Directory.CreateDirectory(outputFolder);
                     }
+                    
+                    Directory.CreateDirectory(outputFolder);
+
+                    // Unzip the .msapp file
                     ZipFile.ExtractToDirectory(msappFile, outputFolder);
-#endif
 
                     WriteVerbose($"Successfully unpacked '{msappFile}'");
                 }

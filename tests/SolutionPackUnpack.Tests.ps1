@@ -97,26 +97,37 @@ Describe "Expand-DataverseSolution and Compress-DataverseSolution" {
             # Output file should not be created
             Test-Path $outputZip | Should -Be $false
         }
+        
+        It "Expand-DataverseSolution should not have Clobber or AllowDelete parameters" {
+            $cmd = Get-Command Expand-DataverseSolution
+            $cmd.Parameters.Keys | Should -Not -Contain 'Clobber'
+            $cmd.Parameters.Keys | Should -Not -Contain 'AllowDelete'
+        }
     }
     
     Context "msapp handling" {
         
         BeforeAll {
-            # Create a mock Canvas App folder structure
-            $script:msappFolder = Join-Path $script:testDir "MockCanvasApp"
+            # Create a mock Canvas App folder with .msapp extension
+            $script:msappFolder = Join-Path $script:testDir "MockCanvasApp.msapp"
             New-Item -ItemType Directory -Path $script:msappFolder | Out-Null
             New-Item -ItemType Directory -Path (Join-Path $script:msappFolder "Src") | Out-Null
             New-Item -ItemType Directory -Path (Join-Path $script:msappFolder "DataSources") | Out-Null
             New-Item -ItemType Directory -Path (Join-Path $script:msappFolder "Connections") | Out-Null
             "test" | Out-File (Join-Path $script:msappFolder "Src\App.fx.yaml")
             
-            # Create an msapp file from the folder
-            $script:msappFile = Join-Path $script:testDir "MockCanvasApp.msapp"
-            Compress-Archive -Path (Join-Path $script:msappFolder "*") -DestinationPath $script:msappFile
+            # Create an msapp zip file from a different folder (to avoid naming conflict)
+            $tempMsappDir = Join-Path $script:testDir "TempMsappContent"
+            New-Item -ItemType Directory -Path $tempMsappDir | Out-Null
+            "test" | Out-File (Join-Path $tempMsappDir "test.txt")
+            $script:msappFile = Join-Path $script:testDir "TestApp.msapp"
+            Compress-Archive -Path (Join-Path $tempMsappDir "*") -DestinationPath $script:msappFile -Force
+            Remove-Item $tempMsappDir -Recurse -Force
         }
         
-        It "Should recognize Canvas App folder structure" {
-            # This test verifies the folder has the expected structure
+        It "Should recognize Canvas App folder with .msapp extension" {
+            # This test verifies the folder has .msapp extension
+            $script:msappFolder | Should -Match '\.msapp$'
             Test-Path (Join-Path $script:msappFolder "Src") | Should -Be $true
             Test-Path (Join-Path $script:msappFolder "DataSources") | Should -Be $true
             Test-Path (Join-Path $script:msappFolder "Connections") | Should -Be $true

@@ -28,8 +28,9 @@ These cmdlets wrap the Power Apps CLI (`pac`) commands:
 
 The cmdlets handle PAC CLI installation automatically:
 1. First checks if `pac` is in your PATH
-2. Then checks if it's installed as a .NET global tool
-3. If not found, automatically installs it using `dotnet tool install --global Microsoft.PowerApps.CLI.Tool`
+2. Then checks if it's already cached locally
+3. If not found, automatically downloads it from NuGet without requiring .NET SDK
+4. Caches it locally for future use
 
 ## Working with Canvas Apps (.msapp files)
 
@@ -82,8 +83,8 @@ $sourceConn = Get-DataverseConnection -Url "https://dev.crm.dynamics.com" -Inter
 # 2. Export the solution
 Export-DataverseSolution -Connection $sourceConn -SolutionName "MySolution" -OutFile "MySolution.zip"
 
-# 3. Unpack for editing
-Expand-DataverseSolution -Path "MySolution.zip" -OutputPath "MySolution_Src" -UnpackMsapp -Clobber
+# 3. Unpack for editing (always overwrites/allows delete)
+Expand-DataverseSolution -Path "MySolution.zip" -OutputPath "MySolution_Src" -UnpackMsapp
 
 # 4. Edit files in MySolution_Src/ (e.g., update customizations, forms, etc.)
 # ... manual edits or automated scripts ...
@@ -104,29 +105,32 @@ Import-DataverseSolution -Connection $targetConn -InFile "MySolution_Modified.zi
 - Always unpack solutions before committing to source control
 - Use `.gitignore` to exclude `.zip` files (keep only unpacked folders)
 - Use `-UnpackMsapp` consistently across your team
+- The cmdlets always overwrite and allow delete for consistency
 
 ### CI/CD Pipelines
 - Use `Compress-DataverseSolution` in your build pipeline to create deployable artifacts
 - Use `Import-DataverseSolution` in your release pipeline to deploy to environments
 - Store unpacked solution folders in your repository, not ZIP files
+- No .NET SDK required - PAC CLI is downloaded automatically from NuGet
 
 ### Collaboration
 - Agree on a standard workflow with your team (always pack/unpack with same flags)
-- Use `-Clobber` when unpacking to avoid conflicts
+- The cmdlets automatically handle overwrites and deletions
 - Review solution diffs in pull requests before merging
 
 ### Canvas Apps
 - When using `-PackMsapp`, be aware that it creates temporary copies (ensure sufficient disk space)
-- Canvas App folder structure is detected automatically (Src/, DataSources/, Connections/, AppCheckerResult.sarif)
-- If a folder doesn't look like a Canvas App, it won't be packed
+- Canvas App folders are identified by having an `.msapp` extension (e.g., `MyApp.msapp/`)
+- Name your Canvas App folders with the `.msapp` extension when unpacking
 
 ## Troubleshooting
 
-### PAC CLI not found
-If you see errors about PAC CLI not being found:
-- Ensure you have .NET SDK installed
-- Try running `dotnet tool install --global Microsoft.PowerApps.CLI.Tool` manually
-- Check that `~/.dotnet/tools` is in your PATH
+### PAC CLI download failures
+If you see errors about PAC CLI download:
+- Check your internet connection
+- Ensure you can reach https://api.nuget.org
+- The PAC CLI is cached in `%LOCALAPPDATA%\Rnwood.Dataverse.Data.PowerShell\pac-cli`
+- Try deleting the cache folder and running again
 
 ### Unpack/Pack failures
 If unpack or pack operations fail:
@@ -135,11 +139,11 @@ If unpack or pack operations fail:
 - Use `-Verbose` to see detailed PAC CLI output
 - Try running `pac solution unpack` manually to see raw error messages
 
-### Canvas App detection issues
-If Canvas Apps aren't detected with `-PackMsapp`:
-- Verify the folder has the typical .msapp structure (Src/, DataSources/, etc.)
-- At least 2 indicators must be present for detection
-- Use `-Verbose` to see which folders are being checked
+### Canvas App folder naming
+For Canvas Apps to be packed correctly with `-PackMsapp`:
+- Name your Canvas App folders with the `.msapp` extension (e.g., `MyApp.msapp/`)
+- The folder name will be used as the .msapp file name
+- Use `-Verbose` to see which folders are being packed
 
 ## Related Cmdlets
 

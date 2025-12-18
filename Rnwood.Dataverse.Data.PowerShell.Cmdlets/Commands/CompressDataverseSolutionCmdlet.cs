@@ -120,43 +120,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void PackMsappFolders(string basePath)
         {
-            // Find all directories that look like unpacked .msapp folders
-            // These are directories that contain the typical .msapp structure (e.g., Src/, DataSources/, etc.)
-            // We'll look for directories that have a parent directory containing other .msapp files or folders
+            // Find all directories with .msapp extension
+            var msappFolders = Directory.GetDirectories(basePath, "*.msapp", SearchOption.AllDirectories);
 
-            // Strategy: Find all directories that:
-            // 1. Have typical .msapp content structure (Src, DataSources, Connections, etc.)
-            // 2. Don't have a corresponding .msapp file yet
-            
-            var candidateFolders = Directory.GetDirectories(basePath, "*", SearchOption.AllDirectories)
-                .Where(dir => IsMsappFolder(dir))
-                .ToList();
-
-            if (candidateFolders.Count == 0)
+            if (msappFolders.Length == 0)
             {
                 WriteVerbose("No .msapp folders found.");
                 return;
             }
 
-            WriteVerbose($"Found {candidateFolders.Count} .msapp folder(s) to pack.");
+            WriteVerbose($"Found {msappFolders.Length} .msapp folder(s) to pack.");
 
-            foreach (string msappFolder in candidateFolders)
+            foreach (string msappFolder in msappFolders)
             {
                 string parentDirectory = System.IO.Path.GetDirectoryName(msappFolder);
                 string folderName = System.IO.Path.GetFileName(msappFolder);
-                string msappFile = System.IO.Path.Combine(parentDirectory, $"{folderName}.msapp");
+                // The folder already has .msapp extension, so use it as-is for the file name
+                string msappFile = System.IO.Path.Combine(parentDirectory, folderName);
 
                 WriteVerbose($"Packing '{msappFolder}' to '{msappFile}'");
 
                 try
                 {
-                    // Create the .msapp file (which is a zip)
+                    // Delete existing .msapp file if it exists (shouldn't normally)
                     if (File.Exists(msappFile))
                     {
                         WriteVerbose($"Deleting existing .msapp file: {msappFile}");
                         File.Delete(msappFile);
                     }
 
+                    // Create the .msapp file (which is a zip)
                     ZipFile.CreateFromDirectory(msappFolder, msappFile, CompressionLevel.Optimal, includeBaseDirectory: false);
 
                     WriteVerbose($"Successfully packed '{msappFolder}'");
@@ -171,27 +164,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            WriteVerbose($"Finished packing {candidateFolders.Count} .msapp folder(s).");
-        }
-
-        private bool IsMsappFolder(string directory)
-        {
-            // Check if this looks like an unpacked .msapp folder
-            // Typical structure includes: Src/, DataSources/, Connections/, etc.
-            string[] msappIndicators = { "Src", "DataSources", "Connections", "AppCheckerResult.sarif" };
-            
-            int indicatorCount = 0;
-            foreach (string indicator in msappIndicators)
-            {
-                string indicatorPath = System.IO.Path.Combine(directory, indicator);
-                if (Directory.Exists(indicatorPath) || File.Exists(indicatorPath))
-                {
-                    indicatorCount++;
-                }
-            }
-
-            // Consider it an .msapp folder if at least 2 indicators are present
-            return indicatorCount >= 2;
+            WriteVerbose($"Finished packing {msappFolders.Length} .msapp folder(s).");
         }
 
         private void CopyDirectory(string sourceDir, string destDir)
