@@ -224,6 +224,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 new ManagedSubcomponentNotCustomizedRule()
             };
 
+            // Add unsolutioned dependency validation rule (always runs)
+            rules.Add(new UnsolutionedDependencyRule(Connection));
+
             // Add dependency validation rule if restrictions are configured
             if ((AllowedDependencySolutions != null && AllowedDependencySolutions.Length > 0) ||
                 (AllowedDependencyPublishers != null && AllowedDependencyPublishers.Length > 0))

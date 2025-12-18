@@ -199,6 +199,12 @@ Describe 'Test-DataverseSolution' {
             $type = [Type]::GetType("$typeName, Rnwood.Dataverse.Data.PowerShell.Cmdlets")
             $type | Should -Not -BeNullOrEmpty
         }
+        
+        It "UnsolutionedDependencyRule class exists" {
+            $typeName = "Rnwood.Dataverse.Data.PowerShell.Commands.Model.SolutionValidationRules.UnsolutionedDependencyRule"
+            $type = [Type]::GetType("$typeName, Rnwood.Dataverse.Data.PowerShell.Cmdlets")
+            $type | Should -Not -BeNullOrEmpty
+        }
     }
 
     Context "Documentation exists" {
@@ -230,6 +236,11 @@ Describe 'Test-DataverseSolution' {
         
         It "SV004 rule documentation exists" {
             $docPath = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/docs/solution-validation-rules/SV004.md"
+            Test-Path $docPath | Should -Be $true
+        }
+        
+        It "SV005 rule documentation exists" {
+            $docPath = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/docs/solution-validation-rules/SV005.md"
             Test-Path $docPath | Should -Be $true
         }
     }
