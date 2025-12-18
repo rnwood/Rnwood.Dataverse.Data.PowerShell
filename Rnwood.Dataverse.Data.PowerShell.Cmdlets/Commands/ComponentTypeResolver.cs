@@ -28,7 +28,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets a fallback display name for a component type using a static mapping.
         /// </summary>
-        private static string GetComponentTypeNameFallback(int componentType)
+        internal static string GetComponentTypeNameFallback(int componentType)
         {
             switch (componentType)
             {
