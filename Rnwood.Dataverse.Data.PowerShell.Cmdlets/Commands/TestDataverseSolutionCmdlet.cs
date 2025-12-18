@@ -238,6 +238,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var ignoredSolutions = IgnoreSharedComponentSolutions?.ToList() ?? new List<string>();
             rules.Add(new SharedUnmanagedComponentRule(Connection, ignoredSolutions));
 
+            // Add environment variable value validation rule (always runs)
+            rules.Add(new EnvironmentVariableValueRule(Connection));
+
             // Add dependency validation rule if restrictions are configured
             if ((AllowedDependencySolutions != null && AllowedDependencySolutions.Length > 0) ||
                 (AllowedDependencyPublishers != null && AllowedDependencyPublishers.Length > 0))

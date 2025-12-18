@@ -219,6 +219,12 @@ Describe 'Test-DataverseSolution' {
             $type = [Type]::GetType("$typeName, Rnwood.Dataverse.Data.PowerShell.Cmdlets")
             $type | Should -Not -BeNullOrEmpty
         }
+        
+        It "EnvironmentVariableValueRule class exists" {
+            $typeName = "Rnwood.Dataverse.Data.PowerShell.Commands.Model.SolutionValidationRules.EnvironmentVariableValueRule"
+            $type = [Type]::GetType("$typeName, Rnwood.Dataverse.Data.PowerShell.Cmdlets")
+            $type | Should -Not -BeNullOrEmpty
+        }
     }
 
     Context "Documentation exists" {
@@ -260,6 +266,11 @@ Describe 'Test-DataverseSolution' {
         
         It "SV006 rule documentation exists" {
             $docPath = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/docs/solution-validation-rules/SV006.md"
+            Test-Path $docPath | Should -Be $true
+        }
+        
+        It "SV007 rule documentation exists" {
+            $docPath = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/docs/solution-validation-rules/SV007.md"
             Test-Path $docPath | Should -Be $true
         }
     }
