@@ -64,6 +64,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string[] AllowedDependencyPublishers { get; set; }
 
         /// <summary>
+        /// Gets or sets solution name patterns to ignore when checking for shared unmanaged components.
+        /// Supports wildcards (* and ?).
+        /// </summary>
+        [Parameter(HelpMessage = "Solution name patterns to ignore when checking for shared unmanaged components. Supports wildcards (* and ?).")]
+        public string[] IgnoreSharedComponentSolutions { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -226,6 +233,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Add unsolutioned dependency validation rule (always runs)
             rules.Add(new UnsolutionedDependencyRule(Connection));
+
+            // Add shared unmanaged component validation rule (always runs)
+            var ignoredSolutions = IgnoreSharedComponentSolutions?.ToList() ?? new List<string>();
+            rules.Add(new SharedUnmanagedComponentRule(Connection, ignoredSolutions));
 
             // Add dependency validation rule if restrictions are configured
             if ((AllowedDependencySolutions != null && AllowedDependencySolutions.Length > 0) ||

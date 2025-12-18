@@ -73,6 +73,14 @@ Describe 'Test-DataverseSolution' {
             $param.ParameterType.Name | Should -Be "String[]"
         }
         
+        It "Has IgnoreSharedComponentSolutions parameter" {
+            $cmd = Get-Command Test-DataverseSolution
+            $param = $cmd.Parameters["IgnoreSharedComponentSolutions"]
+            
+            $param | Should -Not -BeNullOrEmpty
+            $param.ParameterType.Name | Should -Be "String[]"
+        }
+        
         It "Supports ShouldProcess (WhatIf/Confirm)" {
             $cmd = Get-Command Test-DataverseSolution
             $cmd.Parameters.ContainsKey("WhatIf") | Should -Be $true
@@ -205,6 +213,12 @@ Describe 'Test-DataverseSolution' {
             $type = [Type]::GetType("$typeName, Rnwood.Dataverse.Data.PowerShell.Cmdlets")
             $type | Should -Not -BeNullOrEmpty
         }
+        
+        It "SharedUnmanagedComponentRule class exists" {
+            $typeName = "Rnwood.Dataverse.Data.PowerShell.Commands.Model.SolutionValidationRules.SharedUnmanagedComponentRule"
+            $type = [Type]::GetType("$typeName, Rnwood.Dataverse.Data.PowerShell.Cmdlets")
+            $type | Should -Not -BeNullOrEmpty
+        }
     }
 
     Context "Documentation exists" {
@@ -241,6 +255,11 @@ Describe 'Test-DataverseSolution' {
         
         It "SV005 rule documentation exists" {
             $docPath = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/docs/solution-validation-rules/SV005.md"
+            Test-Path $docPath | Should -Be $true
+        }
+        
+        It "SV006 rule documentation exists" {
+            $docPath = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/docs/solution-validation-rules/SV006.md"
             Test-Path $docPath | Should -Be $true
         }
     }
