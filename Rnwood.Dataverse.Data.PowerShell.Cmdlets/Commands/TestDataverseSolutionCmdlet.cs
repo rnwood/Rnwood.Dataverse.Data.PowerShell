@@ -5,6 +5,7 @@ using System.Management.Automation;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk.Query;
 using Rnwood.Dataverse.Data.PowerShell.Commands.Model;
+using Rnwood.Dataverse.Data.PowerShell.Commands.Model.SolutionValidationRules;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -30,6 +31,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter IncludeInfo { get; set; }
 
         /// <summary>
+        /// Gets or sets rule suppressions in format "RuleId" or "RuleId:ComponentIdentifier".
+        /// </summary>
+        [Parameter(HelpMessage = "Suppress specific rules globally or for specific components. Format: 'RuleId' or 'RuleId:ComponentIdentifier'.")]
+        public string[] SuppressRule { get; set; }
+
+        /// <summary>
+        /// Gets or sets the minimum severity level at which violations should be output as PowerShell errors.
+        /// Useful for CI/CD pipelines to fail builds on validation issues.
+        /// </summary>
+        [Parameter(HelpMessage = "Output violations at or above this severity level as PowerShell errors. Useful for CI/CD pipelines.")]
+        public SolutionValidationSeverity? FailOnSeverity { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -42,6 +56,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             WriteVerbose($"Starting validation of solution '{UniqueName}'...");
+
+            // Parse suppressions
+            var suppressions = RuleSuppression.ParseMultiple(SuppressRule);
+            if (suppressions.Any())
+            {
+                WriteVerbose($"Loaded {suppressions.Count} rule suppression(s)");
+                foreach (var suppression in suppressions)
+                {
+                    if (suppression.IsGlobalSuppression)
+                    {
+                        WriteVerbose($"  - {suppression.RuleId} (global)");
+                    }
+                    else
+                    {
+                        WriteVerbose($"  - {suppression.RuleId}:{suppression.ComponentIdentifier}");
+                    }
+                }
+            }
 
             // Create validation result
             var result = new SolutionValidationResult
@@ -64,15 +96,66 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 WriteVerbose($"Found {components.Count} components in solution");
 
+                // Create validation context
+                var context = new SolutionValidationContext
+                {
+                    SolutionUniqueName = UniqueName,
+                    SolutionId = solutionId,
+                    WriteVerbose = WriteVerbose
+                };
+
+                // Get all validation rules
+                var rules = GetValidationRules();
+                WriteVerbose($"Running {rules.Count} validation rule(s)");
+
                 // Run validation rules
-                ValidateRule1_ManagedTablesWithIncludeSubcomponents(components, result);
-                ValidateRule2_ManagedNonTableComponentsNotCustomized(components, result);
-                ValidateRule3_ManagedSubcomponentsNotCustomized(components, result);
+                foreach (var rule in rules)
+                {
+                    var issues = rule.Validate(components, context);
+                    
+                    // Apply suppressions
+                    var unsuppressedIssues = issues.Where(issue => 
+                        !suppressions.Any(s => s.Applies(issue.RuleId, issue.ComponentIdentifier))
+                    ).ToList();
+
+                    if (issues.Count != unsuppressedIssues.Count)
+                    {
+                        WriteVerbose($"  Suppressed {issues.Count - unsuppressedIssues.Count} issue(s) for rule {rule.RuleId}");
+                    }
+
+                    result.Issues.AddRange(unsuppressedIssues);
+                }
 
                 // Determine if solution is valid
                 result.IsValid = result.ErrorCount == 0;
 
                 WriteVerbose($"Validation complete. Found {result.ErrorCount} errors, {result.WarningCount} warnings, {result.InfoCount} info messages");
+
+                // Output issues as PowerShell errors if FailOnSeverity is specified
+                if (FailOnSeverity.HasValue)
+                {
+                    var failureIssues = result.Issues
+                        .Where(i => i.Severity >= FailOnSeverity.Value)
+                        .ToList();
+
+                    foreach (var issue in failureIssues)
+                    {
+                        var errorMessage = $"[{issue.RuleId}] {issue.Message}";
+                        var errorRecord = new ErrorRecord(
+                            new InvalidOperationException(errorMessage),
+                            issue.RuleId,
+                            ErrorCategory.InvalidData,
+                            issue.ComponentIdentifier
+                        );
+                        errorRecord.ErrorDetails = new ErrorDetails($"{errorMessage}\n\nSee: {issue.DocumentationUrl}");
+                        WriteError(errorRecord);
+                    }
+
+                    if (failureIssues.Any())
+                    {
+                        WriteVerbose($"Output {failureIssues.Count} issue(s) as PowerShell errors (severity >= {FailOnSeverity.Value})");
+                    }
+                }
 
                 // Output result
                 WriteObject(result);
@@ -84,6 +167,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 WriteError(new ErrorRecord(ex, "ValidationFailed", ErrorCategory.InvalidOperation, UniqueName));
             }
+        }
+
+        /// <summary>
+        /// Gets the list of validation rules to run.
+        /// </summary>
+        /// <returns>A list of validation rules.</returns>
+        private List<ISolutionValidationRule> GetValidationRules()
+        {
+            return new List<ISolutionValidationRule>
+            {
+                new ManagedTableIncludeSubcomponentsRule(),
+                new ManagedNonTableNotCustomizedRule(),
+                new ManagedSubcomponentNotCustomizedRule()
+            };
         }
 
         /// <summary>
@@ -113,123 +210,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
-        /// Rule 1: Managed table components should not be in the solution with "include subcomponents".
-        /// </summary>
-        private void ValidateRule1_ManagedTablesWithIncludeSubcomponents(List<SolutionComponent> components, SolutionValidationResult result)
-        {
-            WriteVerbose("Validating Rule SV001: Managed tables with 'Include Subcomponents'...");
-
-            const int EntityComponentType = 1; // Entity/Table component type
-
-            var violations = components
-                .Where(c => c.ComponentType == EntityComponentType)
-                .Where(c => c.IsManaged == true)
-                .Where(c => !c.IsSubcomponent)
-                .Where(c => c.RootComponentBehavior == (int)RootComponentBehavior.IncludeSubcomponents)
-                .ToList();
-
-            foreach (var component in violations)
-            {
-                var issue = new SolutionValidationIssue
-                {
-                    RuleId = SolutionValidationRules.ManagedTableIncludeSubcomponents,
-                    RuleName = SolutionValidationRules.GetRuleName(SolutionValidationRules.ManagedTableIncludeSubcomponents),
-                    Severity = SolutionValidationSeverity.Error,
-                    ComponentIdentifier = component.UniqueName ?? component.ObjectId?.ToString(),
-                    ComponentType = component.ComponentType,
-                    ComponentTypeName = component.ComponentTypeName ?? ComponentTypeResolver.GetComponentTypeNameFallback(component.ComponentType),
-                    Message = $"Managed table '{component.UniqueName}' is included with 'Include Subcomponents' behavior. This can cause issues when the managed table has been customized in the target environment.",
-                    DocumentationUrl = SolutionValidationRules.GetDocumentationUrl(SolutionValidationRules.ManagedTableIncludeSubcomponents)
-                };
-
-                issue.Details["Behavior"] = RootComponentBehaviorExtensions.GetDisplayName(component.RootComponentBehavior);
-                issue.Details["IsManaged"] = component.IsManaged;
-
-                result.Issues.Add(issue);
-            }
-
-            WriteVerbose($"Rule SV001: Found {violations.Count} violations");
-        }
-
-        /// <summary>
-        /// Rule 2: Managed non-table components should only be in the solution if they are customized.
-        /// </summary>
-        private void ValidateRule2_ManagedNonTableComponentsNotCustomized(List<SolutionComponent> components, SolutionValidationResult result)
-        {
-            WriteVerbose("Validating Rule SV002: Managed non-table components not customized...");
-
-            const int EntityComponentType = 1; // Entity/Table component type
-
-            var violations = components
-                .Where(c => c.ComponentType != EntityComponentType)
-                .Where(c => c.IsManaged == true)
-                .Where(c => !c.IsSubcomponent)
-                .Where(c => c.IsCustomized != true)
-                .ToList();
-
-            foreach (var component in violations)
-            {
-                var issue = new SolutionValidationIssue
-                {
-                    RuleId = SolutionValidationRules.ManagedNonTableNotCustomized,
-                    RuleName = SolutionValidationRules.GetRuleName(SolutionValidationRules.ManagedNonTableNotCustomized),
-                    Severity = SolutionValidationSeverity.Warning,
-                    ComponentIdentifier = component.UniqueName ?? component.ObjectId?.ToString(),
-                    ComponentType = component.ComponentType,
-                    ComponentTypeName = component.ComponentTypeName ?? ComponentTypeResolver.GetComponentTypeNameFallback(component.ComponentType),
-                    Message = $"Managed {component.ComponentTypeName ?? "component"} '{component.UniqueName ?? component.ObjectId?.ToString()}' is not customized but is included in the solution. Including unmodified managed components can bloat the solution.",
-                    DocumentationUrl = SolutionValidationRules.GetDocumentationUrl(SolutionValidationRules.ManagedNonTableNotCustomized)
-                };
-
-                issue.Details["IsManaged"] = component.IsManaged;
-                issue.Details["IsCustomized"] = component.IsCustomized;
-
-                result.Issues.Add(issue);
-            }
-
-            WriteVerbose($"Rule SV002: Found {violations.Count} violations");
-        }
-
-        /// <summary>
-        /// Rule 3: Table managed subcomponents should only be in the solution if they are customized.
-        /// </summary>
-        private void ValidateRule3_ManagedSubcomponentsNotCustomized(List<SolutionComponent> components, SolutionValidationResult result)
-        {
-            WriteVerbose("Validating Rule SV003: Managed subcomponents not customized...");
-
-            var violations = components
-                .Where(c => c.IsSubcomponent)
-                .Where(c => c.IsManaged == true)
-                .Where(c => c.IsCustomized != true)
-                .ToList();
-
-            foreach (var component in violations)
-            {
-                var issue = new SolutionValidationIssue
-                {
-                    RuleId = SolutionValidationRules.ManagedSubcomponentNotCustomized,
-                    RuleName = SolutionValidationRules.GetRuleName(SolutionValidationRules.ManagedSubcomponentNotCustomized),
-                    Severity = SolutionValidationSeverity.Warning,
-                    ComponentIdentifier = component.UniqueName ?? component.ObjectId?.ToString(),
-                    ComponentType = component.ComponentType,
-                    ComponentTypeName = component.ComponentTypeName ?? ComponentTypeResolver.GetComponentTypeNameFallback(component.ComponentType),
-                    Message = $"Managed subcomponent '{component.UniqueName ?? component.ObjectId?.ToString()}' (type: {component.ComponentTypeName ?? "Unknown"}) is not customized but is included in the solution. Including unmodified managed subcomponents is unnecessary.",
-                    DocumentationUrl = SolutionValidationRules.GetDocumentationUrl(SolutionValidationRules.ManagedSubcomponentNotCustomized)
-                };
-
-                issue.Details["IsManaged"] = component.IsManaged;
-                issue.Details["IsCustomized"] = component.IsCustomized;
-                issue.Details["IsSubcomponent"] = component.IsSubcomponent;
-                issue.Details["ParentTableName"] = component.ParentTableName;
-                issue.Details["ParentIsManaged"] = component.ParentIsManaged;
-
-                result.Issues.Add(issue);
-            }
-
-            WriteVerbose($"Rule SV003: Found {violations.Count} violations");
-        }
-
-        /// <summary>
         /// Writes a summary of the validation results to the verbose stream.
         /// </summary>
         private void WriteSummary(SolutionValidationResult result)
@@ -251,7 +231,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var groupedIssues = result.Issues.GroupBy(i => i.RuleId);
                 foreach (var group in groupedIssues)
                 {
-                    WriteVerbose($"  {group.Key} ({SolutionValidationRules.GetRuleName(group.Key)}): {group.Count()} issue(s)");
+                    var firstIssue = group.First();
+                    WriteVerbose($"  {group.Key} ({firstIssue.RuleName}): {group.Count()} issue(s)");
                 }
             }
 

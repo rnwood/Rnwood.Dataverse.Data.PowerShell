@@ -33,6 +33,22 @@ Describe 'Test-DataverseSolution' {
             $param.ParameterType.Name | Should -Be "SwitchParameter"
         }
         
+        It "Has SuppressRule parameter" {
+            $cmd = Get-Command Test-DataverseSolution
+            $param = $cmd.Parameters["SuppressRule"]
+            
+            $param | Should -Not -BeNullOrEmpty
+            $param.ParameterType.Name | Should -Be "String[]"
+        }
+        
+        It "Has FailOnSeverity parameter" {
+            $cmd = Get-Command Test-DataverseSolution
+            $param = $cmd.Parameters["FailOnSeverity"]
+            
+            $param | Should -Not -BeNullOrEmpty
+            $param.ParameterType.Name | Should -Be "Nullable``1"
+        }
+        
         It "Supports ShouldProcess (WhatIf/Confirm)" {
             $cmd = Get-Command Test-DataverseSolution
             $cmd.Parameters.ContainsKey("WhatIf") | Should -Be $true
@@ -100,47 +116,52 @@ Describe 'Test-DataverseSolution' {
             $type.IsEnum | Should -Be $true
         }
         
-        It "SolutionValidationRules class has expected constants" {
-            $typeName = "Rnwood.Dataverse.Data.PowerShell.Commands.Model.SolutionValidationRules"
+        It "ISolutionValidationRule interface exists" {
+            $typeName = "Rnwood.Dataverse.Data.PowerShell.Commands.Model.ISolutionValidationRule"
+            $type = [Type]::GetType("$typeName, Rnwood.Dataverse.Data.PowerShell.Cmdlets")
+            $type | Should -Not -BeNullOrEmpty
+            $type.IsInterface | Should -Be $true
+        }
+        
+        It "Rule SV001 class exists and implements interface" {
+            $typeName = "Rnwood.Dataverse.Data.PowerShell.Commands.Model.SolutionValidationRules.ManagedTableIncludeSubcomponentsRule"
             $type = [Type]::GetType("$typeName, Rnwood.Dataverse.Data.PowerShell.Cmdlets")
             $type | Should -Not -BeNullOrEmpty
             
-            # Check rule constants exist
-            $sv001 = $type.GetField("ManagedTableIncludeSubcomponents").GetValue($null)
-            $sv001 | Should -Be "SV001"
-            
-            $sv002 = $type.GetField("ManagedNonTableNotCustomized").GetValue($null)
-            $sv002 | Should -Be "SV002"
-            
-            $sv003 = $type.GetField("ManagedSubcomponentNotCustomized").GetValue($null)
-            $sv003 | Should -Be "SV003"
+            $rule = [Activator]::CreateInstance($type)
+            $rule.RuleId | Should -Be "SV001"
+            $rule.RuleName | Should -Be "Managed Table Include Subcomponents"
+            $rule.Severity | Should -Be ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.SolutionValidationSeverity]::Error)
+            $rule.DocumentationUrl | Should -Match "github.com"
+            $rule.DocumentationUrl | Should -Match "SV001"
         }
         
-        It "SolutionValidationRules.GetDocumentationUrl returns expected format" {
-            $typeName = "Rnwood.Dataverse.Data.PowerShell.Commands.Model.SolutionValidationRules"
+        It "Rule SV002 class exists and implements interface" {
+            $typeName = "Rnwood.Dataverse.Data.PowerShell.Commands.Model.SolutionValidationRules.ManagedNonTableNotCustomizedRule"
             $type = [Type]::GetType("$typeName, Rnwood.Dataverse.Data.PowerShell.Cmdlets")
+            $type | Should -Not -BeNullOrEmpty
             
-            $method = $type.GetMethod("GetDocumentationUrl")
-            $url = $method.Invoke($null, @("SV001"))
-            
-            $url | Should -Match "github.com"
-            $url | Should -Match "SV001"
+            $rule = [Activator]::CreateInstance($type)
+            $rule.RuleId | Should -Be "SV002"
+            $rule.RuleName | Should -Be "Managed Non-Table Not Customized"
+            $rule.Severity | Should -Be ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.SolutionValidationSeverity]::Warning)
         }
         
-        It "SolutionValidationRules.GetRuleName returns expected names" {
-            $typeName = "Rnwood.Dataverse.Data.PowerShell.Commands.Model.SolutionValidationRules"
+        It "Rule SV003 class exists and implements interface" {
+            $typeName = "Rnwood.Dataverse.Data.PowerShell.Commands.Model.SolutionValidationRules.ManagedSubcomponentNotCustomizedRule"
             $type = [Type]::GetType("$typeName, Rnwood.Dataverse.Data.PowerShell.Cmdlets")
+            $type | Should -Not -BeNullOrEmpty
             
-            $method = $type.GetMethod("GetRuleName")
-            
-            $name1 = $method.Invoke($null, @("SV001"))
-            $name1 | Should -Be "Managed Table Include Subcomponents"
-            
-            $name2 = $method.Invoke($null, @("SV002"))
-            $name2 | Should -Be "Managed Non-Table Not Customized"
-            
-            $name3 = $method.Invoke($null, @("SV003"))
-            $name3 | Should -Be "Managed Subcomponent Not Customized"
+            $rule = [Activator]::CreateInstance($type)
+            $rule.RuleId | Should -Be "SV003"
+            $rule.RuleName | Should -Be "Managed Subcomponent Not Customized"
+            $rule.Severity | Should -Be ([Rnwood.Dataverse.Data.PowerShell.Commands.Model.SolutionValidationSeverity]::Warning)
+        }
+        
+        It "RuleSuppression class exists" {
+            $typeName = "Rnwood.Dataverse.Data.PowerShell.Commands.Model.RuleSuppression"
+            $type = [Type]::GetType("$typeName, Rnwood.Dataverse.Data.PowerShell.Cmdlets")
+            $type | Should -Not -BeNullOrEmpty
         }
     }
 
