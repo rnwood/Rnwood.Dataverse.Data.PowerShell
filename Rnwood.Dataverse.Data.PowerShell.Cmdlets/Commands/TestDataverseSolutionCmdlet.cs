@@ -44,6 +44,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SolutionValidationSeverity? FailOnSeverity { get; set; }
 
         /// <summary>
+        /// Gets or sets rule severity overrides in format "RuleId:Severity" (e.g., "SV001:Warning").
+        /// </summary>
+        [Parameter(HelpMessage = "Override the severity of specific rules. Format: 'RuleId:Severity' (e.g., 'SV001:Warning').")]
+        public string[] OverrideSeverity { get; set; }
+
+        /// <summary>
+        /// Gets or sets allowed solution name patterns for dependency validation.
+        /// Supports wildcards (* and ?).
+        /// </summary>
+        [Parameter(HelpMessage = "Allowed solution name patterns for dependency validation. Supports wildcards (* and ?).")]
+        public string[] AllowedDependencySolutions { get; set; }
+
+        /// <summary>
+        /// Gets or sets allowed publisher unique name patterns for dependency validation.
+        /// Supports wildcards (* and ?).
+        /// </summary>
+        [Parameter(HelpMessage = "Allowed publisher unique name patterns for dependency validation. Supports wildcards (* and ?).")]
+        public string[] AllowedDependencyPublishers { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -72,6 +92,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         WriteVerbose($"  - {suppression.RuleId}:{suppression.ComponentIdentifier}");
                     }
+                }
+            }
+
+            // Parse severity overrides
+            var severityOverrides = RuleSeverityOverride.ParseMultiple(OverrideSeverity);
+            if (severityOverrides.Any())
+            {
+                WriteVerbose($"Loaded {severityOverrides.Count} severity override(s)");
+                foreach (var kvp in severityOverrides)
+                {
+                    WriteVerbose($"  - {kvp.Key}: {kvp.Value}");
                 }
             }
 
@@ -112,6 +143,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 foreach (var rule in rules)
                 {
                     var issues = rule.Validate(components, context);
+                    
+                    // Apply severity overrides
+                    if (severityOverrides.ContainsKey(rule.RuleId))
+                    {
+                        var newSeverity = severityOverrides[rule.RuleId];
+                        foreach (var issue in issues)
+                        {
+                            issue.Severity = newSeverity;
+                        }
+                        WriteVerbose($"  Applied severity override for rule {rule.RuleId}: {newSeverity}");
+                    }
                     
                     // Apply suppressions
                     var unsuppressedIssues = issues.Where(issue => 
@@ -175,12 +217,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <returns>A list of validation rules.</returns>
         private List<ISolutionValidationRule> GetValidationRules()
         {
-            return new List<ISolutionValidationRule>
+            var rules = new List<ISolutionValidationRule>
             {
                 new ManagedTableIncludeSubcomponentsRule(),
                 new ManagedNonTableNotCustomizedRule(),
                 new ManagedSubcomponentNotCustomizedRule()
             };
+
+            // Add dependency validation rule if restrictions are configured
+            if ((AllowedDependencySolutions != null && AllowedDependencySolutions.Length > 0) ||
+                (AllowedDependencyPublishers != null && AllowedDependencyPublishers.Length > 0))
+            {
+                var allowedSolutions = AllowedDependencySolutions?.ToList() ?? new List<string>();
+                var allowedPublishers = AllowedDependencyPublishers?.ToList() ?? new List<string>();
+                
+                rules.Add(new UnauthorizedDependencyRule(Connection, allowedSolutions, allowedPublishers));
+            }
+
+            return rules;
         }
 
         /// <summary>

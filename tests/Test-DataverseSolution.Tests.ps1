@@ -49,6 +49,30 @@ Describe 'Test-DataverseSolution' {
             $param.ParameterType.Name | Should -Be "Nullable``1"
         }
         
+        It "Has OverrideSeverity parameter" {
+            $cmd = Get-Command Test-DataverseSolution
+            $param = $cmd.Parameters["OverrideSeverity"]
+            
+            $param | Should -Not -BeNullOrEmpty
+            $param.ParameterType.Name | Should -Be "String[]"
+        }
+        
+        It "Has AllowedDependencySolutions parameter" {
+            $cmd = Get-Command Test-DataverseSolution
+            $param = $cmd.Parameters["AllowedDependencySolutions"]
+            
+            $param | Should -Not -BeNullOrEmpty
+            $param.ParameterType.Name | Should -Be "String[]"
+        }
+        
+        It "Has AllowedDependencyPublishers parameter" {
+            $cmd = Get-Command Test-DataverseSolution
+            $param = $cmd.Parameters["AllowedDependencyPublishers"]
+            
+            $param | Should -Not -BeNullOrEmpty
+            $param.ParameterType.Name | Should -Be "String[]"
+        }
+        
         It "Supports ShouldProcess (WhatIf/Confirm)" {
             $cmd = Get-Command Test-DataverseSolution
             $cmd.Parameters.ContainsKey("WhatIf") | Should -Be $true
@@ -163,6 +187,18 @@ Describe 'Test-DataverseSolution' {
             $type = [Type]::GetType("$typeName, Rnwood.Dataverse.Data.PowerShell.Cmdlets")
             $type | Should -Not -BeNullOrEmpty
         }
+        
+        It "RuleSeverityOverride class exists" {
+            $typeName = "Rnwood.Dataverse.Data.PowerShell.Commands.Model.RuleSeverityOverride"
+            $type = [Type]::GetType("$typeName, Rnwood.Dataverse.Data.PowerShell.Cmdlets")
+            $type | Should -Not -BeNullOrEmpty
+        }
+        
+        It "UnauthorizedDependencyRule class exists" {
+            $typeName = "Rnwood.Dataverse.Data.PowerShell.Commands.Model.SolutionValidationRules.UnauthorizedDependencyRule"
+            $type = [Type]::GetType("$typeName, Rnwood.Dataverse.Data.PowerShell.Cmdlets")
+            $type | Should -Not -BeNullOrEmpty
+        }
     }
 
     Context "Documentation exists" {
@@ -189,6 +225,11 @@ Describe 'Test-DataverseSolution' {
         
         It "Validation rules README exists" {
             $docPath = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/docs/solution-validation-rules/README.md"
+            Test-Path $docPath | Should -Be $true
+        }
+        
+        It "SV004 rule documentation exists" {
+            $docPath = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/docs/solution-validation-rules/SV004.md"
             Test-Path $docPath | Should -Be $true
         }
     }
