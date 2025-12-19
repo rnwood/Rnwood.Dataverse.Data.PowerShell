@@ -34,10 +34,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter UnpackMsapp { get; set; }
 
         /// <summary>
-        /// Gets or sets the PAC CLI version to use. If not specified, uses the latest version. Use "system" to use PAC from PATH.
+        /// Gets or sets the package type for unpacking. Can be 'Unmanaged', 'Managed', or 'Both'.
         /// </summary>
-        [Parameter(HelpMessage = "PAC CLI version to use (e.g., '1.31.6'). Use 'system' to use PAC from PATH. If not specified, uses the latest version.")]
-        public string PacVersion { get; set; }
+        [Parameter(HelpMessage = "Package type: 'Unmanaged' (default), 'Managed', or 'Both' for dual Managed and Unmanaged operation.")]
+        [ValidateSet("Unmanaged", "Managed", "Both", IgnoreCase = true)]
+        public string PackageType { get; set; } = "Unmanaged";
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -68,10 +69,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             WriteVerbose($"Unpacking solution from '{resolvedPath}' to '{resolvedOutputPath}'");
 
             // Build PAC CLI arguments (always use clobber and allowDelete)
-            var args = $"solution unpack --zipfile \"{resolvedPath}\" --folder \"{resolvedOutputPath}\" --clobber --allowDelete";
+            var args = $"solution unpack --zipfile \"{resolvedPath}\" --folder \"{resolvedOutputPath}\" --packagetype {PackageType} --clobber --allowDelete";
 
-            // Execute PAC CLI with specified version
-            int exitCode = PacCliHelper.ExecutePacCli(this, args, version: PacVersion);
+            // Execute PAC CLI
+            int exitCode = PacCliHelper.ExecutePacCli(this, args);
 
             if (exitCode != 0)
             {

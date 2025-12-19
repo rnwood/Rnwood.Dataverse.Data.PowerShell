@@ -20,7 +20,13 @@ Compares a solution file with the state of that solution in the target environme
 ### [Compress-DataverseSolution](Compress-DataverseSolution.md)
 {{ Fill in the Synopsis }}
 
+### [Compress-DataverseSolutionFile](Compress-DataverseSolutionFile.md)
+{{ Fill in the Synopsis }}
+
 ### [Expand-DataverseSolution](Expand-DataverseSolution.md)
+{{ Fill in the Synopsis }}
+
+### [Expand-DataverseSolutionFile](Expand-DataverseSolutionFile.md)
 {{ Fill in the Synopsis }}
 
 ### [Export-DataverseSolution](Export-DataverseSolution.md)

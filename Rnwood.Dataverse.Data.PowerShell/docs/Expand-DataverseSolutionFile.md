@@ -13,7 +13,7 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-Expand-DataverseSolutionFile [-Path] <String> [-OutputPath] <String> [-UnpackMsapp] [-PacVersion <String>]
+Expand-DataverseSolutionFile [-Path] <String> [-OutputPath] <String> [-UnpackMsapp] [-PackageType <String>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -46,15 +46,14 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -PacVersion
-PAC CLI version to use (e.g., '1.31.6').
-Use 'system' to use PAC from PATH.
-If not specified, uses the latest version.
+### -PackageType
+Package type: 'Unmanaged' (default), 'Managed', or 'Both' for dual Managed and Unmanaged operation.
 
 ```yaml
 Type: String
 Parameter Sets: (All)
 Aliases:
+Accepted values: Unmanaged, Managed, Both
 
 Required: False
 Position: Named

@@ -6,7 +6,7 @@ Packs a Dataverse solution folder using the Power Apps CLI.
 ## SYNTAX
 
 ```
-Compress-DataverseSolutionFile [-Path] <String> [-OutputPath] <String> [-PacVersion <String>] [-WhatIf] [-Confirm] 
+Compress-DataverseSolutionFile [-Path] <String> [-OutputPath] <String> [-PackageType <String>] [-WhatIf] [-Confirm] 
  [<CommonParameters>]
 ```
 
@@ -63,8 +63,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -PacVersion
-PAC CLI version to use (e.g., '1.31.6'). Use 'system' to use PAC from PATH. If not specified, uses the latest version.
+### -PackageType
+Package type: 'Unmanaged' (default), 'Managed' (from a previous unpack 'Both'), or 'Both'.
 
 ```yaml
 Type: String
@@ -73,7 +73,7 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None (latest version)
+Default value: Unmanaged
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -120,13 +120,11 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### None
 
 ## NOTES
-- Requires the Power Apps CLI (pac). The cmdlet automatically downloads it from NuGet without requiring .NET SDK.
-- The Power Apps CLI package is available at: https://www.nuget.org/packages/Microsoft.PowerApps.CLI.Tool
+- Requires the Power Apps CLI (pac) to be installed and available in your PATH.
+- Install from https://aka.ms/PowerAppsCLI
 - Canvas App folders (with `.msapp` extension) are automatically detected and packed into .msapp files.
 - A temporary copy of the solution folder is created when .msapp folders are found, so the original folder is not modified.
-- Use `-PacVersion` to specify a particular PAC CLI version. If omitted, the latest version is used.
-- Use `-PacVersion "system"` to use PAC CLI from your PATH instead of downloading.
-- By default, PAC CLI from PATH is ignored for consistency - use "system" version to override.
+- Use `-PackageType` to specify 'Unmanaged' (default), 'Managed' (from a previous unpack 'Both'), or 'Both'.
 
 ## RELATED LINKS
 - [Expand-DataverseSolutionFile](Expand-DataverseSolutionFile.md)

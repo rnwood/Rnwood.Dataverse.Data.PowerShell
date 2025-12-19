@@ -6,7 +6,7 @@ Unpacks a Dataverse solution file using the Power Apps CLI.
 ## SYNTAX
 
 ```
-Expand-DataverseSolutionFile [-Path] <String> [-OutputPath] <String> [-UnpackMsapp] [-PacVersion <String>] 
+Expand-DataverseSolutionFile [-Path] <String> [-OutputPath] <String> [-UnpackMsapp] [-PackageType <String>] 
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -80,8 +80,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -PacVersion
-PAC CLI version to use (e.g., '1.31.6'). Use 'system' to use PAC from PATH. If not specified, uses the latest version.
+### -PackageType
+Package type: 'Unmanaged' (default), 'Managed', or 'Both' for dual Managed and Unmanaged operation.
 
 ```yaml
 Type: String
@@ -90,12 +90,10 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None (latest version)
+Default value: Unmanaged
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
-
-
 
 ### -WhatIf
 Shows what would happen if the cmdlet runs. The cmdlet is not run.
@@ -139,13 +137,11 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### None
 
 ## NOTES
-- Requires the Power Apps CLI (pac). The cmdlet automatically downloads it from NuGet without requiring .NET SDK.
-- The Power Apps CLI package is available at: https://www.nuget.org/packages/Microsoft.PowerApps.CLI.Tool
+- Requires the Power Apps CLI (pac) to be installed and available in your PATH.
+- Install from https://aka.ms/PowerAppsCLI
 - The `-UnpackMsapp` switch is useful for version control of Canvas Apps, allowing you to see individual file changes.
 - The cmdlet always uses clobber and allowDelete modes for consistent behavior.
-- Use `-PacVersion` to specify a particular PAC CLI version. If omitted, the latest version is used.
-- Use `-PacVersion "system"` to use PAC CLI from your PATH instead of downloading.
-- By default, PAC CLI from PATH is ignored for consistency - use "system" version to override.
+- Use `-PackageType` to specify 'Unmanaged' (default), 'Managed', or 'Both' for dual Managed and Unmanaged operation.
 
 ## RELATED LINKS
 - [Compress-DataverseSolutionFile](Compress-DataverseSolutionFile.md)
