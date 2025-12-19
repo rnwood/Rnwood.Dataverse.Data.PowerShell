@@ -26,13 +26,10 @@ These cmdlets wrap the Power Apps CLI (`pac`) commands:
 - `Expand-DataverseSolutionFile` uses `pac solution unpack`
 - `Compress-DataverseSolutionFile` uses `pac solution pack`
 
-The cmdlets handle PAC CLI installation automatically:
-1. By default, downloads and caches PAC CLI from NuGet (ignores PATH)
-2. Checks if the requested version is already cached locally
-3. If not found, automatically downloads it from NuGet without requiring .NET SDK
-4. Caches it locally in a version-specific folder for future use
-5. Use `-PacVersion` parameter to specify a particular version (e.g., "1.31.6")
-6. Use `-PacVersion "system"` to use PAC CLI from your PATH instead
+**Prerequisites:**
+- Power Apps CLI must be installed and available in your system PATH
+- Install from: https://aka.ms/PowerAppsCLI
+- The cmdlets will search for `pac.exe` (Windows) or `pac` (Unix) in your PATH
 
 ## Working with Canvas Apps (.msapp files)
 
@@ -101,6 +98,37 @@ $targetConn = Get-DataverseConnection -Url "https://test.crm.dynamics.com" -Inte
 Import-DataverseSolution -Connection $targetConn -InFile "MySolution_Modified.zip"
 ```
 
+## Package Type Support
+
+Both cmdlets support the `-PackageType` parameter to work with managed and unmanaged solutions:
+
+### Unmanaged (Default)
+```powershell
+# Unpack an unmanaged solution
+Expand-DataverseSolutionFile -Path "MySolution.zip" -OutputPath "src"
+
+# Pack an unmanaged solution
+Compress-DataverseSolutionFile -Path "src" -OutputPath "MySolution.zip"
+```
+
+### Managed
+```powershell
+# Unpack a managed solution
+Expand-DataverseSolutionFile -Path "MySolution_managed.zip" -OutputPath "src" -PackageType Managed
+
+# Pack a managed solution (from a previous 'Both' unpack)
+Compress-DataverseSolutionFile -Path "src" -OutputPath "MySolution_managed.zip" -PackageType Managed
+```
+
+### Both (Dual Managed and Unmanaged)
+```powershell
+# Unpack both managed and unmanaged (creates separate folders)
+Expand-DataverseSolutionFile -Path "MySolution.zip" -OutputPath "src" -PackageType Both
+
+# This creates both managed and unmanaged folder structures
+# You can then pack either one using -PackageType Managed or -PackageType Unmanaged
+```
+
 ## Best Practices
 
 ### Version Control
@@ -108,17 +136,20 @@ Import-DataverseSolution -Connection $targetConn -InFile "MySolution_Modified.zi
 - Use `.gitignore` to exclude `.zip` files (keep only unpacked folders)
 - Use `-UnpackMsapp` consistently across your team
 - The cmdlets always overwrite and allow delete for consistency
+- Use `-PackageType Both` if you need to work with both managed and unmanaged solutions
 
 ### CI/CD Pipelines
+- Install PAC CLI in your build agents: https://aka.ms/PowerAppsCLI
 - Use `Compress-DataverseSolutionFile` in your build pipeline to create deployable artifacts
 - Use `Import-DataverseSolution` in your release pipeline to deploy to environments
 - Store unpacked solution folders in your repository, not ZIP files
-- No .NET SDK required - PAC CLI is downloaded automatically from NuGet
+- Use consistent `-PackageType` across your pipeline
 
 ### Collaboration
 - Agree on a standard workflow with your team (always pack/unpack with same flags)
 - The cmdlets automatically handle overwrites and deletions
 - Review solution diffs in pull requests before merging
+- Decide as a team whether to use Unmanaged, Managed, or Both package types
 
 ### Canvas Apps
 - Canvas App folders with `.msapp` extension are automatically packed (no switch needed)
@@ -128,12 +159,12 @@ Import-DataverseSolution -Connection $targetConn -InFile "MySolution_Modified.zi
 
 ## Troubleshooting
 
-### PAC CLI download failures
-If you see errors about PAC CLI download:
-- Check your internet connection
-- Ensure you can reach https://api.nuget.org
-- The PAC CLI is cached in `%LOCALAPPDATA%\Rnwood.Dataverse.Data.PowerShell\pac-cli`
-- Try deleting the cache folder and running again
+### PAC CLI not found
+If you see errors about PAC CLI not being found:
+- Install Power Apps CLI from https://aka.ms/PowerAppsCLI
+- Ensure `pac` or `pac.exe` is in your system PATH
+- Restart your PowerShell session after installation
+- Test by running `pac` in PowerShell to verify installation
 
 ### Unpack/Pack failures
 If unpack or pack operations fail:
@@ -141,19 +172,13 @@ If unpack or pack operations fail:
 - Ensure you have write permissions to the output folder
 - Use `-Verbose` to see detailed PAC CLI output
 - Try running `pac solution unpack` manually to see raw error messages
+- Verify your `-PackageType` matches the solution file (e.g., don't use Managed with an unmanaged ZIP)
 
 ### Canvas App folder naming
 For Canvas Apps to be automatically packed:
 - Name your Canvas App folders with the `.msapp` extension (e.g., `MyApp.msapp/`)
 - The folder name will be used as the .msapp file name
 - Use `-Verbose` to see which folders are being packed
-
-### PAC CLI versioning
-To use a specific PAC CLI version:
-- Add `-PacVersion "1.31.6"` to specify version 1.31.6
-- Omit the parameter to use the latest version
-- Each version is cached separately for quick access
-- Useful for CI/CD pipelines to ensure consistent behavior
 
 ## Related Cmdlets
 

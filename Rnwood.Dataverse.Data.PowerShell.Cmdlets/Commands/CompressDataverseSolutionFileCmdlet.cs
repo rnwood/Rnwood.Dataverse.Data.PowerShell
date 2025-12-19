@@ -10,7 +10,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// Packs a Dataverse solution folder using the Power Apps CLI.
     /// </summary>
     [Cmdlet(VerbsData.Compress, "DataverseSolutionFile", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
-    [Alias("Pack-DataverseSolutionFile", "Compress-DataverseSolution", "Pack-DataverseSolution")]
     public class CompressDataverseSolutionFileCmdlet : PSCmdlet
     {
         /// <summary>

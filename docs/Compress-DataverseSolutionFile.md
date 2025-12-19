@@ -13,7 +13,7 @@ Compress-DataverseSolutionFile [-Path] <String> [-OutputPath] <String> [-Package
 ## DESCRIPTION
 The `Compress-DataverseSolutionFile` cmdlet packs an unpacked Dataverse solution folder into a solution ZIP file using the Power Apps CLI (`pac solution pack` command). This is the reverse operation of `Expand-DataverseSolutionFile` and is typically used after editing solution components.
 
-The cmdlet automatically detects and downloads the Power Apps CLI if it's not already available in your PATH or as a .NET global tool.
+The cmdlet requires the Power Apps CLI to be installed and available in your system PATH. Install from https://aka.ms/PowerAppsCLI
 
 ## EXAMPLES
 
@@ -24,12 +24,12 @@ Compress-DataverseSolutionFile -Path "C:\Solutions\MySolution_Src" -OutputPath "
 
 Packs the solution folder into a ZIP file.
 
-### Example 2: Pack a solution with specific PAC CLI version
+### Example 2: Pack a managed solution
 ```powershell
-Compress-DataverseSolutionFile -Path "C:\Solutions\MySolution_Src" -OutputPath "C:\Solutions\MySolution.zip" -PacVersion "1.31.6"
+Compress-DataverseSolutionFile -Path "C:\Solutions\MySolution_Src" -OutputPath "C:\Solutions\MySolution_Managed.zip" -PackageType Managed
 ```
 
-Packs the solution using a specific version of the PAC CLI. Any folders with `.msapp` extension are automatically zipped into .msapp files before packing.
+Packs a managed solution from a folder that was previously unpacked with `-PackageType Both`. Any folders with `.msapp` extension are automatically zipped into .msapp files before packing.
 
 ## PARAMETERS
 

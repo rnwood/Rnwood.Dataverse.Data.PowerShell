@@ -13,7 +13,7 @@ Expand-DataverseSolutionFile [-Path] <String> [-OutputPath] <String> [-UnpackMsa
 ## DESCRIPTION
 The `Expand-DataverseSolutionFile` cmdlet unpacks a Dataverse solution ZIP file into a folder structure using the Power Apps CLI (`pac solution unpack` command). This is useful for version control and manual editing of solution components.
 
-The cmdlet automatically detects and downloads the Power Apps CLI if it's not already available in your PATH or as a .NET global tool.
+The cmdlet requires the Power Apps CLI to be installed and available in your system PATH. Install from https://aka.ms/PowerAppsCLI
 
 ## EXAMPLES
 
@@ -31,7 +31,12 @@ Expand-DataverseSolutionFile -Path "C:\Solutions\MySolution.zip" -OutputPath "C:
 
 Unpacks the solution and additionally extracts any Canvas Apps (.msapp files) found in the solution into folders with the same name.
 
+### Example 3: Unpack both managed and unmanaged solutions
+```powershell
+Expand-DataverseSolutionFile -Path "C:\Solutions\MySolution.zip" -OutputPath "C:\Solutions\MySolution_Src" -PackageType Both
+```
 
+Unpacks the solution for dual managed and unmanaged operation. This creates separate folder structures for both types.
 
 ## PARAMETERS
 

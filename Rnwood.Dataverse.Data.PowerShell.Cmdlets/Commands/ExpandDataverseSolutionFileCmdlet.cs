@@ -10,7 +10,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// Unpacks a Dataverse solution file using the Power Apps CLI.
     /// </summary>
     [Cmdlet(VerbsData.Expand, "DataverseSolutionFile", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
-    [Alias("Unpack-DataverseSolutionFile", "Expand-DataverseSolution", "Unpack-DataverseSolution")]
     public class ExpandDataverseSolutionFileCmdlet : PSCmdlet
     {
         /// <summary>

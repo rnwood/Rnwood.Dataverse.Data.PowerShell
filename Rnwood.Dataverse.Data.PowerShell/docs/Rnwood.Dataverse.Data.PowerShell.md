@@ -17,13 +17,7 @@ Clears the global metadata cache used by Get cmdlets.
 ### [Compare-DataverseSolutionComponents](Compare-DataverseSolutionComponents.md)
 Compares a solution file with the state of that solution in the target environment or with another solution file.
 
-### [Compress-DataverseSolution](Compress-DataverseSolution.md)
-{{ Fill in the Synopsis }}
-
 ### [Compress-DataverseSolutionFile](Compress-DataverseSolutionFile.md)
-{{ Fill in the Synopsis }}
-
-### [Expand-DataverseSolution](Expand-DataverseSolution.md)
 {{ Fill in the Synopsis }}
 
 ### [Expand-DataverseSolutionFile](Expand-DataverseSolutionFile.md)
