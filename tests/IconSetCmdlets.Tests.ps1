@@ -82,19 +82,16 @@ Describe 'Icon Set Cmdlets - Get-DataverseIconSetIcon' {
     It "Get-DataverseIconSetIcon returns more than 1000 icons for Tabler (requires internet)" -Skip:($env:CI -eq 'true') {
         $icons = Get-DataverseIconSetIcon -IconSet Tabler
         $icons.Count | Should -BeGreaterThan 1000
-        Write-Host "Tabler icon count: $($icons.Count)"
     }
 
     It "Get-DataverseIconSetIcon returns more than 1000 icons for Iconoir (requires internet)" -Skip:($env:CI -eq 'true') {
         $icons = Get-DataverseIconSetIcon -IconSet Iconoir
         $icons.Count | Should -BeGreaterThan 1000
-        Write-Host "Iconoir icon count: $($icons.Count)"
     }
 
     It "Get-DataverseIconSetIcon returns more than 1000 icons for FluentUI (requires internet)" -Skip:($env:CI -eq 'true') {
         $icons = Get-DataverseIconSetIcon -IconSet FluentUI
         $icons.Count | Should -BeGreaterThan 1000
-        Write-Host "FluentUI icon count: $($icons.Count)"
     }
 }
 

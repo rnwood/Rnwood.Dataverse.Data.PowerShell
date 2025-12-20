@@ -125,6 +125,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 icon.Properties.Add(new PSNoteProperty("FileName", System.IO.Path.GetFileName(item.path)));
                 icon.Properties.Add(new PSNoteProperty("DownloadUrl", downloadUrl));
                 icon.Properties.Add(new PSNoteProperty("Size", item.size));
+                icon.Properties.Add(new PSNoteProperty("Truncated", tree.truncated));
                 icons.Add(icon);
             }
 
@@ -194,6 +195,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 icon.Properties.Add(new PSNoteProperty("FileName", System.IO.Path.GetFileName(item.path)));
                 icon.Properties.Add(new PSNoteProperty("DownloadUrl", downloadUrl));
                 icon.Properties.Add(new PSNoteProperty("Size", item.size));
+                icon.Properties.Add(new PSNoteProperty("Truncated", tree.truncated));
                 icons.Add(icon);
             }
 
