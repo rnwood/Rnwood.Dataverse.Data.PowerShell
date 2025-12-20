@@ -14,7 +14,7 @@ Sets a table's vector icon by downloading an icon from an online icon set and cr
 
 ```
 Set-DataverseTableIconFromSet [-EntityName] <String> [[-IconSet] <String>] [-IconName] <String>
- [-PublisherPrefix <String>] [-Publish] [-PassThru] [-Connection <ServiceClient>]
+ [-PublisherPrefix] <String> [-Publish] [-PassThru] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -31,21 +31,21 @@ This cmdlet eliminates the manual steps of downloading icons, creating web resou
 
 ### Example 1: Set a table icon
 ```powershell
-Set-DataverseTableIconFromSet -EntityName "contact" -IconName "person" -Publish
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName "person" -PublisherPrefix "contoso" -Publish
 ```
 
 Downloads the "person" icon from FluentUI (default), creates a web resource, sets it as the contact table's icon, and publishes the changes.
 
 ### Example 1b: Set a table icon from a specific icon set
 ```powershell
-Set-DataverseTableIconFromSet -EntityName "contact" -IconName "user" -IconSet Iconoir -Publish
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName "user" -IconSet Iconoir -PublisherPrefix "contoso" -Publish
 ```
 
 Downloads the "user" icon from Iconoir, creates a web resource, sets it as the contact table's icon, and publishes the changes.
 
 ### Example 1c: Set a table icon from Tabler
 ```powershell
-Set-DataverseTableIconFromSet -EntityName "account" -IconName "building" -IconSet Tabler -Publish
+Set-DataverseTableIconFromSet -EntityName "account" -IconName "building" -IconSet Tabler -PublisherPrefix "contoso" -Publish
 ```
 
 Downloads the "building" icon from Tabler (5000+ icons), creates a web resource, sets it as the account table's icon, and publishes the changes.
@@ -59,7 +59,7 @@ Sets the icon using a custom publisher prefix. The web resource will be named "c
 
 ### Example 3: Set icon and return metadata
 ```powershell
-$result = Set-DataverseTableIconFromSet -EntityName "account" -IconName "building" -PassThru
+$result = Set-DataverseTableIconFromSet -EntityName "account" -IconName "building" -PublisherPrefix "contoso" -PassThru
 $result.IconVectorName
 ```
 
@@ -68,7 +68,7 @@ Sets the icon and returns the updated entity metadata showing the icon web resou
 ### Example 4: Set icons for multiple tables
 ```powershell
 @("contact", "account", "lead") | ForEach-Object {
-    Set-DataverseTableIconFromSet -EntityName $_ -IconName "user" -Publish
+    Set-DataverseTableIconFromSet -EntityName $_ -IconName "user" -PublisherPrefix "contoso" -Publish
 }
 ```
 
@@ -80,7 +80,7 @@ Sets the same icon for multiple tables.
 $icon = Get-DataverseIconSetIcon -Name "*person*" | Out-GridView -OutputMode Single
 
 # Then set the selected icon
-Set-DataverseTableIconFromSet -EntityName "contact" -IconName $icon.Name -Publish
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName $icon.Name -PublisherPrefix "contoso" -Publish
 ```
 
 Browse available icons in a grid view, select one, and set it as the table icon.
@@ -91,14 +91,14 @@ Browse available icons in a grid view, select one, and set it as the table icon.
 $icon = Get-DataverseIconSetIcon -IconSet Tabler -Name "*user*" | Out-GridView -OutputMode Single
 
 # Then set the selected icon from Tabler
-Set-DataverseTableIconFromSet -EntityName "contact" -IconName $icon.Name -IconSet Tabler -Publish
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName $icon.Name -IconSet Tabler -PublisherPrefix "contoso" -Publish
 ```
 
 Browse available icons from Tabler icon set (5000+ icons), select one, and set it as the table icon.
 
 ### Example 6: Preview changes without applying
 ```powershell
-Set-DataverseTableIconFromSet -EntityName "contact" -IconName "user" -WhatIf
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName "user" -PublisherPrefix "contoso" -WhatIf
 ```
 
 Shows what changes would be made without actually applying them.
@@ -217,7 +217,7 @@ Accept wildcard characters: False
 ```
 
 ### -PublisherPrefix
-Publisher prefix to use for the web resource name. If not specified, uses the active publisher's customization prefix. The web resource will be named as `{prefix}_/icons/{iconname}.svg`.
+Publisher prefix to use for the web resource name. The web resource will be named as `{prefix}_/icons/{iconset}/{iconname}.svg`.
 
 
 ```yaml
@@ -225,9 +225,9 @@ Type: String
 Parameter Sets: (All)
 Aliases:
 
-Required: False
-Position: Named
-Default value: None (uses active publisher prefix)
+Required: True
+Position: 3
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
