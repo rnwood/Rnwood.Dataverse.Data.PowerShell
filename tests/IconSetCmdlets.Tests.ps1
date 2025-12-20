@@ -77,6 +77,25 @@ Describe 'Icon Set Cmdlets - Get-DataverseIconSetIcon' {
         $icons[0].Name | Should -Not -BeNullOrEmpty
         $icons[0].DownloadUrl | Should -Not -BeNullOrEmpty
     }
+
+    # Tests for verifying icon sets return more than 1000 icons (GitHub API limit fix)
+    It "Get-DataverseIconSetIcon returns more than 1000 icons for Tabler (requires internet)" -Skip:($env:CI -eq 'true') {
+        $icons = Get-DataverseIconSetIcon -IconSet Tabler
+        $icons.Count | Should -BeGreaterThan 1000
+        Write-Host "Tabler icon count: $($icons.Count)"
+    }
+
+    It "Get-DataverseIconSetIcon returns more than 1000 icons for Iconoir (requires internet)" -Skip:($env:CI -eq 'true') {
+        $icons = Get-DataverseIconSetIcon -IconSet Iconoir
+        $icons.Count | Should -BeGreaterThan 1000
+        Write-Host "Iconoir icon count: $($icons.Count)"
+    }
+
+    It "Get-DataverseIconSetIcon returns more than 1000 icons for FluentUI (requires internet)" -Skip:($env:CI -eq 'true') {
+        $icons = Get-DataverseIconSetIcon -IconSet FluentUI
+        $icons.Count | Should -BeGreaterThan 1000
+        Write-Host "FluentUI icon count: $($icons.Count)"
+    }
 }
 
 Describe 'Icon Set Cmdlets - Set-DataverseTableIconFromSet' {

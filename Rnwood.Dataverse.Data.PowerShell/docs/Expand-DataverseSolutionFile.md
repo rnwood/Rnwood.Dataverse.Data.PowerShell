@@ -70,6 +70,7 @@ Package type: 'Unmanaged' (default), 'Managed', or 'Both' for dual Managed and U
 Type: SolutionPackageType
 Parameter Sets: (All)
 Aliases:
+Accepted values: Unmanaged, Managed, Both
 
 Required: False
 Position: Named

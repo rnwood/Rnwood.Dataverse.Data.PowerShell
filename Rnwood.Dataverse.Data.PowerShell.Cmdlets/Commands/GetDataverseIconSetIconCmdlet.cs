@@ -44,6 +44,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 var icons = GetIconsAsync().GetAwaiter().GetResult();
 
+                WriteVerbose($"Retrieved {icons.Count} total icons from {IconSet}");
+
+                // Check for truncation warning (FluentUI)
+                if (icons.Count > 0)
+                {
+                    var firstIcon = icons[0];
+                    var truncatedProperty = firstIcon.Properties["Truncated"];
+                    if (truncatedProperty != null && truncatedProperty.Value is bool truncated && truncated)
+                    {
+                        WriteWarning($"The {IconSet} repository tree was truncated by GitHub API. Retrieved {icons.Count} icons, but some may be missing. The icon set contains more items than can be returned in a single API call.");
+                    }
+                }
+
                 // Filter icons by name if specified
                 if (!string.IsNullOrWhiteSpace(Name))
                 {
@@ -60,7 +73,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     WriteVerbose($"Filtered to {icons.Count} icons matching '{Name}'");
                 }
 
-                WriteVerbose($"Found {icons.Count} icons");
+                WriteVerbose($"Returning {icons.Count} icons");
                 WriteObject(icons, true);
             }
             catch (Exception ex)
@@ -95,32 +108,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             // Iconoir repository: https://github.com/iconoir-icons/iconoir
             // Icons are in: icons/regular/*.svg
-            // We'll use the GitHub API to list the directory contents
-            var apiUrl = IconSetUrlHelper.GetIconListApiUrl("Iconoir");
-
-            WriteVerbose($"Fetching icon list from GitHub API: {apiUrl}");
-
-            var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
-            request.Headers.Add("User-Agent", "Rnwood.Dataverse.Data.PowerShell");
-            request.Headers.Add("Accept", "application/vnd.github.v3+json");
-
-            var response = await httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-
-            var jsonContent = await response.Content.ReadAsStringAsync();
-            var items = JsonSerializer.Deserialize<List<GitHubFileItem>>(jsonContent);
+            // Use Git Trees API to get all icons (Contents API limited to 1000 items)
+            var tree = await GetGitTreeAsync("iconoir-icons", "iconoir", "main");
 
             var icons = new List<PSObject>();
-            foreach (var item in items.Where(i => i.name.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)))
+            foreach (var item in tree.tree.Where(i => 
+                i.path.StartsWith("icons/regular/", StringComparison.OrdinalIgnoreCase) && 
+                i.path.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)))
             {
-                var iconName = System.IO.Path.GetFileNameWithoutExtension(item.name);
+                var iconName = System.IO.Path.GetFileNameWithoutExtension(System.IO.Path.GetFileName(item.path));
                 var downloadUrl = IconSetUrlHelper.GetIconDownloadUrl("Iconoir", iconName);
                 
                 var icon = new PSObject();
                 icon.Properties.Add(new PSNoteProperty("IconSet", "Iconoir"));
                 icon.Properties.Add(new PSNoteProperty("Name", iconName));
-                icon.Properties.Add(new PSNoteProperty("FileName", item.name));
-                icon.Properties.Add(new PSNoteProperty("DownloadUrl", item.download_url ?? downloadUrl));
+                icon.Properties.Add(new PSNoteProperty("FileName", System.IO.Path.GetFileName(item.path)));
+                icon.Properties.Add(new PSNoteProperty("DownloadUrl", downloadUrl));
                 icon.Properties.Add(new PSNoteProperty("Size", item.size));
                 icons.Add(icon);
             }
@@ -132,38 +135,39 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             // FluentUI System Icons repository: https://github.com/microsoft/fluentui-system-icons
             // Icons are in: assets/{Capitalized}/SVG/ic_fluent_{lowercase}_24_regular.svg
-            // We'll query the assets folder and look for regular/filled variants
-            var apiUrl = IconSetUrlHelper.GetIconListApiUrl("FluentUI");
-
-            WriteVerbose($"Fetching icon list from GitHub API: {apiUrl}");
-
-            var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
-            request.Headers.Add("User-Agent", "Rnwood.Dataverse.Data.PowerShell");
-            request.Headers.Add("Accept", "application/vnd.github.v3+json");
-
-            var response = await httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-
-            var jsonContent = await response.Content.ReadAsStringAsync();
-            var items = JsonSerializer.Deserialize<List<GitHubFileItem>>(jsonContent);
+            // Use Git Trees API to get all icons (Contents API limited to 1000 items)
+            // Note: FluentUI tree may be truncated due to large size
+            var tree = await GetGitTreeAsync("microsoft", "fluentui-system-icons", "master");
 
             var icons = new List<PSObject>();
+            var iconFolders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             // FluentUI has folders for each icon with Capitalized names
-            // But icon names are lowercase in the actual filenames
             // Each icon typically has multiple sizes (16, 20, 24, 28, 32, 48) and variants (regular, filled)
             // We'll use 24_regular as the default for downloads
-            foreach (var item in items.Where(i => i.type == "dir"))
+            foreach (var item in tree.tree.Where(i => 
+                i.path.StartsWith("assets/", StringComparison.OrdinalIgnoreCase) && 
+                i.type == "tree"))
             {
-                var iconName = item.name;
-                var downloadUrl = IconSetUrlHelper.GetIconDownloadUrl("FluentUI", iconName);
-                
-                var icon = new PSObject();
-                icon.Properties.Add(new PSNoteProperty("IconSet", "FluentUI"));
-                icon.Properties.Add(new PSNoteProperty("Name", iconName));
-                icon.Properties.Add(new PSNoteProperty("FileName", $"ic_fluent_{iconName}_24_regular.svg"));
-                icon.Properties.Add(new PSNoteProperty("DownloadUrl", downloadUrl));
-                icon.Properties.Add(new PSNoteProperty("Size", 0L)); // Size unknown without fetching each file
-                icons.Add(icon);
+                // Extract icon name from path like "assets/IconName"
+                var pathParts = item.path.Split('/');
+                if (pathParts.Length == 2)
+                {
+                    var iconName = pathParts[1];
+                    if (iconFolders.Add(iconName))
+                    {
+                        var downloadUrl = IconSetUrlHelper.GetIconDownloadUrl("FluentUI", iconName);
+                        
+                        var icon = new PSObject();
+                        icon.Properties.Add(new PSNoteProperty("IconSet", "FluentUI"));
+                        icon.Properties.Add(new PSNoteProperty("Name", iconName));
+                        icon.Properties.Add(new PSNoteProperty("FileName", $"ic_fluent_{iconName.ToLower().Replace(" ", "_")}_24_regular.svg"));
+                        icon.Properties.Add(new PSNoteProperty("DownloadUrl", downloadUrl));
+                        icon.Properties.Add(new PSNoteProperty("Size", 0L)); // Size unknown without fetching each file
+                        icon.Properties.Add(new PSNoteProperty("Truncated", tree.truncated));
+                        icons.Add(icon);
+                    }
+                }
             }
 
             return icons;
@@ -173,32 +177,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             // Tabler Icons repository: https://github.com/tabler/tabler-icons
             // Icons are in: icons/outline/*.svg
-            // We'll use the GitHub API to list the directory contents
-            var apiUrl = IconSetUrlHelper.GetIconListApiUrl("Tabler");
-
-            WriteVerbose($"Fetching icon list from GitHub API: {apiUrl}");
-
-            var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
-            request.Headers.Add("User-Agent", "Rnwood.Dataverse.Data.PowerShell");
-            request.Headers.Add("Accept", "application/vnd.github.v3+json");
-
-            var response = await httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-
-            var jsonContent = await response.Content.ReadAsStringAsync();
-            var items = JsonSerializer.Deserialize<List<GitHubFileItem>>(jsonContent);
+            // Use Git Trees API to get all icons (Contents API limited to 1000 items)
+            var tree = await GetGitTreeAsync("tabler", "tabler-icons", "main");
 
             var icons = new List<PSObject>();
-            foreach (var item in items.Where(i => i.name.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)))
+            foreach (var item in tree.tree.Where(i => 
+                i.path.StartsWith("icons/outline/", StringComparison.OrdinalIgnoreCase) && 
+                i.path.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)))
             {
-                var iconName = System.IO.Path.GetFileNameWithoutExtension(item.name);
+                var iconName = System.IO.Path.GetFileNameWithoutExtension(System.IO.Path.GetFileName(item.path));
                 var downloadUrl = IconSetUrlHelper.GetIconDownloadUrl("Tabler", iconName);
                 
                 var icon = new PSObject();
                 icon.Properties.Add(new PSNoteProperty("IconSet", "Tabler"));
                 icon.Properties.Add(new PSNoteProperty("Name", iconName));
-                icon.Properties.Add(new PSNoteProperty("FileName", item.name));
-                icon.Properties.Add(new PSNoteProperty("DownloadUrl", item.download_url ?? downloadUrl));
+                icon.Properties.Add(new PSNoteProperty("FileName", System.IO.Path.GetFileName(item.path)));
+                icon.Properties.Add(new PSNoteProperty("DownloadUrl", downloadUrl));
                 icon.Properties.Add(new PSNoteProperty("Size", item.size));
                 icons.Add(icon);
             }
@@ -213,6 +207,68 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             public string download_url { get; set; }
             public long size { get; set; }
             public string type { get; set; }
+        }
+
+        private class GitHubBranchInfo
+        {
+            public GitHubCommitInfo commit { get; set; }
+        }
+
+        private class GitHubCommitInfo
+        {
+            public string sha { get; set; }
+        }
+
+        private class GitHubTreeResponse
+        {
+            public string sha { get; set; }
+            public List<GitHubTreeItem> tree { get; set; }
+            public bool truncated { get; set; }
+        }
+
+        private class GitHubTreeItem
+        {
+            public string path { get; set; }
+            public string mode { get; set; }
+            public string type { get; set; }
+            public string sha { get; set; }
+            public long size { get; set; }
+            public string url { get; set; }
+        }
+
+        /// <summary>
+        /// Fetches the git tree for a repository using the Git Trees API.
+        /// This supports repositories with more than 1000 files (Contents API limit).
+        /// </summary>
+        private async Task<GitHubTreeResponse> GetGitTreeAsync(string owner, string repo, string branch)
+        {
+            // Step 1: Get the commit SHA for the branch
+            var branchUrl = $"https://api.github.com/repos/{owner}/{repo}/branches/{branch}";
+            var branchRequest = new HttpRequestMessage(HttpMethod.Get, branchUrl);
+            branchRequest.Headers.Add("User-Agent", "Rnwood.Dataverse.Data.PowerShell");
+            branchRequest.Headers.Add("Accept", "application/vnd.github.v3+json");
+
+            var branchResponse = await httpClient.SendAsync(branchRequest);
+            branchResponse.EnsureSuccessStatusCode();
+
+            var branchJson = await branchResponse.Content.ReadAsStringAsync();
+            var branchInfo = JsonSerializer.Deserialize<GitHubBranchInfo>(branchJson);
+            var commitSha = branchInfo.commit.sha;
+
+            // Step 2: Get the git tree recursively
+            var treeUrl = $"https://api.github.com/repos/{owner}/{repo}/git/trees/{commitSha}?recursive=1";
+
+            var treeRequest = new HttpRequestMessage(HttpMethod.Get, treeUrl);
+            treeRequest.Headers.Add("User-Agent", "Rnwood.Dataverse.Data.PowerShell");
+            treeRequest.Headers.Add("Accept", "application/vnd.github.v3+json");
+
+            var treeResponse = await httpClient.SendAsync(treeRequest);
+            treeResponse.EnsureSuccessStatusCode();
+
+            var treeJson = await treeResponse.Content.ReadAsStringAsync();
+            var tree = JsonSerializer.Deserialize<GitHubTreeResponse>(treeJson);
+
+            return tree;
         }
     }
 }

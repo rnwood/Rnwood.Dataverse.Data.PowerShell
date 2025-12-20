@@ -319,6 +319,7 @@ Package type: 'Unmanaged', 'Managed', or 'Both' (default) for dual Managed and U
 Type: SolutionPackageType
 Parameter Sets: ToFolder
 Aliases:
+Accepted values: Unmanaged, Managed, Both
 
 Required: False
 Position: Named
