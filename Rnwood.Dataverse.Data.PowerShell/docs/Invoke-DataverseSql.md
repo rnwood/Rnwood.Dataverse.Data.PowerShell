@@ -32,7 +32,8 @@ If applicable (e.g. for UPDATE), the affected row count is written to verbose ou
 
 ### Example 1
 ```powershell
-PS C:\> Invoke-DataverseSql -connection $connection -sql "SELECT TOP 1 createdon FROM Contact WHERE lastname=@lastname" -parameters @{
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Invoke-DataverseSql -sql "SELECT TOP 1 createdon FROM Contact WHERE lastname=@lastname" -parameters @{
 lastname = "Wood"
 }
 
@@ -45,6 +46,7 @@ Returns the rows from the SELECT query matching the @lastname parameter which is
 
 ### Example 2
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> @(
 @{
 lastname = "Wood"
@@ -52,7 +54,7 @@ lastname = "Wood"
 @{
 lastname = "Cat2"
 }
-) | Invoke-DataverseSql -connection $c -sql "SELECT TOP 1 lastname, createdon FROM Contact WHERE lastname=@lastname"
+) | Invoke-DataverseSql -sql "SELECT TOP 1 lastname, createdon FROM Contact WHERE lastname=@lastname"
 
 lastname createdon
 -------- ---------
@@ -64,6 +66,7 @@ Returns the rows from the SELECT query matching the @lastname parameters which a
 
 ### Example 3
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Create connections to different environments
 PS C:\> $primaryConnection = Get-DataverseConnection -url "https://primary.crm.dynamics.com" -ClientId $clientId -ClientSecret $secret
 PS C:\> $secondaryConnection = Get-DataverseConnection -url "https://secondary.crm.dynamics.com" -ClientId $clientId -ClientSecret $secret
@@ -74,7 +77,7 @@ PS C:\> $additionalConnections = @{
 }
 
 PS C:\> # Execute cross-datasource query
-PS C:\> Invoke-DataverseSql -Connection $primaryConnection -AdditionalConnections $additionalConnections -Sql "
+PS C:\> Invoke-DataverseSql -AdditionalConnections $additionalConnections -Sql "
 SELECT p.fullname AS primary_user, s.fullname AS secondary_user
 FROM primary_org.systemuser p
 CROSS JOIN secondary.systemuser s
@@ -91,6 +94,7 @@ Executes a cross-datasource query that joins data from two different Dataverse e
 
 ### Example 4
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Create connections with explicit data source names for repeatability
 PS C:\> $devConnection = Get-DataverseConnection -url "https://dev-org.crm.dynamics.com" -ClientId $clientId -ClientSecret $secret
 PS C:\> $prodConnection = Get-DataverseConnection -url "https://prod-org.crm.dynamics.com" -ClientId $clientId -ClientSecret $secret
@@ -101,7 +105,7 @@ PS C:\> $additionalConnections = @{
 }
 
 PS C:\> # Query uses explicit "primary" name instead of dev org's unique name
-PS C:\> Invoke-DataverseSql -Connection $devConnection -DataSourceName "primary" -AdditionalConnections $additionalConnections -Sql "
+PS C:\> Invoke-DataverseSql -DataSourceName "primary" -AdditionalConnections $additionalConnections -Sql "
 	SELECT p.fullname, prod.email
 	FROM primary.systemuser p
 	LEFT JOIN production.systemuser prod ON p.domainname = prod.domainname

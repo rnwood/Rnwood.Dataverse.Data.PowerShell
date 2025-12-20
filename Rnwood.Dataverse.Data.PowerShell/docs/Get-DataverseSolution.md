@@ -27,6 +27,7 @@ The cmdlet returns SolutionInfo objects with metadata about each solution includ
 
 ### Example 1: Retrieve all solutions
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSolution
 
 UniqueName            Name                  Version    IsManaged PublisherName
@@ -40,6 +41,7 @@ Retrieves all solutions from the Dataverse environment.
 
 ### Example 2: Retrieve a specific solution by unique name
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSolution -UniqueName "MySolution"
 
 UniqueName            : MySolution
@@ -56,6 +58,7 @@ Retrieves a specific solution by its unique name.
 
 ### Example 3: Get only managed solutions
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSolution -Managed
 
 UniqueName            Name                  Version    IsManaged
@@ -68,6 +71,7 @@ Retrieves only managed solutions.
 
 ### Example 4: Get only unmanaged solutions, excluding system solutions
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSolution -Unmanaged -ExcludeSystemSolutions
 
 UniqueName            Name                  Version    IsManaged
@@ -80,6 +84,7 @@ Retrieves only unmanaged solutions, excluding the Default, Active, and Basic sys
 
 ### Example 5: Get solutions using wildcard patterns
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSolution -UniqueName "Contoso*"
 
 UniqueName            Name                  Version    IsManaged
@@ -92,6 +97,7 @@ Retrieves all solutions whose unique name starts with "Contoso".
 
 ### Example 6: Filter solutions with multiple wildcards
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSolution -UniqueName "*Custom*" -Unmanaged
 
 UniqueName            Name                  Version    IsManaged
@@ -104,6 +110,7 @@ Retrieves all unmanaged solutions whose unique name contains "Custom".
 
 ### Example 7: Check solution version before upgrade
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $solution = Get-DataverseSolution -UniqueName "MySolution"
 PS C:\> if ($solution.Version -lt [Version]"2.0.0.0") {
 >>     Write-Host "Solution needs upgrade from $($solution.Version) to 2.0.0.0"

@@ -24,7 +24,8 @@ Writes a list of Dataverse records to a folder where each file represents a sing
 
 ### Example 1
 ```powershell
-PS C:\> Get-DataverseRecord -connection $connection -tablename contact | Set-DataverseRecordsFolder data/contacts
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseRecord -tablename contact | Set-DataverseRecordsFolder data/contacts
 ```
 
 Writes all contacts to the folder `data/contacts`.

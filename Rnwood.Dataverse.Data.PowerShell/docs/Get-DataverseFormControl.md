@@ -29,44 +29,50 @@ The cmdlet supports retrieving controls from:
 
 ### Example 1: Get all controls from a form
 ```powershell
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information'
-PS C:\> Get-DataverseFormControl -Connection $c -FormId $form.FormId
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $form = Get-DataverseForm -Entity 'contact' -Name 'Information'
+PS C:\> Get-DataverseFormControl -FormId $form.FormId
 ```
 
 Retrieves all controls from all tabs, sections, and the header in the contact Information form.
 
 ### Example 2: Get controls from a specific section (requires TabName)
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $formId = '12345678-1234-1234-1234-123456789012'
-PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId -TabName 'General' -SectionName 'ContactDetails'
+PS C:\> Get-DataverseFormControl -FormId $formId -TabName 'General' -SectionName 'ContactDetails'
 ```
 
 Retrieves all controls from the 'ContactDetails' section in the 'General' tab. Note: TabName is required when SectionName is specified since section names are only unique within a tab.
 
 ### Example 3: Get a specific control by ID
 ```powershell
-PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId -ControlId 'firstname_ctrl'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormControl -FormId $formId -ControlId 'firstname_ctrl'
 ```
 
 Retrieves the control with ID 'firstname_ctrl'.
 
 ### Example 4: Get controls by data field
 ```powershell
-PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId -DataField 'emailaddress1'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormControl -FormId $formId -DataField 'emailaddress1'
 ```
 
 Retrieves all controls bound to the 'emailaddress1' field.
 
 ### Example 5: Get controls from specific tab and section
 ```powershell
-PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId -TabName 'Details' -SectionName 'ContactInfo'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormControl -FormId $formId -TabName 'Details' -SectionName 'ContactInfo'
 ```
 
 Retrieves controls from the 'ContactInfo' section within the 'Details' tab.
 
 ### Example 6: Explore control and cell properties
 ```powershell
-PS C:\> $control = Get-DataverseFormControl -Connection $c -FormId $formId -DataField 'firstname'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $control = Get-DataverseFormControl -FormId $formId -DataField 'firstname'
 PS C:\> $control.Id              # Control ID
 PS C:\> $control.DataField       # Bound data field name
 PS C:\> $control.ClassId         # Control class identifier
@@ -86,7 +92,8 @@ Explores the structure and properties of a specific control including cell-level
 
 ### Example 7: Find controls with specific properties
 ```powershell
-PS C:\> $controls = Get-DataverseFormControl -Connection $c -FormId $formId
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $controls = Get-DataverseFormControl -FormId $formId
 PS C:\> $controls | Where-Object { $_.Hidden -eq $true }                    # Hidden controls
 PS C:\> $controls | Where-Object { $_.IsRequired -eq $true }               # Required controls
 PS C:\> $controls | Where-Object { $_.Disabled -eq $true }                 # Disabled controls
@@ -97,7 +104,8 @@ Filters controls based on specific properties.
 
 ### Example 8: Get controls and their locations
 ```powershell
-PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId | 
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormControl -FormId $formId | 
     Select-Object TabName, SectionName, Id, DataField | 
     Sort-Object TabName, SectionName, Id
 ```
@@ -106,21 +114,24 @@ Gets controls with their location information and sorts by hierarchy.
 
 ### Example 9: Get all header controls
 ```powershell
-PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId -TabName '[Header]'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormControl -FormId $formId -TabName '[Header]'
 ```
 
 Retrieves all controls from the form header. Header controls are commonly used for displaying key information at the top of forms.
 
 ### Example 10: Get specific header control by data field
 ```powershell
-PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId -TabName '[Header]' -DataField 'emailaddress1'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormControl -FormId $formId -TabName '[Header]' -DataField 'emailaddress1'
 ```
 
 Retrieves the email address control from the form header.
 
 ### Example 11: Find all email controls across the entire form
 ```powershell
-PS C:\> $controls = Get-DataverseFormControl -Connection $c -FormId $formId
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $controls = Get-DataverseFormControl -FormId $formId
 PS C:\> $emailControls = $controls | Where-Object { $_.ClassId -match 'ADA2203E-B4CD' }
 PS C:\> $emailControls | Select-Object TabName, SectionName, DataField
 ```

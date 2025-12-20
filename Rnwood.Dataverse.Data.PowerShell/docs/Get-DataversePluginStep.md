@@ -43,7 +43,8 @@ Retrieves plugin steps by ID, name, plugin type ID, or all steps.
 
 ### Example 1
 ```powershell
-PS C:\> Get-DataversePluginStep -Connection $connection -PluginTypeId 12345678-1234-1234-1234-123456789012
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataversePluginStep -PluginTypeId 12345678-1234-1234-1234-123456789012
 ```
 
 Retrieves all plugin steps for a specific plugin type.

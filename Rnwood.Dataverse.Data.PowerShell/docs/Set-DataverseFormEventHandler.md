@@ -64,58 +64,66 @@ Use the `-AllowCustomEventNames` switch to bypass event name validation for cust
 
 ### Example 1: Add a form onload handler
 ```powershell
-PS C:\> Set-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload" -FunctionName "OnFormLoad" -LibraryName "new_/scripts/main.js"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormEventHandler -FormId $formId -EventName "onload" -FunctionName "OnFormLoad" -LibraryName "new_/scripts/main.js"
 ```
 
 Adds an onload event handler to the form.
 
 ### Example 2: Add an attribute-level onchange handler
 ```powershell
-PS C:\> Set-DataverseFormEventHandler -Connection $c -FormId $formId -AttributeName "department" -EventName "onchange" -FunctionName "OnDepartmentChange" -LibraryName "new_/scripts/validation.js"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormEventHandler -FormId $formId -AttributeName "department" -EventName "onchange" -FunctionName "OnDepartmentChange" -LibraryName "new_/scripts/validation.js"
 ```
 
 Adds an onchange event handler for the "department" attribute. This creates an event with the attribute property at the form root level.
 
 ### Example 3: Add a tab-level tabstatechange handler
 ```powershell
-PS C:\> Set-DataverseFormEventHandler -Connection $c -FormId $formId -TabName "General" -EventName "tabstatechange" -FunctionName "OnTabChange" -LibraryName "new_/scripts/tabs.js"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormEventHandler -FormId $formId -TabName "General" -EventName "tabstatechange" -FunctionName "OnTabChange" -LibraryName "new_/scripts/tabs.js"
 ```
 
 Adds a tabstatechange event handler to the "General" tab. This creates an event within the tab element.
 
 ### Example 4: Add a control onchange handler
 ```powershell
-PS C:\> Set-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onchange" -FunctionName "OnFieldChange" -LibraryName "new_/scripts/validation.js" -ControlId "emailaddress1" -TabName "general" -SectionName "contact_info"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormEventHandler -FormId $formId -EventName "onchange" -FunctionName "OnFieldChange" -LibraryName "new_/scripts/validation.js" -ControlId "emailaddress1" -TabName "general" -SectionName "contact_info"
 ```
 
 Adds an onchange event handler to a specific control.
 
 ### Example 5: Add a handler with parameters
 ```powershell
-PS C:\> Set-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload" -FunctionName "InitializeForm" -LibraryName "new_/scripts/init.js" -Parameters "{'mode':'create','showWarnings':true}"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormEventHandler -FormId $formId -EventName "onload" -FunctionName "InitializeForm" -LibraryName "new_/scripts/init.js" -Parameters "{'mode':'create','showWarnings':true}"
 ```
 
 Adds a handler with JSON parameters that will be passed to the function.
 
 ### Example 6: Add a disabled handler
 ```powershell
-PS C:\> Set-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onsave" -FunctionName "ValidateData" -LibraryName "new_/scripts/validation.js" -Enabled $false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormEventHandler -FormId $formId -EventName "onsave" -FunctionName "ValidateData" -LibraryName "new_/scripts/validation.js" -Enabled $false
 ```
 
 Adds a handler but leaves it disabled for later activation.
 
 ### Example 7: Update an existing handler
 ```powershell
-PS C:\> Set-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload" -FunctionName "ExistingFunction" -LibraryName "new_/scripts/main.js" -PassExecutionContext $false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormEventHandler -FormId $formId -EventName "onload" -FunctionName "ExistingFunction" -LibraryName "new_/scripts/main.js" -PassExecutionContext $false
 ```
 
 Updates an existing handler's PassExecutionContext setting.
 
 ### Example 8: Add multiple attribute handlers
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $attributes = @("firstname", "lastname", "emailaddress1")
 PS C:\> foreach ($attr in $attributes) {
-PS C:\>     Set-DataverseFormEventHandler -Connection $c -FormId $formId `
+PS C:\>     Set-DataverseFormEventHandler -FormId $formId `
 PS C:\>         -AttributeName $attr -EventName "onchange" `
 PS C:\>         -FunctionName "ValidateField" -LibraryName "new_/scripts/validation.js"
 PS C:\> }
@@ -125,7 +133,8 @@ Adds onchange handlers for multiple attributes using the same validation functio
 
 ### Example 9: Add a custom event handler
 ```powershell
-PS C:\> Set-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "mycustomevent" -FunctionName "CustomHandler" -LibraryName "new_/scripts/custom.js" -AllowCustomEventNames
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormEventHandler -FormId $formId -EventName "mycustomevent" -FunctionName "CustomHandler" -LibraryName "new_/scripts/custom.js" -AllowCustomEventNames
 ```
 
 Adds a handler for a custom event type using the `-AllowCustomEventNames` switch to bypass validation. Event names are automatically converted to lowercase.

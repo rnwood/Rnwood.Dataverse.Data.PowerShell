@@ -31,14 +31,16 @@ When changing column layouts, existing sections are automatically redistributed 
 
 ### Example 1: Create a simple tab
 ```powershell
-PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -Name "Details" -Label "Details Tab"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormTab -FormId $formId -Name "Details" -Label "Details Tab"
 ```
 
 Creates a new tab with default single-column layout.
 
 ### Example 2: Create a two-column tab
 ```powershell
-PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -Name "ContactInfo" -Label "Contact Information" `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormTab -FormId $formId -Name "ContactInfo" -Label "Contact Information" `
     -Layout TwoColumns -Column1Width 60 -Column2Width 40
 ```
 
@@ -46,7 +48,8 @@ Creates a tab with two columns: 60% and 40% width.
 
 ### Example 3: Create a three-column tab
 ```powershell
-PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -Name "Overview" -Label "Overview" `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormTab -FormId $formId -Name "Overview" -Label "Overview" `
     -Layout ThreeColumns -Column1Width 40 -Column2Width 30 -Column3Width 30
 ```
 
@@ -54,8 +57,9 @@ Creates a tab with three columns with custom widths.
 
 ### Example 4: Update existing tab layout
 ```powershell
-PS C:\> $tab = Get-DataverseFormTab -Connection $c -FormId $formId -TabName "general"
-PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -TabId $tab.Id -Name "general" `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $tab = Get-DataverseFormTab -FormId $formId -TabName "general"
+PS C:\> Set-DataverseFormTab -FormId $formId -TabId $tab.Id -Name "general" `
     -Layout TwoColumns -Column1Width 50 -Column2Width 50
 ```
 
@@ -63,7 +67,8 @@ Updates an existing tab to use a two-column layout with equal widths.
 
 ### Example 5: Create tab with positioning
 ```powershell
-PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -Name "Summary" -Label "Summary" `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormTab -FormId $formId -Name "Summary" -Label "Summary" `
     -InsertBefore "general" -Layout OneColumn -PassThru
 ```
 
@@ -71,7 +76,8 @@ Creates a new tab and positions it before the "general" tab, returning the new t
 
 ### Example 6: Create collapsed hidden tab
 ```powershell
-PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -Name "Advanced" -Label "Advanced Options" `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormTab -FormId $formId -Name "Advanced" -Label "Advanced Options" `
     -Hidden -Expanded:$false -ShowLabel
 ```
 
@@ -79,8 +85,9 @@ Creates a new tab that is hidden and collapsed by default but shows the label.
 
 ### Example 7: Update tab visibility and layout
 ```powershell
-PS C:\> $tab = Get-DataverseFormTab -Connection $c -FormId $formId -TabName "details"
-PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -TabId $tab.Id -Name "details" `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $tab = Get-DataverseFormTab -FormId $formId -TabName "details"
+PS C:\> Set-DataverseFormTab -FormId $formId -TabId $tab.Id -Name "details" `
     -Hidden:$false -Layout ThreeColumns -Column1Width 33 -Column2Width 33 -Column3Width 34
 ```
 
@@ -88,7 +95,8 @@ Updates an existing tab to make it visible and change to a three-column layout.
 
 ### Example 8: Create tab at specific position
 ```powershell
-PS C:\> Set-DataverseFormTab -Connection $c -FormId $formId -Name "FirstTab" -Label "First Tab" `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormTab -FormId $formId -Name "FirstTab" -Label "First Tab" `
     -Index 0 -Layout OneColumn
 ```
 

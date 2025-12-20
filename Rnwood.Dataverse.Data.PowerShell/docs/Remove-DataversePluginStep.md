@@ -24,7 +24,8 @@ Deletes a plugin step (SDK message processing step) from Dataverse.
 
 ### Example 1
 ```powershell
-PS C:\> Remove-DataversePluginStep -Connection $connection -Id 12345678-1234-1234-1234-123456789012
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataversePluginStep -Id 12345678-1234-1234-1234-123456789012
 ```
 
 Removes the specified plugin step.

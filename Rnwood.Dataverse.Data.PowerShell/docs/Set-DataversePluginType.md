@@ -25,7 +25,8 @@ Creates or updates plugin types with association to a plugin assembly.
 
 ### Example 1
 ```powershell
-PS C:\> Set-DataversePluginType -Connection $connection -PluginAssemblyId $assemblyId -TypeName "MyNamespace.MyPlugin"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataversePluginType -PluginAssemblyId $assemblyId -TypeName "MyNamespace.MyPlugin"
 ```
 
 Creates a new plugin type.

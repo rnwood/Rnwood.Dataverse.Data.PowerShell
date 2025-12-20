@@ -29,9 +29,10 @@ The cmdlet compares existing values with new values and only updates changed val
 
 ### Example 1: Update organization table columns
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $connection = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
 PS C:\> $updates = [PSCustomObject]@{ name = "Contoso Corporation" }
-PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -Confirm:$false -Verbose
+PS C:\> Set-DataverseOrganizationSettings -InputObject $updates -Confirm:$false -Verbose
 VERBOSE: Column 'name': Changing from '"Contoso"' to '"Contoso Corporation"'
 VERBOSE: Updated 1 attribute(s) in organization record ...
 ```
@@ -40,11 +41,12 @@ Updates the organization name. Only changed values are updated.
 
 ### Example 2: Update OrgDbOrgSettings
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $settings = [PSCustomObject]@{
     MaxUploadFileSize = 10485760
     EnableBingMapsIntegration = $true
 }
-PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $settings -OrgDbOrgSettings -Confirm:$false -Verbose
+PS C:\> Set-DataverseOrganizationSettings -InputObject $settings -OrgDbOrgSettings -Confirm:$false -Verbose
 VERBOSE: Setting 'MaxUploadFileSize': Changing from '5242880' to '10485760'
 VERBOSE: Setting 'EnableBingMapsIntegration': No change (value is 'true')
 VERBOSE: Updated 1 attribute(s) in organization record ...
@@ -54,10 +56,11 @@ Updates OrgDbOrgSettings. Only changed settings are updated.
 
 ### Example 3: Remove an OrgDbOrgSettings setting
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $updates = [PSCustomObject]@{
     ObsoleteGetting = $null
 }
-PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -OrgDbOrgSettings -Confirm:$false -Verbose
+PS C:\> Set-DataverseOrganizationSettings -InputObject $updates -OrgDbOrgSettings -Confirm:$false -Verbose
 VERBOSE: Setting 'ObsoleteGetting': Removing (was 'oldvalue')
 VERBOSE: Updated 1 attribute(s) in organization record ...
 ```
@@ -66,8 +69,9 @@ Removes a setting from OrgDbOrgSettings by passing $null.
 
 ### Example 4: Update with PassThru
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $updates = [PSCustomObject]@{ name = "New Name" }
-PS C:\> $result = Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -PassThru -Confirm:$false
+PS C:\> $result = Set-DataverseOrganizationSettings -InputObject $updates -PassThru -Confirm:$false
 PS C:\> $result.name
 New Name
 ```
@@ -76,8 +80,9 @@ Updates and returns the updated record.
 
 ### Example 5: Use WhatIf to preview changes
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $updates = [PSCustomObject]@{ MaxUploadFileSize = 10485760 }
-PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -OrgDbOrgSettings -WhatIf
+PS C:\> Set-DataverseOrganizationSettings -InputObject $updates -OrgDbOrgSettings -WhatIf
 What if: Performing the operation "Update organization settings" on target "OrgDbOrgSettings in organization record ..."
 ```
 

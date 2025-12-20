@@ -33,6 +33,7 @@ This cmdlet has ConfirmImpact.Medium and prompts for confirmation by default.
 
 ### Example 1: Revoke access from a user
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseRecordAccess -TableName account -Id "12345678-1234-1234-1234-123456789012" -Principal "87654321-4321-4321-4321-210987654321"
 ```
 
@@ -40,6 +41,7 @@ Revokes all access from the specified user for the account record. Prompts for c
 
 ### Example 2: Revoke access from a team without confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseRecordAccess -TableName contact -Id "11111111-1111-1111-1111-111111111111" -Principal "22222222-2222-2222-2222-222222222222" -IsTeam -Confirm:$false
 ```
 
@@ -47,6 +49,7 @@ Revokes all access from the specified team for the contact record without prompt
 
 ### Example 3: Remove access from multiple principals
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $accessList = Get-DataverseRecordAccess -TableName opportunity -Id "33333333-3333-3333-3333-333333333333"
 PS C:\> $whoAmI = Get-DataverseWhoAmI
 PS C:\> $accessList | Where-Object { $_.Principal.Id -ne $whoAmI.UserId } | ForEach-Object {
@@ -58,6 +61,7 @@ Removes shared access from all principals except the current user.
 
 ### Example 4: Verify access was removed
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseRecordAccess -TableName contact -Id "11111111-1111-1111-1111-111111111111" -Principal "44444444-4444-4444-4444-444444444444" -Confirm:$false
 PS C:\> $access = Test-DataverseRecordAccess -TableName contact -Id "11111111-1111-1111-1111-111111111111" -Principal "44444444-4444-4444-4444-444444444444"
 PS C:\> Write-Host "Access after removal: $access"

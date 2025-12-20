@@ -39,6 +39,7 @@ When creating a new attribute, the `-AttributeType` and `-SchemaName` parameters
 
 ### Example 1: Create a simple text attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName account -AttributeName new_customfield `
     -SchemaName new_CustomField -DisplayName "Custom Field" -AttributeType String `
     -MaxLength 200 -Description "A custom text field"
@@ -48,6 +49,7 @@ Creates a new single-line text attribute named `new_customfield` on the `account
 
 ### Example 2: Create a multiline text attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName contact -AttributeName new_notes `
     -SchemaName new_Notes -DisplayName "Notes" -AttributeType Memo `
     -MaxLength 4000 -RequiredLevel Recommended
@@ -57,6 +59,7 @@ Creates a multiline text (memo) attribute on the `contact` table with 4000 chara
 
 ### Example 3: Create an integer attribute with constraints
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName product -AttributeName new_quantity `
     -SchemaName new_Quantity -DisplayName "Quantity" -AttributeType Integer `
     -MinValue 0 -MaxValue 10000 -RequiredLevel ApplicationRequired
@@ -66,6 +69,7 @@ Creates an integer attribute with minimum value of 0 and maximum of 10000, makin
 
 ### Example 4: Create a decimal attribute with precision
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName invoice -AttributeName new_discount `
     -SchemaName new_Discount -DisplayName "Discount Percentage" -AttributeType Decimal `
     -MinValue 0 -MaxValue 100 -Precision 2
@@ -75,6 +79,7 @@ Creates a decimal attribute for discount percentages with 2 decimal places of pr
 
 ### Example 5: Create a money attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName opportunity -AttributeName new_bonus `
     -SchemaName new_Bonus -DisplayName "Bonus Amount" -AttributeType Money `
     -MinValue 0 -MaxValue 1000000 -Precision 2
@@ -84,6 +89,7 @@ Creates a money attribute for bonus amounts with currency formatting.
 
 ### Example 6: Create a date-only attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName contact -AttributeName new_hiredate `
     -SchemaName new_HireDate -DisplayName "Hire Date" -AttributeType DateTime `
     -DateTimeFormat DateOnly -DateTimeBehavior UserLocal
@@ -93,6 +99,7 @@ Creates a date-only attribute (no time component) that displays in the user's lo
 
 ### Example 7: Create a date and time attribute with timezone independence
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName appointment -AttributeName new_eventtime `
     -SchemaName new_EventTime -DisplayName "Event Time" -AttributeType DateTime `
     -DateTimeFormat DateAndTime -DateTimeBehavior TimeZoneIndependent
@@ -102,6 +109,7 @@ Creates a date and time attribute that stores values independent of timezone.
 
 ### Example 8: Create a boolean (Yes/No) attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName account -AttributeName new_ispremium `
     -SchemaName new_IsPremium -DisplayName "Is Premium" -AttributeType Boolean `
     -TrueLabel "Premium" -FalseLabel "Standard" -DefaultValue $true
@@ -111,6 +119,7 @@ Creates a Yes/No attribute with custom labels and a default value of true.
 
 ### Example 9: Create a choice (picklist) attribute with local options
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $options = @(
     @{ Value = 1; Label = "Small" }
     @{ Value = 2; Label = "Medium" }
@@ -127,6 +136,7 @@ Creates a choice attribute with local (entity-specific) options.
 
 ### Example 10: Create a choice attribute using a global option set
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName contact -AttributeName new_status `
     -SchemaName new_Status -DisplayName "Customer Status" -AttributeType Picklist `
     -OptionSetName new_customerstatus
@@ -136,6 +146,7 @@ Creates a choice attribute that uses an existing global option set named `new_cu
 
 ### Example 11: Create a multi-select choice attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $interests = @(
     @{ Value = 1; Label = "Technology" }
     @{ Value = 2; Label = "Sports" }
@@ -152,6 +163,7 @@ Creates a multi-select choice attribute allowing multiple values to be selected.
 
 ### Example 12: Create a file attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName account -AttributeName new_contract `
     -SchemaName new_Contract -DisplayName "Contract Document" -AttributeType File `
     -MaxSizeInKB 10240
@@ -161,6 +173,7 @@ Creates a file attribute that can store documents up to 10MB (10240 KB).
 
 ### Example 13: Create an image attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName contact -AttributeName new_photo `
     -SchemaName new_Photo -DisplayName "Profile Photo" -AttributeType Image `
     -MaxSizeInKB 5120
@@ -170,6 +183,7 @@ Creates an image attribute for storing profile photos up to 5MB.
 
 ### Example 14: Update attribute display name and description
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName account -AttributeName new_customfield `
     -DisplayName "Updated Field Name" -Description "Updated description for this field"
 ```
@@ -178,6 +192,7 @@ Updates the display name and description of an existing attribute. No other prop
 
 ### Example 15: Update attribute required level
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName contact -AttributeName emailaddress1 `
     -RequiredLevel ApplicationRequired
 ```
@@ -186,6 +201,7 @@ Changes the required level of the email address field to make it application-req
 
 ### Example 16: Enable audit on an attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName account -AttributeName revenue `
     -IsAuditEnabled
 ```
@@ -194,6 +210,7 @@ Enables auditing for the revenue field to track changes.
 
 ### Example 17: Update string attribute maximum length
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName account -AttributeName accountnumber `
     -MaxLength 50
 ```
@@ -202,6 +219,7 @@ Increases the maximum length of the account number field to 50 characters.
 
 ### Example 18: Update numeric attribute constraints
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName product -AttributeName new_quantity `
     -MinValue 10 -MaxValue 5000
 ```
@@ -210,6 +228,7 @@ Updates the minimum and maximum values for an existing integer attribute.
 
 ### Example 19: Create attribute with -PassThru to see result
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $result = Set-DataverseAttributeMetadata -EntityName account -AttributeName new_score `
     -SchemaName new_Score -DisplayName "Score" -AttributeType Integer `
     -PassThru
@@ -227,6 +246,7 @@ Creates an attribute and returns the metadata of the created attribute using `-P
 
 ### Example 20: Create email format string attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName contact -AttributeName new_secondaryemail `
     -SchemaName new_SecondaryEmail -DisplayName "Secondary Email" -AttributeType String `
     -MaxLength 100 -StringFormat Email
@@ -236,6 +256,7 @@ Creates a text attribute with email format validation.
 
 ### Example 21: Create URL format string attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName account -AttributeName new_website2 `
     -SchemaName new_Website2 -DisplayName "Secondary Website" -AttributeType String `
     -MaxLength 200 -StringFormat Url
@@ -245,6 +266,7 @@ Creates a text attribute with URL format, displayed as a clickable link.
 
 ### Example 22: Create phone format string attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName contact -AttributeName new_mobilephone2 `
     -SchemaName new_MobilePhone2 -DisplayName "Secondary Mobile" -AttributeType String `
     -MaxLength 20 -StringFormat Phone
@@ -254,6 +276,7 @@ Creates a text attribute with phone number formatting.
 
 ### Example 23: Attempt to update immutable property (will fail)
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName account -AttributeName new_customfield `
     -StringFormat Email
 
@@ -264,6 +287,7 @@ Demonstrates that attempting to change an immutable property will result in an e
 
 ### Example 24: Create BigInt attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName account -AttributeName new_largeid `
     -SchemaName new_LargeId -DisplayName "Large ID" -AttributeType BigInt `
     -Description "Stores very large integer values"
@@ -273,6 +297,7 @@ Creates a BigInt attribute for storing large integer values beyond the range of 
 
 ### Example 25: Create Double attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName measurement -AttributeName new_temperature `
     -SchemaName new_Temperature -DisplayName "Temperature" -AttributeType Double `
     -MinValue -273.15 -MaxValue 1000 -Precision 4
@@ -282,6 +307,7 @@ Creates a double-precision floating point attribute with 4 decimal places.
 
 ### Example 26: Make attribute searchable
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName account -AttributeName new_keywords `
     -SchemaName new_Keywords -DisplayName "Keywords" -AttributeType String `
     -MaxLength 500 -IsSearchable
@@ -291,6 +317,7 @@ Creates a searchable text attribute that can be used in Advanced Find queries.
 
 ### Example 27: Batch create multiple attributes
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $attributes = @(
     @{ AttributeName = "new_field1"; SchemaName = "new_Field1"; DisplayName = "Field 1"; AttributeType = "String"; MaxLength = 100 }
     @{ AttributeName = "new_field2"; SchemaName = "new_Field2"; DisplayName = "Field 2"; AttributeType = "Integer"; MinValue = 0; MaxValue = 100 }
@@ -306,6 +333,7 @@ Creates multiple attributes by iterating through a collection of attribute defin
 
 ### Example 28: Create UniqueIdentifier attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName account -AttributeName new_externalid `
     -SchemaName new_ExternalId -DisplayName "External ID" -AttributeType UniqueIdentifier `
     -Description "Unique identifier from external system"
@@ -315,6 +343,7 @@ Creates a GUID attribute for storing unique identifiers from external systems.
 
 ### Example 29: Use -WhatIf to preview changes
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseAttributeMetadata -EntityName account -AttributeName new_testfield `
     -SchemaName new_TestField -DisplayName "Test Field" -AttributeType String `
     -MaxLength 100 -WhatIf
@@ -326,9 +355,10 @@ Uses -WhatIf to see what would happen without actually creating the attribute.
 
 ### Example 30: Update with specific connection
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://myorg.crm.dynamics.com" -Interactive
 
-PS C:\> Set-DataverseAttributeMetadata -Connection $conn -EntityName account `
+PS C:\> Set-DataverseAttributeMetadata -EntityName account `
     -AttributeName new_customfield -DisplayName "Updated Name"
 ```
 

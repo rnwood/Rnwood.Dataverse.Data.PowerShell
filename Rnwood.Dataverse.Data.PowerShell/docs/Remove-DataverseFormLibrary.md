@@ -31,32 +31,36 @@ The Remove-DataverseFormLibrary cmdlet removes a JavaScript library reference fr
 
 ### Example 1: Remove a library by name
 ```powershell
-PS C:\> Remove-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName "new_/scripts/oldcode.js"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFormLibrary -FormId $formId -LibraryName "new_/scripts/oldcode.js"
 ```
 
 Removes the specified library from the form and publishes the entity.
 
 ### Example 2: Remove a library by unique ID
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $libraryId = 'a1b2c3d4-e5f6-4789-abcd-ef0123456789'
-PS C:\> Remove-DataverseFormLibrary -Connection $c -FormId $formId -LibraryUniqueId $libraryId
+PS C:\> Remove-DataverseFormLibrary -FormId $formId -LibraryUniqueId $libraryId
 ```
 
 Removes a library by its unique identifier.
 
 ### Example 3: Remove without publishing
 ```powershell
-PS C:\> Remove-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName "new_/scripts/temp.js"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFormLibrary -FormId $formId -LibraryName "new_/scripts/temp.js"
 ```
 
 Removes the library without publishing. Useful when making multiple changes.
 
 ### Example 4: Remove all unused libraries
 ```powershell
-PS C:\> $libraries = Get-DataverseFormLibrary -Connection $c -FormId $formId
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $libraries = Get-DataverseFormLibrary -FormId $formId
 PS C:\> $unusedLibs = $libraries | Where-Object { $_.Name -like "*test*" }
 PS C:\> foreach ($lib in $unusedLibs) {
-PS C:\>     Remove-DataverseFormLibrary -Connection $c -FormId $formId -LibraryUniqueId $lib.LibraryUniqueId -Confirm:$false
+PS C:\>     Remove-DataverseFormLibrary -FormId $formId -LibraryUniqueId $lib.LibraryUniqueId -Confirm:$false
 PS C:\> }
 ```
 

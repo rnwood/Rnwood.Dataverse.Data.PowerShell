@@ -69,6 +69,7 @@ This is particularly useful for importing large solutions where the synchronous 
 
 ### Example 1: Import a solution from a file
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip"
 ```
 
@@ -76,6 +77,7 @@ Imports the solution from the specified file with default settings.
 
 ### Example 2: Import with connection references and environment variables
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" `
     -ConnectionReferences @{
         'new_sharepoint' = '12345678-1234-1234-1234-123456789012'
@@ -91,6 +93,7 @@ Imports the solution and sets connection references for two connections and envi
 
 ### Example 3: Import as holding solution (upgrade)
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_v2.zip" -Mode HoldingSolution
 ```
 
@@ -98,6 +101,7 @@ Imports the solution as a holding solution for upgrade. If the solution doesn't 
 
 ### Example 4: Import with overwrite and publish workflows
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -OverwriteUnmanagedCustomizations -PublishWorkflows -Verbose
 ```
 
@@ -105,6 +109,7 @@ Imports the solution, overwrites unmanaged customizations, publishes workflows, 
 
 ### Example 5: Import solution bytes from pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $bytes = [System.IO.File]::ReadAllBytes("C:\Solutions\MySolution.zip")
 PS C:\> $bytes | Import-DataverseSolution -OverwriteUnmanagedCustomizations
 ```
@@ -113,6 +118,7 @@ Imports solution from a byte array via pipeline.
 
 ### Example 6: Import with custom timeout
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\LargeSolution.zip" -TimeoutSeconds 3600 -PollingIntervalSeconds 10
 ```
 
@@ -120,6 +126,7 @@ Imports a large solution with a 60-minute timeout and checks status every 10 sec
 
 ### Example 7: Skip validation for pre-configured environments
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -SkipConnectionReferenceValidation -SkipEnvironmentVariableValidation
 ```
 
@@ -127,6 +134,7 @@ Imports the solution and skips validation checks, useful when connection referen
 
 ### Example 8: Force regular import (skip upgrade logic)
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -Mode NoUpgrade
 ```
 
@@ -134,6 +142,7 @@ Imports the solution using regular import, bypassing any upgrade logic. Useful f
 
 ### Example 9: Explicit stage and upgrade (when conditions are met)
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MyManagedSolution.zip" -Mode StageAndUpgrade
 ```
 
@@ -141,6 +150,7 @@ Explicitly requests stage and upgrade mode. The cmdlet will check if the solutio
 
 ### Example 10: Skip import if same version is already installed
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_1.0.0.0.zip" -SkipIfSameVersion
 ```
 
@@ -148,6 +158,7 @@ Skips the import if the solution version in the file (e.g., 1.0.0.0) is the same
 
 ### Example 11: Skip import if a newer version is already installed
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_1.0.0.0.zip" -SkipIfLowerVersion
 ```
 
@@ -155,6 +166,7 @@ Skips the import if the solution version in the file is lower than the version a
 
 ### Example 12: Combine version checks
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -SkipIfSameVersion -SkipIfLowerVersion
 ```
 
@@ -162,6 +174,7 @@ Skips the import if the solution version in the file is the same as or lower tha
 
 ### Example 13: Update connection references and environment variables even when import is skipped
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_1.0.0.0.zip" `
     -SkipIfSameVersion `
     -ConnectionReferences @{

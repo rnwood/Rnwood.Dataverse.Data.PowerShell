@@ -28,9 +28,10 @@ If a component with the specified ID exists, it will be updated; otherwise, a ne
 
 ### Example 1: Add an entity to an app module by ID
 ```powershell
-PS C:\> $app = Get-DataverseAppModule -Connection $c -UniqueName "myapp"
-PS C:\> $entityMetadata = Get-DataverseEntityMetadata -Connection $c -EntityName "contact"
-PS C:\> Set-DataverseAppModuleComponent -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $app = Get-DataverseAppModule -UniqueName "myapp"
+PS C:\> $entityMetadata = Get-DataverseEntityMetadata -EntityName "contact"
+PS C:\> Set-DataverseAppModuleComponent -PassThru `
     -AppModuleId $app.Id `
     -ObjectId $entityMetadata.MetadataId `
     -ComponentType Entity
@@ -40,8 +41,9 @@ Adds the contact entity to an app module using the app module ID. (Parameter cor
 
 ### Example 2: Add an entity to an app module by unique name
 ```powershell
-PS C:\> $entityMetadata = Get-DataverseEntityMetadata -Connection $c -EntityName "account"
-PS C:\> Set-DataverseAppModuleComponent -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $entityMetadata = Get-DataverseEntityMetadata -EntityName "account"
+PS C:\> Set-DataverseAppModuleComponent -PassThru `
     -AppModuleUniqueName "myapp" `
     -ObjectId $entityMetadata.MetadataId `
     -ComponentType Entity
@@ -51,8 +53,9 @@ Adds the account entity to an app module using the app module's unique name.
 
 ### Example 3: Add a form component
 ```powershell
-PS C:\> $form = Get-DataverseRecord -Connection $c -TableName systemform -FilterValues @{ name = "Contact Main Form" }
-PS C:\> Set-DataverseAppModuleComponent -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $form = Get-DataverseRecord -TableName systemform -FilterValues @{ name = "Contact Main Form" }
+PS C:\> Set-DataverseAppModuleComponent -PassThru `
     -AppModuleUniqueName "myapp" `
     -ObjectId $form.systemformid `
     -ComponentType Form `
@@ -63,8 +66,9 @@ Adds a form as the default form for the app.
 
 ### Example 4: Add a view component
 ```powershell
-PS C:\> $view = Get-DataverseView -Connection $c -TableName contact -Name "Active Contacts"
-PS C:\> Set-DataverseAppModuleComponent -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $view = Get-DataverseView -TableName contact -Name "Active Contacts"
+PS C:\> Set-DataverseAppModuleComponent -PassThru `
     -AppModuleId $appId `
     -ObjectId $view.Id `
     -ComponentType View `
@@ -75,7 +79,8 @@ Adds a view with subcomponents included.
 
 ### Example 5: Update component properties
 ```powershell
-PS C:\> Set-DataverseAppModuleComponent -Connection $c `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseAppModuleComponent `
     -Id $componentId `
     -IsDefault $true `
     -RootComponentBehavior DoNotIncludeSubcomponents
@@ -85,24 +90,26 @@ Updates an existing component to be the default with DoNotIncludeSubcomponents b
 
 ### Example 6: Add multiple components via pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $entities = @("contact", "account", "lead") | ForEach-Object {
-    $metadata = Get-DataverseEntityMetadata -Connection $c -EntityName $_
+    $metadata = Get-DataverseEntityMetadata -EntityName $_
     [PSCustomObject]@{
         AppModuleUniqueName = "salesapp"
         ObjectId = $metadata.MetadataId
         ComponentType = [Rnwood.Dataverse.Data.PowerShell.Commands.Model.AppModuleComponentType]::Entity
     }
 }
-PS C:\> $entities | Set-DataverseAppModuleComponent -Connection $c
+PS C:\> $entities | Set-DataverseAppModuleComponent
 ```
 
 Adds multiple entities to an app module via pipeline input.
 
 ### Example 7: Add component to app by unique name and then update
 ```powershell
-PS C:\> $entity = Get-DataverseEntityMetadata -Connection $c -EntityName "contact"
-PS C:\> $compId = Set-DataverseAppModuleComponent -Connection $c -PassThru -AppModuleUniqueName "myapp" -ObjectId $entity.MetadataId -ComponentType Entity
-PS C:\> Set-DataverseAppModuleComponent -Connection $c -Id $compId -IsDefault $true
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $entity = Get-DataverseEntityMetadata -EntityName "contact"
+PS C:\> $compId = Set-DataverseAppModuleComponent -PassThru -AppModuleUniqueName "myapp" -ObjectId $entity.MetadataId -ComponentType Entity
+PS C:\> Set-DataverseAppModuleComponent -Id $compId -IsDefault $true
 ```
 
 Creates a component referencing the app by unique name, then sets it as default.

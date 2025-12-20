@@ -33,28 +33,32 @@ Use the IfExists parameter to suppress errors when attempting to remove apps tha
 
 ### Example 1: Remove an app module by ID
 ```powershell
-PS C:\> Remove-DataverseAppModule -Connection $c -Id "12345678-1234-1234-1234-123456789012" -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseAppModule -Id "12345678-1234-1234-1234-123456789012" -Confirm:$false
 ```
 
 Removes the app module with the specified ID without confirmation.
 
 ### Example 2: Remove an app module by UniqueName
 ```powershell
-PS C:\> Remove-DataverseAppModule -Connection $c -UniqueName "myapp_unique" -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseAppModule -UniqueName "myapp_unique" -Confirm:$false
 ```
 
 Removes the app module with the specified unique name.
 
 ### Example 3: Safe removal with IfExists
 ```powershell
-PS C:\> Remove-DataverseAppModule -Connection $c -UniqueName "maybe_exists" -IfExists -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseAppModule -UniqueName "maybe_exists" -IfExists -Confirm:$false
 ```
 
 Attempts to remove the app but doesn't error if it doesn't exist.
 
 ### Example 4: Use WhatIf to preview
 ```powershell
-PS C:\> Remove-DataverseAppModule -Connection $c -UniqueName "myapp" -WhatIf
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseAppModule -UniqueName "myapp" -WhatIf
 ```
 
 Shows what would happen without actually removing the app.

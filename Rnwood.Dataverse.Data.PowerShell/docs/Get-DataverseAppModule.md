@@ -28,58 +28,66 @@ App modules can be filtered by ID, unique name, or display name (with wildcard s
 
 ### Example 1: Get a specific app module by ID
 ```powershell
-PS C:\> Get-DataverseAppModule -Connection $c -Id "12345678-1234-1234-1234-123456789012"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseAppModule -Id "12345678-1234-1234-1234-123456789012"
 ```
 
 Retrieves a specific app module by its ID with parsed key properties.
 
 ### Example 2: Get an app module by UniqueName
 ```powershell
-PS C:\> Get-DataverseAppModule -Connection $c -UniqueName "msdyn_SalesHub"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseAppModule -UniqueName "msdyn_SalesHub"
 ```
 
 Retrieves the Sales Hub app module using its unique name.
 
 ### Example 3: Get all app modules
 ```powershell
-PS C:\> Get-DataverseAppModule -Connection $c
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseAppModule
 ```
 
 Retrieves all app modules in the environment.
 
 ### Example 4: Find app modules by name with wildcards
 ```powershell
-PS C:\> Get-DataverseAppModule -Connection $c -Name "Sales*"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseAppModule -Name "Sales*"
 ```
 
 Finds all app modules whose names start with "Sales" using wildcard pattern matching.
 
 ### Example 5: Get app module with raw values
 ```powershell
-PS C:\> Get-DataverseAppModule -Connection $c -Id $appId -Raw
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseAppModule -Id $appId -Raw
 ```
 
 Retrieves an app module with all raw attribute values instead of parsed properties.
 
 ### Example 6: Get app module and its components
 ```powershell
-PS C:\> $app = Get-DataverseAppModule -Connection $c -UniqueName "myapp"
-PS C:\> $components = Get-DataverseAppModuleComponent -Connection $c -AppModuleId $app.Id
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $app = Get-DataverseAppModule -UniqueName "myapp"
+PS C:\> $components = Get-DataverseAppModuleComponent -AppModuleId $app.Id
 ```
 
 Gets an app module and then retrieves all its components. (Parameter name corrected: use -AppModuleId not -AppModuleIdValue.)
 
 ### Example 7: Retrieve published versions of apps only
 ```powershell
-PS C:\> Get-DataverseAppModule -Connection $c -Published -UniqueName "myapp"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseAppModule -Published -UniqueName "myapp"
 ```
 
 Retrieves only the published definition (does not include unpublished changes when -Published is specified).
 
 ### Example 8: Create and then verify navigation type & featured flag
 ```powershell
-PS C:\> $id = Set-DataverseAppModule -Connection $c -PassThru -UniqueName "multi_session_app" -Name "Multi Session" -NavigationType MultiSession -IsFeatured $true
-PS C:\> Get-DataverseAppModule -Connection $c -Id $id | Select-Object UniqueName, NavigationType, IsFeatured
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $id = Set-DataverseAppModule -PassThru -UniqueName "multi_session_app" -Name "Multi Session" -NavigationType MultiSession -IsFeatured $true
+PS C:\> Get-DataverseAppModule -Id $id | Select-Object UniqueName, NavigationType, IsFeatured
 ```
 
 Creates an app module with multi-session navigation and verifies the values.

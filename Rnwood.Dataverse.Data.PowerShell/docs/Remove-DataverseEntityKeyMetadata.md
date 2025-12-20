@@ -25,29 +25,33 @@ This operation permanently removes the key definition.
 
 ### Example 1: Delete an alternate key
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $connection = Get-DataverseConnection -Url "https://myorg.crm.dynamics.com" -Interactive
-PS C:\> Remove-DataverseEntityKeyMetadata -Connection $connection -EntityName contact -KeyName "contact_emailaddress1_key" -Confirm:$false
+PS C:\> Remove-DataverseEntityKeyMetadata -EntityName contact -KeyName "contact_emailaddress1_key" -Confirm:$false
 ```
 
 This command deletes the alternate key named "contact_emailaddress1_key" from the contact entity without prompting for confirmation.
 
 ### Example 2: Delete a key with confirmation
 ```powershell
-PS C:\> Remove-DataverseEntityKeyMetadata -Connection $connection -EntityName account -KeyName "account_number_key"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseEntityKeyMetadata -EntityName account -KeyName "account_number_key"
 ```
 
 This command deletes the alternate key but prompts for confirmation first (ConfirmImpact is High).
 
 ### Example 3: Preview deletion with WhatIf
 ```powershell
-PS C:\> Remove-DataverseEntityKeyMetadata -Connection $connection -EntityName contact -KeyName "contact_name_key" -WhatIf
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseEntityKeyMetadata -EntityName contact -KeyName "contact_name_key" -WhatIf
 ```
 
 This command shows what would happen if the key were deleted, but doesn't actually perform the deletion.
 
 ### Example 4: Delete key from pipeline
 ```powershell
-PS C:\> "contact" | Remove-DataverseEntityKeyMetadata -Connection $connection -KeyName "contact_phone_key" -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> "contact" | Remove-DataverseEntityKeyMetadata -KeyName "contact_phone_key" -Confirm:$false
 ```
 
 This command demonstrates piping the entity name to the cmdlet.

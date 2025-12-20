@@ -25,6 +25,7 @@ Use Get-DataverseEnvironmentVariableDefinition to retrieve both definitions and 
 
 ### Example 1: Get all environment variable values
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableValue
 ```
 
@@ -32,6 +33,7 @@ Retrieves all environment variable values in the environment.
 
 ### Example 2: Get a specific environment variable value
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableValue -SchemaName "new_apiurl"
 ```
 
@@ -39,6 +41,7 @@ Retrieves the value for the environment variable with schema name "new_apiurl".
 
 ### Example 3: Get environment variable values with wildcard
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableValue -SchemaName "new_api*"
 ```
 
@@ -46,6 +49,7 @@ Retrieves all environment variable values where the schema name starts with "new
 
 ### Example 4: Get values from pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> "new_apiurl", "new_apikey" | Get-DataverseEnvironmentVariableValue
 ```
 

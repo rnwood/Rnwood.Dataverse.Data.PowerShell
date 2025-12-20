@@ -43,7 +43,8 @@ Retrieves plugin step images by ID, alias, step ID, or all images.
 
 ### Example 1
 ```powershell
-PS C:\> Get-DataversePluginStepImage -Connection $connection -SdkMessageProcessingStepId 12345678-1234-1234-1234-123456789012
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataversePluginStepImage -SdkMessageProcessingStepId 12345678-1234-1234-1234-123456789012
 ```
 
 Retrieves all step images for a specific plugin step.

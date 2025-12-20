@@ -24,6 +24,7 @@ Gets environment variable definitions from Dataverse. This cmdlet retrieves the 
 
 ### Example 1: Get all environment variable definitions
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableDefinition
 ```
 
@@ -31,6 +32,7 @@ Retrieves all environment variable definitions in the environment.
 
 ### Example 2: Get a specific environment variable definition
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableDefinition -SchemaName "new_apiurl"
 ```
 
@@ -38,6 +40,7 @@ Retrieves the definition for the environment variable with schema name "new_apiu
 
 ### Example 3: Get environment variables by display name
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableDefinition -DisplayName "API*"
 ```
 
@@ -45,6 +48,7 @@ Retrieves all environment variable definitions where the display name starts wit
 
 ### Example 4: Get definitions from pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> "new_apiurl", "new_apikey" | Get-DataverseEnvironmentVariableDefinition
 ```
 

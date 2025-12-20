@@ -54,7 +54,8 @@ Results are returned as PowerShell objects with properties matching the column n
 
 ### Example 1
 ```powershell
-PS C:\> Get-DataverseRecord -connection $connection -tablename contact
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseRecord -tablename contact
 ```
 
 > [!TIP]
@@ -64,7 +65,8 @@ Get all contacts returning all non-system columns.
 
 ### Example 2
 ```powershell
-PS C:\> Get-DataverseRecord -connection $connection -tablename contact -columns firstname -filtervalues @{
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseRecord -tablename contact -columns firstname -filtervalues @{
 	"firstname:Like" = "Rob%"
 }
 ```
@@ -73,7 +75,8 @@ Get all contacts where firstname starts with 'Rob' and return the firstname colu
 
 ### Example 3 (nested hashtable operator)
 ```powershell
-PS C:\> Get-DataverseRecord -connection $connection -tablename contact -filtervalues @(
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseRecord -tablename contact -filtervalues @(
 	@{
 		age = @{
 			value = 25
@@ -87,35 +90,39 @@ Find contacts with age greater than 25 by using a nested hashtable to specify op
 
 ### Example 4: Retrieve record by MatchOn with single column
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> @{ emailaddress1 = "user@example.com" } | 
-    Get-DataverseRecord -Connection $c -TableName contact -MatchOn emailaddress1
+    Get-DataverseRecord -TableName contact -MatchOn emailaddress1
 ```
 
 Retrieves a contact record by matching on the email address. If multiple contacts have the same email, an error is raised unless -AllowMultipleMatches is used.
 
 ### Example 5: Retrieve record by MatchOn with multiple columns
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> @{ firstname = "John"; lastname = "Doe" } | 
-    Get-DataverseRecord -Connection $c -TableName contact -MatchOn @("firstname", "lastname")
+    Get-DataverseRecord -TableName contact -MatchOn @("firstname", "lastname")
 ```
 
 Retrieves a contact record by matching on both firstname and lastname together. This helps ensure you're retrieving the correct record when names might not be unique individually.
 
 ### Example 6: Retrieve all matching records with AllowMultipleMatches
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> @{ lastname = "Smith" } | 
-    Get-DataverseRecord -Connection $c -TableName contact -MatchOn lastname -AllowMultipleMatches
+    Get-DataverseRecord -TableName contact -MatchOn lastname -AllowMultipleMatches
 ```
 
 Retrieves ALL contact records with the lastname "Smith". The -AllowMultipleMatches switch allows retrieving multiple records that match the criteria. Without this switch, an error would be raised if multiple matches are found.
 
 ### Example 7: Use multiple MatchOn criteria with fallback
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> @{ 
     emailaddress1 = "user@example.com"
     firstname = "John"
     lastname = "Doe"
-} | Get-DataverseRecord -Connection $c -TableName contact -MatchOn @("emailaddress1"), @("firstname", "lastname")
+} | Get-DataverseRecord -TableName contact -MatchOn @("emailaddress1"), @("firstname", "lastname")
 ```
 
 Attempts to match first on emailaddress1, then falls back to matching on firstname+lastname if no email match is found. Uses the first matching set that returns records.

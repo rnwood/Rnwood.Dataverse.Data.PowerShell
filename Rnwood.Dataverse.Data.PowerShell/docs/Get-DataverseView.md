@@ -29,64 +29,73 @@ Views can be filtered by ID, name (with wildcard support), table name, view type
 
 ### Example 1: Get a specific view by ID
 ```powershell
-PS C:\> Get-DataverseView -Connection $c -Id "12345678-1234-1234-1234-123456789012"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseView -Id "12345678-1234-1234-1234-123456789012"
 ```
 
 Retrieves a specific view by its ID with parsed Columns, Filters, Links, and OrderBy properties.
 
 ### Example 2: Get all views for a table
 ```powershell
-PS C:\> Get-DataverseView -Connection $c -TableName contact
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseView -TableName contact
 ```
 
 Retrieves all views (both system and personal) for the contact table.
 
 ### Example 3: Get system views only
 ```powershell
-PS C:\> Get-DataverseView -Connection $c -ViewType "System"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseView -ViewType "System"
 ```
 
 Retrieves all system views (savedquery entities).
 
 ### Example 4: Get personal views only
 ```powershell
-PS C:\> Get-DataverseView -Connection $c -ViewType "Personal"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseView -ViewType "Personal"
 ```
 
 Retrieves all personal views (userquery entities).
 
 ### Example 5: Find views by name with wildcards
 ```powershell
-PS C:\> Get-DataverseView -Connection $c -Name "Active*"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseView -Name "Active*"
 ```
 
 Finds all views whose names start with "Active" using wildcard pattern matching.
 
 ### Example 6: Get views with raw values
 ```powershell
-PS C:\> Get-DataverseView -Connection $c -Id $viewId -Raw
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseView -Id $viewId -Raw
 ```
 
 Retrieves a view with raw attribute values instead of parsed properties. Returns all attributes from the savedquery/userquery record including fetchxml, layoutxml, querytype, etc.
 
 ### Example 7: Get Advanced Search views
 ```powershell
-PS C:\> Get-DataverseView -Connection $c -QueryType AdvancedSearch
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseView -QueryType AdvancedSearch
 ```
 
 Retrieves all Advanced Search views (typically used in Advanced Find).
 
 ### Example 8: Get system views for a specific table
 ```powershell
-PS C:\> Get-DataverseView -Connection $c -TableName account -ViewType "System"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseView -TableName account -ViewType "System"
 ```
 
 Retrieves all system views for the account table.
 
 ### Example 9: Clone a view using parsed properties
 ```powershell
-PS C:\> $view = Get-DataverseView -Connection $c -Id $viewId
-PS C:\> Set-DataverseView -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $view = Get-DataverseView -Id $viewId
+PS C:\> Set-DataverseView -PassThru `
     -Name "$($view.Name) (Copy)" `
     -TableName $view.TableName `
     -ViewType $view.ViewType `

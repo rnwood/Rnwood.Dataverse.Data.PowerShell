@@ -43,6 +43,7 @@ Metadata is essential for:
 
 ### Example 1: Get metadata for a specific entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName contact
 PS C:\> $metadata
 
@@ -60,6 +61,7 @@ Retrieves basic metadata for the `contact` entity.
 
 ### Example 2: Get metadata with attributes excluded
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName account -ExcludeAttributes
 PS C:\> $metadata.Attributes
 # Attributes will be null or minimal when excluded
@@ -74,6 +76,7 @@ Gets entity metadata without attributes, then shows the default behavior include
 
 ### Example 3: Get metadata with relationships excluded
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName account -ExcludeRelationships
 PS C:\> $metadata.OneToManyRelationships
 # Relationships will be null or minimal when excluded
@@ -88,6 +91,7 @@ Gets entity metadata without relationships, then shows the default behavior incl
 
 ### Example 4: Get comprehensive metadata (all options by default)
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # By default, all metadata is included
 PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName contact
 
@@ -112,6 +116,7 @@ Retrieves complete entity metadata - all details are included by default.
 
 ### Example 5: List all entities in the organization
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $allEntities = Get-DataverseEntityMetadata
 PS C:\> $allEntities.Count
 450
@@ -132,6 +137,7 @@ Retrieves basic metadata for all entities in the organization.
 
 ### Example 6: Filter to custom entities only
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $customEntities = Get-DataverseEntityMetadata | Where-Object { $_.IsCustomEntity -eq $true }
 PS C:\> $customEntities | Select-Object LogicalName, DisplayName, SchemaName
 
@@ -146,6 +152,7 @@ Retrieves only custom (user-created) entities.
 
 ### Example 7: Find entities with audit enabled
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $auditEntities = Get-DataverseEntityMetadata | 
     Where-Object { $_.IsAuditEnabled.Value -eq $true }
 
@@ -162,6 +169,7 @@ Finds all entities with auditing enabled.
 
 ### Example 8: Find entities that support activities
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $activityEntities = Get-DataverseEntityMetadata | 
     Where-Object { $_.IsActivityParty.Value -eq $true }
 
@@ -173,6 +181,7 @@ Finds all entities that can be associated with activities.
 
 ### Example 9: Export entity list to CSV
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEntityMetadata | 
     Select-Object LogicalName, DisplayName, IsCustomEntity, OwnershipType, IsAuditEnabled | 
     Export-Csv -Path "entities.csv" -NoTypeInformation
@@ -182,6 +191,7 @@ Exports a list of all entities with key properties to CSV for documentation.
 
 ### Example 10: Use metadata cache for performance
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # First call - fetches from server
 PS C:\> Measure-Command { $metadata1 = Get-DataverseEntityMetadata -EntityName contact -UseMetadataCache }
 
@@ -197,11 +207,12 @@ Demonstrates the performance improvement when using the metadata cache.
 
 ### Example 11: Compare entity metadata between environments
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $dev = Get-DataverseConnection -Url "https://dev.crm.dynamics.com" -Interactive
 PS C:\> $prod = Get-DataverseConnection -Url "https://prod.crm.dynamics.com" -Interactive
 
-PS C:\> $devEntities = Get-DataverseEntityMetadata -Connection $dev | Select-Object -ExpandProperty LogicalName
-PS C:\> $prodEntities = Get-DataverseEntityMetadata -Connection $prod | Select-Object -ExpandProperty LogicalName
+PS C:\> $devEntities = Get-DataverseEntityMetadata | Select-Object -ExpandProperty LogicalName
+PS C:\> $prodEntities = Get-DataverseEntityMetadata | Select-Object -ExpandProperty LogicalName
 
 PS C:\> $onlyInDev = $devEntities | Where-Object { $_ -notin $prodEntities }
 PS C:\> $onlyInProd = $prodEntities | Where-Object { $_ -notin $devEntities }
@@ -214,6 +225,7 @@ Compares entities between development and production environments.
 
 ### Example 12: Find entities by display name pattern
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEntityMetadata | 
     Where-Object { $_.DisplayName.UserLocalizedLabel.Label -like "*Project*" } |
     Select-Object LogicalName, DisplayName
@@ -228,6 +240,7 @@ Finds entities with "Project" in their display name.
 
 ### Example 13: Pipeline entity name to get metadata
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> @("account", "contact", "lead") | Get-DataverseEntityMetadata | 
     Select-Object LogicalName, DisplayName, PrimaryNameAttribute
 
@@ -242,6 +255,7 @@ Pipelines multiple entity names to retrieve their metadata.
 
 ### Example 14: Get entities with change tracking enabled
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEntityMetadata | 
     Where-Object { $_.ChangeTrackingEnabled -eq $true } |
     Select-Object LogicalName, DisplayName
@@ -256,6 +270,7 @@ Finds entities with change tracking enabled for data synchronization.
 
 ### Example 15: Access icon properties from entity metadata
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName account
 PS C:\> $metadata | Select-Object LogicalName, IconVectorName, IconLargeName, IconMediumName, IconSmallName
 
@@ -268,9 +283,10 @@ Retrieves and displays icon properties for an entity. Icon properties specify th
 
 ### Example 16: Work with default connection
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Set a default connection
 PS C:\> $conn = Get-DataverseConnection -Url "https://myorg.crm.dynamics.com" -Interactive
-PS C:\> Set-DataverseConnectionAsDefault -Connection $conn
+PS C:\> Set-DataverseConnectionAsDefault
 
 PS C:\> # Now get metadata without specifying connection
 PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName account
@@ -282,6 +298,7 @@ Demonstrates using the default connection for simplified commands.
 
 ### Example 17: Query only published metadata
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Get only published metadata (excludes unpublished changes)
 PS C:\> $publishedMetadata = Get-DataverseEntityMetadata -EntityName account -Published
 PS C:\> $publishedMetadata.LogicalName

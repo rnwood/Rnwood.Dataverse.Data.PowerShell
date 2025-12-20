@@ -57,57 +57,64 @@ The cmdlet returns event handlers with their location, function name, library na
 
 ### Example 1: List ALL event handlers from all locations
 ```powershell
-PS C:\> Get-DataverseFormEventHandler -Connection $c -FormId $formId
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormEventHandler -FormId $formId
 ```
 
 Returns all event handlers from the form, including form-level, attribute-level, tab-level, and control-level events. This is the default behavior when called with only the FormId parameter.
 
 ### Example 2: Get all form-level event handlers
 ```powershell
-PS C:\> Get-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormEventHandler -FormId $formId -EventName "onload"
 ```
 
 Retrieves all form-level handlers for the onload event. Note that this excludes attribute-level events even though they are at the form root.
 
 ### Example 3: Get attribute-level event handlers
 ```powershell
-PS C:\> Get-DataverseFormEventHandler -Connection $c -FormId $formId -AttributeName "department"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormEventHandler -FormId $formId -AttributeName "department"
 ```
 
 Retrieves all event handlers for the "department" attribute. These are typically onchange events.
 
 ### Example 4: Get tab-level event handlers
 ```powershell
-PS C:\> Get-DataverseFormEventHandler -Connection $c -FormId $formId -TabName "General"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormEventHandler -FormId $formId -TabName "General"
 ```
 
 Retrieves all event handlers for the "General" tab. These are typically tabstatechange events.
 
 ### Example 5: Get control-level event handlers
 ```powershell
-PS C:\> Get-DataverseFormEventHandler -Connection $c -FormId $formId -ControlId "firstname" -TabName "general" -SectionName "name"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormEventHandler -FormId $formId -ControlId "firstname" -TabName "general" -SectionName "name"
 ```
 
 Retrieves event handlers for a specific control.
 
 ### Example 6: Get a specific handler by unique ID
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $handlerId = 'a1b2c3d4-e5f6-4789-abcd-ef0123456789'
-PS C:\> Get-DataverseFormEventHandler -Connection $c -FormId $formId -HandlerUniqueId $handlerId
+PS C:\> Get-DataverseFormEventHandler -FormId $formId -HandlerUniqueId $handlerId
 ```
 
 Retrieves a specific handler by its unique identifier.
 
 ### Example 7: List all event handlers across all locations
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Get form-level events
-PS C:\> $formEvents = Get-DataverseFormEventHandler -Connection $c -FormId $formId
+PS C:\> $formEvents = Get-DataverseFormEventHandler -FormId $formId
 PS C:\> Write-Host "Form events: $($formEvents.Count)"
 PS C:\>
 PS C:\> # Get all controls and their events
-PS C:\> $controls = Get-DataverseFormControl -Connection $c -FormId $formId
+PS C:\> $controls = Get-DataverseFormControl -FormId $formId
 PS C:\> foreach ($control in $controls) {
-PS C:\>     $handlers = Get-DataverseFormEventHandler -Connection $c -FormId $formId `
+PS C:\>     $handlers = Get-DataverseFormEventHandler -FormId $formId `
 PS C:\>         -ControlId $control.Id -TabName $control.TabName -SectionName $control.SectionName `
 PS C:\>         -ErrorAction SilentlyContinue
 PS C:\>     if ($handlers) {
@@ -120,7 +127,8 @@ Lists all event handlers across all controls on a form.
 
 ### Example 8: Verify Attribute property in output
 ```powershell
-PS C:\> $handlers = Get-DataverseFormEventHandler -Connection $c -FormId $formId -AttributeName "emailaddress1"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $handlers = Get-DataverseFormEventHandler -FormId $formId -AttributeName "emailaddress1"
 PS C:\> foreach ($handler in $handlers) {
 PS C:\>     Write-Host "Event: $($handler.EventName), Attribute: $($handler.Attribute), Function: $($handler.FunctionName)"
 PS C:\> }
@@ -130,7 +138,8 @@ Displays the Attribute property which identifies attribute-level events.
 
 ### Example 9: Get event handlers from published form only
 ```powershell
-PS C:\> Get-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload" -Published
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormEventHandler -FormId $formId -EventName "onload" -Published
 ```
 
 Retrieves event handlers from the published version of the form only. By default, the cmdlet retrieves from the unpublished (draft) version which includes all recent changes.

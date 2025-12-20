@@ -24,31 +24,35 @@ The Get-DataverseFormTab cmdlet retrieves tab information from a Dataverse form.
 
 ### Example 1: Get all tabs from a form
 ```powershell
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information'
-PS C:\> Get-DataverseFormTab -Connection $c -FormId $form.Id
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $form = Get-DataverseForm -Entity 'contact' -Name 'Information'
+PS C:\> Get-DataverseFormTab -FormId $form.Id
 ```
 
 Retrieves all tabs from the contact Information form.
 
 ### Example 2: Get a specific tab by name
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $formId = '12345678-1234-1234-1234-123456789012'
-PS C:\> Get-DataverseFormTab -Connection $c -FormId $formId -TabName 'General'
+PS C:\> Get-DataverseFormTab -FormId $formId -TabName 'General'
 ```
 
 Retrieves only the 'General' tab from the specified form.
 
 ### Example 3: Pipeline usage with form objects
 ```powershell
-PS C:\> Get-DataverseForm -Connection $c -Entity 'account' | 
-    ForEach-Object { Get-DataverseFormTab -Connection $c -FormId $_.Id }
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseForm -Entity 'account' | 
+    ForEach-Object { Get-DataverseFormTab -FormId $_.Id }
 ```
 
 Gets all tabs from all account forms using pipeline.
 
 ### Example 4: Explore tab structure
 ```powershell
-PS C:\> $tab = Get-DataverseFormTab -Connection $c -FormId $formId -TabName 'Details'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $tab = Get-DataverseFormTab -FormId $formId -TabName 'Details'
 PS C:\> $tab.Layout          # Shows OneColumn, TwoColumns, ThreeColumns, or Custom
 PS C:\> $tab.Sections        # Array of sections in the tab
 PS C:\> $tab.Labels          # Localized labels for the tab
@@ -58,7 +62,8 @@ Explores the structure and properties of a specific tab.
 
 ### Example 5: Check tab visibility settings
 ```powershell
-PS C:\> $tabs = Get-DataverseFormTab -Connection $c -FormId $formId
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $tabs = Get-DataverseFormTab -FormId $formId
 PS C:\> $tabs | Where-Object { $_.Hidden -eq $true }
 ```
 

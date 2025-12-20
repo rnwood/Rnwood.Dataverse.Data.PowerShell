@@ -31,6 +31,7 @@ When removing a solution:
 
 ### Example 1: Remove a solution
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseSolution -UniqueName "MySolution"
 Solution 'My Solution' removed successfully.
 ```
@@ -39,6 +40,7 @@ Removes the specified solution from the environment.
 
 ### Example 2: Remove with confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseSolution -UniqueName "MySolution" -Confirm
 
 Confirm
@@ -52,6 +54,7 @@ Removes the solution with explicit confirmation.
 
 ### Example 3: Remove with custom timeout
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseSolution -UniqueName "LargeSolution" -TimeoutSeconds 1200 -PollingIntervalSeconds 10
 Solution 'Large Solution' removed successfully.
 ```
@@ -60,6 +63,7 @@ Removes a large solution with a 20-minute timeout and checks status every 10 sec
 
 ### Example 4: Remove without confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseSolution -UniqueName "TestSolution" -Confirm:$false
 Solution 'Test Solution' removed successfully.
 ```
@@ -68,6 +72,7 @@ Removes the solution without prompting for confirmation.
 
 ### Example 5: Handle solution not found error
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> try {
 >>     Remove-DataverseSolution -UniqueName "NonExistentSolution" -ErrorAction Stop
 >> } catch {
