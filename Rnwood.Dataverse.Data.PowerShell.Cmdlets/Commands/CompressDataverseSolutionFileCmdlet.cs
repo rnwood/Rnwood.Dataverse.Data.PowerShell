@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Management.Automation;
+using Rnwood.Dataverse.Data.PowerShell.Commands.Model;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -30,8 +31,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the package type for packing. Can be 'Unmanaged', 'Managed', or 'Both'.
         /// </summary>
         [Parameter(HelpMessage = "Package type: 'Unmanaged' (default), 'Managed' (from a previous unpack 'Both'), or 'Both'.")]
-        [ValidateSet("Unmanaged", "Managed", "Both", IgnoreCase = true)]
-        public string PackageType { get; set; } = "Unmanaged";
+        public SolutionPackageType PackageType { get; set; } = SolutionPackageType.Unmanaged;
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -78,7 +78,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     CopyDirectory(resolvedPath, tempPath);
 
                     WriteVerbose("Packing .msapp folders...");
-                    PackMsappFolders(tempPath);
+                    PackMsappFolders(tempPath, this);
 
                     workingPath = tempPath;
                 }
@@ -119,18 +119,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private void PackMsappFolders(string basePath)
+        internal static void PackMsappFolders(string basePath, Cmdlet cmdlet)
         {
             // Find all directories with .msapp extension
             var msappFolders = Directory.GetDirectories(basePath, "*.msapp", SearchOption.AllDirectories);
 
             if (msappFolders.Length == 0)
             {
-                WriteVerbose("No .msapp folders found.");
+                cmdlet.WriteVerbose("No .msapp folders found.");
                 return;
             }
 
-            WriteVerbose($"Found {msappFolders.Length} .msapp folder(s) to pack.");
+            cmdlet.WriteVerbose($"Found {msappFolders.Length} .msapp folder(s) to pack.");
 
             foreach (string msappFolder in msappFolders)
             {
@@ -139,33 +139,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // The folder already has .msapp extension, so use it as-is for the file name
                 string msappFile = System.IO.Path.Combine(parentDirectory, folderName);
 
-                WriteVerbose($"Packing '{msappFolder}' to '{msappFile}'");
+                cmdlet.WriteVerbose($"Packing '{msappFolder}' to '{msappFile}'");
 
-                try
+                // Delete existing .msapp file if it exists (shouldn't normally)
+                if (File.Exists(msappFile))
                 {
-                    // Delete existing .msapp file if it exists (shouldn't normally)
-                    if (File.Exists(msappFile))
-                    {
-                        WriteVerbose($"Deleting existing .msapp file: {msappFile}");
-                        File.Delete(msappFile);
-                    }
-
-                    // Create the .msapp file (which is a zip)
-                    ZipFile.CreateFromDirectory(msappFolder, msappFile, CompressionLevel.Optimal, includeBaseDirectory: false);
-
-                    WriteVerbose($"Successfully packed '{msappFolder}'");
-
-                    // Delete the folder after successful packing
-                    WriteVerbose($"Deleting source folder: {msappFolder}");
-                    Directory.Delete(msappFolder, recursive: true);
+                    cmdlet.WriteVerbose($"Deleting existing .msapp file: {msappFile}");
+                    File.Delete(msappFile);
                 }
-                catch (Exception ex)
-                {
-                    WriteWarning($"Failed to pack '{msappFolder}': {ex.Message}");
-                }
+
+                // Create the .msapp file (which is a zip) using a temporary file to avoid path conflict
+                string tempMsappFile = System.IO.Path.Combine(parentDirectory, Guid.NewGuid().ToString("N") + ".tmp");
+                ZipFile.CreateFromDirectory(msappFolder, tempMsappFile, CompressionLevel.Optimal, includeBaseDirectory: false);
+
+                cmdlet.WriteVerbose($"Successfully packed '{msappFolder}'");
+
+                // Delete the folder after successful packing
+                cmdlet.WriteVerbose($"Deleting source folder: {msappFolder}");
+                Directory.Delete(msappFolder, recursive: true);
+
+                // Move the temporary zip file to the final location
+                File.Move(tempMsappFile, msappFile);
             }
 
-            WriteVerbose($"Finished packing {msappFolders.Length} .msapp folder(s).");
+            cmdlet.WriteVerbose($"Finished packing {msappFolders.Length} .msapp folder(s).");
         }
 
         private void CopyDirectory(string sourceDir, string destDir)

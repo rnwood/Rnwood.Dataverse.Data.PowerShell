@@ -8,26 +8,43 @@ schema: 2.0.0
 # Expand-DataverseSolutionFile
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Unpacks a Dataverse solution file using the Power Apps CLI.
 
 ## SYNTAX
 
 ```
-Expand-DataverseSolutionFile [-Path] <String> [-OutputPath] <String> [-UnpackMsapp] [-PackageType <String>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Expand-DataverseSolutionFile [-Path] <String> [-OutputPath] <String> [-UnpackMsapp]
+ [-PackageType <SolutionPackageType>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The `Expand-DataverseSolutionFile` cmdlet unpacks a Dataverse solution ZIP file into a folder structure using the Power Apps CLI (`pac solution unpack` command). This is useful for version control and manual editing of solution components.
+
+The cmdlet requires the Power Apps CLI to be installed and available in your system PATH. Install from https://aka.ms/PowerAppsCLI
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Unpack a solution
 ```powershell
-PS C:\> {{ Add example code here }}
+Expand-DataverseSolutionFile -Path "C:\Solutions\MySolution.zip" -OutputPath "C:\Solutions\MySolution_Src"
 ```
 
-{{ Add example description here }}
+Unpacks the solution file to the specified output folder.
+
+### Example 2: Unpack a solution and extract .msapp files
+```powershell
+Expand-DataverseSolutionFile -Path "C:\Solutions\MySolution.zip" -OutputPath "C:\Solutions\MySolution_Src" -UnpackMsapp
+```
+
+Unpacks the solution and additionally extracts any Canvas Apps (.msapp files) found in the solution into folders with the same name.
+
+### Example 3: Unpack both managed and unmanaged solutions
+```powershell
+Expand-DataverseSolutionFile -Path "C:\Solutions\MySolution.zip" -OutputPath "C:\Solutions\MySolution_Src" -PackageType Both
+```
+
+Unpacks the solution for dual managed and unmanaged operation. This creates separate folder structures for both types.
 
 ## PARAMETERS
 
@@ -50,14 +67,13 @@ Accept wildcard characters: False
 Package type: 'Unmanaged' (default), 'Managed', or 'Both' for dual Managed and Unmanaged operation.
 
 ```yaml
-Type: String
+Type: SolutionPackageType
 Parameter Sets: (All)
 Aliases:
-Accepted values: Unmanaged, Managed, Both
 
 Required: False
 Position: Named
-Default value: None
+Default value: Unmanaged
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -93,7 +109,7 @@ Accept wildcard characters: False
 ```
 
 ### -UnpackMsapp
-Unpack .msapp files found in the solution into folders (same name without extension).
+Unpack .msapp files found in the solution into folders (same name without extension). Canvas App (.msapp) files are ZIP archives that can be unpacked for version control.
 
 ```yaml
 Type: SwitchParameter
@@ -102,7 +118,7 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -123,8 +139,7 @@ Accept wildcard characters: False
 ```
 
 ### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
 Type: SwitchParameter
@@ -148,5 +163,18 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### System.Object
 ## NOTES
+- Requires the Power Apps CLI (pac) to be installed and available in your PATH.
+- Install from https://aka.ms/PowerAppsCLI
+- The `-UnpackMsapp` switch is useful for version control of Canvas Apps, allowing you to see individual file changes.
+- The cmdlet always uses clobber and allowDelete modes for consistent behavior.
+- Use `-PackageType` to specify 'Unmanaged' (default), 'Managed', or 'Both' for dual Managed and Unmanaged operation.
 
 ## RELATED LINKS
+
+[Compress-DataverseSolutionFile](Compress-DataverseSolutionFile.md)
+
+[Export-DataverseSolution](Export-DataverseSolution.md)
+
+[Import-DataverseSolution](Import-DataverseSolution.md)
+
+[Power Apps CLI documentation](https://learn.microsoft.com/power-platform/developer/cli/introduction)

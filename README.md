@@ -97,7 +97,7 @@ For more advanced scenarios including metadata and customisations, see the [docu
 - [App Module Management](docs/core-concepts/app-module-management.md) - Create, update, and manage model-driven apps
 - [Environment Variables and Connection References](docs/core-concepts/environment-variables-connection-references.md) - Managing configuration and connections
 - [Plugin Management](docs/core-concepts/plugin-management.md) - Manage plugins including dynamic plugin assemblies (compile C# on-the-fly), traditional plugin assemblies, plugin steps, and images
-- [Solution Management](docs/advanced/solution-management.md) - Import, export, and manage solutions
+- [Solution Management](docs/core-concepts/solution-management.md) - Import, export, and manage solutions
 - [Solution Component Management](docs/core-concepts/solution-component-management.md) - Managing individual components within solutions
 - [Dependency Management](docs/core-concepts/dependency-management.md) - Understanding and managing component dependencies
 

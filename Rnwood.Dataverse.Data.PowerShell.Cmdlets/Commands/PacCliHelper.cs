@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Management.Automation;
 using System.Runtime.InteropServices;
+using System.Collections.Concurrent;
+using System.Threading;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -25,7 +27,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 cmdlet.WriteVerbose($"Found PAC CLI in PATH: {pacInPath}");
                 return pacInPath;
             }
-            
+
             throw new InvalidOperationException("PAC CLI not found in PATH. Please install Power Apps CLI from https://aka.ms/PowerAppsCLI");
         }
 
@@ -38,21 +40,70 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             string[] pathDirs = pathEnv.Split(Path.PathSeparator);
-            string pacExecutable = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "pac.exe" : "pac";
-
-            foreach (string dir in pathDirs)
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                try
+                string pathExt = Environment.GetEnvironmentVariable("PATHEXT");
+                if (string.IsNullOrEmpty(pathExt))
                 {
-                    string pacPath = Path.Combine(dir, pacExecutable);
-                    if (File.Exists(pacPath))
+                    pathExt = ".EXE;.BAT;.CMD";
+                }
+                string[] extensions = pathExt.Split(';');
+                foreach (string dir in pathDirs)
+                {
+                    try
                     {
-                        return pacPath;
+                        foreach (string ext in extensions)
+                        {
+                            string pacPath = Path.Combine(dir, "pac" + ext);
+                            if (File.Exists(pacPath))
+                            {
+                                return pacPath;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore invalid paths
                     }
                 }
-                catch
+
+            }
+            else
+            {
+                string[] candidates = { "pac", "pac.sh" };
+                foreach (string dir in pathDirs)
                 {
-                    // Ignore invalid paths
+                    try
+                    {
+                        foreach (string candidate in candidates)
+                        {
+                            string pacPath = Path.Combine(dir, candidate);
+                            if (File.Exists(pacPath))
+                            {
+#if !NETFRAMEWORK
+                                try
+                                {
+                                    var mode = File.GetUnixFileMode(pacPath);
+                                    if ((mode & UnixFileMode.UserExecute) != 0)
+                                    {
+                                        return pacPath;
+                                    }
+                                }
+                                catch
+                                {
+                                    // Ignore if unable to check permissions
+                                }
+#else
+                                // On .NET Framework (Windows only), assume executable if exists
+                                return pacPath;
+#endif
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore invalid paths
+                    }
                 }
             }
 
@@ -83,13 +134,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WorkingDirectory = workingDirectory ?? Directory.GetCurrentDirectory()
             };
 
+            var verboseMessages = new ConcurrentQueue<string>();
+            var warningMessages = new ConcurrentQueue<string>();
+
             using (var process = new Process { StartInfo = startInfo })
             {
                 process.OutputDataReceived += (sender, e) =>
                 {
                     if (!string.IsNullOrEmpty(e.Data))
                     {
-                        cmdlet.WriteVerbose($"PAC: {e.Data}");
+                        verboseMessages.Enqueue($"PAC: {e.Data}");
                     }
                 };
 
@@ -97,14 +151,41 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     if (!string.IsNullOrEmpty(e.Data))
                     {
-                        cmdlet.WriteWarning($"PAC: {e.Data}");
+                        warningMessages.Enqueue($"PAC: {e.Data}");
                     }
                 };
 
                 process.Start();
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
+
+                // Poll for messages until process exits
+                while (!process.HasExited)
+                {
+                    string msg;
+                    while (verboseMessages.TryDequeue(out msg))
+                    {
+                        cmdlet.WriteVerbose(msg);
+                    }
+                    while (warningMessages.TryDequeue(out msg))
+                    {
+                        cmdlet.WriteWarning(msg);
+                    }
+                    Thread.Sleep(50); // Small delay to avoid busy waiting
+                }
+
+                // Ensure process has exited and dequeue any remaining messages
                 process.WaitForExit();
+
+                string msg2;
+                while (verboseMessages.TryDequeue(out msg2))
+                {
+                    cmdlet.WriteVerbose(msg2);
+                }
+                while (warningMessages.TryDequeue(out msg2))
+                {
+                    cmdlet.WriteWarning(msg2);
+                }
 
                 return process.ExitCode;
             }

@@ -8,7 +8,7 @@ Locale: {{ Update Locale }}
 
 # Rnwood.Dataverse.Data.PowerShell Module
 ## Description
-Cross-platform PowerShell module for Microsoft Dataverse data manipulation and form management. This module provides comprehensive cmdlets for CRUD operations on Dataverse records, form structure manipulation, and metadata management. Supports both PowerShell Desktop (5.1+) and PowerShell Core (7+) on Windows, Linux, and macOS.
+{{ Fill in the Description }}
 
 ## Rnwood.Dataverse.Data.PowerShell Cmdlets
 ### [Clear-DataverseMetadataCache](Clear-DataverseMetadataCache.md)
@@ -18,10 +18,10 @@ Clears the global metadata cache used by Get cmdlets.
 Compares a solution file with the state of that solution in the target environment or with another solution file.
 
 ### [Compress-DataverseSolutionFile](Compress-DataverseSolutionFile.md)
-{{ Fill in the Synopsis }}
+Packs a Dataverse solution folder using the Power Apps CLI.
 
 ### [Expand-DataverseSolutionFile](Expand-DataverseSolutionFile.md)
-{{ Fill in the Synopsis }}
+Unpacks a Dataverse solution file using the Power Apps CLI.
 
 ### [Export-DataverseSolution](Export-DataverseSolution.md)
 Exports a solution from Dataverse using an asynchronous job with progress reporting.
@@ -167,7 +167,7 @@ Applies a staged solution upgrade by deleting the original solution and promotin
 Invokes a Dataverse SQL query using Sql4Cds and writes any resulting rows to the pipeline.
 
 ### [Invoke-DataverseXrmToolbox](Invoke-DataverseXrmToolbox.md)
-{{ Fill in the Synopsis }}
+Invokes an XrmToolbox plugin downloaded from NuGet with the current Dataverse connection injected.
 
 ### [Publish-DataverseCustomizations](Publish-DataverseCustomizations.md)
 Publishes customizations in Dataverse.
@@ -185,7 +185,7 @@ Deletes an attribute (column) from a Dataverse entity.
 {{ Fill in the Synopsis }}
 
 ### [Remove-DataverseEntityKeyMetadata](Remove-DataverseEntityKeyMetadata.md)
-{{ Fill in the Synopsis }}
+Deletes an alternate key from an entity (table) in Dataverse.
 
 ### [Remove-DataverseEntityMetadata](Remove-DataverseEntityMetadata.md)
 Deletes an entity (table) from Dataverse.
@@ -278,7 +278,7 @@ Creates or updates connection reference values in Dataverse.
 Compiles C# source code into a plugin assembly, uploads to Dataverse, and automatically manages plugin types.
 
 ### [Set-DataverseEntityKeyMetadata](Set-DataverseEntityKeyMetadata.md)
-{{ Fill in the Synopsis }}
+Creates an alternate key on an entity (table) in Dataverse.
 
 ### [Set-DataverseEntityMetadata](Set-DataverseEntityMetadata.md)
 Creates or updates an entity (table) in Dataverse.

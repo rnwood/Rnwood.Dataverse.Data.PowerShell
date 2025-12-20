@@ -25,10 +25,10 @@ Import-DataverseSolution [-InFile] <String> [-OverwriteUnmanagedCustomizations] 
 
 ### FromFolder
 ```
-Import-DataverseSolution [-InFolder] <String> [-PackageType <String>] [-OverwriteUnmanagedCustomizations]
- [-PublishWorkflows] [-SkipProductUpdateDependencies] [-Mode <ImportMode>] [-ConnectionReferences <Hashtable>]
- [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
- [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfAdditive]
+Import-DataverseSolution -InFolder <String> [-PackageType <ImportSolutionPackageType>]
+ [-OverwriteUnmanagedCustomizations] [-PublishWorkflows] [-SkipProductUpdateDependencies] [-Mode <ImportMode>]
+ [-ConnectionReferences <Hashtable>] [-EnvironmentVariables <Hashtable>] [-ConvertToManaged]
+ [-SkipQueueRibbonJob] [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfAdditive]
  [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation]
  [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion] [-SkipIfLowerVersion] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
@@ -281,7 +281,7 @@ Parameter Sets: FromFolder
 Aliases:
 
 Required: True
-Position: 0
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -334,17 +334,16 @@ Accept wildcard characters: False
 ```
 
 ### -PackageType
-Package type: 'Unmanaged' (default), 'Managed', or 'Both'.
+Package type: 'Unmanaged' (default) or 'Managed'.
 
 ```yaml
-Type: String
+Type: ImportSolutionPackageType
 Parameter Sets: FromFolder
 Aliases:
-Accepted values: Unmanaged, Managed, Both
 
 Required: False
 Position: Named
-Default value: None
+Default value: Unmanaged
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

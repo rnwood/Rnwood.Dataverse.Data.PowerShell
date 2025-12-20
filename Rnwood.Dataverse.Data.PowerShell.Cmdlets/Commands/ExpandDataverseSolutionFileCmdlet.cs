@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Management.Automation;
+using Rnwood.Dataverse.Data.PowerShell.Commands.Model;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -36,8 +37,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the package type for unpacking. Can be 'Unmanaged', 'Managed', or 'Both'.
         /// </summary>
         [Parameter(HelpMessage = "Package type: 'Unmanaged' (default), 'Managed', or 'Both' for dual Managed and Unmanaged operation.")]
-        [ValidateSet("Unmanaged", "Managed", "Both", IgnoreCase = true)]
-        public string PackageType { get; set; } = "Unmanaged";
+        public SolutionPackageType PackageType { get; set; } = SolutionPackageType.Unmanaged;
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -89,53 +89,51 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (UnpackMsapp.IsPresent)
             {
                 WriteVerbose("Searching for .msapp files to unpack...");
-                UnpackMsappFiles(resolvedOutputPath);
+                UnpackMsappFiles(resolvedOutputPath, this);
             }
         }
 
-        private void UnpackMsappFiles(string basePath)
+        internal static void UnpackMsappFiles(string basePath, Cmdlet cmdlet)
         {
             // Find all .msapp files in the unpacked solution
             string[] msappFiles = Directory.GetFiles(basePath, "*.msapp", SearchOption.AllDirectories);
 
             if (msappFiles.Length == 0)
             {
-                WriteVerbose("No .msapp files found.");
+                cmdlet.WriteVerbose("No .msapp files found.");
                 return;
             }
 
-            WriteVerbose($"Found {msappFiles.Length} .msapp file(s) to unpack.");
+            cmdlet.WriteVerbose($"Found {msappFiles.Length} .msapp file(s) to unpack.");
 
             foreach (string msappFile in msappFiles)
             {
                 string msappDirectory = System.IO.Path.GetDirectoryName(msappFile);
-                string msappFileName = System.IO.Path.GetFileNameWithoutExtension(msappFile);
+                string msappFileName = System.IO.Path.GetFileName(msappFile);
+                string tempOutputFolder = System.IO.Path.Combine(msappDirectory, msappFileName + ".tmp");
                 string outputFolder = System.IO.Path.Combine(msappDirectory, msappFileName);
 
-                WriteVerbose($"Unpacking '{msappFile}' to '{outputFolder}'");
+                cmdlet.WriteVerbose($"Unpacking '{msappFile}' to '{outputFolder}'");
 
-                try
+                // Always overwrite - delete existing folder if present
+                if (Directory.Exists(tempOutputFolder))
                 {
-                    // Always overwrite - delete existing folder if present
-                    if (Directory.Exists(outputFolder))
-                    {
-                        Directory.Delete(outputFolder, recursive: true);
-                    }
-                    
-                    Directory.CreateDirectory(outputFolder);
-
-                    // Unzip the .msapp file
-                    ZipFile.ExtractToDirectory(msappFile, outputFolder);
-
-                    WriteVerbose($"Successfully unpacked '{msappFile}'");
+                    Directory.Delete(tempOutputFolder, recursive: true);
                 }
-                catch (Exception ex)
-                {
-                    WriteWarning($"Failed to unpack '{msappFile}': {ex.Message}");
-                }
+
+                Directory.CreateDirectory(tempOutputFolder);
+
+                // Unzip the .msapp file
+                ZipFile.ExtractToDirectory(msappFile, tempOutputFolder);
+
+                File.Delete(msappFile);
+                Directory.Move(tempOutputFolder, outputFolder);
+
+                cmdlet.WriteVerbose($"Successfully unpacked '{msappFile}'");
+
             }
 
-            WriteVerbose($"Finished unpacking {msappFiles.Length} .msapp file(s).");
+            cmdlet.WriteVerbose($"Finished unpacking {msappFiles.Length} .msapp file(s).");
         }
     }
 }

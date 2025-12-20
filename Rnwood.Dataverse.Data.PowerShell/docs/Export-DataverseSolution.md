@@ -25,13 +25,13 @@ Export-DataverseSolution [-SolutionName] <String> [-Managed] [-TargetVersion <St
 
 ### ToFolder
 ```
-Export-DataverseSolution [-SolutionName] <String> [-Managed] [-TargetVersion <String>]
- [-ExportAutoNumberingSettings] [-ExportCalendarSettings] [-ExportCustomizationSettings]
- [-ExportEmailTrackingSettings] [-ExportGeneralSettings] [-ExportMarketingSettings]
- [-ExportOutlookSynchronizationSettings] [-ExportRelationshipRoles] [-ExportIsvConfig] [-ExportSales]
- [-ExportExternalApplications] -OutFolder <String> [-UnpackCanvas] [-PackageType <String>]
- [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Export-DataverseSolution [-SolutionName] <String> [-TargetVersion <String>] [-ExportAutoNumberingSettings]
+ [-ExportCalendarSettings] [-ExportCustomizationSettings] [-ExportEmailTrackingSettings]
+ [-ExportGeneralSettings] [-ExportMarketingSettings] [-ExportOutlookSynchronizationSettings]
+ [-ExportRelationshipRoles] [-ExportIsvConfig] [-ExportSales] [-ExportExternalApplications] -OutFolder <String>
+ [-UnpackMsApp] [-PackageType <SolutionPackageType>] [-PollingIntervalSeconds <Int32>]
+ [-TimeoutSeconds <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -272,7 +272,7 @@ Export as a managed solution. Default is unmanaged (false).
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: (All)
+Parameter Sets: ToFile
 Aliases:
 
 Required: False
@@ -313,17 +313,16 @@ Accept wildcard characters: False
 ```
 
 ### -PackageType
-Package type: 'Unmanaged' (default), 'Managed', or 'Both' for dual Managed and Unmanaged operation.
+Package type: 'Unmanaged', 'Managed', or 'Both' (default) for dual Managed and Unmanaged operation. Controls which solution types are exported and unpacked.
 
 ```yaml
-Type: String
+Type: SolutionPackageType
 Parameter Sets: ToFolder
 Aliases:
-Accepted values: Unmanaged, Managed, Both
 
 Required: False
 Position: Named
-Default value: None
+Default value: Both
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -418,7 +417,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -UnpackCanvas
+### -UnpackMsApp
 Unpack .msapp files found in the solution into folders.
 
 ```yaml

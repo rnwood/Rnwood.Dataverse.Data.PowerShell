@@ -63,11 +63,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string InFolder { get; set; }
 
         /// <summary>
-        /// Gets or sets the package type for packing when using InFolder. Can be 'Unmanaged', 'Managed', or 'Both'.
+        /// Gets or sets the package type for packing when using InFolder. Can be 'Unmanaged' or 'Managed'.
         /// </summary>
-        [Parameter(ParameterSetName = "FromFolder", HelpMessage = "Package type: 'Unmanaged' (default), 'Managed', or 'Both'.")]
-        [ValidateSet("Unmanaged", "Managed", "Both", IgnoreCase = true)]
-        public string PackageType { get; set; } = "Unmanaged";
+        [Parameter(ParameterSetName = "FromFolder", HelpMessage = "Package type: 'Unmanaged' (default) or 'Managed'.")]
+        public ImportSolutionPackageType PackageType { get; set; } = ImportSolutionPackageType.Unmanaged;
 
         /// <summary>
         /// Gets or sets the solution file bytes to import.
@@ -261,7 +260,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             CopyDirectory(folderPath, tempWorkingPath);
 
                             WriteVerbose("Packing .msapp folders...");
-                            PackMsappFolders(tempWorkingPath);
+                            CompressDataverseSolutionFileCmdlet.PackMsappFolders(tempWorkingPath, this);
 
                             workingPath = tempWorkingPath;
                         }
@@ -1800,55 +1799,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             return null;
-        }
-
-        private void PackMsappFolders(string basePath)
-        {
-            // Find all directories with .msapp extension
-            var msappFolders = Directory.GetDirectories(basePath, "*.msapp", SearchOption.AllDirectories);
-
-            if (msappFolders.Length == 0)
-            {
-                WriteVerbose("No .msapp folders found.");
-                return;
-            }
-
-            WriteVerbose($"Found {msappFolders.Length} .msapp folder(s) to pack.");
-
-            foreach (string msappFolder in msappFolders)
-            {
-                string parentDirectory = System.IO.Path.GetDirectoryName(msappFolder);
-                string folderName = System.IO.Path.GetFileName(msappFolder);
-                // The folder already has .msapp extension, so use it as-is for the file name
-                string msappFile = System.IO.Path.Combine(parentDirectory, folderName);
-
-                WriteVerbose($"Packing '{msappFolder}' to '{msappFile}'");
-
-                try
-                {
-                    // Delete existing .msapp file if it exists (shouldn't normally)
-                    if (File.Exists(msappFile))
-                    {
-                        WriteVerbose($"Deleting existing .msapp file: {msappFile}");
-                        File.Delete(msappFile);
-                    }
-
-                    // Create the .msapp file (which is a zip)
-                    ZipFile.CreateFromDirectory(msappFolder, msappFile, CompressionLevel.Optimal, includeBaseDirectory: false);
-
-                    WriteVerbose($"Successfully packed '{msappFolder}'");
-
-                    // Delete the folder after successful packing
-                    WriteVerbose($"Deleting source folder: {msappFolder}");
-                    Directory.Delete(msappFolder, recursive: true);
-                }
-                catch (Exception ex)
-                {
-                    WriteWarning($"Failed to pack '{msappFolder}': {ex.Message}");
-                }
-            }
-
-            WriteVerbose($"Finished packing {msappFolders.Length} .msapp folder(s).");
         }
 
         private void CopyDirectory(string sourceDir, string destDir)

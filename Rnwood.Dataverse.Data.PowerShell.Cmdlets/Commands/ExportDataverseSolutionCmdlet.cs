@@ -7,6 +7,7 @@ using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Rnwood.Dataverse.Data.PowerShell.Commands.Model;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -29,7 +30,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets whether the solution should be exported as a managed solution.
         /// </summary>
         [Parameter(ParameterSetName = "ToFile", HelpMessage = "Export as a managed solution. Default is unmanaged (false).")]
-        [Parameter(ParameterSetName = "ToFolder", HelpMessage = "Export as a managed solution. Default is unmanaged (false).")]
         public SwitchParameter Managed { get; set; }
 
         /// <summary>
@@ -121,14 +121,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets whether to unpack .msapp files when using OutFolder.
         /// </summary>
         [Parameter(ParameterSetName = "ToFolder", HelpMessage = "Unpack .msapp files found in the solution into folders.")]
-        public SwitchParameter UnpackCanvas { get; set; }
+        public SwitchParameter UnpackMsApp { get; set; }
 
         /// <summary>
         /// Gets or sets the package type for unpacking when using OutFolder. Can be 'Unmanaged', 'Managed', or 'Both'.
         /// </summary>
-        [Parameter(ParameterSetName = "ToFolder", HelpMessage = "Package type: 'Unmanaged' (default), 'Managed', or 'Both' for dual Managed and Unmanaged operation.")]
-        [ValidateSet("Unmanaged", "Managed", "Both", IgnoreCase = true)]
-        public string PackageType { get; set; } = "Unmanaged";
+        [Parameter(ParameterSetName = "ToFolder", HelpMessage = "Package type: 'Unmanaged', 'Managed', or 'Both' (default) for dual Managed and Unmanaged operation.")]
+        public SolutionPackageType PackageType { get; set; } = SolutionPackageType.Both;
 
         /// <summary>
         /// Gets or sets whether to output the solution file bytes to the pipeline.
@@ -160,13 +159,118 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
-            WriteVerbose($"Starting async export of solution '{SolutionName}' (Managed={Managed})");
+            if (ParameterSetName == "ToFile")
+            {
+                var solutionFileBytes = ExportSolutionBytes(SolutionName, Managed.IsPresent);
+
+                // Handle ToFile parameter set
+                // Save to file if OutFile is specified
+                if (!string.IsNullOrEmpty(OutFile))
+                {
+                    var outFilePath = GetUnresolvedProviderPathFromPSPath(OutFile);
+                    WriteVerbose($"Saving solution to file: {outFilePath}");
+                    File.WriteAllBytes(outFilePath, solutionFileBytes);
+                    WriteVerbose("Solution file saved successfully.");
+                }
+
+                // Output to pipeline if PassThru is specified
+                if (PassThru.IsPresent)
+                {
+                    WriteObject(solutionFileBytes);
+                }
+            }
+            else if (ParameterSetName == "ToFolder")
+            {
+                string tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+                Directory.CreateDirectory(tempDir);
+
+                try
+                {
+                    string zipFilePath = null;
+
+                    if (PackageType == SolutionPackageType.Unmanaged || PackageType == SolutionPackageType.Both)
+                    {
+                        var bytes = ExportSolutionBytes(SolutionName, false);
+                        var fileName = $"{SolutionName}.zip";
+                        var filePath = System.IO.Path.Combine(tempDir, fileName);
+                        File.WriteAllBytes(filePath, bytes);
+
+                        if (PackageType == SolutionPackageType.Unmanaged || PackageType == SolutionPackageType.Both)
+                        {
+                            zipFilePath = filePath;
+                        }
+                    }
+
+                    if (PackageType == SolutionPackageType.Managed || PackageType == SolutionPackageType.Both)
+                    {
+                        var bytes = ExportSolutionBytes(SolutionName, true);
+                        var fileName = $"{SolutionName}_managed.zip";
+                        var filePath = System.IO.Path.Combine(tempDir, fileName);
+                        File.WriteAllBytes(filePath, bytes);
+
+                        if (PackageType == SolutionPackageType.Managed)
+                        {
+                            zipFilePath = filePath;
+                        }
+                    }
+
+                    // Unpack using PAC CLI
+                    var resolvedOutputPath = GetUnresolvedProviderPathFromPSPath(OutFolder);
+                    WriteVerbose($"Unpacking solution to '{resolvedOutputPath}'");
+
+                    // Build PAC CLI arguments (always use clobber and allowDelete)
+                    var args = $"solution unpack --zipfile \"{zipFilePath}\" --folder \"{resolvedOutputPath}\" --packagetype {PackageType} --clobber --allowDelete";
+
+                    // Execute PAC CLI
+                    int exitCode = PacCliHelper.ExecutePacCli(this, args);
+
+                    if (exitCode != 0)
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"PAC CLI unpack failed with exit code {exitCode}"),
+                            "PacCliFailed",
+                            ErrorCategory.InvalidOperation,
+                            zipFilePath));
+                        return;
+                    }
+
+                    WriteVerbose("Solution unpacked successfully.");
+
+                    // If UnpackMsApp is specified, find and unpack .msapp files
+                    if (UnpackMsApp.IsPresent)
+                    {
+                        WriteVerbose("Searching for .msapp files to unpack...");
+                        ExpandDataverseSolutionFileCmdlet.UnpackMsappFiles(resolvedOutputPath, this);
+                    }
+                }
+                finally
+                {
+                    // Clean up temp directory
+                    if (Directory.Exists(tempDir))
+                    {
+                        WriteVerbose($"Cleaning up temporary directory: {tempDir}");
+                        try
+                        {
+                            Directory.Delete(tempDir, true);
+                        }
+                        catch (Exception ex)
+                        {
+                            WriteWarning($"Failed to delete temporary directory '{tempDir}': {ex.Message}");
+                        }
+                    }
+                }
+            }
+        }
+
+        private byte[] ExportSolutionBytes(string solutionName, bool managed)
+        {
+            WriteVerbose($"Starting async export of solution '{solutionName}' (Managed={managed})");
 
             // Create the async export request
             var exportRequest = new ExportSolutionAsyncRequest
             {
-                SolutionName = SolutionName,
-                Managed = Managed.IsPresent,
+                SolutionName = solutionName,
+                Managed = managed,
                 TargetVersion = TargetVersion,
                 ExportAutoNumberingSettings = ExportAutoNumberingSettings.IsPresent,
                 ExportCalendarSettings = ExportCalendarSettings.IsPresent,
@@ -189,7 +293,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             WriteVerbose($"Export job started. ExportJobId: {exportJobId}, AsyncOperationId: {asyncOperationId}");
 
             // Monitor the async operation
-            var progressRecord = new ProgressRecord(1, "Exporting Solution", $"Exporting solution '{SolutionName}'")
+            var progressRecord = new ProgressRecord(1, "Exporting Solution", $"Exporting solution '{solutionName}' (Managed={managed})")
             {
                 PercentComplete = 0
             };
@@ -206,12 +310,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     progressRecord.RecordType = ProgressRecordType.Completed;
                     WriteProgress(progressRecord);
-                    ThrowTerminatingError(new ErrorRecord(
-                        new TimeoutException($"Solution export timed out after {TimeoutSeconds} seconds."),
-                        "ExportTimeout",
-                        ErrorCategory.OperationTimeout,
-                        SolutionName));
-                    return;
+                    throw new TimeoutException($"Solution export timed out after {TimeoutSeconds} seconds.");
                 }
 
                 // Check if stopping has been requested
@@ -219,8 +318,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     progressRecord.RecordType = ProgressRecordType.Completed;
                     WriteProgress(progressRecord);
-                    WriteWarning("Export operation was stopped by user.");
-                    return;
+                    throw new OperationCanceledException("Export operation was stopped by user.");
                 }
 
                 // Query the asyncoperation record to check status
@@ -241,12 +339,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     progressRecord.RecordType = ProgressRecordType.Completed;
                     WriteProgress(progressRecord);
-                    ThrowTerminatingError(new ErrorRecord(
-                        new InvalidOperationException($"Async operation {asyncOperationId} not found."),
-                        "AsyncOperationNotFound",
-                        ErrorCategory.ObjectNotFound,
-                        asyncOperationId));
-                    return;
+                    throw new InvalidOperationException($"Async operation {asyncOperationId} not found.");
                 }
 
                 var asyncOperation = asyncOperations.Entities[0];
@@ -254,19 +347,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var message = asyncOperation.GetAttributeValue<string>("message");
                 var friendlyMessage = asyncOperation.GetAttributeValue<string>("friendlymessage");
 
-                // Status codes for asyncoperation:
-                // 0 = WaitingForResources
-                // 10 = Waiting
-                // 20 = InProgress
-                // 21 = Pausing
-                // 22 = Canceling
-                // 30 = Succeeded
-                // 31 = Failed
-                // 32 = Canceled
-
                 var statusDescription = GetStatusDescription(statusCode);
                 progressRecord.StatusDescription = $"{statusDescription}";
-                
+
                 if (!string.IsNullOrEmpty(friendlyMessage))
                 {
                     progressRecord.CurrentOperation = friendlyMessage;
@@ -290,19 +373,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     progressRecord.RecordType = ProgressRecordType.Completed;
                     WriteProgress(progressRecord);
                     var errorMessage = friendlyMessage ?? message ?? "Unknown error";
-                    ThrowTerminatingError(new ErrorRecord(
-                        new InvalidOperationException($"Solution export failed: {errorMessage}"),
-                        "ExportFailed",
-                        ErrorCategory.InvalidOperation,
-                        SolutionName));
-                    return;
+                    throw new InvalidOperationException($"Solution export failed: {errorMessage}");
                 }
                 else if (statusCode == 32) // Canceled
                 {
                     progressRecord.RecordType = ProgressRecordType.Completed;
                     WriteProgress(progressRecord);
-                    WriteWarning("Solution export was canceled.");
-                    return;
+                    throw new OperationCanceledException("Solution export was canceled.");
                 }
                 else
                 {
@@ -337,128 +414,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             WriteProgress(progressRecord);
 
             WriteVerbose($"Solution exported successfully. Size: {solutionFileBytes.Length} bytes");
-
-            // Handle ToFolder parameter set - unpack the solution
-            if (ParameterSetName == "ToFolder")
-            {
-                string tempZipPath = null;
-                try
-                {
-                    // Save to temp file first
-                    tempZipPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"{SolutionName}_{Guid.NewGuid():N}.zip");
-                    WriteVerbose($"Saving solution to temporary file: {tempZipPath}");
-                    File.WriteAllBytes(tempZipPath, solutionFileBytes);
-
-                    // Unpack using PAC CLI
-                    var resolvedOutputPath = GetUnresolvedProviderPathFromPSPath(OutFolder);
-                    WriteVerbose($"Unpacking solution to '{resolvedOutputPath}'");
-
-                    // Build PAC CLI arguments (always use clobber and allowDelete)
-                    var args = $"solution unpack --zipfile \"{tempZipPath}\" --folder \"{resolvedOutputPath}\" --packagetype {PackageType} --clobber --allowDelete";
-
-                    // Execute PAC CLI
-                    int exitCode = PacCliHelper.ExecutePacCli(this, args);
-
-                    if (exitCode != 0)
-                    {
-                        ThrowTerminatingError(new ErrorRecord(
-                            new InvalidOperationException($"PAC CLI unpack failed with exit code {exitCode}"),
-                            "PacCliFailed",
-                            ErrorCategory.InvalidOperation,
-                            tempZipPath));
-                        return;
-                    }
-
-                    WriteVerbose("Solution unpacked successfully.");
-
-                    // If UnpackCanvas is specified, find and unpack .msapp files
-                    if (UnpackCanvas.IsPresent)
-                    {
-                        WriteVerbose("Searching for .msapp files to unpack...");
-                        UnpackMsappFiles(resolvedOutputPath);
-                    }
-                }
-                finally
-                {
-                    // Clean up temp file
-                    if (tempZipPath != null && File.Exists(tempZipPath))
-                    {
-                        WriteVerbose($"Cleaning up temporary file: {tempZipPath}");
-                        try
-                        {
-                            File.Delete(tempZipPath);
-                        }
-                        catch (Exception ex)
-                        {
-                            WriteWarning($"Failed to delete temporary file '{tempZipPath}': {ex.Message}");
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // Handle ToFile parameter set
-                // Save to file if OutFile is specified
-                if (!string.IsNullOrEmpty(OutFile))
-                {
-                    var outFilePath = GetUnresolvedProviderPathFromPSPath(OutFile);
-                    WriteVerbose($"Saving solution to file: {outFilePath}");
-                    File.WriteAllBytes(outFilePath, solutionFileBytes);
-                    WriteVerbose("Solution file saved successfully.");
-                }
-
-                // Output to pipeline if PassThru is specified
-                if (PassThru.IsPresent)
-                {
-                    WriteObject(solutionFileBytes);
-                }
-            }
+            return solutionFileBytes;
         }
 
-        private void UnpackMsappFiles(string basePath)
-        {
-            // Find all .msapp files in the unpacked solution
-            string[] msappFiles = Directory.GetFiles(basePath, "*.msapp", SearchOption.AllDirectories);
-
-            if (msappFiles.Length == 0)
-            {
-                WriteVerbose("No .msapp files found.");
-                return;
-            }
-
-            WriteVerbose($"Found {msappFiles.Length} .msapp file(s) to unpack.");
-
-            foreach (string msappFile in msappFiles)
-            {
-                string msappDirectory = System.IO.Path.GetDirectoryName(msappFile);
-                string msappFileName = System.IO.Path.GetFileNameWithoutExtension(msappFile);
-                string outputFolder = System.IO.Path.Combine(msappDirectory, msappFileName);
-
-                WriteVerbose($"Unpacking '{msappFile}' to '{outputFolder}'");
-
-                try
-                {
-                    // Always overwrite - delete existing folder if present
-                    if (Directory.Exists(outputFolder))
-                    {
-                        Directory.Delete(outputFolder, recursive: true);
-                    }
-                    
-                    Directory.CreateDirectory(outputFolder);
-
-                    // Unzip the .msapp file
-                    ZipFile.ExtractToDirectory(msappFile, outputFolder);
-
-                    WriteVerbose($"Successfully unpacked '{msappFile}'");
-                }
-                catch (Exception ex)
-                {
-                    WriteWarning($"Failed to unpack '{msappFile}': {ex.Message}");
-                }
-            }
-
-            WriteVerbose($"Finished unpacking {msappFiles.Length} .msapp file(s).");
-        }
+        
 
         private string GetStatusDescription(int statusCode)
         {

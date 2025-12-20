@@ -8,7 +8,7 @@ schema: 2.0.0
 # Remove-DataverseEntityKeyMetadata
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Deletes an alternate key from an entity (table) in Dataverse.
 
 ## SYNTAX
 
@@ -18,23 +18,44 @@ Remove-DataverseEntityKeyMetadata [-EntityName] <String> [-KeyName] <String> [-C
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+The Remove-DataverseEntityKeyMetadata cmdlet deletes an alternate key from an entity in Dataverse.
+This operation permanently removes the key definition.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Delete an alternate key
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $connection = Get-DataverseConnection -Url "https://myorg.crm.dynamics.com" -Interactive
+PS C:\> Remove-DataverseEntityKeyMetadata -Connection $connection -EntityName contact -KeyName "contact_emailaddress1_key" -Confirm:$false
 ```
 
-{{ Add example description here }}
+This command deletes the alternate key named "contact_emailaddress1_key" from the contact entity without prompting for confirmation.
+
+### Example 2: Delete a key with confirmation
+```powershell
+PS C:\> Remove-DataverseEntityKeyMetadata -Connection $connection -EntityName account -KeyName "account_number_key"
+```
+
+This command deletes the alternate key but prompts for confirmation first (ConfirmImpact is High).
+
+### Example 3: Preview deletion with WhatIf
+```powershell
+PS C:\> Remove-DataverseEntityKeyMetadata -Connection $connection -EntityName contact -KeyName "contact_name_key" -WhatIf
+```
+
+This command shows what would happen if the key were deleted, but doesn't actually perform the deletion.
+
+### Example 4: Delete key from pipeline
+```powershell
+PS C:\> "contact" | Remove-DataverseEntityKeyMetadata -Connection $connection -KeyName "contact_phone_key" -Confirm:$false
+```
+
+This command demonstrates piping the entity name to the cmdlet.
 
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/).
-If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+The Dataverse connection to use. If not specified, uses the default connection.
 
 ```yaml
 Type: ServiceClient
@@ -49,7 +70,7 @@ Accept wildcard characters: False
 ```
 
 ### -EntityName
-Logical name of the entity (table)
+The logical name of the entity (table) to delete the key from.
 
 ```yaml
 Type: String
@@ -64,7 +85,7 @@ Accept wildcard characters: False
 ```
 
 ### -KeyName
-Logical name of the alternate key to delete
+The logical name of the alternate key to delete.
 
 ```yaml
 Type: String
@@ -109,8 +130,7 @@ Accept wildcard characters: False
 ```
 
 ### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
 Type: SwitchParameter
@@ -134,5 +154,13 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### System.Object
 ## NOTES
+- This operation permanently deletes the alternate key.
+- Confirmation is required by default due to the high impact of this operation.
+- Use -Confirm:$false to skip the confirmation prompt.
+- You may need to publish the entity after deleting the key for changes to take effect.
 
 ## RELATED LINKS
+
+[Get-DataverseEntityKeyMetadata](Get-DataverseEntityKeyMetadata.md)
+[Set-DataverseEntityKeyMetadata](Set-DataverseEntityKeyMetadata.md)
+[Define alternate keys for an entity](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/define-alternate-keys-entity)
