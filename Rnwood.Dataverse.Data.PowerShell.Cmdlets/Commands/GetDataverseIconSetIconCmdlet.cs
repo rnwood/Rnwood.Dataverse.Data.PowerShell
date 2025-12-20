@@ -136,39 +136,46 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             // FluentUI System Icons repository: https://github.com/microsoft/fluentui-system-icons
             // Icons are in: assets/{Capitalized}/SVG/ic_fluent_{lowercase}_24_regular.svg
-            // Use Git Trees API to get all icons (Contents API limited to 1000 items)
-            // Note: FluentUI tree may be truncated due to large size
-            var tree = await GetGitTreeAsync("microsoft", "fluentui-system-icons", "master");
+            // FluentUI provides an index file that lists all icons, which is more reliable than Git Trees API
+            // which can be truncated for large repositories
+            var indexUrl = "https://raw.githubusercontent.com/microsoft/fluentui-system-icons/main/icons_regular.md";
 
+            var request = new HttpRequestMessage(HttpMethod.Get, indexUrl);
+            request.Headers.Add("User-Agent", "Rnwood.Dataverse.Data.PowerShell");
+
+            var response = await httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var markdownContent = await response.Content.ReadAsStringAsync();
             var icons = new List<PSObject>();
-            var iconFolders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            // FluentUI has folders for each icon with Capitalized names
-            // Each icon typically has multiple sizes (16, 20, 24, 28, 32, 48) and variants (regular, filled)
-            // We'll use 24_regular as the default for downloads
-            foreach (var item in tree.tree.Where(i => 
-                i.path.StartsWith("assets/", StringComparison.OrdinalIgnoreCase) && 
-                i.type == "tree"))
+            // Parse the markdown table
+            // Format: |Name|Icon|iOS|Android|
+            // Skip header rows and separator row
+            var lines = markdownContent.Split('\n');
+            foreach (var line in lines.Skip(4)) // Skip comment, title, header, separator
             {
-                // Extract icon name from path like "assets/IconName"
-                var pathParts = item.path.Split('/');
-                if (pathParts.Length == 2)
-                {
-                    var iconName = pathParts[1];
-                    if (iconFolders.Add(iconName))
-                    {
-                        var downloadUrl = IconSetUrlHelper.GetIconDownloadUrl("FluentUI", iconName);
-                        
-                        var icon = new PSObject();
-                        icon.Properties.Add(new PSNoteProperty("IconSet", "FluentUI"));
-                        icon.Properties.Add(new PSNoteProperty("Name", iconName));
-                        icon.Properties.Add(new PSNoteProperty("FileName", $"ic_fluent_{iconName.ToLower().Replace(" ", "_")}_24_regular.svg"));
-                        icon.Properties.Add(new PSNoteProperty("DownloadUrl", downloadUrl));
-                        icon.Properties.Add(new PSNoteProperty("Size", 0L)); // Size unknown without fetching each file
-                        icon.Properties.Add(new PSNoteProperty("Truncated", tree.truncated));
-                        icons.Add(icon);
-                    }
-                }
+                if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("|"))
+                    continue;
+
+                var columns = line.Split('|');
+                if (columns.Length < 2)
+                    continue;
+
+                var iconName = columns[1].Trim();
+                if (string.IsNullOrEmpty(iconName) || iconName == "---")
+                    continue;
+
+                var downloadUrl = IconSetUrlHelper.GetIconDownloadUrl("FluentUI", iconName);
+
+                var icon = new PSObject();
+                icon.Properties.Add(new PSNoteProperty("IconSet", "FluentUI"));
+                icon.Properties.Add(new PSNoteProperty("Name", iconName));
+                icon.Properties.Add(new PSNoteProperty("FileName", $"ic_fluent_{iconName.ToLower().Replace(" ", "_")}_24_regular.svg"));
+                icon.Properties.Add(new PSNoteProperty("DownloadUrl", downloadUrl));
+                icon.Properties.Add(new PSNoteProperty("Size", 0L)); // Size unknown without fetching each file
+                icon.Properties.Add(new PSNoteProperty("Truncated", false)); // Index file is complete
+                icons.Add(icon);
             }
 
             return icons;
