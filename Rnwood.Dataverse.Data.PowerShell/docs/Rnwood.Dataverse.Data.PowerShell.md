@@ -52,7 +52,7 @@ Gets connection references from Dataverse.
 Extracts source code and build metadata from a dynamic plugin assembly.
 
 ### [Get-DataverseEntityKeyMetadata](Get-DataverseEntityKeyMetadata.md)
-{{ Fill in the Synopsis }}
+Retrieves entity key (alternate key) metadata for a Dataverse table.
 
 ### [Get-DataverseEntityMetadata](Get-DataverseEntityMetadata.md)
 Retrieves entity (table) metadata from Dataverse.
@@ -182,7 +182,7 @@ Removes an app module component from Dataverse.
 Deletes an attribute (column) from a Dataverse entity.
 
 ### [Remove-DataverseConnectionReference](Remove-DataverseConnectionReference.md)
-{{ Fill in the Synopsis }}
+Removes a connection reference from a Dataverse environment.
 
 ### [Remove-DataverseEntityKeyMetadata](Remove-DataverseEntityKeyMetadata.md)
 Deletes an alternate key from an entity (table) in Dataverse.
@@ -257,7 +257,7 @@ Removes a solution component from an unmanaged solution.
 Removes Dataverse views (savedquery and userquery entities).
 
 ### [Remove-DataverseWebResource](Remove-DataverseWebResource.md)
-{{ Fill in the Synopsis }}
+Removes a web resource from a Dataverse environment.
 
 ### [Set-DataverseAppModule](Set-DataverseAppModule.md)
 Creates or updates an app module (model-driven app) in Dataverse.
@@ -362,11 +362,11 @@ Sets a table's vector icon by downloading an icon from an online icon set and cr
 Creates or updates Dataverse views (savedquery and userquery entities) with flexible column and filter configuration.
 
 ### [Set-DataverseWebResource](Set-DataverseWebResource.md)
-{{ Fill in the Synopsis }}
+Creates or updates web resources in a Dataverse environment.
 
 ### [Test-DataverseRecordAccess](Test-DataverseRecordAccess.md)
 Tests the access rights a security principal (user or team) has for a specific record.
 
 ### [Wait-DataversePublish](Wait-DataversePublish.md)
-{{ Fill in the Synopsis }}
+Waits for a Dataverse publish operation to complete.
 

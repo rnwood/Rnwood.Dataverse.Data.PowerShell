@@ -358,10 +358,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 TopCount = 1
                             };
 
+                            EntityCollection results = null;
+
                             // Try unpublished data first (newly created components are unpublished)
-                            var request = new RetrieveUnpublishedMultipleRequest { Query = query };
-                            var response = (RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
-                            var results = response.EntityCollection;
+                            // Note: Some entities like appmodulecomponent don't support RetrieveUnpublishedMultiple
+                            try
+                            {
+                                var request = new RetrieveUnpublishedMultipleRequest { Query = query };
+                                var response = (RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+                                results = response.EntityCollection;
+                                WriteVerbose($"Retrieved {results.Entities.Count} unpublished app module component(s)");
+                            }
+                            catch (FaultException<OrganizationServiceFault> ex)
+                            {
+                                // If RetrieveUnpublishedMultiple is not supported for this entity, fall back to published query
+                                WriteVerbose($"RetrieveUnpublishedMultiple not supported for appmodulecomponent: {ex.Message}");
+                                results = new EntityCollection();
+                            }
 
                             // If not found in unpublished, try published data
                             if (results.Entities.Count == 0)
@@ -369,6 +382,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 var pubRequest = new RetrieveMultipleRequest { Query = query };
                                 var pubResponse = (RetrieveMultipleResponse)Connection.Execute(pubRequest);
                                 results = pubResponse.EntityCollection;
+                                WriteVerbose($"Retrieved {results.Entities.Count} published app module component(s)");
                             }
 
                             if (results.Entities.Count > 0)
