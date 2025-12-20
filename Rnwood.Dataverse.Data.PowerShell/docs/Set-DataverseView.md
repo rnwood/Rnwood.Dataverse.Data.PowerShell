@@ -32,7 +32,8 @@ When updating existing views, you can add, remove, or update specific columns wi
 
 ### Example 1: Create a basic personal view
 ```powershell
-PS C:\> Set-DataverseView -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseView -PassThru `
     -Name "My Active Contacts" `
     -TableName contact `
  -Columns @("firstname", "lastname", "emailaddress1", "telephone1") `
@@ -43,7 +44,8 @@ Creates a personal view (default) showing active contacts with specified columns
 
 ### Example 2: Create a system view with column widths
 ```powershell
-PS C:\> Set-DataverseView -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseView -PassThru `
   -Name "All Active Contacts" `
     -TableName contact `
     -ViewType "System" `
@@ -60,7 +62,8 @@ Creates a system view accessible to all users with specific column widths.
 
 ### Example 3: Update an existing view
 ```powershell
-PS C:\> Set-DataverseView -Connection $c -Id $viewId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseView -Id $viewId `
     -ViewType "Personal" `
     -Name "Updated Contact View" `
     -Description "Shows active contacts with email"
@@ -70,7 +73,8 @@ Updates the name and description of an existing view. ViewType must be specified
 
 ### Example 4: Add columns to a view
 ```powershell
-PS C:\> Set-DataverseView -Connection $c -Id $viewId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseView -Id $viewId `
     -ViewType "Personal" `
     -AddColumns @(
         @{ name = "address1_city"; width = 150 },
@@ -82,7 +86,8 @@ Adds new columns to an existing view without affecting existing columns.
 
 ### Example 5: Add columns at specific positions
 ```powershell
-PS C:\> Set-DataverseView -Connection $c -Id $viewId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseView -Id $viewId `
     -ViewType "Personal" `
     -AddColumns @("mobilephone", "fax") `
     -InsertColumnsAfter "telephone1"
@@ -92,7 +97,8 @@ Adds mobile phone and fax columns after the telephone1 column.
 
 ### Example 6: Insert columns before a specific column
 ```powershell
-PS C:\> Set-DataverseView -Connection $c -Id $viewId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseView -Id $viewId `
     -ViewType "Personal" `
     -AddColumns @("jobtitle") `
     -InsertColumnsBefore "emailaddress1"
@@ -102,8 +108,9 @@ Inserts the job title column before the email address column in the layout.
 
 ### Example 7: Clone a view using Get-DataverseView output
 ```powershell
-PS C:\> $originalView = Get-DataverseView -Connection $c -Id $originalViewId
-PS C:\> Set-DataverseView -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $originalView = Get-DataverseView -Id $originalViewId
+PS C:\> Set-DataverseView -PassThru `
     -Name "$($originalView.Name) (Copy)" `
     -TableName $originalView.TableName `
     -ViewType $originalView.ViewType `
@@ -117,7 +124,8 @@ Retrieves a view and creates a copy. The properties returned by Get-DataverseVie
 
 ### Example 8: Create view with complex filters
 ```powershell
-PS C:\> Set-DataverseView -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseView -PassThru `
     -Name "High Value Opportunities" `
     -TableName opportunity `
     -ViewType "System" `
@@ -137,6 +145,7 @@ Creates a system view with nested logical filter expressions using AND/OR operat
 
 ### Example 9: Use FetchXML for advanced queries
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $fetchXml = @"
 <fetch>
   <entity name="contact">
@@ -152,7 +161,7 @@ PS C:\> $fetchXml = @"
 </fetch>
 "@
 
-PS C:\> Set-DataverseView -Connection $c -PassThru `
+PS C:\> Set-DataverseView -PassThru `
     -Name "Recent Contacts" `
     -TableName contact `
   -FetchXml $fetchXml

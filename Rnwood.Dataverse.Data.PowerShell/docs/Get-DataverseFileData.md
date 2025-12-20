@@ -37,28 +37,32 @@ The Get-DataverseFileData cmdlet downloads file data from a Dataverse file colum
 
 ### Example 1: Download file to specific path
 ```powershell
-PS C:\> Get-DataverseFileData -Connection $connection -TableName "account" -Id $accountId -ColumnName "documentfile" -FilePath "C:\Downloads\contract.pdf"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFileData -TableName "account" -Id $accountId -ColumnName "documentfile" -FilePath "C:\Downloads\contract.pdf"
 ```
 
 Downloads the file from the specified column to the given file path.
 
 ### Example 2: Download file to folder with original filename
 ```powershell
-PS C:\> Get-DataverseFileData -Connection $connection -TableName "account" -Id $accountId -ColumnName "documentfile" -FolderPath "C:\Downloads"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFileData -TableName "account" -Id $accountId -ColumnName "documentfile" -FolderPath "C:\Downloads"
 ```
 
 Downloads the file using its original filename into the specified folder.
 
 ### Example 3: Get file content as byte array
 ```powershell
-PS C:\> $bytes = Get-DataverseFileData -Connection $connection -TableName "account" -Id $accountId -ColumnName "documentfile" -AsBytes
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $bytes = Get-DataverseFileData -TableName "account" -Id $accountId -ColumnName "documentfile" -AsBytes
 ```
 
 Retrieves the file content as a byte array for in-memory processing.
 
 ### Example 4: Pipe from Get-DataverseRecord
 ```powershell
-PS C:\> Get-DataverseRecord -Connection $connection -TableName "account" -Id $accountId | Get-DataverseFileData -ColumnName "documentfile" -FolderPath "C:\Downloads"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseRecord -TableName "account" -Id $accountId | Get-DataverseFileData -ColumnName "documentfile" -FolderPath "C:\Downloads"
 ```
 
 Pipes a record from Get-DataverseRecord and downloads its file.

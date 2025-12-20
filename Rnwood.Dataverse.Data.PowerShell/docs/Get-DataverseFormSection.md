@@ -24,37 +24,42 @@ The Get-DataverseFormSection cmdlet retrieves section information from a Dataver
 
 ### Example 1: Get all sections from a form
 ```powershell
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information'
-PS C:\> Get-DataverseFormSection -Connection $c -FormId $form.FormId
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $form = Get-DataverseForm -Entity 'contact' -Name 'Information'
+PS C:\> Get-DataverseFormSection -FormId $form.FormId
 ```
 
 Retrieves all sections from all tabs in the contact Information form.
 
 ### Example 2: Get sections from a specific tab
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $formId = '12345678-1234-1234-1234-123456789012'
-PS C:\> Get-DataverseFormSection -Connection $c -FormId $formId -TabName 'General'
+PS C:\> Get-DataverseFormSection -FormId $formId -TabName 'General'
 ```
 
 Retrieves all sections from the 'General' tab of the specified form.
 
 ### Example 3: Get a specific section by name
 ```powershell
-PS C:\> Get-DataverseFormSection -Connection $c -FormId $formId -SectionName 'ContactDetails'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormSection -FormId $formId -SectionName 'ContactDetails'
 ```
 
 Retrieves only the section named 'ContactDetails' from the form.
 
 ### Example 4: Get sections from specific tab and section
 ```powershell
-PS C:\> Get-DataverseFormSection -Connection $c -FormId $formId -TabName 'Details' -SectionName 'AdditionalInfo'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormSection -FormId $formId -TabName 'Details' -SectionName 'AdditionalInfo'
 ```
 
 Retrieves the 'AdditionalInfo' section specifically from the 'Details' tab.
 
 ### Example 5: Explore section properties
 ```powershell
-PS C:\> $section = Get-DataverseFormSection -Connection $c -FormId $formId -TabName 'General' -SectionName 'Summary'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $section = Get-DataverseFormSection -FormId $formId -TabName 'General' -SectionName 'Summary'
 PS C:\> $section.ColumnIndex    # Which column in the tab this section belongs to
 PS C:\> $section.Columns        # Number of columns in the section
 PS C:\> $section.Controls       # Controls contained in this section
@@ -65,7 +70,8 @@ Explores the structure and properties of a specific section.
 
 ### Example 6: Find sections with specific properties
 ```powershell
-PS C:\> $sections = Get-DataverseFormSection -Connection $c -FormId $formId
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $sections = Get-DataverseFormSection -FormId $formId
 PS C:\> $sections | Where-Object { $_.Hidden -eq $true }                    # Hidden sections
 PS C:\> $sections | Where-Object { $_.Columns -gt 1 }                      # Multi-column sections
 PS C:\> $sections | Where-Object { $_.ShowLabel -eq $false }               # Sections without labels

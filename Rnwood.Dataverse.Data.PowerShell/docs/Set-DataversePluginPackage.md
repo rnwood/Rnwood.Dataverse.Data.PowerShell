@@ -33,7 +33,8 @@ Creates or updates plugin packages with support for reading from file path or by
 
 ### Example 1
 ```powershell
-PS C:\> Set-DataversePluginPackage -Connection $connection -UniqueName "MyPackage" -FilePath "C:\Plugins\MyPackage.nupkg"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataversePluginPackage -UniqueName "MyPackage" -FilePath "C:\Plugins\MyPackage.nupkg"
 ```
 
 Creates a new plugin package from a NuGet package file.

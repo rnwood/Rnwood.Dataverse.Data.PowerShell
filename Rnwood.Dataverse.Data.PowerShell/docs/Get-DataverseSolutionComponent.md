@@ -35,32 +35,36 @@ The cmdlet outputs PowerShell objects representing each component with propertie
 
 ### Example 1: Get components by solution name
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
-PS C:\> Get-DataverseSolutionComponent -Connection $conn -SolutionName "MySolution"
+PS C:\> Get-DataverseSolutionComponent -SolutionName "MySolution"
 ```
 
 This example retrieves all root components from the solution named "MySolution".
 
 ### Example 2: Get components by solution ID
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
-PS C:\> Get-DataverseSolutionComponent -Connection $conn -SolutionId "12345678-1234-1234-1234-123456789012"
+PS C:\> Get-DataverseSolutionComponent -SolutionId "12345678-1234-1234-1234-123456789012"
 ```
 
 This example retrieves all root components from the solution with the specified ID.
 
 ### Example 3: Get components including subcomponents
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
-PS C:\> Get-DataverseSolutionComponent -Connection $conn -SolutionName "MySolution" -IncludeImpliedSubcomponents
+PS C:\> Get-DataverseSolutionComponent -SolutionName "MySolution" -IncludeImpliedSubcomponents
 ```
 
 This example retrieves all root components and their subcomponents from the solution named "MySolution".
 
 ### Example 4: Filter components by type
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
-PS C:\> $components = Get-DataverseSolutionComponent -Connection $conn -SolutionName "MySolution"
+PS C:\> $components = Get-DataverseSolutionComponent -SolutionName "MySolution"
 PS C:\> $components | Where-Object { $_.ComponentType -eq 1 } | Format-Table
 ```
 
@@ -68,8 +72,9 @@ This example retrieves all components from the solution and filters to show only
 
 ### Example 5: Count components by type
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
-PS C:\> $components = Get-DataverseSolutionComponent -Connection $conn -SolutionName "MySolution"
+PS C:\> $components = Get-DataverseSolutionComponent -SolutionName "MySolution"
 PS C:\> $components | Group-Object ComponentTypeName | Select-Object Name, Count | Sort-Object Count -Descending
 ```
 

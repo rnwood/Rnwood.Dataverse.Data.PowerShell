@@ -24,7 +24,8 @@ Deletes a plugin package from Dataverse.
 
 ### Example 1
 ```powershell
-PS C:\> Remove-DataversePluginPackage -Connection $connection -Id 12345678-1234-1234-1234-123456789012
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataversePluginPackage -Id 12345678-1234-1234-1234-123456789012
 ```
 
 Removes the specified plugin package.

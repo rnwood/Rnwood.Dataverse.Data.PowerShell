@@ -25,6 +25,7 @@ Use Remove-DataverseEnvironmentVariableDefinition to remove both the definition 
 
 ### Example 1: Remove an environment variable value
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseEnvironmentVariableValue -SchemaName "new_apiurl"
 ```
 
@@ -32,6 +33,7 @@ Removes the value for the environment variable "new_apiurl", but preserves the d
 
 ### Example 2: Remove with confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseEnvironmentVariableValue -SchemaName "new_apiurl" -Confirm
 ```
 
@@ -39,6 +41,7 @@ Prompts for confirmation before removing the value.
 
 ### Example 3: Remove value with WhatIf
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseEnvironmentVariableValue -SchemaName "new_apiurl" -WhatIf
 ```
 
@@ -46,6 +49,7 @@ Shows what would happen if the cmdlet runs without actually removing the value.
 
 ### Example 4: Remove from pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableValue -SchemaName "new_test*" | 
     Remove-DataverseEnvironmentVariableValue
 ```

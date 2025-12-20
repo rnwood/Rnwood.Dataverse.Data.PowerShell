@@ -33,32 +33,36 @@ This cmdlet is useful for analyzing solution contents without importing the solu
 
 ### Example 1: List all components from a solution file
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
-PS C:\> Get-DataverseSolutionFileComponent -Connection $conn -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip"
+PS C:\> Get-DataverseSolutionFileComponent -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip"
 ```
 
 Lists all root components from the specified solution file, including environment variables and connection references.
 
 ### Example 2: List components including subcomponents
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
-PS C:\> Get-DataverseSolutionFileComponent -Connection $conn -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip" -IncludeSubcomponents
+PS C:\> Get-DataverseSolutionFileComponent -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip" -IncludeSubcomponents
 ```
 
 Lists all components including subcomponents (attributes, relationships, forms, views, etc.) from the specified solution file.
 
 ### Example 3: Filter for environment variables
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
-PS C:\> Get-DataverseSolutionFileComponent -Connection $conn -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip" | Where-Object { $_.ComponentType -eq 380 }
+PS C:\> Get-DataverseSolutionFileComponent -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip" | Where-Object { $_.ComponentType -eq 380 }
 ```
 
 Lists only environment variable components (componenttype=380) from the solution file.
 
 ### Example 4: Filter for connection references
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
-PS C:\> Get-DataverseSolutionFileComponent -Connection $conn -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip" | Where-Object { $_.ComponentType -eq 635 }
+PS C:\> Get-DataverseSolutionFileComponent -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip" | Where-Object { $_.ComponentType -eq 635 }
 ```
 
 Lists only connection reference components (componenttype=635) from the solution file.

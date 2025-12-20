@@ -35,6 +35,7 @@ When updating an existing relationship, only certain properties can be modified:
 
 ### Example 1: Create a OneToMany relationship
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseRelationshipMetadata -SchemaName "new_project_contact" `
     -RelationshipType "OneToMany" `
     -ReferencedEntity "new_project" `
@@ -48,6 +49,7 @@ Creates a OneToMany relationship from new_project to contact with a lookup field
 
 ### Example 2: Create a ManyToMany relationship
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseRelationshipMetadata -SchemaName "new_project_contact" `
     -RelationshipType "ManyToMany" `
     -ReferencedEntity "new_project" `
@@ -59,6 +61,7 @@ Creates a ManyToMany relationship between new_project and contact tables.
 
 ### Example 3: Update cascade behavior on existing relationship
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseRelationshipMetadata -SchemaName "new_project_contact" `
     -RelationshipType "OneToMany" `
     -ReferencedEntity "new_project" `
@@ -71,6 +74,7 @@ Updates an existing OneToMany relationship to change its cascade behaviors.
 
 ### Example 4: Create relationship with full cascade configuration
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseRelationshipMetadata -SchemaName "new_task_project" `
     -RelationshipType "OneToMany" `
     -ReferencedEntity "new_project" `

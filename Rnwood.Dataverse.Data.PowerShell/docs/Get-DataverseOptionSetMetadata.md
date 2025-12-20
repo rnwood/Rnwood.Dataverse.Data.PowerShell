@@ -47,6 +47,7 @@ Option set metadata is essential for:
 
 ### Example 1: Get option set for an entity attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $optionSet = Get-DataverseOptionSetMetadata -EntityName contact -AttributeName gendercode
 PS C:\> $optionSet.Options | Select-Object Value, Label
 
@@ -60,6 +61,7 @@ Retrieves the options for the `gendercode` choice field on the `contact` entity.
 
 ### Example 2: Get all options with descriptions
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $optionSet = Get-DataverseOptionSetMetadata -EntityName lead -AttributeName industrycode
 PS C:\> $optionSet.Options | ForEach-Object {
     [PSCustomObject]@{
@@ -80,6 +82,7 @@ Retrieves options with descriptions for the industry code field.
 
 ### Example 3: Get a global option set by name
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $globalOptionSet = Get-DataverseOptionSetMetadata -Name new_customerstatus
 PS C:\> $globalOptionSet.Options | Select-Object Value, Label
 
@@ -94,6 +97,7 @@ Retrieves a global option set that can be reused across entities.
 
 ### Example 4: List all global option sets
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $allGlobalOptionSets = Get-DataverseOptionSetMetadata
 PS C:\> $allGlobalOptionSets | Select-Object -First 10 Name, DisplayName
 
@@ -108,6 +112,7 @@ Retrieves all global option sets in the organization.
 
 ### Example 5: Export option values to CSV
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $optionSet = Get-DataverseOptionSetMetadata -EntityName account -AttributeName industrycode
 PS C:\> $optionSet.Options | 
     Select-Object Value, @{N='Label';E={$_.Label.UserLocalizedLabel.Label}} |
@@ -118,6 +123,7 @@ Exports option set values to CSV for documentation or import.
 
 ### Example 6: Find option by label
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $optionSet = Get-DataverseOptionSetMetadata -EntityName contact -AttributeName preferredcontactmethodcode
 PS C:\> $emailOption = $optionSet.Options | 
     Where-Object { $_.Label.UserLocalizedLabel.Label -eq 'Email' }
@@ -130,6 +136,7 @@ Finds the numeric value for a specific option label.
 
 ### Example 7: Get status reason options
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $statusOptions = Get-DataverseOptionSetMetadata -EntityName opportunity -AttributeName statuscode
 PS C:\> $statusOptions.Options | Select-Object Value, 
     @{N='Label';E={$_.Label.UserLocalizedLabel.Label}},
@@ -147,6 +154,7 @@ Retrieves status reason options with their colors and state values.
 
 ### Example 8: Count options in a choice field
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $optionSet = Get-DataverseOptionSetMetadata -EntityName account -AttributeName accountcategorycode
 PS C:\> Write-Host "Number of categories: $($optionSet.Options.Count)"
 Number of categories: 5
@@ -156,11 +164,12 @@ Counts the number of options in a choice field.
 
 ### Example 9: Compare option sets between environments
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $dev = Get-DataverseConnection -Url "https://dev.crm.dynamics.com" -Interactive
 PS C:\> $prod = Get-DataverseConnection -Url "https://prod.crm.dynamics.com" -Interactive
 
-PS C:\> $devOptions = Get-DataverseOptionSetMetadata -Connection $dev -EntityName account -AttributeName industrycode
-PS C:\> $prodOptions = Get-DataverseOptionSetMetadata -Connection $prod -EntityName account -AttributeName industrycode
+PS C:\> $devOptions = Get-DataverseOptionSetMetadata -EntityName account -AttributeName industrycode
+PS C:\> $prodOptions = Get-DataverseOptionSetMetadata -EntityName account -AttributeName industrycode
 
 PS C:\> $devValues = $devOptions.Options.Value
 PS C:\> $prodValues = $prodOptions.Options.Value
@@ -173,6 +182,7 @@ Compares option set values between development and production environments.
 
 ### Example 10: Generate lookup table for choice fields
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $optionSet = Get-DataverseOptionSetMetadata -EntityName lead -AttributeName leadqualitycode
 PS C:\> $lookup = @{}
 PS C:\> foreach ($option in $optionSet.Options) {
@@ -188,6 +198,7 @@ Creates a hashtable for quick value-to-label lookups.
 
 ### Example 11: Find multi-select choice options
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $attr = Get-DataverseAttributeMetadata -EntityName contact -AttributeName new_interests
 PS C:\> if ($attr.AttributeType -eq 'MultiSelectPicklist') {
     $optionSet = Get-DataverseOptionSetMetadata -EntityName contact -AttributeName new_interests
@@ -206,6 +217,7 @@ Retrieves options for a multi-select choice field.
 
 ### Example 12: Validate choice value exists
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $optionSet = Get-DataverseOptionSetMetadata -EntityName account -AttributeName industrycode
 PS C:\> $valueToCheck = 99
 PS C:\> $validValues = $optionSet.Options.Value
@@ -221,6 +233,7 @@ Validates if a choice value exists in the option set.
 
 ### Example 13: Get default option value
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $attr = Get-DataverseAttributeMetadata -EntityName account -AttributeName industrycode
 PS C:\> if ($attr.DefaultFormValue) {
     $optionSet = Get-DataverseOptionSetMetadata -EntityName account -AttributeName industrycode
@@ -234,6 +247,7 @@ Finds the default value for a choice field.
 
 ### Example 14: Generate documentation for all choice fields
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $attributes = Get-DataverseAttributeMetadata -EntityName account
 PS C:\> $choiceFields = $attributes | 
     Where-Object { $_.AttributeType -in @('Picklist', 'State', 'Status') }
@@ -251,6 +265,7 @@ Generates documentation for all choice fields on an entity.
 
 ### Example 15: Handle missing or null labels
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $optionSet = Get-DataverseOptionSetMetadata -EntityName account -AttributeName industrycode
 PS C:\> $optionSet.Options | ForEach-Object {
     $label = if ($_.Label.UserLocalizedLabel) { 
@@ -269,6 +284,7 @@ Handles option sets with missing or null labels gracefully.
 
 ### Example 16: Query only published metadata
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Get only published option sets
 PS C:\> $publishedOptionSets = Get-DataverseOptionSetMetadata -Published
 PS C:\> $publishedOptionSets.Count

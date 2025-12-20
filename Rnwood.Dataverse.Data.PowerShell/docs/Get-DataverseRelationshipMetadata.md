@@ -33,6 +33,7 @@ The cmdlet returns relationship metadata objects that contain comprehensive info
 
 ### Example 1: Get all relationships for an entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $relationships = Get-DataverseRelationshipMetadata -EntityName account
 PS C:\> $relationships.Count
 45
@@ -52,6 +53,7 @@ Retrieves all relationships involving the `account` entity.
 
 ### Example 2: Get a specific relationship by name
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $rel = Get-DataverseRelationshipMetadata -RelationshipName account_primary_contact
 PS C:\> [PSCustomObject]@{
     SchemaName = $rel.SchemaName
@@ -74,6 +76,7 @@ Retrieves metadata for a specific relationship by schema name.
 
 ### Example 3: Get all OneToMany relationships
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $oneToMany = Get-DataverseRelationshipMetadata -RelationshipType OneToMany
 PS C:\> $oneToMany.Count
 234
@@ -94,6 +97,7 @@ Retrieves all OneToMany relationships in the organization.
 
 ### Example 4: Get ManyToMany relationships for an entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $manyToMany = Get-DataverseRelationshipMetadata -EntityName account -RelationshipType ManyToMany
 PS C:\> $manyToMany | Select-Object SchemaName, ReferencedEntity, ReferencingEntity, IntersectEntityName
 
@@ -108,6 +112,7 @@ Retrieves ManyToMany relationships for the account entity.
 
 ### Example 5: Analyze cascade behaviors
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $relationships = Get-DataverseRelationshipMetadata -EntityName account -RelationshipType OneToMany
 PS C:\> $relationships | Select-Object SchemaName, ReferencingEntity, 
     @{Name="CascadeDelete"; Expression={$_.CascadeDelete.Value}},
@@ -127,6 +132,7 @@ Analyzes cascade behaviors for OneToMany relationships.
 
 ### Example 6: Find custom relationships
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $customRelationships = Get-DataverseRelationshipMetadata | 
     Where-Object { $_.IsCustomRelationship -eq $true }
 
@@ -143,6 +149,7 @@ Finds all custom relationships in the organization.
 
 ### Example 7: Get relationships with cascade delete
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $cascadeDeleteRels = Get-DataverseRelationshipMetadata -RelationshipType OneToMany | 
     Where-Object { $_.CascadeDelete.Value -eq "Cascade" }
 
@@ -159,6 +166,7 @@ Finds relationships that will delete related records when the parent is deleted.
 
 ### Example 8: Export relationship metadata to CSV
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $relationships = Get-DataverseRelationshipMetadata -EntityName account
 PS C:\> $relationships | Select-Object SchemaName, RelationshipType, ReferencedEntity, ReferencingEntity,
     @{Name="CascadeDelete"; Expression={$_.CascadeDelete.Value}},
@@ -170,6 +178,7 @@ Exports relationship metadata to CSV for documentation or analysis.
 
 ### Example 9: Find self-referencing relationships
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $selfReferencing = Get-DataverseRelationshipMetadata | 
     Where-Object { $_.ReferencedEntity -eq $_.ReferencingEntity -and $_.RelationshipType -eq "OneToMany" }
 
@@ -187,6 +196,7 @@ Finds hierarchical (self-referencing) relationships.
 
 ### Example 10: Get relationship statistics
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $allRelationships = Get-DataverseRelationshipMetadata
 PS C:\> $stats = [PSCustomObject]@{
     TotalRelationships = $allRelationships.Count
@@ -211,6 +221,7 @@ Generates statistics about relationships in the organization.
 
 ### Example 11: Find relationships by entity pattern
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $projectRelationships = Get-DataverseRelationshipMetadata | 
     Where-Object { $_.SchemaName -like "*project*" }
 
@@ -228,6 +239,7 @@ Finds all relationships related to project entities.
 
 ### Example 12: Analyze lookup attributes from relationships
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $oneToMany = Get-DataverseRelationshipMetadata -RelationshipType OneToMany -EntityName account
 PS C:\> foreach ($rel in $oneToMany) {
     # Get the lookup attribute metadata
@@ -247,11 +259,12 @@ Analyzes lookup attributes created by OneToMany relationships.
 
 ### Example 13: Compare relationships between environments
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn1 = Get-DataverseConnection -Url "https://dev.crm.dynamics.com" -Interactive
 PS C:\> $conn2 = Get-DataverseConnection -Url "https://prod.crm.dynamics.com" -Interactive
 
-PS C:\> $devRels = Get-DataverseRelationshipMetadata -Connection $conn1 -EntityName account
-PS C:\> $prodRels = Get-DataverseRelationshipMetadata -Connection $conn2 -EntityName account
+PS C:\> $devRels = Get-DataverseRelationshipMetadata -EntityName account
+PS C:\> $prodRels = Get-DataverseRelationshipMetadata -EntityName account
 
 PS C:\> $devSchemas = $devRels | Select-Object -ExpandProperty SchemaName
 PS C:\> $prodSchemas = $prodRels | Select-Object -ExpandProperty SchemaName
@@ -267,6 +280,7 @@ Compares relationships between development and production environments.
 
 ### Example 14: Find relationships with specific cascade behavior
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $restrictDelete = Get-DataverseRelationshipMetadata -RelationshipType OneToMany | 
     Where-Object { $_.CascadeDelete.Value -eq "Restrict" }
 
@@ -282,6 +296,7 @@ Finds relationships that prevent deletion of parent records when child records e
 
 ### Example 15: Pipeline relationship names
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> @("account_primary_contact", "contact_parent_contact", "lead_qualifying_lead") | 
     Get-DataverseRelationshipMetadata | 
     Select-Object SchemaName, RelationshipType, ReferencedEntity, ReferencingEntity
@@ -297,6 +312,7 @@ Processes multiple relationship names through the pipeline.
 
 ### Example 16: Query only published metadata
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Get only published relationships
 PS C:\> $publishedRels = Get-DataverseRelationshipMetadata -EntityName account -Published
 PS C:\> $publishedRels.Count

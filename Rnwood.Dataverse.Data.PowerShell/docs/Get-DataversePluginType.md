@@ -43,7 +43,8 @@ Retrieves plugin types by ID, type name, assembly ID, or all types.
 
 ### Example 1
 ```powershell
-PS C:\> Get-DataversePluginType -Connection $connection -PluginAssemblyId 12345678-1234-1234-1234-123456789012
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataversePluginType -PluginAssemblyId 12345678-1234-1234-1234-123456789012
 ```
 
 Retrieves all plugin types for a specific assembly.

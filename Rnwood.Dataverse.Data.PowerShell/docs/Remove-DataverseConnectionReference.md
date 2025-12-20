@@ -8,7 +8,7 @@ schema: 2.0.0
 # Remove-DataverseConnectionReference
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Removes a connection reference from a Dataverse environment.
 
 ## SYNTAX
 
@@ -18,16 +18,36 @@ Remove-DataverseConnectionReference [-ConnectionReferenceLogicalName] <String> [
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Deletes a connection reference from the Dataverse environment. Connection references
+define connections to external services used by Power Automate flows and other Dataverse components.
+
+Use with caution as deleting a connection reference may break flows or other components that depend on it.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Remove a connection reference
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseConnectionReference -ConnectionReferenceLogicalName "new_oldconnection"
 ```
 
-{{ Add example description here }}
+Removes the connection reference with the specified logical name.
+
+### Example 2: Remove with confirmation
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseConnectionReference -ConnectionReferenceLogicalName "new_oldconnection" -Confirm
+```
+
+Removes the connection reference with a confirmation prompt.
+
+### Example 3: Preview deletion with WhatIf
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseConnectionReference -ConnectionReferenceLogicalName "new_oldconnection" -WhatIf
+```
+
+Shows what would happen if the connection reference were deleted without actually deleting it.
 
 ## PARAMETERS
 

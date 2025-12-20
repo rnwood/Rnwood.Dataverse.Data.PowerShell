@@ -38,6 +38,7 @@ The cmdlet returns a collection of dependency entities, each describing a depend
 
 ### Example 1: Check dependencies before deleting an entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $entityMetadata = Get-DataverseEntityMetadata -EntityName "new_customtable"
 PS C:\> $dependencies = Get-DataverseComponentDependency -ObjectId $entityMetadata.MetadataId -ComponentType 1 -RequiredBy
 
@@ -53,6 +54,7 @@ Checks if a custom entity has any dependencies before attempting to delete it.
 
 ### Example 2: Find all components that use a specific attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $attrMetadata = Get-DataverseAttributeMetadata -EntityName "contact" -AttributeName "new_customfield"
 PS C:\> $dependents = Get-DataverseComponentDependency -ObjectId $attrMetadata.MetadataId -ComponentType 2 -Dependent
 
@@ -72,6 +74,7 @@ Groups dependent components by type to understand how an attribute is being used
 
 ### Example 3: Pipeline processing for multiple components
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $attributes = Get-DataverseAttributeMetadata -EntityName "account" | Where-Object { $_.IsCustomAttribute }
 PS C:\> $attributes | ForEach-Object {
 >>     $deps = Get-DataverseComponentDependency -ObjectId $_.MetadataId -ComponentType 2 -RequiredBy
@@ -88,6 +91,7 @@ Reports dependency counts for all custom attributes on the account entity.
 
 ### Example 4: Analyze what would be affected by removing an option set
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $optionSetMetadata = Get-DataverseOptionSetMetadata -Name "new_customchoice"
 PS C:\> $dependents = Get-DataverseComponentDependency -ObjectId $optionSetMetadata.MetadataId -ComponentType 9 -Dependent
 

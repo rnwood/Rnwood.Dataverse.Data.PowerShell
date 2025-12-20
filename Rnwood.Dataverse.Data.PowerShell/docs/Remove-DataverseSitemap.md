@@ -42,6 +42,7 @@ Use the -WhatIf parameter to preview what would be deleted without actually perf
 
 ### Example 1: Remove a sitemap by name
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseSitemap -Name "MySitemap"
 
 Sitemap 'MySitemap' deleted successfully.
@@ -51,6 +52,7 @@ Deletes the sitemap with the specified name.
 
 ### Example 2: Remove a sitemap by ID
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseSitemap -Id "a1b2c3d4-5678-90ab-cdef-1234567890ab"
 
 Sitemap 'MySitemap' deleted successfully.
@@ -60,6 +62,7 @@ Deletes the sitemap with the specified ID.
 
 ### Example 3: Remove multiple sitemaps by piping
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSitemap -Unmanaged | Where-Object { $_.Name -like "Test*" } | Remove-DataverseSitemap
 
 Sitemap 'TestSitemap1' deleted successfully.
@@ -71,6 +74,7 @@ Retrieves all unmanaged sitemaps with names starting with "Test" and deletes the
 
 ### Example 4: Remove sitemap only if it exists
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseSitemap -Name "OptionalSitemap" -IfExists
 
 Sitemap 'OptionalSitemap' not found. Skipping deletion.
@@ -80,6 +84,7 @@ Attempts to delete a sitemap but doesn't raise an error if it doesn't exist.
 
 ### Example 5: Preview deletion with WhatIf
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseSitemap -Name "MySitemap" -WhatIf
 
 What if: Performing the operation "Delete" on target "Sitemap 'MySitemap' (ID: a1b2c3d4-5678-90ab-cdef-1234567890ab)".
@@ -89,6 +94,7 @@ Shows what would be deleted without actually performing the deletion.
 
 ### Example 6: Conditional deletion with confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $sitemap = Get-DataverseSitemap -Name "MySitemap"
 PS C:\> if ($sitemap.ModifiedOn -lt (Get-Date).AddMonths(-6)) {
 >>     Remove-DataverseSitemap -Id $sitemap.Id -Confirm:$false

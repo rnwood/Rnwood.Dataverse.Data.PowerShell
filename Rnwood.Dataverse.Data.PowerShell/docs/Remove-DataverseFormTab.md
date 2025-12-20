@@ -26,32 +26,36 @@ The cmdlet supports removing tabs by either name or ID, and can optionally publi
 
 ### Example 1: Remove a tab by name
 ```powershell
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information'
-PS C:\> Remove-DataverseFormTab -Connection $c -FormId $form.Id -TabName 'CustomTab'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $form = Get-DataverseForm -Entity 'contact' -Name 'Information'
+PS C:\> Remove-DataverseFormTab -FormId $form.Id -TabName 'CustomTab'
 ```
 
 Removes the tab named 'CustomTab' from the contact Information form.
 
 ### Example 2: Remove a tab by ID with immediate publishing
 ```powershell
-PS C:\> Remove-DataverseFormTab -Connection $c -FormId $formId -TabId 'tab-guid-12345' -Publish
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFormTab -FormId $formId -TabId 'tab-guid-12345' -Publish
 ```
 
 Removes the tab with the specified ID and publishes the form to make changes visible immediately.
 
 ### Example 3: Remove tab with confirmation
 ```powershell
-PS C:\> Remove-DataverseFormTab -Connection $c -FormId $formId -TabName 'ObsoleteTab' -Confirm
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFormTab -FormId $formId -TabName 'ObsoleteTab' -Confirm
 ```
 
 Removes the tab with user confirmation prompt before proceeding.
 
 ### Example 4: Remove multiple tabs safely
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $tabsToRemove = @('TempTab1', 'TempTab2', 'TempTab3')
 PS C:\> foreach ($tabName in $tabsToRemove) {
     try {
-        Remove-DataverseFormTab -Connection $c -FormId $formId -TabName $tabName -WhatIf
+        Remove-DataverseFormTab -FormId $formId -TabName $tabName -WhatIf
         Write-Host "Would remove tab: $tabName"
     }
     catch {
@@ -62,7 +66,7 @@ PS C:\> foreach ($tabName in $tabsToRemove) {
 # After reviewing, execute without -WhatIf
 PS C:\> foreach ($tabName in $tabsToRemove) {
     try {
-        Remove-DataverseFormTab -Connection $c -FormId $formId -TabName $tabName
+        Remove-DataverseFormTab -FormId $formId -TabName $tabName
         Write-Host "Removed tab: $tabName"
     }
     catch {
@@ -75,14 +79,15 @@ Safely removes multiple tabs by first previewing with -WhatIf, then executing th
 
 ### Example 5: Remove tabs based on conditions
 ```powershell
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'account' -Name 'Information' -ParseFormXml
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $form = Get-DataverseForm -Entity 'account' -Name 'Information' -ParseFormXml
 PS C:\> $tabsToRemove = $form.ParsedForm.Tabs | Where-Object { 
     $_.Name -like 'Legacy*' -and $_.Sections.Count -eq 0 
 }
 
 PS C:\> foreach ($tab in $tabsToRemove) {
     Write-Host "Removing empty legacy tab: $($tab.Name)"
-    Remove-DataverseFormTab -Connection $c -FormId $form.Id -TabName $tab.Name
+    Remove-DataverseFormTab -FormId $form.Id -TabName $tab.Name
 }
 ```
 
@@ -90,8 +95,9 @@ Removes tabs that match specific criteria (legacy tabs with no sections).
 
 ### Example 6: Backup before removal
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # First, backup the form XML
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information' -IncludeFormXml
+PS C:\> $form = Get-DataverseForm -Entity 'contact' -Name 'Information' -IncludeFormXml
 PS C:\> $backup = @{
     FormId = $form.Id
     FormXml = $form.FormXml
@@ -100,7 +106,7 @@ PS C:\> $backup = @{
 PS C:\> $backup | Export-Clixml -Path "FormBackup_$($form.Id)_$(Get-Date -Format 'yyyyMMdd_HHmmss').xml"
 
 PS C:\> # Now safely remove the tab
-PS C:\> Remove-DataverseFormTab -Connection $c -FormId $form.Id -TabName 'OldTab'
+PS C:\> Remove-DataverseFormTab -FormId $form.Id -TabName 'OldTab'
 PS C:\> Write-Host "Tab removed. Backup saved for recovery if needed."
 ```
 

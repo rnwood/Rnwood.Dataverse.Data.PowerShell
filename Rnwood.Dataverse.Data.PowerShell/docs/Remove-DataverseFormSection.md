@@ -26,32 +26,36 @@ The cmdlet supports removing sections by either name or ID within a specific tab
 
 ### Example 1: Remove a section by name
 ```powershell
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information'
-PS C:\> Remove-DataverseFormSection -Connection $c -FormId $form.Id -TabName 'General' -SectionName 'CustomSection'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $form = Get-DataverseForm -Entity 'contact' -Name 'Information'
+PS C:\> Remove-DataverseFormSection -FormId $form.Id -TabName 'General' -SectionName 'CustomSection'
 ```
 
 Removes the section named 'CustomSection' from the General tab of the contact Information form.
 
 ### Example 2: Remove a section by ID with immediate publishing
 ```powershell
-PS C:\> Remove-DataverseFormSection -Connection $c -FormId $formId -TabName 'Details' -SectionId 'section-guid-12345' -Publish
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFormSection -FormId $formId -TabName 'Details' -SectionId 'section-guid-12345' -Publish
 ```
 
 Removes the section with the specified ID from the Details tab and publishes the form to make changes visible immediately.
 
 ### Example 3: Remove section with confirmation
 ```powershell
-PS C:\> Remove-DataverseFormSection -Connection $c -FormId $formId -TabName 'General' -SectionName 'ObsoleteSection' -Confirm
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFormSection -FormId $formId -TabName 'General' -SectionName 'ObsoleteSection' -Confirm
 ```
 
 Removes the section with user confirmation prompt before proceeding.
 
 ### Example 4: Remove multiple sections safely
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $sectionsToRemove = @('TempSection1', 'TempSection2', 'TempSection3')
 PS C:\> foreach ($sectionName in $sectionsToRemove) {
     try {
-        Remove-DataverseFormSection -Connection $c -FormId $formId -TabName 'Advanced' -SectionName $sectionName -WhatIf
+        Remove-DataverseFormSection -FormId $formId -TabName 'Advanced' -SectionName $sectionName -WhatIf
         Write-Host "Would remove section: $sectionName"
     }
     catch {
@@ -62,7 +66,7 @@ PS C:\> foreach ($sectionName in $sectionsToRemove) {
 # After reviewing, execute without -WhatIf
 PS C:\> foreach ($sectionName in $sectionsToRemove) {
     try {
-        Remove-DataverseFormSection -Connection $c -FormId $formId -TabName 'Advanced' -SectionName $sectionName
+        Remove-DataverseFormSection -FormId $formId -TabName 'Advanced' -SectionName $sectionName
         Write-Host "Removed section: $sectionName"
     }
     catch {
@@ -75,7 +79,8 @@ Safely removes multiple sections by first previewing with -WhatIf, then executin
 
 ### Example 5: Remove sections based on conditions
 ```powershell
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'account' -Name 'Information' -ParseFormXml
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $form = Get-DataverseForm -Entity 'account' -Name 'Information' -ParseFormXml
 PS C:\> $sectionsToRemove = $form.ParsedForm.Tabs | Where-Object { $_.Name -eq 'Details' } | 
     ForEach-Object { $_.Sections } | Where-Object { 
     $_.Name -like 'Legacy*' -and $_.Controls.Count -eq 0 
@@ -83,7 +88,7 @@ PS C:\> $sectionsToRemove = $form.ParsedForm.Tabs | Where-Object { $_.Name -eq '
 
 PS C:\> foreach ($section in $sectionsToRemove) {
     Write-Host "Removing empty legacy section: $($section.Name)"
-    Remove-DataverseFormSection -Connection $c -FormId $form.Id -TabName 'Details' -SectionName $section.Name
+    Remove-DataverseFormSection -FormId $form.Id -TabName 'Details' -SectionName $section.Name
 }
 ```
 
@@ -91,8 +96,9 @@ Removes sections that match specific criteria (legacy sections with no controls)
 
 ### Example 6: Backup before removal
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # First, backup the form XML
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information' -IncludeFormXml
+PS C:\> $form = Get-DataverseForm -Entity 'contact' -Name 'Information' -IncludeFormXml
 PS C:\> $backup = @{
     FormId = $form.Id
     FormXml = $form.FormXml
@@ -101,7 +107,7 @@ PS C:\> $backup = @{
 PS C:\> $backup | Export-Clixml -Path "FormBackup_$($form.Id)_$(Get-Date -Format 'yyyyMMdd_HHmmss').xml"
 
 PS C:\> # Now safely remove the section
-PS C:\> Remove-DataverseFormSection -Connection $c -FormId $form.Id -TabName 'General' -SectionName 'OldSection'
+PS C:\> Remove-DataverseFormSection -FormId $form.Id -TabName 'General' -SectionName 'OldSection'
 PS C:\> Write-Host "Section removed. Backup saved for recovery if needed."
 ```
 

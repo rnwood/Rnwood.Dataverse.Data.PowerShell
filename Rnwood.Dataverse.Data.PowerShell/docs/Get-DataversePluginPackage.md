@@ -37,7 +37,8 @@ Retrieves plugin packages by ID, unique name, or all packages.
 
 ### Example 1
 ```powershell
-PS C:\> Get-DataversePluginPackage -Connection $connection -All
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataversePluginPackage -All
 ```
 
 Retrieves all plugin packages.

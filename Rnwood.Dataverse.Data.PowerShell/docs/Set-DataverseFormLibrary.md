@@ -24,42 +24,47 @@ The Set-DataverseFormLibrary cmdlet adds a new JavaScript library (web resource)
 
 ### Example 1: Add a new library to a form
 ```powershell
-PS C:\> Set-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName "new_/scripts/mycode.js"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormLibrary -FormId $formId -LibraryName "new_/scripts/mycode.js"
 ```
 
 Adds a new JavaScript library to the form and publishes the entity.
 
 ### Example 2: Add a library with a specific unique ID
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $libraryId = [Guid]::NewGuid()
-PS C:\> Set-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName "new_/scripts/mycode.js" -LibraryUniqueId $libraryId
+PS C:\> Set-DataverseFormLibrary -FormId $formId -LibraryName "new_/scripts/mycode.js" -LibraryUniqueId $libraryId
 ```
 
 Adds a library with a specific unique identifier.
 
 ### Example 3: Add a library without publishing
 ```powershell
-PS C:\> Set-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName "new_/scripts/mycode.js"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormLibrary -FormId $formId -LibraryName "new_/scripts/mycode.js"
 ```
 
 Adds the library but does not publish the entity. Useful when making multiple changes.
 
 ### Example 4: Update an existing library's unique ID
 ```powershell
-PS C:\> Set-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName "new_/scripts/existing.js" -LibraryUniqueId $newId
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormLibrary -FormId $formId -LibraryName "new_/scripts/existing.js" -LibraryUniqueId $newId
 ```
 
 Updates the unique ID of an existing library reference.
 
 ### Example 5: Add multiple libraries
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $libraries = @(
 PS C:\>     "new_/scripts/main.js",
 PS C:\>     "new_/scripts/validation.js",
 PS C:\>     "new_/scripts/utils.js"
 PS C:\> )
 PS C:\> foreach ($lib in $libraries) {
-PS C:\>     Set-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName $lib
+PS C:\>     Set-DataverseFormLibrary -FormId $formId -LibraryName $lib
 PS C:\> }
 PS C:\> # Note: Use Publish-DataverseAllCustomizations or restart the Dataverse environment to publish changes
 ```
@@ -68,7 +73,8 @@ Adds multiple libraries efficiently by skipping publish and publishing once at t
 
 ### Example 6: Using WhatIf to preview changes
 ```powershell
-PS C:\> Set-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName "new_/scripts/mycode.js" -WhatIf
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormLibrary -FormId $formId -LibraryName "new_/scripts/mycode.js" -WhatIf
 ```
 
 Previews the library addition without making changes.

@@ -32,8 +32,8 @@ Take care to make the operations within the script block as efficient as possibl
 
 ### Example 1: Update records in parallel
 ```powershell
-PS C:\> $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET
-PS C:\> Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 -Columns emailaddress1 |
+PS C:\> $connection = Get-DataverseConnection -url 'https://myorg.crm.dynamics.com' -ClientId $env:CLIENT_ID -ClientSecret $env:CLIENT_SECRET -SetAsDefault
+PS C:\> Get-DataverseRecord -TableName contact -Top 1000 -Columns emailaddress1 |
   Invoke-DataverseParallel -Connection $connection -ChunkSize 50 -MaxDegreeOfParallelism 8 -ScriptBlock {
     $_ |
        ForEach-Object{ $_.emailaddress1 = "updated-$($_.contactid)@example.com"; $_ } |

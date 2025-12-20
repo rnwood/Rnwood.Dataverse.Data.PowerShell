@@ -28,6 +28,7 @@ When creating a new sitemap, the Name parameter is required. When updating an ex
 
 ### Example 1: Create a new sitemap
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $sitemapXml = @"
 <SiteMap>
   <Area Id="Area1" ResourceId="Area1.Title">
@@ -47,6 +48,7 @@ Creates a new sitemap with the specified name and XML definition, returning the 
 
 ### Example 2: Update an existing sitemap
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $sitemap = Get-DataverseSitemap -Name "MySitemap"
 PS C:\> $updatedXml = $sitemap.SitemapXml -replace 'Area1', 'UpdatedArea1'
 PS C:\> Set-DataverseSitemap -Name "MySitemap" -Id $sitemap.Id -SitemapXml $updatedXml
@@ -58,6 +60,7 @@ Retrieves an existing sitemap, modifies its XML, and updates it.
 
 ### Example 3: Load sitemap XML from file and create sitemap
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $sitemapXml = Get-Content -Path "MySitemap.xml" -Raw
 PS C:\> Set-DataverseSitemap -Name "ImportedSitemap" -SitemapXml $sitemapXml
 
@@ -68,6 +71,7 @@ Loads sitemap XML from a file and creates a new sitemap.
 
 ### Example 4: Add a new area to an existing sitemap
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $sitemap = Get-DataverseSitemap -Name "MySitemap"
 PS C:\> $xml = [xml]$sitemap.SitemapXml
 PS C:\> 
@@ -89,6 +93,7 @@ Demonstrates programmatic manipulation of sitemap XML to add a new navigation ar
 
 ### Example 5: Clone a sitemap
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $source = Get-DataverseSitemap -Name "OriginalSitemap"
 PS C:\> Set-DataverseSitemap -Name "ClonedSitemap" -SitemapXml $source.SitemapXml -PassThru
 
@@ -99,6 +104,7 @@ Creates a copy of an existing sitemap with a different name.
 
 ### Example 6: Create and publish a sitemap
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $sitemapXml = @"
 <SiteMap>
   <Area Id="SalesArea" ResourceId="SalesArea.Title">

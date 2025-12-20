@@ -42,6 +42,7 @@ By default, this cmdlet prompts for confirmation (ConfirmImpact = High). Use `-F
 
 ### Example 1: Delete a OneToMany relationship
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseRelationshipMetadata -SchemaName new_project_contact
 
 Confirm
@@ -54,6 +55,7 @@ Deletes the OneToMany relationship `new_project_contact` after prompting for con
 
 ### Example 2: Delete a ManyToMany relationship without confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseRelationshipMetadata -SchemaName new_project_contact_association -Force
 ```
 
@@ -61,6 +63,7 @@ Deletes a ManyToMany relationship without prompting. All association records are
 
 ### Example 3: Delete relationship with entity name for cache invalidation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseRelationshipMetadata -SchemaName new_project_task `
     -EntityName new_project -Force
 ```
@@ -69,6 +72,7 @@ Deletes a relationship and invalidates the metadata cache for the `new_project` 
 
 ### Example 4: Use WhatIf to preview deletion
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseRelationshipMetadata -SchemaName new_test_relationship -WhatIf
 
 What if: Performing the operation "Delete relationship 'new_test_relationship'" on target "Dataverse organization".
@@ -78,6 +82,7 @@ Shows what would happen without actually deleting the relationship.
 
 ### Example 5: Delete multiple test relationships
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> @("new_test_rel1", "new_test_rel2", "new_test_rel3") | 
     Remove-DataverseRelationshipMetadata -Force
 ```
@@ -86,6 +91,7 @@ Deletes multiple relationships by passing relationship names through the pipelin
 
 ### Example 6: Find and delete relationships for an entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $relationships = Get-DataverseRelationshipMetadata -EntityName new_customentity
 
 PS C:\> $relationships | Where-Object { $_.SchemaName -like "new_test*" } | ForEach-Object {
@@ -98,6 +104,7 @@ Finds and deletes all test relationships (starting with "new_test") for an entit
 
 ### Example 7: Conditional deletion based on usage
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $rel = Get-DataverseRelationshipMetadata -SchemaName new_project_contact
 
 PS C:\> if ($rel.RelationshipType -eq "ManyToMany") {
@@ -118,6 +125,7 @@ Checks if a ManyToMany relationship has any associations before deleting.
 
 ### Example 8: Delete with error handling
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> try {
     Remove-DataverseRelationshipMetadata -SchemaName new_obsolete_rel `
         -Force -ErrorAction Stop
@@ -135,6 +143,7 @@ Deletes a relationship with proper error handling and publishes customizations.
 
 ### Example 9: Delete all custom relationships for cleanup
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseRelationshipMetadata | 
     Where-Object { $_.IsCustomRelationship -and $_.SchemaName -like "new_*" } |
     ForEach-Object {
@@ -153,8 +162,9 @@ Finds and attempts to delete all custom relationships, handling errors for depen
 
 ### Example 10: Use specific connection
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://myorg.crm.dynamics.com" -Interactive
-PS C:\> Remove-DataverseRelationshipMetadata -Connection $conn `
+PS C:\> Remove-DataverseRelationshipMetadata `
     -SchemaName new_deprecated_rel -Force
 ```
 

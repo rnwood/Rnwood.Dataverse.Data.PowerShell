@@ -29,6 +29,7 @@ The cmdlet returns SitemapInfo objects with metadata about each sitemap includin
 
 ### Example 1: Retrieve all sitemaps
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSitemap
 
 Name              Id                                   UniqueName
@@ -41,6 +42,7 @@ Retrieves all sitemaps from the Dataverse environment.
 
 ### Example 2: Retrieve a specific sitemap by name
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSitemap -Name "MySitemap"
 
 Name              : MySitemap
@@ -55,6 +57,7 @@ Retrieves a specific sitemap by its name with full details.
 
 ### Example 3: Get sitemap by unique name
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSitemap -UniqueName "mysitemap_unique"
 
 Name              Id                                   UniqueName
@@ -66,6 +69,7 @@ Retrieves a specific sitemap by its unique name.
 
 ### Example 4: Get sitemap by ID
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSitemap -Id "a1b2c3d4-5678-90ab-cdef-1234567890ab"
 
 Name              Id                                   CreatedOn             ModifiedOn
@@ -77,6 +81,7 @@ Retrieves a sitemap by its unique identifier.
 
 ### Example 5: Export sitemap XML to file
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $sitemap = Get-DataverseSitemap -Name "MySitemap"
 PS C:\> $sitemap.SitemapXml | Out-File -FilePath "MySitemap.xml"
 ```

@@ -45,36 +45,41 @@ Use the specialized form management cmdlets (Get-DataverseFormTab, Get-Dataverse
 
 ### Example 1: Get all forms for an entity
 ```powershell
-PS C:\> Get-DataverseForm -Connection $c -Entity 'contact'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseForm -Entity 'contact'
 ```
 
 Retrieves all forms for the contact entity.
 
 ### Example 2: Get a specific form by ID
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $formId = 'a1234567-89ab-cdef-0123-456789abcdef'
-PS C:\> Get-DataverseForm -Connection $c -Id $formId
+PS C:\> Get-DataverseForm -Id $formId
 ```
 
 Retrieves a specific form by its ID.
 
 ### Example 3: Get forms of a specific type
 ```powershell
-PS C:\> Get-DataverseForm -Connection $c -Entity 'account' -FormType 'Main'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseForm -Entity 'account' -FormType 'Main'
 ```
 
 Retrieves all main forms for the account entity.
 
 ### Example 4: Get a form by entity and name
 ```powershell
-PS C:\> Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseForm -Entity 'contact' -Name 'Information'
 ```
 
 Retrieves the contact form named "Information".
 
 ### Example 5: Get form with FormXml
 ```powershell
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information' -IncludeFormXml
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $form = Get-DataverseForm -Entity 'contact' -Name 'Information' -IncludeFormXml
 PS C:\> $form.FormXml
 ```
 
@@ -82,20 +87,22 @@ Retrieves a form and includes the raw FormXml content.
 
 ### Example 6: Work with form structure using specialized cmdlets
 ```powershell
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $form = Get-DataverseForm -Entity 'contact' -Name 'Information'
 PS C:\> # Get all tabs from the form
-PS C:\> $tabs = Get-DataverseFormTab -Connection $c -FormId $form.FormId
+PS C:\> $tabs = Get-DataverseFormTab -FormId $form.FormId
 PS C:\> # Get all sections from a specific tab
-PS C:\> $sections = Get-DataverseFormSection -Connection $c -FormId $form.FormId -TabName 'General'
+PS C:\> $sections = Get-DataverseFormSection -FormId $form.FormId -TabName 'General'
 PS C:\> # Get all controls from a specific section
-PS C:\> $controls = Get-DataverseFormControl -Connection $c -FormId $form.FormId -TabName 'General' -SectionName 'Details'
+PS C:\> $controls = Get-DataverseFormControl -FormId $form.FormId -TabName 'General' -SectionName 'Details'
 ```
 
 Demonstrates how to explore form structure using the specialized form cmdlets.
 
 ### Example 7: Get published forms
 ```powershell
-PS C:\> Get-DataverseForm -Connection $c -Entity 'contact' -Published
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseForm -Entity 'contact' -Published
 ```
 
 Retrieves published forms for the contact entity.

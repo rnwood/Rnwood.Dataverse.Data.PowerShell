@@ -67,6 +67,7 @@ The Set-DataverseSitemapEntry cmdlet creates or updates navigation entries (Area
 
 ### Example 1: Create a new Area with multilingual titles
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $titles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
 PS C:\> $titles.Add(1033, "Sales")
 PS C:\> $titles.Add(1036, "Ventes")
@@ -77,6 +78,7 @@ Creates a new Area entry with titles in English and French.
 
 ### Example 2: Create a Group with descriptions
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $titles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
 PS C:\> $titles.Add(1033, "Leads")
 PS C:\> $descriptions = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
@@ -88,6 +90,7 @@ Creates a new Group at the first position (index 0) within the SalesArea with ti
 
 ### Example 3: Create a SubArea with entity reference
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $titles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
 PS C:\> $titles.Add(1033, "Accounts")
 PS C:\> Set-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -SubArea -EntryId "AccountsSubarea" `
@@ -99,6 +102,7 @@ Creates a new SubArea positioned before the "ContactsSubarea" entry.
 
 ### Example 4: Add French translation to existing entry
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $frenchTitles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
 PS C:\> $frenchTitles.Add(1036, "Ventes et Marketing")
 PS C:\> Set-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -Area -EntryId "SalesArea" -Titles $frenchTitles
@@ -108,6 +112,7 @@ Adds a French title to an existing Area entry (additively - English title is pre
 
 ### Example 5: Remove a language translation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $removeFrench = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
 PS C:\> $removeFrench.Add(1036, $null)
 PS C:\> Set-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -Area -EntryId "SalesArea" -Titles $removeFrench
