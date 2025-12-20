@@ -47,14 +47,14 @@ $icon = Get-DataverseIconSetIcon -Name "*settings*" | Out-GridView -OutputMode S
 Use `Set-DataverseTableIconFromSet` to download an icon and set it on a table:
 
 ```powershell
-# Set icon from FluentUI (default)
-Set-DataverseTableIconFromSet -EntityName "contact" -IconName "person" -Publish
+# Set icon from FluentUI (default) with publisher prefix
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName "person" -PublisherPrefix "contoso" -Publish
 
 # Set icon from Tabler icon set
-Set-DataverseTableIconFromSet -EntityName "account" -IconName "building" -IconSet Tabler -Publish
+Set-DataverseTableIconFromSet -EntityName "account" -IconName "building" -IconSet Tabler -PublisherPrefix "contoso" -Publish
 
 # Set icon from Iconoir
-Set-DataverseTableIconFromSet -EntityName "new_project" -IconName "user" -IconSet Iconoir -Publish
+Set-DataverseTableIconFromSet -EntityName "new_project" -IconName "user" -IconSet Iconoir -PublisherPrefix "contoso" -Publish
 ```
 
 ## How It Works
@@ -63,32 +63,33 @@ The `Set-DataverseTableIconFromSet` cmdlet automates the entire process:
 
 1. **Downloads** the SVG icon from the online icon set
 2. **Creates or updates** a web resource with the icon content
-   - Web resource naming pattern: `{prefix}_/icons/{iconname}.svg`
-   - Uses your active publisher prefix by default
+   - Web resource naming pattern: `{prefix}_/icons/{iconset}/{iconname}.svg`
+   - Requires you to specify the publisher prefix with `-PublisherPrefix`
 3. **Updates** the table's `IconVectorName` metadata property
 4. **Publishes** changes if the `-Publish` switch is specified
 
 ## Advanced Usage
 
-### Custom Publisher Prefix
+### Publisher Prefix
 
-Specify a custom publisher prefix for the web resource:
+The `-PublisherPrefix` parameter is required and specifies the prefix for the web resource:
 
 ```powershell
 Set-DataverseTableIconFromSet -EntityName "new_customtable" `
     -IconName "settings" `
+    -IconSet "FluentUI" `
     -PublisherPrefix "contoso" `
     -Publish
 ```
 
-This creates a web resource named `contoso_/icons/settings.svg`.
+This creates a web resource named `contoso_/icons/FluentUI/settings.svg`.
 
 ### Preview Changes
 
 Use `-WhatIf` to see what changes would be made:
 
 ```powershell
-Set-DataverseTableIconFromSet -EntityName "contact" -IconName "user" -WhatIf
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName "user" -PublisherPrefix "contoso" -WhatIf
 ```
 
 ### Return Updated Metadata
@@ -98,6 +99,7 @@ Use `-PassThru` to return the updated entity metadata:
 ```powershell
 $result = Set-DataverseTableIconFromSet -EntityName "account" `
     -IconName "building" `
+    -PublisherPrefix "contoso" `
     -PassThru
 $result.IconVectorName
 ```
@@ -106,7 +108,7 @@ $result.IconVectorName
 
 ```powershell
 @("contact", "account", "lead") | ForEach-Object {
-    Set-DataverseTableIconFromSet -EntityName $_ -IconName "person" -Publish
+    Set-DataverseTableIconFromSet -EntityName $_ -IconName "person" -PublisherPrefix "contoso" -Publish
 }
 ```
 
@@ -152,6 +154,7 @@ Set-DataverseEntityMetadata -EntityName new_product `
 Set-DataverseTableIconFromSet -EntityName new_product `
     -IconName "shopping-cart" `
     -IconSet Tabler `
+    -PublisherPrefix "new" `
     -Publish
 ```
 
@@ -159,10 +162,10 @@ Or manually set the icon using `Set-DataverseEntityMetadata`:
 
 ```powershell
 # After using Set-DataverseTableIconFromSet, the web resource name follows the pattern:
-# {prefix}_/icons/{iconname}.svg
+# {prefix}_/icons/{iconset}/{iconname}.svg
 
 Set-DataverseEntityMetadata -EntityName new_product `
-    -IconVectorName "new_/icons/shopping-cart.svg"
+    -IconVectorName "new_/icons/Tabler/shopping-cart.svg"
 ```
 
 ## Troubleshooting
@@ -190,7 +193,7 @@ If you're behind a firewall, ensure access to:
 
 ### Publisher Prefix
 
-The cmdlet automatically detects your active publisher's customization prefix. If you have multiple publishers, you may want to specify the prefix explicitly with `-PublisherPrefix`.
+You must always specify the publisher prefix with the `-PublisherPrefix` parameter. This determines the naming of the web resource created for the icon. Use your organization's customization prefix (e.g., "contoso", "new", etc.).
 
 ## Related Cmdlets
 

@@ -45,7 +45,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the publisher prefix to use for the web resource name.
         /// </summary>
-        [Parameter(HelpMessage = "Publisher prefix to use for the web resource name (defaults to active publisher's prefix)")]
+        [Parameter(Mandatory = true, Position = 3, HelpMessage = "Publisher prefix to use for the web resource name")]
         public string PublisherPrefix { get; set; }
 
         /// <summary>
@@ -69,13 +69,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             try
             {
-                // Get the publisher prefix if not specified
-                if (string.IsNullOrWhiteSpace(PublisherPrefix))
-                {
-                    PublisherPrefix = GetActivePublisherPrefix();
-                    WriteVerbose($"Using active publisher prefix: {PublisherPrefix}");
-                }
-
                 // Download the icon
                 WriteVerbose($"Downloading icon '{IconName}' from {IconSet}");
                 var iconContent = DownloadIconAsync().GetAwaiter().GetResult();
@@ -267,48 +260,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Wait for publish to complete
             PublishHelpers.WaitForPublishComplete(Connection, WriteVerbose);
-        }
-
-        private string GetActivePublisherPrefix()
-        {
-            // Query for the active publisher
-            // First get the organization's default publisher
-            var whoAmIRequest = new OrganizationRequest("WhoAmI");
-            var whoAmIResponse = Connection.Execute(whoAmIRequest);
-            var organizationId = (Guid)whoAmIResponse["OrganizationId"];
-
-            var retrieveOrgRequest = new RetrieveRequest
-            {
-                Target = new EntityReference("organization", organizationId),
-                ColumnSet = new ColumnSet("defaultpublisherid")
-            };
-
-            var retrieveOrgResponse = (RetrieveResponse)Connection.Execute(retrieveOrgRequest);
-            var organization = retrieveOrgResponse.Entity;
-
-            if (organization.Contains("defaultpublisherid"))
-            {
-                var publisherId = organization.GetAttributeValue<EntityReference>("defaultpublisherid").Id;
-
-                // Retrieve the publisher prefix
-                var retrievePublisherRequest = new RetrieveRequest
-                {
-                    Target = new EntityReference("publisher", publisherId),
-                    ColumnSet = new ColumnSet("customizationprefix")
-                };
-
-                var retrievePublisherResponse = (RetrieveResponse)Connection.Execute(retrievePublisherRequest);
-                var publisher = retrievePublisherResponse.Entity;
-
-                if (publisher.Contains("customizationprefix"))
-                {
-                    return publisher.GetAttributeValue<string>("customizationprefix");
-                }
-            }
-
-            // Fallback to "new" if we can't determine the publisher prefix
-            WriteWarning("Could not determine active publisher prefix, using 'new' as fallback");
-            return "new";
         }
 
         private PSObject ConvertEntityMetadataToPSObject(EntityMetadata metadata)
