@@ -66,6 +66,12 @@ Retrieves forms from a Dataverse environment.
 ### [Get-DataverseFormControl](Get-DataverseFormControl.md)
 Retrieves control information from a Dataverse form including controls from tabs, sections, and the form header.
 
+### [Get-DataverseFormEventHandler](Get-DataverseFormEventHandler.md)
+Retrieves event handlers from a Dataverse form (form-level, attribute-level, tab-level, or control-level events).
+
+### [Get-DataverseFormLibrary](Get-DataverseFormLibrary.md)
+Retrieves script libraries from a Dataverse form.
+
 ### [Get-DataverseFormSection](Get-DataverseFormSection.md)
 Retrieves section information from a Dataverse form.
 
@@ -193,6 +199,12 @@ Removes/deletes a form from a Dataverse environment.
 ### [Remove-DataverseFormControl](Remove-DataverseFormControl.md)
 Removes a control from a Dataverse form section.
 
+### [Remove-DataverseFormEventHandler](Remove-DataverseFormEventHandler.md)
+Removes an event handler from a Dataverse form (form-level, attribute-level, tab-level, or control-level).
+
+### [Remove-DataverseFormLibrary](Remove-DataverseFormLibrary.md)
+Removes a script library from a Dataverse form.
+
 ### [Remove-DataverseFormSection](Remove-DataverseFormSection.md)
 Removes a section from a Dataverse form tab.
 
@@ -279,6 +291,12 @@ Creates or updates a form in a Dataverse environment.
 
 ### [Set-DataverseFormControl](Set-DataverseFormControl.md)
 Creates or updates a control in a Dataverse form section or header.
+
+### [Set-DataverseFormEventHandler](Set-DataverseFormEventHandler.md)
+Adds or updates an event handler in a Dataverse form (form-level, attribute-level, tab-level, or control-level).
+
+### [Set-DataverseFormLibrary](Set-DataverseFormLibrary.md)
+Adds or updates a script library in a Dataverse form.
 
 ### [Set-DataverseFormSection](Set-DataverseFormSection.md)
 Creates or updates a section in a Dataverse form tab.
