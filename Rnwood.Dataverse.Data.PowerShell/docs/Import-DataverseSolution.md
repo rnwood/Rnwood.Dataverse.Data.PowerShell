@@ -23,6 +23,17 @@ Import-DataverseSolution [-InFile] <String> [-OverwriteUnmanagedCustomizations] 
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
+### FromFolder
+```
+Import-DataverseSolution -InFolder <String> [-PackageType <ImportSolutionPackageType>]
+ [-OverwriteUnmanagedCustomizations] [-PublishWorkflows] [-SkipProductUpdateDependencies] [-Mode <ImportMode>]
+ [-ConnectionReferences <Hashtable>] [-EnvironmentVariables <Hashtable>] [-ConvertToManaged]
+ [-SkipQueueRibbonJob] [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfAdditive]
+ [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation]
+ [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion] [-SkipIfLowerVersion] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
 ### FromBytes
 ```
 Import-DataverseSolution -SolutionFile <Byte[]> [-OverwriteUnmanagedCustomizations] [-PublishWorkflows]
@@ -261,6 +272,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -InFolder
+Path to the solution folder to pack and import.
+
+```yaml
+Type: String
+Parameter Sets: FromFolder
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -LayerDesiredOrder
 For internal use only.
 
@@ -303,6 +329,21 @@ Aliases:
 Required: False
 Position: Named
 Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PackageType
+Package type: 'Unmanaged' (default) or 'Managed'.
+
+```yaml
+Type: ImportSolutionPackageType
+Parameter Sets: FromFolder
+Aliases:
+
+Required: False
+Position: Named
+Default value: Unmanaged
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

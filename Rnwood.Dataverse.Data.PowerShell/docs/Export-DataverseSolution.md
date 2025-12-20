@@ -12,12 +12,24 @@ Exports a solution from Dataverse using an asynchronous job with progress report
 
 ## SYNTAX
 
+### ToFile (Default)
 ```
 Export-DataverseSolution [-SolutionName] <String> [-Managed] [-TargetVersion <String>]
  [-ExportAutoNumberingSettings] [-ExportCalendarSettings] [-ExportCustomizationSettings]
  [-ExportEmailTrackingSettings] [-ExportGeneralSettings] [-ExportMarketingSettings]
  [-ExportOutlookSynchronizationSettings] [-ExportRelationshipRoles] [-ExportIsvConfig] [-ExportSales]
  [-ExportExternalApplications] [-OutFile <String>] [-PassThru] [-PollingIntervalSeconds <Int32>]
+ [-TimeoutSeconds <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
+```
+
+### ToFolder
+```
+Export-DataverseSolution [-SolutionName] <String> [-TargetVersion <String>] [-ExportAutoNumberingSettings]
+ [-ExportCalendarSettings] [-ExportCustomizationSettings] [-ExportEmailTrackingSettings]
+ [-ExportGeneralSettings] [-ExportMarketingSettings] [-ExportOutlookSynchronizationSettings]
+ [-ExportRelationshipRoles] [-ExportIsvConfig] [-ExportSales] [-ExportExternalApplications] -OutFolder <String>
+ [-UnpackMsApp] [-PackageType <SolutionPackageType>] [-PollingIntervalSeconds <Int32>]
  [-TimeoutSeconds <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
@@ -260,7 +272,7 @@ Export as a managed solution. Default is unmanaged (false).
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: (All)
+Parameter Sets: ToFile
 Aliases:
 
 Required: False
@@ -275,7 +287,7 @@ Path where the exported solution file should be saved.
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: ToFile
 Aliases:
 
 Required: False
@@ -285,12 +297,42 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -OutFolder
+Path where the exported solution will be unpacked.
+
+```yaml
+Type: String
+Parameter Sets: ToFolder
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PackageType
+Package type: 'Unmanaged', 'Managed', or 'Both' (default) for dual Managed and Unmanaged operation. Controls which solution types are exported and unpacked.
+
+```yaml
+Type: SolutionPackageType
+Parameter Sets: ToFolder
+Aliases:
+
+Required: False
+Position: Named
+Default value: Both
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -PassThru
 Output the solution file bytes to the pipeline.
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: (All)
+Parameter Sets: ToFile
 Aliases:
 
 Required: False
@@ -371,6 +413,21 @@ Aliases:
 Required: False
 Position: Named
 Default value: 600
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UnpackMsApp
+Unpack .msapp files found in the solution into folders.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: ToFolder
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

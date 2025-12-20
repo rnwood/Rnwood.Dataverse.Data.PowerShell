@@ -19,23 +19,94 @@ Set-DataverseTableIconFromSet [-EntityName] <String> [[-IconSet] <String>] [-Ico
 ```
 
 ## DESCRIPTION
-The Set-DataverseTableIconFromSet cmdlet simplifies the process of setting a table's vector icon by downloading an SVG icon from an online icon set (FluentUI, Tabler, or Iconoir), creating or updating a web resource with the icon content, and updating the table's IconVectorName metadata property. This eliminates the manual steps of downloading icons, creating web resources, and updating table metadata.
+The `Set-DataverseTableIconFromSet` cmdlet simplifies the process of setting a table's vector icon by:
+1. Downloading an SVG icon from an online icon set (e.g., Iconoir)
+2. Creating or updating a web resource with the icon content
+3. Updating the table's IconVectorName metadata property to reference the web resource
+4. Optionally publishing the changes
+
+This cmdlet eliminates the manual steps of downloading icons, creating web resources, and updating table metadata.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Set a table icon
 ```powershell
-PS C:\> Set-DataverseTableIconFromSet -EntityName "contact" -IconName "person" -Publish
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName "person" -Publish
 ```
 
-{{ Add example description here }}
+Downloads the "person" icon from FluentUI (default), creates a web resource, sets it as the contact table's icon, and publishes the changes.
+
+### Example 1b: Set a table icon from a specific icon set
+```powershell
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName "user" -IconSet Iconoir -Publish
+```
+
+Downloads the "user" icon from Iconoir, creates a web resource, sets it as the contact table's icon, and publishes the changes.
+
+### Example 1c: Set a table icon from Tabler
+```powershell
+Set-DataverseTableIconFromSet -EntityName "account" -IconName "building" -IconSet Tabler -Publish
+```
+
+Downloads the "building" icon from Tabler (5000+ icons), creates a web resource, sets it as the account table's icon, and publishes the changes.
+
+### Example 2: Set icon with custom publisher prefix
+```powershell
+Set-DataverseTableIconFromSet -EntityName "new_customtable" -IconName "settings" -PublisherPrefix "contoso"
+```
+
+Sets the icon using a custom publisher prefix. The web resource will be named "contoso_/icons/settings.svg".
+
+### Example 3: Set icon and return metadata
+```powershell
+$result = Set-DataverseTableIconFromSet -EntityName "account" -IconName "building" -PassThru
+$result.IconVectorName
+```
+
+Sets the icon and returns the updated entity metadata showing the icon web resource name.
+
+### Example 4: Set icons for multiple tables
+```powershell
+@("contact", "account", "lead") | ForEach-Object {
+    Set-DataverseTableIconFromSet -EntityName $_ -IconName "user" -Publish
+}
+```
+
+Sets the same icon for multiple tables.
+
+### Example 5: Browse and set icon interactively
+```powershell
+# First, browse available icons from FluentUI (default)
+$icon = Get-DataverseIconSetIcon -Name "*person*" | Out-GridView -OutputMode Single
+
+# Then set the selected icon
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName $icon.Name -Publish
+```
+
+Browse available icons in a grid view, select one, and set it as the table icon.
+
+### Example 5b: Browse and set icon from Tabler
+```powershell
+# Browse available icons from Tabler (5000+ icons)
+$icon = Get-DataverseIconSetIcon -IconSet Tabler -Name "*user*" | Out-GridView -OutputMode Single
+
+# Then set the selected icon from Tabler
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName $icon.Name -IconSet Tabler -Publish
+```
+
+Browse available icons from Tabler icon set (5000+ icons), select one, and set it as the table icon.
+
+### Example 6: Preview changes without applying
+```powershell
+Set-DataverseTableIconFromSet -EntityName "contact" -IconName "user" -WhatIf
+```
+
+Shows what changes would be made without actually applying them.
 
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/).
-If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+Dataverse connection obtained from `Get-DataverseConnection`. If not provided, uses the default connection.
 
 ```yaml
 Type: ServiceClient
@@ -44,13 +115,13 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
+Default value: None (uses default connection)
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
 ### -EntityName
-Logical name of the entity (table)
+Logical name of the entity (table) to set the icon for.
 
 ```yaml
 Type: String
@@ -65,7 +136,7 @@ Accept wildcard characters: False
 ```
 
 ### -IconName
-Name of the icon to set (e.g., 'user', 'settings')
+Name of the icon to set (e.g., 'user', 'settings'). Use `Get-DataverseIconSetIcon` to browse available icons.
 
 ```yaml
 Type: String
@@ -80,7 +151,12 @@ Accept wildcard characters: False
 ```
 
 ### -IconSet
-Icon set to retrieve the icon from
+Icon set to retrieve the icon from. Currently supported icon sets:
+- **FluentUI**: Microsoft's Fluent UI System Icons - comprehensive icon library with 2000+ icons from https://github.com/microsoft/fluentui-system-icons
+- **Iconoir**: Modern, open-source SVG icon library with 1000+ icons from https://iconoir.com
+- **Tabler**: Tabler Icons - open-source icon library with 5000+ icons from https://github.com/tabler/tabler-icons
+
+Default value: `FluentUI`
 
 ```yaml
 Type: String
@@ -90,13 +166,13 @@ Accepted values: FluentUI, Iconoir, Tabler
 
 Required: False
 Position: 1
-Default value: None
+Default value: FluentUI
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
 ### -PassThru
-Return the updated entity metadata
+If specified, returns the updated entity metadata.
 
 ```yaml
 Type: SwitchParameter
@@ -105,7 +181,7 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -126,7 +202,7 @@ Accept wildcard characters: False
 ```
 
 ### -Publish
-Publish the entity and web resource after updating
+If specified, publishes the entity and web resource after updating.
 
 ```yaml
 Type: SwitchParameter
@@ -135,13 +211,14 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
 ### -PublisherPrefix
-Publisher prefix to use for the web resource name (defaults to active publisher's prefix)
+Publisher prefix to use for the web resource name. If not specified, uses the active publisher's customization prefix. The web resource will be named as `{prefix}_/icons/{iconname}.svg`.
+
 
 ```yaml
 Type: String
@@ -150,7 +227,7 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
+Default value: None (uses active publisher prefix)
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -171,8 +248,7 @@ Accept wildcard characters: False
 ```
 
 ### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
 Type: SwitchParameter
@@ -196,5 +272,21 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### System.Management.Automation.PSObject
 ## NOTES
+- This cmdlet requires internet access to download icons from the online icon set.
+- The web resource is created in the format `{PublisherPrefix}_/icons/{IconName}.svg`.
+- If a web resource with the same name already exists, it will be updated with the new icon content.
+- Changes are not visible until published. Use the `-Publish` switch to publish immediately.
 
 ## RELATED LINKS
+
+[Get-DataverseIconSetIcon](Get-DataverseIconSetIcon.md)
+
+[Set-DataverseEntityMetadata](Set-DataverseEntityMetadata.md)
+
+[Get-DataverseEntityMetadata](Get-DataverseEntityMetadata.md)
+
+[FluentUI System Icons](https://github.com/microsoft/fluentui-system-icons)
+
+[Iconoir Icons](https://iconoir.com)
+
+[Tabler Icons](https://github.com/tabler/tabler-icons)

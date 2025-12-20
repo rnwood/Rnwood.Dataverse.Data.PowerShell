@@ -1,7 +1,7 @@
 # Rnwood.Dataverse.Data.PowerShell - Copilot Agent Instructions
 
 ## Repository Summary
-Cross-platform PowerShell module (~206MB, 1339 files) for Microsoft Dataverse data manipulation. Targets .NET 6.0 (PowerShell Core 7+) and .NET Framework 4.6.2 (PowerShell Desktop 5.1+) for Windows/Linux/macOS. Written in C# (cmdlets) with PowerShell scripts (build/test). Three projects: Cmdlets (SDK wrappers), Loader (assembly resolution), Module (manifest/docs).
+Cross-platform PowerShell module (~206MB, 1339 files) for Microsoft Dataverse data manipulation. Targets .NET 8.0 (PowerShell Core 7+) and .NET Framework 4.6.2 (PowerShell Desktop 5.1+) for Windows/Linux/macOS. Written in C# (cmdlets) with PowerShell scripts (build/test). Three projects: Cmdlets (SDK wrappers), Loader (assembly resolution), Module (manifest/docs).
 
 ## Build Instructions - VALIDATED AND WORKING
 

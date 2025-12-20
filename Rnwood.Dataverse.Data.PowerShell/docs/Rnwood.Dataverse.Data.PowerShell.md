@@ -8,7 +8,7 @@ Locale: {{ Update Locale }}
 
 # Rnwood.Dataverse.Data.PowerShell Module
 ## Description
-Cross-platform PowerShell module for Microsoft Dataverse data manipulation and form management. This module provides comprehensive cmdlets for CRUD operations on Dataverse records, form structure manipulation, and metadata management. Supports both PowerShell Desktop (5.1+) and PowerShell Core (7+) on Windows, Linux, and macOS.
+{{ Fill in the Description }}
 
 ## Rnwood.Dataverse.Data.PowerShell Cmdlets
 ### [Clear-DataverseMetadataCache](Clear-DataverseMetadataCache.md)
@@ -16,6 +16,12 @@ Clears the global metadata cache used by Get cmdlets.
 
 ### [Compare-DataverseSolutionComponents](Compare-DataverseSolutionComponents.md)
 Compares a solution file with the state of that solution in the target environment or with another solution file.
+
+### [Compress-DataverseSolutionFile](Compress-DataverseSolutionFile.md)
+Packs a Dataverse solution folder using the Power Apps CLI.
+
+### [Expand-DataverseSolutionFile](Expand-DataverseSolutionFile.md)
+Unpacks a Dataverse solution file using the Power Apps CLI.
 
 ### [Export-DataverseSolution](Export-DataverseSolution.md)
 Exports a solution from Dataverse using an asynchronous job with progress reporting.
@@ -65,6 +71,12 @@ Retrieves forms from a Dataverse environment.
 
 ### [Get-DataverseFormControl](Get-DataverseFormControl.md)
 Retrieves control information from a Dataverse form including controls from tabs, sections, and the form header.
+
+### [Get-DataverseFormEventHandler](Get-DataverseFormEventHandler.md)
+Retrieves event handlers from a Dataverse form (form-level, attribute-level, tab-level, or control-level events).
+
+### [Get-DataverseFormLibrary](Get-DataverseFormLibrary.md)
+Retrieves script libraries from a Dataverse form.
 
 ### [Get-DataverseFormSection](Get-DataverseFormSection.md)
 Retrieves section information from a Dataverse form.
@@ -155,7 +167,7 @@ Applies a staged solution upgrade by deleting the original solution and promotin
 Invokes a Dataverse SQL query using Sql4Cds and writes any resulting rows to the pipeline.
 
 ### [Invoke-DataverseXrmToolbox](Invoke-DataverseXrmToolbox.md)
-{{ Fill in the Synopsis }}
+Invokes an XrmToolbox plugin downloaded from NuGet with the current Dataverse connection injected.
 
 ### [Publish-DataverseCustomizations](Publish-DataverseCustomizations.md)
 Publishes customizations in Dataverse.
@@ -173,7 +185,7 @@ Deletes an attribute (column) from a Dataverse entity.
 {{ Fill in the Synopsis }}
 
 ### [Remove-DataverseEntityKeyMetadata](Remove-DataverseEntityKeyMetadata.md)
-{{ Fill in the Synopsis }}
+Deletes an alternate key from an entity (table) in Dataverse.
 
 ### [Remove-DataverseEntityMetadata](Remove-DataverseEntityMetadata.md)
 Deletes an entity (table) from Dataverse.
@@ -192,6 +204,12 @@ Removes/deletes a form from a Dataverse environment.
 
 ### [Remove-DataverseFormControl](Remove-DataverseFormControl.md)
 Removes a control from a Dataverse form section.
+
+### [Remove-DataverseFormEventHandler](Remove-DataverseFormEventHandler.md)
+Removes an event handler from a Dataverse form (form-level, attribute-level, tab-level, or control-level).
+
+### [Remove-DataverseFormLibrary](Remove-DataverseFormLibrary.md)
+Removes a script library from a Dataverse form.
 
 ### [Remove-DataverseFormSection](Remove-DataverseFormSection.md)
 Removes a section from a Dataverse form tab.
@@ -260,7 +278,7 @@ Creates or updates connection reference values in Dataverse.
 Compiles C# source code into a plugin assembly, uploads to Dataverse, and automatically manages plugin types.
 
 ### [Set-DataverseEntityKeyMetadata](Set-DataverseEntityKeyMetadata.md)
-{{ Fill in the Synopsis }}
+Creates an alternate key on an entity (table) in Dataverse.
 
 ### [Set-DataverseEntityMetadata](Set-DataverseEntityMetadata.md)
 Creates or updates an entity (table) in Dataverse.
@@ -279,6 +297,12 @@ Creates or updates a form in a Dataverse environment.
 
 ### [Set-DataverseFormControl](Set-DataverseFormControl.md)
 Creates or updates a control in a Dataverse form section or header.
+
+### [Set-DataverseFormEventHandler](Set-DataverseFormEventHandler.md)
+Adds or updates an event handler in a Dataverse form (form-level, attribute-level, tab-level, or control-level).
+
+### [Set-DataverseFormLibrary](Set-DataverseFormLibrary.md)
+Adds or updates a script library in a Dataverse form.
 
 ### [Set-DataverseFormSection](Set-DataverseFormSection.md)
 Creates or updates a section in a Dataverse form tab.

@@ -56,6 +56,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string InFile { get; set; }
 
         /// <summary>
+        /// Gets or sets the path to the solution folder to pack and import.
+        /// </summary>
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "FromFolder", HelpMessage = "Path to the solution folder to pack and import.")]
+        [ValidateNotNullOrEmpty]
+        public string InFolder { get; set; }
+
+        /// <summary>
+        /// Gets or sets the package type for packing when using InFolder. Can be 'Unmanaged' or 'Managed'.
+        /// </summary>
+        [Parameter(ParameterSetName = "FromFolder", HelpMessage = "Package type: 'Unmanaged' (default) or 'Managed'.")]
+        public ImportSolutionPackageType PackageType { get; set; } = ImportSolutionPackageType.Unmanaged;
+
+        /// <summary>
         /// Gets or sets the solution file bytes to import.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipeline = true, ParameterSetName = "FromBytes", HelpMessage = "Solution file bytes to import.")]
@@ -204,6 +217,109 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 WriteVerbose($"{filePath}");
                 solutionBytes = File.ReadAllBytes(filePath);
+            }
+            else if (ParameterSetName == "FromFolder")
+            {
+                var folderPath = GetUnresolvedProviderPathFromPSPath(InFolder);
+                if (!Directory.Exists(folderPath))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new DirectoryNotFoundException($"Solution folder not found: {folderPath}"),
+                        "FolderNotFound",
+                        ErrorCategory.ObjectNotFound,
+                        folderPath));
+                    return;
+                }
+
+                if (!ShouldProcess($"Solution folder '{folderPath}'", "Pack and Import"))
+                {
+                    return;
+                }
+
+                string tempZipPath = null;
+                try
+                {
+                    // Pack the solution to a temp file
+                    tempZipPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"solution_{Guid.NewGuid():N}.zip");
+                    WriteVerbose($"Packing solution from '{folderPath}' to temporary file: {tempZipPath}");
+
+                    string workingPath = folderPath;
+                    string tempWorkingPath = null;
+
+                    try
+                    {
+                        // Always check for and pack .msapp folders automatically
+                        var msappFolders = Directory.GetDirectories(folderPath, "*.msapp", SearchOption.AllDirectories);
+                        if (msappFolders.Length > 0)
+                        {
+                            WriteVerbose($"Found {msappFolders.Length} .msapp folder(s). Creating temporary copy to pack them...");
+                            tempWorkingPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"dataverse_solution_{Guid.NewGuid():N}");
+                            Directory.CreateDirectory(tempWorkingPath);
+
+                            WriteVerbose($"Copying solution to temporary location: {tempWorkingPath}");
+                            CopyDirectory(folderPath, tempWorkingPath);
+
+                            WriteVerbose("Packing .msapp folders...");
+                            CompressDataverseSolutionFileCmdlet.PackMsappFolders(tempWorkingPath, this);
+
+                            workingPath = tempWorkingPath;
+                        }
+
+                        // Build PAC CLI arguments
+                        var args = $"solution pack --zipfile \"{tempZipPath}\" --folder \"{workingPath}\" --packagetype {PackageType}";
+
+                        // Execute PAC CLI
+                        int exitCode = PacCliHelper.ExecutePacCli(this, args);
+
+                        if (exitCode != 0)
+                        {
+                            ThrowTerminatingError(new ErrorRecord(
+                                new InvalidOperationException($"PAC CLI pack failed with exit code {exitCode}"),
+                                "PacCliFailed",
+                                ErrorCategory.InvalidOperation,
+                                folderPath));
+                            return;
+                        }
+
+                        WriteVerbose("Solution packed successfully.");
+                    }
+                    finally
+                    {
+                        // Clean up temp working directory
+                        if (tempWorkingPath != null && Directory.Exists(tempWorkingPath))
+                        {
+                            WriteVerbose($"Cleaning up temporary working directory: {tempWorkingPath}");
+                            try
+                            {
+                                Directory.Delete(tempWorkingPath, recursive: true);
+                            }
+                            catch (Exception ex)
+                            {
+                                WriteWarning($"Failed to delete temporary directory '{tempWorkingPath}': {ex.Message}");
+                            }
+                        }
+                    }
+
+                    // Read the packed solution
+                    WriteVerbose($"Reading packed solution from: {tempZipPath}");
+                    solutionBytes = File.ReadAllBytes(tempZipPath);
+                }
+                finally
+                {
+                    // Clean up temp zip file after reading
+                    if (tempZipPath != null && File.Exists(tempZipPath))
+                    {
+                        WriteVerbose($"Cleaning up temporary file: {tempZipPath}");
+                        try
+                        {
+                            File.Delete(tempZipPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            WriteWarning($"Failed to delete temporary file '{tempZipPath}': {ex.Message}");
+                        }
+                    }
+                }
             }
             else
             {
@@ -1683,6 +1799,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             return null;
+        }
+
+        private void CopyDirectory(string sourceDir, string destDir)
+        {
+            // Create destination directory
+            Directory.CreateDirectory(destDir);
+
+            // Copy files
+            foreach (string file in Directory.GetFiles(sourceDir))
+            {
+                string destFile = System.IO.Path.Combine(destDir, System.IO.Path.GetFileName(file));
+                File.Copy(file, destFile, overwrite: true);
+            }
+
+            // Copy subdirectories
+            foreach (string subDir in Directory.GetDirectories(sourceDir))
+            {
+                string destSubDir = System.IO.Path.Combine(destDir, System.IO.Path.GetFileName(subDir));
+                CopyDirectory(subDir, destSubDir);
+            }
         }
     }
 }
