@@ -8,7 +8,7 @@ schema: 2.0.0
 # Set-DataverseWebResource
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Creates or updates web resources in a Dataverse environment.
 
 ## SYNTAX
 
@@ -35,16 +35,64 @@ Set-DataverseWebResource -Folder <String> [-DisplayName <String>] [-Publish] [-P
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Creates or updates web resources in Dataverse. Web resources are files like JavaScript, HTML, CSS, images, 
+and other static assets that can be referenced from forms, apps, and other components.
+
+The cmdlet supports three modes:
+- **File mode**: Upload a single file as a web resource
+- **Folder mode**: Upload multiple files from a folder
+- **InputObject mode**: Create/update from an object (useful with pipeline)
+
+By default, the cmdlet will update existing web resources or create new ones. Use -NoUpdate or -NoCreate 
+to control this behavior. The web resource type is auto-detected from file extension unless explicitly specified.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Upload a JavaScript file
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseWebResource -Name "new_myscript" -Path "./script.js" -Publish
 ```
 
-{{ Add example description here }}
+Uploads a JavaScript file as a web resource and publishes it.
+
+### Example 2: Upload multiple files from a folder
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseWebResource -Folder "./webresources" -PublisherPrefix "new_" -Publish
+```
+
+Uploads all files from the folder as web resources with the specified publisher prefix.
+
+### Example 3: Update only if file is newer
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseWebResource -Folder "./dist" -PublisherPrefix "new_" -IfNewer -Publish
+```
+
+Updates web resources only if the local files are newer than the existing web resources.
+
+### Example 4: Create from object
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $webResource = @{
+    name = "new_customscript"
+    displayname = "Custom Script"
+    webresourcetype = 3  # JavaScript
+    content = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes("alert('Hello');"))
+}
+PS C:\> $webResource | Set-DataverseWebResource -PassThru
+```
+
+Creates a web resource from a PowerShell object and returns the created resource.
+
+### Example 5: Filter files in folder
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseWebResource -Folder "./assets" -FileFilter "*.png" -PublisherPrefix "new_" -Publish
+```
+
+Uploads only PNG files from the folder as web resources.
 
 ## PARAMETERS
 

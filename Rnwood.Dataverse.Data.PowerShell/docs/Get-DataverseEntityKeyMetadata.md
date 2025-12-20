@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseEntityKeyMetadata
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves entity key (alternate key) metadata for a Dataverse table.
 
 ## SYNTAX
 
@@ -18,16 +18,37 @@ Get-DataverseEntityKeyMetadata [-EntityName] <String> [[-KeyName] <String>] [-Us
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Retrieves metadata about entity keys (alternate keys) defined on a Dataverse table. 
+Entity keys provide a way to uniquely identify records using columns other than the primary key.
+You can retrieve all keys for a table or a specific key by name.
+
+By default, unpublished (draft) metadata is retrieved. Use -Published to retrieve only published metadata.
 
 ## EXAMPLES
 
-### Example 1
-```
-PS C:\> {{ Add example code here }}
+### Example 1: Get all keys for an entity
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseEntityKeyMetadata -EntityName contact
 ```
 
-{{ Add example description here }}
+Retrieves all entity keys defined on the contact table.
+
+### Example 2: Get a specific entity key
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseEntityKeyMetadata -EntityName contact -KeyName emailaddress1_key
+```
+
+Retrieves metadata for a specific entity key.
+
+### Example 3: Get published keys with caching
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseEntityKeyMetadata -EntityName account -Published -UseMetadataCache
+```
+
+Retrieves published entity key metadata for the account table using the metadata cache for improved performance.
 
 ## PARAMETERS
 
