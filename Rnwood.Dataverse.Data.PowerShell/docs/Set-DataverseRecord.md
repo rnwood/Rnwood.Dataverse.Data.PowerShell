@@ -136,123 +136,135 @@ To change a record's state/status include `statuscode` (and optionally `statecod
 
 ### Example 1: Create a single record
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> [PSCustomObject] @{
 	TableName = "contact"
 	lastname = "Simpson"
 	firstname = "Homer"
-} | Set-DataverseRecord -Connection $c
+} | Set-DataverseRecord
 ```
 
 Creates a new contact record with a last name and first name.
 
 ### Example 2: Update existing records
 ```powershell
-PS C:\> Get-DataverseRecord -Connection $c -TableName contact -Columns statuscode | 
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseRecord -TableName contact -Columns statuscode | 
     ForEach-Object { $_.statuscode = "Inactive" } | 
-    Set-DataverseRecord -Connection $c
+    Set-DataverseRecord
 ```
 
 Retrieves all existing contacts and sets their status reason to `Inactive`.
 
 ### Example 3: Batch create multiple records
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $contacts = @(
     @{ firstname = "John"; lastname = "Doe"; emailaddress1 = "john@example.com" }
     @{ firstname = "Jane"; lastname = "Smith"; emailaddress1 = "jane@example.com" }
     @{ firstname = "Bob"; lastname = "Johnson"; emailaddress1 = "bob@example.com" }
 )
 
-PS C:\> $contacts | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly
+PS C:\> $contacts | Set-DataverseRecord -TableName contact -CreateOnly
 ```
 
 Creates multiple contact records in a single batch. The `-CreateOnly` switch improves performance by skipping the existence check since we know these are new records. By default, all 3 records will be sent in a single ExecuteMultipleRequest.
 
 ### Example 4: Batch update with choice columns
 ```powershell
-PS C:\> $accounts = Get-DataverseRecord -Connection $c -TableName account -Top 50
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $accounts = Get-DataverseRecord -TableName account -Top 50
 
 PS C:\> $accounts | ForEach-Object { 
     $_.industrycode = "Retail"  # Can use label name
     $_.accountratingcode = 1     # Or numeric value
-} | Set-DataverseRecord -Connection $c
+} | Set-DataverseRecord
 ```
 
 Retrieves 50 accounts and updates their industry (using label) and rating (using numeric value). Choice/option set columns accept either the numeric value or the display label.
 
 ### Example 5: Batch operations with state/status changes
 ```powershell
-PS C:\> $cases = Get-DataverseRecord -Connection $c -TableName incident -FilterValues @{ statecode = 0 }
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $cases = Get-DataverseRecord -TableName incident -FilterValues @{ statecode = 0 }
 
 PS C:\> $cases | ForEach-Object {
     $_.statuscode = "Resolved"  # Can use status label
     $_.statecode = 1             # Or numeric state value
-} | Set-DataverseRecord -Connection $c
+} | Set-DataverseRecord
 ```
 
 Closes all active cases by setting their state and status. The cmdlet automatically handles state/status changes as separate SetStateRequest operations after the main update.
 
 ### Example 6: Upsert with alternate key
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> @(
     @{ emailaddress1 = "user1@example.com"; firstname = "Alice"; lastname = "Anderson" }
     @{ emailaddress1 = "user2@example.com"; firstname = "Bob"; lastname = "Brown" }
-) | Set-DataverseRecord -Connection $c -TableName contact -Upsert -MatchOn emailaddress1
+) | Set-DataverseRecord -TableName contact -Upsert -MatchOn emailaddress1
 ```
 
 Uses upsert operation with alternate key on emailaddress1. If a contact with the email exists, it will be updated; otherwise a new one is created. Requires that `emailaddress1` is defined as an alternate key on the contact table.
 
 ### Example 7: Control batch size
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $records = 1..500 | ForEach-Object {
     @{ name = "Account $_"; telephone1 = "555-$_" }
 }
 
-PS C:\> $records | Set-DataverseRecord -Connection $c -TableName account -BatchSize 50 -CreateOnly
+PS C:\> $records | Set-DataverseRecord -TableName account -BatchSize 50 -CreateOnly
 ```
 
 Creates 500 records in batches of 50. This will result in 10 ExecuteMultipleRequest calls, each containing 50 CreateRequest operations.
 
 ### Example 8: Disable batching for detailed error handling
 ```powershell
-PS C:\> $records | Set-DataverseRecord -Connection $c -TableName contact -BatchSize 1
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $records | Set-DataverseRecord -TableName contact -BatchSize 1
 ```
 
 Disables batching by setting BatchSize to 1. Each record is sent in a separate request, which stops immediately on first error rather than continuing through the batch.
 
 ### Example 9: MatchOn with multiple columns
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> @(
     @{ firstname = "John"; lastname = "Doe"; telephone1 = "555-0001" }
     @{ firstname = "Jane"; lastname = "Smith"; telephone1 = "555-0002" }
-) | Set-DataverseRecord -Connection $c -TableName contact -MatchOn ("firstname", "lastname")
+) | Set-DataverseRecord -TableName contact -MatchOn ("firstname", "lastname")
 ```
 
 Looks for existing contacts matching BOTH firstname AND lastname. If found, updates them; otherwise creates new records.
 
 ### Example 10: Assignment with batching
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $newOwnerId = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
-PS C:\> Get-DataverseRecord -Connection $c -TableName account -Top 100 | 
+PS C:\> Get-DataverseRecord -TableName account -Top 100 | 
     ForEach-Object { $_.ownerid = $newOwnerId } | 
-    Set-DataverseRecord -Connection $c
+    Set-DataverseRecord
 ```
 
 Reassigns 100 accounts to a new owner. The cmdlet handles this as update operations followed by AssignRequest operations, all batched together.
 
 ### Example 11: Using lookup columns with names
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> @{
     firstname = "John"
     lastname = "Doe"
     parentcustomerid = "Contoso Ltd"  # Lookup by account name
-} | Set-DataverseRecord -Connection $c -TableName contact
+} | Set-DataverseRecord -TableName contact
 ```
 
 Creates a contact with a lookup to an account by name. The module will automatically resolve "Contoso Ltd" to the account's GUID if the name is unique.
 
 ### Example 12: Handle errors in batch operations
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $records = @(
     @{ firstname = "Alice"; lastname = "Valid"; emailaddress1 = "alice@example.com" }
     @{ firstname = "Bob"; lastname = ""; emailaddress1 = "bob@example.com" }  # Invalid - required field missing
@@ -260,7 +272,7 @@ PS C:\> $records = @(
 )
 
 PS C:\> $errors = @()
-PS C:\> $records | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -ErrorVariable +errors -ErrorAction SilentlyContinue
+PS C:\> $records | Set-DataverseRecord -TableName contact -CreateOnly -ErrorVariable +errors -ErrorAction SilentlyContinue
 
 PS C:\> # Process errors - each error's TargetObject contains the input record that failed
 PS C:\> foreach ($err in $errors) {
@@ -273,12 +285,13 @@ Demonstrates batch error handling. When using batching (default BatchSize of 100
 
 ### Example 13: Access full error details from server
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $records = @(
     @{ firstname = "Test"; lastname = "User" }
 )
 
 PS C:\> $errors = @()
-PS C:\> $records | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -ErrorVariable +errors -ErrorAction SilentlyContinue
+PS C:\> $records | Set-DataverseRecord -TableName contact -CreateOnly -ErrorVariable +errors -ErrorAction SilentlyContinue
 
 PS C:\> # Access detailed error information from the server
 PS C:\> foreach ($err in $errors) {
@@ -302,6 +315,7 @@ Demonstrates how to access comprehensive error details from the Dataverse server
 
 ### Example 14: Stop on first error with BatchSize 1
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $records = @(
     @{ firstname = "Alice"; lastname = "Valid" }
     @{ firstname = "Bob"; lastname = "" }  # Invalid - will cause error
@@ -309,7 +323,7 @@ PS C:\> $records = @(
 )
 
 PS C:\> try {
-    $records | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -BatchSize 1 -ErrorAction Stop
+    $records | Set-DataverseRecord -TableName contact -CreateOnly -BatchSize 1 -ErrorAction Stop
 } catch {
     Write-Host "Error creating record: $($_.TargetObject.firstname)"
     Write-Host "Remaining records were not processed"
@@ -320,13 +334,14 @@ Disables batching by setting `-BatchSize 1`. With this setting, each record is s
 
 ### Example 15: Get IDs of created records using PassThru
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $contacts = @(
     @{ firstname = "Alice"; lastname = "Anderson" }
     @{ firstname = "Bob"; lastname = "Brown" }
     @{ firstname = "Charlie"; lastname = "Clark" }
 )
 
-PS C:\> $createdRecords = $contacts | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -PassThru
+PS C:\> $createdRecords = $contacts | Set-DataverseRecord -TableName contact -CreateOnly -PassThru
 
 PS C:\> # Access the IDs of created records
 PS C:\> foreach ($record in $createdRecords) {
@@ -338,16 +353,17 @@ Creates multiple contact records and returns the input objects with their `Id` p
 
 ### Example 16: Use PassThru to create and link records
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Create parent account and get its ID
 PS C:\> $account = @{ name = "Contoso Ltd" } | 
-    Set-DataverseRecord -Connection $c -TableName account -CreateOnly -PassThru
+    Set-DataverseRecord -TableName account -CreateOnly -PassThru
 
 PS C:\> # Create child contact linked to the account
 PS C:\> $contact = @{ 
     firstname = "John"
     lastname = "Doe"
     parentcustomerid = $account.Id
-} | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -PassThru
+} | Set-DataverseRecord -TableName contact -CreateOnly -PassThru
 
 PS C:\> Write-Host "Created contact $($contact.Id) linked to account $($account.Id)"
 ```
@@ -356,9 +372,10 @@ Demonstrates using `-PassThru` to chain record creation operations. First create
 
 ### Example 17: Associate records in many-to-many relationships
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Create two accounts to associate
-PS C:\> $account1 = @{ name = "Contoso Ltd" } | Set-DataverseRecord -Connection $c -TableName account -CreateOnly -PassThru
-PS C:\> $account2 = @{ name = "Fabrikam Inc" } | Set-DataverseRecord -Connection $c -TableName account -CreateOnly -PassThru
+PS C:\> $account1 = @{ name = "Contoso Ltd" } | Set-DataverseRecord -TableName account -CreateOnly -PassThru
+PS C:\> $account2 = @{ name = "Fabrikam Inc" } | Set-DataverseRecord -TableName account -CreateOnly -PassThru
 
 PS C:\> # Associate the accounts using the intersect table
 PS C:\> # The intersect table name is typically in the format: <entity1>_<entity2> or similar
@@ -370,22 +387,23 @@ PS C:\> @{
     
     # Entity 2 in the relationship - use the exact column name from the intersect table
     accountid2 = $account2.Id
-} | Set-DataverseRecord -Connection $c -TableName "account_accounts" -CreateOnly
+} | Set-DataverseRecord -TableName "account_accounts" -CreateOnly
 ```
 
 Creates a many-to-many association between two account records. Many-to-many relationships in Dataverse are implemented using intersect tables that contain references to both related entities. The property names must match the exact column names in the intersect table (typically the primary key column names of the related entities). Use metadata queries or the Dataverse UI to find the correct table name and column names for your M:M relationship.
 
 ### Example 18: Batch associate multiple M:M relationships
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Create multiple contacts and marketing lists
 PS C:\> $contacts = @(
     @{ firstname = "Alice"; lastname = "Smith" }
     @{ firstname = "Bob"; lastname = "Jones" }
     @{ firstname = "Carol"; lastname = "Williams" }
-) | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -PassThru
+) | Set-DataverseRecord -TableName contact -CreateOnly -PassThru
 
 PS C:\> $marketingList = @{ listname = "Q1 Newsletter Subscribers"; type = $false } | 
-    Set-DataverseRecord -Connection $c -TableName list -CreateOnly -PassThru
+    Set-DataverseRecord -TableName list -CreateOnly -PassThru
 
 PS C:\> # Associate all contacts with the marketing list using the intersect table
 PS C:\> # Property names must match the exact column names in the intersect table
@@ -396,13 +414,14 @@ PS C:\> $associations = $contacts | ForEach-Object {
     }
 }
 
-PS C:\> $associations | Set-DataverseRecord -Connection $c -TableName "listcontact" -CreateOnly
+PS C:\> $associations | Set-DataverseRecord -TableName "listcontact" -CreateOnly
 ```
 
 Creates multiple many-to-many associations in a batch operation. This example associates multiple contacts with a marketing list using the `listcontact` intersect table. The property names (`contactid`, `listid`) must match the exact column names in the intersect table. The cmdlet automatically batches these operations for improved performance.
 
 ### Example 18: Using retry logic for transient failures
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $records = @(
     @{ firstname = "Alice"; lastname = "Smith" }
     @{ firstname = "Bob"; lastname = "Jones" }
@@ -410,21 +429,23 @@ PS C:\> $records = @(
 )
 
 PS C:\> # Retry each failed record up to 3 times with exponential backoff
-PS C:\> $records | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -Retries 3 -InitialRetryDelay 500 -Verbose
+PS C:\> $records | Set-DataverseRecord -TableName contact -CreateOnly -Retries 3 -InitialRetryDelay 500 -Verbose
 ```
 
 Creates multiple contacts with automatic retry on transient failures. Failed requests will be retried up to 3 times with delays of 500ms, 1000ms, and 2000ms respectively. The `-Verbose` flag shows retry attempts and wait times.
 
 ### Example 19: Custom retry delay for rate limiting
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Handle rate limiting with longer initial delay
-PS C:\> $largeDataset | Set-DataverseRecord -Connection $c -TableName account -Retries 5 -InitialRetryDelay 2000
+PS C:\> $largeDataset | Set-DataverseRecord -TableName account -Retries 5 -InitialRetryDelay 2000
 ```
 
 Processes a large dataset with automatic retry configured for rate limiting scenarios. Uses 5 retry attempts with an initial 2-second delay, doubling on each retry (2s, 4s, 8s, 16s, 32s).
 
 ### Example 20: Process records in parallel for maximum throughput
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Create 10,000 records with 4 parallel workers and batches of 100
 PS C:\> $records = 1..10000 | ForEach-Object {
     @{ 
@@ -434,13 +455,14 @@ PS C:\> $records = 1..10000 | ForEach-Object {
     }
 }
 
-PS C:\> $records | Set-DataverseRecord -Connection $c -TableName contact -CreateOnly -MaxDegreeOfParallelism 4 -BatchSize 100 -Verbose
+PS C:\> $records | Set-DataverseRecord -TableName contact -CreateOnly -MaxDegreeOfParallelism 4 -BatchSize 100 -Verbose
 ```
 
 Processes 10,000 records using 4 parallel worker threads. Each worker maintains its own batch of 100 records. This results in multiple ExecuteMultipleRequest operations running concurrently for maximum throughput. The `-Verbose` flag shows worker activity and progress across all threads.
 
 ### Example 21: Parallel updates with MatchOn
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Update records in parallel by email address
 PS C:\> $updates = 1..1000 | ForEach-Object {
     @{ 
@@ -449,18 +471,19 @@ PS C:\> $updates = 1..1000 | ForEach-Object {
     }
 }
 
-PS C:\> $updates | Set-DataverseRecord -Connection $c -TableName contact -MatchOn emailaddress1 -MaxDegreeOfParallelism 3 -BatchSize 50
+PS C:\> $updates | Set-DataverseRecord -TableName contact -MatchOn emailaddress1 -MaxDegreeOfParallelism 3 -BatchSize 50
 ```
 
 Updates 1000 existing contacts in parallel using email address as the match key. Uses 3 workers with batch size of 50 for optimal performance.
 
 ### Example 22: Update multiple matching records with AllowMultipleMatches
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Update all contacts with a specific last name
 PS C:\> @{ 
     lastname = "TestUser"
     emailaddress1 = "updated@example.com" 
-} | Set-DataverseRecord -Connection $c -TableName contact -MatchOn lastname -AllowMultipleMatches
+} | Set-DataverseRecord -TableName contact -MatchOn lastname -AllowMultipleMatches
 ```
 
 Updates ALL contacts with lastname "TestUser" by setting their email address. The -AllowMultipleMatches switch allows updating all matching records when multiple records match the MatchOn criteria. Without this switch, an error would be raised if multiple matches are found.
@@ -921,7 +944,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Management.Automation.PSObject
 ### System.String
 ### System.Guid
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Object

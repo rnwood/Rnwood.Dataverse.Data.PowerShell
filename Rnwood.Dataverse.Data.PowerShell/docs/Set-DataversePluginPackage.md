@@ -33,7 +33,8 @@ Creates or updates plugin packages with support for reading from file path or by
 
 ### Example 1
 ```powershell
-PS C:\> Set-DataversePluginPackage -Connection $connection -UniqueName "MyPackage" -FilePath "C:\Plugins\MyPackage.nupkg"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataversePluginPackage -UniqueName "MyPackage" -FilePath "C:\Plugins\MyPackage.nupkg"
 ```
 
 Creates a new plugin package from a NuGet package file.
@@ -210,7 +211,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject

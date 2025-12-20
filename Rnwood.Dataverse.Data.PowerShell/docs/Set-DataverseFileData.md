@@ -33,36 +33,41 @@ The Set-DataverseFileData cmdlet uploads file data to a Dataverse file column. Y
 
 ### Example 1: Upload file from path
 ```powershell
-PS C:\> Set-DataverseFileData -Connection $connection -TableName "account" -Id $accountId -ColumnName "documentfile" -FilePath "C:\Documents\contract.pdf"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFileData -TableName "account" -Id $accountId -ColumnName "documentfile" -FilePath "C:\Documents\contract.pdf"
 ```
 
 Uploads a file from the specified path to the file column. MIME type is automatically detected as "application/pdf".
 
 ### Example 2: Upload from byte array
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $bytes = [System.IO.File]::ReadAllBytes("C:\Documents\contract.pdf")
-PS C:\> Set-DataverseFileData -Connection $connection -TableName "account" -Id $accountId -ColumnName "documentfile" -FileContent $bytes -FileName "contract.pdf"
+PS C:\> Set-DataverseFileData -TableName "account" -Id $accountId -ColumnName "documentfile" -FileContent $bytes -FileName "contract.pdf"
 ```
 
 Uploads file content from a byte array with a specified filename.
 
 ### Example 3: Upload with manual MIME type
 ```powershell
-PS C:\> Set-DataverseFileData -Connection $connection -TableName "account" -Id $accountId -ColumnName "documentfile" -FilePath "C:\Documents\data.bin" -MimeType "application/octet-stream"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFileData -TableName "account" -Id $accountId -ColumnName "documentfile" -FilePath "C:\Documents\data.bin" -MimeType "application/octet-stream"
 ```
 
 Uploads a file with a manually specified MIME type, overriding auto-detection.
 
 ### Example 4: Pipe from Get-DataverseRecord
 ```powershell
-PS C:\> Get-DataverseRecord -Connection $connection -TableName "account" -Id $accountId | Set-DataverseFileData -ColumnName "documentfile" -FilePath "C:\Documents\contract.pdf"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseRecord -TableName "account" -Id $accountId | Set-DataverseFileData -ColumnName "documentfile" -FilePath "C:\Documents\contract.pdf"
 ```
 
 Pipes a record and uploads a file to it.
 
 ### Example 5: Use WhatIf to preview changes
 ```powershell
-PS C:\> Set-DataverseFileData -Connection $connection -TableName "account" -Id $accountId -ColumnName "documentfile" -FilePath "C:\Documents\contract.pdf" -WhatIf
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFileData -TableName "account" -Id $accountId -ColumnName "documentfile" -FilePath "C:\Documents\contract.pdf" -WhatIf
 ```
 
 Shows what would happen if the cmdlet runs without actually uploading the file.

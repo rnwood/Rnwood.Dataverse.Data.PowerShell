@@ -30,6 +30,7 @@ Wildcard patterns (* and ?) are supported for all filter parameters.
 
 ### Example 1: Get all connection references
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseConnectionReference
 ```
 
@@ -37,6 +38,7 @@ Retrieves all connection references from the Dataverse environment.
 
 ### Example 2: Get a specific connection reference
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharepoint"
 ```
 
@@ -44,6 +46,7 @@ Retrieves a specific connection reference by its logical name.
 
 ### Example 3: Filter by display name
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseConnectionReference -DisplayName "Production*"
 ```
 
@@ -51,6 +54,7 @@ Retrieves connection references whose display name starts with "Production".
 
 ### Example 4: Filter by connector ID
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseConnectionReference -ConnectorId "98765432-4321-4321-4321-210987654321"
 ```
 

@@ -57,6 +57,7 @@ When updating an existing entity, only the properties you specify will be change
 
 ### Example 1: Create a simple custom entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
     -SchemaName new_Product `
     -DisplayName "Product" `
@@ -71,6 +72,7 @@ Creates a new user-owned entity named `new_product` with a primary name attribut
 
 ### Example 2: Create entity with activities and notes support
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_project `
     -SchemaName new_Project `
     -DisplayName "Project" `
@@ -86,6 +88,7 @@ Creates an entity that supports activities (tasks, appointments) and notes (anno
 
 ### Example 3: Create organization-owned entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_setting `
     -SchemaName new_Setting `
     -DisplayName "Application Setting" `
@@ -99,6 +102,7 @@ Creates an organization-owned entity (not owned by specific users or teams).
 
 ### Example 4: Create entity with audit and change tracking enabled
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_transaction `
     -SchemaName new_Transaction `
     -DisplayName "Transaction" `
@@ -114,6 +118,7 @@ Creates an entity with auditing and change tracking enabled for compliance requi
 
 ### Example 5: Create entity with custom primary name length
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_code `
     -SchemaName new_Code `
     -DisplayName "Code" `
@@ -128,6 +133,7 @@ Creates an entity with a primary name attribute limited to 50 characters.
 
 ### Example 6: Update entity display names
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
     -DisplayName "Product Catalog" `
     -DisplayCollectionName "Product Catalogs" `
@@ -138,6 +144,7 @@ Updates the display names and description of an existing entity.
 
 ### Example 7: Enable audit on existing entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName account `
     -IsAuditEnabled
 ```
@@ -146,6 +153,7 @@ Enables auditing for the standard `account` entity.
 
 ### Example 8: Enable change tracking on existing entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName contact `
     -ChangeTrackingEnabled
 ```
@@ -154,6 +162,7 @@ Enables change tracking for the `contact` entity to support data synchronization
 
 ### Example 9: Create entity and return metadata
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $result = Set-DataverseEntityMetadata -EntityName new_item `
     -SchemaName new_Item `
     -DisplayName "Item" `
@@ -179,6 +188,7 @@ Creates an entity and returns its metadata using `-PassThru`.
 
 ### Example 10: Use -WhatIf to preview changes
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_test `
     -SchemaName new_Test `
     -DisplayName "Test Entity" `
@@ -195,6 +205,7 @@ Uses `-WhatIf` to see what would happen without actually creating the entity.
 
 ### Example 11: Create entity with activities, notes, and audit
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_case `
     -SchemaName new_Case `
     -DisplayName "Support Case" `
@@ -213,6 +224,7 @@ Creates a full-featured entity with all available options enabled.
 
 ### Example 12: Update with Force parameter
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
     -DisplayName "Updated Product" `
     -Force
@@ -222,6 +234,7 @@ Updates an entity without confirmation prompt (Force parameter bypasses confirma
 
 ### Example 13: Create team-owned entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_resource `
     -SchemaName new_Resource `
     -DisplayName "Shared Resource" `
@@ -235,6 +248,7 @@ Creates a team-owned entity where records are owned by teams rather than individ
 
 ### Example 14: Batch create multiple entities
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $entities = @(
     @{ SchemaName = "new_Category"; DisplayName = "Category"; PrimaryAttribute = "new_name" }
     @{ SchemaName = "new_Tag"; DisplayName = "Tag"; PrimaryAttribute = "new_name" }
@@ -257,9 +271,10 @@ Creates multiple entities by iterating through a collection.
 
 ### Example 15: Create with specific connection
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://myorg.crm.dynamics.com" -Interactive
 
-PS C:\> Set-DataverseEntityMetadata -Connection $conn `
+PS C:\> Set-DataverseEntityMetadata `
     -EntityName new_inventory `
     -SchemaName new_Inventory `
     -DisplayName "Inventory Item" `
@@ -273,6 +288,7 @@ Creates an entity using a specific connection instead of the default connection.
 
 ### Example 16: Create entity with icon properties
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
     -SchemaName new_Product `
     -DisplayName "Product" `
@@ -290,6 +306,7 @@ Creates an entity with custom icon properties. Icons control the visual appearan
 
 ### Example 17: Update icon properties on existing entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName account `
     -IconVectorName "svg_custom_account" `
     -IconLargeName "Custom/account_large.png"
@@ -299,6 +316,7 @@ Updates only the icon properties of an existing entity without changing other pr
 
 ### Example 18: Update entity using EntityMetadata object
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Get existing metadata
 PS C:\> $metadata = Get-DataverseEntityMetadata -EntityName account
 
@@ -314,6 +332,7 @@ Retrieves an EntityMetadata object, modifies properties, and updates the entity 
 
 ### Example 19: Pipeline EntityMetadata for batch updates
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Update icons for multiple custom entities
 PS C:\> Get-DataverseEntityMetadata | 
     Where-Object { $_.IsCustomEntity -eq $true } |
@@ -328,6 +347,7 @@ Retrieves all custom entities, updates their icon properties, and publishes the 
 
 ### Example 20: Copy entity metadata properties to another entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Get source entity metadata
 PS C:\> $sourceMetadata = Get-DataverseEntityMetadata -EntityName account
 
@@ -343,6 +363,7 @@ Copies icon properties from one entity to another entity.
 
 ### Example 21: Create entity with validated icon webresources
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Create an entity with all icon properties that reference valid webresources
 PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
     -SchemaName new_Product `
@@ -367,6 +388,7 @@ If any webresource doesn't exist or has the wrong type, an error is thrown.
 
 ### Example 22: Skip icon webresource validation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Create an entity without validating icon webresource existence
 PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
     -SchemaName new_Product `
@@ -383,6 +405,7 @@ Creates an entity with icon validation disabled. The cmdlet will not check if "n
 
 ### Example 23: Create an activity entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_customactivity `
     -SchemaName new_CustomActivity `
     -DisplayName "Custom Activity" `

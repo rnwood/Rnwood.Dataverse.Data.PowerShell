@@ -24,28 +24,32 @@ The Remove-DataverseFileData cmdlet deletes file data from a Dataverse file colu
 
 ### Example 1: Delete a file
 ```powershell
-PS C:\> Remove-DataverseFileData -Connection $connection -TableName "account" -Id $accountId -ColumnName "documentfile"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFileData -TableName "account" -Id $accountId -ColumnName "documentfile"
 ```
 
 Deletes the file from the specified column.
 
 ### Example 2: Delete only if exists
 ```powershell
-PS C:\> Remove-DataverseFileData -Connection $connection -TableName "account" -Id $accountId -ColumnName "documentfile" -IfExists
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFileData -TableName "account" -Id $accountId -ColumnName "documentfile" -IfExists
 ```
 
 Deletes the file if it exists, but doesn't raise an error if it doesn't exist.
 
 ### Example 3: Pipe from Get-DataverseRecord to delete multiple files
 ```powershell
-PS C:\> Get-DataverseRecord -Connection $connection -TableName "account" -FilterValues @{deletefiles=$true} | Remove-DataverseFileData -ColumnName "documentfile" -IfExists
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseRecord -TableName "account" -FilterValues @{deletefiles=$true} | Remove-DataverseFileData -ColumnName "documentfile" -IfExists
 ```
 
 Pipes multiple records and deletes files from all of them.
 
 ### Example 4: Use WhatIf to preview deletions
 ```powershell
-PS C:\> Remove-DataverseFileData -Connection $connection -TableName "account" -Id $accountId -ColumnName "documentfile" -WhatIf
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFileData -TableName "account" -Id $accountId -ColumnName "documentfile" -WhatIf
 ```
 
 Shows what would happen if the cmdlet runs without actually deleting the file.

@@ -50,6 +50,7 @@ The cmdlet returns a collection of dependency entities, each describing a depend
 
 ### Example 1: Check for missing dependencies before import
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $missingDeps = Get-DataverseSolutionDependency -SolutionUniqueName "MyCustomSolution" -Missing
 
 PS C:\> if ($missingDeps) {
@@ -65,6 +66,7 @@ Checks for missing dependencies before importing a solution.
 
 ### Example 2: Verify solution uninstall readiness
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $dependencies = Get-DataverseSolutionDependency -SolutionUniqueName "MyOldSolution" -Uninstall
 
 PS C:\> if ($dependencies) {
@@ -80,6 +82,7 @@ Checks if a solution has any dependencies before attempting to uninstall it.
 
 ### Example 3: Generate missing dependencies report
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $missingDeps = Get-DataverseSolutionDependency -SolutionUniqueName "TestSolution" -Missing
 PS C:\> $missingDeps | ForEach-Object {
 >>     [PSCustomObject]@{
@@ -95,6 +98,7 @@ Creates a detailed report of all missing dependencies.
 
 ### Example 4: Check multiple solutions for uninstall readiness
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $solutions = "Solution1", "Solution2", "Solution3"
 PS C:\> $solutions | ForEach-Object {
 >>     $deps = Get-DataverseSolutionDependency -SolutionUniqueName $_ -Uninstall
@@ -110,6 +114,7 @@ Checks multiple solutions for uninstall readiness and reports status.
 
 ### Example 5: Pipeline usage with solution list
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $solutions = Get-DataverseSolution | Where-Object { $_.ismanaged -eq $false }
 PS C:\> $solutions | ForEach-Object {
 >>     $deps = Get-DataverseSolutionDependency -SolutionUniqueName $_.uniquename -Uninstall

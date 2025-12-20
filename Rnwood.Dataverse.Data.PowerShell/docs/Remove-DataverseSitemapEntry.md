@@ -52,6 +52,7 @@ The cmdlet supports the -IfExists parameter to suppress errors when removing ent
 
 ### Example 1: Remove an Area from a sitemap
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseSitemapEntry -SitemapName "Default" -EntryType Area -EntryId "Sales"
 ```
 
@@ -59,6 +60,7 @@ Removes the Area with ID "Sales" from the sitemap named "Default".
 
 ### Example 2: Remove a SubArea using pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSitemapEntry -SitemapName "Default" -EntryType SubArea -EntryId "Contacts" | Remove-DataverseSitemapEntry
 ```
 
@@ -66,6 +68,7 @@ Retrieves a specific SubArea entry and removes it via pipeline.
 
 ### Example 3: Remove an entry with -IfExists for idempotent scripts
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseSitemapEntry -SitemapName "Default" -EntryType Group -EntryId "Marketing" -IfExists
 ```
 
@@ -339,7 +342,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapEntryInfo
 ### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapInfo
 ### System.String
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Object

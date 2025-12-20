@@ -8,7 +8,7 @@ schema: 2.0.0
 # Wait-DataversePublish
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Waits for a Dataverse publish operation to complete.
 
 ## SYNTAX
 
@@ -18,16 +18,43 @@ Wait-DataversePublish [-MaxWaitSeconds <Int32>] [-PollIntervalSeconds <Int32>] [
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Waits for an in-progress publish operation to complete before continuing. This is useful after
+making metadata changes or publishing customizations to ensure they are fully applied before
+proceeding with subsequent operations.
+
+The cmdlet polls the Dataverse environment at regular intervals to check the publish status.
+If the publish operation does not complete within the maximum wait time, an error is thrown.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Wait for publish to complete
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Publish-DataverseCustomizations
+PS C:\> Wait-DataversePublish
 ```
 
-{{ Add example description here }}
+Publishes customizations and waits for the publish operation to complete using default settings (5 minute timeout, 2 second poll interval).
+
+### Example 2: Wait with custom timeout
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Publish-DataverseCustomizations
+PS C:\> Wait-DataversePublish -MaxWaitSeconds 600 -PollIntervalSeconds 5
+```
+
+Waits up to 10 minutes for the publish to complete, checking every 5 seconds.
+
+### Example 3: Wait after metadata changes
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseAttributeMetadata -EntityName contact -Attribute @{ schemaname = "new_customfield"; displayname = "Custom Field"; attributetype = "String" }
+PS C:\> Publish-DataverseCustomizations
+PS C:\> Wait-DataversePublish
+PS C:\> # Metadata is now published and available
+```
+
+Creates a new attribute, publishes it, and waits for publish to complete before continuing.
 
 ## PARAMETERS
 

@@ -39,33 +39,36 @@ Options are specified as an array of hashtables, each containing:
 
 ### Example 1: Create a new global option set
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $options = @(
     @{ Value = 1; Label = "Option 1" }
     @{ Value = 2; Label = "Option 2"; Color = "#FF0000" }
     @{ Value = 3; Label = "Option 3"; Description = "Third option" }
 )
 
-PS C:\> Set-DataverseOptionSetMetadata -Connection $c -Name "new_optionset" -DisplayName "New Option Set" -Options $options
+PS C:\> Set-DataverseOptionSetMetadata -Name "new_optionset" -DisplayName "New Option Set" -Options $options
 ```
 
 Creates a new global option set with three options.
 
 ### Example 2: Update an existing option set
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $options = @(
     @{ Value = 1; Label = "Updated Option 1" }
     @{ Value = 2; Label = "Option 2" }
     @{ Value = 4; Label = "New Option 4" }
 )
 
-PS C:\> Set-DataverseOptionSetMetadata -Connection $c -Name "existing_optionset" -Options $options
+PS C:\> Set-DataverseOptionSetMetadata -Name "existing_optionset" -Options $options
 ```
 
 Updates an existing option set by changing the label of option 1, keeping option 2 unchanged, and adding a new option 4. Option 3 (if it existed) would be removed unless -NoRemoveMissingOptions is specified.
 
 ### Example 3: Update option set metadata without changing options
 ```powershell
-PS C:\> Set-DataverseOptionSetMetadata -Connection $c -Name "my_optionset" -DisplayName "Updated Display Name" -Description "Updated description"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseOptionSetMetadata -Name "my_optionset" -DisplayName "Updated Display Name" -Description "Updated description"
 ```
 
 Updates only the display name and description of an existing option set without modifying any options.

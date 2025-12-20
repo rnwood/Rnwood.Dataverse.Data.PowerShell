@@ -29,6 +29,7 @@ Note: This cmdlet only returns explicitly shared access. It does not return acce
 
 ### Example 1: Get all principals with access to a record
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $accessList = Get-DataverseRecordAccess -TableName account -Id "12345678-1234-1234-1234-123456789012"
 PS C:\> $accessList | Format-Table @{Label="Principal ID"; Expression={$_.Principal.Id}}, @{Label="Principal Type"; Expression={$_.Principal.LogicalName}}, AccessMask
 
@@ -42,6 +43,7 @@ Retrieves all principals who have shared access to the account record.
 
 ### Example 2: Find users with write access
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $accessList = Get-DataverseRecordAccess -TableName contact -Id "11111111-1111-1111-1111-111111111111"
 PS C:\> $writeAccess = $accessList | Where-Object { 
 >>     ($_.AccessMask -band [Microsoft.Crm.Sdk.Messages.AccessRights]::WriteAccess) -ne 0 
@@ -55,6 +57,7 @@ Finds all principals who have write access to the contact record.
 
 ### Example 3: Pipeline usage with multiple records
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $opportunities = Get-DataverseRecord -TableName opportunity -FilterValues @{statecode=0} -Columns opportunityid
 PS C:\> $opportunities | ForEach-Object {
 >>     Get-DataverseRecordAccess -TableName opportunity -Id $_.opportunityid

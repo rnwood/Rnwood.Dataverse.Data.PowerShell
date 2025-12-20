@@ -24,7 +24,8 @@ The Get-DataverseFormLibrary cmdlet retrieves JavaScript libraries (web resource
 
 ### Example 1: Get all libraries from a form
 ```powershell
-PS C:\> $libraries = Get-DataverseFormLibrary -Connection $c -FormId $formId
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $libraries = Get-DataverseFormLibrary -FormId $formId
 PS C:\> $libraries | Format-Table Name, LibraryUniqueId
 
 Name                           LibraryUniqueId
@@ -37,25 +38,28 @@ Retrieves all script libraries from a form.
 
 ### Example 2: Get a specific library by name
 ```powershell
-PS C:\> Get-DataverseFormLibrary -Connection $c -FormId $formId -LibraryName "new_/scripts/main.js"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormLibrary -FormId $formId -LibraryName "new_/scripts/main.js"
 ```
 
 Retrieves a specific library by its web resource name.
 
 ### Example 3: Get a library by unique ID
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $uniqueId = 'a1b2c3d4-e5f6-4789-abcd-ef0123456789'
-PS C:\> Get-DataverseFormLibrary -Connection $c -FormId $formId -LibraryUniqueId $uniqueId
+PS C:\> Get-DataverseFormLibrary -FormId $formId -LibraryUniqueId $uniqueId
 ```
 
 Retrieves a library by its unique identifier.
 
 ### Example 4: List all libraries across multiple forms
 ```powershell
-PS C:\> $forms = Get-DataverseForm -Connection $c -Entity 'contact'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $forms = Get-DataverseForm -Entity 'contact'
 PS C:\> foreach ($form in $forms) {
 PS C:\>     Write-Host "Form: $($form.Name)"
-PS C:\>     Get-DataverseFormLibrary -Connection $c -FormId $form.FormId | 
+PS C:\>     Get-DataverseFormLibrary -FormId $form.FormId | 
 PS C:\>         Format-Table Name -AutoSize
 PS C:\> }
 ```
@@ -64,7 +68,8 @@ Retrieves all libraries from all forms for an entity.
 
 ### Example 5: Get libraries from published form only
 ```powershell
-PS C:\> Get-DataverseFormLibrary -Connection $c -FormId $formId -Published
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseFormLibrary -FormId $formId -Published
 ```
 
 Retrieves libraries from the published version of the form only. By default, the cmdlet retrieves from the unpublished (draft) version which includes all recent changes.

@@ -33,53 +33,60 @@ The Remove-DataverseForm cmdlet deletes form definitions from a Dataverse enviro
 
 ### Example 1: Delete a form by ID with confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $formId = 'a1234567-89ab-cdef-0123-456789abcdef'
-PS C:\> Remove-DataverseForm -Connection $c -Id $formId
+PS C:\> Remove-DataverseForm -Id $formId
 ```
 
 Deletes a form by its ID with built-in confirmation prompt.
 
 ### Example 2: Delete a form by entity and name
 ```powershell
-PS C:\> Remove-DataverseForm -Connection $c -Entity 'contact' -Name 'Old Contact Form' -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseForm -Entity 'contact' -Name 'Old Contact Form' -Confirm:$false
 ```
 
 Deletes a form by entity name and form name without confirmation.
 
 ### Example 3: Delete form and publish immediately
 ```powershell
-PS C:\> Remove-DataverseForm -Connection $c -Id $formId -Publish -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseForm -Id $formId -Publish -Confirm:$false
 ```
 
 Deletes a form and immediately publishes the entity to apply changes.
 
 ### Example 4: Safe deletion with IfExists
 ```powershell
-PS C:\> Remove-DataverseForm -Connection $c -Entity 'account' -Name 'Test Form' -IfExists -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseForm -Entity 'account' -Name 'Test Form' -IfExists -Confirm:$false
 ```
 
 Attempts to delete a form but doesn't raise an error if the form doesn't exist.
 
 ### Example 5: Preview deletion with WhatIf
 ```powershell
-PS C:\> Remove-DataverseForm -Connection $c -Id $formId -WhatIf
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseForm -Id $formId -WhatIf
 ```
 
 Shows what would happen if the form were deleted without actually deleting it.
 
 ### Example 6: Batch delete forms with pipeline
 ```powershell
-PS C:\> Get-DataverseForm -Connection $c -Entity 'contact' | 
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseForm -Entity 'contact' | 
     Where-Object { $_.Name -like 'Test*' } | 
-    Remove-DataverseForm -Connection $c -IfExists -Confirm:$false
+    Remove-DataverseForm -IfExists -Confirm:$false
 ```
 
 Finds and deletes all contact forms whose names start with 'Test'.
 
 ### Example 7: Delete form and handle errors gracefully
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> try {
-    Remove-DataverseForm -Connection $c -Entity 'contact' -Name 'NonexistentForm' -IfExists
+    Remove-DataverseForm -Entity 'contact' -Name 'NonexistentForm' -IfExists
     Write-Host "Form deletion completed successfully"
 } catch {
     Write-Warning "Failed to delete form: $($_.Exception.Message)"

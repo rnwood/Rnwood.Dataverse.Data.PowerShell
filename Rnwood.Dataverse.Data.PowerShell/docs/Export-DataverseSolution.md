@@ -51,6 +51,7 @@ This is particularly useful for exporting large solutions where the synchronous 
 
 ### Example 1: Export an unmanaged solution to a file
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Export-DataverseSolution -SolutionName "MySolution" -OutFile "C:\Exports\MySolution.zip"
 ```
 
@@ -58,6 +59,7 @@ Exports the unmanaged version of "MySolution" and saves it to the specified file
 
 ### Example 2: Export a managed solution with progress monitoring
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Export-DataverseSolution -SolutionName "MySolution" -Managed -OutFile "C:\Exports\MySolution_managed.zip" -Verbose
 ```
 
@@ -65,6 +67,7 @@ Exports the managed version of "MySolution" with verbose output showing the expo
 
 ### Example 3: Export solution with settings included
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Export-DataverseSolution -SolutionName "MySolution" -ExportAutoNumberingSettings -ExportCalendarSettings -OutFile "C:\Exports\MySolution.zip"
 ```
 
@@ -72,6 +75,7 @@ Exports "MySolution" including auto-numbering and calendar settings.
 
 ### Example 4: Export solution and return bytes to pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $solutionBytes = Export-DataverseSolution -SolutionName "MySolution" -PassThru
 PS C:\> [System.IO.File]::WriteAllBytes("C:\Exports\MySolution.zip", $solutionBytes)
 ```
@@ -80,6 +84,7 @@ Exports "MySolution" and captures the raw bytes in a variable for further proces
 
 ### Example 5: Export solution with custom timeout
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Export-DataverseSolution -SolutionName "LargeSolution" -OutFile "C:\Exports\LargeSolution.zip" -TimeoutSeconds 1200 -PollingIntervalSeconds 10
 ```
 
@@ -319,7 +324,6 @@ Package type: 'Unmanaged', 'Managed', or 'Both' (default) for dual Managed and U
 Type: SolutionPackageType
 Parameter Sets: ToFolder
 Aliases:
-Accepted values: Unmanaged, Managed, Both
 
 Required: False
 Position: Named

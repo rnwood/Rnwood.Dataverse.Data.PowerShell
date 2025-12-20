@@ -25,7 +25,8 @@ Creates or updates plugin types with association to a plugin assembly.
 
 ### Example 1
 ```powershell
-PS C:\> Set-DataversePluginType -Connection $connection -PluginAssemblyId $assemblyId -TypeName "MyNamespace.MyPlugin"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataversePluginType -PluginAssemblyId $assemblyId -TypeName "MyNamespace.MyPlugin"
 ```
 
 Creates a new plugin type.
@@ -217,7 +218,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject

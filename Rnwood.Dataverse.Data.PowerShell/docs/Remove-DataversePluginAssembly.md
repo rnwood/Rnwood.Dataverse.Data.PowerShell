@@ -24,14 +24,16 @@ The Remove-DataversePluginAssembly cmdlet deletes a plugin assembly from a Datav
 
 ### Example 1: Remove a plugin assembly
 ```powershell
-PS C:\> Remove-DataversePluginAssembly -Connection $connection -Id 12345678-1234-1234-1234-123456789012
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataversePluginAssembly -Id 12345678-1234-1234-1234-123456789012
 ```
 
 Removes the specified plugin assembly.
 
 ### Example 2: Remove with IfExists flag
 ```powershell
-PS C:\> Remove-DataversePluginAssembly -Connection $connection -Id 12345678-1234-1234-1234-123456789012 -IfExists
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataversePluginAssembly -Id 12345678-1234-1234-1234-123456789012 -IfExists
 ```
 
 Removes the plugin assembly if it exists, without raising an error if it doesn't.

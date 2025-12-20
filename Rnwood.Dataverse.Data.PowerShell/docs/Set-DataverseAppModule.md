@@ -29,7 +29,8 @@ The cmdlet supports both creation and update scenarios with full control through
 
 ### Example 1: Create a new app module
 ```powershell
-PS C:\> Set-DataverseAppModule -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseAppModule -PassThru `
     -UniqueName "myapp_unique" `
     -Name "My Custom App" `
     -Description "A custom model-driven application"
@@ -39,7 +40,8 @@ Creates a new app module with the specified unique name, display name, and descr
 
 ### Example 2: Update an existing app module by ID
 ```powershell
-PS C:\> Set-DataverseAppModule -Connection $c `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseAppModule `
     -Id "12345678-1234-1234-1234-123456789012" `
     -Name "Updated App Name" `
     -Description "Updated description"
@@ -49,7 +51,8 @@ Updates the name and description of an existing app module.
 
 ### Example 3: Update an app module by UniqueName
 ```powershell
-PS C:\> Set-DataverseAppModule -Connection $c `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseAppModule `
     -UniqueName "myapp_unique" `
     -Description "New description"
 ```
@@ -58,8 +61,9 @@ Updates an app module identified by its unique name.
 
 ### Example 4: Create with specific properties
 ```powershell
-PS C:\> $webResourceId = (Get-DataverseRecord -Connection $c -TableName webresource -FilterValues @{name="app_icon.svg"}).webresourceid
-PS C:\> Set-DataverseAppModule -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $webResourceId = (Get-DataverseRecord -TableName webresource -FilterValues @{name="app_icon.svg"}).webresourceid
+PS C:\> Set-DataverseAppModule -PassThru `
     -UniqueName "sales_app" `
     -Name "Sales Application" `
     -Url "/main.aspx?app=sales" `
@@ -72,7 +76,8 @@ Creates a new app module with icon, URL, and form factor settings.
 
 ### Example 5: Create with navigation type and featured setting
 ```powershell
-PS C:\> Set-DataverseAppModule -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseAppModule -PassThru `
     -UniqueName "featured_app" `
     -Name "Featured Application" `
     -NavigationType MultiSession `
@@ -83,7 +88,8 @@ Creates a new app module with multi-session navigation and marks it as featured.
 
 ### Example 6: Create and publish an app module
 ```powershell
-PS C:\> Set-DataverseAppModule -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseAppModule -PassThru `
     -UniqueName "ready_app" `
     -Name "Ready Application" `
     -Validate `
@@ -94,7 +100,8 @@ Creates a new app module, validates it, and publishes it immediately.
 
 ### Example 7: Upsert pattern with NoCreate
 ```powershell
-PS C:\> Set-DataverseAppModule -Connection $c `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseAppModule `
     -UniqueName "existing_app" `
     -Name "Updated Name" `
     -NoCreate
@@ -104,7 +111,8 @@ Updates the app if it exists, but does nothing if it doesn't exist (prevents acc
 
 ### Example 8: Safe update with NoUpdate
 ```powershell
-PS C:\> Set-DataverseAppModule -Connection $c `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseAppModule `
     -Id $appId `
     -Name "New Name" `
     -NoUpdate
@@ -413,10 +421,10 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### System.Guid
 ### System.String
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
-### System.Nullable`1[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ### System.Nullable`1[[Rnwood.Dataverse.Data.PowerShell.Commands.NavigationType, Rnwood.Dataverse.Data.PowerShell.Cmdlets, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]
-### System.Nullable`1[[System.Boolean, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Boolean, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Guid

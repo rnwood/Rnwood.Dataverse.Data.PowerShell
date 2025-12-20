@@ -34,6 +34,7 @@ Access rights can be combined using bitwise OR to grant multiple permissions at 
 
 ### Example 1: Grant read and write access to a user (additive)
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $accessRights = [Microsoft.Crm.Sdk.Messages.AccessRights]::ReadAccess -bor [Microsoft.Crm.Sdk.Messages.AccessRights]::WriteAccess
 PS C:\> Set-DataverseRecordAccess -TableName account -Id "12345678-1234-1234-1234-123456789012" -Principal "87654321-4321-4321-4321-210987654321" -AccessRights $accessRights
 ```
@@ -42,6 +43,7 @@ Grants read and write access to the specified user for the account record. If th
 
 ### Example 2: Add delete access to existing permissions
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # User already has read/write access, now add delete
 PS C:\> Set-DataverseRecordAccess -TableName contact -Id "11111111-1111-1111-1111-111111111111" -Principal "22222222-2222-2222-2222-222222222222" -AccessRights DeleteAccess
 ```
@@ -50,6 +52,7 @@ Adds delete access to the user's existing permissions. The user will now have re
 
 ### Example 3: Replace all access with only read access
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # User has read, write, delete access - replace with only read
 PS C:\> Set-DataverseRecordAccess -TableName opportunity -Id "33333333-3333-3333-3333-333333333333" -Principal "44444444-4444-4444-4444-444444444444" -AccessRights ReadAccess -Replace
 ```
@@ -58,6 +61,7 @@ Replaces all existing access rights with only read access. Any write or delete p
 
 ### Example 4: Grant full access to a team
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $fullAccess = [Microsoft.Crm.Sdk.Messages.AccessRights]::ReadAccess -bor [Microsoft.Crm.Sdk.Messages.AccessRights]::WriteAccess -bor [Microsoft.Crm.Sdk.Messages.AccessRights]::DeleteAccess -bor [Microsoft.Crm.Sdk.Messages.AccessRights]::ShareAccess -bor [Microsoft.Crm.Sdk.Messages.AccessRights]::AssignAccess
 PS C:\> Set-DataverseRecordAccess -TableName account -Id "55555555-5555-5555-5555-555555555555" -Principal "66666666-6666-6666-6666-666666666666" -AccessRights $fullAccess -IsTeam
 ```
@@ -66,6 +70,7 @@ Grants full access to a team for the account record.
 
 ### Example 5: Use with pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $records = Get-DataverseRecord -TableName contact -FilterValues @{statecode=0} -Columns contactid
 PS C:\> $userId = "77777777-7777-7777-7777-777777777777"
 PS C:\> $records | ForEach-Object {

@@ -29,8 +29,9 @@ Components can be filtered by ID, app module ID, app module unique name, object 
 
 ### Example 1: Get all components for an app module by ID
 ```powershell
-PS C:\> $app = Get-DataverseAppModule -Connection $c -UniqueName "myapp"
-PS C:\> Get-DataverseAppModuleComponent -Connection $c -AppModuleId $app.Id
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $app = Get-DataverseAppModule -UniqueName "myapp"
+PS C:\> Get-DataverseAppModuleComponent -AppModuleId $app.Id
 ```
 
 Retrieves all components associated with a specific app module using its ID.
@@ -39,7 +40,8 @@ Retrieves all components associated with a specific app module using its ID.
 
 ### Example 2: Get all components for an app module by unique name
 ```powershell
-PS C:\> Get-DataverseAppModuleComponent -Connection $c -AppModuleUniqueName "myapp"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseAppModuleComponent -AppModuleUniqueName "myapp"
 ```
 
 Retrieves all components associated with a specific app module using its unique name.
@@ -48,7 +50,8 @@ Retrieves all components associated with a specific app module using its unique 
 
 ### Example 3: Get a specific component by ID
 ```powershell
-PS C:\> Get-DataverseAppModuleComponent -Connection $c -Id "12345678-1234-1234-1234-123456789012"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseAppModuleComponent -Id "12345678-1234-1234-1234-123456789012"
 ```
 
 Retrieves a specific component by its ID.
@@ -57,7 +60,8 @@ Retrieves a specific component by its ID.
 
 ### Example 4: Get components by component type
 ```powershell
-PS C:\> Get-DataverseAppModuleComponent -Connection $c -AppModuleUniqueName "myapp" -ComponentType Entity
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseAppModuleComponent -AppModuleUniqueName "myapp" -ComponentType Entity
 ```
 
 Retrieves all entity components for an app module.
@@ -66,8 +70,9 @@ Retrieves all entity components for an app module.
 
 ### Example 5: Get components for a specific entity
 ```powershell
-PS C:\> $entityMetadata = Get-DataverseEntityMetadata -Connection $c -EntityName "contact"
-PS C:\> Get-DataverseAppModuleComponent -Connection $c -ObjectId $entityMetadata.MetadataId
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $entityMetadata = Get-DataverseEntityMetadata -EntityName "contact"
+PS C:\> Get-DataverseAppModuleComponent -ObjectId $entityMetadata.MetadataId
 ```
 
 Finds which app modules include a specific entity.
@@ -76,7 +81,8 @@ Finds which app modules include a specific entity.
 
 ### Example 6: Get raw component data
 ```powershell
-PS C:\> Get-DataverseAppModuleComponent -Connection $c -AppModuleId $appId -Raw
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseAppModuleComponent -AppModuleId $appId -Raw
 ```
 
 Retrieves components with all raw attribute values instead of parsed properties.

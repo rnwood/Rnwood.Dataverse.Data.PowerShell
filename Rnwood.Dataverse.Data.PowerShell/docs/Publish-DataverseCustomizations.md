@@ -27,6 +27,7 @@ Publishing customizations makes them available to users and is required after ma
 
 ### Example 1: Publish all customizations
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Publish-DataverseCustomizations
 Customizations published successfully.
 ```
@@ -35,6 +36,7 @@ Publishes all customizations in the environment.
 
 ### Example 2: Publish customizations for a specific entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Publish-DataverseCustomizations -EntityName "contact"
 Customizations published successfully.
 ```
@@ -43,6 +45,7 @@ Publishes only the customizations for the contact entity.
 
 ### Example 3: Publish with confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Publish-DataverseCustomizations -Confirm
 
 Confirm
@@ -56,6 +59,7 @@ Publishes customizations with explicit confirmation.
 
 ### Example 4: Publish after making schema changes
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Add a new field to contact entity
 PS C:\> Invoke-DataverseCreateAttribute -EntityName "contact" -AttributeName "new_customfield" -AttributeType "String"
 PS C:\> # Publish the changes

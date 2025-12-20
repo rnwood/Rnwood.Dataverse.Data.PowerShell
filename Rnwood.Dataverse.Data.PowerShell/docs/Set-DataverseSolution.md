@@ -26,28 +26,28 @@ This cmdlet creates a new solution if the specified unique name does not exist, 
 
 ### Example1: Update solution description
 ```powershell
-Set-DataverseSolution -Connection $c -UniqueName "MySolution" -Description "Updated solution description"
+Set-DataverseSolution -UniqueName "MySolution" -Description "Updated solution description"
 ```
 
 Updates the description of an unmanaged solution.
 
 ### Example2: Update solution name and version
 ```powershell
-Set-DataverseSolution -Connection $c -UniqueName "MySolution" -Name "My Updated Solution" -Version "1.1.0.0"
+Set-DataverseSolution -UniqueName "MySolution" -Name "My Updated Solution" -Version "1.1.0.0"
 ```
 
 Updates both the friendly name and version of an unmanaged solution.
 
 ### Example3: Update all updatable properties
 ```powershell
-Set-DataverseSolution -Connection $c -UniqueName "MySolution" -Name "Updated Name" -Description "New description" -Version "2.0.0.0"
+Set-DataverseSolution -UniqueName "MySolution" -Name "Updated Name" -Description "New description" -Version "2.0.0.0"
 ```
 
 Updates the name, description, and version in one operation.
 
 ### Example4: Attempt to update managed solution (shows warning)
 ```powershell
-Set-DataverseSolution -Connection $c -UniqueName "ManagedSolution" -Name "New Name" -Version "2.0.0.0"
+Set-DataverseSolution -UniqueName "ManagedSolution" -Name "New Name" -Version "2.0.0.0"
 WARNING: Solution is managed. Only the description can be updated for managed solutions.
 WARNING: Cannot update name of managed solution. Skipping name update.
 WARNING: Cannot update version of managed solution. Skipping version update.
@@ -58,7 +58,7 @@ Attempts to update a managed solution, but only description updates are allowed.
 
 ### Example5: Create a new solution
 ```powershell
-Set-DataverseSolution -Connection $c -UniqueName "NewSolution" -Name "My New Solution" -Description "Description" -Version "1.0.0.0" -PublisherUniqueName "defaultpublisher"
+Set-DataverseSolution -UniqueName "NewSolution" -Name "My New Solution" -Description "Description" -Version "1.0.0.0" -PublisherUniqueName "defaultpublisher"
 ```
 
 Creates a new solution with the specified properties.

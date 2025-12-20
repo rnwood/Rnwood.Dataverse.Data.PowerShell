@@ -28,7 +28,8 @@ Creates or updates plugin steps with comprehensive configuration including stage
 
 ### Example 1: Create a plugin step with filtering attributes
 ```powershell
-PS C:\> Set-DataversePluginStep -Connection $connection -Name "MyStep" -PluginTypeId $typeId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataversePluginStep -Name "MyStep" -PluginTypeId $typeId `
     -SdkMessageId $messageId -Stage 20 -Mode 0 `
     -FilteringAttributes "name","revenue","primarycontactid"
 ```
@@ -37,7 +38,8 @@ Creates a synchronous pre-operation plugin step with filtering attributes.
 
 ### Example 2: Create a plugin step without filtering
 ```powershell
-PS C:\> Set-DataversePluginStep -Connection $connection -Name "MyStep" -PluginTypeId $typeId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataversePluginStep -Name "MyStep" -PluginTypeId $typeId `
     -SdkMessageId $messageId -Stage 20 -Mode 0
 ```
 
@@ -368,7 +370,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject

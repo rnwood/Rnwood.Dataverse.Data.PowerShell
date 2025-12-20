@@ -33,39 +33,44 @@ When a control is removed, any business rules, form scripts, or other customizat
 
 ### Example 1: Remove a control by ID
 ```powershell
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information'
-PS C:\> Remove-DataverseFormControl -Connection $c -FormId $form.Id -ControlId 'firstname_control_id'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $form = Get-DataverseForm -Entity 'contact' -Name 'Information'
+PS C:\> Remove-DataverseFormControl -FormId $form.Id -ControlId 'firstname_control_id'
 ```
 
 Removes the control with the specified ID from the form.
 
 ### Example 2: Remove a control by data field name
 ```powershell
-PS C:\> Remove-DataverseFormControl -Connection $c -FormId $formId -TabName 'General' -SectionName 'ContactInfo' -DataField 'middlename'
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFormControl -FormId $formId -TabName 'General' -SectionName 'ContactInfo' -DataField 'middlename'
 ```
 
 Removes the control bound to the 'middlename' field from the ContactInfo section in the General tab.
 
 ### Example 3: Remove control with immediate publishing
 ```powershell
-PS C:\> Remove-DataverseFormControl -Connection $c -FormId $formId -TabName 'Details' -SectionName 'CustomSection' -DataField 'custom_field' -Publish
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFormControl -FormId $formId -TabName 'Details' -SectionName 'CustomSection' -DataField 'custom_field' -Publish
 ```
 
 Removes the custom field control and publishes the form to make changes visible immediately.
 
 ### Example 4: Remove control with confirmation
 ```powershell
-PS C:\> Remove-DataverseFormControl -Connection $c -FormId $formId -TabName 'General' -SectionName 'MainInfo' -DataField 'telephone2' -Confirm
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFormControl -FormId $formId -TabName 'General' -SectionName 'MainInfo' -DataField 'telephone2' -Confirm
 ```
 
 Removes the control with user confirmation prompt before proceeding.
 
 ### Example 5: Remove multiple controls safely
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $controlsToRemove = @('fax', 'pager', 'telex')
 PS C:\> foreach ($fieldName in $controlsToRemove) {
     try {
-        Remove-DataverseFormControl -Connection $c -FormId $formId -TabName 'General' -SectionName 'ContactMethods' -DataField $fieldName -WhatIf
+        Remove-DataverseFormControl -FormId $formId -TabName 'General' -SectionName 'ContactMethods' -DataField $fieldName -WhatIf
         Write-Host "Would remove control: $fieldName"
     }
     catch {
@@ -76,7 +81,7 @@ PS C:\> foreach ($fieldName in $controlsToRemove) {
 # After reviewing, execute without -WhatIf
 PS C:\> foreach ($fieldName in $controlsToRemove) {
     try {
-        Remove-DataverseFormControl -Connection $c -FormId $formId -TabName 'General' -SectionName 'ContactMethods' -DataField $fieldName
+        Remove-DataverseFormControl -FormId $formId -TabName 'General' -SectionName 'ContactMethods' -DataField $fieldName
         Write-Host "Removed control: $fieldName"
     }
     catch {
@@ -89,7 +94,8 @@ Safely removes multiple controls by first previewing with -WhatIf, then executin
 
 ### Example 6: Remove obsolete controls based on conditions
 ```powershell
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'account' -Name 'Information' -ParseFormXml
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $form = Get-DataverseForm -Entity 'account' -Name 'Information' -ParseFormXml
 PS C:\> $controlsToRemove = $form.ParsedForm.Tabs | 
     ForEach-Object { $_.Sections } |
     ForEach-Object { $_.Controls } | 
@@ -97,7 +103,7 @@ PS C:\> $controlsToRemove = $form.ParsedForm.Tabs |
 
 PS C:\> foreach ($control in $controlsToRemove) {
     Write-Host "Removing hidden legacy control: $($control.DataField)"
-    Remove-DataverseFormControl -Connection $c -FormId $form.Id -ControlId $control.Id
+    Remove-DataverseFormControl -FormId $form.Id -ControlId $control.Id
 }
 ```
 
@@ -105,8 +111,9 @@ Removes controls that match specific criteria (hidden legacy controls).
 
 ### Example 7: Backup before removal
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # First, backup the form XML
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information' -IncludeFormXml
+PS C:\> $form = Get-DataverseForm -Entity 'contact' -Name 'Information' -IncludeFormXml
 PS C:\> $backup = @{
     FormId = $form.Id
     FormXml = $form.FormXml
@@ -115,7 +122,7 @@ PS C:\> $backup = @{
 PS C:\> $backup | Export-Clixml -Path "FormBackup_$($form.Id)_$(Get-Date -Format 'yyyyMMdd_HHmmss').xml"
 
 PS C:\> # Now safely remove the control
-PS C:\> Remove-DataverseFormControl -Connection $c -FormId $form.Id -TabName 'General' -SectionName 'ContactInfo' -DataField 'assistantname'
+PS C:\> Remove-DataverseFormControl -FormId $form.Id -TabName 'General' -SectionName 'ContactInfo' -DataField 'assistantname'
 PS C:\> Write-Host "Control removed. Backup saved for recovery if needed."
 ```
 
@@ -123,10 +130,11 @@ Creates a backup of the form before removing the control for safety.
 
 ### Example 8: Remove control and handle dependencies
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $controlToRemove = 'creditlimit'
 
 PS C:\> # Check if control exists and get details
-PS C:\> $control = Get-DataverseFormControl -Connection $c -FormId $formId -TabName 'Details' -SectionName 'Financial' -DataField $controlToRemove
+PS C:\> $control = Get-DataverseFormControl -FormId $formId -TabName 'Details' -SectionName 'Financial' -DataField $controlToRemove
 
 PS C:\> if ($control) {
     Write-Host "Found control: $($control.DataField) - $($control.Label)"
@@ -134,7 +142,7 @@ PS C:\> if ($control) {
     
     $userChoice = Read-Host "Continue with removal? (y/N)"
     if ($userChoice -eq 'y' -or $userChoice -eq 'Y') {
-        Remove-DataverseFormControl -Connection $c -FormId $formId -TabName 'Details' -SectionName 'Financial' -DataField $controlToRemove
+        Remove-DataverseFormControl -FormId $formId -TabName 'Details' -SectionName 'Financial' -DataField $controlToRemove
         Write-Host "Control removed successfully"
     } else {
         Write-Host "Removal cancelled"

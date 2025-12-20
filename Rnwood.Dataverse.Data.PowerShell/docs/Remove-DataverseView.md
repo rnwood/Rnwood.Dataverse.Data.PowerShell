@@ -26,57 +26,64 @@ The cmdlet supports safe deletion with confirmation prompts and WhatIf support. 
 
 ### Example 1: Remove a personal view
 ```powershell
-PS C:\> Remove-DataverseView -Connection $c -Id "12345678-1234-1234-1234-123456789012"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseView -Id "12345678-1234-1234-1234-123456789012"
 ```
 
 Removes a personal view (default) by its ID. Prompts for confirmation before deletion.
 
 ### Example 2: Remove a system view
 ```powershell
-PS C:\> Remove-DataverseView -Connection $c -Id "12345678-1234-1234-1234-123456789012" -ViewType "System"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseView -Id "12345678-1234-1234-1234-123456789012" -ViewType "System"
 ```
 
 Removes a system view by its ID. ViewType must be specified when deleting system views.
 
 ### Example 3: Remove view if it exists
 ```powershell
-PS C:\> Remove-DataverseView -Connection $c -Id "12345678-1234-1234-1234-123456789012" -IfExists -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseView -Id "12345678-1234-1234-1234-123456789012" -IfExists -Confirm:$false
 ```
 
 Removes a view if it exists, without raising an error if it doesn't exist. Suppresses the confirmation prompt.
 
 ### Example 4: Remove multiple views via pipeline
 ```powershell
-PS C:\> Get-DataverseView -Connection $c -Name "Test*" |
-    Remove-DataverseView -Connection $c -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseView -Name "Test*" |
+    Remove-DataverseView -Confirm:$false
 ```
 
 Finds all views whose names start with "Test" and removes them without confirmation prompts. The ViewType is automatically inferred from the pipeline input.
 
 ### Example 5: Remove with confirmation suppressed
 ```powershell
-PS C:\> Remove-DataverseView -Connection $c -Id $viewId -ViewType "Personal" -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseView -Id $viewId -ViewType "Personal" -Confirm:$false
 ```
 
 Removes a personal view without prompting for confirmation.
 
 ### Example 6: Use WhatIf to preview deletion
 ```powershell
-PS C:\> Remove-DataverseView -Connection $c -Id $viewId -ViewType "System" -WhatIf
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseView -Id $viewId -ViewType "System" -WhatIf
 ```
 
 Shows what would happen if the view were deleted, without actually deleting it.
 
 ### Example 7: Remove views in a safe workflow
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Get test views
-PS C:\> $testViews = Get-DataverseView -Connection $c -Name "DEV_*"
+PS C:\> $testViews = Get-DataverseView -Name "DEV_*"
 PS C:\> 
 PS C:\> # Preview what will be deleted
-PS C:\> $testViews | Remove-DataverseView -Connection $c -WhatIf
+PS C:\> $testViews | Remove-DataverseView -WhatIf
 PS C:\> 
 PS C:\> # Confirm and delete
-PS C:\> $testViews | Remove-DataverseView -Connection $c
+PS C:\> $testViews | Remove-DataverseView
 ```
 
 Demonstrates a safe workflow: first preview with WhatIf, then delete with confirmation prompts.

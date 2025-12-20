@@ -43,6 +43,7 @@ Attribute metadata is essential for:
 
 ### Example 1: Get metadata for a specific attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $attr = Get-DataverseAttributeMetadata -EntityName contact -AttributeName firstname
 PS C:\> $attr
 
@@ -60,6 +61,7 @@ Retrieves metadata for the `firstname` attribute on the `contact` entity.
 
 ### Example 2: Get all attributes for an entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $attributes = Get-DataverseAttributeMetadata -EntityName account
 PS C:\> $attributes.Count
 150
@@ -82,6 +84,7 @@ Retrieves all attributes for the `account` entity.
 
 ### Example 3: Filter attributes by type
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseAttributeMetadata -EntityName contact | 
     Where-Object { $_.AttributeType -eq 'String' } |
     Select-Object LogicalName, MaxLength
@@ -99,6 +102,7 @@ Finds all string (text) attributes on the `contact` entity.
 
 ### Example 4: Find required attributes
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseAttributeMetadata -EntityName account | 
     Where-Object { $_.RequiredLevel.Value -in @('ApplicationRequired', 'SystemRequired') } |
     Select-Object LogicalName, DisplayName, RequiredLevel
@@ -112,6 +116,7 @@ Finds all required attributes on the `account` entity.
 
 ### Example 5: Get choice field options
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $attr = Get-DataverseAttributeMetadata -EntityName contact -AttributeName gendercode
 PS C:\> $attr.OptionSet.Options | Select-Object Value, Label
 
@@ -125,6 +130,7 @@ Retrieves the options for a choice (picklist) field.
 
 ### Example 6: Find searchable attributes
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseAttributeMetadata -EntityName contact | 
     Where-Object { $_.IsValidForAdvancedFind.Value -eq $true } |
     Select-Object LogicalName, DisplayName
@@ -141,6 +147,7 @@ Finds all attributes that can be used in Advanced Find.
 
 ### Example 7: Get attributes with max length
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseAttributeMetadata -EntityName contact | 
     Where-Object { $_.MaxLength -ne $null } |
     Select-Object LogicalName, AttributeType, MaxLength | 
@@ -158,6 +165,7 @@ Finds string and memo attributes with their maximum lengths.
 
 ### Example 8: Find numeric attributes with constraints
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseAttributeMetadata -EntityName account | 
     Where-Object { $_.AttributeType -in @('Integer', 'Decimal', 'Money') } |
     Select-Object LogicalName, AttributeType, MinValue, MaxValue, Precision
@@ -172,6 +180,7 @@ Finds numeric attributes with their constraints.
 
 ### Example 9: Export attribute list to CSV
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseAttributeMetadata -EntityName account | 
     Select-Object LogicalName, DisplayName, AttributeType, RequiredLevel, MaxLength | 
     Export-Csv -Path "account_attributes.csv" -NoTypeInformation
@@ -181,6 +190,7 @@ Exports attribute metadata to CSV for documentation.
 
 ### Example 10: Use metadata cache for performance
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # First call - fetches from server
 PS C:\> Measure-Command { 
     $attrs1 = Get-DataverseAttributeMetadata -EntityName contact -UseMetadataCache 
@@ -200,6 +210,7 @@ Demonstrates the performance improvement when using the metadata cache.
 
 ### Example 11: Find date/time attributes
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseAttributeMetadata -EntityName contact | 
     Where-Object { $_.AttributeType -eq 'DateTime' } |
     Select-Object LogicalName, DisplayName, DateTimeBehavior, Format
@@ -215,6 +226,7 @@ Finds all date/time attributes with their format settings.
 
 ### Example 12: Find lookup attributes
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseAttributeMetadata -EntityName contact | 
     Where-Object { $_.AttributeType -eq 'Lookup' } |
     Select-Object LogicalName, DisplayName, Targets
@@ -229,6 +241,7 @@ Finds all lookup attributes and their target entities.
 
 ### Example 13: Find custom attributes only
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseAttributeMetadata -EntityName account | 
     Where-Object { $_.IsCustomAttribute -eq $true } |
     Select-Object LogicalName, DisplayName, AttributeType
@@ -244,6 +257,7 @@ Finds only custom (user-created) attributes.
 
 ### Example 14: Find attributes with field-level security
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseAttributeMetadata -EntityName contact | 
     Where-Object { $_.IsSecured -eq $true } |
     Select-Object LogicalName, DisplayName
@@ -257,6 +271,7 @@ Finds attributes with field-level security enabled.
 
 ### Example 15: Pipeline attribute name
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> @("firstname", "lastname", "emailaddress1") | ForEach-Object {
     Get-DataverseAttributeMetadata -EntityName contact -AttributeName $_
 } | Select-Object LogicalName, AttributeType, MaxLength
@@ -272,6 +287,7 @@ Retrieves metadata for multiple attributes using pipeline.
 
 ### Example 16: Compare attribute metadata between entities
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $accountAttrs = Get-DataverseAttributeMetadata -EntityName account
 PS C:\> $contactAttrs = Get-DataverseAttributeMetadata -EntityName contact
 
@@ -287,6 +303,7 @@ Compares attributes between two entities.
 
 ### Example 17: Generate field documentation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $attrs = Get-DataverseAttributeMetadata -EntityName account
 PS C:\> foreach ($attr in $attrs) {
     [PSCustomObject]@{
@@ -303,6 +320,7 @@ Generates comprehensive field documentation for an entity.
 
 ### Example 18: Query only published metadata
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Get only published attribute metadata
 PS C:\> $publishedAttrs = Get-DataverseAttributeMetadata -EntityName account -Published
 PS C:\> $publishedAttrs.Count

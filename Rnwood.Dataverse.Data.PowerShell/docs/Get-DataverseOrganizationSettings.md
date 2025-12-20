@@ -27,8 +27,9 @@ When -OrgDbOrgSettings IS specified: Returns only the parsed OrgDbOrgSettings as
 
 ### Example 1: Get organization record
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $connection = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
-PS C:\> $org = Get-DataverseOrganizationSettings -Connection $connection
+PS C:\> $org = Get-DataverseOrganizationSettings
 PS C:\> $org.name
 Contoso Corporation
 ```
@@ -37,7 +38,8 @@ Gets the full organization record and displays the organization name.
 
 ### Example 2: Get only OrgDbOrgSettings
 ```powershell
-PS C:\> $settings = Get-DataverseOrganizationSettings -Connection $connection -OrgDbOrgSettings
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $settings = Get-DataverseOrganizationSettings -OrgDbOrgSettings
 PS C:\> $settings.MaxUploadFileSize
 5242880
 PS C:\> $settings.EnableBingMapsIntegration
@@ -48,7 +50,8 @@ Gets only the OrgDbOrgSettings as a PSObject with parsed settings as properties.
 
 ### Example 3: Include raw XML in organization record
 ```powershell
-PS C:\> $org = Get-DataverseOrganizationSettings -Connection $connection -IncludeRawXml
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $org = Get-DataverseOrganizationSettings -IncludeRawXml
 PS C:\> $org.orgdborgsettings
 <OrgSettings>
   <MaxUploadFileSize>5242880</MaxUploadFileSize>

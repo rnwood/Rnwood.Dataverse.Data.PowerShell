@@ -31,7 +31,8 @@ This is useful for verifying authentication and determining the context in which
 
 ### Example 1
 ```powershell
-PS C:\> Get-DataverseWhoAmI -Connection $c
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseWhoAmI
 ```
 
 Returns info for the existing connection `$c`.

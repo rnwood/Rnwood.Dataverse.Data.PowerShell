@@ -79,45 +79,51 @@ Handlers can be identified by their unique ID or by function name and library na
 
 ### Example 1: Remove a form-level handler by unique ID
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $handlerId = 'a1b2c3d4-e5f6-4789-abcd-ef0123456789'
-PS C:\> Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload" -HandlerUniqueId $handlerId
+PS C:\> Remove-DataverseFormEventHandler -FormId $formId -EventName "onload" -HandlerUniqueId $handlerId
 ```
 
 Removes a specific onload handler from the form.
 
 ### Example 2: Remove a form-level handler by function and library name
 ```powershell
-PS C:\> Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onsave" -FunctionName "ValidateData" -LibraryName "new_/scripts/validation.js"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFormEventHandler -FormId $formId -EventName "onsave" -FunctionName "ValidateData" -LibraryName "new_/scripts/validation.js"
 ```
 
 Removes a handler identified by its function and library.
 
 ### Example 3: Remove an attribute-level handler
 ```powershell
-PS C:\> Remove-DataverseFormEventHandler -Connection $c -FormId $formId -AttributeName "department" -EventName "onchange" -FunctionName "OnDepartmentChange" -LibraryName "new_/scripts/validation.js"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFormEventHandler -FormId $formId -AttributeName "department" -EventName "onchange" -FunctionName "OnDepartmentChange" -LibraryName "new_/scripts/validation.js"
 ```
 
 Removes an onchange handler from the "department" attribute.
 
 ### Example 4: Remove a tab-level handler
 ```powershell
-PS C:\> Remove-DataverseFormEventHandler -Connection $c -FormId $formId -TabName "General" -EventName "tabstatechange" -FunctionName "OnTabChange" -LibraryName "new_/scripts/tabs.js"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFormEventHandler -FormId $formId -TabName "General" -EventName "tabstatechange" -FunctionName "OnTabChange" -LibraryName "new_/scripts/tabs.js"
 ```
 
 Removes a tabstatechange handler from the "General" tab.
 
 ### Example 5: Remove a control-level handler
 ```powershell
-PS C:\> Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onchange" -FunctionName "OnFieldChange" -LibraryName "new_/scripts/main.js" -ControlId "emailaddress1" -TabName "general" -SectionName "contact_info"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseFormEventHandler -FormId $formId -EventName "onchange" -FunctionName "OnFieldChange" -LibraryName "new_/scripts/main.js" -ControlId "emailaddress1" -TabName "general" -SectionName "contact_info"
 ```
 
 Removes an onchange handler from a specific control.
 
 ### Example 6: Remove all handlers for an event
 ```powershell
-PS C:\> $handlers = Get-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $handlers = Get-DataverseFormEventHandler -FormId $formId -EventName "onload"
 PS C:\> foreach ($handler in $handlers) {
-PS C:\>     Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName "onload" -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
+PS C:\>     Remove-DataverseFormEventHandler -FormId $formId -EventName "onload" -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
 PS C:\> }
 ```
 
@@ -125,11 +131,12 @@ Removes all handlers for a specific event.
 
 ### Example 7: Clean up attribute handlers for multiple fields
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $attributes = @("firstname", "lastname", "emailaddress1")
 PS C:\> foreach ($attr in $attributes) {
-PS C:\>     $handlers = Get-DataverseFormEventHandler -Connection $c -FormId $formId -AttributeName $attr -ErrorAction SilentlyContinue
+PS C:\>     $handlers = Get-DataverseFormEventHandler -FormId $formId -AttributeName $attr -ErrorAction SilentlyContinue
 PS C:\>     foreach ($handler in $handlers) {
-PS C:\>         Remove-DataverseFormEventHandler -Connection $c -FormId $formId -AttributeName $attr -EventName $handler.EventName -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
+PS C:\>         Remove-DataverseFormEventHandler -FormId $formId -AttributeName $attr -EventName $handler.EventName -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
 PS C:\>     }
 PS C:\> }
 ```
@@ -138,15 +145,16 @@ Removes all handlers from multiple attributes.
 
 ### Example 8: Clean up deprecated handlers
 ```powershell
-PS C:\> $allHandlers = Get-DataverseFormEventHandler -Connection $c -FormId $formId
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $allHandlers = Get-DataverseFormEventHandler -FormId $formId
 PS C:\> $deprecated = $allHandlers | Where-Object { $_.LibraryName -like "*deprecated*" }
 PS C:\> foreach ($handler in $deprecated) {
 PS C:\>     if ($handler.Attribute) {
-PS C:\>         Remove-DataverseFormEventHandler -Connection $c -FormId $formId -AttributeName $handler.Attribute -EventName $handler.EventName -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
+PS C:\>         Remove-DataverseFormEventHandler -FormId $formId -AttributeName $handler.Attribute -EventName $handler.EventName -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
 PS C:\>     } elseif ($handler.TabName -and -not $handler.ControlId) {
-PS C:\>         Remove-DataverseFormEventHandler -Connection $c -FormId $formId -TabName $handler.TabName -EventName $handler.EventName -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
+PS C:\>         Remove-DataverseFormEventHandler -FormId $formId -TabName $handler.TabName -EventName $handler.EventName -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
 PS C:\>     } else {
-PS C:\>         Remove-DataverseFormEventHandler -Connection $c -FormId $formId -EventName $handler.EventName -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
+PS C:\>         Remove-DataverseFormEventHandler -FormId $formId -EventName $handler.EventName -HandlerUniqueId $handler.HandlerUniqueId -Confirm:$false
 PS C:\>     }
 PS C:\> }
 ```

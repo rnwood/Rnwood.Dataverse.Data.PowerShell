@@ -31,8 +31,9 @@ Sections can be positioned using Index, InsertBefore, or InsertAfter parameters,
 
 ### Example 1: Create a new section in a tab
 ```powershell
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information'
-PS C:\> Set-DataverseFormSection -Connection $c -FormId $form.FormId -TabName 'General' `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $form = Get-DataverseForm -Entity 'contact' -Name 'Information'
+PS C:\> Set-DataverseFormSection -FormId $form.FormId -TabName 'General' `
     -Name 'CustomSection' -Label 'Custom Information' -Columns 2 -PassThru
 ```
 
@@ -40,8 +41,9 @@ Creates a new section named 'CustomSection' with 2 columns in the General tab.
 
 ### Example 2: Update an existing section's properties
 ```powershell
-PS C:\> $section = Get-DataverseFormSection -Connection $c -FormId $formId -TabName 'General' -SectionName 'ContactDetails'
-PS C:\> Set-DataverseFormSection -Connection $c -FormId $formId -TabName 'General' `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $section = Get-DataverseFormSection -FormId $formId -TabName 'General' -SectionName 'ContactDetails'
+PS C:\> Set-DataverseFormSection -FormId $formId -TabName 'General' `
     -SectionId $section.Id -Name 'ContactDetails' `
     -Label 'Updated Contact Information' -ShowLabel -ShowBar -Columns 1
 ```
@@ -50,7 +52,8 @@ Updates an existing section's label and layout properties.
 
 ### Example 3: Create a section at a specific position
 ```powershell
-PS C:\> Set-DataverseFormSection -Connection $c -FormId $formId -TabName 'Details' `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormSection -FormId $formId -TabName 'Details' `
     -Name 'AddressSection' -Label 'Address Information' `
     -InsertAfter 'ContactSection' -Columns 2 -PassThru
 ```
@@ -59,7 +62,8 @@ Creates a new section positioned after the 'ContactSection' with 2-column layout
 
 ### Example 4: Create a section in specific column
 ```powershell
-PS C:\> Set-DataverseFormSection -Connection $c -FormId $formId -TabName 'General' `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormSection -FormId $formId -TabName 'General' `
     -Name 'RightPanelSection' -Label 'Additional Details' `
     -ColumnIndex 1 -Columns 1 -LabelWidth 120 -PassThru
 ```
@@ -68,7 +72,8 @@ Creates a section in the second column (index 1) of the tab with custom label wi
 
 ### Example 5: Create section with cell formatting
 ```powershell
-PS C:\> Set-DataverseFormSection -Connection $c -FormId $formId -TabName 'Advanced' `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormSection -FormId $formId -TabName 'Advanced' `
     -Name 'FormattedSection' -Label 'Formatted Information' `
     -CellLabelAlignment Center -CellLabelPosition Top -Columns 2 -PassThru
 ```
@@ -77,7 +82,8 @@ Creates a section with centered labels positioned above controls.
 
 ### Example 6: Create hidden section for conditional display
 ```powershell
-PS C:\> Set-DataverseFormSection -Connection $c -FormId $formId -TabName 'Advanced' `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormSection -FormId $formId -TabName 'Advanced' `
     -Name 'ConditionalSection' -Label 'Advanced Settings' `
     -Hidden -Columns 1 -ShowLabel:$false -PassThru
 ```
@@ -86,8 +92,9 @@ Creates a hidden section that can be shown conditionally via business rules or J
 
 ### Example 7: Move existing section to different position
 ```powershell
-PS C:\> $section = Get-DataverseFormSection -Connection $c -FormId $formId -TabName 'General' -SectionName 'Summary'
-PS C:\> Set-DataverseFormSection -Connection $c -FormId $formId -TabName 'General' `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $section = Get-DataverseFormSection -FormId $formId -TabName 'General' -SectionName 'Summary'
+PS C:\> Set-DataverseFormSection -FormId $formId -TabName 'General' `
     -SectionId $section.Id -Name 'Summary' -Index 0
 ```
 
@@ -95,6 +102,7 @@ Moves an existing section to the first position (index 0) within its column.
 
 ### Example 8: Bulk section creation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $sections = @(
     @{ Name = 'BasicInfo'; Label = 'Basic Information'; Columns = 2; ColumnIndex = 0 }
     @{ Name = 'ContactDetails'; Label = 'Contact Details'; Columns = 1; ColumnIndex = 1 }
@@ -103,7 +111,7 @@ PS C:\> $sections = @(
 
 PS C:\> foreach ($section in $sections) {
     try {
-        $sectionId = Set-DataverseFormSection -Connection $c -FormId $formId -TabName 'General' `
+        $sectionId = Set-DataverseFormSection -FormId $formId -TabName 'General' `
             -Name $section.Name -Label $section.Label -Columns $section.Columns `
             -ColumnIndex $section.ColumnIndex -PassThru
         Write-Host "Created section: $($section.Name) with ID: $sectionId"

@@ -26,7 +26,8 @@ Creates or updates plugin step images (pre-image or post-image) with attribute f
 
 ### Example 1: Create a pre-image with specific attributes
 ```powershell
-PS C:\> Set-DataversePluginStepImage -Connection $connection `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataversePluginStepImage `
     -SdkMessageProcessingStepId $stepId `
     -EntityAlias "PreImage" `
     -ImageType 0 `
@@ -37,7 +38,8 @@ Creates a pre-image with specific attributes.
 
 ### Example 2: Create a post-image with all attributes
 ```powershell
-PS C:\> Set-DataversePluginStepImage -Connection $connection `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataversePluginStepImage `
     -SdkMessageProcessingStepId $stepId `
     -EntityAlias "PostImage" `
     -ImageType 1
@@ -233,7 +235,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject

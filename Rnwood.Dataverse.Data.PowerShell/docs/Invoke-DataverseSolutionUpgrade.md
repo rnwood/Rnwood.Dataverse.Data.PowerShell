@@ -33,6 +33,7 @@ The cmdlet uses the Microsoft.Crm.Sdk.Messages.DeleteAndPromoteRequest wrapped i
 
 ### Example 1: Apply a solution upgrade
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Invoke-DataverseSolutionUpgrade -SolutionName "MySolution"
 
 SolutionName      : MySolution
@@ -44,6 +45,7 @@ Applies the staged upgrade for MySolution, promoting MySolution_Upgrade to MySol
 
 ### Example 2: Apply upgrade with existence check
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Invoke-DataverseSolutionUpgrade -SolutionName "MySolution" -IfExists
 
 WARNING: Holding solution 'MySolution_Upgrade' does not exist. Skipping upgrade operation.
@@ -53,6 +55,7 @@ Checks if the holding solution exists before attempting to apply the upgrade. If
 
 ### Example 3: Apply upgrade with confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Invoke-DataverseSolutionUpgrade -SolutionName "MySolution" -Confirm
 
 Confirm
@@ -70,6 +73,7 @@ Applies the upgrade with explicit confirmation.
 
 ### Example 4: Complete upgrade workflow
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Step 1: Import solution as holding solution for upgrade
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_v2.zip" -Mode HoldingSolution
 
@@ -93,6 +97,7 @@ Complete workflow showing how to stage a solution upgrade and then apply it.
 
 ### Example 5: Apply upgrade without confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Invoke-DataverseSolutionUpgrade -SolutionName "MySolution" -Confirm:$false
 
 SolutionName        : MySolution
@@ -105,6 +110,7 @@ Applies the upgrade without prompting for confirmation.
 
 ### Example 6: Conditional upgrade in deployment script
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Import new version as holding solution
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -Mode HoldingSolution
 
@@ -116,6 +122,7 @@ Useful in deployment scripts where you want to conditionally apply an upgrade on
 
 ### Example 7: Apply upgrade with custom timeout
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Invoke-DataverseSolutionUpgrade -SolutionName "LargeSolution" -TimeoutSeconds 7200 -PollingIntervalSeconds 10
 
 SolutionName        : LargeSolution

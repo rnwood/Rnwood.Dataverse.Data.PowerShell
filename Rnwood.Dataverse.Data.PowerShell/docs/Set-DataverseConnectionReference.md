@@ -36,6 +36,7 @@ This cmdlet uses the same table and column names as the Import-DataverseSolution
 
 ### Example 1: Create a new connection reference
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharedconnectionref" -ConnectionId "12345678-1234-1234-1234-123456789012" -ConnectorId "98765432-4321-4321-4321-210987654321" -DisplayName "Shared SharePoint Connection"
 ```
 
@@ -43,6 +44,7 @@ Creates a new connection reference with the specified logical name, connection I
 
 ### Example 2: Update an existing connection reference
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharedconnectionref" -ConnectionId "87654321-4321-4321-4321-210987654321"
 ```
 
@@ -50,6 +52,7 @@ Updates the connection ID of an existing connection reference. ConnectorId is no
 
 ### Example 3: Create connection reference with description
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sqlconnection" -ConnectionId "12345678-1234-1234-1234-123456789012" -ConnectorId "98765432-4321-4321-4321-210987654321" -DisplayName "Production SQL Database" -Description "Connection to the production SQL database server"
 ```
 
@@ -57,6 +60,7 @@ Creates a connection reference with display name and description.
 
 ### Example 4: Set multiple connection references
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseConnectionReference -ConnectionReferences @{
     'new_sharepoint' = '12345678-1234-1234-1234-123456789012'
     'new_sql' = '87654321-4321-4321-4321-210987654321'
@@ -67,6 +71,7 @@ Sets multiple connection references at once using a hashtable.
 
 ### Example 5: Set connection references with stored connection IDs
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $connectionIds = @{
     'new_dataverse' = (Get-DataverseRecord -TableName connection -FilterValues @{ name = 'Production Dataverse' }).connectionid
     'new_sharepoint' = (Get-DataverseRecord -TableName connection -FilterValues @{ name = 'Production SharePoint' }).connectionid
@@ -78,6 +83,7 @@ Retrieves connection IDs by name and sets them for the connection references.
 
 ### Example 6: Use with solution import workflow
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Set connection references before importing solution
 PS C:\> Set-DataverseConnectionReference -ConnectionReferences @{
     'new_sharepoint' = '12345678-1234-1234-1234-123456789012'
@@ -90,6 +96,7 @@ Sets connection references before importing a solution, ensuring they are config
 
 ### Example 7: View operation results
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $result = Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharedconnectionref" -ConnectionId "12345678-1234-1234-1234-123456789abc"
 PS C:\> Write-Host "Operation: $($result.Operation)"
 PS C:\> if ($result.PreviousConnectionId) {

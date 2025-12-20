@@ -52,6 +52,7 @@ The Get-DataverseSitemapEntry cmdlet retrieves navigation entries (Areas, Groups
 
 ### Example 1: Get all entries from a sitemap
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSitemapEntry -SitemapUniqueName "MySitemap"
 ```
 
@@ -59,6 +60,7 @@ Retrieves all navigation entries (Areas, Groups, and SubAreas) from the specifie
 
 ### Example 2: Get only Areas
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -Area
 ```
 
@@ -66,6 +68,7 @@ Retrieves only Area entries from the sitemap.
 
 ### Example 3: Get a specific entry
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -EntryId "SalesArea"
 ```
 
@@ -73,6 +76,7 @@ Retrieves a specific entry by its ID.
 
 ### Example 4: Get Groups within an Area
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -Group -ParentAreaId "SalesArea"
 ```
 
@@ -80,6 +84,7 @@ Retrieves all Groups within the specified Area.
 
 ### Example 5: Use pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSitemap -Name "MySitemap" | Get-DataverseSitemapEntry -Area
 ```
 
@@ -291,7 +296,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapInfo
 ### System.String
-### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### Rnwood.Dataverse.Data.PowerShell.Commands.SitemapEntryInfo
