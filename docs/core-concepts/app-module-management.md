@@ -144,6 +144,19 @@ Set-DataverseAppModule -Connection $c -PassThru `
     -Publish
 ```
 
+### Set an app module icon from an icon set
+
+```powershell
+# Set icon for an app module using an icon from an online icon set
+Set-DataverseAppmoduleIconFromSet -UniqueName "my_app" `
+    -IconName "person" `
+    -IconSet FluentUI `
+    -PublisherPrefix "contoso" `
+    -Publish
+```
+
+Downloads an icon from an online icon set, creates a web resource, and sets it as the app module's icon. See [Set-DataverseAppmoduleIconFromSet](../Set-DataverseAppmoduleIconFromSet.md) for more details.
+
 ## Deleting App Modules
 
 ### Delete by ID
@@ -243,7 +256,8 @@ When working with app modules, you'll encounter these key properties:
 
 ## See Also
 
-- [Connection Management](connections.md) � Managing Dataverse connections
+- [Connection Management](connections.md) – Managing Dataverse connections
 - [Get-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseAppModule.md)
 - [Set-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseAppModule.md)
-- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)
+- [Remove-DataverseAppModule cmdlet reference](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseAppModule.md)
+- [Set-DataverseAppmoduleIconFromSet cmdlet reference](../Set-DataverseAppmoduleIconFromSet.md)
