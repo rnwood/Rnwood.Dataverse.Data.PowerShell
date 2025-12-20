@@ -1,33 +1,36 @@
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Messages;
-using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Linq;
 using System.Management.Automation;
 using System.Net.Http;
+using System.ServiceModel;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Sets a table's vector icon by downloading an icon from an online icon set and creating/updating a web resource.
+    /// Sets an app module's icon by downloading an icon from an online icon set and creating/updating a web resource.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "DataverseTableIconFromSet", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
+    [Cmdlet(VerbsCommon.Set, "DataverseAppmoduleIconFromSet", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     [OutputType(typeof(PSObject))]
-    public class SetDataverseTableIconFromSetCmdlet : OrganizationServiceCmdlet
+    public class SetDataverseAppmoduleIconFromSetCmdlet : OrganizationServiceCmdlet
     {
         private static readonly HttpClient httpClient = new HttpClient();
 
         /// <summary>
-        /// Gets or sets the logical name of the entity (table).
+        /// Gets or sets the ID of the app module.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, ValueFromPipelineByPropertyName = true, HelpMessage = "Logical name of the entity (table)")]
-        [ArgumentCompleter(typeof(TableNameArgumentCompleter))]
-        [Alias("TableName")]
-        public string EntityName { get; set; }
+        [Parameter(Mandatory = true, Position = 0, ValueFromPipelineByPropertyName = true, ParameterSetName = "ById", HelpMessage = "ID of the app module")]
+        public Guid Id { get; set; }
+
+        /// <summary>
+        /// Gets or sets the unique name of the app module.
+        /// </summary>
+        [Parameter(Mandatory = true, Position = 0, ValueFromPipelineByPropertyName = true, ParameterSetName = "ByUniqueName", HelpMessage = "Unique name of the app module")]
+        public string UniqueName { get; set; }
 
         /// <summary>
         /// Gets or sets the icon set to retrieve the icon from.
@@ -45,19 +48,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the publisher prefix to use for the web resource name.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 3, HelpMessage = "Publisher prefix to use for the web resource name")]
+        [Parameter(Mandatory = true, HelpMessage = "Publisher prefix to use for the web resource name")]
         public string PublisherPrefix { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to publish the entity and web resource after updating.
+        /// Gets or sets whether to publish the app module and web resource after updating.
         /// </summary>
-        [Parameter(HelpMessage = "Publish the entity and web resource after updating")]
+        [Parameter(HelpMessage = "Publish the app module and web resource after updating")]
         public SwitchParameter Publish { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to return the updated entity metadata.
+        /// Gets or sets whether to return the updated app module.
         /// </summary>
-        [Parameter(HelpMessage = "Return the updated entity metadata")]
+        [Parameter(HelpMessage = "Return the updated app module")]
         public SwitchParameter PassThru { get; set; }
 
         /// <summary>
@@ -69,6 +72,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             try
             {
+                // Get the app module ID
+                Guid appModuleId = GetAppModuleId();
+
                 // Download the icon
                 WriteVerbose($"Downloading icon '{IconName}' from {IconSet}");
                 var iconContent = DownloadIconAsync().GetAwaiter().GetResult();
@@ -81,32 +87,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var webResourceId = CreateOrUpdateWebResource(webResourceName, iconContent);
                 WriteVerbose($"Web resource created/updated: {webResourceId}");
 
-                // Update the entity metadata
-                if (!ShouldProcess($"Entity '{EntityName}'", $"Set IconVectorName to '{webResourceName}'"))
+                // Update the app module
+                if (!ShouldProcess($"App module with ID '{appModuleId}'", $"Set webresourceid to '{webResourceId}'"))
                 {
                     return;
                 }
 
-                UpdateEntityIcon(webResourceName);
+                UpdateAppModuleIcon(appModuleId, webResourceId);
 
                 // Publish if requested
-                if (Publish && ShouldProcess($"Entity '{EntityName}' and web resource '{webResourceName}'", "Publish"))
+                if (Publish && ShouldProcess($"App module with ID '{appModuleId}' and web resource '{webResourceName}'", "Publish"))
                 {
-                    PublishChanges(webResourceId);
+                    PublishChanges(appModuleId, webResourceId);
                 }
 
-                // Return updated entity metadata if PassThru specified
+                // Return updated app module if PassThru specified
                 if (PassThru)
                 {
-                    var retrieveRequest = new RetrieveEntityRequest
-                    {
-                        LogicalName = EntityName,
-                        EntityFilters = EntityFilters.Entity,
-                        RetrieveAsIfPublished = true
-                    };
-
-                    var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
-                    var result = ConvertEntityMetadataToPSObject(retrieveResponse.EntityMetadata);
+                    var appModule = Connection.Retrieve("appmodule", appModuleId, new ColumnSet(true));
+                    var result = ConvertAppModuleToPSObject(appModule);
                     WriteObject(result);
                 }
             }
@@ -114,15 +113,58 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 ThrowTerminatingError(new ErrorRecord(
                     ex,
-                    "SetTableIconError",
+                    "SetAppModuleIconError",
                     ErrorCategory.InvalidOperation,
-                    EntityName));
+                    null));
             }
+        }
+
+        private Guid GetAppModuleId()
+        {
+            if (ParameterSetName == "ById")
+            {
+                return Id;
+            }
+
+            // Get by UniqueName
+            WriteVerbose($"Looking up app module by UniqueName: {UniqueName}");
+
+            var query = new QueryExpression("appmodule")
+            {
+                ColumnSet = new ColumnSet("appmoduleid"),
+                Criteria = new FilterExpression()
+            };
+            query.Criteria.AddCondition("uniquename", ConditionOperator.Equal, UniqueName);
+
+            var results = Connection.RetrieveMultiple(query);
+            
+            if (results.Entities.Count == 0)
+            {
+                // Try to retrieve unpublished version
+                var retrieveUnpublishedMultipleRequest = new RetrieveUnpublishedMultipleRequest
+                {
+                    Query = query
+                };
+                var unpublishedResponse = (RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                results = unpublishedResponse.EntityCollection;
+            }
+
+            if (results.Entities.Count == 0)
+            {
+                throw new ArgumentException($"App module with UniqueName '{UniqueName}' not found");
+            }
+
+            if (results.Entities.Count > 1)
+            {
+                throw new ArgumentException($"Multiple app modules found with UniqueName '{UniqueName}'");
+            }
+
+            return results.Entities[0].Id;
         }
 
         private async Task<string> DownloadIconAsync()
         {
-            // Use shared helper to get consistent download URL across both cmdlets
+            // Use shared helper to get consistent download URL across cmdlets
             var downloadUrl = IconSetUrlHelper.GetIconDownloadUrl(IconSet, IconName);
 
             WriteVerbose($"Downloading from: {downloadUrl}");
@@ -196,59 +238,55 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private void UpdateEntityIcon(string webResourceName)
+        private void UpdateAppModuleIcon(Guid appModuleId, Guid webResourceId)
         {
-            WriteVerbose($"Updating entity '{EntityName}' IconVectorName to '{webResourceName}'");
+            WriteVerbose($"Updating app module '{appModuleId}' webresourceid to '{webResourceId}'");
 
-            // Retrieve existing entity metadata
-            var retrieveRequest = new RetrieveEntityRequest
+            // Retrieve existing app module to check current value
+            Entity existingAppModule;
+            try
             {
-                LogicalName = EntityName,
-                EntityFilters = EntityFilters.Entity,
-                RetrieveAsIfPublished = true
-            };
-
-            var retrieveResponse = (RetrieveEntityResponse)Connection.Execute(retrieveRequest);
-            var existingEntity = retrieveResponse.EntityMetadata;
-
-            // Update entity metadata
-            var entityToUpdate = new EntityMetadata
-            {
-                MetadataId = existingEntity.MetadataId,
-                LogicalName = existingEntity.LogicalName,
-                IconVectorName = webResourceName
-            };
-
-            var updateRequest = new UpdateEntityRequest
-            {
-                Entity = entityToUpdate,
-                MergeLabels = true
-            };
-
-            Connection.Execute(updateRequest);
-
-            WriteVerbose($"Entity icon updated successfully");
-
-            // Invalidate cache for this entity
-            var connectionKey = MetadataCache.GetConnectionKey(Connection as Microsoft.PowerPlatform.Dataverse.Client.ServiceClient);
-            if (connectionKey != null)
-            {
-                MetadataCache.InvalidateEntity(connectionKey, EntityName);
-                WriteVerbose($"Invalidated metadata cache for entity '{EntityName}'");
+                existingAppModule = Connection.Retrieve("appmodule", appModuleId, new ColumnSet("webresourceid"));
             }
+            catch (FaultException<OrganizationServiceFault> ex)
+            {
+                if (QueryHelpers.IsNotFoundException(ex))
+                {
+                    // Try to retrieve unpublished version
+                    var retrieveUnpublishedRequest = new RetrieveUnpublishedRequest
+                    {
+                        Target = new EntityReference("appmodule", appModuleId),
+                        ColumnSet = new ColumnSet("webresourceid")
+                    };
+                    var response = (RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
+                    existingAppModule = response.Entity;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            // Update app module
+            var updateEntity = new Entity("appmodule", appModuleId);
+            updateEntity["webresourceid"] = webResourceId;
+
+            Connection.Update(updateEntity);
+
+            WriteVerbose($"App module icon updated successfully");
         }
 
-        private void PublishChanges(Guid webResourceId)
+        private void PublishChanges(Guid appModuleId, Guid webResourceId)
         {
-            WriteVerbose($"Publishing entity '{EntityName}' and web resource");
+            WriteVerbose($"Publishing app module '{appModuleId}' and web resource '{webResourceId}'");
 
-            // Publish both entity and web resource
+            // Publish both app module and web resource
             var publishRequest = new PublishXmlRequest
             {
                 ParameterXml = $@"<importexportxml>
-                    <entities>
-                        <entity>{EntityName}</entity>
-                    </entities>
+                    <appmodules>
+                        <appmodule>{{{appModuleId}}}</appmodule>
+                    </appmodules>
                     <webresources>
                         <webresource>{{{webResourceId}}}</webresource>
                     </webresources>
@@ -262,14 +300,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             PublishHelpers.WaitForPublishComplete(Connection, WriteVerbose);
         }
 
-        private PSObject ConvertEntityMetadataToPSObject(EntityMetadata metadata)
+        private PSObject ConvertAppModuleToPSObject(Entity appModule)
         {
             var result = new PSObject();
-            result.Properties.Add(new PSNoteProperty("LogicalName", metadata.LogicalName));
-            result.Properties.Add(new PSNoteProperty("SchemaName", metadata.SchemaName));
-            result.Properties.Add(new PSNoteProperty("DisplayName", metadata.DisplayName?.UserLocalizedLabel?.Label));
-            result.Properties.Add(new PSNoteProperty("IconVectorName", metadata.IconVectorName));
-            result.Properties.Add(new PSNoteProperty("MetadataId", metadata.MetadataId));
+            result.Properties.Add(new PSNoteProperty("Id", appModule.Id));
+            result.Properties.Add(new PSNoteProperty("UniqueName", appModule.GetAttributeValue<string>("uniquename")));
+            result.Properties.Add(new PSNoteProperty("Name", appModule.GetAttributeValue<string>("name")));
+            result.Properties.Add(new PSNoteProperty("WebResourceId", appModule.GetAttributeValue<Guid?>("webresourceid")));
             return result;
         }
     }

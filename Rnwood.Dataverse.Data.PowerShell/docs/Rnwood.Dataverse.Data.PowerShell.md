@@ -265,6 +265,9 @@ Creates or updates an app module (model-driven app) in Dataverse.
 ### [Set-DataverseAppModuleComponent](Set-DataverseAppModuleComponent.md)
 Creates or updates an app module component in Dataverse.
 
+### [Set-DataverseAppmoduleIconFromSet](Set-DataverseAppmoduleIconFromSet.md)
+Sets an app module's icon by downloading an icon from an online icon set and creating/updating a web resource.
+
 ### [Set-DataverseAttributeMetadata](Set-DataverseAttributeMetadata.md)
 Creates or updates an attribute (column) in Dataverse.
 
