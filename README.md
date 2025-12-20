@@ -18,8 +18,6 @@ This module works in PowerShell Desktop and PowerShell Core, supporting Windows,
 - Concise PowerShell-friendly hashtable-based filters with grouped logical expressions (and/or/not/xor) and arbitrary nesting
 - Batching and parallelisation support for efficient bulk operations
 - Auto-retries support in many cmdlets
-- **Dynamic plugin assemblies** - compile C# plugin source code on-the-fly and deploy to Dataverse without Visual Studio or build tools, with automatic strong name key persistence
-- **Table vector icons from online icon sets** - easily set table icons by downloading SVG icons from FluentUI, Tabler, or Iconoir icon sets
 - Comprehensive metadata operations
     - Create, read, update, and delete entities, attributes, option sets, and relationships
     - manipulate model-driven apps, forms, views
