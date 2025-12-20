@@ -174,14 +174,13 @@ Describe 'Set-DataverseAppModuleComponent' {
         }
     }
 
-    Context "PassThru support with unpublished data" {
-        It "Should attempt to retrieve component from unpublished data when PassThru is specified" {
-            # This test verifies that the cmdlet uses RetrieveUnpublishedMultipleRequest
-            # to query for the newly created component before falling back to published data
+    Context "PassThru support" {
+        It "Should query published data when PassThru is specified (appmodulecomponent doesn't support unpublished queries)" {
+            # This test verifies that the cmdlet uses RetrieveMultipleRequest
+            # to query for the newly created component since appmodulecomponent
+            # entity does not support RetrieveUnpublishedMultipleRequest
             
-            # Note: In the mock environment, the RetrieveUnpublishedMultipleRequest returns empty
-            # (see Common.ps1) which causes the code to fall back to RetrieveMultipleRequest.
-            # Since AddAppComponentsRequest also doesn't actually create records in FakeXrmEasy,
+            # Since AddAppComponentsRequest doesn't actually create records in FakeXrmEasy,
             # we expect a warning about the component not being retrieved.
             
             $appModuleId = [Guid]::NewGuid()

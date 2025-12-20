@@ -358,18 +358,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 TopCount = 1
                             };
 
-                            // Try unpublished data first (newly created components are unpublished)
-                            var request = new RetrieveUnpublishedMultipleRequest { Query = query };
-                            var response = (RetrieveUnpublishedMultipleResponse)Connection.Execute(request);
+                            // Note: appmodulecomponent entity does not support RetrieveUnpublishedMultiple
+                            // so we query published data directly
+                            var request = new RetrieveMultipleRequest { Query = query };
+                            var response = (RetrieveMultipleResponse)Connection.Execute(request);
                             var results = response.EntityCollection;
-
-                            // If not found in unpublished, try published data
-                            if (results.Entities.Count == 0)
-                            {
-                                var pubRequest = new RetrieveMultipleRequest { Query = query };
-                                var pubResponse = (RetrieveMultipleResponse)Connection.Execute(pubRequest);
-                                results = pubResponse.EntityCollection;
-                            }
+                            WriteVerbose($"Retrieved {results.Entities.Count} app module component(s)");
 
                             if (results.Entities.Count > 0)
                             {
