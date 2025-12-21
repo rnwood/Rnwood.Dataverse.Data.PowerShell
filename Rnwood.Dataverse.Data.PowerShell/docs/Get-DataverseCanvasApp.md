@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseCanvasApp
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves Canvas apps from a Dataverse environment.
 
 ## SYNTAX
 
@@ -25,16 +25,39 @@ Get-DataverseCanvasApp [[-Name] <String>] [-DisplayName <String>] [-Unmanaged] [
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Retrieves Canvas apps from a Dataverse environment. You can retrieve apps by ID, name pattern, or display name pattern. By default, the document content (.msapp file) is excluded for performance reasons.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Get a Canvas app by ID
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $connection = Get-DataverseConnection -InteractiveLogin -Url "https://org.crm.dynamics.com"
+PS C:\> Get-DataverseCanvasApp -Connection $connection -Id "12345678-1234-1234-1234-123456789012"
 ```
 
-{{ Add example description here }}
+Retrieves a specific Canvas app by its ID.
+
+### Example 2: Get all Canvas apps by name pattern
+```powershell
+PS C:\> Get-DataverseCanvasApp -Name "MyApp*"
+```
+
+Retrieves all Canvas apps whose name starts with "MyApp".
+
+### Example 3: Get unmanaged Canvas apps
+```powershell
+PS C:\> Get-DataverseCanvasApp -Unmanaged
+```
+
+Retrieves all unmanaged Canvas apps in the environment.
+
+### Example 4: Get a Canvas app with document content
+```powershell
+PS C:\> $app = Get-DataverseCanvasApp -Name "MyApp" -IncludeDocument
+PS C:\> $app.document  # Contains base64-encoded .msapp file bytes
+```
+
+Retrieves a Canvas app and includes the document content (.msapp file).
 
 ## PARAMETERS
 

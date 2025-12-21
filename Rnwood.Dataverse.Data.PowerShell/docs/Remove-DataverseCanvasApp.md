@@ -8,7 +8,7 @@ schema: 2.0.0
 # Remove-DataverseCanvasApp
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Removes a Canvas app from a Dataverse environment.
 
 ## SYNTAX
 
@@ -25,16 +25,30 @@ Remove-DataverseCanvasApp [-Name] <String> [-IfExists] [-Connection <ServiceClie
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Removes a Canvas app from a Dataverse environment. You can specify the Canvas app by ID or name.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Remove a Canvas app by ID
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Remove-DataverseCanvasApp -Id "12345678-1234-1234-1234-123456789012"
 ```
 
-{{ Add example description here }}
+Removes a Canvas app with the specified ID.
+
+### Example 2: Remove a Canvas app by name
+```powershell
+PS C:\> Remove-DataverseCanvasApp -Name "new_myapp"
+```
+
+Removes a Canvas app with the specified name.
+
+### Example 3: Remove a Canvas app with IfExists flag
+```powershell
+PS C:\> Remove-DataverseCanvasApp -Name "new_maybeexists" -IfExists
+```
+
+Attempts to remove a Canvas app, but doesn't throw an error if it doesn't exist.
 
 ## PARAMETERS
 
