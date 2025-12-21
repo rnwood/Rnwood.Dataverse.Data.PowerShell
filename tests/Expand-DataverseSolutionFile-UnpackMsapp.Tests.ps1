@@ -65,8 +65,8 @@ with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zf:
     }
 
     It "Unpacks .msapp files with Windows path separators correctly" {
-        # Skip on Windows PowerShell 5.1 as it doesn't manifest the issue
-        if ($IsWindows -or $PSVersionTable.PSVersion.Major -le 5) {
+        # Skip on Windows PowerShell as it doesn't manifest the issue
+        if ($PSVersionTable.PSVersion.Major -le 5) {
             Set-ItResult -Skipped -Because "This test validates Linux-specific path separator handling"
             return
         }

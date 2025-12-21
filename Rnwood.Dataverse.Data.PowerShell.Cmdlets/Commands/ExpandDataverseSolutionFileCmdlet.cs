@@ -128,24 +128,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Unzip the .msapp file
                 // Use ZipFile instead of FastZip to normalize path separators on non-Windows platforms
                 // .msapp files created on Windows may contain backslashes in entry names
-                // which need to be converted to forward slashes on Linux/macOS
+                // which need to be converted to platform-appropriate path separators
                 using (var zipFile = new ZipFile(msappFile))
                 {
                     foreach (ZipEntry entry in zipFile)
                     {
-                        // Normalize the entry name by replacing backslashes with forward slashes
+                        // Normalize the entry name by splitting on both separators and recombining
+                        // This ensures platform-native path construction
                         string entryName = entry.Name.Replace('\\', '/');
+                        string[] pathComponents = entryName.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
                         
                         // Skip directory entries
                         if (entry.IsDirectory)
                         {
-                            string dirPath = System.IO.Path.Combine(tempOutputFolder, entryName);
+                            string dirPath = System.IO.Path.Combine(new[] { tempOutputFolder }.Concat(pathComponents).ToArray());
                             Directory.CreateDirectory(dirPath);
                             continue;
                         }
                         
                         // Ensure the directory exists for the file
-                        string filePath = System.IO.Path.Combine(tempOutputFolder, entryName);
+                        string filePath = System.IO.Path.Combine(new[] { tempOutputFolder }.Concat(pathComponents).ToArray());
                         string fileDir = System.IO.Path.GetDirectoryName(filePath);
                         if (!string.IsNullOrEmpty(fileDir) && !Directory.Exists(fileDir))
                         {
