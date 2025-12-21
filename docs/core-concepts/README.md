@@ -16,6 +16,7 @@ This section covers the core concepts and operations for working with Dataverse 
 - **[Table Icons](table-icons.md)** - Setting table vector icons from online icon sets (FluentUI, Tabler, Iconoir)
 - **[Organization Settings](organization-settings.md)** - Getting and updating organization table columns and OrgDbOrgSettings XML
 - **[Form Management](form-management.md)** - Managing forms, tabs, sections, and controls with positioning and FormXml manipulation
+- **[Canvas App Management](canvas-app-management.md)** - Creating, updating, and managing Canvas apps with local .msapp file operations for screens and components
 - **[Solution Component Management](solution-component-management.md)** - Managing individual solution components (entities, attributes, forms, views) within solutions
 - **[Dependency Management](dependency-management.md)** - Understanding and managing component dependencies, checking dependencies before deletion, and validating solutions
 - **[Error Handling and Batch Operations](error-handling.md)** - Error handling, batch processing, and retry logic
@@ -32,6 +33,7 @@ This section covers the core concepts and operations for working with Dataverse 
 - Managing web resources (files, scripts, styles)
 - Working with metadata (schema management)
 - Managing forms, tabs, sections, and controls
+- Managing Canvas apps with local .msapp file operations
 - Managing solution components within solutions
 - Understanding and managing component dependencies
 

@@ -19,7 +19,7 @@ Set-DataverseCanvasApp [[-Id] <Guid>] [[-Name] <String>] [-DisplayName <String>]
 ```
 
 ## DESCRIPTION
-Creates or updates a Canvas app in a Dataverse environment (upsert operation). Automatically determines whether to create or update based on ID or Name. Upload a .msapp file that has been modified locally using the MsApp cmdlets.
+Creates or updates a Canvas app in a Dataverse environment (upsert operation). Automatically determines whether to create or update based on ID or Name. Upload a .msapp file that has been modified locally using the MsApp cmdlets. Uses the default connection if -Connection is not specified.
 
 ## EXAMPLES
 
@@ -39,7 +39,6 @@ Updates an existing Canvas app with a modified .msapp file. If the ID doesn't ex
 
 ### Example 3: Workflow - modify .msapp locally then upload
 ```powershell
-PS C:\> # Download or create .msapp file locally
 PS C:\> # Modify screens/components using MsApp cmdlets
 PS C:\> Set-DataverseMsAppScreen -MsAppPath "myapp.msapp" -ScreenName "NewScreen" -YamlContent $yaml
 PS C:\> Set-DataverseMsAppComponent -MsAppPath "myapp.msapp" -ComponentName "MyButton" -YamlContent $yaml

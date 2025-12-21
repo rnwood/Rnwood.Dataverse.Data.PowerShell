@@ -31,11 +31,10 @@ Retrieves Canvas apps from a Dataverse environment. You can retrieve apps by ID,
 
 ### Example 1: Get a Canvas app by ID
 ```powershell
-PS C:\> $connection = Get-DataverseConnection -InteractiveLogin -Url "https://org.crm.dynamics.com"
-PS C:\> Get-DataverseCanvasApp -Connection $connection -Id "12345678-1234-1234-1234-123456789012"
+PS C:\> Get-DataverseCanvasApp -Id "12345678-1234-1234-1234-123456789012"
 ```
 
-Retrieves a specific Canvas app by its ID.
+Retrieves a specific Canvas app by its ID using the default connection.
 
 ### Example 2: Get all Canvas apps by name pattern
 ```powershell
