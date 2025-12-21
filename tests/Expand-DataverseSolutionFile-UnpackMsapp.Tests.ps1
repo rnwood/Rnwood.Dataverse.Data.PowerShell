@@ -105,23 +105,24 @@ with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zf:
         
         New-Item -ItemType Directory -Path $tempOutputFolder | Out-Null
         
-        # Unpack using manual extraction with path normalization (our fix)
+        # Unpack using manual extraction with path normalization (matches production code)
         # This is the same code as in ExpandDataverseSolutionFileCmdlet
         $zipFile = New-Object ICSharpCode.SharpZipLib.Zip.ZipFile($targetMsappPath)
         try {
             foreach ($entry in $zipFile) {
-                # Normalize the entry name by replacing backslashes with forward slashes
-                $entryName = $entry.Name.Replace('\', '/')
+                # Normalize the entry name by splitting on both separators and recombining
+                # This ensures platform-native path construction (matches C# implementation)
+                $pathComponents = $entry.Name.Split(@('\', '/'), [StringSplitOptions]::RemoveEmptyEntries)
                 
                 # Skip directory entries
                 if ($entry.IsDirectory) {
-                    $dirPath = Join-Path $tempOutputFolder $entryName
+                    $dirPath = Join-Path $tempOutputFolder ($pathComponents -join [System.IO.Path]::DirectorySeparatorChar)
                     New-Item -ItemType Directory -Path $dirPath -Force | Out-Null
                     continue
                 }
                 
-                # Ensure the directory exists for the file
-                $filePath = Join-Path $tempOutputFolder $entryName
+                # Build the file path using the components
+                $filePath = Join-Path $tempOutputFolder ($pathComponents -join [System.IO.Path]::DirectorySeparatorChar)
                 $fileDir = Split-Path $filePath -Parent
                 if ($fileDir -and -not (Test-Path $fileDir)) {
                     New-Item -ItemType Directory -Path $fileDir -Force | Out-Null

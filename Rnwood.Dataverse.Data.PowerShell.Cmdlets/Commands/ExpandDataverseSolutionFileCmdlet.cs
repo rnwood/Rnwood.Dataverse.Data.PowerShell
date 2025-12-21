@@ -135,8 +135,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         // Normalize the entry name by splitting on both separators and recombining
                         // This ensures platform-native path construction
-                        string entryName = entry.Name.Replace('\\', '/');
-                        string[] pathComponents = entryName.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                        string[] pathComponents = entry.Name.Split(new[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries);
                         
                         // Skip directory entries
                         if (entry.IsDirectory)
