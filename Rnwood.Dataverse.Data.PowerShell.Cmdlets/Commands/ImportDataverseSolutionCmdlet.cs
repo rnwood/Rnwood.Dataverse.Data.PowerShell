@@ -2,12 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Management.Automation;
 using System.Text;
 using System.Threading;
 using System.Xml.Linq;
+using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
@@ -387,7 +387,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     
                     if (SkipIfLowerVersion.IsPresent && versionComparison < 0)
                     {
-                        WriteWarning($"Skipping import: Solution '{solutionUniqueName}' version {sourceSolutionVersion} is lower than installed version {installedVersion}.");
+                        WriteWarning($"Skipping import: Solution '{solutionUniqueName}' version {sourceSolutionVersion} is lower than the installed version {installedVersion}.");
                         
                         // Check and update connection references and environment variables if provided
                         CheckAndUpdateSolutionComponents(solutionUniqueName);
@@ -898,15 +898,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private (string UniqueName, bool IsManaged, Version Version) ExtractSolutionInfo(byte[] solutionBytes)
         {
                 using (var memoryStream = new MemoryStream(solutionBytes))
-                using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
+                using (var zipFile = new ZipFile(memoryStream))
                 {
                     // Find the solution.xml file in the solution
-                    var solutionXmlEntry = archive.Entries.FirstOrDefault(e =>
-                        e.FullName.Equals("solution.xml", StringComparison.OrdinalIgnoreCase));
+                    var entryIndex = zipFile.FindEntry("solution.xml", true);
 
-                    if (solutionXmlEntry != null)
+                    if (entryIndex != -1)
                     {
-                        using (var stream = solutionXmlEntry.Open())
+                        using (var stream = zipFile.GetInputStream(entryIndex))
                         using (var reader = new StreamReader(stream))
                         {
                             var xmlContent = reader.ReadToEnd();
@@ -993,15 +992,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             try
             {
                 using (var memoryStream = new MemoryStream(solutionBytes))
-                using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
+                using (var zipFile = new ZipFile(memoryStream))
                 {
                     // Find the customizations.xml file in the solution
-                    var customizationsEntry = archive.Entries.FirstOrDefault(e =>
-                        e.FullName.Equals("customizations.xml", StringComparison.OrdinalIgnoreCase));
+                    var customizationsEntryIndex = zipFile.FindEntry("customizations.xml", true);
 
-                    if (customizationsEntry != null)
+                    if (customizationsEntryIndex != -1)
                     {
-                        using (var stream = customizationsEntry.Open())
+                        using (var stream = zipFile.GetInputStream(customizationsEntryIndex))
                         using (var reader = new StreamReader(stream))
                         {
                             var xmlContent = reader.ReadToEnd();
@@ -1025,34 +1023,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
 
                     // Extract environment variables from separate files
-                    var envVarEntries = archive.Entries.Where(e =>
-                        e.FullName.Contains("environmentvariabledefinitions/") &&
-                        e.FullName.EndsWith("environmentvariabledefinition.xml", StringComparison.OrdinalIgnoreCase));
-
-                    foreach (var entry in envVarEntries)
+                    foreach (ZipEntry entry in zipFile)
                     {
-                        try
+                        if (entry.Name.Contains("environmentvariabledefinitions/") &&
+                            entry.Name.EndsWith("environmentvariabledefinition.xml", StringComparison.OrdinalIgnoreCase))
                         {
-                            using (var stream = entry.Open())
-                            using (var reader = new StreamReader(stream))
+                            try
                             {
-                                var xmlContent = reader.ReadToEnd();
-                                var xdoc = XDocument.Parse(xmlContent);
-
-                                // Get the schemaname from the root element attribute
-                                var root = xdoc.Root;
-                                var schemaName = root?.Attribute("schemaname")?.Value;
-
-                                if (!string.IsNullOrEmpty(schemaName))
+                                using (var stream = zipFile.GetInputStream(entry))
+                                using (var reader = new StreamReader(stream))
                                 {
-                                    environmentVariables.Add(schemaName);
-                                    WriteVerbose($"Found environment variable in solution: {schemaName}");
+                                    var xmlContent = reader.ReadToEnd();
+                                    var xdoc = XDocument.Parse(xmlContent);
+
+                                    // Get the schemaname from the root element attribute
+                                    var root = xdoc.Root;
+                                    var schemaName = root?.Attribute("schemaname")?.Value;
+
+                                    if (!string.IsNullOrEmpty(schemaName))
+                                    {
+                                        environmentVariables.Add(schemaName);
+                                        WriteVerbose($"Found environment variable in solution: {schemaName}");
+                                    }
                                 }
                             }
-                        }
-                        catch (Exception ex)
-                        {
-                            WriteVerbose($"Error parsing environment variable file {entry.FullName}: {ex.Message}");
+                            catch (Exception ex)
+                            {
+                                WriteVerbose($"Error parsing environment variable file {entry.Name}: {ex.Message}");
+                            }
                         }
                     }
                 }
@@ -1345,14 +1343,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private string ExtractSolutionName(byte[] solutionBytes)
         {
             using (var memoryStream = new MemoryStream(solutionBytes))
-            using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read))
+            using (var zipFile = new ZipFile(memoryStream))
             {
-                var solutionXmlEntry = archive.Entries.FirstOrDefault(e =>
-                   e.FullName.Equals("solution.xml", StringComparison.OrdinalIgnoreCase));
+                var entryIndex = zipFile.FindEntry("solution.xml", true);
 
-                if (solutionXmlEntry != null)
+                if (entryIndex != -1)
                 {
-                    using (var stream = solutionXmlEntry.Open())
+                    using (var stream = zipFile.GetInputStream(entryIndex))
                     using (var reader = new StreamReader(stream))
                     {
                         var xmlContent = reader.ReadToEnd();

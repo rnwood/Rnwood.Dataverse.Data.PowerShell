@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Management.Automation;
+using ICSharpCode.SharpZipLib.Zip;
 using Rnwood.Dataverse.Data.PowerShell.Cmdlets.Commands.Model;
 using Rnwood.Dataverse.Data.PowerShell.Commands.Model;
 
@@ -124,8 +124,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 Directory.CreateDirectory(tempOutputFolder);
 
+
                 // Unzip the .msapp file
-                ZipFile.ExtractToDirectory(msappFile, tempOutputFolder, new ZipFileNameEncoding());
+                new FastZip().ExtractZip(msappFile, tempOutputFolder, null);
 
                 File.Delete(msappFile);
                 Directory.Move(tempOutputFolder, outputFolder);

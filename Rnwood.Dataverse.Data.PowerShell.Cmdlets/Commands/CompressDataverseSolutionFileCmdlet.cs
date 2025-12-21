@@ -2,9 +2,9 @@ using Rnwood.Dataverse.Data.PowerShell.Cmdlets.Commands.Model;
 using Rnwood.Dataverse.Data.PowerShell.Commands.Model;
 using System;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Management.Automation;
+using ICSharpCode.SharpZipLib.Zip;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -151,7 +151,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 // Create the .msapp file (which is a zip) using a temporary file to avoid path conflict
                 string tempMsappFile = System.IO.Path.Combine(parentDirectory, Guid.NewGuid().ToString("N") + ".tmp");
-                ZipFile.CreateFromDirectory(msappFolder, tempMsappFile, CompressionLevel.Optimal, includeBaseDirectory: false, entryNameEncoding: new ZipFileNameEncoding());
+                new FastZip().CreateZip(tempMsappFile, msappFolder, true, null);
 
                 cmdlet.WriteVerbose($"Successfully packed '{msappFolder}'");
 
