@@ -1,3 +1,10 @@
+using Microsoft.PowerPlatform.Dataverse.Client;
+using NuGet.Common;
+using NuGet.Packaging.Core;
+using NuGet.Protocol;
+using NuGet.Protocol.Core.Types;
+using NuGet.Versioning;
+using Rnwood.Dataverse.Data.PowerShell.Cmdlets.Commands.Model;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -7,12 +14,6 @@ using System.Linq;
 using System.Management.Automation;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.PowerPlatform.Dataverse.Client;
-using NuGet.Common;
-using NuGet.Packaging.Core;
-using NuGet.Protocol;
-using NuGet.Protocol.Core.Types;
-using NuGet.Versioning;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -387,7 +388,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             WriteProgress(new ProgressRecord(3, "Extracting Package", $"Extracting {identity.Id}"));
             WriteVerbose($"Extracting package to: {extractPath}");
 
-            ZipFile.ExtractToDirectory(packagePath, extractPath);
+            ZipFile.ExtractToDirectory(packagePath, extractPath, entryNameEncoding: new ZipFileNameEncoding());
 
             WriteProgress(new ProgressRecord(3, "Extracting Package", "Extraction complete") { RecordType = ProgressRecordType.Completed });
 
