@@ -8,7 +8,7 @@ schema: 2.0.0
 # Remove-DataverseMsAppComponent
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Removes a component from a .msapp file.
 
 ## SYNTAX
 
@@ -18,16 +18,16 @@ Remove-DataverseMsAppComponent [-MsAppPath] <String> [-ComponentName] <String> [
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Removes a component from a Canvas app .msapp file. The .msapp file is modified in place.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Remove a component
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Remove-DataverseMsAppComponent -MsAppPath "myapp.msapp" -ComponentName "OldButton"
 ```
 
-{{ Add example description here }}
+Removes a component from the .msapp file.
 
 ## PARAMETERS
 

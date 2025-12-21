@@ -8,7 +8,7 @@ schema: 2.0.0
 # Set-DataverseMsAppComponent
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Adds or updates a component in a .msapp file.
 
 ## SYNTAX
 
@@ -25,16 +25,23 @@ Set-DataverseMsAppComponent [-MsAppPath] <String> [-ComponentName] <String> -Yam
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Adds or updates a component in a Canvas app .msapp file. Components are defined using Power Apps YAML format. The .msapp file is modified in place.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Add a new component
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $yaml = @"
+Component:
+  MyButton:
+    Properties:
+      Width: 100
+      Height: 50
+"@
+PS C:\> Set-DataverseMsAppComponent -MsAppPath "myapp.msapp" -ComponentName "MyButton" -YamlContent $yaml
 ```
 
-{{ Add example description here }}
+Adds a new component to the .msapp file.
 
 ## PARAMETERS
 

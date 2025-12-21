@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseMsAppScreen
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves screens from a .msapp file.
 
 ## SYNTAX
 
@@ -18,16 +18,24 @@ Get-DataverseMsAppScreen [-MsAppPath] <String> [-ScreenName <String>] [-Progress
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Retrieves screens from a Canvas app .msapp file. Screens are returned as PowerShell objects containing the screen name, file path, and YAML content.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Get all screens from a .msapp file
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $screens = Get-DataverseMsAppScreen -MsAppPath "C:\apps\myapp.msapp"
+PS C:\> $screens | Format-Table ScreenName, Size
 ```
 
-{{ Add example description here }}
+Retrieves all screens from a .msapp file.
+
+### Example 2: Filter screens by name pattern
+```powershell
+PS C:\> Get-DataverseMsAppScreen -MsAppPath "myapp.msapp" -ScreenName "Main*"
+```
+
+Retrieves only screens whose names start with "Main".
 
 ## PARAMETERS
 
