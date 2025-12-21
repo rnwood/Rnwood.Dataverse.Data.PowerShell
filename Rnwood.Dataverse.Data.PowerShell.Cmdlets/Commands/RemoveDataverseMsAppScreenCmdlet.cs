@@ -1,7 +1,4 @@
 using ICSharpCode.SharpZipLib.Zip;
-using Microsoft.PowerPlatform.Dataverse.Client;
-using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.IO;
 using System.Management.Automation;
@@ -9,21 +6,23 @@ using System.Management.Automation;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Removes a screen from a Canvas app's .msapp file.
+    /// Removes a screen from a .msapp file.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "DataverseCanvasAppScreen", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
-    public class RemoveDataverseCanvasAppScreenCmdlet : OrganizationServiceCmdlet
+    [Cmdlet(VerbsCommon.Remove, "DataverseMsAppScreen", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.High)]
+    public class RemoveDataverseMsAppScreenCmdlet : PSCmdlet
     {
         /// <summary>
-        /// Gets or sets the Canvas app ID to remove screen from.
+        /// Gets or sets the path to the .msapp file.
         /// </summary>
-        [Parameter(Mandatory = true, HelpMessage = "ID of the Canvas app to remove screen from")]
-        public Guid CanvasAppId { get; set; }
+        [Parameter(Mandatory = true, Position = 0, HelpMessage = "Path to the .msapp file")]
+        [ValidateNotNullOrEmpty]
+        public string MsAppPath { get; set; }
 
         /// <summary>
         /// Gets or sets the screen name to remove.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, HelpMessage = "Name of the screen to remove")]
+        [Parameter(Mandatory = true, Position = 1, HelpMessage = "Name of the screen to remove")]
+        [ValidateNotNullOrEmpty]
         public string ScreenName { get; set; }
 
         /// <summary>
@@ -37,51 +36,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            string action = $"Remove screen '{ScreenName}' from Canvas app '{CanvasAppId}'";
+            var filePath = GetUnresolvedProviderPathFromPSPath(MsAppPath);
+            if (!File.Exists(filePath))
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new FileNotFoundException($"MsApp file not found: {filePath}"),
+                    "FileNotFound",
+                    ErrorCategory.ObjectNotFound,
+                    filePath));
+                return;
+            }
+
+            string action = $"Remove screen '{ScreenName}' from .msapp file '{filePath}'";
             if (!ShouldProcess(action, action, "Remove Screen"))
             {
                 return;
             }
 
-            // Retrieve existing Canvas app
-            var canvasApp = Connection.Retrieve("canvasapp", CanvasAppId, new ColumnSet("document", "name"));
-            if (canvasApp == null)
-            {
-                ThrowTerminatingError(new ErrorRecord(
-                    new Exception($"Canvas app with ID {CanvasAppId} not found"),
-                    "CanvasAppNotFound",
-                    ErrorCategory.ObjectNotFound,
-                    CanvasAppId));
-                return;
-            }
+            byte[] msappBytes = File.ReadAllBytes(filePath);
+            byte[] modifiedBytes = RemoveMsAppScreen(msappBytes);
+            File.WriteAllBytes(filePath, modifiedBytes);
 
-            // Get document bytes
-            string base64Document = canvasApp.GetAttributeValue<string>("document");
-            if (string.IsNullOrEmpty(base64Document))
-            {
-                ThrowTerminatingError(new ErrorRecord(
-                    new Exception("Canvas app does not contain a document (.msapp file)"),
-                    "NoDocument",
-                    ErrorCategory.InvalidData,
-                    CanvasAppId));
-                return;
-            }
-
-            byte[] msappBytes = Convert.FromBase64String(base64Document);
-
-            // Modify .msapp file to remove screen
-            byte[] modifiedMsappBytes = RemoveMsAppScreen(msappBytes);
-
-            // Update Canvas app with modified .msapp file
-            var updateEntity = new Entity("canvasapp")
-            {
-                Id = CanvasAppId,
-                ["document"] = Convert.ToBase64String(modifiedMsappBytes)
-            };
-
-            Connection.Update(updateEntity);
-
-            WriteVerbose($"Screen '{ScreenName}' removed successfully from Canvas app");
+            WriteVerbose($"Screen '{ScreenName}' removed successfully from .msapp file");
         }
 
         private byte[] RemoveMsAppScreen(byte[] originalBytes)
@@ -119,7 +95,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (!screenFound && !IfExists.IsPresent)
                 {
                     ThrowTerminatingError(new ErrorRecord(
-                        new Exception($"Screen '{ScreenName}' not found in Canvas app"),
+                        new Exception($"Screen '{ScreenName}' not found in .msapp file"),
                         "ScreenNotFound",
                         ErrorCategory.ObjectNotFound,
                         ScreenName));

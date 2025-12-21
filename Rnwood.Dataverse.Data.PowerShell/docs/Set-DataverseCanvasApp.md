@@ -12,19 +12,10 @@ Creates or updates a Canvas app in a Dataverse environment.
 
 ## SYNTAX
 
-### Update
 ```
-Set-DataverseCanvasApp -Id <Guid> [[-Name] <String>] [-DisplayName <String>] [-Description <String>]
- [-MsAppPath <String>] [-BackgroundColor <String>] [-PassThru] [-NoCreate] [-NoUpdate]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
-```
-
-### New
-```
-Set-DataverseCanvasApp [-Name] <String> [-DisplayName <String>] [-Description <String>]
- -PublisherPrefix <String> [-PublisherName <String>] [-MsAppPath <String>] [-BackgroundColor <String>]
- [-PassThru] [-NoCreate] [-NoUpdate] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataverseCanvasApp [[-Id] <Guid>] [[-Name] <String>] [-DisplayName <String>] [-Description <String>]
+ -MsAppPath <String> [-PublisherPrefix <String>] [-PassThru] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -61,21 +52,6 @@ PS C:\> Set-DataverseCanvasApp -Id "12345678-1234-1234-1234-123456789012" -MsApp
 Updates the Canvas app's document content with a new .msapp file.
 
 ## PARAMETERS
-
-### -BackgroundColor
-Background color for the Canvas app (e.g., 'RGBA(0,176,240,1)')
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
@@ -129,13 +105,13 @@ ID of the Canvas app to update
 
 ```yaml
 Type: Guid
-Parameter Sets: Update
+Parameter Sets: (All)
 Aliases:
 
-Required: True
-Position: Named
+Required: False
+Position: 0
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
@@ -147,7 +123,7 @@ Type: String
 Parameter Sets: (All)
 Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -159,53 +135,11 @@ Name for the Canvas app (logical name)
 
 ```yaml
 Type: String
-Parameter Sets: Update
-Aliases:
-
-Required: False
-Position: 0
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-```yaml
-Type: String
-Parameter Sets: New
-Aliases:
-
-Required: True
-Position: 0
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -NoCreate
-If set, skips creating new Canvas apps (only updates existing ones)
-
-```yaml
-Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -NoUpdate
-If set, skips updating existing Canvas apps (only creates new ones)
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
+Position: 1
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -241,30 +175,15 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -PublisherName
-Publisher display name for the new Canvas app
-
-```yaml
-Type: String
-Parameter Sets: New
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -PublisherPrefix
 Publisher prefix for the new Canvas app (e.g., 'new')
 
 ```yaml
 Type: String
-Parameter Sets: New
+Parameter Sets: (All)
 Aliases:
 
-Required: True
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -307,7 +226,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
+### System.Nullable`1[[System.Guid, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]
 ## OUTPUTS
 
 ### System.Guid
