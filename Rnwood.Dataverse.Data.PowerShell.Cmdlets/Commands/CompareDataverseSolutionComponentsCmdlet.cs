@@ -216,13 +216,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             result.Properties.Add(new PSNoteProperty("ComponentType", componentType));
             result.Properties.Add(new PSNoteProperty("ComponentTypeName", ComponentTypeResolver.GetComponentTypeName(Connection, dummyComponent)));
 
-            // Display the logical name if available, otherwise the ObjectId
-            string displayIdentifier = GetDisplayIdentifier(sourceComponent) ?? GetDisplayIdentifier(targetComponent) ?? "Unknown";
-            result.Properties.Add(new PSNoteProperty("DisplayIdentifier", displayIdentifier));
 
             // Add source and target ObjectIds
             result.Properties.Add(new PSNoteProperty("SourceObjectId", (object)sourceComponent?.ObjectId));
             result.Properties.Add(new PSNoteProperty("TargetObjectId", (object)targetComponent?.ObjectId));
+            result.Properties.Add(new PSNoteProperty("SourceUniqueName", (object)sourceComponent?.UniqueName));
+            result.Properties.Add(new PSNoteProperty("TargetUniqueName", (object)targetComponent?.UniqueName));
 
             result.Properties.Add(new PSNoteProperty("Status", status.ToString()));
             
@@ -353,26 +352,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Output boolean result
             WriteObject(isAdditive);
-        }
-
-        /// <summary>
-        /// Gets the display identifier for a component, including parent table name if available.
-        /// </summary>
-        private string GetDisplayIdentifier(SolutionComponent component)
-        {
-            if (component == null) return null;
-
-            if (!string.IsNullOrEmpty(component.UniqueName))
-            {
-                string id = component.UniqueName;
-                if (!string.IsNullOrEmpty(component.ParentTableName))
-                {
-                    id = $"{component.ParentTableName}.{id}";
-                }
-                return id;
-            }
-
-            return component.ObjectId?.ToString();
         }
     }
 }

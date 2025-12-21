@@ -103,42 +103,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                                     var typeAttr = rootComponent.Attribute("type");
                                     var behaviorAttr = rootComponent.Attribute("behavior");
 
-                                    string componentId = null;
-                                    Guid? componentMetadataId = null;
-                                    int? componentType = null;
+                                    Guid? componentId = null;
+                                    int? componentType = int.Parse(typeAttr.Value); ;
 
                                     if (idAttr != null)
                                     {
-                                        componentId = idAttr.Value;
-                                        if (Guid.TryParse(componentId, out var parsedGuid))
+                                        if (Guid.TryParse(idAttr.Value, out var componentIdValue))
                                         {
-                                            componentMetadataId = parsedGuid;
-                                        }
-                                    }
-                                    else if (schemaNameAttr != null && typeAttr != null)
-                                    {
-                                        componentType = int.Parse(typeAttr.Value);
-                                        if (componentType == 1) // Entity
-                                        {
-                                            componentId = schemaNameAttr.Value;
-                                            componentMetadataId = FindEntityMetadataIdBySchemaName(customizationsXdoc, schemaNameAttr.Value);
+                                            componentId = componentIdValue;
                                         }
                                     }
 
-                                    if (!string.IsNullOrEmpty(componentId) && typeAttr != null)
+
+                                    var component = new SolutionComponent
                                     {
-                                        var component = new SolutionComponent
-                                        {
-                                            UniqueName = componentType == 1 ? componentId : null, // Entity
-                                            ObjectId = componentMetadataId,
-                                            ComponentType = int.Parse(typeAttr.Value),
-                                            ComponentTypeName = null, // Placeholder, will be populated from msdyn_componenttypename if available
-                                            RootComponentBehavior = behaviorAttr != null
-                                        ? int.Parse(behaviorAttr.Value)
-                                                 : 0
-                                        };
-                                        components.Add(component);
-                                    }
+                                        UniqueName = schemaNameAttr?.Value,
+                                        ObjectId = componentId,
+                                        ComponentType = int.Parse(typeAttr.Value),
+                                        ComponentTypeName = null, // Placeholder, will be populated from msdyn_componenttypename if available
+                                        RootComponentBehavior = behaviorAttr != null
+                                    ? int.Parse(behaviorAttr.Value)
+                                             : 0
+                                    };
+                                    components.Add(component);
+
                                 }
                             }
                         }
@@ -194,7 +182,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                 }
 
                 // Discover connection references from customizations.xml
-                // Connection references (componenttype=635) may not be in RootComponents
+                // Connection references (componenttype=10150) may not be in RootComponents
                 // but are stored in customizations.xml
                 if (customizationsXdoc != null)
                 {
@@ -218,7 +206,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                             {
                                 UniqueName = logicalName,
                                 ObjectId = connRefId,
-                                ComponentType = 635, // Connection Reference
+                                ComponentType = 10150, // Connection Reference
                                 RootComponentBehavior = 0 // Default behavior
                             });
 
@@ -257,18 +245,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
             return expandedComponents;
         }
 
-        /// <summary>
-        /// Gets the subcomponents for a specific parent component.
-        /// </summary>
-        public List<SolutionComponent> GetSubcomponents(SolutionComponent parentComponent)
-        {
-            return ExtractSubcomponentsFromFile(parentComponent);
-        }
 
         /// <summary>
         /// Extracts subcomponents from a solution file.
         /// </summary>
-        private List<SolutionComponent> ExtractSubcomponentsFromFile(SolutionComponent parentComponent)
+        public List<SolutionComponent> GetSubcomponents(SolutionComponent parentComponent)
         {
             var subcomponents = new List<SolutionComponent>();
 
