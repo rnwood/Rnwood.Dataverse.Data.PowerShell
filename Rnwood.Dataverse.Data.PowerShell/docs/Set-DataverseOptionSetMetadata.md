@@ -21,7 +21,7 @@ Set-DataverseOptionSetMetadata [-Name] <String> [-DisplayName <String>] [-Descri
 
 ### EntityAttribute
 ```
-Set-DataverseOptionSetMetadata [-EntityName] <String> [-AttributeName] <String> [-DisplayName <String>]
+Set-DataverseOptionSetMetadata -EntityName <String> -AttributeName <String> [-DisplayName <String>]
  [-Description <String>] -Options <Hashtable[]> [-NoRemoveMissingOptions] [-PassThru] [-Publish]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
@@ -110,7 +110,7 @@ Parameter Sets: EntityAttribute
 Aliases: ColumnName
 
 Required: True
-Position: 1
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -170,7 +170,7 @@ Parameter Sets: EntityAttribute
 Aliases: TableName
 
 Required: True
-Position: 0
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
