@@ -8,7 +8,7 @@ schema: 2.0.0
 # Set-DataverseCanvasApp
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Creates or updates a Canvas app in a Dataverse environment.
 
 ## SYNTAX
 
@@ -28,16 +28,37 @@ Set-DataverseCanvasApp [-Name] <String> [-DisplayName <String>] [-Description <S
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Creates a new Canvas app or updates an existing one by generating a solution file and importing it. For creation, a minimal .msapp file is generated unless you provide one via -MsAppPath. For updates, the existing app is exported, modified, and re-imported.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Create a new Canvas app with minimal properties
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Set-DataverseCanvasApp -Name "new_myapp" -DisplayName "My App" -PublisherPrefix "new" -PassThru
 ```
 
-{{ Add example description here }}
+Creates a new Canvas app with the specified name and display name.
+
+### Example 2: Create a Canvas app with a custom .msapp file
+```powershell
+PS C:\> Set-DataverseCanvasApp -Name "new_customapp" -DisplayName "Custom App" -PublisherPrefix "new" -MsAppPath "C:\apps\myapp.msapp"
+```
+
+Creates a new Canvas app using a specific .msapp file as the document content.
+
+### Example 3: Update an existing Canvas app's display name
+```powershell
+PS C:\> Set-DataverseCanvasApp -Id "12345678-1234-1234-1234-123456789012" -DisplayName "Updated App Name"
+```
+
+Updates the display name of an existing Canvas app.
+
+### Example 4: Update a Canvas app's .msapp file
+```powershell
+PS C:\> Set-DataverseCanvasApp -Id "12345678-1234-1234-1234-123456789012" -MsAppPath "C:\apps\updated.msapp"
+```
+
+Updates the Canvas app's document content with a new .msapp file.
 
 ## PARAMETERS
 
