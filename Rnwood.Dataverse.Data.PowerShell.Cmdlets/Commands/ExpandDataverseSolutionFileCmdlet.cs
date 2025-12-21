@@ -126,7 +126,40 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 
                 // Unzip the .msapp file
-                new FastZip().ExtractZip(msappFile, tempOutputFolder, null);
+                // Use ZipFile instead of FastZip to normalize path separators on non-Windows platforms
+                // .msapp files created on Windows may contain backslashes in entry names
+                // which need to be converted to forward slashes on Linux/macOS
+                using (var zipFile = new ZipFile(msappFile))
+                {
+                    foreach (ZipEntry entry in zipFile)
+                    {
+                        // Normalize the entry name by replacing backslashes with forward slashes
+                        string entryName = entry.Name.Replace('\\', '/');
+                        
+                        // Skip directory entries
+                        if (entry.IsDirectory)
+                        {
+                            string dirPath = System.IO.Path.Combine(tempOutputFolder, entryName);
+                            Directory.CreateDirectory(dirPath);
+                            continue;
+                        }
+                        
+                        // Ensure the directory exists for the file
+                        string filePath = System.IO.Path.Combine(tempOutputFolder, entryName);
+                        string fileDir = System.IO.Path.GetDirectoryName(filePath);
+                        if (!string.IsNullOrEmpty(fileDir) && !Directory.Exists(fileDir))
+                        {
+                            Directory.CreateDirectory(fileDir);
+                        }
+                        
+                        // Extract the file
+                        using (var inputStream = zipFile.GetInputStream(entry))
+                        using (var outputStream = File.Create(filePath))
+                        {
+                            inputStream.CopyTo(outputStream);
+                        }
+                    }
+                }
 
                 File.Delete(msappFile);
                 Directory.Move(tempOutputFolder, outputFolder);
