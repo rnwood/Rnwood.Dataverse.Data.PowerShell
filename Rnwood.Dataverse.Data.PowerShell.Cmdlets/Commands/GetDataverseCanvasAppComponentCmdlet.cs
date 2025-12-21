@@ -146,6 +146,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // Components in Components/ folder
                         isComponent = true;
                         componentName = Path.GetFileNameWithoutExtension(entry.Name);
+                        
+                        // Apply name filter if specified
+                        if (!string.IsNullOrEmpty(ComponentName))
+                        {
+                            if (!MatchesPattern(componentName, ComponentName))
+                            {
+                                continue;
+                            }
+                        }
+
+                        // Read YAML content
+                        byte[] entryBytes = ReadZipEntryBytes(zipInputStream);
+                        string yamlContent = System.Text.Encoding.UTF8.GetString(entryBytes);
+
+                        // Create PSObject with component information
+                        var psObject = new PSObject();
+                        psObject.Properties.Add(new PSNoteProperty("ComponentName", componentName));
+                        psObject.Properties.Add(new PSNoteProperty("FilePath", entry.Name));
+                        psObject.Properties.Add(new PSNoteProperty("YamlContent", yamlContent));
+                        psObject.Properties.Add(new PSNoteProperty("Size", entryBytes.Length));
+
+                        WriteObject(psObject);
                     }
                     else if (entry.Name.StartsWith("Src/") && 
                              entry.Name.EndsWith(".pa.yaml") &&
@@ -185,30 +207,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                             WriteObject(psObject);
                         }
-                    }
-                    else if (isComponent)
-                    {
-                        // Apply name filter if specified
-                        if (!string.IsNullOrEmpty(ComponentName))
-                        {
-                            if (!MatchesPattern(componentName, ComponentName))
-                            {
-                                continue;
-                            }
-                        }
-
-                        // Read YAML content
-                        byte[] entryBytes = ReadZipEntryBytes(zipInputStream);
-                        string yamlContent = System.Text.Encoding.UTF8.GetString(entryBytes);
-
-                        // Create PSObject with component information
-                        var psObject = new PSObject();
-                        psObject.Properties.Add(new PSNoteProperty("ComponentName", componentName));
-                        psObject.Properties.Add(new PSNoteProperty("FilePath", entry.Name));
-                        psObject.Properties.Add(new PSNoteProperty("YamlContent", yamlContent));
-                        psObject.Properties.Add(new PSNoteProperty("Size", entryBytes.Length));
-
-                        WriteObject(psObject);
                     }
                 }
             }

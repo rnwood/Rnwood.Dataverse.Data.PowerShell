@@ -35,6 +35,15 @@ Retrieves app module component information from a Dataverse environment.
 ### [Get-DataverseAttributeMetadata](Get-DataverseAttributeMetadata.md)
 Retrieves attribute (column) metadata from Dataverse.
 
+### [Get-DataverseCanvasApp](Get-DataverseCanvasApp.md)
+Retrieves Canvas apps from a Dataverse environment.
+
+### [Get-DataverseCanvasAppComponent](Get-DataverseCanvasAppComponent.md)
+Retrieves components from a Canvas app's .msapp file.
+
+### [Get-DataverseCanvasAppScreen](Get-DataverseCanvasAppScreen.md)
+Retrieves screens from a Canvas app's .msapp file.
+
 ### [Get-DataverseComponentDependency](Get-DataverseComponentDependency.md)
 Retrieves component dependencies in Dataverse.
 
@@ -181,6 +190,15 @@ Removes an app module component from Dataverse.
 ### [Remove-DataverseAttributeMetadata](Remove-DataverseAttributeMetadata.md)
 Deletes an attribute (column) from a Dataverse entity.
 
+### [Remove-DataverseCanvasApp](Remove-DataverseCanvasApp.md)
+Removes a Canvas app from a Dataverse environment.
+
+### [Remove-DataverseCanvasAppComponent](Remove-DataverseCanvasAppComponent.md)
+Removes a component from a Canvas app's .msapp file.
+
+### [Remove-DataverseCanvasAppScreen](Remove-DataverseCanvasAppScreen.md)
+Removes a screen from a Canvas app's .msapp file.
+
 ### [Remove-DataverseConnectionReference](Remove-DataverseConnectionReference.md)
 Removes a connection reference from a Dataverse environment.
 
@@ -270,6 +288,15 @@ Sets an app module's icon by downloading an icon from an online icon set and cre
 
 ### [Set-DataverseAttributeMetadata](Set-DataverseAttributeMetadata.md)
 Creates or updates an attribute (column) in Dataverse.
+
+### [Set-DataverseCanvasApp](Set-DataverseCanvasApp.md)
+Creates or updates a Canvas app in a Dataverse environment.
+
+### [Set-DataverseCanvasAppComponent](Set-DataverseCanvasAppComponent.md)
+Adds or updates a component in a Canvas app's .msapp file.
+
+### [Set-DataverseCanvasAppScreen](Set-DataverseCanvasAppScreen.md)
+Adds or updates a screen in a Canvas app's .msapp file.
 
 ### [Set-DataverseConnectionAsDefault](Set-DataverseConnectionAsDefault.md)
 Sets the specified Dataverse connection as the default connection for cmdlets that don't specify a connection.
