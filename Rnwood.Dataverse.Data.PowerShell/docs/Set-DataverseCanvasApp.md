@@ -19,37 +19,35 @@ Set-DataverseCanvasApp [[-Id] <Guid>] [[-Name] <String>] [-DisplayName <String>]
 ```
 
 ## DESCRIPTION
-Creates a new Canvas app or updates an existing one by generating a solution file and importing it. For creation, a minimal .msapp file is generated unless you provide one via -MsAppPath. For updates, the existing app is exported, modified, and re-imported.
+Creates or updates a Canvas app in a Dataverse environment (upsert operation). Automatically determines whether to create or update based on ID or Name. Upload a .msapp file that has been modified locally using the MsApp cmdlets.
 
 ## EXAMPLES
 
-### Example 1: Create a new Canvas app with minimal properties
+### Example 1: Create a new Canvas app (upsert by Name)
 ```powershell
-PS C:\> Set-DataverseCanvasApp -Name "new_myapp" -DisplayName "My App" -PublisherPrefix "new" -PassThru
+PS C:\> Set-DataverseCanvasApp -Name "new_myapp" -DisplayName "My App" -MsAppPath "C:\apps\myapp.msapp"
 ```
 
-Creates a new Canvas app with the specified name and display name.
+Creates a new Canvas app with the specified name using a local .msapp file. If the app already exists, it will be updated instead.
 
-### Example 2: Create a Canvas app with a custom .msapp file
-```powershell
-PS C:\> Set-DataverseCanvasApp -Name "new_customapp" -DisplayName "Custom App" -PublisherPrefix "new" -MsAppPath "C:\apps\myapp.msapp"
-```
-
-Creates a new Canvas app using a specific .msapp file as the document content.
-
-### Example 3: Update an existing Canvas app's display name
-```powershell
-PS C:\> Set-DataverseCanvasApp -Id "12345678-1234-1234-1234-123456789012" -DisplayName "Updated App Name"
-```
-
-Updates the display name of an existing Canvas app.
-
-### Example 4: Update a Canvas app's .msapp file
+### Example 2: Update an existing Canvas app (upsert by ID)
 ```powershell
 PS C:\> Set-DataverseCanvasApp -Id "12345678-1234-1234-1234-123456789012" -MsAppPath "C:\apps\updated.msapp"
 ```
 
-Updates the Canvas app's document content with a new .msapp file.
+Updates an existing Canvas app with a modified .msapp file. If the ID doesn't exist, creates a new app with that ID.
+
+### Example 3: Workflow - modify .msapp locally then upload
+```powershell
+PS C:\> # Download or create .msapp file locally
+PS C:\> # Modify screens/components using MsApp cmdlets
+PS C:\> Set-DataverseMsAppScreen -MsAppPath "myapp.msapp" -ScreenName "NewScreen" -YamlContent $yaml
+PS C:\> Set-DataverseMsAppComponent -MsAppPath "myapp.msapp" -ComponentName "MyButton" -YamlContent $yaml
+PS C:\> # Upload modified app to Dataverse
+PS C:\> Set-DataverseCanvasApp -Name "new_myapp" -MsAppPath "myapp.msapp"
+```
+
+Complete workflow: modify .msapp locally, then upload to Dataverse. This is much faster than import/export for each change.
 
 ## PARAMETERS
 
@@ -101,7 +99,7 @@ Accept wildcard characters: False
 ```
 
 ### -Id
-ID of the Canvas app to update
+ID of the Canvas app (used as unique key for upsert). If provided and exists, updates the app. If not exists, creates with this ID.
 
 ```yaml
 Type: Guid
@@ -116,7 +114,7 @@ Accept wildcard characters: False
 ```
 
 ### -MsAppPath
-Path to an .msapp file to use as the document content
+Path to a .msapp file to upload as the Canvas app document content. Required.
 
 ```yaml
 Type: String
@@ -131,7 +129,7 @@ Accept wildcard characters: False
 ```
 
 ### -Name
-Name for the Canvas app (logical name)
+Name for the Canvas app (logical name, used as unique key if ID not provided). Used to find existing app for upsert.
 
 ```yaml
 Type: String

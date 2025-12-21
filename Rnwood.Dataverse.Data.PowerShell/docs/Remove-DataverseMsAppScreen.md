@@ -8,7 +8,7 @@ schema: 2.0.0
 # Remove-DataverseMsAppScreen
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Removes a screen from a .msapp file.
 
 ## SYNTAX
 
@@ -18,16 +18,23 @@ Remove-DataverseMsAppScreen [-MsAppPath] <String> [-ScreenName] <String> [-IfExi
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Removes a screen from a Canvas app .msapp file. The .msapp file is modified in place.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Remove a screen
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Remove-DataverseMsAppScreen -MsAppPath "myapp.msapp" -ScreenName "OldScreen"
 ```
 
-{{ Add example description here }}
+Removes a screen from the .msapp file.
+
+### Example 2: Remove with IfExists flag
+```powershell
+PS C:\> Remove-DataverseMsAppScreen -MsAppPath "myapp.msapp" -ScreenName "MaybeExists" -IfExists
+```
+
+Attempts to remove a screen, but doesn't throw an error if it doesn't exist.
 
 ## PARAMETERS
 

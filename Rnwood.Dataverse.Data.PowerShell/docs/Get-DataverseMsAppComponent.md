@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseMsAppComponent
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves components from a .msapp file.
 
 ## SYNTAX
 
@@ -18,16 +18,24 @@ Get-DataverseMsAppComponent [-MsAppPath] <String> [-ComponentName <String>]
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Retrieves components from a Canvas app .msapp file. Components are reusable custom controls defined in YAML format.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Get all components from a .msapp file
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $components = Get-DataverseMsAppComponent -MsAppPath "C:\apps\myapp.msapp"
+PS C:\> $components | Format-Table ComponentName, Size
 ```
 
-{{ Add example description here }}
+Retrieves all components from a .msapp file.
+
+### Example 2: Filter components by name
+```powershell
+PS C:\> Get-DataverseMsAppComponent -MsAppPath "myapp.msapp" -ComponentName "Custom*"
+```
+
+Retrieves only components whose names start with "Custom".
 
 ## PARAMETERS
 

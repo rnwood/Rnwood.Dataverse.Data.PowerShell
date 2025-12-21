@@ -90,6 +90,12 @@ Retrieves tab information from a Dataverse form.
 ### [Get-DataverseIconSetIcon](Get-DataverseIconSetIcon.md)
 Retrieves available icons from supported online icon sets.
 
+### [Get-DataverseMsAppComponent](Get-DataverseMsAppComponent.md)
+Retrieves components from a .msapp file.
+
+### [Get-DataverseMsAppScreen](Get-DataverseMsAppScreen.md)
+Retrieves screens from a .msapp file.
+
 ### [Get-DataverseOptionSetMetadata](Get-DataverseOptionSetMetadata.md)
 Retrieves option set (choice) metadata from Dataverse.
 
@@ -223,6 +229,12 @@ Removes a section from a Dataverse form tab.
 ### [Remove-DataverseFormTab](Remove-DataverseFormTab.md)
 Removes a tab from a Dataverse form.
 
+### [Remove-DataverseMsAppComponent](Remove-DataverseMsAppComponent.md)
+Removes a component from a .msapp file.
+
+### [Remove-DataverseMsAppScreen](Remove-DataverseMsAppScreen.md)
+Removes a screen from a .msapp file.
+
 ### [Remove-DataversePluginAssembly](Remove-DataversePluginAssembly.md)
 Removes a plugin assembly from a Dataverse environment.
 
@@ -321,6 +333,12 @@ Creates or updates a section in a Dataverse form tab.
 
 ### [Set-DataverseFormTab](Set-DataverseFormTab.md)
 Creates or updates a tab on a Dataverse form with support for column layouts.
+
+### [Set-DataverseMsAppComponent](Set-DataverseMsAppComponent.md)
+Adds or updates a component in a .msapp file.
+
+### [Set-DataverseMsAppScreen](Set-DataverseMsAppScreen.md)
+Adds or updates a screen in a .msapp file.
 
 ### [Set-DataverseOptionSetMetadata](Set-DataverseOptionSetMetadata.md)
 Creates or updates a global option set in Dataverse.

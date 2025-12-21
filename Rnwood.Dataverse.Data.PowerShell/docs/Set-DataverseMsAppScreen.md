@@ -8,7 +8,7 @@ schema: 2.0.0
 # Set-DataverseMsAppScreen
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Adds or updates a screen in a .msapp file.
 
 ## SYNTAX
 
@@ -25,16 +25,29 @@ Set-DataverseMsAppScreen [-MsAppPath] <String> [-ScreenName] <String> -YamlFileP
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Adds or updates a screen in a Canvas app .msapp file. The screen is defined using Power Apps YAML format. The .msapp file is modified in place.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Add a new screen
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $yaml = @"
+Screens:
+  NewScreen:
+    Properties:
+      LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
+"@
+PS C:\> Set-DataverseMsAppScreen -MsAppPath "myapp.msapp" -ScreenName "NewScreen" -YamlContent $yaml
 ```
 
-{{ Add example description here }}
+Adds a new screen to the .msapp file.
+
+### Example 2: Update from YAML file
+```powershell
+PS C:\> Set-DataverseMsAppScreen -MsAppPath "myapp.msapp" -ScreenName "MainScreen" -YamlFilePath "MainScreen.pa.yaml"
+```
+
+Updates a screen using YAML content from a file.
 
 ## PARAMETERS
 
