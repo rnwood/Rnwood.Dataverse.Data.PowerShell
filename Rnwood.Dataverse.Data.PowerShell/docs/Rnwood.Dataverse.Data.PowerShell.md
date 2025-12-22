@@ -93,6 +93,9 @@ Retrieves available icons from supported online icon sets.
 ### [Get-DataverseMsAppComponent](Get-DataverseMsAppComponent.md)
 Retrieves components from a .msapp file.
 
+### [Get-DataverseMsAppProperties](Get-DataverseMsAppProperties.md)
+{{ Fill in the Synopsis }}
+
 ### [Get-DataverseMsAppScreen](Get-DataverseMsAppScreen.md)
 Retrieves screens from a .msapp file.
 
@@ -336,6 +339,9 @@ Creates or updates a tab on a Dataverse form with support for column layouts.
 
 ### [Set-DataverseMsAppComponent](Set-DataverseMsAppComponent.md)
 Adds or updates a component in a .msapp file.
+
+### [Set-DataverseMsAppProperties](Set-DataverseMsAppProperties.md)
+{{ Fill in the Synopsis }}
 
 ### [Set-DataverseMsAppScreen](Set-DataverseMsAppScreen.md)
 Adds or updates a screen in a .msapp file.

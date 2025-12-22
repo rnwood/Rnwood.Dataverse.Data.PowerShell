@@ -12,15 +12,27 @@ Adds or updates a component in a .msapp file.
 
 ## SYNTAX
 
-### YamlContent
+### YamlContent-FromPath
 ```
 Set-DataverseMsAppComponent [-MsAppPath] <String> [-ComponentName] <String> [-YamlContent] <String>
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
-### YamlFile
+### YamlFile-FromPath
 ```
 Set-DataverseMsAppComponent [-MsAppPath] <String> [-ComponentName] <String> -YamlFilePath <String>
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### YamlContent-FromObject
+```
+Set-DataverseMsAppComponent [-CanvasApp] <PSObject> [-ComponentName] <String> [-YamlContent] <String>
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### YamlFile-FromObject
+```
+Set-DataverseMsAppComponent [-CanvasApp] <PSObject> [-ComponentName] <String> -YamlFilePath <String>
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -45,6 +57,21 @@ Adds a new component to the .msapp file.
 
 ## PARAMETERS
 
+### -CanvasApp
+Canvas app PSObject from Get-DataverseCanvasApp -IncludeDocument
+
+```yaml
+Type: PSObject
+Parameter Sets: YamlContent-FromObject, YamlFile-FromObject
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
 ### -ComponentName
 Name of the component
 
@@ -65,7 +92,7 @@ Path to the .msapp file
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: YamlContent-FromPath, YamlFile-FromPath
 Aliases:
 
 Required: True
@@ -95,7 +122,7 @@ YAML content for the component
 
 ```yaml
 Type: String
-Parameter Sets: YamlContent
+Parameter Sets: YamlContent-FromPath, YamlContent-FromObject
 Aliases:
 
 Required: True
@@ -110,7 +137,7 @@ Path to a YAML file containing the component definition
 
 ```yaml
 Type: String
-Parameter Sets: YamlFile
+Parameter Sets: YamlFile-FromPath, YamlFile-FromObject
 Aliases:
 
 Required: True
@@ -156,7 +183,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
+### System.Management.Automation.PSObject
 ## OUTPUTS
 
 ### System.Object

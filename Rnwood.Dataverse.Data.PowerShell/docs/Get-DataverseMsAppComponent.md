@@ -12,8 +12,15 @@ Retrieves components from a .msapp file.
 
 ## SYNTAX
 
+### FromPath
 ```
 Get-DataverseMsAppComponent [-MsAppPath] <String> [-ComponentName <String>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### FromObject
+```
+Get-DataverseMsAppComponent [-CanvasApp] <PSObject> [-ComponentName <String>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -39,6 +46,21 @@ Retrieves only components whose names start with "Custom".
 
 ## PARAMETERS
 
+### -CanvasApp
+Canvas app PSObject from Get-DataverseCanvasApp -IncludeDocument
+
+```yaml
+Type: PSObject
+Parameter Sets: FromObject
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
 ### -ComponentName
 Name pattern of components to retrieve.
 Supports wildcards (* and ?)
@@ -60,7 +82,7 @@ Path to the .msapp file
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: FromPath
 Aliases:
 
 Required: True
@@ -90,7 +112,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
+### System.Management.Automation.PSObject
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject

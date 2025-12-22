@@ -12,8 +12,15 @@ Removes a component from a .msapp file.
 
 ## SYNTAX
 
+### FromPath
 ```
 Remove-DataverseMsAppComponent [-MsAppPath] <String> [-ComponentName] <String> [-IfExists]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### FromObject
+```
+Remove-DataverseMsAppComponent [-CanvasApp] <PSObject> [-ComponentName] <String> [-IfExists]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -30,6 +37,21 @@ PS C:\> Remove-DataverseMsAppComponent -MsAppPath "myapp.msapp" -ComponentName "
 Removes a component from the .msapp file.
 
 ## PARAMETERS
+
+### -CanvasApp
+Canvas app PSObject from Get-DataverseCanvasApp -IncludeDocument
+
+```yaml
+Type: PSObject
+Parameter Sets: FromObject
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
 
 ### -ComponentName
 Name of the component to remove
@@ -66,7 +88,7 @@ Path to the .msapp file
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: FromPath
 Aliases:
 
 Required: True
@@ -127,7 +149,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
+### System.Management.Automation.PSObject
 ## OUTPUTS
 
 ### System.Object
