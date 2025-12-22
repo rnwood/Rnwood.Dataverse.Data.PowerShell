@@ -1,6 +1,7 @@
 using ICSharpCode.SharpZipLib.Zip;
 using System;
 using System.IO;
+using System.Linq;
 using System.Management.Automation;
 using System.Text;
 
@@ -15,9 +16,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the path to the .msapp file.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, HelpMessage = "Path to the .msapp file")]
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "YamlContent-FromPath", HelpMessage = "Path to the .msapp file")]
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "YamlFile-FromPath", HelpMessage = "Path to the .msapp file")]
         [ValidateNotNullOrEmpty]
         public string MsAppPath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Canvas app PSObject returned by Get-DataverseCanvasApp with -IncludeDocument.
+        /// The document property will be updated with the modified .msapp.
+        /// </summary>
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "YamlContent-FromObject", ValueFromPipeline = true, HelpMessage = "Canvas app PSObject from Get-DataverseCanvasApp -IncludeDocument")]
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "YamlFile-FromObject", ValueFromPipeline = true, HelpMessage = "Canvas app PSObject from Get-DataverseCanvasApp -IncludeDocument")]
+        [ValidateNotNull]
+        public PSObject CanvasApp { get; set; }
 
         /// <summary>
         /// Gets or sets the component name.
@@ -27,16 +38,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string ComponentName { get; set; }
 
         /// <summary>
-        /// Gets or sets the YAML content for the component.
+        /// Gets or sets the YAML content for the component (without header - will be added automatically).
         /// </summary>
-        [Parameter(Mandatory = true, Position = 2, ParameterSetName = "YamlContent", HelpMessage = "YAML content for the component")]
+        [Parameter(Mandatory = true, Position = 2, ParameterSetName = "YamlContent-FromPath", HelpMessage = "YAML content for the component (without header)")]
+        [Parameter(Mandatory = true, Position = 2, ParameterSetName = "YamlContent-FromObject", HelpMessage = "YAML content for the component (without header)")]
         [ValidateNotNullOrEmpty]
         public string YamlContent { get; set; }
 
         /// <summary>
-        /// Gets or sets the path to a YAML file containing the component definition.
+        /// Gets or sets the path to a YAML file containing the component definition (without header).
         /// </summary>
-        [Parameter(Mandatory = true, ParameterSetName = "YamlFile", HelpMessage = "Path to a YAML file containing the component definition")]
+        [Parameter(Mandatory = true, ParameterSetName = "YamlFile-FromPath", HelpMessage = "Path to a YAML file containing the component definition (without header)")]
+        [Parameter(Mandatory = true, ParameterSetName = "YamlFile-FromObject", HelpMessage = "Path to a YAML file containing the component definition (without header)")]
         [ValidateNotNullOrEmpty]
         public string YamlFilePath { get; set; }
 
@@ -45,15 +58,41 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            var filePath = GetUnresolvedProviderPathFromPSPath(MsAppPath);
-            if (!File.Exists(filePath))
+            bool isFromObject = ParameterSetName.Contains("FromObject");
+            byte[] msappBytes;
+            string targetPath = null;
+
+            if (isFromObject)
             {
-                ThrowTerminatingError(new ErrorRecord(
-                    new FileNotFoundException($"MsApp file not found: {filePath}"),
-                    "FileNotFound",
-                    ErrorCategory.ObjectNotFound,
-                    filePath));
-                return;
+                // Get .msapp from the PSObject's document property
+                var documentProp = CanvasApp.Properties["document"];
+                if (documentProp == null || documentProp.Value == null)
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException("CanvasApp object does not have a 'document' property. Use Get-DataverseCanvasApp with -IncludeDocument."),
+                        "DocumentPropertyMissing",
+                        ErrorCategory.InvalidArgument,
+                        CanvasApp));
+                    return;
+                }
+
+                string base64Document = documentProp.Value.ToString();
+                msappBytes = Convert.FromBase64String(base64Document);
+            }
+            else
+            {
+                targetPath = GetUnresolvedProviderPathFromPSPath(MsAppPath);
+                if (!File.Exists(targetPath))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new FileNotFoundException($"MsApp file not found: {targetPath}"),
+                        "FileNotFound",
+                        ErrorCategory.ObjectNotFound,
+                        targetPath));
+                    return;
+                }
+
+                msappBytes = File.ReadAllBytes(targetPath);
             }
 
             // Get YAML content
@@ -77,17 +116,32 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 yaml = YamlContent;
             }
 
-            string action = $"Set component '{ComponentName}' in .msapp file '{filePath}'";
+            string action = isFromObject 
+                ? $"Set component '{ComponentName}' in Canvas app" 
+                : $"Set component '{ComponentName}' in .msapp file '{targetPath}'";
+            
             if (!ShouldProcess(action, action, "Set Component"))
             {
                 return;
             }
 
-            byte[] msappBytes = File.ReadAllBytes(filePath);
-            byte[] modifiedBytes = ModifyMsAppComponent(msappBytes, yaml);
-            File.WriteAllBytes(filePath, modifiedBytes);
+            // Add header and indent the YAML content
+            string fullYaml = AddComponentHeader(yaml, ComponentName);
 
-            WriteVerbose($"Component '{ComponentName}' set successfully in .msapp file");
+            byte[] modifiedBytes = ModifyMsAppComponent(msappBytes, fullYaml);
+            
+            if (isFromObject)
+            {
+                // Update the document property in the PSObject
+                string base64 = Convert.ToBase64String(modifiedBytes);
+                CanvasApp.Properties["document"].Value = base64;
+                WriteVerbose($"Component '{ComponentName}' set successfully in Canvas app object");
+            }
+            else
+            {
+                File.WriteAllBytes(targetPath, modifiedBytes);
+                WriteVerbose($"Component '{ComponentName}' set successfully in .msapp file");
+            }
         }
 
         private byte[] ModifyMsAppComponent(byte[] originalBytes, string yaml)
@@ -164,6 +218,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 return entryStream.ToArray();
             }
+        }
+
+        /// <summary>
+        /// Adds the component header and indents the content.
+        /// Transforms: "Property: =Value" -> "Components:\n  ComponentName:\n    Property: =Value"
+        /// </summary>
+        private string AddComponentHeader(string yamlContent, string componentName)
+        {
+            // Add proper indentation (4 spaces) to each line
+            var lines = yamlContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            var indentedLines = lines.Select(line => 
+            {
+                // Don't indent empty lines
+                if (string.IsNullOrWhiteSpace(line))
+                {
+                    return line;
+                }
+                return "    " + line;
+            });
+
+            // Build the full YAML with header
+            var result = new StringBuilder();
+            result.AppendLine("Components:");
+            result.AppendLine($"  {componentName}:");
+            result.Append(string.Join(Environment.NewLine, indentedLines));
+
+            return result.ToString();
         }
     }
 }

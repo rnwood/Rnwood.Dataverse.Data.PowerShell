@@ -14,9 +14,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the path to the .msapp file.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, HelpMessage = "Path to the .msapp file")]
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "FromPath", HelpMessage = "Path to the .msapp file")]
         [ValidateNotNullOrEmpty]
         public string MsAppPath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Canvas app PSObject returned by Get-DataverseCanvasApp with -IncludeDocument.
+        /// The document property will be updated with the modified .msapp.
+        /// </summary>
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "FromObject", ValueFromPipeline = true, HelpMessage = "Canvas app PSObject from Get-DataverseCanvasApp -IncludeDocument")]
+        [ValidateNotNull]
+        public PSObject CanvasApp { get; set; }
 
         /// <summary>
         /// Gets or sets the screen name to remove.
@@ -36,28 +44,66 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            var filePath = GetUnresolvedProviderPathFromPSPath(MsAppPath);
-            if (!File.Exists(filePath))
+            bool isFromObject = ParameterSetName == "FromObject";
+            byte[] msappBytes;
+            string targetPath = null;
+
+            if (isFromObject)
             {
-                ThrowTerminatingError(new ErrorRecord(
-                    new FileNotFoundException($"MsApp file not found: {filePath}"),
-                    "FileNotFound",
-                    ErrorCategory.ObjectNotFound,
-                    filePath));
-                return;
+                // Get .msapp from the PSObject's document property
+                var documentProp = CanvasApp.Properties["document"];
+                if (documentProp == null || documentProp.Value == null)
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException("CanvasApp object does not have a 'document' property. Use Get-DataverseCanvasApp with -IncludeDocument."),
+                        "DocumentPropertyMissing",
+                        ErrorCategory.InvalidArgument,
+                        CanvasApp));
+                    return;
+                }
+
+                string base64Document = documentProp.Value.ToString();
+                msappBytes = Convert.FromBase64String(base64Document);
+            }
+            else
+            {
+                targetPath = GetUnresolvedProviderPathFromPSPath(MsAppPath);
+                if (!File.Exists(targetPath))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new FileNotFoundException($"MsApp file not found: {targetPath}"),
+                        "FileNotFound",
+                        ErrorCategory.ObjectNotFound,
+                        targetPath));
+                    return;
+                }
+
+                msappBytes = File.ReadAllBytes(targetPath);
             }
 
-            string action = $"Remove screen '{ScreenName}' from .msapp file '{filePath}'";
+            string action = isFromObject
+                ? $"Remove screen '{ScreenName}' from Canvas app"
+                : $"Remove screen '{ScreenName}' from .msapp file '{targetPath}'";
+            
             if (!ShouldProcess(action, action, "Remove Screen"))
             {
                 return;
             }
 
-            byte[] msappBytes = File.ReadAllBytes(filePath);
             byte[] modifiedBytes = RemoveMsAppScreen(msappBytes);
-            File.WriteAllBytes(filePath, modifiedBytes);
-
-            WriteVerbose($"Screen '{ScreenName}' removed successfully from .msapp file");
+            
+            if (isFromObject)
+            {
+                // Update the document property in the PSObject
+                string base64 = Convert.ToBase64String(modifiedBytes);
+                CanvasApp.Properties["document"].Value = base64;
+                WriteVerbose($"Screen '{ScreenName}' removed successfully from Canvas app object");
+            }
+            else
+            {
+                File.WriteAllBytes(targetPath, modifiedBytes);
+                WriteVerbose($"Screen '{ScreenName}' removed successfully from .msapp file");
+            }
         }
 
         private byte[] RemoveMsAppScreen(byte[] originalBytes)
