@@ -12,8 +12,15 @@ Removes a screen from a .msapp file.
 
 ## SYNTAX
 
+### FromPath
 ```
 Remove-DataverseMsAppScreen [-MsAppPath] <String> [-ScreenName] <String> [-IfExists]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### FromObject
+```
+Remove-DataverseMsAppScreen [-CanvasApp] <PSObject> [-ScreenName] <String> [-IfExists]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -38,6 +45,21 @@ Attempts to remove a screen, but doesn't throw an error if it doesn't exist.
 
 ## PARAMETERS
 
+### -CanvasApp
+Canvas app PSObject from Get-DataverseCanvasApp -IncludeDocument
+
+```yaml
+Type: PSObject
+Parameter Sets: FromObject
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
 ### -IfExists
 If set, no error is thrown if the screen doesn't exist
 
@@ -58,7 +80,7 @@ Path to the .msapp file
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: FromPath
 Aliases:
 
 Required: True
@@ -134,7 +156,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### None
+### System.Management.Automation.PSObject
 ## OUTPUTS
 
 ### System.Object
